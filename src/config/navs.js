@@ -249,4 +249,20 @@ export default [
       },
     ],
   },
+    {
+    path: "/users",
+    name: "Users",
+    icon: icons.users,
+  },
+  {
+    path: "/roles",
+    name: "Roles",
+    icon: icons.role,
+  },
+  {
+    path: "/privileges",
+    name: "Privilege",
+    icon: icons.privilege,
+    privilege: ["CREATE_USER"],
+  },
 ];

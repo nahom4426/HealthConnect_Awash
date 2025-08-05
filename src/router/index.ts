@@ -12,6 +12,7 @@ import Login from "@/views/Login.vue";
 import { useBreadcrumb, type BreadcrumbRoutes } from "@/stores/breadCrumbsStore";
 import { useAuthStore } from "@/stores/auth";
 import type { LoginResponse } from "@/features/auth/authApi";
+import adminRoutes from "./admin.routes";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,6 +38,7 @@ const router = createRouter({
             },
           ],
         },
+        ...adminRoutes,
         ...quotationRoutes,
         ...underwritingRoutes,
         ...claimRoutes,

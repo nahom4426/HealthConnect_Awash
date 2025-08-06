@@ -5,7 +5,7 @@ import type { InstitutionContract } from "../store/payerInstitutionContractStore
 
 const api = new ApiService()
 
-const path = '/payer-institution-contract'
+const path = '/claimconnect/payer-institution-contract'
 
 export function getAllPolicyPendingInstitutions(query = {}, config = {}) {
 	return api.addAuthenticationHeader().get<Institution[]>(`${path}/list/pending/policies`, {

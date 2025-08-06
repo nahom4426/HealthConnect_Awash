@@ -13,10 +13,25 @@ import { useBreadcrumb, type BreadcrumbRoutes } from "@/stores/breadCrumbsStore"
 import { useAuthStore } from "@/stores/auth";
 import type { LoginResponse } from "@/features/auth/authApi";
 import adminRoutes from "./admin.routes";
-
+function addMetaToRoutes(routes) {
+  return routes.map(route => {
+    // If the route has a privilege property in its meta, make sure it's also marked as requiresAuth
+    if (route.meta?.privilege && !route.meta.requiresAuth) {
+      route.meta.requiresAuth = true;
+    }
+    
+    // If the route has children, process them recursively
+    if (route.children) {
+      route.children = addMetaToRoutes(route.children);
+    }
+    
+    return route;
+  });
+}
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
+  routes: addMetaToRoutes([
+ 
     {
       path: '/login',
       name: 'login',
@@ -48,7 +63,7 @@ const router = createRouter({
         ...product_settingsRoutes,
       ],
     },
-  ],
+  ]),
 });
 
 router.beforeEach((to, from, next) => {

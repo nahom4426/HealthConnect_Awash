@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/stores/auth";
 
 function checkPrivilage(el, { value, modifiers }) {
-  console.log(value)
+  console.log(value);
   if (!value && !modifiers) return;
 
   const authStore = useAuthStore();
@@ -11,6 +11,9 @@ function checkPrivilage(el, { value, modifiers }) {
     let storedUser = localStorage.getItem("userDetail");
     if (storedUser) {
       user = JSON.parse(storedUser);
+      if (!user.privileges) {
+        user.privileges = []; // Default to empty array
+      }
     }
   }
 
@@ -24,11 +27,8 @@ function checkPrivilage(el, { value, modifiers }) {
   }
 
   if (value instanceof Array) {
-    let privileges = user?.privileges;
-
-    const found = value?.find((privilage) => {
-      return privileges?.includes(`ROLE_${privilage}`);
-    });
+    let privileges = user?.privileges || []; // Default to empty array
+    const found = value.find((privilage) => privileges.includes(`ROLE_${privilage}`));
 
     if (!found) {
       el.remove();

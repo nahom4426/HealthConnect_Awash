@@ -1,0 +1,112 @@
+import { defineStore } from "pinia";
+import { ref } from "vue";
+
+// Status type (adjust if needed)
+const Status = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+  PENDING: "PENDING",
+};
+
+// Provider interface (for reference, not enforced in JS)
+const Provider = {
+  providerUuid: "",
+  email: "",
+  providerName: "",
+  threeDigitAcronym: "",
+  description: "",
+  telephone: "",
+  category: "",
+  level: "",
+  address1: "",
+  address2: "",
+  address3: "",
+  state: "",
+  country: "",
+  latitude: 0,
+  longitude: 0,
+  status: Status.ACTIVE,
+};
+
+export const useProviders = defineStore("providerStore", () => {
+  const providers = ref([]);
+
+  function getAll() {
+    return providers.value;
+  }
+
+  function set(data) {
+    console.log("Setting providers in store:", data);
+    providers.value = data;
+  }
+
+  // Alias for set
+  function setProviders(data) {
+    console.log("Setting providers with setProviders:", data);
+    set(data);
+  }
+
+  // Alias for set
+  function setAll(data) {
+    console.log("Setting providers with setAll:", data);
+    set(data);
+  }
+
+  function add(data) {
+    console.log("Adding provider to store:", data);
+    providers.value.unshift(data);
+  }
+
+  function update(id, data) {
+    console.log(`Updating provider with UUID: ${id}`, data);
+    
+    // Debug: log all provider UUIDs to check for matches
+    console.log("Available provider UUIDs:", providers.value.map(p => p.providerUuid));
+    
+    const idx = providers.value.findIndex((el) => el.providerUuid === id);
+    if (idx === -1) {
+      console.warn(`[Provider Store] No provider found with UUID: ${id}`);
+      // If not found by UUID, try to add it instead
+      if (data.providerUuid) {
+        console.log("Provider not found for update, adding instead:", data);
+        add(data);
+      }
+      return;
+    }
+
+    // Use splice for reactive updates
+    providers.value.splice(idx, 1, {
+      ...providers.value[idx],
+      ...data,
+    });
+    console.log("Provider updated successfully");
+  }
+
+  function remove(id) {
+    const idx = providers.value.findIndex((el) => el.providerUuid === id);
+    if (idx === -1) {
+      console.warn(`[Provider Store] No provider found with UUID: ${id}`);
+      return;
+    }
+
+    providers.value.splice(idx, 1);
+  }
+
+  // Update provider status
+  function updateStatus(id, status) {
+    console.log(`Updating status for provider with UUID: ${id} to ${status}`);
+    update(id, { status });
+  }
+
+  return {
+    providers,
+    getAll,
+    set,
+    setProviders,
+    setAll,
+    add,
+    update,
+    updateStatus,
+    remove,
+  };
+});

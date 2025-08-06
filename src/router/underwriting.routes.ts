@@ -1,3 +1,4 @@
+import Institution from "@/features/pages/Institution.vue";
 import AddNewPolicy from "@/features/underwriting/pages/AddNewPolicy.vue";
 import AmendPolicy from "@/features/underwriting/pages/AmendPolicy.vue";
 import ImportPolicy from "@/features/underwriting/pages/importPolicy.vue";
@@ -46,7 +47,7 @@ export default [
 	{
 		path: '/import_policy',
 		name: 'Add Policy Holders',
-		component: ImportPolicy
+		component: Institution,
 	},
 	{
 		path: '/issued_policy',

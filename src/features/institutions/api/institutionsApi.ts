@@ -4,7 +4,7 @@ import type { Institution } from "../store/institutionsStore";
 
 const api = new ApiService()
 
-const path = '/institution'
+const path = '/claimconnect/institution'
 
 export function getInstitutionsPolicyByStatus(query = {}) {
 	return api.addAuthenticationHeader().get<Institution[]>(`${path}/policy-holders/list`, {

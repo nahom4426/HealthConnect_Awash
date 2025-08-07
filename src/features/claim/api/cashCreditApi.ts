@@ -2,7 +2,7 @@ import ApiService from "@/service/ApiService";
 import type { CashBatchClaim } from "../store/cashClaimByInstitutionBatchStore";
 
 const api = new ApiService()
-const path = '/cash-credit'
+const path = '/claimconnect/cash-credit'
 
 export function getCashCreditByInstitution(query = {}) {
 	return api.addAuthenticationHeader().get(`${path}/saved/lists`, {

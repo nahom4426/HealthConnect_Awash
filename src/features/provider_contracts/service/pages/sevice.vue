@@ -48,7 +48,7 @@ const search = ref("");
       <div class="flex gap-3">
         <div
           tabindex="0"
-          class="w-full md:m bg-base-clr3 focus-within:border-primary flex items-center rounded-lg overflow-hidden"
+          class="w-full md:m bg-gray-100 focus-within:border-primary flex items-center rounded-lg overflow-hidden"
         >
           <span
             class="w-10 h-full text-base-clr grid place-items-center"

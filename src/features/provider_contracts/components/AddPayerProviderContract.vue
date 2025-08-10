@@ -7,7 +7,7 @@ import { ref, onMounted } from 'vue';
 import { useForm, ErrorMessage } from 'vee-validate';
 import { registerInstitutionSchema } from '@/validations/validations';
 import { Field } from 'vee-validate';
-import { useToast } from 'vue-toastification';
+import { useToast } from '@/toast/store/toast';
 
 const toast = useToast();
 const route = useRoute();

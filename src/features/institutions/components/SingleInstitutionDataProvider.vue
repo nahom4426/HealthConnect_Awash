@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useSingleInstitution } from "../store/singleInstitutionStore";
-import { getInstitutionsById } from "../api/institutionsApi";
+import { getInstitutionsById } from "../api/institutionApi";
 import { useRoute } from "vue-router";
 import type { Institution } from "../store/institutionsStore";
 

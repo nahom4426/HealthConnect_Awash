@@ -191,7 +191,7 @@ if (payerName) {
 
 // Title options
 const titleOptions = ['Mr', 'Ms.', 'Dr.', 'Prof'];
-const genderOptions = ['Female', 'Male'];
+const genderOptions = ['FEMALE', 'Male'];
 
 // Initialize form data
 onMounted(async () => {

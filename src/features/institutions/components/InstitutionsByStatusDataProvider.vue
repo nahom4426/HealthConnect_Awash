@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePagination } from "@/composables/usePagination";
-import { getInstitutionsByStatus } from "../api/institutionsApi";
+import { getInstitutionsByStatus } from "../api/institutionApi";
 import { watch, type PropType } from "vue";
 import { useInstitutionStore } from "../store/institutionsStore";
 import type { Status } from "@/types/interface";

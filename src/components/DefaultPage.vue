@@ -29,7 +29,7 @@ watch(search, () => {
       <div
         v-if="props.first"
         tabindex="0"
-        class="w-full md:max-w-[28rem] bg-base-clr3 h-[3.5rem] focus-within:border-primary flex items-center rounded-lg overflow-hidden"
+        class="w-full md:max-w-[28rem] bg-white h-[3.5rem] focus-within:border-primary flex items-center rounded-lg overflow-hidden"
       >
      	<span class="size-10 text-base-clr border-r grid place-items-center" v-html='icons.search' />
 					<input v-model="search" :placeholder="placeholder || 'Search...'" class="!shadow-none flex-1 px-3 h-full" />

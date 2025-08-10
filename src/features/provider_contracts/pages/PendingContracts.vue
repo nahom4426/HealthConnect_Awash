@@ -68,7 +68,7 @@ onMounted(fetchContracts);
   <DefaultPage placeholder="Search Active Contracts">
     <template #filter>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>

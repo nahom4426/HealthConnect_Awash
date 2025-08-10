@@ -3,7 +3,7 @@ import { usePagination } from "@/composables/usePagination";
 import { useInstitutionPolicyStore } from "../store/institutionPolicyStore";
 import {
 	getInstitutionsPolicyByStatus,
-} from "../api/institutionsApi";
+} from "../api/institutionApi";
 import { watch } from "vue";
 import type { PropType } from "vue";
 import type { Status } from "@/types/interface";

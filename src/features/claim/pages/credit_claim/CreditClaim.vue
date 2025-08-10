@@ -10,7 +10,7 @@ import { Status } from "@/types/interface";
 import icons from "@/utils/icons";
 import SearchSelect from "@/components/SearchSelect.vue";
 import type { Provider } from "@/features/providers/store/providersStore";
-import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionsApi";
+import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import type { Institution } from "@/features/institutions/store/institutionsStore";
 import Button from "@/components/Button.vue";
 import { useRequestdClaims } from "../../store/requestedCreditClaimStore";

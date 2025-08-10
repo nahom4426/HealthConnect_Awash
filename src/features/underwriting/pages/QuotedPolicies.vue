@@ -1,68 +1,72 @@
 <script setup>
-import { ref } from 'vue';
-import Table from "@/components/Table.vue";
-import DefaultPage from "@/components/DefaultPage.vue";
-import UnderwritingDataProvider from "../components/UnderwritingDataProvider.vue";
-import { openModal } from "@customizer/modal-x";
-import icons from "@/utils/icons";
-import PolicyStatusRow from '../components/PolicyStatusRow.vue';
+import SectionMain from "@/components/section/SectionMain.vue";
+import api from "@/scripts/api";
+import { mdiFileDocumentPlus } from "@mdi/js";
+import { onMounted, ref } from "vue";
+import Modal from "@/components/modal.vue";
+import SectionTitleLineWithButton from "@/components/section/SectionTitleLineWithButton.vue";
+import InstitutionList from "@/components/institution/tobeIssuedList.vue";
+import DeleteInstitution from "@/components/actions/deleteInstitution.vue";
+import loader from "@/components/loader/loader.vue";
 
-const handleDeletePolicy = async (id) => {
-  console.log("Delete policy:", id);
+const open = ref(false);
+const deleteInstitutionModalOpen = ref(false);
+const institutions = ref([]);
+const loading = ref(false);
+const deleteLoading = ref(false);
+const InstitutionToDelete = ref("");
+
+onMounted(async () => {
+    await fetchInstitutions();
+});
+const handleModalClose = async (modalValue) => {
+    if (modalValue === "delete") {
+        deleteInstitutionModalOpen.value = !deleteInstitutionModalOpen.value;
+    } else {
+        open.value = !open.value;
+        await fetchInstitutions();
+    }
 };
 
-const viewDetails = (id) => {
-  console.log("View policy details:", id);
+const CatchInstitutionToBeDeleted = (id) => {
+    InstitutionToDelete.value = id;
+    deleteInstitutionModalOpen.value = !deleteInstitutionModalOpen.value;
+};
+
+const fetchInstitutions = async () => {
+    loading.value = true;
+    await api.get("/payer-institution-contract/list/pending/policies").then((data) => {
+        institutions.value = data;
+        loading.value = false;
+    });
 };
 </script>
-
 <template>
-  <DefaultPage placeholder="Search Quoted Policies">
-    <template #filter>
-      <button class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100">
-        <i v-html="icons.filter"></i>
-        <p class="text-base">Filters</p>
-      </button>
-    </template>
+    <div>
+        <Modal :open="deleteInstitutionModalOpen" @close="handleModalClose('delete')">
+            <DeleteInstitution @confirmed="handleInstitutionDelete" @canceled="handleModalClose('delete')"
+                :loading="deleteLoading" />
+        </Modal>
+        <SectionMain>
+            <SectionTitleLineWithButton :icon="mdiFileDocumentPlus" title="Quoted Policies" main>
+                <form id="searchEliService" class="w-full md:w-[40%] lg:w-[20%] mt-2">
+                    <label for="default-search"
+                        class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                    <div class="relative">
+                        <input type="text" v-model="search" id="default-search"
+                            class="block w-full px-4 py-2 ps-4 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            placeholder="Search . . ." required />
+                    </div>
+                </form>
+            </SectionTitleLineWithButton>
+            <div class="min-h-[70vh]">
+                <div v-if="loading" class="flex items-center justify-center h-[40vh]">
+                    <loader />
+                </div>
 
-    <template #add-action>
-      <button
-        @click.prevent="openModal('AddPolicy')"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
-      >
-        <i v-html="icons.plus_circle"></i>
-        <p class="text-base">Add Policy</p>
-      </button>
-    </template>
-
-    <template #default="{ search }">
-      <UnderwritingDataProvider
-        :search="search"
-        status="QUOTED"
-        v-slot="{ policies, pending }"
-      >
-        <Table
-          :pending="pending"
-          :headers="{
-            head: ['Policy Number', 'Institution', 'Premium', 'Status', 'Date', 'Actions'],
-            row: ['policyNumber', 'institutionName', 'premium', 'status', 'createdAt']
-          }"
-          :rows="policies"
-          :rowCom="PolicyStatusRow"
-        >
-          <template #empty>
-            <div class="py-12 text-center">
-              <div class="flex flex-col items-center justify-center">
-                <i v-html="icons.document"></i>
-                <p class="text-gray-500">No quoted policies found</p>
-                <p v-if="search" class="text-sm text-gray-400 mt-1">
-                  No results match your search criteria
-                </p>
-              </div>
+                <InstitutionList @save="fetchInstitutions" v-if="!loading" :institutions="institutions"
+                    @delete="(id) => CatchInstitutionToBeDeleted(id)" />
             </div>
-          </template>
-        </Table>
-      </UnderwritingDataProvider>
-    </template>
-  </DefaultPage>
+        </SectionMain>
+    </div>
 </template>

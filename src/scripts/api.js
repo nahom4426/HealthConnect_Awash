@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useToast } from "vue-toastification";
+import { useToast } from "@/toast/store/toast";
 import * as session from "./session";
 
 const toast = useToast();
@@ -61,8 +61,8 @@ function getAccessToken() {
   const user = session.getUser();
   return user.accessToken;
 }
-
 async function makeRequest(config) {
+  const toast = useToast(); // ✅ moved inside
   try {
     const response = await api.request(config);
     return response.data;
@@ -71,7 +71,18 @@ async function makeRequest(config) {
   }
 }
 
+async function makeAuthRequest(config) {
+  const toast = useToast(); // ✅ moved inside
+  try {
+    const response = await authApi.request(config);
+    return response.data;
+  } catch (error) {
+    toast.error(error.message);
+  }
+}
+
 export async function makeAuthenticatedRequest(config) {
+  const toast = useToast(); // ✅ moved inside
   const token = getAccessToken();
   if (token) {
     config.headers = {};
@@ -84,35 +95,3 @@ export async function makeAuthenticatedRequest(config) {
     }
   }
 }
-
-async function makeAuthRequest(config) {
-    try {
-      const response = await authApi.request(config);
-      return response.data;
-    } catch (error) {
-      toast.error(error.message);
-    }
-}
-
-export default {
-  get(url) {
-    return makeRequest({ method: "get", url });
-  },
-  authPost(url, data) {
-    return makeAuthRequest({method: "post", url, data})
-  },
-  post(url, data) {
-    return makeRequest({ method: "post", url, data });
-  },
-  put(url, data) {
-    return makeRequest({ method: "put", url, data });
-  },
-  patch(url, data) {
-    return makeRequest({ method: "patch", url, data });
-  },
-  delete(url) {
-    return makeRequest({ method: "delete", url });
-  },
-  makeAuthenticatedRequest
-};
-

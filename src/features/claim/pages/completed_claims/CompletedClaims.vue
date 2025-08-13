@@ -7,7 +7,7 @@ import Button from "@/components/Button.vue";
 import FilterOnDetector from "@/components/FilterOnDetector.vue";
 import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
-import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionsApi";
+import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import type { Institution } from "@/features/institutions/store/institutionsStore";
 import { ref } from "vue";
 import type { Provider } from "@/features/providers/store/providersStore";

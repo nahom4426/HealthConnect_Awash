@@ -8,6 +8,7 @@ export function getProviders(query = {}) {
     params: query,
   });
 }
+
 export function getActiveProviders(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/list`, {
     params: query,

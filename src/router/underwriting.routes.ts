@@ -1,3 +1,4 @@
+import Institution from "@/features/underwriting/pages/Institution.vue";
 import AddNewPolicy from "@/features/underwriting/pages/AddNewPolicy.vue";
 import AmendPolicy from "@/features/underwriting/pages/AmendPolicy.vue";
 import ImportPolicy from "@/features/underwriting/pages/importPolicy.vue";
@@ -7,6 +8,11 @@ import InstitutionCoverage from "@/features/underwriting/pages/InstitutionCovera
 import InstitutionsInsuredPersons from "@/features/underwriting/pages/InstitutionsInsuredPersons.vue";
 import IssuedPolicy from "@/features/underwriting/pages/IssuedPolicy.vue";
 import UnderwritingIndex from "@/features/underwriting/pages/UnderwritingIndex.vue";
+import InstitutionContracts from "@/features/underwriting/pages/InstitutionContracts.vue";
+import Insured from "@/features/insured_persons/pages/Insured.vue";
+import InsuredDetails from "@/features/insured_persons/pages/insuredDetails.vue";
+import Coverages from "@/features/product_settings/pages/Coverages.vue";
+import InstitutionContractswithIssued from "@/features/underwriting/pages/InstitutionContractswithIssued.vue";
 
 export default [
 	{
@@ -46,11 +52,42 @@ export default [
 	{
 		path: '/import_policy',
 		name: 'Add Policy Holders',
-		component: ImportPolicy
+		component: Institution,
 	},
+	{
+		path: 'institution_contracts/:id',
+		name: 'Add Institutions',
+		component: InstitutionContracts,
+	},
+	{
+		path: 'insured_persons/:id',
+		name: 'insured persons',
+		component: Insured,
+	},
+	
+	{
+		path: 'packages/:id',
+		name: 'packages',
+		component: Coverages,
+	},	
+	  {
+            path: '/insured_list/detail/:insuredPersonUuid',
+            name: 'Insured Person Details',
+            component: InsuredDetails,
+            props: true,
+            // meta: {
+            //   requiresAuth: true,
+            //   privileges: ['create_user','View_card'],
+            // }
+          },
 	{
 		path: '/issued_policy',
 		name: 'issued policy',
+		component: InstitutionContractswithIssued
+	},
+		{
+		path: '/issued_policys',
+		name: 'issued policys',
 		component: IssuedPolicy
 	},
 	{

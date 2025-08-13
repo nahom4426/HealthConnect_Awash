@@ -6,7 +6,7 @@ import { mdiPlus, mdiSecurity, mdiAccountMultipleCheckOutline, mdiMenu } from '@
 import { onMounted, ref, computed, toRefs, watch } from 'vue';
 import Modal from '@/components/modal.vue';
 import SectionTitleLineWithButton from '@/components/section/SectionTitleLineWithButton.vue';
-import { useToast } from 'vue-toastification';
+import { useToast } from '@/toast/store/toast';
 import Loader from '@/components/loader/loader.vue';
 import BaseButton from '@/components/base/BaseButton.vue';
 import EditInstitution from '@/components/forms/EditInstitutionPayerProviderContract.vue';

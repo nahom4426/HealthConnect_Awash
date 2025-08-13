@@ -108,7 +108,7 @@ watch(checked, () => {
               institutions.map((el) => ({
                 value: el.institutionUuid,
                 label: el.institutionName,
-              }))
+              })) 
             "
           />
           <Dropdown v-slot="{ setRef, toggle }">

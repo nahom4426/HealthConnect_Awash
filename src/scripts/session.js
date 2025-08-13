@@ -9,7 +9,7 @@ const getUser = (pinia) => {
   const store = useUserStore(pinia);
   return store.user;
 };
-
+ 
 
 const setUserIsLoggedIn = (state) => {
   const store = useUserStore();

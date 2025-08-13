@@ -7,6 +7,10 @@ import icons from "@/utils/icons";
 import UserStatusRow from "../components/statusrow.vue";
 import UsersDataProvider from "../components/UsersDataProvider.vue";
 import { openModal } from "@customizer/modal-x";
+import { useRouter } from "vue-router";
+
+
+const router = useRouter();
 </script>
 
 <template>

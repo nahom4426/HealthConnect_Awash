@@ -5,9 +5,12 @@ import EditPrivilege from "@/features/admin/privilege/pages/EditPrivilege.vue";
 import Role from "@/features/admin/role/pages/Role.vue";
 import AddRole from "@/features/admin/role/pages/AddRole.vue";
 import EditRole from "@/features/admin/role/pages/EditRole.vue";
+import RoleDetail from "@/features/admin/role/pages/RoleDetail.vue";
 import Users from "@/features/admin/user/pages/Users.vue";
 import AddUser from "@/features/admin/user/pages/AddUser.mdl.vue";
 import EditUser from "@/features/admin/user/pages/EditUser.vue";
+import UserDetail from "@/features/admin/user/pages/UserDetail.vue";
+import PrivilegeDetail from "@/features/admin/privilege/pages/PrivilegeDetail.vue";
 
 export default [
   // Privileges routes
@@ -43,29 +46,22 @@ export default [
   {
     path: '/roles',
     name: 'Roles',
-    component: Role,  // Make sure this component exists
-    // meta: {
-    //   privileges: ['Manage_Roles'],
-    //   requiresAuth: true
-    // }
+    component: Role,
   },
   {
     path: '/create-role',
     name: 'Create Role',
     component: AddRole,
-    // meta: {
-    //   privileges: ['Manage_Roles'],
-    //   requiresAuth: true
-    // }
   },
   {
     path: '/edit_role/:roleUuid',
     name: 'Edit Role',
     component: EditRole,
-    // meta: {
-    //   privileges: ['Manage_Roles'],
-    //   requiresAuth: true
-    // }
+  },
+  {
+    path: '/role_detail/:roleUuid',
+    name: 'Role Detail',
+    component: RoleDetail,
   },
   
   // Users routes
@@ -95,5 +91,17 @@ export default [
     //   privileges: ['Manage_Users'],
     //   requiresAuth: true
     // }
+  },
+  {
+    path: '/user_detail/:userUuid',
+    name: 'User Detail',
+    component: () => import('@/features/admin/user/pages/UserDetail.vue'),
+  },
+  
+  // Privilege routes
+  {
+    path: '/privilege_detail/:privilegeUuid',
+    name: 'Privilege Detail',
+    component: PrivilegeDetail,
   }
 ];

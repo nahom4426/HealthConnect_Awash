@@ -18,10 +18,10 @@ const components = [
     name: "Services",
     component: ServiceList,
   },
-  // {
-  //   name: "Drugs",
-  //   component: Drugs,
-  // },
+  {
+    name: "Drugs",
+    component: Drugs,
+  },
 ];
 const search = ref("");
 </script>
@@ -61,13 +61,13 @@ const search = ref("");
           />
         </div>
         <div v-if="active === 0" class="flex gap-2">
-          <button
+          <!-- <button
             class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
             @click="openModal('AddService')"
           >
             <i v-html="icons.plus_circle" class=""></i>
             Add Service
-          </button>
+          </button> -->
           <button
             class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
             @click="openModal('Import')"

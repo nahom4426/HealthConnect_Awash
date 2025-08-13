@@ -1,10 +1,10 @@
-// stores/institutionStore.jsaa
+// stores/institutionContractStore.js
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
-export const useInstitution = defineStore("institution", () => {
+export const useInstitutionContract = defineStore("institutionContractStore", () => {
   // State
-  const institutions = ref([]);
+  const institutionContract = ref([]);
   const currentPage = ref(1);
   const itemsPerPage = ref(10);
   const totalPages = ref(0);
@@ -13,13 +13,13 @@ export const useInstitution = defineStore("institution", () => {
   const error = ref(null);
 
   // Getters
-  const getAll = () => institutions.value;
+  const getAll = () => institutionContract.value;
   const getInstitutionById = (id) => 
-    institutions.value.find(inst => inst.institutionUuid === id);
+    institutionContract.value.find(inst => inst.payerInstitutionContractUuid === id);
 
   // Actions
   function set(data) {
-    institutions.value = data;
+    institutionContract.value = data;
   }
 
   function setPagination(response) {
@@ -30,24 +30,26 @@ export const useInstitution = defineStore("institution", () => {
   }
 
   function addInstitution(institution) {
-    institutions.value.unshift(institution);
+    institutionContract.value.unshift(institution);
   }
+
 function updateInstitution(id, updatedData) {
-  const index = institutions.value.findIndex(
-    item => item.institutionUuid === id
+  const index = institutionContract.value.findIndex(
+    item => item.payerInstitutionContractUuid === id
   );
   if (index !== -1) {
-    institutions.value[index] = { ...institutions.value[index], ...updatedData };
-  } else {
-    // Add if not found
-    institutions.value.unshift(updatedData);
+    // Create a new array to trigger reactivity
+    institutionContract.value = [
+      ...institutionContract.value.slice(0, index),
+      { ...institutionContract.value[index], ...updatedData },
+      ...institutionContract.value.slice(index + 1)
+    ];
   }
 }
 
-
   function removeInstitution(id) {
-    institutions.value = institutions.value.filter(
-      item => item.institutionUuid !== id
+    institutionContract.value = institutionContract.value.filter(
+      item => item.payerInstitutionContractUuid !== id
     );
   }
 
@@ -60,7 +62,7 @@ function updateInstitution(id, updatedData) {
   }
 
   function reset() {
-    institutions.value = [];
+    institutionContract.value = [];
     currentPage.value = 1;
     itemsPerPage.value = 10;
     totalPages.value = 0;
@@ -71,7 +73,7 @@ function updateInstitution(id, updatedData) {
 
   return {
     // State
-    institutions,
+    institutionContract,
     currentPage,
     itemsPerPage,
     totalPages,

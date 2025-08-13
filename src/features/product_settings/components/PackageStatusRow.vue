@@ -42,7 +42,7 @@ function handleEdit(packageData) {
 }
 
 function handleAddServices(packageData) {
-  openModal('AddServicesToPackage', {
+  openModal('AddServiceToContractPackage', {
     packageUuid: packageData.packageUuid,
     packageName: packageData.packageName
   });

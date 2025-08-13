@@ -139,7 +139,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
         class="dropdown-menu hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-20 overflow-hidden"
       >
         <div class="py-1">
-          <button
+          <!-- <button
             @click.prevent="$router.push(`/packages/${row?.payerInstitutionContractUuid}`)"
             class="dropdown-item"
           >
@@ -147,7 +147,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
             Product Packages
           </button>
           <button 
-            @click.prevent="$router.push(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}`)"
+            @click.prevent="$router.push(`/insured_persons/${row?.payerInstitutionContractUuid}`)"
             class="dropdown-item"
           >
             <i v-html="icons.users_check || '👥'" class="w-5 h-5"></i>
@@ -159,8 +159,8 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           >
             <i v-html="icons.hospital_building || '🏥'" class="w-5 h-5"></i>
             Add Providers
-          </button>
-          <!-- <button 
+          </button> -->
+          <button 
             @click.stop="openEditModal(row)"
             class="dropdown-item"
           >
@@ -173,7 +173,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           >
             <i v-html="icons.delete" class="w-5 h-5"></i>
             Delete Contract
-          </button> -->
+          </button>
         </div>
       </div>
     </td>

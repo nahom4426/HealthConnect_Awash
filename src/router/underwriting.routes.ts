@@ -41,7 +41,7 @@ export default [
 						component: InstitutionCoverage
 					},
 					{
-						path: 'insured_persons/:payerInstitutionContractUuid',
+						path: '/insured_persons/:payerInstitutionContractUuid',
 						name: 'Policy Holders',
 						component: InstitutionsInsuredPersons
 					}
@@ -60,7 +60,7 @@ export default [
 		component: InstitutionContracts,
 	},
 	{
-		path: 'insured_persons/:id',
+		path: 'insured_persons/:id/:institutionUuid',
 		name: 'insured persons',
 		component: Insured,
 	},

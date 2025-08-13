@@ -1,16 +1,15 @@
 <script setup>
-import { ref } from 'vue';
-import { useRoute } from 'vue-router';
 import ModalParent from '@/components/ModalParent.vue';
 import NewFormParent from '@/components/NewFormParent.vue';
 import Button from '@/components/Button.vue';
-import Form from '@/components/new_form_builder/Form.vue';
-import Input from '@/components/new_form_elements/Input.vue';
-import Select from '@/components/new_form_elements/Select.vue';
-import { useForm } from '@/components/new_form_builder/useForm';
-import { useApiRequest } from '@/composables/useApiRequest';
-import { toasted } from '@/utils/utils';
-import { closeModal } from '@customizer/modal-x';
+import { useForm } from "@/components/new_form_builder/useForm";
+import { useApiRequest } from "@/composables/useApiRequest";
+import { toasted } from "@/utils/utils";
+import { closeModal } from "@customizer/modal-x";
+import { useRoute } from 'vue-router';
+import { createInstitutionContract } from '../api/underwritingApi';
+import ContractForm from "../form/ContractForm.vue";
+import { useInstitutionContract } from "../store/institutionContractsStore";
 
 const props = defineProps({
   data: {
@@ -19,114 +18,66 @@ const props = defineProps({
   }
 });
 
-const route = useRoute();
-const { submit } = useForm('create-contract-form');
+const { submit } = useForm("create-contract-form");
 const req = useApiRequest();
+const route = useRoute();
+const institutionStore = useInstitutionContract();
 
-const statusOptions = [
-  { value: 'ACTIVE', label: 'Active' },
-  { value: 'PENDING', label: 'Pending' },
-  { value: 'CLOSED', label: 'Closed' }
-];
-
-const createContract = async ({ values }) => {
+function createContract({ values }) {
   const contractData = {
-    institutionUuid: props.data.institutionUuid || route.params.Uuid,
+    institutionUuid: props.data.institutionUuid || route.params.id,
     contractName: values.contractName,
     contractCode: values.contractCode,
-    benefit: parseFloat(values.benefit),
-    premium: parseFloat(values.premium),
+    benefit: parseFloat(values.benefit) || 0,
+    premium: parseFloat(values.premium) || 0,
     beginDate: values.beginDate,
     endDate: values.endDate,
-    status: values.status,
+    quotationUuid: values.quotationUuid || "string",
+    multiGroupUuid: values.multiGroupUuid || "string",
+    status: values.status || 'ACTIVE'
   };
 
-  const response = await req.send(() => 
-    req.post('/payer-institution-contract', contractData)
+  req.send(
+    () => createInstitutionContract(contractData),
+    (res) => {
+      if (res.success) {
+        toasted('Institution contract created successfully', 'success');
+        institutionStore.addInstitution(res.data);
+        props.data.onRefetch?.();
+        closeModal();
+      }
+    }
   );
-
-  if (response) {
-    toasted('Institution contract created successfully', 'success');
-    props.data.onRefetch?.();
-    closeModal();
-  }
-};
+}
 </script>
 
 <template>
   <ModalParent>
     <NewFormParent
-      size="lg"
-      title="Contract Information"
-      subtitle="Create a new institution contract"
+      size="xl"
+      title="Create Contract"
+      subtitle="Define a new contract with benefits and premium details"
     >
-      <Form id="create-contract-form" class="grid grid-cols-2 gap-4">
-        <Input
-          name="contractName"
-          label="Category Name"
-          validation="required"
-          :attributes="{ placeholder: 'Enter category name' }"
-        />
-        
-        <Input
-          name="contractCode"
-          label="Category Code"
-          validation="required"
-          :attributes="{ placeholder: 'Enter category code' }"
-        />
-        
-        <Input
-          name="benefit"
-          label="Benefit"
-          type="number"
-          validation="required|numeric"
-          :attributes="{ placeholder: 'Enter benefit amount', step: '0.01' }"
-        />
-        
-        <Input
-          name="premium"
-          label="Premium"
-          type="number"
-          validation="required|numeric"
-          :attributes="{ placeholder: 'Enter premium amount', step: '0.01' }"
-        />
-        
-        <Input
-          name="beginDate"
-          label="Effective Date"
-          type="date"
-          validation="required"
-        />
-        
-        <Input
-          name="endDate"
-          label="End Date"
-          type="date"
-          validation="required"
-        />
-        
-        <div class="col-span-2">
-          <Select
-            name="status"
-            label="Status"
-            validation="required"
-            :options="statusOptions"
-            :attributes="{ placeholder: 'Select status' }"
-          />
-        </div>
-      </Form>
+      <div class="max-h-[80vh] overflow-y-auto">
+        <ContractForm :data="data" />
+      </div>
 
       <template #bottom>
-        <div class="flex gap-3 justify-end">
-          <Button @click="closeModal" class="border border-gray-300">
+        <div class="flex gap-4 justify-end p-6 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          <Button
+            type="button"
+            @click="closeModal"
+            class="px-6 py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+          >
             Cancel
           </Button>
           <Button
+            type="button"
             :pending="req.pending.value"
             @click="submit(createContract)"
-            type="primary"
+            class="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2"
           >
-            Create Contract
+            {{ req.pending.value ? 'Creating Contract...' : 'Create Contract' }}
           </Button>
         </div>
       </template>

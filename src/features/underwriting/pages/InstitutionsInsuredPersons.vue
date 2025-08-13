@@ -23,7 +23,7 @@ const props = defineProps({
 
 const route = useRoute();
 const payerInstitutionContractUuid = route.params.payerInstitutionContractUuid;
-
+const institutionUuid = route.params.institutionUuid;
 const pagination = usePagination({
   cb: (data: any) => getInsuredByContractId(payerInstitutionContractUuid as string, data)
 });

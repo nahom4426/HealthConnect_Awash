@@ -8,6 +8,9 @@ import { toasted } from "@/utils/utils";
 import { ref, onMounted, watch } from "vue";
 import { updateInsured } from "../api/insuredPersonsApi";
 import { insuredMembers } from "../store/insuredPersonsStore";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
 
 const props = defineProps({
   data: {
@@ -52,44 +55,32 @@ async function handleSubmit(formValues) {
       throw new Error('Insured UUID is missing');
     }
 
-    const formData = new FormData();
-
-    if (formValues.employeePhoto) {
-      formData.append('photo', formValues.employeePhoto);
-    }
-
     const insuredPayload = {
+      email: formValues.email || "",
+      institutionUuid: route.params.institutionUuid,
+      payerInstitutionContractUuid: route.params.id,
+      premium: 0,
+      title: "Mr/Ms",
       firstName: formValues.firstName,
-      payerUuid: formValues.payerUuid,
       fatherName: formValues.fatherName,
-      grandFatherName: formValues.grandFatherName || formValues.grandfatherName,
+      grandFatherName: formValues.grandFatherName || formValues.grandfatherName || "",
       birthDate: formValues.birthDate ? `${formValues.birthDate}T00:00:00.000Z` : '',
-      inactiveDate: formValues.inactiveDate ? `${formValues.inactiveDate}T00:00:00.000Z` : '',
       phone: formValues.phone || null,
-      woreda: formValues.woreda || "",
-      subcity: formValues.subcity || "",
-      city: formValues.city || "",
+      branchOffice: "Your Branch Office",
+      position: formValues.position || "",
+      idNumber: formValues.idNumber,
+      insuranceId: insuredUuid.value,
+      address1: formValues.woreda || "",
+      address2: formValues.city || "",
+      address3: formValues.subcity || "",
       state: formValues.state || "Addis Ababa",
       country: formValues.country || "Ethiopia",
-      idNumber: formValues.idNumber,
-      position: formValues.position,
-      gender: formValues.gender,
       status: formValues.status || "ACTIVE",
-      email: formValues.email || "",
-      insuredUuid: insuredUuid.value
+      gender: formValues.gender
     };
 
-    if (!formValues.employeePhoto) {
-      if (insuredData.value.photoBase64) {
-        insuredPayload.photoBase64 = insuredData.value.photoBase64;
-      } else if (insuredData.value.photoPath) {
-        insuredPayload.photoPath = insuredData.value.photoPath;
-      }
-    }
+    const result = await updateInsured(insuredUuid.value, insuredPayload);
 
-    formData.append('insured', JSON.stringify(insuredPayload));
-
-    const result = await updateInsured(insuredUuid.value, formData);
     const isSuccess = result && (result.success || result.status === 200 || result.status === 'success');
 
     if (isSuccess) {

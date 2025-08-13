@@ -48,7 +48,7 @@ const pagination = usePagination({
   cb: (data) =>
     getAllServices(
       route.params.id  || props.id || authStore.auth?.user?.providerUuid,
-      removeUndefined({ searchKey: props.search, ...data })
+      removeUndefined({ search: props.search, ...data })
     ),
 });
 

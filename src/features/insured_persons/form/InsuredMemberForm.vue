@@ -42,7 +42,7 @@ const gender = ref("");
 const role = ref("");
 const dateOfBirth = ref("");
 const inactiveDate = ref("");
-const employeeId = ref("");
+const idNumber = ref("");
 const phoneNumber = ref("");
 const countryCode = ref("+251");
 const woreda = ref(""); // Woreda
@@ -96,7 +96,7 @@ onMounted(() => {
     role.value = props.initialData.position || "";
     dateOfBirth.value = props.initialData.birthDate?.split("T")[0] || "";
     inactiveDate.value = props.initialData.inactiveDate?.split("T")[0] || "";
-    employeeId.value = props.initialData.idNumber || "";
+    idNumber.value = props.initialData.idNumber || "";
     state.value = props.initialData.state || "Addis Ababa";
     city.value = props.initialData.city || ""; // City
     subcity.value = props.initialData.subcity || ""; // Sub City
@@ -154,7 +154,7 @@ function handleSubmit() {
     gender: gender.value,
     birthDate: dateOfBirth.value ? `${dateOfBirth.value}T00:00:00.000Z` : "",
     inactiveDate: inactiveDate.value ? `${inactiveDate.value}T00:00:00.000Z` : "",
-    idNumber: employeeId.value,
+    idNumber: idNumber.value,
       ...(phoneNumber.value && {
       phone: `${countryCode.value}${phoneNumber.value}`,
     }),
@@ -369,8 +369,8 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
             Employee ID <span class="text-red-500">*</span>
           </label>
           <Input
-            v-model="employeeId"
-            name="employeeId"
+            v-model="idNumber"
+            name="idNumber"
             validation="required"
             :attributes="{
               placeholder: 'Enter employee ID',

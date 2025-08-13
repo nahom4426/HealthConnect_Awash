@@ -17,9 +17,9 @@ export function getActiveInstitutions(query = {}) {
 		params: query
 	});
 }
-export function createinstitution(data: any) {
-	return api.addAuthenticationHeader().post<Institution>(`${path}`, data);
-}
+	export function createinstitution(data: any) {
+		return api.addAuthenticationHeader().post<Institution>(`${path}`, data);
+	}
 
 export function getInstitutionsByStatus(query = {}) {
 	return api.addAuthenticationHeader().get<Institution[]>(`${path}/list`, {

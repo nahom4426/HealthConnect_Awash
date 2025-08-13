@@ -11,7 +11,9 @@ export function getPackages(query = {}) {
 export function getPackage(packageUuid) {
   return api.addAuthenticationHeader().get(`${path}/${packageUuid}`);
 }
-
+export function getEligiblePackage(packageUuid,payerProviderContractUuid) {
+  return api.addAuthenticationHeader().get(`${path}/packageEligibleServices${packageUuid}/${payerProviderContractUuid}`);
+}
 export function createPackage(data) {
   return api.addAuthenticationHeader().post(`${path}`, data);
 }
@@ -24,10 +26,10 @@ export function deletePackage(packageUuid) {
   return api.addAuthenticationHeader().delete(`${path}/${packageUuid}`);
 }
 
-export function addEligibleServices(packageUuid, eligibleServiceUuids) {
-  return api.addAuthenticationHeader().put(`${path}/addEligibleServices/${packageUuid}`, {
-    eligibleServiceUuids
-  });
+export function addEligibleServices(packageUuid, payload) {
+  return api
+    .addAuthenticationHeader()
+    .put(`${path}/addEligibleServices/${packageUuid}`, payload);
 }
 
 export function getFamilyLevelPackages() {

@@ -60,24 +60,19 @@ function register(formData) {
     return Promise.reject(error);
   }
 }
-
-function sendRegistrationRequest(formData) {
-  console.log("Sending registration request with form data");
+function sendRegistrationRequest(payload) {
+  console.log("Sending registration request:", payload);
 
   return new Promise((resolve, reject) => {
     registerReq.send(
-      () => createInsured(formData),
+      () => createInsured(payload),
       (response) => {
         if (response.success) {
           console.log("Registration successful:", response.data);
-          toasted(true, "Insured member registered successfully");
           resolve(response);
         } else {
           console.error("Registration failed:", response.error);
-          const errorMsg =
-            response.error || "Failed to register insured member";
-          // toasted(false, '',errorMsg);
-          reject(new Error(errorMsg));
+          reject(new Error(response.error || "Failed to register insured member"));
         }
       }
     );

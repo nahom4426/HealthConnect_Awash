@@ -6,15 +6,15 @@ import DefaultPage from '@/components/DefaultPage.vue';
 import Table from '@/components/Table.vue';
 import { openModal } from '@customizer/modal-x';
 import InstitutionContractsDataProvider from '../components/InstitutionContractsDataProvider.vue';
-import MembershipCategoryRow from '../components/MembershipCategoryRow.vue';
-import { useUnderwriting } from '../store/underwritingStore';
+import instutionContractRow from '../components/instutionContractRow.vue';
+import { useInstitutionContract } from '../store/institutionContractsStore';
 import icons from '@/utils/icons';
 import { getInstitution } from '../api/underwritingApi';
 
 const router = useRouter();
 const route = useRoute();
 const { addToast } = useToast();
-const underwritingStore = useUnderwriting();
+const underwritingStore = useInstitutionContract();
 
 const dataProvider = ref();
 const institutionName = ref('');
@@ -63,7 +63,7 @@ const handleRefetch = () => {
 </script>
 
 <template>
-  <DefaultPage :title="`${institutionName} Membership Category`" placeholder="Search contracts...">
+  <DefaultPage :title="`${institutionName} Contracts`" placeholder="Search contracts...">
     <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
@@ -79,7 +79,7 @@ const handleRefetch = () => {
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
       >
         <i v-html="icons.plus_circle"></i>
-        <p class="text-base">Add Category</p>
+        <p class="text-base">Add Contract</p>
       </button>
     </template>
 
@@ -90,31 +90,35 @@ const handleRefetch = () => {
   :institutionUuid="route.params.id"
   :status="status"
   :search="search"
-  v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages }"
+  v-slot="{ institutionContract, pending, currentPage, itemsPerPage, totalPages }"
 >
   {{ console.log('Pending state:', pending) }}
-  {{ console.log('Contracts data:', contracts) }}
+  {{ console.log('Contracts data:', institutionContract) }}
   <!-- rest of your template -->
         <Table
           :pending="pending"
           :headers="{
             head: [ 
-              'Category Code',
+         
               'Description',
+              'Benefit',
+              'Premium',
               'Effective Date',
               'Status',
               'Actions',
             ],
             row: [
               '',
-               'contractCode',
+              
               'contractName',
+              'benefit',
+              'premium', 
               'dateRange',
               'status',
             ],
           }"
-          :rows="contracts"
-          :rowCom="MembershipCategoryRow"
+          :rows="institutionContract"
+          :rowCom="instutionContractRow"
           :pagination="{
             currentPage,
             itemsPerPage,
@@ -124,12 +128,14 @@ const handleRefetch = () => {
           }"
         >
           <template #row>
-            <MembershipCategoryRow
-              :rowData="contracts"
+            <instutionContractRow
+              :rowData="institutionContract"
               :rowKeys="[
                 'index',
                 'contractCode',
                 'contractName',
+                'benefit',
+                'premium',
                 'dateRange',
                 'status',
               ]"
@@ -138,6 +144,8 @@ const handleRefetch = () => {
                 'Category Code',
                 'Description',
                 'Effective Date',
+                'Benefit',
+                'Premium',
                 'Status',
                 'Actions',
               ]"

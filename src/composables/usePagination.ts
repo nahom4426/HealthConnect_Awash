@@ -19,7 +19,7 @@ export function usePagination<T>(options: PaginationOptions<T>) {
   const paginationOptions = ref({
     store: null,
     auto: true,
-    perPage: 25,
+    perPage: 250000,
     cache: false,
     watch: [],
     ...(options || {}),
@@ -45,7 +45,7 @@ export function usePagination<T>(options: PaginationOptions<T>) {
               ? ++searchPagination.page.value
               : searchPagination.page.value
             : --searchPagination.page.value,
-          limit: searchPagination.limit.value || 25,
+          limit: searchPagination.limit.value || 2500,
         })
       );
     } else {
@@ -58,7 +58,7 @@ export function usePagination<T>(options: PaginationOptions<T>) {
               ? ++pagination.page.value
               : pagination.page.value
             : --pagination.page.value,
-          limit: pagination.limit.value || 25,
+          limit: pagination.limit.value || 2500,
         })
       );
     }

@@ -66,14 +66,14 @@ const handleRefetch = () => {
   <DefaultPage :title="`${institutionName} Membership Category`" placeholder="Search contracts...">
     <template #filter>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-whote"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
     </template>
 
-    <template #add-action>
+    <!-- <template #add-action>
       <button
         @click="openModal('CreateInstitutionContract', { institutionUuid: route.params.id, onRefetch: handleRefetch })"
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
@@ -81,7 +81,7 @@ const handleRefetch = () => {
         <i v-html="icons.plus_circle"></i>
         <p class="text-base">Add Category</p>
       </button>
-    </template>
+    </template> -->
 
     <template #default="{ search }">
   
@@ -99,16 +99,20 @@ const handleRefetch = () => {
           :pending="pending"
           :headers="{
             head: [ 
-              'Category Code',
+         
               'Description',
+              'Benefit',
+              'Premium',
               'Effective Date',
               'Status',
               'Actions',
             ],
             row: [
               '',
-               'contractCode',
+              
               'contractName',
+              'benefit',
+              'premium', 
               'dateRange',
               'status',
             ],
@@ -130,6 +134,8 @@ const handleRefetch = () => {
                 'index',
                 'contractCode',
                 'contractName',
+                'benefit',
+                'premium',
                 'dateRange',
                 'status',
               ]"
@@ -138,6 +144,8 @@ const handleRefetch = () => {
                 'Category Code',
                 'Description',
                 'Effective Date',
+                'Benefit',
+                'Premium',
                 'Status',
                 'Actions',
               ]"

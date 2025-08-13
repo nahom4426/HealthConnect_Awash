@@ -13,12 +13,12 @@ export const useInstitution = defineStore("institution", () => {
   const error = ref(null);
 
   // Getters
-  const getAllInstitutions = () => institutions.value;
+  const getAll = () => institutions.value;
   const getInstitutionById = (id) => 
     institutions.value.find(inst => inst.institutionUuid === id);
 
   // Actions
-  function setInstitutions(data) {
+  function set(data) {
     institutions.value = data;
   }
 
@@ -82,11 +82,11 @@ function updateInstitution(id, updatedData) {
     error,
 
     // Getters
-    getAllInstitutions,
+    getAll,
     getInstitutionById,
 
     // Actions
-    setInstitutions,
+    set,
     setPagination,
     addInstitution,
     updateInstitution,

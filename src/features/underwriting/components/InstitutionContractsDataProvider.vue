@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePagination } from "@/composables/usePagination";
-import { useUnderwriting } from "../store/underwritingStore";
+import { useInstitutionContract } from "../store/institutionContractsStore";
 import { getInstitutionContracts } from "../api/underwritingApi";
 import { watch, ref } from "vue";
 import { removeUndefined } from "@/utils/utils";
@@ -24,20 +24,20 @@ const props = defineProps({
   },
 });
 
-const store = useUnderwriting();
+const institutionContractStore = useInstitutionContract();
 const loading = ref(false); // Add local loading state
 
 const pagination = usePagination({
   store: {
     state: {
-      items: store.contracts,
-      currentPage: store.currentPage,
-      itemsPerPage: store.itemsPerPage,
-      totalPages: store.totalPages,
-      totalItems: store.totalItems,
+      items: institutionContractStore.institutionContract,
+      currentPage: institutionContractStore.currentPage,
+      itemsPerPage: institutionContractStore.itemsPerPage,
+      totalPages: institutionContractStore.totalPages,
+      totalItems: institutionContractStore.totalItems,
     },
-    getAll: () => store.getAll(),
-    set: (data) => store.set(data),
+    getAll: () => institutionContractStore.getAll(),
+    set: (data) => institutionContractStore.set(data),
   },
   cb: async (params) => {
     loading.value = true; // Set loading to true before request
@@ -50,7 +50,7 @@ const pagination = usePagination({
           // search: props.search.trim(),
         })
       );
-      store.setPagination(response);
+      institutionContractStore.setPagination(response);
       return response;
     } finally {
       loading.value = false; // Ensure loading is set to false after request
@@ -82,11 +82,11 @@ watch(
 defineExpose({
   refresh: pagination.send,
   setPage: (page: number) => {
-    store.currentPage = page;
+    institutionContractStore.currentPage = page;
     pagination.send();
   },
   setLimit: (limit: number) => {
-    store.itemsPerPage = limit;
+    institutionContractStore.itemsPerPage = limit;
     pagination.send();
   },
 });
@@ -94,11 +94,11 @@ defineExpose({
 
 <template>
   <slot
-    :contracts="store.contracts"
+    :institutionContract="institutionContractStore.institutionContract"
     :pending="loading"
     :error="pagination.error"
-    :currentPage="store.currentPage"
-    :itemsPerPage="store.itemsPerPage"
-    :totalPages="store.totalPages"
+    :currentPage="institutionContractStore.currentPage"
+    :itemsPerPage="institutionContractStore.itemsPerPage"
+    :totalPages="institutionContractStore.totalPages"
   />
 </template>

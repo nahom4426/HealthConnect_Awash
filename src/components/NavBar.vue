@@ -30,7 +30,7 @@ function handleImageError() {
 function logout() {
   authStore.logout(); // Uses the centralized logout logic
 }
-
+ 
 const props = defineProps({
   breadcrumbs: Object,
 });
@@ -43,7 +43,7 @@ const props = defineProps({
       'shadow-lg scale-[1.005]': isScrolled,
       'border-b border-gray-100': !isScrolled
     }"
-  >
+  > 
     <!-- Left Section -->
     <div class="flex items-center  gap-6 animate-fade-in">
       <button 

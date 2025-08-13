@@ -28,7 +28,7 @@ const pagination: any = usePagination({
 if (!institutionStore.institutions.length) {
   pagination.send();
 }
-
+ 
 watch(props, () => {
   pagination.search.value = props.search;
 	pagination.send();

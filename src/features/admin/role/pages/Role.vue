@@ -10,8 +10,8 @@ import { removeRoleById } from '../Api/RoleApi';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { toasted } from '@/utils/utils';
 import { useRouter } from 'vue-router';
-
-
+import { openModal } from '@customizer/modal-x';
+const router = useRouter();
 const deleteReq = useApiRequest();
 
 function handleDelete(id) {
@@ -21,7 +21,6 @@ function handleDelete(id) {
       (res) => {
         if (res.success) {
           toasted(true, "Role deleted successfully");
-          // Refresh the data provider
           if (dataProvider.value) {
             dataProvider.value.refresh();
           }
@@ -31,6 +30,10 @@ function handleDelete(id) {
       }
     );
   }
+}
+
+function showRoleDetail(roleUuid) {
+  router.push(`/role_detail/${roleUuid}`);
 }
 
 const dataProvider = ref(null);
@@ -102,11 +105,11 @@ const dataProvider = ref(null);
           </button>
 
           <button
-          
+            @click.prevent="showRoleDetail(row?.roleUuid)"
             class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
           >
             <i v-html="icons.details" />
-            <span>Detal</span>
+            <span>Detail</span>
           </button>
           
           <button

@@ -4,7 +4,7 @@ import type { BatchClaim } from "../store/claimByInstitutionBatchStore";
 
 const api = new ApiService()
 
-const path = '/claim'
+const path = '/claimconnect/claim'
 
 export function getRequestedClaim(query: any) {
 	return api.addAuthenticationHeader().get<RequestedClaim>(`${path}/requested/list`, {

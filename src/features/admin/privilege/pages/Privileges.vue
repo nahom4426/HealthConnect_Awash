@@ -5,8 +5,9 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import PrivilegesDataProvider from "../components/PrivilegesDataProvider.vue";
 import icons from "@/utils/icons";
 import Dropdown from "@/components/new_form_elements/Dropdown.vue";
+import { useRouter } from "vue-router";
 
-
+const router = useRouter();
 const dataProvider = ref();
 
 
@@ -71,11 +72,11 @@ const dataProvider = ref();
           </button>
 
           <button
-          
+            @click.prevent="$router.push(`/privilege_detail/${row?.privilegeUuid}`)"
             class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
           >
             <i v-html="icons.details" />
-            <span>Detal</span>
+            <span>Detail</span>
           </button>
           
         </div>

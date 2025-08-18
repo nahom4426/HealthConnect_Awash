@@ -1,32 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
-// Status type (adjust if needed)
-const Status = {
-  ACTIVE: "ACTIVE",
-  INACTIVE: "INACTIVE",
-  PENDING: "PENDING",
-};
-
-// Provider interface (for reference, not enforced in JS)
-const Provider = {
-  providerUuid: "",
-  email: "",
-  providerName: "",
-  threeDigitAcronym: "",
-  description: "",
-  telephone: "",
-  category: "",
-  level: "",
-  address1: "",
-  address2: "",
-  address3: "",
-  state: "",
-  country: "",
-  latitude: 0,
-  longitude: 0,
-  status: Status.ACTIVE,
-};
 
 export const useProviders = defineStore("providerStore", () => {
   const providers = ref([]);

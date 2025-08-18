@@ -2,8 +2,9 @@
 import { ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import FamilyDataProvider from "../components/FamilyDataProvider.vue";
-import FamilyRow from "../components/FamilyRow.vue";
+// import FamilyRow from "../components/FamilyRow.vue";
 import Table from "@/components/Table.vue";
+import FamilyRow from "../components/familyRow.vue";
 
 const props = defineProps({
   search: String,

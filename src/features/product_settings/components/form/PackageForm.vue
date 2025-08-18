@@ -61,7 +61,7 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
       <Input
         name="packageName"
         validation="required|min:3|max:50"
-        label="Package Name"
+        label="Benefit Name"
         :value="packageData.packageName"
         :attributes="{
           placeholder: 'e.g. Premium Medical Coverage',

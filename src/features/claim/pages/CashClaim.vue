@@ -1,7 +1,7 @@
-<script setup lang="ts">
+<script setup>
 import CustomSelect from "@/components/CustomSelect.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import { usePagination } from "@/composables/usePagination"; 
+import { usePagination } from "@/composables/usePagination.JS"; 
 import InstitutionPolicyByStatusDataProvider from "@/features/institutions/components/InstitutionPolicyByStatusDataProvider.vue";
 import { computed, ref, watch } from "vue";
 import { getCashCreditByInstitution, requestCashClaim } from "../api/cashCreditApi";
@@ -23,7 +23,7 @@ const cashCreditInsuredStore = useSearchedCashCreditInsuredByInstitutionStore();
 const cashCredit = usePagination({
   auto: false,
   store: cashCreditInsuredStore,
-  cb: (data: any) => {
+  cb: (data) => {
     return getCashCreditByInstitution({
       ...data,
       institutionUuid: institution.value,
@@ -34,67 +34,59 @@ const cashCredit = usePagination({
 
 const searchInsured = usePagination({
   auto: false,
-  cb: (data: any, config: any) => {
+  cb: (data, config) => {
     return searchInsuredByInstitution(institution.value, data, config);
   },
 });
 
-interface Selectedinsured {
-  insuredPersonUuid: string;
-  dependantUuid: string | null;
-  name: string;
-}
-
-const selected = ref<Selectedinsured>({
+// Selected insured details
+const selected = ref({
   insuredPersonUuid: "",
   dependantUuid: null,
   name: "",
 });
 
-const requestClaimReq = useApiRequest()
+const requestClaimReq = useApiRequest();
+
 function requestClaim() {
-  if(requestClaimReq.pending.value) return
-  
-  openModal('Comment', {}, (comment: string) => {
-    if(comment) {
+  if (requestClaimReq.pending.value) return;
+
+  openModal('Comment', {}, (comment) => {
+    if (comment) {
       requestClaimReq.send(
         () => requestCashClaim({
           comment: comment.trim(),
-          cashCreditUuidRequest: checked.value.map(el => ({cashCreditUuid: el}))
+          cashCreditUuidRequest: checked.value.map(el => ({ cashCreditUuid: el })),
         }),
         res => {
-          if(res.success) {
-            toasted(true, 'Request Created')
-            cashCreditInsuredStore.removeAll([...checked.value])
-            checked.value = []
+          if (res.success) {
+            toasted(true, 'Request Created');
+            cashCreditInsuredStore.removeAll([...checked.value]);
+            checked.value = [];
           }
         }
-      )
+      );
     }
-  })
+  });
 }
 
-interface InsuredDetail {
-  insuredName?: string,
-  phone?: string,
-  insuranceId?: string
-}
+// Insured detail structure
+const focusedInsured = ref({});
+let timeout;
 
-const focusedInsured = ref<InsuredDetail>({})
-let timeout: number
-function assignUser(value: InsuredDetail) {
-  if(timeout) clearTimeout(timeout)
+function assignUser(value) {
+  if (timeout) clearTimeout(timeout);
   timeout = setTimeout(() => {
-    focusedInsured.value = value
-  }, 100)
+    focusedInsured.value = value;
+  }, 100);
 }
 
-const checked = ref([])
+const checked = ref([]);
+
 watch(checked, () => {
   console.log('checked', checked.value);
-})
+});
 </script>
-
 <template>
   <InstitutionPolicyByStatusDataProvider v-slot="{ pending, institutions }">
     <DefaultPage>
@@ -244,9 +236,9 @@ watch(checked, () => {
           row: ['fullName', 'hospital', 'totalAmount'],
         }"
         :cells="{
-					totalAmount: (totalAmount: number) => formatCurrency(totalAmount)
-				}"
-        :rows="cashCreditInsuredStore.cashCreditInsured"
+  totalAmount: (totalAmount) => formatCurrency(totalAmount)
+}"
+:rows="cashCreditInsuredStore.cashCreditInsured"
       >
         <template #actions="{ row }">
           <button

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { usePagination } from "@/composables/useContentPagination";
 import { useUnderwriting } from "../store/underwritingStore";
 import { getIssuedContracts } from "../api/underwritingApi";
@@ -43,11 +43,9 @@ const pagination = usePagination({
     loading.value = true; // Set loading to true before request
     try {
       const response = await getIssuedContracts(
-        
         removeUndefined({
           status: props.status,
           ...params,
-          // search: props.search.trim(),
         })
       );
       store.setPagination(response);
@@ -60,7 +58,7 @@ const pagination = usePagination({
 });
 
 // Debounce the search to prevent too many requests
-let searchTimeout: number;
+let searchTimeout;
 watch(
   () => props.search,
   (newVal) => {
@@ -81,17 +79,16 @@ watch(
 
 defineExpose({
   refresh: pagination.send,
-  setPage: (page: number) => {
+  setPage: (page) => {
     store.currentPage = page;
     pagination.send();
   },
-  setLimit: (limit: number) => {
+  setLimit: (limit) => {
     store.itemsPerPage = limit;
     pagination.send();
   },
 });
 </script>
-
 <template>
   <slot
     :contracts="store.contracts"

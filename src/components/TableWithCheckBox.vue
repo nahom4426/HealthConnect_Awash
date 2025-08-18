@@ -1,32 +1,44 @@
-<script setup lang="ts" generic="T">
-import { computed, ref, watch, type PropType } from "vue";
+<script setup>
+import { computed, ref, watch } from "vue";
 import Table from "./Table.vue";
 
+// Define the props with appropriate types
 const props = defineProps({
-	modelValue: {
-		type: Array as PropType<string[]>
-	},
-  headers: [Array, Object],
-  rows: {
-    type: Array as PropType<T[]>,
-    default: [],
+  modelValue: {
+    type: Array,
+    default: () => [],
   },
-  cells: Object,
+  headers: {
+    type: [Array, Object],
+    default: () => [],
+  },
+  rows: {
+    type: Array,
+    default: () => [],
+  },
+  cells: {
+    type: Object,
+    default: () => ({}),
+  },
   toBeSelected: {
     type: String,
     required: true,
   },
 });
 
-const emit = defineEmits(['update:modelValue'])
-const selected = ref<string[]>(props.modelValue ? [...props.modelValue] : []);
-function toggleSelectAll(ev: Event) {
-  const target = ev.target as HTMLInputElement;
+// Emit event for model update
+const emit = defineEmits(['update:modelValue']);
+
+const selected = ref(props.modelValue ? [...props.modelValue] : []);
+
+// Function to toggle selection of all rows
+function toggleSelectAll(ev) {
+  const target = ev.target;
   if (target.checked) {
-    selected.value = props.rows.map((el: any) => {
+    selected.value = props.rows.map((el) => {
       return props.toBeSelected
         .split(".")
-        .reduce((state: any, name: string) => {
+        .reduce((state, name) => {
           return state[name];
         }, el);
     });
@@ -35,47 +47,45 @@ function toggleSelectAll(ev: Event) {
   }
 }
 
-function toggleData(data: string) {
-  const idx = selected.value.findIndex(
-    (el: any) => el == data
-  );
-  if (idx == -1) {
+// Function to toggle individual data selection
+function toggleData(data) {
+  const idx = selected.value.findIndex((el) => el === data);
+  if (idx === -1) {
     selected.value.push(data);
   } else {
     selected.value.splice(idx, 1);
   }
 }
 
+// Computed property to check if all rows are selected
 const allSelected = computed(() => {
-  return selected.value?.length == props.rows?.length;
+  return selected.value.length === props.rows.length;
 });
 
+// Watch for changes in selected items
 watch(selected, () => {
-	emit('update:modelValue', selected.value)
-}, {deep: true, flush: 'post'})
+  emit('update:modelValue', selected.value);
+}, { deep: true, flush: 'post' });
 
+// Watch for changes in modelValue prop
 watch(() => props.modelValue, () => {
-  selected.value = props.modelValue as string[]
-})
+  selected.value = props.modelValue;
+});
 </script>
 
 <template>
   <Table
     :last-col="true"
-    :headers="headers || []"
-    :cells="cells || {}"
-    :rows="rows || []"
+    :headers="headers"
+    :cells="cells"
+    :rows="rows"
   >
     <template #headerLast>
       <input :checked="allSelected" @change="toggleSelectAll" type="checkbox" />
     </template>
     <template #lastCol="{ row }">
       <input
-        :checked="
-					!!selected.find(
-						(el: any) => el == row?.[toBeSelected]
-					)
-				"
+        :checked="selected.includes(row?.[toBeSelected])"
         @change="() => toggleData(row?.[toBeSelected])"
         type="checkbox"
       />

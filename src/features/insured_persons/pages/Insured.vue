@@ -83,7 +83,7 @@ const search = ref("");
         >
           <i v-html="icons.plus_circle" class=""></i>
 
-          New Group
+          New Coverage
         </button>
       </div>
     </div>

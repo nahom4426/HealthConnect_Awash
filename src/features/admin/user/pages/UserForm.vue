@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { PropType, ref, computed, onMounted } from 'vue';
+<script setup>
+import { ref, computed, onMounted } from 'vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import InputPassword from '@/components/new_form_elements/InputPassword.vue';
 import Select from '@/components/new_form_elements/Select.vue';
@@ -7,9 +7,10 @@ import Form from '@/components/new_form_builder/Form.vue';
 import { getAllRole } from '../../role/Api/RoleApi';
 import Spinner from '@/components/Spinner.vue';
 import InputLayout from '@/components/new_form_elements/NewInputLayout.vue';
+
 const props = defineProps({
   initialData: {
-    type: Object as PropType<any>,
+    type: Object,
     default: () => ({})
   },
   isEdit: {
@@ -21,11 +22,11 @@ const props = defineProps({
     default: false
   },
   onSubmit: {
-    type: Function as PropType<(values: any) => void>,
+    type: Function,
     required: true
   },
   onCancel: {
-    type: Function as PropType<() => void>,
+    type: Function,
     required: true
   },
   roleName: {
@@ -73,15 +74,14 @@ const mobilePhone = ref('');
 const roleUuid = ref('');
 
 // Role fetching state
-const roles = ref<any[]>([]);
+const roles = ref([]);
 const fetchRolesPending = ref(false);
-const rolesError = ref<string | null>(null);
+const rolesError = ref(null);
 
 // Role options computation
 const roleOptions = computed(() => {
   if (!roles.value) return [];
   
-  // Check if roles.value has a content property (pagination response)
   const rolesArray = roles.value.content || roles.value;
   
   if (!Array.isArray(rolesArray)) {
@@ -95,7 +95,6 @@ const roleOptions = computed(() => {
   }));
 });
 
-
 // Fetch roles function
 async function fetchRoles() {
   console.log('Fetching roles, looking for:', props.roleName);
@@ -108,11 +107,8 @@ async function fetchRoles() {
       roles.value = response.data || [];
       console.log('Fetched roles:', roles.value);
       
-      // If a specific role name is provided, try to find and select it
       if (props.roleName) {
         console.log('Looking for role with name:', props.roleName);
-        
-        // Check if roles.value has a content property (pagination response)
         const rolesArray = roles.value.content || roles.value;
         
         if (!Array.isArray(rolesArray)) {
@@ -120,59 +116,34 @@ async function fetchRoles() {
           return;
         }
         
-        // Try to find a role that matches the pattern "PA_[PayerName]_Manager"
-        // First, extract the payer name from the role name pattern
         const payerNameMatch = props.roleName.match(/^(PA|PR)_(.+)_Manager$/);
-const payerName = payerNameMatch ? payerNameMatch[2] : null;
+        const payerName = payerNameMatch ? payerNameMatch[2] : null;
 
-let matchingRole = null;
+        let matchingRole = null;
 
-if (payerName) {
-  // Look for an exact match first
-  matchingRole = rolesArray.find(role => 
-    role.roleName === props.roleName
-  );
-  
-  // If no exact match, look for a role that contains the payer/provider name
-  if (!matchingRole) {
-    matchingRole = rolesArray.find(role => 
-      role.roleName && role.roleName.includes(payerName)
-    );
-  }
-}
+        if (payerName) {
+          matchingRole = rolesArray.find(role => role.roleName === props.roleName);
+          if (!matchingRole) {
+            matchingRole = rolesArray.find(role => role.roleName && role.roleName.includes(payerName));
+          }
+        }
         
-        // If still no match, try a more general approach
         if (!matchingRole) {
           console.log('No match found using payer name, trying more general approach');
-          
-          // Try exact match
-          matchingRole = rolesArray.find(role => 
-            role.roleName === props.roleName
-          );
-          
-          // If no exact match, try case-insensitive match
+          matchingRole = rolesArray.find(role => role.roleName === props.roleName);
           if (!matchingRole) {
             const normalizedRoleName = props.roleName.toLowerCase();
-            matchingRole = rolesArray.find(role => 
-              role.roleName && role.roleName.toLowerCase() === normalizedRoleName
-            );
+            matchingRole = rolesArray.find(role => role.roleName && role.roleName.toLowerCase() === normalizedRoleName);
           }
-          
-          // If still no match, try partial match
           if (!matchingRole) {
             console.log('No exact match found, trying partial match');
-            matchingRole = rolesArray.find(role => 
-              role.roleName && 
-              (role.roleName.includes(props.roleName) || 
-               props.roleName.includes(role.roleName))
-            );
+            matchingRole = rolesArray.find(role => role.roleName && (role.roleName.includes(props.roleName) || props.roleName.includes(role.roleName)));
           }
         }
         
         if (matchingRole) {
           console.log('Found matching role:', matchingRole);
           roleUuid.value = matchingRole.roleUuid;
-          // Disable role selection if a specific role is provided
           roleDisabled.value = true;
         } else {
           console.log('No matching role found for:', props.roleName);
@@ -205,25 +176,18 @@ onMounted(async () => {
     fatherName.value = props.initialData.fatherName || '';
     grandFatherName.value = props.initialData.grandFatherName || '';
     
-    // Fix gender capitalization - convert to uppercase for the select component
-   if (props.initialData.gender) {
-  gender.value = props.initialData.gender.charAt(0).toUpperCase() + 
-                 props.initialData.gender.slice(1).toLowerCase();
-}
+    if (props.initialData.gender) {
+      gender.value = props.initialData.gender.charAt(0).toUpperCase() + props.initialData.gender.slice(1).toLowerCase();
+    }
     mobilePhone.value = props.initialData.mobilePhone || '';
     
-    // Handle role selection
     if (props.initialData.roleUuid) {
       roleUuid.value = props.initialData.roleUuid;
-    } 
-    // If we have roleName but no roleUuid, try to find the matching role
-    else if (props.initialData.roleName && roles.value) {
+    } else if (props.initialData.roleName && roles.value) {
       const rolesArray = roles.value.content || roles.value;
       
       if (Array.isArray(rolesArray)) {
-        const matchingRole = rolesArray.find(role => 
-          role.roleName === props.initialData.roleName
-        );
+        const matchingRole = rolesArray.find(role => role.roleName === props.initialData.roleName);
         
         if (matchingRole) {
           roleUuid.value = matchingRole.roleUuid;
@@ -237,7 +201,6 @@ onMounted(async () => {
 function handleSubmit() {
   const formData = {
     email: email.value,
-  
     title: title.value,
     firstName: firstName.value,
     fatherName: fatherName.value,

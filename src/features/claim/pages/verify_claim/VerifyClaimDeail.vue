@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import DefaultPage from '@/components/DefaultPage.vue';
-import { usePagination } from '@/composables/usePagination';
+import { usePagination } from '@/composables/usePagination.JS';
 import { claimProccessed, claimVerified, getRequestedClaimByBatchDetail } from '../../api/claimApi';
 import Table from '@/components/Table.vue';
 import { useRoute } from 'vue-router';

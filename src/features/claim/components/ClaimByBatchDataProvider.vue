@@ -1,34 +1,32 @@
-<script setup lang="ts" generic="T">
+<script setup>
 import { useApiRequest } from "@/composables/useApiRequest";
 import { usePagination } from "@/composables/usePagination";
-import { watch, type PropType } from "vue";
-import { PaymentStatus, Status } from "@/types/interface";
+import { watch } from "vue";
+import { PaymentStatus } from "@/types/interface";
 import { useClaimByInstitutionBatch } from "../store/claimByInstitutionBatchStore";
 import { getClaimsByInstitutionBatch } from "../api/claimApi";
-import { removeUndefined } from "@/utils/utils";
 import { getCashClaimsByInstitutionBatch } from "../api/cashCreditApi";
-import { useCashClaimByInstitutionBatch } from "../store/cashClaimByInstitutionBatchStore";
-import type { Store, StoreDefinition } from "pinia";
 
 const props = defineProps({
   auto: {
     type: Boolean,
     default: true,
   },
-  store: Object as PropType<Store>,
+  store: Object,
   creditService: {
     type: Boolean,
     default: true,
   },
   status: {
-    type: String as PropType<PaymentStatus>,
+    type: String,
     default: PaymentStatus.REQUESTED,
   },
   params: {
     type: Object,
-    default: {},
+    default: () => ({}),
   },
 });
+
 const batchClaimsStore = props.store ?? useClaimByInstitutionBatch();
 const batchClaimReq = useApiRequest();
 
@@ -36,7 +34,7 @@ const pagination = usePagination({
   store: batchClaimsStore,
   auto: false,
   reset: true,
-  cb: (data: any) => {
+  cb: (data) => {
     return props.creditService
       ? getClaimsByInstitutionBatch({
           ...data,
@@ -51,7 +49,7 @@ const pagination = usePagination({
   },
 });
 
-if (!(batchClaimsStore as any)?.claims?.length) {
+if (!(batchClaimsStore)?.claims?.length) {
   if (props.auto) {
     pagination.send();
   }
@@ -65,9 +63,10 @@ watch(
   { deep: true }
 );
 </script>
+
 <template>
   <slot
-    :claims="(batchClaimsStore as any)?.claims as T"
+    :claims="(batchClaimsStore)?.claims"
     :pending="pagination.pending.value"
     :error="batchClaimReq.error.value"
     :search="pagination.search"

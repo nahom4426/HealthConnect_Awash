@@ -50,8 +50,8 @@ export default [
 		]
 	},
 	{
-		path: '/import_policy',
-		name: 'Add Policy Holders',
+		path: '/institution_policy',
+		name: 'Institutions',
 		component: Institution,
 	},
 	{

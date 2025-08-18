@@ -3,7 +3,7 @@ import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import Select from "@/components/new_form_elements/Select.vue";
 import { ethiopianRegions, getCitiesByRegion, getSubCitiesByCity } from "@/components/ethiopianLocations";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, readonly } from "vue";
 
 const props = defineProps({
   data: {
@@ -42,7 +42,7 @@ const formData = ref({
   // Additional info
   referralType: props.data?.referralType || 'On Man',
   referredBy: props.data?.referredBy || '',
-  
+  status: props.data?.status || 'ACTIVE',
   // System fields
   institutionUuid: props.data?.institutionUuid || ''
 });
@@ -131,6 +131,7 @@ const openMapPicker = () => {
             placeholder: 'Hospital, Clinic, Health Center',
           }"
         />
+        
         <Input 
           name="description" 
           label="Description"
@@ -346,7 +347,17 @@ const openMapPicker = () => {
     </div>
 
     <!-- Hidden status field -->
-    <input type="hidden" name="status" value="ACTIVE" />
+   <div>
+   <Input 
+          name="status" 
+          value="ACTIVE"
+          label="status"
+          :attributes="{ 
+            placeholder: 'ACTIVE, INACTIVE',
+            readonly
+          }"
+        />
+  </div>
   </Form>
 </template>
 

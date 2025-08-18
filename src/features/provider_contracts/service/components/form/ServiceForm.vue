@@ -1,81 +1,120 @@
+<!-- ServiceForm.vue -->
 <script setup>
 import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
+import Select from "@/components/new_form_elements/Select.vue";
+
 
 const props = defineProps({
   services: {
     type: Object,
-    Required: false,
+    required: false,
   },
 });
-console.log(props.services);
+
+const statusOptions = [
+  ['ACTIVE', 'INACTIVE'] // or ['ACTIVE', 'INACTIVE']
+];
 </script>
+
 <template>
   <Form
-    class="grid grid-cols-3 gap-4"
+    class="grid grid-cols-1 md:grid-cols-2 gap-6"
     :inner="false"
     id="serviceForm"
     v-slot="{}"
   >
-    <div class="col-span-3">
-      <Input
-        name="serviceName"
-        validation="required"
-        label="Service Name"
-        :value="props.services?.serviceName || ''"
-        :attributes="{
-          placeholder: 'Enter Service Name',
-        }"
-      />
+    <!-- First Column -->
+    <div class="space-y-6">
+      <div>
+        <Input
+          name="item"
+          validation="required|min:3"
+          label="Service Name"
+          :value="props.services?.item || ''"
+          :attributes="{
+            readonly,
+            placeholder: 'e.g. X-Ray Scan',
+          }"
+        />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <Input
+          name="itemCode"
+          validation="required|alpha_dash"
+          label="Item Code"
+          :value="props.services?.itemCode || ''"
+          :attributes="{
+            readonly,
+            placeholder: 'e.g. XR-100',
+          }"
+        />
+
+        <Input
+          name="price"
+          validation="required|numeric|min_value:0"
+          label="Price ($)"
+          type="number"
+          :value="props.services?.price || ''"
+          :attributes="{
+           
+            placeholder: '0.00',
+            step: '0.01',
+            min: '0'
+          }"
+        />
+      </div>
+
+    
     </div>
-    <Input
-      name="serviceCode"
-      validation="required"
-      label="Item Code"
-      :value="props.services?.serviceCode || ''"
-      :attributes="{
-        placeholder: 'Item Code',
-      }"
-    />
 
-    <Input
-      name="serviceCategory"
-      validation="required"
-      label="Category"
-      :value="props.services?.serviceCategory || ''"
-      :attributes="{
-        placeholder: 'Category',
-      }"
-    />
-    <Input
-      name="serviceSubCategory"
-      validation="required"
-      label="Sub Category"
-      :value="props.services?.serviceSubCategory || ''"
-      :attributes="{
-        placeholder: 'Sub Category',
-      }"
-    />
+    <!-- Second Column -->
+    <div class="space-y-6">
+      <div class="grid grid-cols-2 gap-4">
+        <Input
+          name="category"
+          validation="required"
+          label="Category"
+          :value="props.services?.category || ''"
+          :attributes="{
+            readonly,
+            placeholder: 'e.g. Radiology',
+          }"
+        />
 
-    <!-- <Input
-      name="price"
-      validation="required"
-      label="Price"
-      :value="props.services?.price || ''"
-      :attributes="{
-        placeholder: 'Price',
-      }"
-    /> -->
-    <div class="col-span-3">
-      <Textarea
-        name="serviceDescription"
-        label="Description"
-        :value="props.services?.serviceDescription || ''"
-        :attributes="{
-          placeholder: 'Enter Description',
-        }"
-      />
+        <Input
+          name="subCategory"
+          validation="required"
+          label="Sub Category"
+          :value="props.services?.subCategory || ''"
+          :attributes="{
+            readonly,
+            placeholder: 'e.g. Diagnostic',
+          }"
+        />
+      </div>
+      
+    
+
+      <div>
+        <Textarea
+          name="description"
+          label="Description"
+          validation="max:500"
+          :value="props.services?.description || ''"
+          :attributes="{
+            readonly,
+            placeholder: 'Enter detailed description (max 500 chars)',
+            rows: 4
+          }"
+        />
+      </div>
     </div>
   </Form>
 </template>
+
+<style scoped>
+/* Add custom styles if needed */
+</style>

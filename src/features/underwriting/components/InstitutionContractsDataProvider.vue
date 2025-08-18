@@ -46,7 +46,7 @@ const pagination = usePagination({
         props.institutionUuid,
         removeUndefined({
           status: props.status,
-          ...params,
+          // ...params,
           // search: props.search.trim(),
         })
       );

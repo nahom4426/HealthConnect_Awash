@@ -1,47 +1,48 @@
 import ApiService from "@/service/ApiService";
-import type { dependant, AsyncResponse, Insured } from "@/types/interface";
-import { getQueryFormObject } from "@/utils/utils";
+import { useAuthStore } from "@/stores/auth"; // Make sure to import the auth store
 
-const api = new ApiService()
-const path = '/dependant'
-const baseUrl = import.meta.env.v_API_URI
+const api = new ApiService();
+const path = '/dependant';
+const baseUrl = import.meta.env.v_API_URI;
 const basePath = '/dependant';
 
-export function getInsuredByContractId(id: string, query = {}) {
-	return api.addAuthenticationHeader().get<dependant[]>(`${path}/list/${id}`, {
-		params: query
-	})
+export function getInsuredByContractId(id, query = {}) {
+  return api.addAuthenticationHeader().get(`${path}/list/${id}`, {
+    params: query
+  });
 }
 
-export function searchInsuredByInstitution(id: string, query = {}, config = {}) {
-	return api.addAuthenticationHeader().get(`${path}/by-payer/${id}`, {
-		params: query,
-		...config
-	}).then(response => {
-		console.log("API raw response:", response);
-		// Return the response data directly, the component will handle pagination
-		return response.data;
-	}).catch(error => {
-		console.error("API error:", error);
-		throw error;
-	});
+export function searchInsuredByInstitution(id, query = {}, config = {}) {
+  return api.addAuthenticationHeader().get(`${path}/by-payer/${id}`, {
+    params: query,
+    ...config
+  }).then(response => {
+    console.log("API raw response:", response);
+    // Return the response data directly, the component will handle pagination
+    return response.data;
+  }).catch(error => {
+    console.error("API error:", error);
+    throw error;
+  });
 }
 
-export function createdependant(formData: FormData): Promise<AsyncResponse<any>> {
+export function createdependant(formData) {
   return api.post(`${basePath}/createDependant`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   });
 }
-export function updatedependant(dependantUuid: string, formData: FormData): Promise<AsyncResponse<any>> {
+
+export function updatedependant(dependantUuid, formData) {
   return api.put(`${basePath}/${dependantUuid}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   });
 }
-export async function updateInsured(uuid: string, formData: FormData): Promise<AsyncResponse<Insured>> {
+
+export async function updateInsured(uuid, formData) {
   try {
     const response = await api.put(`${basePath}/updateInsured/${uuid}`, formData, {
       headers: {
@@ -53,7 +54,7 @@ export async function updateInsured(uuid: string, formData: FormData): Promise<A
       success: response.status >= 200 && response.status < 300,
       data: response.data,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
       error: error?.response?.data?.message || error.message || 'Unknown error'
@@ -61,19 +62,15 @@ export async function updateInsured(uuid: string, formData: FormData): Promise<A
   }
 }
 
-
-
-export function updatedependantstatus(dependantUuid: string, newStatus: string): Promise<AsyncResponse<any>> {
+export function updatedependantstatus(dependantUuid, newStatus) {
   return api.patch(`${basePath}/dependant/${dependantUuid}/status`, { newStatus });
 }
 
-export function getdependantById(uuid: string) {
-	return api.addAuthenticationHeader().get(`${baseUrl}/dependant/${uuid}`)
+export function getdependantById(uuid) {
+  return api.addAuthenticationHeader().get(`${baseUrl}/dependant/${uuid}`);
 }
 
-import { useAuthStore } from "@/stores/auth"; // Make sure to import the auth store
-
-export function importdependants(file: File, institutionUuid: string): Promise<AsyncResponse<any>> {
+export function importdependants(file, institutionUuid) {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -93,18 +90,17 @@ export function importdependants(file: File, institutionUuid: string): Promise<A
   });
 }
 
-
 export function getInsuredMembers(query = {}) {
-  return api.addAuthenticationHeader().get<Insured[]>(`${basePath}/list`, {
+  return api.addAuthenticationHeader().get(`${basePath}/list`, {
     params: query
   });
 }
 
-export function getInsuredById(id: string): Promise<AsyncResponse<Insured>> {
+export function getInsuredById(id) {
   return api.addAuthenticationHeader().get(`${basePath}/${id}`);
 }
 
-export function createInsured(formData: FormData): Promise<AsyncResponse<Insured>> {
+export function createInsured(formData) {
   return api.addAuthenticationHeader().post(`${path}/createdependant`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -112,19 +108,17 @@ export function createInsured(formData: FormData): Promise<AsyncResponse<Insured
   });
 }
 
-export function changeInsuredStatus(insuredId: string, newStatus: 'ACTIVE' | 'INACTIVE'): Promise<AsyncResponse<Insured>> {
+export function changeInsuredStatus(insuredId, newStatus) {
   return api.addAuthenticationHeader().put(`${basePath}/${insuredId}/status`, null, {
     params: { newStatus }
   });
 }
 
-
-
-export function deleteInsured(id: string): Promise<AsyncResponse<any>> {
+export function deleteInsured(id) {
   return api.addAuthenticationHeader().delete(`${basePath}/${id}`);
 }
 
-export function importInsuredMembers(file: File): Promise<AsyncResponse<any>> {
+export function importInsuredMembers(file) {
   const formData = new FormData();
   formData.append('file', file);
   
@@ -135,7 +129,7 @@ export function importInsuredMembers(file: File): Promise<AsyncResponse<any>> {
   });
 }
 
-export function downloadInsuredTemplate(): Promise<Blob> {
+export function downloadInsuredTemplate() {
   return api.addAuthenticationHeader().get(`${basePath}/template`, {
     responseType: 'blob'
   });

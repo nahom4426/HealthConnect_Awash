@@ -12,7 +12,7 @@ export function getPackage(packageUuid) {
   return api.addAuthenticationHeader().get(`${path}/${packageUuid}`);
 }
 export function getEligiblePackage(packageUuid,payerProviderContractUuid) {
-  return api.addAuthenticationHeader().get(`${path}/packageEligibleServices${packageUuid}/${payerProviderContractUuid}`);
+  return api.addAuthenticationHeader().get(`${path}/packageServices/${packageUuid}?payerProviderContractUuid=${payerProviderContractUuid}`);
 }
 export function createPackage(data) {
   return api.addAuthenticationHeader().post(`${path}`, data);
@@ -46,4 +46,7 @@ export function createFamilyLevelPackage(data) {
 
 export function getPackageDropdown(insuredPersonUuid) {
   return api.addAuthenticationHeader().get(`${path}/dropdown/${insuredPersonUuid}`);
+}
+export function addPackages(insuredPersonUuid, payload) {
+  return api.addAuthenticationHeader().put(`/claimconnect/insuredperson/addPackages/${insuredPersonUuid}`, payload);
 }

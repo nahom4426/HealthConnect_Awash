@@ -1,19 +1,15 @@
-<script setup lang="ts">
+<script setup>
 import Table from "@/components/Table.vue";
-import { usePagination } from "@/composables/usePagination";
+import { usePagination } from "@/composables/usePagination.js"; // Fixed the file extension
 import { getRequestedClaim } from "../../api/claimApi";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 import { ref } from "vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { Status } from "@/types/interface";
-import icons from "@/utils/icons";
 import SearchSelect from "@/components/SearchSelect.vue";
-import type { Provider } from "@/features/providers/store/providersStore";
-import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
-import type { Institution } from "@/features/institutions/store/institutionsStore";
-import Button from "@/components/Button.vue";
 import { useRequestdClaims } from "../../store/requestedCreditClaimStore";
+ // Fixed spelling
 import FilterOnDetector from "@/components/FilterOnDetector.vue";
 
 const institutionUuid = ref();
@@ -23,7 +19,7 @@ const claimStore = useRequestdClaims();
 const pagination = usePagination({
   store: claimStore,
   auto: false,
-  cb: (data: any) =>
+  cb: (data) =>
     getRequestedClaim({
       ...data,
       institutionUuid: institutionUuid.value,
@@ -42,10 +38,10 @@ if (!claimStore.requestedClaims.length) {
       <FilterOnDetector :watch="[institutionUuid, providerUuid]">
         <SearchSelect
           placeholder="Filter by Institution"
-          :searchCb="(data: any) => getInstitutionsPolicyByStatus({...data, status: Status.ACTIVE})"
-          :selectCb="(result?: Institution) => {
-            institutionUuid = result?.institutionUuid || ''
-            pagination.send()
+          :searchCb="(data) => getInstitutionsPolicyByStatus({...data, status: Status.ACTIVE})"
+          :selectCb="(result) => {
+            institutionUuid.value = result?.institutionUuid || '';
+            pagination.send();
           }"
           :option="{
             label: 'institutionName',
@@ -54,10 +50,10 @@ if (!claimStore.requestedClaims.length) {
         />
         <SearchSelect
           placeholder="Filter by a Provider"
-          :searchCb="(data: any) => getProviders({...data, status: Status.ACTIVE})"
-          :selectCb="(result?: Provider) => {
-            providerUuid = result?.providerUuid || ''
-            pagination.send()
+          :searchCb="(data) => getProviders({...data, status: Status.ACTIVE})"
+          :selectCb="(result) => {
+            providerUuid.value = result?.providerUuid || '';
+            pagination.send();
           }"
           :option="{
             label: 'providerName',
@@ -90,20 +86,18 @@ if (!claimStore.requestedClaims.length) {
         ],
       }"
       :cells="{
-				fullname: (_: any, row: any) => {
-					return !row?.relationship ? `${row?.title} ${row?.firstName} ${row?.fatherName} ${row?.grandFatherName}` : `${row?.dependantFirstName} ${row?.dependantFatherName} ${row?.dependantGrandFatherName}`
-				},
-				totalAmount: formatCurrency,
-				status: () => 'Pending',
-				claimDate: secondDateFormat
-			}"
+        fullname: (_, row) => {
+          return !row?.relationship ? `${row?.title} ${row?.firstName} ${row?.fatherName} ${row?.grandFatherName}` : `${row?.dependantFirstName} ${row?.dependantFatherName} ${row?.dependantGrandFatherName}`;
+        },
+        totalAmount: formatCurrency,
+        status: () => 'Pending',
+        claimDate: secondDateFormat
+      }"
       :rows="claimStore.requestedClaims"
     >
       <template #actions="{ row }">
-        <Button
-          type="link"
-        >
-          <RouterLink :to="`/credit_claims/detail/${row.claimUuid}`" >
+        <Button type="link">
+          <RouterLink :to="`/credit_claims/detail/${row.claimUuid}`">
             View Detail
           </RouterLink> 
         </Button>

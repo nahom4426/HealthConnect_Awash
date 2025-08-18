@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import ModalParent from '@/components/ModalParent.vue';
 import NewFormParent from '@/components/NewFormParent.vue';
 import Button from '@/components/Button.vue';
@@ -11,21 +11,21 @@ import { useApiRequest } from '@/composables/useApiRequest';
 import { createProvider } from '../api/providerApi';
 import { toasted } from '@/utils/utils';
 import { closeModal } from '@customizer/modal-x';
-import { useProviders, type Provider } from '../store/providersStore';
+import { useProviders } from '../store/providersStore';
 
 const { submit } = useForm('provider-form');
 const providerStore = useProviders();
 const createReq = useApiRequest();
 
-function handleSubmit({ values, reset }: any) {
+function handleSubmit({ values, reset }) {
     if (createReq.pending.value) return;
     
     createReq.send(
         () => createProvider(values),
-        res => {
+        (res) => {
             if (res.success) {
                 toasted(true, 'Provider Created Successfully');
-                providerStore.providers.unshift(res.data as Provider);
+                providerStore.providers.unshift(res.data);
                 reset();
                 closeModal();
             }
@@ -33,7 +33,6 @@ function handleSubmit({ values, reset }: any) {
     );
 }
 </script>
-
 <template>
     <ModalParent>
         <NewFormParent size="lg" title="Add Provider">

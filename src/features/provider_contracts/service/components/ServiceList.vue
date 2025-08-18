@@ -1,7 +1,7 @@
 <script setup>
 import Table from "@/components/Table.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { usePagination } from "@/composables/usePagination";
+import { usePagination } from "@/composables/usePagination.JS";
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
 import Button from "@/components/Button.vue";
@@ -9,7 +9,8 @@ import { useAuthStore } from "@/stores/auth";
 import ServiceListDataProvider from "../components/ServiceListDataProvider.vue";
 import { removeService } from "../api/serviceApi";
 import { useServiceListStore } from "../store/serviceListStore";
-import Dropdown from "@/components/Dropdown.vue";
+import Dropdown from "@/components/new_form_elements/Dropdown.vue";
+// import Dropdown from "@/components/Dropdown.vue";
 const api = useApiRequest();
 const authStore = useAuthStore();
 const serviceListStore = useServiceListStore();
@@ -50,7 +51,7 @@ function remove(id) {
         :rows="serviceList"
         :headers="{
           head: ['Code', 'Service Name', 'Price (ETB)', 'Status', 'actions'],
-          row: ['serviceCode', 'serviceName', 'price', 'status'],
+          row: ['itemCode', 'item', 'price', 'status'],
         }"
       >
         <template #actions="{ row }">
@@ -74,20 +75,20 @@ function remove(id) {
                 <i v-html="icons.edits" />
                 <span>Edit</span>
               </button>
-              <button
+              <!-- <button
                 @click="openModal('ServiceManagement', row?.serviceUuid)"
                 class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
               >
                 <i v-html="icons.details" />
                 <span>Detail</span>
-              </button>
-              <button
+              </button> -->
+              <!-- <button
                 @click="remove(row?.serviceUuid)"
                 class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
               >
                 <i v-html="icons.deactivate" />
                 <span>Mark as unavailable</span>
-              </button>
+              </button> -->
             </div>
           </Dropdown>
           <!-- <div class="flex gap-4 items-center">

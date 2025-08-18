@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import DefaultPage from '@/components/DefaultPage.vue';
@@ -6,9 +6,11 @@ import Button from '@/components/Button.vue';
 import InsuredPersonForm from '../form/InsuredPersonForm.vue';
 import InsuredPersonFormDataProvider from '../form/InsuredPersonFormDataProvider.vue';
 import { useAuthStore } from "@/stores/auth";
+
 const router = useRouter();
 const route = useRoute();
 const auth = useAuthStore();
+
 // Get institutionUuid from route params or query
 const institutionUuid = ref(
   auth.auth?.payerUuid || 

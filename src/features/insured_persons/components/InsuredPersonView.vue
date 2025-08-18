@@ -1,12 +1,10 @@
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { Status } from '@/types/interface';
+<script setup>
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { getInsuredPersonById, updateInsuredPerson } from '../api/insuredPersonsApi';
 import Button from '@/components/Button.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Input from '@/components/new_form_elements/Input.vue';
-import { watch } from 'vue';
 import { v4 as uuidv4 } from 'uuid'; // Make sure to install and import uuid
 
 const route = useRoute();
@@ -17,7 +15,7 @@ const isEditing = ref(false);
 const editedPerson = ref(null);
 
 onMounted(async () => {
-  const insuredPersonUuid = route.params.insuredPersonId as string;
+  const insuredPersonUuid = route.params.insuredPersonId;
   if (!insuredPersonUuid) {
     error.value = 'Invalid insured person ID';
     loading.value = false;
@@ -41,34 +39,29 @@ function getStatusStyle(status) {
 
   switch (status?.toUpperCase()) {
     case "APPROVED":
+    case "ACTIVE":
       return `${base} bg-green-100 text-green-800`;
-      case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
-      case "SUBMITTED":
-      return `${base} bg-yellow-100 text-yellow-800`;
-        // Light green for active
-    case "INACTIVE":
-      return `${base} bg-red-100 text-red-800`;    // Light gray for inactive
+    case "SUBMITTED":
     case "PENDING":
-      return `${base} bg-yellow-100 text-yellow-800`; // Light yellow for pending
-    case "ACCEPTED":
-      return `${base} bg-blue-100 text-blue-800`;     // Light blue for accepted
+    case "SUSPENDED":
+      return `${base} bg-yellow-100 text-yellow-800`;
+    case "INACTIVE":
     case "REJECTED":
-      return `${base} bg-red-100 text-red-800`;       // Light red for rejected
+      return `${base} bg-red-100 text-red-800`;
+    case "ACCEPTED":
+      return `${base} bg-blue-100 text-blue-800`;
     case "RESUBMITTED":
       return `${base} bg-purple-100 text-purple-800`;
-    case "SUSPENDED":
-      return `${base} bg-yellow-100 text-yellow-800`; // Light yellow for suspended
     default:
-      return `${base} bg-gray-100 text-gray-800`;    // Default light gray
+      return `${base} bg-gray-100 text-gray-800`;
   }
 }
 
-function formatName(person: any) {
+function formatName(person) {
   return `${person.insuredTitle || ''} ${person.firstName || ''} ${person.fatherName || ''} ${person.grandFatherName || ''}`.trim();
 }
 
-function formatDate(dateString: string) {
+function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString();
 }
 
@@ -83,15 +76,11 @@ async function saveChanges() {
   try {
     loading.value = true;
     const response = await updateInsuredPerson(editedPerson.value.insuredPersonUuid, editedPerson.value);
-    // Update the person ref with the new data
     person.value = { ...person.value, ...editedPerson.value };
     isEditing.value = false;
-    // Show success message (you can implement this using a toast notification or other method)
     console.log('Insured person updated successfully');
   } catch (err) {
     console.error('Failed to update insured person:', err);
-    // Show error message (you can implement this using a toast notification or other method)
-    console.error('Failed to update insured person');
   } finally {
     loading.value = false;
   }
@@ -143,7 +132,6 @@ watch(person, (newValue) => {
           <h3 class="text-xl font-semibold text-gray-800 mb-4">Personal Information</h3>
           <div class="space-y-4">
             <template v-if="isEditing">
-              <!-- Input fields in edit mode -->
               <Select v-model="editedPerson.insuredTitle" :options="['Mr', 'Mrs', 'Ms', 'Dr']" label="Title" name="insuredTitle"
                 :attributes="{ placeholder: 'Select Title', class: 'w-full input-compact' }" />
               <Input v-model="editedPerson.firstName" label="First Name" name="firstName"
@@ -261,14 +249,13 @@ watch(person, (newValue) => {
         </div>
         <p v-else class="mt-2 text-sm text-gray-600">No dependants found.</p>
       </div>
-       <div v-if="isEditing" class="p-4 m-2 px-2 gap-4 flex justify-end ">
-      <Button class="px-2" @click="saveChanges" type="primary">Save</Button>
-      <Button @click="toggleEdit" type="secondary">Cancel</Button>
-    </div>
+      <div v-if="isEditing" class="p-4 m-2 px-2 gap-4 flex justify-end">
+        <Button class="px-2" @click="saveChanges" type="primary">Save</Button>
+        <Button @click="toggleEdit" type="secondary">Cancel</Button>
+      </div>
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .input-compact {

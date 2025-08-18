@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import Button from "@/components/Button.vue";
 import ClaimDetail from "../../components/ClaimDetail.vue";
 import ClaimIndividualDetailDataProvider from "../../components/ClaimIndividualDetailDataProvider.vue";
@@ -7,14 +7,15 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { claimProccessed } from "../../api/claimApi";
 import { toasted } from "@/utils/utils";
 import { useRoute } from "vue-router";
-import { ClaimStatus } from "@/types/interface";
 
 const route = useRoute();
 const batchCode = route.params.batchCode;
 
 const approveClaimReq = useApiRequest();
-function approveClaim(data: any) {
+
+function approveClaim(data) {
   if (approveClaimReq.pending.value) return;
+  
   openModal(
     "Comment",
     {
@@ -40,7 +41,6 @@ function approveClaim(data: any) {
   );
 }
 </script>
-
 <template>
   <ClaimIndividualDetailDataProvider v-slot="{ pending, ...rest }">
     <ClaimDetail v-bind="rest">

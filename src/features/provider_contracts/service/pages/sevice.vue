@@ -18,10 +18,10 @@ const components = [
     name: "Services",
     component: ServiceList,
   },
-  {
-    name: "Drugs",
-    component: Drugs,
-  },
+  // {
+  //   name: "Drugs",
+  //   component: Drugs,
+  // },
 ];
 const search = ref("");
 </script>

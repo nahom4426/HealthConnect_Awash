@@ -22,15 +22,14 @@ const props = defineProps({
     default: () => ({})
   }
 });
+
 const selectedpayerProviderContractUuid = ref('');
-
 const packageUuid = computed(() => props.data?.packageUuid);
-
 const { addToast } = useToast();
 const api = useApiRequest();
 
 // Step management
-const currentStep = ref(1); // 1: Select Provider, 2: Select Services
+const currentStep = ref(1);
 const steps = [
   { number: 1, title: 'Select Provider', description: 'Choose a provider to view their services' },
   { number: 2, title: 'Select Services', description: 'Choose services to add to the package' }
@@ -75,25 +74,26 @@ async function fetchServices() {
     loadingServices.value = true;
     
     // 1. Get all services for the provider
-    const servicesResponse = await getAllServices(selectedProvider.value.payerProviderContractUuid);
+    const [servicesResponse, existingResponse] = await Promise.all([
+      getAllServices(selectedProvider.value.payerProviderContractUuid),
+      getEligiblePackage(packageUuid.value, selectedProvider.value.payerProviderContractUuid)
+    ]);
+
     const allServicesData = servicesResponse?.data?.content || [];
-    
-    // 2. Get existing services in the package
-    const existingResponse = await getEligiblePackage(packageUuid.value, selectedProvider.value.payerProviderContractUuid);
-    const existingServiceUuids = new Set(
-      (existingResponse?.data?.eligibleServices || []).map(service => service.eligibleServiceUuid)
+    const existingServiceIds = new Set(
+      (existingResponse?.data?.packageEligibleServices || []).map(service => service.serviceId)
     );
     
-    // 3. Mark services as existing or available
+    // Process services
     allServices.value = allServicesData.map(service => ({
       ...service,
-      isExisting: existingServiceUuids.has(service.eligibleServiceUuid)
+      isExisting: existingServiceIds.has(service.serviceId)
     }));
     
-    // 4. Set existing services
+    // Set existing services
     existingServices.value = allServices.value.filter(service => service.isExisting);
     
-    // 5. Pre-select existing services
+    // Pre-select existing services
     selectedServices.value = [...existingServices.value];
     selectedCategories.value = [];
     selectAll.value = false;
@@ -157,7 +157,7 @@ function toggleSelectAll() {
 function toggleServiceSelection(service) {
   if (service.isExisting) return;
   
-  const index = selectedServices.value.findIndex(s => s.eligibleServiceUuid === service.eligibleServiceUuid);
+  const index = selectedServices.value.findIndex(s => s.serviceId === service.serviceId);
   
   if (index > -1) {
     selectedServices.value.splice(index, 1);
@@ -166,7 +166,6 @@ function toggleServiceSelection(service) {
   }
   updateSelectAllState();
 }
-
 // Get unique categories
 const uniqueCategories = computed(() => {
   const categories = new Set();
@@ -230,7 +229,7 @@ function updateSelectAllState() {
 
 // Check if service is selected
 function isServiceSelected(service) {
-  return selectedServices.value.some(s => s.eligibleServiceUuid === service.eligibleServiceUuid);
+  return selectedServices.value.some(s => s.serviceId === service.serviceId);
 }
 
 // Check if category is selected
@@ -270,9 +269,9 @@ async function submitServices() {
     }
 
     // Get only newly selected services (not existing ones)
-    const newServiceUuids = selectedServices.value
-      .filter(service => !service.isExisting)
-      .map(service => service.eligibleServiceUuid);
+ const newServiceUuids = selectedServices.value
+  .filter(service => !service.isExisting)
+  .map(service => service.eligibleServiceUuid);
 
     if (newServiceUuids.length === 0) {
       addToast({
@@ -320,7 +319,6 @@ onMounted(() => {
   fetchProviders();
 });
 </script>
-
 <template>
   <ModalParent>
     <NewFormParent

@@ -216,7 +216,7 @@ async function handleDeactivateWithClose(insuredId) {
             @click.stop="handleEditWithClose(row)"
             class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors rounded-md"
           >
-            <i v-html="icons.edits" class="w-5 h-5" />
+            <i v-html="icons.edits || '✏️'" class="w-5 h-5" />
             Edit
           </button>
 
@@ -224,17 +224,24 @@ async function handleDeactivateWithClose(insuredId) {
             @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
             class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors rounded-md"
           >
-            <i v-html="icons.details" class="w-5 h-5" />
+            <i v-html="icons.details || '🔍'" class="w-5 h-5" />
             Details
           </button>
+          <button
+          class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors rounded-md"
+          @click="openModal('AddPackages', row)"
+        >
+          <i v-html="icons.plus_circle || '➕'" class=""></i>
 
+          Packages
+        </button>
           <template v-if="row.status">
             <button 
               v-if="row.status.toUpperCase() === 'INACTIVE'"
               @click.stop="handleActivateWithClose(row.insuredUuid || row.id)"
               class="flex items-center gap-3 w-full px-4 py-2 text-green-600 hover:bg-green-50 transition-colors rounded-md font-semibold"
             >
-              <i v-html="icons.activate" class="w-5 h-5" />
+              <i v-html="icons.activate || '⬇️'" class="w-5 h-5" />
               Activate
             </button>
            
@@ -243,7 +250,7 @@ async function handleDeactivateWithClose(insuredId) {
               @click.stop="handleDeactivateWithClose(row.insuredUuid || row.id)"
               class="flex items-center gap-3 w-full px-4 py-2 text-red-600 hover:bg-red-50 transition-colors rounded-md font-semibold"
             >
-              <i v-html="icons.deactivate" class="w-5 h-5" />
+              <i v-html="icons.deactivate || '🚫'" class="w-5 h-5" />
               Deactivate
             </button>
           </template>

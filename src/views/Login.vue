@@ -42,7 +42,7 @@ onMounted(() => {
     ></div>
 
     <div class="fixed bottom-4 left-4 text-white z-20 hidden md:block">
-      <p class="text-sm">© 2024 HealthConnect</p>
+      <p class="text-sm">© 2025 HealthConnect</p>
       <p class="text-xs opacity-70">
         Connecting healthcare providers and payers
       </p>

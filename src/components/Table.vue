@@ -1,6 +1,6 @@
-<script setup lang="ts" generic="T">
+<script setup>
 import DataTable from "./DataTable.vue";
-import { inject, ref, useAttrs, watch, type PropType, computed } from "vue";
+import { inject, ref, useAttrs, watch, computed } from "vue";
 import GenericTableRow from "./GenericTableRow.vue";
 import icons from "@/utils/icons";
 import TableRowSkeleton from "./TableRowSkeleton.vue";
@@ -24,8 +24,8 @@ const props = defineProps({
   actionHide: String,
   headers: [Array, Object],
   rows: {
-    type: Array as PropType<T[]>,
-    default: [],
+    type: Array,
+    default: () => [],
   },
   firstCol: { type: Boolean, default: false },
   lastCol: { type: Boolean, default: false },
@@ -37,14 +37,14 @@ const props = defineProps({
   length: Number,
   Fallback: {
     type: Object,
-    default: TableRowSkeleton
+    default: TableRowSkeleton,
   },
   pending: Boolean,
 });
 
-function toUpper(str: string) {
+function toUpper(str) {
   let words = str.split(" ");
-  if (words.length == 0) return str;
+  if (words.length === 0) return str;
 
   for (let i = 1; i < words.length; i++) {
     words[0] += words[i].charAt(0).toUpperCase() + words[i].substring(1);
@@ -53,15 +53,11 @@ function toUpper(str: string) {
   return words[0];
 }
 
-interface Spec {
-  head: string[],
-  row: string[]
-}
-const spec = ref<Spec>({ head: [], row: [] });
+const spec = ref({ head: [], row: [] });
 
 function format() {
   if (Array.isArray(props.headers)) {
-    spec.value.head = props.headers as [];
+    spec.value.head = props.headers;
 
     const res = props.headers.reduce((state, el) => {
       const temp = el.toLowerCase();
@@ -69,7 +65,7 @@ function format() {
       return state;
     }, []);
 
-    spec.value.row = res.filter((el: string) => el != "modify");
+    spec.value.row = res.filter((el) => el !== "modify");
   } else {
     spec.value.head = props.headers?.head || [];
     spec.value.row = props.headers?.row || [];
@@ -78,7 +74,7 @@ function format() {
 
 format();
 
-function getUrl(blob: Blob) {
+function getUrl(blob) {
   if (blob.toString().includes("File")) {
     const url = URL.createObjectURL(blob);
     return url;
@@ -93,13 +89,89 @@ watch(props, () => {
 
 const nextPage = inject("next", () => {});
 const previousPage = inject("previous", () => {});
-const page = inject("page", 1);
-const totalPages = inject("totalPages", 1);
-const totalElements = inject("totalElements", null);
-const perPage = inject("perPage", 25);
-const sendPagination = inject("sendPagination", () => {});
-const pageChanger = inject("pageChanger", (page) => {
-  sendPagination(perPage.value, page - 1);
+const page = inject("page", ref(1)); // Already 1-based
+const totalPages = inject("totalPages", ref(1));
+const totalElements = inject("totalElements", ref(0));
+const perPage = inject("perPage", ref(25));
+const sendPagination = inject("sendPagination", (limit, page) => {});
+const pageChanger = inject("pageChanger", (pageNum) => {});
+
+// Handle per-page changes
+const handlePerPageChange = (newPerPage) => {
+  const newLimit = parseInt(newPerPage);
+  if (props.pagination?.onLimitChange) {
+    props.pagination.onLimitChange(newLimit);
+  } else {
+    sendPagination(newLimit, 1); // Reset to page 1 (1-based)
+  }
+};
+
+// Handle page changes
+const handlePageChange = (pageNum) => {
+  if (props.pagination?.onPageChange) {
+    props.pagination.onPageChange(pageNum);
+  } else {
+    pageChanger(pageNum); // No conversion needed, already 1-based
+  }
+};
+
+// Computed values for display
+const currentPage = computed(() => {
+  return props.pagination?.currentPage || page.value;
+});
+
+const currentTotalPages = computed(() => {
+  return props.pagination?.totalPages || totalPages.value;
+});
+
+const currentTotalElements = computed(() => {
+  return props.pagination?.totalElements || totalElements.value;
+});
+
+const currentPerPage = computed(() => {
+  return props.pagination?.itemsPerPage || perPage.value;
+});
+
+// Generate page numbers for pagination display
+const pageNumbers = computed(() => {
+  const total = currentTotalPages.value;
+  const current = currentPage.value;
+  const pages = [];
+  
+  if (total <= 7) {
+    // Show all pages if 7 or fewer
+    for (let i = 1; i <= total; i++) {
+      pages.push(i);
+    }
+  } else {
+    // Always show first page
+    pages.push(1);
+    
+    if (current > 4) {
+      pages.push('...');
+    }
+    
+    // Show pages around current page
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+    
+    for (let i = start; i <= end; i++) {
+      if (i !== 1 && i !== total) {
+        pages.push(i);
+      }
+    }
+    
+    if (current < total - 3) {
+      pages.push('...');
+    }
+    
+    // Always show last page if more than 1 page
+    if (total > 1) {
+      pages.push(total);
+    }
+  }
+  
+  return pages;
 });
 
 // Computed properties for "no data" and pagination logic
@@ -116,7 +188,6 @@ const range = (start, end) => {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 };
 </script>
-
 <template>
   <div class="h-full Table-header">
     <DataTable
@@ -203,9 +274,9 @@ const range = (start, end) => {
       <div class="flex gap-5 items-center">
         <span class="text-gray-600">Show</span>
         <select
-          @change="sendPagination(parseInt($event.target.value), 0)"
+          @change="handlePerPageChange($event.target.value)"
           class="px-3 py-2 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          :value="perPage"
+          :value="currentPerPage"
         >
           <option value="25">25</option>
           <option value="50">50</option>
@@ -216,92 +287,36 @@ const range = (start, end) => {
       </div>
       
       <div class="text-gray-600">
-        Showing {{ rows?.length || 0 }} of {{ totalElements || 0 }} records
+        Showing {{ rows?.length || 0 }} of {{ currentTotalElements || 0 }} records
       </div>
       
       <div class="flex gap-2 items-center justify-center flex-wrap">
         <button
           @click="previousPage"
           class="pagination-button"
-          :disabled="page === 1 || pending"
+          :disabled="currentPage === 1 || pending"
         >
           <i v-html="icons.chevron_left"></i>
         </button>
         
-        <template v-if="totalPages <= 7">
-          <button
-            v-for="pageNum in totalPages"
-            :key="pageNum"
-            @click="pageChanger(pageNum)"
-            class="pagination-button"
-            :class="{ 'active-page': page === pageNum }"
-          >
-            {{ pageNum }}
-          </button>
-        </template>
-        
-        <template v-else>
-          <button
-            @click="pageChanger(1)"
-            class="pagination-button"
-            :class="{ 'active-page': page === 1 }"
-          >
-            1
-          </button>
-          
-          <template v-if="page < 4">
-            <button
-              v-for="pageNum in range(2, 4)"
-              :key="pageNum"
-              @click="pageChanger(pageNum)"
-              class="pagination-button"
-              :class="{ 'active-page': page === pageNum }"
-            >
-              {{ pageNum }}
-            </button>
-            <span class="px-2">...</span>
-          </template>
-          
-          <template v-else-if="page > totalPages - 3">
-            <span class="px-2">...</span>
-            <button
-              v-for="pageNum in range(totalPages - 3, totalPages - 1)"
-              :key="pageNum"
-              @click="pageChanger(pageNum)"
-              class="pagination-button"
-              :class="{ 'active-page': page === pageNum }"
-            >
-              {{ pageNum }}
-            </button>
-          </template>
-          
-          <template v-else>
-            <span class="px-2">...</span>
-            <button
-              v-for="pageNum in [page - 1, page, page + 1]"
-              :key="pageNum"
-              @click="pageChanger(pageNum)"
-              class="pagination-button"
-              :class="{ 'active-page': page === pageNum }"
-            >
-              {{ pageNum }}
-            </button>
-            <span class="px-2">...</span>
-          </template>
-          
-          <button
-            @click="pageChanger(totalPages)"
-            class="pagination-button"
-            :class="{ 'active-page': page === totalPages }"
-          >
-            {{ totalPages }}
-          </button>
-        </template>
+        <button
+          v-for="pageNum in pageNumbers"
+          :key="pageNum"
+          @click="pageNum !== '...' ? handlePageChange(pageNum) : null"
+          class="pagination-button"
+          :class="{ 
+            'active-page': currentPage === pageNum,
+            'cursor-default': pageNum === '...'
+          }"
+          :disabled="pageNum === '...'"
+        >
+          {{ pageNum }}
+        </button>
         
         <button
           @click="nextPage"
           class="pagination-button"
-          :disabled="page === totalPages || pending"
+          :disabled="currentPage === currentTotalPages || pending"
         >
           <i v-html="icons.chevron_right"></i>
         </button>
@@ -380,3 +395,11 @@ const range = (start, end) => {
   }
 }
 </style>
+
+
+
+
+
+
+
+

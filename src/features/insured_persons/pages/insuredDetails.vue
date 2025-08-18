@@ -615,8 +615,7 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, computed, onUnmounted } from "vue";
 import icons from "@/utils/icons";
 import { useApiRequest } from "@/composables/useApiRequest";
@@ -639,14 +638,14 @@ import { useDependentStore } from "../store/dependantPersonsStore";
 const dependentStore = useDependentStore();
 const route = useRoute();
 const router = useRouter();
-const insuredPersonUuid = route.params.insuredPersonUuid as string;
+const insuredPersonUuid = route.params.insuredPersonUuid;
 const apiRequest = useApiRequest();
 const activeTab = ref("dependents");
 const showNewDependentForm = ref(false);
 const savingDependent = ref(false);
 const loading = ref(true);
 const error = ref("");
-const insuredData = ref<any>({});
+const insuredData = ref({});
 const editingDependentIndex = ref(-1);
 const editingDependent = ref(null);
 const photoPreview = ref(null);
@@ -674,7 +673,7 @@ const newDependent = ref({
   relationship: "Spouse",
   age: null,
   group: "C-Family",
-  gender: "Male", // Added for gender selection
+  gender: "Male",
   status: "ACTIVE",
 });
 
@@ -697,7 +696,6 @@ async function fetchInsuredData() {
       ) {
         insuredData.value.dependants = insuredData.value.dependants.map(
           (dep) => {
-            // Calculate age from birth date if available
             let age = null;
             if (dep.dependantBirthDate) {
               const birthDate = new Date(dep.dependantBirthDate);
@@ -709,7 +707,6 @@ async function fetchInsuredData() {
               }
             }
 
-            // Construct full name from parts
             const fullName = [
               dep.dependantFirstName || "",
               dep.dependantFatherName || "",
@@ -722,7 +719,6 @@ async function fetchInsuredData() {
               ...dep,
               fullName,
               age,
-              // Ensure these fields exist
               dependantUuid: dep.dependantUuid || dep.id,
               gender: dep.dependantGender || dep.gender || "Male",
               status: dep.dependantStatus || dep.status || "ACTIVE",
@@ -743,7 +739,7 @@ async function fetchInsuredData() {
 }
 
 // Calculate age from birthdate
-function calculateAge(birthDate: string) {
+function calculateAge(birthDate) {
   if (!birthDate) return "N/A";
 
   const today = new Date();
@@ -763,7 +759,6 @@ function calculateAge(birthDate: string) {
 
 function addNewDependent() {
   showNewDependentForm.value = true;
-  // Reset form
   newDependent.value = {
     id: "",
     photo: "",
@@ -787,21 +782,14 @@ function saveDependent() {
 
   savingDependent.value = true;
 
-  // Parse the full name into parts
   const nameParts = newDependent.value.fullName.split(" ");
-
-  // Calculate birthdate from age
   const birthDate = new Date();
   if (newDependent.value.age) {
     birthDate.setFullYear(birthDate.getFullYear() - newDependent.value.age);
   }
 
-  // Format the date as required by the API (ISO format with time)
-  const formattedBirthDate = `${
-    birthDate.toISOString().split("T")[0]
-  }T00:00:00.000Z`;
+  const formattedBirthDate = `${birthDate.toISOString().split("T")[0]}T00:00:00.000Z`;
 
-  // Create the dependant object according to the API requirements
   const dependantData = {
     insuredPersonUuid: insuredPersonUuid,
     dependantFirstName: nameParts[0] || "",
@@ -813,59 +801,44 @@ function saveDependent() {
     dependantStatus: newDependent.value.status,
   };
 
-  // Create FormData
   const formData = new FormData();
-
-  // Append the dependant data as JSON string
   formData.append("dependant", JSON.stringify(dependantData));
 
-  // Handle photo upload - use the actual file from the input element
-  const fileInput = document.querySelector(
-    'input[type="file"]'
-  ) as HTMLInputElement;
+  const fileInput = document.querySelector('input[type="file"]');
   if (fileInput && fileInput.files && fileInput.files.length > 0) {
     const photoFile = fileInput.files[0];
     console.log("Using actual file from input:", photoFile);
     formData.append("photo", photoFile);
   }
 
-  // Call API with explicit content type
   apiRequest.send(() => createdependant(formData), handleDependantResponse);
 }
 
-function handleDependantResponse(response: any) {
+function handleDependantResponse(response) {
   savingDependent.value = false;
   console.log("API Response:", response);
 
   if (response.success) {
     toasted(true, "Dependant added successfully", "");
-
-    // Refresh the data to show the new dependant
     fetchInsuredData();
-
-    // Hide the form
     showNewDependentForm.value = false;
   } else {
     toasted(false, "", response.error || "Failed to add dependant");
   }
 }
 
-// Modified handlePhotoUpload function to work with both new and editing dependents
 function handlePhotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
 
-  // Check if we're editing a dependent or adding a new one
   if (editingDependentIndex.value >= 0) {
-    // For editing existing dependent
     reader.onload = (e) => {
       photoPreview.value = e.target.result;
       editingDependent.value.profilePictureBase64 = e.target.result;
     };
   } else {
-    // For new dependent
     reader.onload = (e) => {
       newDependent.value.photo = e.target.result;
     };
@@ -875,38 +848,33 @@ function handlePhotoUpload(event) {
   console.log("File selected:", file);
 }
 
-// Fetch data on component mount
 onMounted(() => {
   fetchInsuredData();
 });
 
 function toggleDropdown(event, rowId) {
   event.stopPropagation();
-  closeAllDropdowns(); // Close any open dropdowns first
+  closeAllDropdowns();
   const dropdown = document.getElementById(`dropdown-${rowId}`);
   if (dropdown) {
     dropdown.classList.toggle("hidden");
   }
 }
 
-// Close dropdown when clicking outside or when an option is selected
 function closeAllDropdowns() {
   document.querySelectorAll(".dropdown-menu").forEach((el) => {
     el.classList.add("hidden");
   });
 }
 
-// Call this when component mounts
 onMounted(() => {
   window.addEventListener("click", closeAllDropdowns);
 });
 
-// Call this when component unmounts
 onUnmounted(() => {
   window.removeEventListener("click", closeAllDropdowns);
 });
 
-// Modified handler functions to close dropdown after action
 function handleEditWithClose(row) {
   closeAllDropdowns();
   handleEdit(row);
@@ -918,11 +886,10 @@ function handleViewWithClose(insuredUuid) {
     return;
   }
   closeAllDropdowns();
-  // Navigate to the insured person details page
   router.push(`/insured-persons/${insuredUuid}`);
 }
 
-async function handleActivateWithClose(dependantUuid: string) {
+async function handleActivateWithClose(dependantUuid) {
   if (!dependantUuid) {
     console.error("No dependent UUID provided");
     return;
@@ -939,7 +906,6 @@ async function handleActivateWithClose(dependantUuid: string) {
         message: "Dependent has been activated successfully",
       });
 
-      // ✅ Find and update the dependent locally
       const index = dependentsList.value.findIndex(
         (d) => d.dependantUuid === dependantUuid
       );
@@ -962,7 +928,7 @@ async function handleActivateWithClose(dependantUuid: string) {
   }
 }
 
-async function handleDeactivateWithClose(dependantUuid: string) {
+async function handleDeactivateWithClose(dependantUuid) {
   if (!dependantUuid) {
     console.error("No dependent UUID provided");
     return;
@@ -979,7 +945,6 @@ async function handleDeactivateWithClose(dependantUuid: string) {
         message: "Dependent has been deactivated successfully",
       });
 
-      // ✅ Find and update the dependent locally
       const index = dependentsList.value.findIndex(
         (d) => d.dependantUuid === dependantUuid
       );
@@ -1002,11 +967,9 @@ async function handleDeactivateWithClose(dependantUuid: string) {
   }
 }
 
-// Function to update a dependant
 function updateDependant(dependant) {
   const savingDependant = ref(true);
 
-  // Format the data for the API
   const dependantData = {
     dependantUuid: dependant.dependantUuid,
     insuredPersonUuid: insuredPersonUuid,
@@ -1026,7 +989,7 @@ function updateDependant(dependant) {
 
       if (response.success) {
         toasted(true, "Dependant updated successfully", "");
-        fetchInsuredData(); // Refresh the data
+        fetchInsuredData();
       } else {
         toasted(false, "", response.error || "Failed to update dependant");
       }
@@ -1034,7 +997,6 @@ function updateDependant(dependant) {
   );
 }
 
-// Function to toggle dependant status
 function toggleDependantStatus(dependant, newStatus) {
   apiRequest.send(
     () => updatedependantstatus(dependant.dependantUuid, newStatus),
@@ -1047,7 +1009,7 @@ function toggleDependantStatus(dependant, newStatus) {
           } successfully`,
           ""
         );
-        fetchInsuredData(); // Refresh the data
+        fetchInsuredData();
       } else {
         toasted(
           false,
@@ -1059,7 +1021,6 @@ function toggleDependantStatus(dependant, newStatus) {
   );
 }
 
-// Helper function to calculate birth date from age
 function calculateBirthDateFromAge(age) {
   const birthDate = new Date();
   if (age) {
@@ -1067,17 +1028,16 @@ function calculateBirthDateFromAge(age) {
   }
   return `${birthDate.toISOString().split("T")[0]}T00:00:00.000Z`;
 }
+
 function startEdit(dependent) {
   closeAllDropdowns();
 
-  // Find the exact index in the array (not just by ID)
   const index = dependentsList.value.findIndex(
     (d, i) =>
       (d.dependantUuid === dependent.dependantUuid || d.id === dependent.id) &&
       i === dependent.index
   );
 
-  // Create properly formatted copy
   const dependentCopy = {
     ...dependent,
     gender: dependent.gender ? capitalizeFirstLetter(dependent.gender) : "Male",
@@ -1091,7 +1051,6 @@ function startEdit(dependent) {
     status: dependent.status || dependent.dependantStatus || "ACTIVE",
   };
 
-  // Store the original array index
   dependentCopy.originalIndex =
     index !== -1 ? index : dependentsList.value.indexOf(dependent);
 
@@ -1110,7 +1069,6 @@ async function saveEdit() {
     const formData = new FormData();
     const nameParts = editingDependent.value.fullName.split(" ");
 
-    // Create an object for updateRequest
     const updateRequest = {
       firstName: nameParts[0] || "",
       otherName: nameParts.slice(1).join(" ") || "",
@@ -1122,10 +1080,8 @@ async function saveEdit() {
       phone: editingDependent.value.phone || "",
     };
 
-    // Append updateRequest as a JSON string
     formData.append("updateRequest", JSON.stringify(updateRequest));
 
-    // Handle profile picture upload
     if (
       photoPreview.value &&
       photoPreview.value !== editingDependent.value.profilePictureBase64
@@ -1137,23 +1093,17 @@ async function saveEdit() {
         formData.append("profilePicture", photoPreview.value);
       }
     } else if (editingDependent.value.profilePictureBase64) {
-      // If no new photo is selected, but there is an existing one, keep it (optional)
       const existingBlob = await fetch(
         editingDependent.value.profilePictureBase64
       ).then((res) => res.blob());
       formData.append("profilePicture", existingBlob, "profile.jpg");
-    } else {
-      // Do not append null if no photo is selected
-      // formData.append('profilePicture', null); // Removed this line
     }
 
-    // Call API
     const response = await updatedependant(
       editingDependent.value.dependantUuid,
       formData
     );
 
-    // Update local state with the response data
     const updatedDependent = {
       ...editingDependent.value,
       ...response.data,
@@ -1163,14 +1113,12 @@ async function saveEdit() {
       gender: editingDependent.value.gender,
     };
 
-    // Update the specific item in the list
     dependentsList.value.splice(
       editingDependentIndex.value,
       1,
       updatedDependent
     );
 
-    // Reset editing state
     editingDependentIndex.value = -1;
     photoPreview.value = null;
 
@@ -1185,12 +1133,12 @@ async function saveEdit() {
     );
   }
 }
+
 function cancelEdit() {
-  // Reset editing state
   editingDependentIndex.value = -1;
   photoPreview.value = null;
 }
-// In your component's methods
+
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 }

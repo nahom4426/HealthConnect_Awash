@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import ClaimByBatchDataProvider from "../../components/ClaimByBatchDataProvider.vue";
 import Table from "@/components/Table.vue";
@@ -8,19 +8,15 @@ import FilterOnDetector from "@/components/FilterOnDetector.vue";
 import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
-import type { Institution } from "@/features/institutions/store/institutionsStore";
 import { ref } from "vue";
-import type { Provider } from "@/features/providers/store/providersStore";
-import { PaymentStatus, ServiceTypes, Status } from "@/types/interface";
+import { PaymentStatus, ServiceTypes } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
-import type { BatchClaim } from "../../store/claimByInstitutionBatchStore";
-import type { CashBatchClaim } from "../../store/cashClaimByInstitutionBatchStore";
 import { useCompletedClaimByInstitutionBatch } from "../../store/completedClaimByInstitutionBatchStore";
 
 const institutionUuid = ref();
 const providerUuid = ref();
 
-const active = ref<ServiceTypes>(ServiceTypes.creditService);
+const active = ref(ServiceTypes.creditService);
 
 const store = useCompletedClaimByInstitutionBatch();
 </script>
@@ -52,10 +48,10 @@ const store = useCompletedClaimByInstitutionBatch();
         <FilterOnDetector :watch="[institutionUuid, providerUuid]">
           <SearchSelect
             placeholder="Filter by Institution"
-            :searchCb="(data: any) => getInstitutionsPolicyByStatus({...data, status: Status.ACTIVE})"
-            :selectCb="(result?: Institution) => {
-							institutionUuid = result?.institutionUuid || null
-						}"
+            :searchCb="(data) => getInstitutionsPolicyByStatus({...data, status: Status.ACTIVE})"
+            :selectCb="(result) => {
+              institutionUuid.value = result?.institutionUuid || null;
+            }"
             :option="{
               label: 'institutionName',
               value: 'institutionUuid',
@@ -64,10 +60,10 @@ const store = useCompletedClaimByInstitutionBatch();
           <SearchSelect
             v-if="ServiceTypes.creditService == active"
             placeholder="Filter by a Provider"
-            :searchCb="(data: any) => getProviders({...data, status: Status.ACTIVE})"
-            :selectCb="(result?: Provider) => {
-							providerUuid = result?.providerUuid || null
-						}"
+            :searchCb="(data) => getProviders({...data, status: Status.ACTIVE})"
+            :selectCb="(result) => {
+              providerUuid.value = result?.providerUuid || null;
+            }"
             :option="{
               label: 'providerName',
               value: 'providerUuid',
@@ -78,44 +74,23 @@ const store = useCompletedClaimByInstitutionBatch();
       <Table
         :pending="pending"
         :headers="{
-          head:
-            ServiceTypes.creditService == active
-              ? [
-                  'Policy Holder Name',
-                  'Provider Name',
-                  'Batch Code',
-                  'Total Amount',
-                  'Requested Date',
-                  'Status',
-                  'actions',
-                ]
-              : [
-                  'Policy Holder Name',
-                  'Provider Name',
-                  'Batch Code',
-                  'Total Amount',
-                  'Requested Date',
-                  'Status',
-                  'actions',
-                ],
-          row:
-            ServiceTypes.creditService == active
-              ? [
-                  'institutionName',
-                  'providerName',
-                  'batchCode',
-                  'totalAmount',
-                  'requestPaymentDate',
-                  'claimStatus',
-                ]
-              : [
-                  'institutionName',
-                  'hospitalName',
-                  'claimBatchCode',
-                  'totalAmount',
-                  'actionDate',
-                  'status',
-                ],
+          head: [
+            'Policy Holder Name',
+            'Provider Name',
+            'Batch Code',
+            'Total Amount',
+            'Requested Date',
+            'Status',
+            'actions',
+          ],
+          row: [
+            'institutionName',
+            'providerName',
+            'batchCode',
+            'totalAmount',
+            'requestPaymentDate',
+            'claimStatus',
+          ],
         }"
         :cells="{
           totalAmount: formatCurrency,
@@ -126,13 +101,13 @@ const store = useCompletedClaimByInstitutionBatch();
       >
         <template #actions="{ row }">
           <Button size="xs" type="elevated">
-            <RouterLink
+            <!-- <RouterLink
               :to=" ServiceTypes.creditService == active ?
-               `/completed_claims/detail/${(row as BatchClaim).providerUuid}/${encodeURIComponent((row as BatchClaim).batchCode)}` :
-               `/completed_claims/cash_detail/${encodeURIComponent((row as CashBatchClaim)?.claimBatchCode)}`"
+               `/completed_claims/detail/${row.providerUuid}/${encodeURIComponent(row.batchCode)}` :
+               `/completed_claims/cash_detail/${encodeURIComponent(row.claimBatchCode)}`
             >
               Detail
-            </RouterLink>
+            </RouterLink> -->
           </Button>
         </template>
       </Table>

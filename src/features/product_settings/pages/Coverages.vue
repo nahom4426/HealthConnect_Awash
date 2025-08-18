@@ -73,7 +73,7 @@ function viewDetails(packageUuid) {
               'Min Limit',
               'Max Limit',
               'Gender',
-              'Services Count',
+            
               'Status',
               'Actions',
             ],
@@ -85,7 +85,7 @@ function viewDetails(packageUuid) {
               'minLimit',
               'maxLimit',
               'gender',
-              'packageEligibleServices',
+             
               'status',
             ],
           }"
@@ -110,18 +110,18 @@ function viewDetails(packageUuid) {
                 'minLimit',
                 'maxLimit',
                 'gender',
-                'packageEligibleServices',
+              
                 'status',
               ]"
               :headKeys="[
                 '#',
-                'Package Name',
+                'Benefit Name',
                 'Category',
                 'Description',
                 'Min Limit',
                 'Max Limit',
                 'Gender',
-                'Services Count',
+              
                 'Status',
                 'Actions',
               ]"

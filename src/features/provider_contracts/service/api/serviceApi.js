@@ -23,26 +23,9 @@ export function createService(id, data) {
 }
 
 // Function to update a service
-export async function updateService(uuid, formData) {
-  try {
-    const response = await api.put(`${basePath}/${uuid}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    return {
-      success: response.status >= 200 && response.status < 300,
-      data: response.data,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error?.response?.data?.message || error.message || "Unknown error",
-    };
-  }
+export function updateService(payerProviderContractUuid, data) {
+  return api.addAuthenticationHeader().put(`${basePath}/edit-eligible-services?payerProviderContractUuid=${payerProviderContractUuid}`, data);
 }
-
 // Function to delete a service
 export function removeService(id) {
   return api.addAuthenticationHeader().delete(`${basePath}/${id}`);

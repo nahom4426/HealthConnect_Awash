@@ -1,5 +1,5 @@
 <script setup>
-import { usePagination } from "@/composables/usePagination";
+import { usePagination } from "@/composables/useContentPagination";
 import { watch } from "vue";
 import { useServiceListStore } from "../store/serviceListStore";
 import { getAllServices } from "../api/serviceApi.js";

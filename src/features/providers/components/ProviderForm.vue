@@ -1,21 +1,15 @@
-<script setup >
-import Form from '@/components/new_form_builder/Form.vue';
-import Input from '@/components/new_form_elements/Input.vue';
-import Select from '@/components/new_form_elements/Select.vue';
-import Textarea from '@/components/new_form_elements/Textarea.vue';
-import Button from '@/components/Button.vue';
-import {  ref, computed, watch, onMounted } from 'vue';
-import InputEmail from '@/components/new_form_elements/InputEmail.vue';
-import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmitButton.vue';
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue';
 import { 
   ethiopianRegions, 
   getCitiesByRegion, 
   getSubCitiesByCity 
 } from '@/components/ethiopianLocations';
-import { toasted } from "@/utils/utils";
+import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmitButton.vue';
+
 const props = defineProps({
   initialData: {
-    type: Object ,
+    type: Object,
     default: () => ({})
   },
   isEdit: {
@@ -27,17 +21,16 @@ const props = defineProps({
     default: false
   },
   onSubmit: {
-    type: Function ,
+    type: Function,
     required: true
   },
   onCancel: {
-    type: Function ,
+    type: Function,
     required: true
   }
 });
 
 // Form data
-const providerLogo = ref(null); 
 const providerUuid = ref('');
 const providerName = ref('');
 const threeDigitAcronym = ref('');
@@ -53,33 +46,24 @@ const email = ref('');
 const memo = ref('');
 const previewImage = ref('');
 
-// Computed properties for dynamic dropdowns
-const availableCities = computed(() => {
-  return getCitiesByRegion(state.value);
-});
+// Computed properties
+const availableCities = computed(() => getCitiesByRegion(state.value));
+const availableSubCities = computed(() => getSubCitiesByCity(address3.value));
+const isAddisAbaba = computed(() => state.value === 'Addis Ababa');
 
-const availableSubCities = computed(() => {
-  return getSubCitiesByCity(address3.value);
-});
-
-const isAddisAbaba = computed(() => {
-  return state.value === 'Addis Ababa';
-});
-
-// Watch for state changes to reset city and sub-city
-watch(state, (newState) => {
+// Watchers
+watch(state, () => {
   address3.value = '';
   address2.value = '';
   address1.value = '';
 });
 
-// Watch for city changes to reset sub-city
-watch(address3, (newCity) => {
+watch(address3, () => {
   address2.value = '';
   address1.value = '';
 });
 
-// Initialize form data from props
+// Initialize form data
 onMounted(() => {
   if (props.initialData && Object.keys(props.initialData).length > 0) {
     providerUuid.value = props.initialData.providerUuid || '';
@@ -87,123 +71,29 @@ onMounted(() => {
     threeDigitAcronym.value = props.initialData.threeDigitAcronym || '';
     category.value = props.initialData.category || '';
     state.value = props.initialData.state || 'Addis Ababa';
-    address3.value = props.initialData.address3 || ''; // City
-    address2.value = props.initialData.address2 || ''; // Sub City
-    address1.value = props.initialData.address1 || ''; // Woreda
+    address3.value = props.initialData.address3 || '';
+    address2.value = props.initialData.address2 || '';
+    address1.value = props.initialData.address1 || '';
     tin.value = props.initialData.tinNumber || '';
     email.value = props.initialData.email || '';
     memo.value = props.initialData.description || props.initialData.memo || '';
 
     const fullTelephone = props.initialData.telephone || '';
-    const possibleCodes = ['+251'];
-    const matchedCode = possibleCodes.find(code => fullTelephone.startsWith(code));
-    
-    if (matchedCode) {
-      countryCode.value = matchedCode;
-      telephone.value = fullTelephone.slice(matchedCode.length);
-    } else {
-      countryCode.value = '+251';
-      telephone.value = fullTelephone;
-    }
+    telephone.value = fullTelephone.startsWith('+251') ? fullTelephone.slice(4) : fullTelephone;
 
     if (props.initialData.logoBase64) {
       previewImage.value = props.initialData.logoBase64;
     } else if (props.initialData.logoUrl) {
       previewImage.value = props.initialData.logoUrl;
-    } else if (props.initialData.logoPath) {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-      previewImage.value = `${baseUrl}/provider/logo/${props.initialData.logoPath}`;
     }
   }
 });
 
-// File upload handling
-function handleFileUpload(event) {
-  try {
-    // First ensure we have a proper event with files
-    if (!event || !event.target || !event.target.files) {
-      toasted(false, "File Upload Error", "Invalid file upload event");
-      return;
-    }
-
-    const file = event.target.files[0];
-    
-    // Check if file was selected
-    if (!file) {
-      toasted(false, "File Upload Error", "No file selected");
-      return;
-    }
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (!validTypes.includes(file.type)) {
-      toasted(false, "Invalid File Type", "Please upload only JPG, PNG or GIF images");
-      return;
-    }
-
-    // Validate size (e.g.,  1MB max)
-   if (file.size > 1 * 1024 * 1024) { // 1MB
-  toasted(false, "File Too Large", "Maximum file size is 1MB");
-  return;
-}
-
-providerLogo.value = file;
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImage.value = e.target?.result || '';
-    };
-    reader.onerror = (error) => {
-      toasted(false, "File Read Error", "Failed to process the image");
-      console.error("Error reading file:", error);
-    };
-    reader.readAsDataURL(file);
-
-  } catch (error) {
-    toasted(false, "Unexpected Error", "An error occurred during file upload");
-    console.error("File upload error:", error);
-  }
-}
-function browseFiles() {
-  const fileInput = document.getElementById('file-upload') ;
-  fileInput.click();
-}
-
-function handleDragOver(event) {
-  event.preventDefault();
-  (event.currentTarget ).classList.add('border-primary');
-}
-
-function handleDragLeave(event) {
-  event.preventDefault();
-  (event.currentTarget ).classList.remove('border-primary');
-}
-
-function handleDrop(event) {
-  event.preventDefault();
-  (event.currentTarget ).classList.remove('border-primary');
-  
-  if (event.dataTransfer?.files.length) {
-    const file = event.dataTransfer.files[0];
-    providerLogo.value = file;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImage.value = e.target?.result ;
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-
-
-
-
-
-
-
-
+const categoryOptions = [
+  'Government provider',
+  'Private provider',
+  'NGO provider'
+];
 
 function handleSubmit() {
   const formData = {
@@ -213,339 +103,318 @@ function handleSubmit() {
     category: category.value,
     telephone: `${countryCode.value}${telephone.value}`,
     state: state.value,
-    address3: address3.value, // City
-    address2: address2.value, // Sub City
-    address1: address1.value, // Woreda
+    address3: address3.value,
+    address2: address2.value,
+    address1: address1.value,
     tinNumber: tin.value,
     email: email.value,
     description: memo.value,
     country: 'Ethiopia'
   };
-
-  // Only include logo if it exists
-  if (providerLogo.value) {
-    formData.providerLogo = providerLogo.value;
-  }
-
-  // If we have a preview image but no new logo file, pass the existing logo data
-  if (previewImage.value && !providerLogo.value && props.isEdit) {
-    if (props.initialData.logoBase64) {
-      formData.logoBase64 = props.initialData.logoBase64;
-    } else if (props.initialData.logoPath) {
-      formData.logoPath = props.initialData.logoPath;
-    }
-  }
-
   props.onSubmit(formData);
 }
-
-const categoryOptions = [
-  'Government provider',
-  'Private provider',
-  'NGO provider'
-];
 </script>
 
 <template>
-  <Form
-    ref="formEl"
-    :inner="false"
-    id="provider-form"
-    v-slot="{}"
-    class="bg-white"
-    @submit.prevent="handleSubmit"
-  >
-    <div class="p-4 space-y-6">
-      <!-- Provider Logo -->
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-[#75778B]">
-          Provider logo
-        </label>
-        <div 
-          @dragover="handleDragOver"
-          @dragleave="handleDragLeave"
-          @drop="handleDrop"
-          class="border-[1px] bg-[#F6F7FA] border-dashed border-[#75778B] rounded-md items-center justify-center p-6 flex flex-col cursor-pointer hover:border-primary"
-        >
-          <div v-if="previewImage" class="mb-4 relative w-full">
-            <img :src="previewImage" alt="Logo preview" class="h-20 w-auto object-contain mx-auto" />
-          </div>
-          
-          <div class="flex items-end justify-end mt-2">
-            <button 
-              v-if="previewImage"
-              type="button" 
-              @click="browseFiles"
-              class="text-xs font-medium text-white bg-[#02676B] ml-2 py-2 px-3 rounded hover:bg-[#014F4F]"
-            >
-              Change Logo
-            </button>
-          </div>
+  <form @submit.prevent="handleSubmit" class="bg-white rounded-xl shadow-sm">
+    <!-- Provider Information Section -->
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100 mb-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-gray-800">Provider Information</h3>
+          <p class="text-sm text-gray-600">Basic details about the healthcare provider</p>
+        </div>
+      </div>
 
-          <template v-if="!previewImage">
-            <p class="text-sm text-[#75778B]">Drag your logo file to start uploading</p>
-            <p class="text-sm text-[#75778B] mt-1">or</p>
-            <button 
-              type="button" 
-              @click="browseFiles"
-              class="mt-2 px-4 py-2 text-sm font-medium text-[#75778B] border border-[#75778B] rounded-md hover:bg-gray-50"
-            >
-              Browse images
-            </button>
-          </template>
-          <input 
-            id="file-upload" 
-            type="file" 
-            accept="image/*" 
-            class="hidden" 
-            @change="handleFileUpload"
-          />
-        </div>
-      </div>
-      
-      <!-- Provider Name -->
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-[#75778B]">
-          Provider Name <span class="text-red-500">*</span>
-        </label>
-        <div class="flex w-full gap-2">
-          <Input
-            v-model="threeDigitAcronym"
-            name="threeDigitAcronym"
-            validation="required"
-            :attributes="{
-              placeholder: 'Enter three characters ID ',
-              class: 'pr-4 my-2 bg-[#F9F9FD]',
-              maxlength: 3,
-              pattern: '^[A-Z]{3}$',
-              title: 'Three-digit acronym must be uppercase letters (e.g., ABC)',
-              required: true
-            }"
-          />
-          <Input
-            v-model="providerName"
-            name="providerName"
-            validation="required"
-            :attributes="{
-              placeholder: 'Enter provider\'s legal name',
-              class: 'pr-[30rem] my-2 bg-[#F9F9FD]',
-              required: true
-            }"
-          />
-        </div>
-      </div>
-      
-      <!-- Two column layout -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Provider Logo -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">
+            Provider logo
+          </label>
+          <div class="flex items-center gap-4">
+            <div v-if="previewImage" class="relative">
+              <img :src="previewImage" alt="Logo preview" class="h-20 w-20 object-cover rounded-lg border-2 border-gray-200" />
+            </div>
+            <div v-else class="h-20 w-20 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Provider Name and Acronym -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">
+            Provider Name <span class="text-red-500">*</span>
+          </label>
+          <div class="flex w-full gap-2">
+            <input
+              v-model="threeDigitAcronym"
+              placeholder="ABC"
+              class="w-20 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              maxlength="3"
+              pattern="^[A-Z]{3}$"
+              title="Three-digit acronym must be uppercase letters"
+              required
+              readonly
+            />
+            <input
+              v-model="providerName"
+              placeholder="Provider legal name"
+              class="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+              readonly
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
         <!-- Category -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#75778B]">
+          <label class="block text-sm font-medium text-gray-700">
             Category <span class="text-red-500">*</span>
           </label>
-          <Select
+          <select
             v-model="category"
-            name="category"
-            validation="required"
-            :options="categoryOptions"
-            :attributes="{
-              placeholder: 'Select company category',
-              required: true
-            }"
-          />
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+            disabled
+          >
+            <option value="">Select company category</option>
+            <option v-for="option in categoryOptions" :key="option" :value="option">
+              {{ option }}
+            </option>
+          </select>
         </div>
         
         <!-- Phone Number -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#75778B]">
+          <label class="block text-sm font-medium text-gray-700">
             Phone Number <span class="text-red-500">*</span>
           </label>
           <div class="flex w-full gap-2">
-            <Select
+            <!-- <select
               v-model="countryCode"
-              name="countryCode"
-              :options="['+251']"
-              :attributes="{
-                class: 'pr-2 my-2 bg-[#F9F9FD]',
-                required: true
-              }"
-            />
-            <Input
+              class="w-20 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+              disabled
+            >
+              <option value="+251">+251</option>
+            </select> -->
+            <input
               v-model="telephone"
-              name="phoneNumber"
-              validation="required"
-              :attributes="{
-                placeholder: 'Enter phone number',
-                class: 'pr-40 my-2 bg-[#F9F9FD]',
-                required: true
-              }"
+              placeholder="Phone number"
+              class="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+              readonly
             />
           </div>
         </div>
       </div>
+    </div>
 
-      <h3 class="text-md font-medium text-[#75778B]">Address Information</h3>
-      <!-- Address Information -->
+    <!-- Address Information Section -->
+    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100 mb-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-gray-800">Address Information</h3>
+          <p class="text-sm text-gray-600">Location details of the provider</p>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- State/Region -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#75778B]">
+          <label class="block text-sm font-medium text-gray-700">
             State/Region 
           </label>
-          <Select
+          <select
             v-model="state"
-            name="state"
-            :options="ethiopianRegions"
-            :attributes="{
-              placeholder: 'Select State/Region',
-              required: true
-            }"
-          />
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            disabled
+          >
+            <option value="">Select State/Region</option>
+            <option v-for="region in ethiopianRegions" :key="region" :value="region">
+              {{ region }}
+            </option>
+          </select>
         </div>
         
         <!-- City -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#75778B]">
+          <label class="block text-sm font-medium text-gray-700">
             City 
           </label>
-          <Select
+          <select
             v-if="availableCities.length > 0"
             v-model="address3"
-            name="address3"
-            :options="availableCities"
-            :attributes="{
-              placeholder: 'Select City',
-            }"
-          />
-          <Input
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            disabled
+          >
+            <option value="">Select City</option>
+            <option v-for="city in availableCities" :key="city" :value="city">
+              {{ city }}
+            </option>
+          </select>
+          <input
             v-else
             v-model="address3"
-            name="address3"
-            :attributes="{
-              placeholder: 'Enter City',
-            }"
+            placeholder="Enter City"
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            readonly
           />
         </div>
         
         <!-- Sub City -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#75778B]">
+          <label class="block text-sm font-medium text-gray-700">
             Sub City 
           </label>
-          <Select
+          <select
             v-if="isAddisAbaba && availableSubCities.length > 0"
             v-model="address2"
-            name="address2"
-            :options="availableSubCities"
-            :attributes="{
-              placeholder: 'Select Sub City',
-            }"
-          />
-          <Input
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            disabled
+          >
+            <option value="">Select Sub City</option>
+            <option v-for="subCity in availableSubCities" :key="subCity" :value="subCity">
+              {{ subCity }}
+            </option>
+          </select>
+          <input
             v-else
             v-model="address2"
-            name="address2"
-            :attributes="{
-              placeholder: 'Enter Sub City',
-            }"
+            placeholder="Enter Sub City"
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            readonly
           />
         </div>
         
-        <!-- Woreda/address1 -->
+        <!-- Woreda -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#75778B]">
+          <label class="block text-sm font-medium text-gray-700">
             Woreda 
           </label>
-          <Input
+          <input
             v-model="address1"
-            name="address1"
-            :attributes="{
-              placeholder: 'Enter Woreda',
-            }"
+            placeholder="Enter Woreda"
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            readonly
           />
         </div>
       </div>
-      
-      <!-- Two column layout -->
+    </div>
+
+    <!-- Additional Information Section -->
+    <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100 mb-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-gray-800">Additional Information</h3>
+          <p class="text-sm text-gray-600">Tax and contact details</p>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- TIN -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#75778B]">
+          <label class="block text-sm font-medium text-gray-700">
             TIN <span class="text-red-500">*</span>
           </label>
-          <Input
+          <input
             v-model="tin"
-            name="tin"
-            validation="required"
-            :attributes="{
-              placeholder: 'Enter TIN',
-              required: true
-            }"
+            placeholder="Tax Identification Number"
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+            readonly
           />
         </div>
         
         <!-- Email -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-[#75778B]">
+          <label class="block text-sm font-medium text-gray-700">
             Provider's Email 
           </label>
-          <InputEmail
+          <input
             v-model="email"
-            name="email"
-            validation="required|email"
-            :attributes="{
-              placeholder: 'Email of the provider',
-              required: true
-            }"
+            type="email"
+            placeholder="provider@example.com"
+            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+            readonly
           />
         </div>
       </div>
       
-      <!-- Memo -->
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-[#75778B]">
+      <!-- Description -->
+      <div class="space-y-2 mt-4">
+        <label class="block text-sm font-medium text-gray-700">
           Description
         </label>
-        <Textarea
+        <textarea
           v-model="memo"
-          name="memo"
-          :attributes="{
-            placeholder: 'Write any description',
-            rows: 3
-          }"
-        />
+          placeholder="Provider description"
+          rows="3"
+          class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          readonly
+        ></textarea>
       </div>
     </div>
     
     <!-- Form Actions -->
-    <div class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
-      <Button
+    <div class="pt-4 px-6 border-t border-gray-200 flex justify-end space-x-4">
+      <button
         type="button"
         @click="props.onCancel"
-        class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
+        class="text-gray-700 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
         :disabled="pending"
       >
-        Cancel
-      </Button>
-      <ModalFormSubmitButton
+        Back
+      </button>
+    
+       <ModalFormSubmitButton
         :pending="pending"
-        :btn-text="isEdit ? 'Update Provider' : 'Add Provider'"
+        :btn-text="isEdit ? 'Add Provider' : 'Add Provider'"
         class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
       />
     </div>
-  </Form>
+  </form>
 </template>
 
 <style scoped>
-/* Additional styling for the form */
-:deep(.form-control) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
+input[readonly], select[disabled], textarea[readonly] {
+  @apply bg-gray-100 cursor-not-allowed;
 }
 
-:deep(.form-select) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
+/* Enhanced select dropdown styling */
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
+  padding-right: 3rem;
 }
 
-:deep(.form-textarea) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
+/* Smooth transitions */
+* {
+  transition: all 0.2s ease-in-out;
 }
 </style>

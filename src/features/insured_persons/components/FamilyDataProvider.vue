@@ -1,17 +1,17 @@
-<script setup lang="ts">
+<script setup>
 import { usePagination } from "@/composables/usePagination";
 import { watch, onMounted, computed, ref } from "vue";
 import { removeUndefined } from "@/utils/utils";
-import { useFamily } from "../store/FamilyStore";
 import { getGroup } from "../api/groupServiceApi";
 import { useAuthStore } from "@/stores/auth";
 import { useRoute } from "vue-router";
+import { useFamily } from "../store/FamilyStore";
 
 const route = useRoute();
 const authStore = useAuthStore();
 const familyStore = useFamily();
 
-// Define props with TypeScript types
+// Define props
 const props = defineProps({
   auto: {
     type: Boolean,
@@ -36,12 +36,11 @@ const totalItems = ref(0);
 // Enhanced pagination setup
 const pagination = usePagination({
   auto: props.auto,
-  cb: async (data: any) => {
+  cb: async (data) => {
     const response = await getGroup(
       route.params.id || authStore.auth?.user?.payerUuid,
       removeUndefined({
         ...data,
-        // search: props.search,
       })
     );
 
@@ -83,11 +82,11 @@ onMounted(() => {
 // Expose refresh functionality to parent
 defineExpose({
   refresh: pagination.send,
-  setPage: (page: number) => {
+  setPage: (page) => {
     currentPage.value = page;
     pagination.send();
   },
-  setLimit: (limit: number) => {
+  setLimit: (limit) => {
     itemsPerPage.value = limit;
     pagination.send();
   },

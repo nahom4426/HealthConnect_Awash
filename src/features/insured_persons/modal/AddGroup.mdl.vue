@@ -13,7 +13,7 @@ import Switch from "@/components/Switch.vue";
 import PackageSelector from "@/components/PackageSelector.vue";
 import { useRoute } from "vue-router";
 import { toasted } from '@/utils/utils';
-import { useFamily } from '../store/familyStore';
+import { useFamily } from '../store/FamilyStore';
 const familysStore = useFamily();
 const route = useRoute();
 const packageUuids = ref([]);

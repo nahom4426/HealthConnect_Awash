@@ -1,6 +1,6 @@
 <script setup>
 import Table from "@/components/Table.vue";
-import { usePagination } from "@/composables/usePagination.js"; // Fixed the file extension
+import { usePagination } from "@/composables/usePagination";// Fixed the file extension
 import { getRequestedClaim } from "../../api/claimApi";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 import { ref } from "vue";

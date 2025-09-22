@@ -1,7 +1,7 @@
 <script setup>
 import CustomSelect from "@/components/CustomSelect.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import { usePagination } from "@/composables/usePagination.JS"; 
+import { usePagination } from "@/composables/usePagination";
 import InstitutionPolicyByStatusDataProvider from "@/features/institutions/components/InstitutionPolicyByStatusDataProvider.vue";
 import { computed, ref, watch } from "vue";
 import { getCashCreditByInstitution, requestCashClaim } from "../api/cashCreditApi";

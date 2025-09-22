@@ -2,7 +2,7 @@
 import icons from "@/utils/icons";
 import Dropdown from "./Dropdown.vue";
 import { ref, watch, type PropType } from "vue";
-import { usePagination } from "@/composables/usePagination.JS";
+import { usePagination } from "@/composables/usePagination";
 
 const props = defineProps({
   modelValue: {

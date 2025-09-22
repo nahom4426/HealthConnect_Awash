@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import DefaultPage from "@/components/DefaultPage.vue";
-import { usePagination } from "@/composables/usePagination.JS";
+import { usePagination } from "@/composables/usePagination";
 import { allRequest, secondDateFormat } from "@/utils/utils";
 import { useRoute } from "vue-router";
 import  { Status, type InsuredPerson, type Pagination } from "@/types/interface";

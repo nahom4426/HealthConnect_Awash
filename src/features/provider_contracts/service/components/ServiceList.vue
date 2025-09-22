@@ -1,7 +1,7 @@
 <script setup>
 import Table from "@/components/Table.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { usePagination } from "@/composables/usePagination.JS";
+import { usePagination } from "@/composables/usePagination";
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
 import Button from "@/components/Button.vue";

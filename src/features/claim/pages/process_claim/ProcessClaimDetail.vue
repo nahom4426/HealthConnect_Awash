@@ -1,6 +1,6 @@
 <script setup>
 import DefaultPage from '@/components/DefaultPage.vue';
-import { usePagination } from '@/composables/usePagination.js'; // Fixed the file extension
+import { usePagination } from "@/composables/usePagination"; // Fixed the file extension
 import { claimProccessed, getRequestedClaimByBatchDetail } from '../../api/claimApi';
 import Table from '@/components/Table.vue';
 import { useRoute } from 'vue-router';

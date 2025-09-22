@@ -117,8 +117,8 @@ async function handleSubmit(formValues) {
     <NewFormParent 
       class="" 
       size="lg" 
-      title="Edit Provider" 
-      subtitle="Update the provider information in the fields below."
+      title="Add Provider" 
+      subtitle="Add this provider to the system"
     >
       <div class="bg-white rounded-lg">
         <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">

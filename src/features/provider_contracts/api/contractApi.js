@@ -96,6 +96,11 @@ export const getPendingContracts = (page = 1, limit = 25) => {
     }
   });
 };
+export function approveContractStatus(providerId) {
+  return api
+    .addAuthenticationHeader()
+    .put(`/claimconnect/payer-provider-contract/approve/${providerId}`);
+}
 export const getSuspendedContracts = (page = 1, limit = 25) => {
   return api.addAuthenticationHeader().get(`${basePath}/provider/lists`, {
     params: {

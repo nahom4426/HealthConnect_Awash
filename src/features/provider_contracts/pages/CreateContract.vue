@@ -1,5 +1,5 @@
-<script setup> 
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+<script setup>
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from "@/toast/store/toast";
 import { getActiveProviders } from "@/features/providers/api/providerApi";
@@ -12,6 +12,7 @@ import { createNewContract } from '../api/contractApi';
 const router = useRouter();
 const toast = useToast();
 
+// Form data
 const formData = ref({
   providerUuid: '',
   contractName: '',
@@ -26,6 +27,7 @@ const providers = ref([]);
 const isLoading = ref(false);
 const submitAttempted = ref(false);
 
+// Fetch providers
 onMounted(async () => {
   try {
     isLoading.value = true;
@@ -43,70 +45,52 @@ onMounted(async () => {
   }
 });
 
-// Active Step Logic
-const steps = [
-  { id: 1, title: "Contract Info", ref: ref(null) },
-  { id: 2, title: "Contract Period", ref: ref(null) },
-  { id: 3, title: "Provider Info", ref: ref(null) },
-  { id: 4, title: "Description", ref: ref(null) }
-];
-const activeStep = ref(1);
 
-const onScroll = () => {
-  const scrollPosition = window.scrollY + 100;
-  
-  for (let i = 0; i < steps.length; i++) {
-    const section = steps[i].ref.value;
-    if (section) {
-      const sectionTop = section.offsetTop;
-      const sectionBottom = sectionTop + section.offsetHeight;
-      
-      if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
-        activeStep.value = steps[i].id;
-        break;
-      }
-    }
-  }
-};
-
-onMounted(() => {
-  window.addEventListener("scroll", onScroll);
-  // Initialize active step on mount
-  onScroll();
-});
-onBeforeUnmount(() => {
-  window.removeEventListener("scroll", onScroll);
-});
-
-const scrollToStep = (stepRef) => {
-  if (stepRef) {
-    window.scrollTo({
-      top: stepRef.offsetTop - 80,
-      behavior: 'smooth'
-    });
-  }
-};
-
+// Date validation
 const isEndDateValid = computed(() => {
   if (!formData.value.beginDate || !formData.value.endDate) return true;
   return new Date(formData.value.endDate) >= new Date(formData.value.beginDate);
 });
 
+// Submit form
 const submitForm = async () => {
   submitAttempted.value = true;
+  
+  if (!formData.value.providerUuid) {
+    toasted(false, "", "Please select a provider");
+    return;
+  }
 
-  if (!formData.value.providerUuid) return toasted(false, "", "Please select a provider");
-  if (!formData.value.contractName) return toasted(false, "", "Contract name is required");
-  if (!formData.value.contractCode) return toasted(false, "", "Contract code is required");
-  if (!formData.value.beginDate) return toasted(false, "", "Effective date is required");
-  if (!formData.value.endDate) return toasted(false, "", "End date is required");
-  if (!isEndDateValid.value) return toasted(false, "", "End date must be after effective date");
+  if (!formData.value.contractName) {
+    toasted(false, "", "Contract name is required");
+    return;
+  }
+
+  if (!formData.value.contractCode) {
+    toasted(false, "", "Contract code is required");
+    return;
+  }
+
+  if (!formData.value.beginDate) {
+    toasted(false, "", "Effective date is required");
+    return;
+  }
+
+  if (!formData.value.endDate) {
+    toasted(false, "", "End date is required");
+    return;
+  }
+
+  if (!isEndDateValid.value) {
+    toasted(false, "", "End date must be after effective date");
+    return;
+  }
 
   isLoading.value = true;
   try {
     await createNewContract(formData.value);
     toasted(true, "Contract created successfully");
-    router.push('/active_contracts');
+    router.push('/create_contract');
   } catch (error) {
     toasted(false, "", error.message || "Failed to create contract");
   } finally {
@@ -116,177 +100,248 @@ const submitForm = async () => {
 </script>
 
 <template>
-  <DefaultPage title="✨ Create Provider Contract">
-    
-    <!-- Step Indicator -->
-    <div class="sticky top-0 z-10 bg-white/80 backdrop-blur-md shadow-sm py-3 mb-4 px-6 rounded-b-xl">
-      <div class="flex items-center gap-6 justify-center">
-        <template v-for="(step, index) in steps" :key="step.id">
-          <div class="flex items-center gap-2 cursor-pointer group" 
-               @click="scrollToStep(step.ref.value)">
-            <div :class="[ 
-              'w-9 h-9 flex items-center justify-center rounded-full border-2 font-bold transition-all duration-300 shadow-sm',
-              activeStep === step.id 
-                ? 'bg-[#02676B] border-[#02676B] text-white' 
-                : 'bg-gray-100 border-gray-300 text-gray-500 group-hover:bg-gray-200'
-            ]">
-              {{ step.id }}
-            </div>
-            <span :class="[
-              'transition-colors duration-300',
-              activeStep === step.id 
-                ? 'text-[#02676B] font-semibold' 
-                : 'text-gray-500 group-hover:text-gray-700'
-            ]">
-              {{ step.title }}
-            </span>
-          </div>
-          <div v-if="index < steps.length - 1" 
-               :class="[
-                 'h-0.5 transition-colors duration-300',
-                 activeStep > step.id ? 'bg-[#02676B]' : 'bg-gray-300'
-               ]"
-               class="w-14">
-          </div>
-        </template>
-      </div>
-    </div>
 
-    <!-- Form Sections -->
-    <div class="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg p-6 animate-fadeIn">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Contract Info -->
-        <div ref="steps[0].ref" class="glass-card">
-          <h3 class="section-title">📄 Contract Information</h3>
-          <div class="space-y-4 mt-4">
+    <div class="bg-white rounded-xl p-8 space-y-8 shadow-lg">
+      <!-- Contract Information Section -->
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="space-y-6">
+          <div class="flex items-center">
+            <div class="w-10 h-10 rounded-full bg-[#e6f7f8] flex items-center justify-center mr-3">
+              <span v-html="icons.document" class="w-5 h-5 text-[#02676B]"></span>
+            </div>
+            <h3 class="text-lg font-semibold text-[#02676B]">Contract Information</h3>
+          </div>
+          
+          <div class="space-y-5 pl-12">
             <div>
-              <label class="floating-label">
+              <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 Contract Name
-                <input v-model="formData.contractName" placeholder=" " class="input-field"
-                      :class="{ 'border-red-500': submitAttempted && !formData.contractName }" />
+                <span class="text-red-500 ml-1">*</span>
               </label>
-              <p v-if="submitAttempted && !formData.contractName" class="error-message">Required</p>
+              <input
+                v-model="formData.contractName"
+                placeholder="e.g. Annual Service Contract"
+                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm"
+                :class="{ 'border-red-500': submitAttempted && !formData.contractName }"
+                required
+              />
+              <p v-if="submitAttempted && !formData.contractName" class="text-red-500 text-xs mt-1 ml-1">
+                Contract name is required
+              </p>
             </div>
+
             <div>
-              <label class="floating-label">
+              <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 Contract Code
-                <input v-model="formData.contractCode" placeholder=" " class="input-field"
-                      :class="{ 'border-red-500': submitAttempted && !formData.contractCode }" />
+                <span class="text-red-500 ml-1">*</span>
               </label>
-              <p v-if="submitAttempted && !formData.contractCode" class="error-message">Required</p>
+              <input
+                v-model="formData.contractCode"
+                placeholder="e.g. CONT-2023-001"
+                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm"
+                :class="{ 'border-red-500': submitAttempted && !formData.contractCode }"
+                required
+              />
+              <p v-if="submitAttempted && !formData.contractCode" class="text-red-500 text-xs mt-1 ml-1">
+                Contract code is required
+              </p>
             </div>
           </div>
         </div>
 
-        <!-- Contract Period -->
-        <div ref="steps[1].ref" class="glass-card">
-          <h3 class="section-title">📅 Contract Period</h3>
-          <div class="space-y-4 mt-4">
+        <!-- Dates Section -->
+        <div class="space-y-6">
+          <div class="flex items-center">
+            <div class="w-10 h-10 rounded-full bg-[#e6f7f8] flex items-center justify-center mr-3">
+              <span v-html="icons.calendar" class="w-5 h-5 text-[#02676B]"></span>
+            </div>
+            <h3 class="text-lg font-semibold text-[#02676B]">Contract Period</h3>
+          </div>
+          
+          <div class="grid md:grid-cols-2 gap-5 pl-12">
             <div>
-              <label class="floating-label">
+              <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 Effective Date
-                <input type="date" v-model="formData.beginDate" placeholder=" " class="input-field"
-                      :class="{ 'border-red-500': submitAttempted && !formData.beginDate }" />
+                <span class="text-red-500 ml-1">*</span>
               </label>
-              <p v-if="submitAttempted && !formData.beginDate" class="error-message">Required</p>
+              <input
+                type="date"
+                v-model="formData.beginDate"
+                class="w-full py-3 px-1 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm"
+                :class="{ 'border-red-500': submitAttempted && !formData.beginDate }"
+                required
+              />
+              <p v-if="submitAttempted && !formData.beginDate" class="text-red-500 text-xs mt-1 ml-1">
+                Effective date is required
+              </p>
             </div>
+
             <div>
-              <label class="floating-label">
+              <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 End Date
-                <input type="date" v-model="formData.endDate" placeholder=" " class="input-field"
-                      :class="{ 'border-red-500': submitAttempted && (!formData.endDate || !isEndDateValid) }" />
+                <span class="text-red-500 ml-1">*</span>
               </label>
-              <p v-if="submitAttempted && !formData.endDate" class="error-message">Required</p>
-              <p v-if="submitAttempted && formData.endDate && !isEndDateValid" class="error-message">Must be after start date</p>
+              <input
+                type="date"
+                v-model="formData.endDate"
+                class="w-full py-3 px-1 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm"
+                :class="{
+                  'border-red-500': submitAttempted && (!formData.endDate || !isEndDateValid)
+                }"
+                required
+              />
+              <p v-if="submitAttempted && !formData.endDate" class="text-red-500 text-xs mt-1 ml-1">
+                End date is required
+              </p>
+              <p v-if="submitAttempted && formData.endDate && !isEndDateValid" class="text-red-500 text-xs mt-1 ml-1">
+                Must be after effective date
+              </p>
             </div>
-          </div>
-        </div>
-
-        <!-- Provider Info -->
-        <div ref="steps[2].ref" class="glass-card">
-          <h3 class="section-title">🏥 Provider Information</h3>
-          <div class="space-y-4 mt-4">
-            <div>
-              <label class="floating-label">
-                Provider
-                <select v-model="formData.providerUuid" class="input-field"
-                        :class="{ 'border-red-500': submitAttempted && !formData.providerUuid }">
-                  <option value="" disabled>Select a provider</option>
-                  <option v-for="p in providers" :key="p.providerUuid" :value="p.providerUuid">
-                    {{ p.providerName }}
-                  </option>
-                </select>
-              </label>
-              <p v-if="submitAttempted && !formData.providerUuid" class="error-message">Required</p>
-            </div>
-            <div>
-              <label class="floating-label">
-                Status
-                <select v-model="formData.status" class="input-field">
-                  <option value="ACTIVE">Active</option>
-                  <option value="PENDING">Pending</option>
-                </select>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Description -->
-        <div ref="steps[3].ref" class="glass-card">
-          <h3 class="section-title">📝 Description</h3>
-          <div class="mt-4">
-            <textarea v-model="formData.description" rows="4" placeholder="Type here..."
-                      class="input-field w-full h-full min-h-[150px]"></textarea>
           </div>
         </div>
       </div>
 
-      <!-- Actions -->
-      <div class="flex justify-end gap-4 border-t pt-6 mt-6">
-        <button @click="router.push('/ProviderContracts/Active-Contracts')" class="btn-secondary" :disabled="isLoading">
+      <!-- Provider Information Section -->
+      <div class="space-y-6">
+        <div class="flex items-center">
+          <div class="w-10 h-10 rounded-full bg-[#e6f7f8] flex items-center justify-center mr-3">
+            <span v-html="icons.provider" class="w-5 h-5 text-[#02676B]"></span>
+          </div>
+          <h3 class="text-lg font-semibold text-[#02676B]">Provider Information</h3>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-6 pl-12">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+              Provider
+              <span class="text-red-500 ml-1">*</span>
+            </label>
+            <select
+              v-model="formData.providerUuid"
+              class="w-full py-3 px-1 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzk5OTk5OSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem] bg-[length:16px_16px] pr-10"
+              :class="{ 'border-red-500': submitAttempted && !formData.providerUuid }"
+              required
+            >
+              <option value="" disabled selected>Select a provider</option>
+              <option 
+                v-for="provider in providers" 
+                :key="provider.providerUuid"
+                :value="provider.providerUuid"
+              >
+                {{ provider.providerName }}
+              </option>
+            </select>
+            <p v-if="submitAttempted && !formData.providerUuid" class="text-red-500 text-xs mt-1 ml-1">
+              Provider is required
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mx-8 mb-2">
+              Status
+            </label>
+            <div class="relative">
+              <select
+                v-model="formData.status"
+                class=" py-3 px-8 mx-8 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzk5OTk5OSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem] bg-[length:16px_16px] pr-10"
+              >
+                <option value="ACTIVE">Active</option>
+                <option value="PENDING">Pending</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description Section -->
+      <div class="space-y-6">
+        <div class="flex items-center">
+          <div class="w-10 h-10 rounded-full bg-[#e6f7f8] flex items-center justify-center mr-3">
+            <span v-html="icons.description" class="w-5 h-5 text-[#02676B]"></span>
+          </div>
+          <h3 class="text-lg font-semibold text-[#02676B]">Description</h3>
+        </div>
+        <div class="pl-12">
+          <textarea
+            v-model="formData.description"
+            rows="4"
+            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm"
+            placeholder="Describe the contract terms and conditions..."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex justify-end space-x-4 pt-8 border-t">
+        <button
+          @click="router.push('/create_contract')"
+          class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md flex items-center"
+          :disabled="isLoading"
+        >
+          <span v-html="icons.cancel" class="w-4 h-4 mr-2"></span>
           Cancel
         </button>
-        <button @click="submitForm" class="btn-primary ripple" :disabled="isLoading">
-          <ButtonSpinner v-if="isLoading" class="h-4 w-4" />
+        
+        <button
+          @click="submitForm"
+          class="px-6 py-3 bg-gradient-to-r from-[#02676B] to-[#02494D] text-white rounded-lg text-sm font-medium hover:from-[#02494D] hover:to-[#013436] transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+          :disabled="isLoading"
+        >
+          <ButtonSpinner v-if="isLoading" class="h-4 w-4 text-white" />
           <span v-else v-html="icons.contracts" class="w-4 h-4"></span>
           {{ isLoading ? 'Creating...' : 'Create Contract' }}
         </button>
       </div>
     </div>
-  </DefaultPage>
+ 
 </template>
 
 <style scoped>
-@keyframes fadeIn { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
-.animate-fadeIn { animation: fadeIn .4s ease-in-out; }
-.section-title { @apply text-lg font-semibold text-[#02676B] pb-2 flex items-center gap-2; }
-.glass-card { @apply bg-gray-100 backdrop-blur-md rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-200; }
-.floating-label { @apply block relative w-full; }
-.floating-label input,
-.floating-label select,
-textarea.input-field {
-  @apply w-full p-3 border border-gray-300 rounded-lg bg-transparent outline-none transition-all;
+/* Enhanced form styling */
+input, select, textarea {
+  @apply border-gray-300;
 }
-.floating-label input:focus,
-.floating-label select:focus,
-textarea.input-field:focus {
-  @apply border-[#02676B] ring-2 ring-[#02676B];
+
+input:focus, select:focus, textarea:focus {
+  @apply border-[#02676B] ring-2 ring-[#02676B] ring-opacity-20 outline-none;
 }
-.error-message { @apply text-red-500 text-xs mt-1; }
-.btn-primary {
-  @apply px-5 py-2 bg-[#02676B] text-white font-medium rounded-lg shadow hover:bg-[#02494D] transition-all flex items-center gap-2;
+
+.required-field {
+  @apply border-l-2 border-[#02676B];
 }
-.btn-secondary {
-  @apply px-5 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition;
+
+.error-field {
+  @apply border-red-500 ring-2 ring-red-500 ring-opacity-20;
 }
-.ripple { position: relative; overflow: hidden; }
-.ripple::after {
-  content: "";
-  position: absolute;
-  background: rgba(255,255,255,0.5);
-  border-radius: 50%;
-  transform: scale(0);
-  animation: ripple 0.6s linear;
+
+.error-message {
+  @apply text-red-500 text-xs mt-1;
 }
-@keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Make date inputs required visually */
+input[type="date"]:required {
+  border-left: 2px solid #02676B;
+}
+
+/* Animation classes */
+.highlight-change {
+  animation: highlight 1s ease;
+}
+
+@keyframes highlight {
+  0% { background-color: transparent; }
+  50% { background-color: rgba(251, 191, 36, 0.3); }
+  100% { background-color: transparent; }
+}
+
+/* Custom select arrow */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
 </style>

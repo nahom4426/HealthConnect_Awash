@@ -13,6 +13,7 @@ import Insured from "@/features/insured_persons/pages/Insured.vue";
 import InsuredDetails from "@/features/insured_persons/pages/insuredDetails.vue";
 import Coverages from "@/features/product_settings/pages/Coverages.vue";
 import InstitutionContractswithIssued from "@/features/underwriting/pages/InstitutionContractswithIssued.vue";
+import AddProviderForInstitution from "@/features/providers/pages/AddProviderForInstitution.vue";
 
 export default [
 	{
@@ -63,6 +64,11 @@ export default [
 		path: 'insured_persons/:id/:institutionUuid',
 		name: 'insured persons',
 		component: Insured,
+	},
+	{
+		path: 'addInstitution/:id/:institutionUuid',
+		name: 'addInstitution',
+		component: AddProviderForInstitution,
 	},
 	
 	{

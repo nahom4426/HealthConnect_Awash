@@ -47,6 +47,12 @@ function handleAddServices(packageData) {
     packageName: packageData.packageName
   });
 }
+function handleRemoveServices(packageData) {
+  openModal('RemoveServiceFromContractPackage', {
+    packageUuid: packageData.packageUuid,
+    packageName: packageData.packageName
+  });
+}
 
 function toggleStatus(packageData) {
   const newStatus = packageData.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
@@ -134,6 +140,9 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
         <div class="py-1">
           <button @click.stop="handleAddServices(row)" class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-blue-100 hover:text-blue-700">
             <i v-html="icons.plus_circle || '➕'" class="w-5 h-5"></i> Add Services
+          </button>
+           <button @click.stop="handleRemoveServices(row)" class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-red-100 hover:text-blue-700">
+            <i v-html="icons.minus|| ''" class="w-5 h-5"></i> Remove Services
           </button>
           <button @click.stop="handleEdit(row)" class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-yellow-100 hover:text-yellow-700">
             <i v-html="icons.edit || '✏️'" class="w-5 h-5"></i> Edit

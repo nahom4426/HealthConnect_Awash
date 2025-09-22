@@ -102,7 +102,7 @@
   </div>
 </div>
 
-      <div v-if="insuredData.dependantCoverage == true" class="mt-6">
+      <div v-else class="mt-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">Dependants</h3>
           <button @click="showNewDependentForm = !showNewDependentForm">

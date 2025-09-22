@@ -122,10 +122,10 @@ const props = defineProps({
 
           <div class="hidden md:flex flex-col items-start">
             <span class="text-sm font-semibold text-gray-800 max-w-[120px] line-clamp-1">
-              {{ authStore.auth.user?.firstName + ' ' + authStore.auth.user?.fatherName || 'User' }}
+              {{ authStore.auth.firstName + ' ' + authStore.auth.fatherName || 'User' }}
             </span>
             <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary">
-              {{ authStore.auth?.user?.roleName || 'Admin' }}
+              {{ authStore.auth.roleName || 'Admin' }}
             </span>
           </div>
           <i v-html="icons.chevron_down" class="text-xs text-gray-500 group-hover:rotate-180 transition-transform" />
@@ -137,8 +137,8 @@ const props = defineProps({
           :ref="setRef"
         >
           <div class="px-3 py-2 border-b border-gray-100">
-            <p class="text-sm font-medium text-gray-800">{{ authStore.auth.user?.firstName }} {{ authStore.auth.user?.fatherName }}</p>
-            <p class="text-xs text-gray-500">{{ authStore.auth?.user?.email }}</p>
+            <p class="text-sm font-medium text-gray-800">{{ authStore.auth.firstName }} {{ authStore.auth.fatherName }}</p>
+            <p class="text-xs text-gray-500">{{ authStore.auth.email }}</p>
           </div>
 
           <button @click="$router.push('/profile')" class="p-2 flex items-center gap-3 rounded-lg hover:bg-gray-50 transition-all duration-200">

@@ -15,10 +15,6 @@ const router = useRouter();
 const { submit } = useForm("privilegeForm");
 
 function create({ values, reset }) {
-
-
-
-
   req.send(
     () => {
       return createPrivilege(values);

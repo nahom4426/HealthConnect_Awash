@@ -268,43 +268,43 @@ async function submitServices() {
       return;
     }
 
-    // Get only newly selected services (not existing ones)
- const newServiceUuids = selectedServices.value
-  .filter(service => !service.isExisting)
-  .map(service => service.eligibleServiceUuid);
+    // Get all selected services (both new and existing)
+    const allSelectedUuids = selectedServices.value
+      .map(service => service.eligibleServiceUuid);
 
-    if (newServiceUuids.length === 0) {
+    if (allSelectedUuids.length === 0) {
       addToast({
         type: 'info',
-        title: 'No Changes',
-        message: 'No new services selected to add'
+        title: 'No Services',
+        message: 'No services selected'
       });
       closeModal();
       return;
     }
 
     const payload = {
-      eligibleServiceUuids: newServiceUuids
+      eligibleServiceUuids: allSelectedUuids
     };
 
     const response = await addEligibleServices(packageUuid.value, payload);
 
     if (response?.success !== false) {
+      const newServicesCount = selectedServices.value.filter(s => !s.isExisting).length;
       addToast({
         type: 'success',
         title: 'Success',
-        message: `${newServiceUuids.length} service(s) added to package successfully`
+        message: `${allSelectedUuids.length} service(s) updated for package (${newServicesCount} new services added)`
       });
       closeModal(true);
     } else {
-      throw new Error(response?.message || 'Failed to add services');
+      throw new Error(response?.message || 'Failed to update services');
     }
   } catch (error) {
-    console.error('Error adding services:', error);
+    console.error('Error updating services:', error);
     addToast({
       type: 'error',
       title: 'Error',
-      message: error.message || 'Failed to add services to package'
+      message: error.message || 'Failed to update services for package'
     });
   }
 }

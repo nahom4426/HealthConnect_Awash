@@ -3,7 +3,7 @@ import { defineProps, onMounted, onUnmounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { openModal } from '@customizer/modal-x';
 import { useProviders } from "@/features/providers/store/providersStore";
-
+import { useRoute } from 'vue-router';
 import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
 
@@ -45,6 +45,8 @@ const props = defineProps({
 const { addToast } = useToast();
 const providersStore = useProviders();
 const { providers: storeProviders } = storeToRefs(providersStore);
+const route = useRoute();
+
 function toggleDropdown(event, rowId) {
   event.stopPropagation();
   closeAllDropdowns();
@@ -102,10 +104,22 @@ function handleEdit(row) {
     }
   });
 }
+function handleAdd(row) {
+  openModal('ConfirmAddProvider', {
+    providerName: row.providerName,
+    payerProviderContractUuid: route.params.payerProviderContractUuid || route.params.id,
+    payerInstitutionContractUuid: row.payerProviderContractUuid || row.providerUuid,
+    onConfirm: () => {
+      // This will be called when user confirms in the modal
+      mapProviderContract(row);
+    }
+  });
+}
+
 // Wrapper functions with dropdown close
-function handleEditWithClose(row) {
+function handleAddWithClose(row) {
   closeAllDropdowns();
-  handleEdit(row);
+  handleAdd(row);
 }
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick);
@@ -198,7 +212,7 @@ function handleDocumentClick(event) {
 
     <!-- Actions Column -->
     <td class="p-3">  
-     <div class="dropdown-container relative">
+      <div class="dropdown-container relative">
         <button 
           @click.stop="toggleDropdown($event, row.providerUuid || row.id)"
           class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
@@ -215,7 +229,7 @@ function handleDocumentClick(event) {
         >
           <div class="py-1" role="none">
             <button 
-              @click.stop="handleEditWithClose(row)"
+              @click.stop="handleAddWithClose(row)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               <div class="flex items-center justify-start pl-4 gap-4">
@@ -223,14 +237,6 @@ function handleDocumentClick(event) {
                 Add This Provider
               </div>
             </button>
-            
-           
-       
-
-        
-        
-            
-            
           </div>
         </div>
       </div>

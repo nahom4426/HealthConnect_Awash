@@ -5,7 +5,11 @@ import icons from "@/utils/icons";
 import { onUnmounted } from 'vue';
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { approveContractStatus } from '../api/contractApi';
+import { toasted } from '@/utils/utils';
+import { usecontracts } from '../store/cotractStore';
 const router = useRouter();
+const contractStore = usecontracts();
 const props = defineProps({
   rowData: {
     type: Array,
@@ -68,7 +72,7 @@ function handleViewWithClose(row) {
 
 function handleServicesWithClose(row) {
   closeAllDropdowns();
-  router.push(`/active_contract/services/${row.payerProviderContractUuid}`);
+  router.push(`/active_contract/services/${row.payerProviderContractUuid}/${row.providerUuid}`);
 }
 
 onMounted(() => {
@@ -78,6 +82,21 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('click', closeAllDropdowns);
 });
+function handleActivateWithClose(payerProviderContractUuid) {
+  closeAllDropdowns();
+
+  return approveContractStatus(payerProviderContractUuid)
+    .then((res) => {
+      if (res.success) {
+        contractStore.update(payerProviderContractUuid, { status: 'ACTIVE' });
+        toasted(res.success, 'Contract Activated Successfully', res.error);
+        return true;
+      }
+      return false;
+    })
+    .catch(() => false);
+}
+
 </script>
 
 <template>
@@ -144,6 +163,7 @@ onUnmounted(() => {
                 </div>
               </button>
               <button 
+                @click.stop="handleActivateWithClose(row.payerProviderContractUuid)"
                 class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
@@ -177,6 +197,7 @@ onUnmounted(() => {
             <!-- Actions for SUSPENDED status -->
             <template v-else-if="row.status?.toUpperCase() === 'SUSPENDED'">
               <button 
+                 @click.stop="handleActivateWithClose(row.payerProviderContractUuid)"
                 class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">

@@ -98,14 +98,14 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     </td>
 
     <!-- Benefit -->
-    <td class="p-4 text-green-700 font-semibold">
+    <!-- <td class="p-4 text-green-700 font-semibold">
       {{ formatCurrency(row.benefit) }}
-    </td>
+    </td> -->
 
     <!-- Premium -->
-    <td class="p-4 text-blue-700 font-semibold">
+    <!-- <td class="p-4 text-blue-700 font-semibold">
       {{ formatCurrency(row.premium) }}
-    </td>
+    </td> -->
 
     <!-- Date Range -->
     <td class="p-4 text-gray-600">
@@ -153,8 +153,8 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
             <i v-html="icons.users_check || '👥'" class="w-5 h-5"></i>
             Insured Persons
           </button>
-          <button 
-            @click.stop="navigateTo('ProvidersInContract', row.payerInstitutionContractUuid)"
+          <button
+            @click.prevent="$router.push(`/addInstitution/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}`)"
             class="dropdown-item"
           >
             <i v-html="icons.hospital_building || '🏥'" class="w-5 h-5"></i>

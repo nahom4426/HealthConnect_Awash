@@ -103,14 +103,14 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     </td>
 
     <!-- Premium -->
-    <td class="p-4 text-blue-700 font-semibold">
+    <!-- <td class="p-4 text-blue-700 font-semibold">
       {{ formatCurrency(row.premium) }}
-    </td>
+    </td> -->
 
     <!-- Date Range -->
-    <td class="p-4 text-gray-600">
+    <!-- <td class="p-4 text-gray-600">
       {{ formatDate(row.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row.endDate) }}
-    </td>
+    </td> -->
 
     <!-- Status -->
     <td class="p-4">

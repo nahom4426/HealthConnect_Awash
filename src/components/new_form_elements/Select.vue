@@ -81,7 +81,7 @@ watch(() => props.modelValue, () => {
         <div class="absolute pointer-events-none top-0 right-0 h-full">
           <slot name="right">
             <div class="h-full ml-auto w-8 flex items-center justify-center">
-              <i v-if="!pending" v-html="icons.downAngle" />
+              <i v-if="!pending" v-html="icons.downAngl" />
               <i v-else class="animate-spin" v-html="icons.spinner" />
             </div>
           </slot>

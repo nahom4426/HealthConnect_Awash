@@ -9,6 +9,11 @@ export function getProviders(query = {}) {
   });
 }
 
+export function getMappedActiveProviders(payerInstitutionContractUuid ,query = {}) {
+  return api.addAuthenticationHeader().get(`/claimconnect/map_contract/providers-for-mapping-contracts?payerInstitutionContractUuid=${payerInstitutionContractUuid}`, {
+    params: query,
+  });
+}
 export function getActiveProviders(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/list`, {
     params: query,
@@ -55,3 +60,18 @@ export async function updateProvider(data) {
     };
   }
 }
+
+/**
+ * Map provider contracts to institution contracts
+ */
+export const mapContracts = async (contractMappings) => {
+  try {
+    const response = await api
+      .addAuthenticationHeader()
+      .post('/claimconnect/map_contract', contractMappings);
+    return response.data;
+  } catch (error) {
+    console.error('Error mapping contracts:', error);
+    throw error;
+  }
+};

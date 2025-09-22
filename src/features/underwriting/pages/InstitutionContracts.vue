@@ -102,8 +102,8 @@ const handleRefetch = () => {
          
               'Description',
               'Benefit',
-              'Premium',
-              'Effective Date',
+              // 'Premium',
+              // 'Effective Date',
               'Status',
               'Actions',
             ],
@@ -112,8 +112,8 @@ const handleRefetch = () => {
               
               'contractName',
               'benefit',
-              'premium', 
-              'dateRange',
+              // 'premium', 
+              // 'dateRange',
               'status',
             ],
           }"
@@ -134,8 +134,8 @@ const handleRefetch = () => {
                 'index',
                 'contractCode',
                 'contractName',
-                'benefit',
-                'premium',
+                // 'benefit',
+                // 'premium',
                 'dateRange',
                 'status',
               ]"
@@ -144,8 +144,8 @@ const handleRefetch = () => {
                 'Category Code',
                 'Description',
                 'Effective Date',
-                'Benefit',
-                'Premium',
+                // 'Benefit',
+                // 'Premium',
                 'Status',
                 'Actions',
               ]"

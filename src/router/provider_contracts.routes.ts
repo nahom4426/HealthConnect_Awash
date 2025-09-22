@@ -35,7 +35,7 @@ export default [
 				component: ActiveContracts,
 			},
 			{
-				path: 'services/:id',
+				path: 'services/:id/:providerUuid',
 				name: 'Provider Contract Services',
 				component: service,
 				props: true,

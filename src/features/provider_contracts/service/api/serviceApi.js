@@ -1,7 +1,9 @@
 import ApiService from "@/service/ApiService";
+import ApiServiceProvider from "@/service/ApiServiceProvider";
 import { getQueryFormObject } from "@/utils/utils.js";
 
 const api = new ApiService();
+const api1 =new ApiServiceProvider();
 const basePath = "/claimconnect/eligible-service";
 
 export function getAllServices(providerUuid, query = {}) {
@@ -11,6 +13,56 @@ export function getAllServices(providerUuid, query = {}) {
       params: query,
     });
 }
+export const getServiceCategories = async (providerUuid) => {
+  try {
+    const response = await api1
+      .addAuthenticationHeader()
+      .get(`/healthConnectProvider/service/${providerUuid}/service-categories`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching service categories:', error);
+    throw error;
+  }
+};
+export const exportServicesByCategories = async (providerUuid, categories, providerName) => {
+  try {
+    const response = await api1
+      .addAuthenticationHeader()
+      .post(
+        `/healthConnectProvider/service/${providerUuid}/services/export`,
+        { categories },
+        { responseType: 'blob' }
+      );
+
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Sanitize provider name for filename
+    const sanitizedName = (providerName || 'services')
+      .replace(/[^a-z0-9]/gi, '_')  // Replace special chars with underscore
+      .toLowerCase();
+    
+    const filename = `services_${sanitizedName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    setTimeout(() => {
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    }, 100);
+
+    return true;
+  } catch (error) {
+    console.error('Export error:', error);
+    toasted(false, "Failed to export services", error.message || 'Export failed');
+    return false;
+  }
+};
 
 // Function to get a service by ID
 export function getServiceByid(id) {

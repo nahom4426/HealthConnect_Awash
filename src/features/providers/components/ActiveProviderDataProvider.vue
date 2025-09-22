@@ -1,9 +1,12 @@
 <script setup>
 import { usePagination } from "@/composables/usePagination";
 import { useProviders } from "../store/providersStore";
-import { getActiveProviders } from "../api/providerApi";
+import { getActiveProviders, getMappedActiveProviders } from "../api/providerApi";
 import { watch, computed, onMounted } from "vue";
 import { removeUndefined } from "@/utils/utils";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
 
 const props = defineProps({
   auto: {
@@ -19,13 +22,14 @@ const props = defineProps({
     default: "",
   },
 });
-
+const getMappedActiveProvider = route.params.payerInstitutionContractUuid || route.params.id || "";
 const store = useProviders();
 
 const pagination = usePagination({
   store: store,
   cb: (data) =>
-    getActiveProviders(
+    getMappedActiveProviders(
+      getMappedActiveProvider,
       removeUndefined({
         ...data,
         status: props.status,

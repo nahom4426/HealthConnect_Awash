@@ -1,30 +1,23 @@
-<script setup lang="ts">
+<script setup>
 import Button from "@/components/Button.vue";
 import ClaimDetail from "../../components/ClaimDetail.vue";
 import ClaimIndividualDetailDataProvider from "../../components/ClaimIndividualDetailDataProvider.vue";
 import { openModal } from "@customizer/modal-x";
 import { useApiRequest } from "@/composables/useApiRequest";
-import {
-  claimApproved,
-  claimAuthorized,
-  claimProccessed,
-  claimVerified,
-} from "../../api/claimApi";
+import { claimAuthorized } from "../../api/claimApi";
 import { toasted } from "@/utils/utils";
 import { useRoute } from "vue-router";
-import { ClaimStatus } from "@/types/interface";
 
 const route = useRoute();
 const batchCode = route.params.batchCode;
 
 const authClaimReq = useApiRequest();
-function approveClaim(data: any) {
+
+function approveClaim(data) {
   if (authClaimReq.pending.value) return;
   openModal(
     "Comment",
-    {
-      title: "Authorize Claim",
-    },
+    { title: "Authorize Claim" },
     (comment) => {
       if (comment) {
         authClaimReq.send(
@@ -53,7 +46,7 @@ function approveClaim(data: any) {
         <Button
           :pending="authClaimReq.pending.value"
           v-if="
-            rest.detail?.claimStatus == ClaimStatus.APPROVED &&
+            rest.detail?.claimStatus === 'APPROVED' &&
             !authClaimReq.dirty.value &&
             !authClaimReq.error.value
           "

@@ -1,30 +1,22 @@
-<script setup lang="ts">
-import { type PropType, ref } from "vue";
+<script setup>
+import { ref } from "vue";
 import Button from "../Button.vue";
 import NestedDrawerButton from "./NestedDrawerButton.vue";
 import icons from "@/utils/icons";
 import { RouterLink } from "vue-router";
 
-export type Nav = {
-  path?: string;
-  icon: string;
-  name: string;
-  meta?: {
-    requiresAuth: boolean;
-    permissions: string[];
-  };
-  navs?: Nav[];
-};
-
+// Props
 const props = defineProps({
   navs: {
-    type: Object as PropType<Nav>,
+    type: Object,
     required: true,
   },
 });
 
+// Local state
 const open = ref(false);
 </script>
+
 <template>
   <div
     v-privilage="navs.meta?.permissions"
@@ -48,6 +40,7 @@ const open = ref(false);
       </div>
     </RouterLink>
   </div>
+
   <div
     v-privilage="navs.meta?.permissions"
     class="flex flex-col gap-2"
@@ -75,6 +68,7 @@ const open = ref(false);
         </Button>
       </div>
     </div>
+
     <div
       class="border-l flex flex-col gap-2 ml-5 pl-2"
       v-if="open && navs?.navs"

@@ -4,11 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "--build",
-    "preview": "vite preview"
+    "type-check": "vue-tsc --noEmit",
+    "build-only": "vite build",
+    "build": "run-p type-check build-only"
   },
-  
   "dependencies": {
     "@customizer/modal-x": "^0.0.88",
     "@headlessui/vue": "^1.7.23",
@@ -25,7 +24,7 @@
     "vee-validate": "^4.15.1",
     "vue": "^3.4.29",
     "vue-router": "^4.3.3",
-   "vue-toastification": "2.0.0-rc.5",
+    "vue-toastification": "2.0.0-rc.5",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -34,7 +33,7 @@
     "@vitejs/plugin-vue": "^5.0.5",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
     "@vue/tsconfig": "^0.5.1",
-    "npm-run-all2": "^6.2.0",
+    "npm-run-all": "^4.1.5",
     "typescript": "~5.4.0",
     "vite": "^5.3.1",
     "vite-plugin-vue-devtools": "^7.3.1",

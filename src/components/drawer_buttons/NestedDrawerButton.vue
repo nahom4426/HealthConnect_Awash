@@ -1,11 +1,9 @@
-<script setup lang="ts">
-import { PropType } from "vue";
+<script setup>
 import DrawerButtonParent from "./DrawerButtonParent.vue";
-import type { Nav } from "./DrawerButtonParent.vue"; // <-- note the 'type' keyword
 
 defineProps({
   navs: {
-    type: Array as PropType<Nav[]>,
+    type: Array,
     required: true,
   },
 });

@@ -1,19 +1,22 @@
-<script setup lang="ts">
+<script setup>
 import { onMounted, ref, watch } from 'vue';
-import { Chart, ChartOptions, ChartData, registerables } from 'chart.js';
+import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
-// Props typing
-const props = defineProps<{
-  chartData: ChartData<'line'>;
-  options?: ChartOptions<'line'>;
-  height?: string;
-  fill?: boolean;
-}>();
+// Props
+const props = defineProps({
+  chartData: {
+    type: Object,
+    required: true
+  },
+  options: Object,
+  height: String,
+  fill: Boolean,
+});
 
-const chartContainer = ref<HTMLCanvasElement | null>(null);
-let chart: Chart<'line'> | null = null;
+const chartContainer = ref(null);
+let chart = null;
 
 onMounted(() => {
   createChart();

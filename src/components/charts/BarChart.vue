@@ -1,20 +1,23 @@
-<script setup lang="ts">
+<script setup>
 import { onMounted, ref, watch } from "vue";
-import { Chart, ChartOptions, ChartData, registerables, BarControllerChartOptions } from "chart.js";
+import { Chart, registerables } from "chart.js";
 
 Chart.register(...registerables);
 
-// Props typing
-const props = defineProps<{
-  chartData: ChartData<"bar">;
-  options?: ChartOptions<"bar">;
-  height?: string;
-  barThickness?: number;
-  maxBarThickness?: number;
-}>();
+// Props
+const props = defineProps({
+  chartData: {
+    type: Object,
+    required: true
+  },
+  options: Object,
+  height: String,
+  barThickness: Number,
+  maxBarThickness: Number,
+});
 
-const chartContainer = ref<HTMLCanvasElement | null>(null);
-let chart: Chart<"bar"> | null = null;
+const chartContainer = ref(null);
+let chart = null;
 
 onMounted(() => {
   createChart();
@@ -34,7 +37,7 @@ watch(
 function createChart() {
   if (!chartContainer.value) return;
 
-  const defaultOptions: ChartOptions<"bar"> = {
+  const defaultOptions = {
     responsive: true,
     maintainAspectRatio: false,
   };
@@ -45,7 +48,7 @@ function createChart() {
       bar: {
         ...(props.barThickness !== undefined ? { barThickness: props.barThickness } : {}),
         ...(props.maxBarThickness !== undefined ? { maxBarThickness: props.maxBarThickness } : {}),
-      } as any, // Chart.js typing for dataset options can be tricky
+      },
     };
   }
 

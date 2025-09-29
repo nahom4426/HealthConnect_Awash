@@ -1,33 +1,20 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
-import { Chart, registerables } from "chart.js";
+import { Chart, ChartOptions, ChartData, registerables, BarControllerChartOptions } from "chart.js";
+
 Chart.register(...registerables);
 
-const props = defineProps({
-  chartData: {
-    type: Object,
-    required: true,
-  },
-  options: {
-    type: Object,
-    default: () => ({}),
-  },
-  height: {
-    type: String,
-    default: "300px",
-  },
-  barThickness: {
-    type: Number,
-    default: undefined,
-  },
-  maxBarThickness: {
-    type: Number,
-    default: undefined,
-  },
-});
+// Props typing
+const props = defineProps<{
+  chartData: ChartData<"bar">;
+  options?: ChartOptions<"bar">;
+  height?: string;
+  barThickness?: number;
+  maxBarThickness?: number;
+}>();
 
-const chartContainer = ref(null);
-let chart = null;
+const chartContainer = ref<HTMLCanvasElement | null>(null);
+let chart: Chart<"bar"> | null = null;
 
 onMounted(() => {
   createChart();
@@ -45,37 +32,33 @@ watch(
 );
 
 function createChart() {
-  if (chartContainer.value) {
-    const defaultOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      datasets: {
-        bar: {},
-      },
+  if (!chartContainer.value) return;
+
+  const defaultOptions: ChartOptions<"bar"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+  };
+
+  // Apply bar thickness options if provided
+  if (props.barThickness !== undefined || props.maxBarThickness !== undefined) {
+    defaultOptions.datasets = {
+      bar: {
+        ...(props.barThickness !== undefined ? { barThickness: props.barThickness } : {}),
+        ...(props.maxBarThickness !== undefined ? { maxBarThickness: props.maxBarThickness } : {}),
+      } as any, // Chart.js typing for dataset options can be tricky
     };
-
-    if (props.barThickness !== undefined) {
-      defaultOptions.datasets.bar.barThickness = props.barThickness;
-    }
-
-    if (props.maxBarThickness !== undefined) {
-      defaultOptions.datasets.bar.maxBarThickness = props.maxBarThickness;
-    }
-
-    chart = new Chart(chartContainer.value, {
-      type: "bar",
-      data: props.chartData,
-      options: {
-        ...defaultOptions,
-        ...props.options,
-      },
-    });
   }
+
+  chart = new Chart(chartContainer.value, {
+    type: "bar",
+    data: props.chartData,
+    options: { ...defaultOptions, ...props.options },
+  });
 }
 </script>
 
 <template>
-  <div :style="{ height }">
+  <div :style="{ height: props.height || '300px' }">
     <canvas ref="chartContainer"></canvas>
   </div>
 </template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { PropType } from "vue";
-import DrawerButtonParent, { Nav } from "./DrawerButtonParent.vue";
+import DrawerButtonParent from "./DrawerButtonParent.vue";
+import type { Nav } from "./DrawerButtonParent.vue"; // <-- note the 'type' keyword
 
 defineProps({
   navs: {
@@ -8,10 +9,12 @@ defineProps({
     required: true,
   },
 });
-
 </script>
+
 <template>
-	<DrawerButtonParent
-		:navs="nav" v-for="nav in navs" :key="nav.name"
-	/>
+  <DrawerButtonParent
+    v-for="nav in navs"
+    :key="nav.name"
+    :navs="nav"
+  />
 </template>

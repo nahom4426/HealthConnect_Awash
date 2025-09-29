@@ -1,15 +1,14 @@
-<script setup lang="ts">
-import { ref, defineProps, defineEmits, defineExpose } from "vue";
-import { Gender } from "@/utils/utils";
-import { Status } from "@/types/interface";
-import Form from "@/components/new_form_builder/Form.vue";
-import { Input, Select } from "@/components/new_form_elements";
+<script setup>
+import { ref, defineProps, defineEmits, defineExpose } from "vue"
+import { Gender } from "@/utils/utils"
+import { Status } from "@/types/interface"
+import Form from "@/components/new_form_builder/Form.vue"
+import { Input, Select } from "@/components/new_form_elements"
 // import DatePicker from '@/components/new_form_elements/DatePicker.vue';
-import type { InsuredPerson } from "@/types/interface";
 
 const props = defineProps({
   insuredPerson: {
-    type: Object as () => InsuredPerson,
+    type: Object,
     default: () => ({}),
   },
   institutionId: {
@@ -20,38 +19,36 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-
   pending: {
     type: Boolean,
     default: false,
   },
-});
+})
 
-const emit = defineEmits(["submit", "cancel"]);
+const emit = defineEmits(["submit", "cancel"])
 
 // Form data
-const title = ref(props.insuredPerson?.title || "");
-const firstName = ref(props.insuredPerson?.firstName || "");
-const fatherName = ref(props.insuredPerson?.fatherName || "");
-const grandFatherName = ref(props.insuredPerson?.grandFatherName || "");
-const email = ref(props.insuredPerson?.email || "");
-const phone = ref(props.insuredPerson?.phone || "");
-const birthDate = ref(props.insuredPerson?.birthDate || "");
-const gender = ref(props.insuredPerson?.gender || "");
-const branchOffice = ref(props.insuredPerson?.branchOffice || "");
-const position = ref(props.insuredPerson?.position || "");
-const idNumber = ref(props.insuredPerson?.idNumber || "");
-const premium = ref(props.insuredPerson?.premium || 0);
-const address1 = ref(props.insuredPerson?.address1 || "");
-const address2 = ref(props.insuredPerson?.address2 || "");
-const address3 = ref(props.insuredPerson?.address3 || "");
-const state = ref(props.insuredPerson?.state || "");
-const country = ref(props.insuredPerson?.country || "Ethiopia");
-const status = ref(props.insuredPerson?.status || Status.ACTIVE);
+const title = ref(props.insuredPerson?.title || "")
+const firstName = ref(props.insuredPerson?.firstName || "")
+const fatherName = ref(props.insuredPerson?.fatherName || "")
+const grandFatherName = ref(props.insuredPerson?.grandFatherName || "")
+const email = ref(props.insuredPerson?.email || "")
+const phone = ref(props.insuredPerson?.phone || "")
+const birthDate = ref(props.insuredPerson?.birthDate || "")
+const gender = ref(props.insuredPerson?.gender || "")
+const branchOffice = ref(props.insuredPerson?.branchOffice || "")
+const position = ref(props.insuredPerson?.position || "")
+const idNumber = ref(props.insuredPerson?.idNumber || "")
+const premium = ref(props.insuredPerson?.premium || 0)
+const address1 = ref(props.insuredPerson?.address1 || "")
+const address2 = ref(props.insuredPerson?.address2 || "")
+const address3 = ref(props.insuredPerson?.address3 || "")
+const state = ref(props.insuredPerson?.state || "")
+const country = ref(props.insuredPerson?.country || "Ethiopia")
+const status = ref(props.insuredPerson?.status || Status.ACTIVE)
 
 // Handle form submission
 function handleSubmit() {
-  // Validate required fields before submission
   const requiredFields = [
     { name: "Title", value: title.value },
     { name: "Institution", value: props.institutionId },
@@ -69,19 +66,18 @@ function handleSubmit() {
     { name: "Address 2", value: address2.value },
     { name: "Address 3", value: address3.value },
     { name: "State", value: state.value },
-  ];
+  ]
 
   const missingFields = requiredFields
     .filter((field) => !field.value)
-    .map((field) => field.name);
+    .map((field) => field.name)
 
   if (missingFields.length > 0) {
-    console.error("Missing required fields:", missingFields);
-    alert(`Please fill in all required fields: ${missingFields.join(", ")}`);
-    return;
+    console.error("Missing required fields:", missingFields)
+    alert(`Please fill in all required fields: ${missingFields.join(", ")}`)
+    return
   }
 
-  // Create payload
   const payload = {
     email: email.value,
     payerUuid: props.institutionId,
@@ -102,21 +98,19 @@ function handleSubmit() {
     country: country.value,
     status: status.value,
     gender: gender.value,
-  };
-
-  // If editing, include the UUID
-  if (props.insuredPerson?.insuredPersonUuid) {
-    payload.insuredPersonUuid = props.insuredPerson.insuredPersonUuid;
   }
 
-  console.log("Submitting insured person data:", payload);
-  emit("submit", payload);
+  if (props.insuredPerson?.insuredPersonUuid) {
+    payload.insuredPersonUuid = props.insuredPerson.insuredPersonUuid
+  }
+
+  console.log("Submitting insured person data:", payload)
+  emit("submit", payload)
 }
 
-// Expose the handleSubmit method to parent components
 defineExpose({
   handleSubmit,
-});
+})
 </script>
 
 <template>
@@ -137,9 +131,7 @@ defineExpose({
       :options="['Mr.', 'Mrs.', 'Ms.']"
       v-model="title"
       validation="required"
-      :attributes="{
-        placeholder: 'Select Title',
-      }"
+      :attributes="{ placeholder: 'Select Title' }"
     />
 
     <Input
@@ -147,9 +139,7 @@ defineExpose({
       name="firstName"
       v-model="firstName"
       validation="required|max-25"
-      :attributes="{
-        placeholder: 'Enter First Name',
-      }"
+      :attributes="{ placeholder: 'Enter First Name' }"
     />
 
     <Input
@@ -157,9 +147,7 @@ defineExpose({
       name="fatherName"
       v-model="fatherName"
       validation="required|max-25"
-      :attributes="{
-        placeholder: 'Enter Father Name',
-      }"
+      :attributes="{ placeholder: 'Enter Father Name' }"
     />
 
     <Input
@@ -167,42 +155,24 @@ defineExpose({
       name="grandFatherName"
       v-model="grandFatherName"
       validation="required|max-25"
-      :attributes="{
-        placeholder: 'Enter Grand Father Name',
-      }"
+      :attributes="{ placeholder: 'Enter Grand Father Name' }"
     />
 
-    <!-- Use a standard HTML date input as fallback -->
-    <!-- <DatePicker
-      label="Birth Date"
-      name="birthDate"
-      v-model="birthDate"
-      validation="required"
-      :attributes="{
-        placeholder: 'Select Birth Date',
-        max: new Date().toISOString().split('T')[0],
-        class: 'form-control '
-      }"
-    /> -->
     <Input
       name="birthDate"
       label="Date of Birth"
       v-model="birthDate"
       validation="required"
-      :attributes="{
-        type: 'date',
-        placeholder: 'Enter Grand Father\'s Name',
-      }"
+      :attributes="{ type: 'date', placeholder: 'Select Birth Date' }"
     />
+
     <Select
       label="Gender"
       name="gender"
       :options="['MALE', 'FEMALE', 'OTHER']"
       v-model="gender"
       validation="required"
-      :attributes="{
-        placeholder: 'Select Gender',
-      }"
+      :attributes="{ placeholder: 'Select Gender' }"
     />
 
     <!-- Contact Information -->
@@ -216,10 +186,7 @@ defineExpose({
       name="email"
       v-model="email"
       validation="required|email"
-      :attributes="{
-        placeholder: 'Enter Email',
-        type: 'email',
-      }"
+      :attributes="{ placeholder: 'Enter Email', type: 'email' }"
     />
 
     <Input
@@ -227,10 +194,7 @@ defineExpose({
       name="phone"
       v-model="phone"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter Phone Number',
-        type: 'tel',
-      }"
+      :attributes="{ placeholder: 'Enter Phone Number', type: 'tel' }"
     />
 
     <Input
@@ -238,9 +202,7 @@ defineExpose({
       name="idNumber"
       v-model="idNumber"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter ID Number',
-      }"
+      :attributes="{ placeholder: 'Enter ID Number' }"
     />
 
     <!-- Employment Information -->
@@ -254,9 +216,7 @@ defineExpose({
       name="branchOffice"
       v-model="branchOffice"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter Branch Office',
-      }"
+      :attributes="{ placeholder: 'Enter Branch Office' }"
     />
 
     <Input
@@ -264,9 +224,7 @@ defineExpose({
       name="position"
       v-model="position"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter Position',
-      }"
+      :attributes="{ placeholder: 'Enter Position' }"
     />
 
     <Input
@@ -274,10 +232,7 @@ defineExpose({
       name="premium"
       v-model="premium"
       validation="required|numeric"
-      :attributes="{
-        placeholder: 'Enter Premium Amount',
-        type: 'number',
-      }"
+      :attributes="{ placeholder: 'Enter Premium Amount', type: 'number' }"
     />
 
     <!-- Address Information -->
@@ -291,9 +246,7 @@ defineExpose({
       name="country"
       v-model="country"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter Country',
-      }"
+      :attributes="{ placeholder: 'Enter Country' }"
     />
 
     <Input
@@ -301,9 +254,7 @@ defineExpose({
       name="state"
       v-model="state"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter State/Region',
-      }"
+      :attributes="{ placeholder: 'Enter State/Region' }"
     />
 
     <Input
@@ -311,9 +262,7 @@ defineExpose({
       name="address3"
       v-model="address3"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter City',
-      }"
+      :attributes="{ placeholder: 'Enter City' }"
     />
 
     <Input
@@ -321,19 +270,15 @@ defineExpose({
       name="address2"
       v-model="address2"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter Sub City',
-      }"
+      :attributes="{ placeholder: 'Enter Sub City' }"
     />
 
     <Input
-      label="address1"
+      label="Address1"
       name="address1"
       v-model="address1"
       validation="required"
-      :attributes="{
-        placeholder: 'Enter address1',
-      }"
+      :attributes="{ placeholder: 'Enter Address1' }"
     />
 
     <Select
@@ -342,9 +287,7 @@ defineExpose({
       :options="[Status.ACTIVE, Status.PENDING, Status.SUSPENDED]"
       v-model="status"
       validation="required"
-      :attributes="{
-        placeholder: 'Select Status',
-      }"
+      :attributes="{ placeholder: 'Select Status' }"
     />
   </Form>
 </template>

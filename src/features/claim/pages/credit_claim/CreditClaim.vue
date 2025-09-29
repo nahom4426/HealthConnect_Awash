@@ -13,7 +13,8 @@ import { useRequestdClaims } from "../../store/requestedCreditClaimStore";
 import FilterOnDetector from "@/components/FilterOnDetector.vue";
 
 const institutionUuid = ref();
-const providerUuid = ref();
+const contractUuid = ref();
+const itemType = ref('SERVICE'); // default to SERVICE
 
 const claimStore = useRequestdClaims();
 const pagination = usePagination({
@@ -23,7 +24,8 @@ const pagination = usePagination({
     getRequestedClaim({
       ...data,
       institutionUuid: institutionUuid.value,
-      providerUuid: providerUuid.value,
+      contractUuid: contractUuid.value,
+      itemType: itemType.value,
     }),
 });
 
@@ -35,7 +37,7 @@ if (!claimStore.requestedClaims.length) {
 <template>
   <DefaultPage v-model="pagination.search.value">
     <template #more>
-      <FilterOnDetector :watch="[institutionUuid, providerUuid]">
+      <FilterOnDetector :watch="[institutionUuid, contractUuid]">
         <SearchSelect
           placeholder="Filter by Institution"
           :searchCb="(data) => getInstitutionsPolicyByStatus({...data, status: Status.ACTIVE})"
@@ -49,10 +51,11 @@ if (!claimStore.requestedClaims.length) {
           }"
         />
         <SearchSelect
-          placeholder="Filter by a Provider"
+          placeholder="Filter by a Provider / Contract"
           :searchCb="(data) => getProviders({...data, status: Status.ACTIVE})"
           :selectCb="(result) => {
-            providerUuid.value = result?.providerUuid || '';
+            // API returns contractUuid on the record — fallback to providerUuid if not present
+            contractUuid.value = result?.contractUuid || result?.providerUuid || '';
             pagination.send();
           }"
           :option="{
@@ -66,9 +69,8 @@ if (!claimStore.requestedClaims.length) {
       :pending="pagination.pending.value"
       :headers="{
         head: [
-          'Policy Holder Name',
+          'Insured Name',
           'Provider Name',
-          'Provider Phone',
           'Group Name',
           'Total Amount',
           'Status',
@@ -78,26 +80,26 @@ if (!claimStore.requestedClaims.length) {
         row: [
           'fullname',
           'providerName',
-          'providerPhone',
           'institutionName',
-          'totalAmount',
+          'amount',
           'status',
-          'claimDate',
+          'providedDate',
         ],
       }"
       :cells="{
         fullname: (_, row) => {
-          return !row?.relationship ? `${row?.title} ${row?.firstName} ${row?.fatherName} ${row?.grandFatherName}` : `${row?.dependantFirstName} ${row?.dependantFatherName} ${row?.dependantGrandFatherName}`;
+          // use insuredName from API, fallback to dependantName
+          return row?.insuredName || row?.dependantName || '';
         },
-        totalAmount: formatCurrency,
+        amount: formatCurrency,
         status: () => 'Pending',
-        claimDate: secondDateFormat
+        providedDate: secondDateFormat
       }"
       :rows="claimStore.requestedClaims"
     >
       <template #actions="{ row }">
         <Button type="link">
-          <RouterLink :to="`/credit_claims/detail/${row.claimUuid}`">
+          <RouterLink :to="`/credit_claims/detail/${row.serviceProvidedUuid || row.claimUuid}`">
             View Detail
           </RouterLink> 
         </Button>

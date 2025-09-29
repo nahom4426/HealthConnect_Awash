@@ -1,7 +1,7 @@
 <script setup>
 import { useApiRequest } from "@/composables/useApiRequest";
 import { usePagination } from "@/composables/usePagination";
-import { watch } from "vue";
+import { watch, unref } from "vue";
 import { PaymentStatus } from "@/types/interface";
 import { useClaimByInstitutionBatch } from "../store/claimByInstitutionBatchStore";
 import { getClaimsByInstitutionBatch } from "../api/claimApi";
@@ -19,7 +19,7 @@ const props = defineProps({
   },
   status: {
     type: String,
-    default: PaymentStatus.REQUESTED,
+    default: PaymentStatus.PENDING,
   },
   params: {
     type: Object,
@@ -35,17 +35,29 @@ const pagination = usePagination({
   auto: false,
   reset: true,
   cb: (data) => {
+    // unwrap any refs from props.params and build params, prefer claimStatus per API
+    const params = { ...data };
+
+    // merge unwrapped params (skip null/undefined)
+    Object.keys(props.params || {}).forEach((k) => {
+      const v = unref(props.params[k]);
+      if (v !== null && v !== undefined && v !== "") {
+        params[k] = v;
+      }
+    });
+
+    // ensure claimStatus is always sent (API expects this)
+    params.claimStatus = props.status;
+
+    // remove empty search and any null/undefined values to avoid sending unwanted query keys
+    if (params.search === "" || params.search == null) delete params.search;
+    Object.keys(params).forEach((k) => {
+      if (params[k] === null || params[k] === undefined) delete params[k];
+    });
+
     return props.creditService
-      ? getClaimsByInstitutionBatch({
-          ...data,
-          ...props.params,
-          status: props.status,
-        })
-      : getCashClaimsByInstitutionBatch({
-          ...data,
-          ...props.params,
-          status: props.status,
-        });
+      ? getClaimsByInstitutionBatch(params)
+      : getCashClaimsByInstitutionBatch(params);
   },
 });
 

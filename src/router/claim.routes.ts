@@ -55,7 +55,7 @@ export default [
         component: ProcessClaims,
       },
       {
-        path: "detail/:providerUuid/:batchCode",
+        path: "detail/:claimUuid",
         name: "Process Claim Batch Detail",
         component: ProcessClaimDetailIndex,
         children: [

@@ -130,11 +130,13 @@ export enum Status {
 }
 
 export enum PaymentStatus {
-  REQUESTED = "Requested",
-  PROCESSED = 'Processed',
-  CHECKED = 'Checked',
-  APPROVED = 'Approved',
-  AUTHORIZED = 'Authorized'
+  PENDING = "PENDING",
+  REQUESTED = "REQUESTED",
+  PROCESSED = "PROCESSED",
+  CHECKED = "CHECKED",
+  APPROVED = "APPROVED",
+  AUTHORIZED = "AUTHORIZED",
+  REJECTED = "REJECTED"
 }
 
 export enum CStatus {

@@ -45,22 +45,24 @@ watch(() => props.modelValue, () => {
         <slot name="left"></slot>
         <select
           :style="{
-            opacity: attributes?.placeholder && !value ? .6 : 1
+            opacity: attributes?.placeholder && !value ? .65 : 1
           }"
           :ref="setRef"
           class="appearance-none flex-1 text-text-clr h-full text-sm"
+          :value="value"
+          @change="(e) => { value = e.target.value }"
+          :aria-label="attributes?.label || attributes?.placeholder || 'select'"
         >
           <option
-            selected
             value=""
             disabled
           >
-            {{ attributes?.placeholder }}
+            {{ attributes?.placeholder || 'Select' }}
           </option>
           <template v-if="!obj">
             <option
               class="text-sm px-4"
-              :selected="value == option"
+              :value="option"
               :key="option"
               v-for="option in options"
             >
@@ -69,7 +71,6 @@ watch(() => props.modelValue, () => {
           </template>
           <template v-else>
             <option
-              :selected="value == option.value"
               :value="option.value"
               :key="option.value"
               v-for="option in options"

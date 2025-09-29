@@ -9,15 +9,13 @@ import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import { ref } from "vue";
-import { ServiceTypes } from "@/types/interface";
+import { ServiceTypes, Status, PaymentStatus } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useProcessClaimByInstitutionBatch } from "../../store/processClaimByInstitutionBatchStore";
 
 const institutionUuid = ref();
-const providerUuid = ref();
-
+const contractUuid = ref();
 const active = ref(ServiceTypes.creditService);
-
 const store = useProcessClaimByInstitutionBatch();
 </script>
 
@@ -25,110 +23,48 @@ const store = useProcessClaimByInstitutionBatch();
   <ClaimByBatchDataProvider
     :store="store"
     :creditService="active == ServiceTypes.creditService"
-    :params="{
+    :status="PaymentStatus.PENDING"
+   :params="{
       providerUuid: providerUuid,
       institutionUuid: institutionUuid,
     }"
     v-slot="{ claims, pending, search }"
   >
-    <DefaultPage v-model="search.value">
+    <DefaultPage v-if="search" v-model="search.value">
       <template #header>
         <Toogle
           v-model="active"
           :items="[
-            {
-              name: ServiceTypes.creditService,
-            },
-            {
-              name: ServiceTypes.cashService,
-            },
+            { name: ServiceTypes.creditService },
+            { name: ServiceTypes.cashService }
           ]"
         />
-        <FilterOnDetector :watch="[institutionUuid, providerUuid]">
+        <FilterOnDetector :watch="[institutionUuid, contractUuid]">
           <SearchSelect
             placeholder="Filter by Institution"
             :searchCb="(data) => getInstitutionsPolicyByStatus({...data, status: Status.ACTIVE})"
-            :selectCb="(result) => {
-              institutionUuid.value = result?.institutionUuid || null;
-            }"
-            :option="{
-              label: 'institutionName',
-              value: 'institutionUuid',
-            }"
+            :selectCb="(result) => { institutionUuid.value = result?.institutionUuid || null; }"
+            :option="{ label: 'institutionName', value: 'institutionUuid' }"
           />
           <SearchSelect
             v-if="ServiceTypes.creditService == active"
-            placeholder="Filter by a Provider"
+            placeholder="Filter by a Provider / Contract"
             :searchCb="(data) => getProviders({...data, status: Status.ACTIVE})"
-            :selectCb="(result) => {
-              providerUuid.value = result?.providerUuid || null;
-            }"
-            :option="{
-              label: 'providerName',
-              value: 'providerUuid',
-            }"
+            :selectCb="(result) => { contractUuid.value = result?.contractUuid || result?.providerUuid || null; }"
+            :option="{ label: 'providerName', value: 'providerUuid' }"
           />
         </FilterOnDetector>
       </template>
+
       <Table
         :pending="pending"
-        :headers="{
-          head:
-            ServiceTypes.creditService == active
-              ? [
-                  'Policy Holder Name',
-                  'Provider Name',
-                  'Batch Code',
-                  'Total Amount',
-                  'Requested Date',
-                  'Status',
-                  'actions',
-                ]
-              : [
-                  'Policy Holder Name',
-                  'Provider Name',
-                  'Batch Code',
-                  'Total Amount',
-                  'Requested Date',
-                  'Status',
-                  'actions',
-                ],
-          row:
-            ServiceTypes.creditService == active
-              ? [
-                  'institutionName',
-                  'providerName',
-                  'batchCode',
-                  'totalAmount',
-                  'requestPaymentDate',
-                  'claimStatus',
-                ]
-              : [
-                  'institutionName',
-                  'hospitalName',
-                  'claimBatchCode',
-                  'totalAmount',
-                  'actionDate',
-                  'status',
-                ],
-        }"
-        :cells="{
-          totalAmount: formatCurrency,
-          requestPaymentDate: secondDateFormat,
-          actionDate: secondDateFormat,
-        }"
+        :headers="{ head: [ 'Policy Holder Name','Provider Name','Batch Code','Total Amount','Requested Date','Status','actions' ], row: ['institutionName','providerName','batchCode','totalAmount','requestPaymentDate','claimStatus'] }"
+        :cells="{ totalAmount: formatCurrency, requestPaymentDate: secondDateFormat }"
         :rows="claims"
       >
         <template #actions="{ row }">
           <Button size="xs" type="elevated">
-            <RouterLink
-              :to="ServiceTypes.creditService == active 
-                ? `/process_claims/detail/${(row).providerUuid}/${encodeURIComponent((row).batchCode)}` 
-                : `/process_claims/cash_detail/${encodeURIComponent((row)?.claimBatchCode)}`
-              "
-            >
-              Detail
-            </RouterLink>
+            <RouterLink :to="`/process_claims/detail/${(row).claimUuid || ''}`">Detail</RouterLink>
           </Button>
         </template>
       </Table>

@@ -228,6 +228,9 @@ const range = (start, end) => {
             <template v-if="firstCol" #select="{ row }">
               <slot name="select" :row="row" />
             </template>
+            <template v-if="firstCol" #firstCol="{ row }">
+              <slot name="firstCol" :row="row" />
+            </template>
             <template v-if="lastCol" #lastCol="{ row }">
               <slot name="lastCol" :row="row" />
             </template>

@@ -1,6 +1,5 @@
 <script setup>
 import icons from "@/utils/icons";
-// import Dropdown from "./Dropdown.vue";
 import { useAuthStore } from "@/stores/auth";
 import { ref, computed, onMounted } from "vue";
 import imageSrc from '@/assets/img/profile.png';
@@ -8,27 +7,27 @@ import Dropdown from "./new_form_elements/Dropdown.vue";
 
 const authStore = useAuthStore();
 const isScrolled = ref(false);
-const profilePicture = ref(authStore.auth?.user?.imageData || null);
 
-async function processProfilePicture() {
-  if (profilePicture.value && !profilePicture.value.startsWith("data:image/")) {
-    profilePicture.value = `data:image/png;base64,${authStore.auth?.user?.imageData}`;
-  }
-}
+const profilePicture = computed(() => {
+  const data = authStore.auth?.user?.imageData || authStore.auth?.user?.image || null;
+  if (!data) return imageSrc;
+  // if already base64 data URI
+  if (typeof data === "string" && data.startsWith("data:image/")) return data;
+  return `data:image/png;base64,${data}`;
+});
 
 onMounted(() => {
-  processProfilePicture();
   window.addEventListener('scroll', () => {
     isScrolled.value = window.scrollY > 10;
   });
 });
 
-function handleImageError() {
-  profilePicture.value = imageSrc;
+function handleImageError(event) {
+  event.target.src = imageSrc;
 }
 
 function logout() {
-  authStore.logout(); // Uses the centralized logout logic
+  authStore.logout();
 }
  
 const props = defineProps({
@@ -38,7 +37,7 @@ const props = defineProps({
 
 <template>
   <div
-    class="h-navbar-height bg-white/80 backdrop-blur-md bg-red-500 flex items-center sticky top-0 z-50 justify-between px-6 transition-all duration-300 shadow-sm"
+    class="h-navbar-height bg-white/80 backdrop-blur-md flex items-center sticky top-0 z-50 justify-between px-6 transition-all duration-300 shadow-sm"
     :class="{
       'shadow-lg scale-[1.005]': isScrolled,
       'border-b border-gray-100': !isScrolled
@@ -86,6 +85,7 @@ const props = defineProps({
         <button
           @click.prevent="toggleDropdown"
           class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 group hover:scale-105"
+          aria-haspopup="true"
         >
           <span class="text-sm font-medium text-gray-700 group-hover:text-primary">ENG</span>
           <i 
@@ -98,7 +98,6 @@ const props = defineProps({
           :ref="setRef"
         >
           <button class="p-2 text-left hover:bg-gray-50 rounded-md transition-colors">English</button>
-          <!-- <button class="p-2 text-left hover:bg-gray-50 rounded-md transition-colors">Amharic</button> -->
         </div>
       </Dropdown>
 
@@ -107,11 +106,13 @@ const props = defineProps({
         <div
           @click.prevent="toggleDropdown"
           class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer group hover:scale-105"
+          role="button"
+          tabindex="0"
         >
           <div class="relative">
             <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow">
               <img
-                :src="profilePicture || imageSrc"
+                :src="profilePicture"
                 alt="User avatar"
                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 @error="handleImageError"
@@ -122,10 +123,10 @@ const props = defineProps({
 
           <div class="hidden md:flex flex-col items-start">
             <span class="text-sm font-semibold text-gray-800 max-w-[120px] line-clamp-1">
-              {{ authStore.auth.firstName + ' ' + authStore.auth.fatherName || 'User' }}
+              {{ (authStore.auth?.user?.firstName || '') + ' ' + (authStore.auth?.user?.fatherName || '') || 'User' }}
             </span>
             <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary">
-              {{ authStore.auth.roleName || 'Admin' }}
+              {{ authStore.auth?.user?.roleName || authStore.auth?.roleName || 'Admin' }}
             </span>
           </div>
           <i v-html="icons.chevron_down" class="text-xs text-gray-500 group-hover:rotate-180 transition-transform" />
@@ -137,8 +138,8 @@ const props = defineProps({
           :ref="setRef"
         >
           <div class="px-3 py-2 border-b border-gray-100">
-            <p class="text-sm font-medium text-gray-800">{{ authStore.auth.firstName }} {{ authStore.auth.fatherName }}</p>
-            <p class="text-xs text-gray-500">{{ authStore.auth.email }}</p>
+            <p class="text-sm font-medium text-gray-800">{{ authStore.auth?.user?.firstName }} {{ authStore.auth?.user?.fatherName }}</p>
+            <p class="text-xs text-gray-500">{{ authStore.auth?.user?.email }}</p>
           </div>
 
           <button @click="$router.push('/profile')" class="p-2 flex items-center gap-3 rounded-lg hover:bg-gray-50 transition-all duration-200">

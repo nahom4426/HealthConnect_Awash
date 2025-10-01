@@ -9,7 +9,7 @@ import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import { ref } from "vue";
-import { PaymentStatus, ServiceTypes } from "@/types/interface";
+import { ClaimLevel, PaymentStatus, ServiceTypes } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useVerifyClaimByInstitutionBatch } from "../../store/verifyClaimByInstitutionBatchStore";
 
@@ -24,6 +24,7 @@ const active = ref(ServiceTypes.creditService);
   <ClaimByBatchDataProvider
     :store="store"
     :status="PaymentStatus.PROCESSED"
+    :level="ClaimLevel.LEVEL1"
     :creditService="active == ServiceTypes.creditService"
     :params="{
       providerUuid: providerUuid,
@@ -102,7 +103,7 @@ const active = ref(ServiceTypes.creditService);
           <Button size="xs" type="elevated">
             <RouterLink
               :to="ServiceTypes.creditService == active
-                ? `/verify_claims/detail/${row.providerUuid}/${encodeURIComponent(row.batchCode)}`
+                ? `/verify_claims/detail/${row.claimUuid}`
                 : `/verify_claims/cash_detail/${encodeURIComponent(row.claimBatchCode)}`
               "
             >

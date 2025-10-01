@@ -138,6 +138,11 @@ export enum PaymentStatus {
   AUTHORIZED = "AUTHORIZED",
   REJECTED = "REJECTED"
 }
+export enum ClaimLevel {
+LEVEL1="LEVEL1",
+LEVEL2="LEVEL2",
+LEVEL3="LEVEL3"
+}
 
 export enum CStatus {
   ACTIVE = "Active",

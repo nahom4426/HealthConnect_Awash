@@ -98,7 +98,7 @@ export default [
         component: VerifyClaim,
       },
       {
-        path: "detail/:providerUuid/:batchCode",
+        path: "detail/:claimUuid",
         name: "Verify Claim Batch Detail",
         component: ProcessClaimDetailIndex,
         children: [
@@ -125,7 +125,7 @@ export default [
         component: ApproveClaims,
       },
       {
-        path: "detail/:providerUuid/:batchCode",
+        path: "detail/:claimUuid",
         name: "Approve Claim Batch Detail",
         component: RouterView,
         children: [
@@ -152,7 +152,7 @@ export default [
         component: AuthorizeClaims,
       },
       {
-        path: "detail/:providerUuid/:batchCode",
+        path: "detail/:claimUuid",
         name: "Authorized Claim Batch Detail",
         component: RouterView,
         children: [
@@ -179,7 +179,7 @@ export default [
         component: CompletedClaimss
       },
       {
-        path: 'detail/:providerUuid/:batchCode',
+        path: 'detail/:claimUuid',
         name: "Completed Claim Batch Detail",
         component: RouterView,
         children: [

@@ -3,7 +3,7 @@ import DefaultPage from '@/components/DefaultPage.vue';
 import { usePagination } from "@/composables/usePagination";
 import { approveClaimProcessedBy, claimProccessed, getRequestedClaimByBatchDetail, updateServiceProvidedClaimStatus } from '../../api/claimApi';
 import Table from '@/components/Table.vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { PaymentStatus } from '@/types/interface';
 import { formatCurrency, toasted, secondDateFormat } from '@/utils/utils';
 import Button from '@/components/Button.vue';
@@ -13,6 +13,7 @@ import { useApiRequest } from '@/composables/useApiRequest';
 import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
 import ProvidedItemsModal from '../../components/ProvidedItems.mdl.vue';
+const router = useRouter();
 
 const route = useRoute();
 const batchCode = route.params.batchCode;
@@ -51,7 +52,7 @@ function batchProcessed() {
   if (processedClaimReq.pending.value) return;
 
   // remark optional with action selection
-  openModal('Comment', { title: 'Process Selected Claims' }, (result) => {
+  openModal('ProcessSelectedClaim', { title: 'Process Selected Claims' }, (result) => {
     const body = checked.value.slice(); // these are serviceProvidedUuid
     if (!body.length) return;
     
@@ -91,6 +92,7 @@ function openProcessWholeClaim() {
       (res) => {
         if (res && res.status >= 200 && res.status < 300) {
           toasted(true, 'Claim processed successfully');
+          router.push('/process_claims')
           // optionally refresh current table
           pagination.send();
         }
@@ -143,7 +145,7 @@ function openItemsModal(row) {
       </template>
     </TableWithCheckBox>
 
-    <div class="mt-4 flex justify-end" v-if="canProcessWholeClaim">
+    <div class="pb-8 flex justify-end" v-if="canProcessWholeClaim">
       <Button :pending="processWholeReq.pending.value" type="primary" @click="openProcessWholeClaim">
         Process Claim
       </Button>

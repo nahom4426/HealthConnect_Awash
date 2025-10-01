@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { closeModal } from '@customizer/modal-x';
-import Button from './Button.vue';
-import ModalParent from './ModalParent.vue';
-import Form from './new_form_builder/Form.vue';
-import Textarea from './new_form_elements/Textarea.vue';
-import NewFormParent from './NewFormParent.vue';
 import { ref } from 'vue';
 import type { PropType } from 'vue';
+import Button from '@/components/Button.vue';
+import ModalParent from '@/components/ModalParent.vue';
+import NewFormParent from '@/components/NewFormParent.vue';
 
 const props = defineProps({
 	data: {

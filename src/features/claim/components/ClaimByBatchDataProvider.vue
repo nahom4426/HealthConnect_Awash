@@ -2,7 +2,7 @@
 import { useApiRequest } from "@/composables/useApiRequest";
 import { usePagination } from "@/composables/usePagination";
 import { watch, unref } from "vue";
-import { PaymentStatus } from "@/types/interface";
+import { ClaimLevel, PaymentStatus } from "@/types/interface";
 import { useClaimByInstitutionBatch } from "../store/claimByInstitutionBatchStore";
 import { getClaimsByInstitutionBatch } from "../api/claimApi";
 import { getCashClaimsByInstitutionBatch } from "../api/cashCreditApi";
@@ -20,6 +20,10 @@ const props = defineProps({
   status: {
     type: String,
     default: PaymentStatus.PENDING,
+  },
+  level: {
+    type: String,
+    default: ClaimLevel.LEVEL1,
   },
   params: {
     type: Object,
@@ -48,6 +52,7 @@ const pagination = usePagination({
 
     // ensure claimStatus is always sent (API expects this)
     params.claimStatus = props.status;
+    params.claimLevel = props.level;
 
     // remove empty search and any null/undefined values to avoid sending unwanted query keys
     if (params.search === "" || params.search == null) delete params.search;

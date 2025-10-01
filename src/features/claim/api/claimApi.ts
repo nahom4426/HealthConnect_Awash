@@ -31,7 +31,10 @@ export function getClaimLogs(query = {}) {
 export function approveClaimProcessedBy(claimUuid: string, data: { comment: string; batchCode: string }) {
   return api.addAuthenticationHeader().put(`${path}/claim/approve/processedBy/${claimUuid}`, data)
 }
-
+export function checkClaimProcessedBy(claimUuid: string, data: { comment: string; batchCode: string }) {
+	return api.addAuthenticationHeader().put(`${path}/claim/approve/approvedBy/${claimUuid}`, data)
+  }
+  
 export function claimVerified(data: any) {
   return api.addAuthenticationHeader().put(`${path}/approve/checkedBy`, data)
 }

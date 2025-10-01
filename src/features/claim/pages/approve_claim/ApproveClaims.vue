@@ -9,7 +9,7 @@ import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import { ref } from "vue";
-import { ServiceTypes, Status, PaymentStatus } from "@/types/interface";
+import { ServiceTypes, Status, PaymentStatus, ClaimLevel } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useApproveClaimByInstitutionBatch } from "../../store/approveClaimByInstitutionBatchStore";
 
@@ -23,7 +23,8 @@ const store = useApproveClaimByInstitutionBatch();
   <ClaimByBatchDataProvider
     :store="store"
     :creditService="active == ServiceTypes.creditService"
-    :status="PaymentStatus.CHECKED"
+    :status="PaymentStatus.PROCESSED"
+    :level="ClaimLevel.LEVEL2"
    :params="{
       providerUuid: providerUuid,
       institutionUuid: institutionUuid,
@@ -64,7 +65,7 @@ const store = useApproveClaimByInstitutionBatch();
       >
         <template #actions="{ row }">
           <Button size="xs" type="elevated">
-            <RouterLink :to="`/process_claims/detail/${(row).claimUuid || ''}`">Detail</RouterLink>
+            <RouterLink :to="`/approve_claims/detail/${(row).claimUuid || ''}`">Detail</RouterLink>
           </Button>
         </template>
       </Table>

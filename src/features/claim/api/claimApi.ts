@@ -15,6 +15,15 @@ export function getRequestedClaim(query: any) {
 export function getClaimDetail(id: string,) {
 	return api.addAuthenticationHeader().get<any>(`${path}/details/${id}`)
 }
+export function getAttachmentUrl(serviceProvidedUuid: string) {
+	return api.addAuthenticationHeader().get<string>(
+	  `${path}/service-provided/open/attachment`,
+	  {
+		params: { serviceProvidedUuid }
+	  }
+	)
+  }
+  
 
 export function getClaimServices(query = {}) {
 	return api.addAuthenticationHeader().get<any>(`${path}/claimed-services`, {

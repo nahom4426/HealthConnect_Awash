@@ -23,7 +23,7 @@ const props = defineProps({
   },
   level: {
     type: String,
-    default: ClaimLevel.LEVEL1,
+   
   },
   params: {
     type: Object,

@@ -32,6 +32,7 @@ const props = defineProps({
 
 // Form data
 const providerUuid = ref('');
+const providerLogo = ref(null); 
 const providerName = ref('');
 const threeDigitAcronym = ref('');
 const category = ref('');
@@ -51,18 +52,6 @@ const availableCities = computed(() => getCitiesByRegion(state.value));
 const availableSubCities = computed(() => getSubCitiesByCity(address3.value));
 const isAddisAbaba = computed(() => state.value === 'Addis Ababa');
 
-// Watchers
-watch(state, () => {
-  address3.value = '';
-  address2.value = '';
-  address1.value = '';
-});
-
-watch(address3, () => {
-  address2.value = '';
-  address1.value = '';
-});
-
 // Initialize form data
 onMounted(() => {
   if (props.initialData && Object.keys(props.initialData).length > 0) {
@@ -81,13 +70,64 @@ onMounted(() => {
     const fullTelephone = props.initialData.telephone || '';
     telephone.value = fullTelephone.startsWith('+251') ? fullTelephone.slice(4) : fullTelephone;
 
+    // Always set the preview image from initial data
     if (props.initialData.logoBase64) {
       previewImage.value = props.initialData.logoBase64;
+      // Convert base64 to blob for submission
+      providerLogo.value = base64ToBlob(props.initialData.logoBase64, 'logo.png');
     } else if (props.initialData.logoUrl) {
       previewImage.value = props.initialData.logoUrl;
+      // If we have a logo URL but no base64, we need to handle this
+      // For now, we'll fetch the image and convert to blob
+      fetchLogoFromUrl(props.initialData.logoUrl);
     }
+    
+    console.log('Initial data loaded with logo:', !!previewImage.value);
   }
 });
+
+// Helper function to convert base64 to blob
+function base64ToBlob(base64Data, filename) {
+  try {
+    // Check if base64Data is a data URL or raw base64
+    const base64 = base64Data.includes('base64,') 
+      ? base64Data.split(',')[1] 
+      : base64Data;
+    
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+    
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+      
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+    
+    const blob = new Blob(byteArrays, { type: 'image/png' });
+    return new File([blob], filename, { type: 'image/png' });
+  } catch (error) {
+    console.error('Error converting base64 to blob:', error);
+    return null;
+  }
+}
+
+// Function to fetch logo from URL and convert to blob
+async function fetchLogoFromUrl(url) {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    providerLogo.value = new File([blob], 'logo.png', { type: blob.type });
+    console.log('Logo fetched from URL and converted to file');
+  } catch (error) {
+    console.error('Error fetching logo from URL:', error);
+  }
+}
 
 const categoryOptions = [
   'Government provider',
@@ -96,23 +136,66 @@ const categoryOptions = [
 ];
 
 function handleSubmit() {
-  const formData = {
-    providerUuid: providerUuid.value,
+  console.log('=== FORM SUBMISSION START ===');
+  
+  // Create the providerRequest object as expected by the backend
+  const providerRequest = {
+    providerUuid:providerUuid.value,
     providerName: providerName.value,
     threeDigitAcronym: threeDigitAcronym.value,
     category: category.value,
     telephone: `${countryCode.value}${telephone.value}`,
     state: state.value,
-    address3: address3.value,
-    address2: address2.value,
-    address1: address1.value,
+    address3: address3.value, // City
+    address2: address2.value, // Sub City
+    address1: address1.value, // Woreda
+    address: `${address1.value}, ${address2.value}, ${address3.value}, ${state.value}`, // Combined address
     tinNumber: tin.value,
     email: email.value,
     description: memo.value,
-    country: 'Ethiopia'
+    country: 'Ethiopia',
+    // Add other required fields from Swagger
+    to_company: '', // Add this field if needed
+    format: '', // Add this field if needed
+    address4: '', // Add missing address fields
+    address5: '',
+    address6: '',
+    address7: '',
+    status: 'ACTIVE'
   };
+
+  // Include providerUuid for edits
+  if (props.isEdit && providerUuid.value) {
+    providerRequest.providerUuid = providerUuid.value;
+  }
+
+  console.log('Provider Request:', providerRequest);
+
+  // Prepare the final payload structure
+  const formData = new FormData();
+  
+  // Append providerRequest as JSON string
+  formData.append('providerRequest', JSON.stringify(providerRequest));
+  
+  // ALWAYS append logo if it exists - don't check for changes
+  if (providerLogo.value) {
+    console.log('Adding file to FormData with parameter name "file":', providerLogo.value);
+    formData.append('logo', providerLogo.value);
+  } else {
+    console.log('WARNING: No logo file available for submission');
+  }
+
+  // Debug: Log FormData contents
+  console.log('FormData contents:');
+  for (let [key, value] of formData.entries()) {
+    console.log(`- ${key}:`, value);
+  }
+
+  console.log('=== FORM SUBMISSION END ===');
+
   props.onSubmit(formData);
 }
+
 </script>
 
 <template>
@@ -132,7 +215,7 @@ function handleSubmit() {
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Provider Logo -->
+        <!-- Provider Logo - READONLY -->
         <div class="space-y-2">
           <label class="block text-sm font-medium text-gray-700">
             Provider logo
@@ -145,6 +228,9 @@ function handleSubmit() {
               <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm text-gray-500">Logo from external system</p>
             </div>
           </div>
         </div>
@@ -201,14 +287,14 @@ function handleSubmit() {
             Phone Number <span class="text-red-500">*</span>
           </label>
           <div class="flex w-full gap-2">
-            <!-- <select
+            <select
               v-model="countryCode"
               class="w-20 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
               disabled
             >
               <option value="+251">+251</option>
-            </select> -->
+            </select>
             <input
               v-model="telephone"
               placeholder="Phone number"
@@ -392,7 +478,7 @@ function handleSubmit() {
     
        <ModalFormSubmitButton
         :pending="pending"
-        :btn-text="isEdit ? 'Add Provider' : 'Add Provider'"
+        :btn-text="isEdit ? 'Update Provider' : 'Add Provider'"
         class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
       />
     </div>
@@ -405,13 +491,7 @@ input[readonly], select[disabled], textarea[readonly] {
 }
 
 /* Enhanced select dropdown styling */
-select {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.75rem center;
-  background-repeat: no-repeat;
-  background-size: 1.25em 1.25em;
-  padding-right: 3rem;
-}
+
 
 /* Smooth transitions */
 * {

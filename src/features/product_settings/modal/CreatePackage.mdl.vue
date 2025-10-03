@@ -10,14 +10,15 @@ import { closeModal } from "@customizer/modal-x";
 import { useToast } from "@/toast/store/toast";
 import PackageForm from "../components/form/PackageForm.vue";
 import { ref } from "vue";
+import { toasted } from "@/utils/utils";
 
 const { submit } = useForm("createPackageForm");
 const { addToast } = useToast();
 const api = useApiRequest();
 const coverageStore = useCoverage();
 const formRef = ref(null);
-
-function handleCreate({ values, reset }) {
+const req = useApiRequest();
+  function handleCreate({ values, reset }) {
   const payload = {
     packageName: values.packageName,
     packageCategory: values.packageCategory,
@@ -26,33 +27,33 @@ function handleCreate({ values, reset }) {
     maxLimit: parseInt(values.maxLimit),
     status: values.status || "ACTIVE",
     gender: values.gender,
-    packageCode: generatePackageCode(values.packageCategory) // Added auto-generated code
+    packageCode: generatePackageCode(values.packageCategory),
   };
 
-  // Validate min/max limits
+  // Validate min/max
   if (payload.minLimit >= payload.maxLimit) {
-    addToast('Maximum limit must be greater than minimum limit', '', 'error');
+    toasted(false, "", "Maximum limit must be greater than minimum limit");
     return;
   }
 
   api.send(
     () => createPackage(payload),
-    (response) => {
-      if (response.success) {
-        coverageStore.addPackage(response.data);
-        addToast('Package created successfully', '', 'success');
+    (res) => {
+      if (res.success) {
+        coverageStore.addPackage(res.data);
+        toasted(res.success, "Package Created", res.error);
+
         reset();
         closeModal();
-        
-        // Refresh package list if needed
+
         coverageStore.setPagination({
           currentPage: 1,
           itemsPerPage: coverageStore.itemsPerPage,
           totalPages: Math.ceil((coverageStore.totalItems + 1) / coverageStore.itemsPerPage),
-          totalItems: coverageStore.totalItems + 1
+          totalItems: coverageStore.totalItems + 1,
         });
       } else {
-        addToast('Failed to create package', response.error || '', 'error');
+        toasted(false, "Failed to Create Package", res.error || "");
       }
     }
   );

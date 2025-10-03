@@ -19,6 +19,11 @@ export function getActiveProviders(query = {}) {
     params: query,
   });
 }
+export function getActiveProvidersForContract(query = {}) {
+  return api.addAuthenticationHeader().get(`${path}/toSignContract`, {
+    params: query,
+  });
+}
 export function getInactiveProviders(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/list`, {
     params: query,
@@ -27,7 +32,7 @@ export function getInactiveProviders(query = {}) {
 export function createProvider(data) {
   return api.addAuthenticationHeader().post(`${path}`, data, {
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'multipart/form-data', // Change to multipart/form-data
     },
   });
 }

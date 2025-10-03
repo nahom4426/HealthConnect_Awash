@@ -86,7 +86,6 @@ const active = ref(ServiceTypes.creditService);
           row: [
             'institutionName',
             'providerName',
-            'batchCode',
             'totalAmount',
             'requestPaymentDate',
             'claimStatus',

@@ -4,11 +4,11 @@ import Button from "@/components/Button.vue";
 import icons from "@/utils/icons";
 import { formatCurrency } from "@/utils/utils";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { updateServiceProvidedClaimStatus } from "../api/claimApi";
+import { updateServiceProvidedClaimStatus, getAttachmentUrl } from "../api/claimApi"; // ✅ import attachment API
 import { useClaimByInstitutionBatch } from "../store/claimByInstitutionBatchStore";
 
 const props = defineProps({
-  row: { type: Object, default: null },         // full row (serviceProvidedUuid + claimUuid)
+  row: { type: Object, default: null },
   items: { type: Array, default: () => [] },
   title: { type: String, default: "Provided Items" },
 });
@@ -48,29 +48,51 @@ async function performAction(action) {
     () => updateServiceProvidedClaimStatus(claimId, action, body, remarkVal),
     (res) => {
       if (res && res.status >= 200 && res.status < 300) {
-        // update status in store instead of removing or relying on parent
         const updated = (store.claims || []).map((claim) => {
           if (body.includes(claim.serviceProvidedUuid)) {
             return { ...claim, serviceClaimStatus: action };
           }
           return claim;
         });
-        if (store.set) {
-          store.set(updated);
-        } else {
-          // fallback when set is not available
-          store.claims = updated;
-        }
+        if (store.set) store.set(updated);
+        else store.claims = updated;
         emit("close");
       }
     }
   );
+}
+
+// 🔑 Attachment logic
+const loadingAttachment = ref(false);
+
+async function openAttachment() {
+  if (!localRow.value) return;
+  try {
+    loadingAttachment.value = true;
+    const id = localRow.value.serviceProvidedUuid || localRow.value.claimUuid;
+    if (!id) {
+      alert("No attachment ID found");
+      return;
+    }
+    const res = await getAttachmentUrl(id);
+    const url = res?.data?.url || res?.data;
+
+    if (url) window.open(url, "_blank");
+    else alert("No attachment found.");
+  } catch (err) {
+    console.error("❌ Failed to load attachment", err);
+    alert("Could not load attachment. Please try again.");
+  } finally {
+    loadingAttachment.value = false;
+  }
 }
 </script>
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
     <div class="w-full max-w-3xl bg-white rounded-lg shadow-xl overflow-hidden">
+
+      <!-- Header -->
       <div class="flex items-start justify-between gap-4 px-6 py-4 border-b">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white">
@@ -85,14 +107,14 @@ async function performAction(action) {
             <p class="text-xs text-gray-500 mt-1">ServiceProvided UUID: {{ localRow?.serviceProvidedUuid }}</p>
           </div>
         </div>
-
         <div class="flex items-center gap-2">
           <Button size="sm" type="link" @click="$emit('close')">Close</Button>
         </div>
       </div>
 
+      <!-- Table -->
       <div class="p-4">
-        <div class="overflow-auto"> 
+        <div class="overflow-auto">
           <table class="min-w-full bg-white text-sm">
             <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
               <tr>
@@ -140,20 +162,18 @@ async function performAction(action) {
             </tfoot>
           </table>
         </div>
-
-        <!-- <div class="mt-4">
-          <label class="block text-sm text-gray-600 mb-2">Remark (optional)</label>
-          <textarea v-model="remark" rows="2" class="w-full p-2 border rounded text-sm" placeholder="Add a remark (optional)"></textarea>
-        </div> -->
       </div>
 
-      <div class="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
-        <div class="text-sm text-gray-600">Items: <span class="font-medium">{{ localItems.length }}</span></div>
-        <!-- <div class="flex items-center gap-3">
-          <Button type="danger" @click="performAction('REJECTED')" :pending="req.pending.value">Reject</Button>
-          <Button type="primary" @click="performAction('CHECKED')" :pending="req.pending.value">Checked</Button>
-        </div> -->
+      <!-- Footer Actions -->
+      <div class="px-6 py-4 border-t bg-gray-50 flex items-center justify-end gap-3">
+        <Button type="secondary" @click="openAttachment" :disabled="loadingAttachment">
+          <span v-if="loadingAttachment">Loading...</span>
+          <span v-else>View Attachment</span>
+        </Button>
+        <!-- <Button type="danger" @click="performAction('REJECTED')" :pending="req.pending.value">Reject</Button>
+        <Button type="primary" @click="performAction('CHECKED')" :pending="req.pending.value">Checked</Button> -->
       </div>
+
     </div>
   </div>
 </template>

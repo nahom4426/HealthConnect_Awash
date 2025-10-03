@@ -26,7 +26,7 @@ const packageData = computed(() => {
       packageName: props.data.data.packageName || '',
       packageCategory: props.data.data.packageCategory || '',
       packageDescription: props.data.data.packageDescription || '',
-      minLimit: props.data.data.minLimit || 0,
+      // minLimit: props.data.data.minLimit || 0,
       maxLimit: props.data.data.maxLimit || 0,
       status: props.data.data.status || 'ACTIVE',
       gender: props.data.data.gender || 'BOTH'
@@ -37,7 +37,7 @@ const packageData = computed(() => {
     packageName: props.data.packageName || '',
     packageCategory: props.data.packageCategory || '',
     packageDescription: props.data.packageDescription || '',
-    minLimit: props.data.minLimit || 0,
+    // minLimit: props.data.minLimit || 0,
     maxLimit: props.data.maxLimit || 0,
     status: props.data.status || 'ACTIVE',
     gender: props.data.gender || 'BOTH'
@@ -93,7 +93,7 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
     <div class="md:col-span-2 border-t pt-4">
       <h3 class="text-lg font-medium text-gray-900 mb-4">Coverage Limits</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
+        <!-- <Input
           name="minLimit"
           validation="required|numeric|min_value:0"
           label="Minimum Coverage"
@@ -104,7 +104,7 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
             step: '100'
           }"
           prefix="$"
-        />
+        /> -->
 
         <Input
           name="maxLimit"

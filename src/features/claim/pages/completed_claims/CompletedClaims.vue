@@ -24,7 +24,7 @@ const store = useCompletedClaimByInstitutionBatch();
 <template>
   <ClaimByBatchDataProvider
     :store="store"
-    :status="PaymentStatus.AUTHORIZED"
+    :status="PaymentStatus.APPROVED"
     :creditService="active == ServiceTypes.creditService"
     :params="{
       providerUuid: providerUuid,
@@ -75,18 +75,16 @@ const store = useCompletedClaimByInstitutionBatch();
         :pending="pending"
         :headers="{
           head: [
-            'Policy Holder Name',
+        
             'Provider Name',
-            'Batch Code',
             'Total Amount',
             'Requested Date',
             'Status',
             'actions',
           ],
           row: [
-            'institutionName',
+         
             'providerName',
-            'batchCode',
             'totalAmount',
             'requestPaymentDate',
             'claimStatus',

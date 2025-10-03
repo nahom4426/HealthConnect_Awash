@@ -44,7 +44,7 @@ const props = defineProps({
       </div>
       <div class="flex items-center gap-4">
         <slot name="right-actions"></slot>
-        <button v-if="showCloseModal" class="border rounded-full" @click="closeModal()">
+        <button v-if="showCloseModal" class="border rounded-full" @click.prevent="closeModal()">
           <i v-html="icons.close" />
         </button>
       </div>

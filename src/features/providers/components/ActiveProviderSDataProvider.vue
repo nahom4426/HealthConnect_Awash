@@ -1,8 +1,8 @@
 <script setup>
 import { usePagination } from "@/composables/usePagination";
-import { useUnderwriting } from "../store/underwritingStore";
-import { getIssuedContracts } from "../api/underwritingApi";
-import { watch } from "vue";
+import { useProviders } from "../store/providersStore";
+import { getInactiveProviders } from "../api/providerApi";
+import { watch, computed, onMounted } from "vue";
 import { removeUndefined } from "@/utils/utils";
 
 const props = defineProps({
@@ -12,30 +12,24 @@ const props = defineProps({
   },
   status: {
     type: String,
-    default: "ACTIVE",
+    default: "ACTIVE", // Default to 'inactive' status
   },
   search: {
     type: String,
     default: "",
   },
-  institutionUuid: {
-    type: String,
-    required: true,
-  },
 });
 
-const store = useUnderwriting();
+const store = useProviders();
 
 const pagination = usePagination({
-  store,
-  auto: props.auto,
+  store: store,
   cb: (data) =>
-    getIssuedContracts(
+    getInactiveProviders(
       removeUndefined({
         ...data,
         status: props.status,
         search: props.search.trim(),
-        institutionUuid: props.institutionUuid,
       })
     ),
 });
@@ -43,25 +37,16 @@ const pagination = usePagination({
 watch(
   () => props.search,
   () => {
-    pagination.send();
-  }
-);
+    console.log("hhhh");
 
-watch(
-  () => props.status,
-  () => {
     pagination.send();
   }
 );
 </script>
-
 <template>
   <slot
-    :contracts="store.contracts"
+    :providers="store.providers"
     :pending="pagination.pending.value"
     :error="pagination.error.value"
-    :currentPage="store.currentPage"
-    :itemsPerPage="store.itemsPerPage"
-    :totalPages="store.totalPages"
   />
 </template>

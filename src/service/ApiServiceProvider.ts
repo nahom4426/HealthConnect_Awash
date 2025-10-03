@@ -3,7 +3,7 @@ import { responseHandler } from "./ApiResponseHandler";
 import { useAuthStore } from "@/stores/auth";
 import { useSignal } from "@/composables/useSignal";
 
-export const backendApi = import.meta.env?.v_API_URI;
+export const backendApi = import.meta.env?.v_API_PROVIDER_URI;
 
 export default class ApiServiceProvider {
   constructor(baseURL) {

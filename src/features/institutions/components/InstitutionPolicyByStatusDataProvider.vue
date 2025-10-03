@@ -1,42 +1,53 @@
-<script setup lang="ts">
+<script setup>
 import { usePagination } from "@/composables/usePagination";
 import { useInstitutionPolicyStore } from "../store/institutionPolicyStore";
-import {
-	getInstitutionsPolicyByStatus,
-} from "../api/institutionApi";
+import { getInstitutionsPolicyByStatus } from "../api/institutionApi";
 import { watch } from "vue";
-import type { PropType } from "vue";
-import type { Status } from "@/types/interface";
+import { removeUndefined } from "@/utils/utils";
 
 const props = defineProps({
-  search: {
-    type: String,
+  auto: {
+    type: Boolean,
+    default: true,
   },
   status: {
-    type: String as PropType<Status>,
+    type: String,
     default: "ACTIVE",
+  },
+  search: {
+    type: String,
+    default: "",
   },
 });
 
-const institutionStore = useInstitutionPolicyStore();
-const pagination: any = usePagination({
-  store: institutionStore,
-  auto: false,
-  cb: (data: any) => getInstitutionsPolicyByStatus({ ...data, status: props.status }),
+const store = useInstitutionPolicyStore();
+
+const pagination = usePagination({
+  store,
+  auto: props.auto,
+  cb: (data) =>
+    getInstitutionsPolicyByStatus(
+      removeUndefined({
+        ...data,
+        status: props.status,
+        search: props.search.trim(),
+      })
+    ),
 });
 
-if (!institutionStore.institutions.length) {
-  pagination.send();
-}
- 
-watch(props, () => {
-  pagination.search.value = props.search;
-	pagination.send();
-});
+watch(
+  () => props.search,
+  
+  () => {
+    console.log("hhhh");
+    pagination.send();
+  }
+);
 </script>
+
 <template>
   <slot
-    :institutions="institutionStore.institutions"
+    :institutions="store.institutions"
     :pending="pagination.pending.value"
     :error="pagination.error.value"
   />

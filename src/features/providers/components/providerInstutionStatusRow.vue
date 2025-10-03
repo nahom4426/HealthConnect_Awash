@@ -107,8 +107,8 @@ function handleEdit(row) {
 function handleAdd(row) {
   openModal('ConfirmAddProvider', {
     providerName: row.providerName,
-    payerProviderContractUuid: route.params.payerProviderContractUuid || route.params.id,
-    payerInstitutionContractUuid: row.payerProviderContractUuid || row.providerUuid,
+    payerInstitutionContractUuid: route.params.payerProviderContractUuid || route.params.id,
+    payerProviderContractUuid: row.payerProviderContractUuid || row.providerUuid,
     onConfirm: () => {
       // This will be called when user confirms in the modal
       mapProviderContract(row);

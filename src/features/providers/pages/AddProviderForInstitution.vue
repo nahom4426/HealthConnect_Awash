@@ -74,20 +74,15 @@ function viewDetails(id) {
           :headers="{
             head: [
               'Provider Name',
-              'Contact Person',
-              'Contact',
-              'Category',
-              'Level',
-              'Status',
+              'Contract Name',
+              'Contract Code',
               'Actions',
             ],
             row: [
               'providerName',
-              'email',
-              'telephone',
-              'category',
-              'level',
-              'status',
+              'payerProviderContractName',
+              'payerProviderContractCode',
+             
             ],
           }"
           :rows="providers"

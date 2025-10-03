@@ -3,7 +3,7 @@ import { ref, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import ActiveProvidersDataProvider from "../components/ActiveProviderDataProvider.vue";
+import ActiveProvidersDataProvider from "../components/ActiveProviderSDataProvider.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import ActiveproviderStatusRow from "../components/ActiveproviderStatusRow.vue";
 import { openModal } from "@customizer/modal-x";
@@ -43,7 +43,7 @@ function viewDetails(id) {
 
 <template>
   <DefaultPage placeholder="Search Active Providers">
-    <template #filter>
+    <!-- <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
       >
@@ -60,7 +60,7 @@ function viewDetails(id) {
         <i v-html="icons.plus_circle"></i>
         <p class="text-base">Add Provider</p>
       </button>
-    </template>
+    </template> -->
 
     <template #default="{ search }">
       <ActiveProvidersDataProvider

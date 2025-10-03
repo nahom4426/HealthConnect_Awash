@@ -59,7 +59,7 @@ const store = useAuthorizeClaimByInstitutionBatch();
 
       <Table
         :pending="pending"
-        :headers="{ head: [ 'Policy Holder Name','Provider Name','Batch Code','Total Amount','Requested Date','Status','actions' ], row: ['institutionName','providerName','batchCode','totalAmount','requestPaymentDate','claimStatus'] }"
+        :headers="{ head: ['Provider Name','Total Amount','Requested Date','Status','actions' ], row: ['providerName','totalAmount','requestPaymentDate','claimStatus'] }"
         :cells="{ totalAmount: formatCurrency, requestPaymentDate: secondDateFormat }"
         :rows="claims"
       >

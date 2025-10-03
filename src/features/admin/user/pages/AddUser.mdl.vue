@@ -7,6 +7,7 @@ import { ref, onMounted } from "vue";
 import { CreateUser } from "../Api/UserApi";
 import { useUsers } from "../store/userStore";
 import { useToast } from '@/toast/store/toast';
+import { useApiRequest } from "@/composables/useApiRequest";
 
 const props = defineProps({
   data: {

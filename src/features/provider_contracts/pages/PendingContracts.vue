@@ -10,20 +10,22 @@ import DefaultPage from '@/components/DefaultPage.vue';
 import { useRowStore } from '@/stores/threePageValue';
 import { toasted } from '@/utils/utils';
 import icons from '@/utils/icons';
+import { useContractStore } from '../store/cotractStore';
 
 const router = useRouter();
 const toast = useToast();
 const rowStore = useRowStore();
+const contractStore = useContractStore();
 const dataProvider = ref();
 const searchQuery = ref('');
-const contracts = ref([]);
 const isLoading = ref(false);
 
 const fetchContracts = async () => {
   isLoading.value = true;
   try {
     const response = await getPendingContracts();
-    contracts.value = response.data;
+    // Populate the store so other components (like ContractStatusRow) can update reactively
+    contractStore.set(response.data.content || []);
   } catch (error) {
     toasted(false, "", error.message || "Failed to load contracts");
   } finally {
@@ -32,9 +34,10 @@ const fetchContracts = async () => {
 };
 
 const filteredContracts = computed(() => {
-  if (!searchQuery.value) return contracts.value;
+  const list = contractStore.contracts || [];
+  if (!searchQuery.value) return list;
   const query = searchQuery.value.toLowerCase();
-  return contracts.value.filter(contract => 
+  return list.filter(contract => 
     contract.contractName?.toLowerCase().includes(query) ||
     contract.providerName?.toLowerCase().includes(query) ||
     contract.contractCode?.toLowerCase().includes(query))
@@ -66,14 +69,14 @@ onMounted(fetchContracts);
 
 <template>
   <DefaultPage placeholder="Search Active Contracts">
-    <template #filter>
+     <!-- <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
-      >
+      > 
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
-    </template>
+    </template> -->
      <template #add-action>
       <button
         @click.prevent="$router.push(`/create_contract/new`)"

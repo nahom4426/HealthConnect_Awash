@@ -47,7 +47,7 @@ const pagination = usePagination({
         removeUndefined({
           status: props.status,
           // ...params,
-          // search: props.search.trim(),
+          search: props.search.trim(),
         })
       );
       institutionContractStore.setPagination(response);

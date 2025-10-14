@@ -64,14 +64,20 @@ const handleRefetch = () => {
 
 <template>
   <DefaultPage :title="`${institutionName} Contracts`" placeholder="Search contracts...">
-    <template #filter>
-      <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
-      >
-        <i v-html="icons.filter"></i>
-        <p class="text-base">Filters</p>
-      </button>
-    </template>
+    <!-- <template #filter>
+      <div class="flex items-center gap-3">
+        <label class="text-sm text-gray-700">Status</label>
+        <select
+          v-model="status"
+          class="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          <option value="PENDING">PENDING</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="RENEWED">RENEWED</option>
+          <option value="EXPIRED">EXPIRED</option>
+        </select>
+      </div>
+    </template> -->
 
     <template #add-action>
       <button
@@ -79,7 +85,7 @@ const handleRefetch = () => {
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
       >
         <i v-html="icons.plus_circle"></i>
-        <p class="text-base">Add Contract</p>
+        <p class="text-base">Add Policy</p>
       </button>
     </template>
 

@@ -44,16 +44,18 @@ export default [
 					{
 						path: '/insured_persons/:payerInstitutionContractUuid',
 						name: 'Policy Holders',
-						component: InstitutionsInsuredPersons
 					}
 				]
 			}
 		]
 	},
-	{
+	  {
 		path: '/institution_policy',
 		name: 'Institutions',
 		component: Institution,
+		meta: {
+			permissions: ['Read-Institutions','Create-Institutions','Update-Institutions','Delete_institutions'],
+		},
 	},
 	{
 		path: 'institution_contracts/:id',

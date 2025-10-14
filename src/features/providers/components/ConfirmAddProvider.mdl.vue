@@ -7,6 +7,7 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from '@/toast/store/toast';
 import { mapContracts } from '@/features/providers/api/providerApi'; // Adjust import path as needed
 import icons from "@/utils/icons";
+import { toasted } from "@/utils/utils";
 
 const props = defineProps({
   data: {
@@ -36,10 +37,13 @@ function confirmAdd() {
     (res) => {
       if (res.success) {
         props.data?.onConfirm?.(res);
+        toasted(res.success,"mapped successfully",res.error)
+        console.log(res.success,"mapped successfully",res.error)
         closeModal();
       } else {
         // Handle failure if needed
         console.error(res.message || 'Failed to add provider');
+        // toasted(res.success,"mapped successfully",res.error)
       }
     }
   );

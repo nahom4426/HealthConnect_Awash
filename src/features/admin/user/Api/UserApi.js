@@ -13,7 +13,7 @@ export function CreateUser(data) {
 
   return api
     .addAuthenticationHeader()
-    .post(`${path}/signup`, formattedData)
+    .post(`${path}/signUp`, formattedData)
     .catch((error) => {
       return {
         success: false,

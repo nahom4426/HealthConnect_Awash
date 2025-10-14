@@ -1,5 +1,5 @@
 <script setup>
-import PrivilegesDataProvider from "../../privilege/components/PrivilegesDataProvider.vue";
+import PrivilegesDataProvider from "../../privilege/components/RolePrivilegesDataProvider.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { craeteRole } from "../Api/RoleApi";
 import { toasted } from "@/utils/utils";
@@ -43,7 +43,7 @@ const goBack = () => {
     class="flex justify-center h-full pb-6 bg-white"
     title="Add Role"
   >
-    <PrivilegesDataProvider :pre-page="500" v-slot="{ privileges, pending }">
+    <PrivilegesDataProvider :pre-page="5000" v-slot="{ privileges, pending }">
       <RoleForm
         v-if="!pending"
         :privileges="privileges"

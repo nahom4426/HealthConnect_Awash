@@ -35,7 +35,7 @@ const totalItems = ref(0);
 
 // Enhanced pagination setup
 const pagination = usePagination({
-  auto: props.auto,
+  auto: false,
   cb: async (data) => {
     const response = await getGroup(
       route.params.id || authStore.auth?.user?.payerUuid,

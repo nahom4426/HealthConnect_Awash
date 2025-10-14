@@ -381,7 +381,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
         <!-- Phone Number -->
         <div class="py-1">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number 
+            Phone Number  <span class="text-red-500">*</span>
           </label>
           <div class="flex w-full gap-2">
             <Select
@@ -389,7 +389,8 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
               name="countryCode"
               :options="['+251']"
               :attributes="{
-                 class: 'pr-2  ',
+                 class: 'pr-2 py-2 ',
+                 required: true,
                 
               }"
             />
@@ -399,7 +400,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
               validation="required"
               :attributes="{
                 placeholder: 'Enter phone number',
-                class: 'pr-32  ',
+                class: 'pr-24 ml-2 py-2',
               
               }"
             />

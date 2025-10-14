@@ -1,21 +1,21 @@
 <script setup>
 import { usePagination } from "@/composables/usePagination";
 import { watch } from "vue";
-import { usePrivilege } from "../store/privilegeStore";
+import { useRolePrivilege } from "../store/roleprivilegeStore";
 import { getAllPrivilege } from "../Api/PrivilegeApi";
 import { removeUndefined } from "@/utils/utils";
 
 const props = defineProps({
   prePage: {
     type: Number,
-    default: 25,
+    default: 5000,
   },
   search: {
     type: String,
     default: "",
   },
 });
-const privilegesStore = usePrivilege();
+const privilegesStore = useRolePrivilege();
 
 const pagination = usePagination({
   auto: false,

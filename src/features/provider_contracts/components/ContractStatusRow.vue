@@ -5,7 +5,7 @@ import icons from "@/utils/icons";
 import { onUnmounted } from 'vue';
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { approveContractStatus } from '../api/contractApi';
+import { approveContractStatus, changeContractStatus } from '../api/contractApi';
 import { toasted } from '@/utils/utils';
 import { usecontracts } from '../store/cotractStore';
 
@@ -109,7 +109,6 @@ function closeAllDropdowns() {
   });
 }
 
-// Wrapper functions with dropdown close
 function handleViewWithClose(row) {
   closeAllDropdowns();
   props.onView(row);
@@ -120,13 +119,13 @@ function handleServicesWithClose(row) {
   router.push(`/active_contract/services/${row.payerProviderContractUuid}/${row.providerUuid}`);
 }
 
-onMounted(() => {
-  window.addEventListener('click', closeAllDropdowns);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('click', closeAllDropdowns);
-});
+function handleEditWithClose(row) {
+  closeAllDropdowns();
+  const id = row.payerProviderContractUuid || row.id;
+  if (id) {
+    router.push(`/create_contract/edit/${id}`);
+  }
+}
 
 function handleActivateWithClose(payerProviderContractUuid) {
   closeAllDropdowns();
@@ -142,6 +141,60 @@ function handleActivateWithClose(payerProviderContractUuid) {
     })
     .catch(() => false);
 }
+
+async function handleActivateForSuspendedWithClose(payerProviderContractUuid) {
+  closeAllDropdowns();
+  try {
+    const response = await changeContractStatus(payerProviderContractUuid, 'ACTIVE');
+    if (response.success) {
+      addToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: 'Provider has been activated successfully'
+      });
+      contractStore.update(payerProviderContractUuid, { status: 'ACTIVE' });
+    } else {
+      throw new Error(response.error || 'Failed to activate provider');
+    }
+  } catch (error) {
+    addToast({
+      type: 'error',
+      title: 'Activation Failed',
+      message: error.message || 'An error occurred while activating the provider'
+    });
+  }
+}
+
+async function handleDeactivateWithClose(payerProviderContractUuid) {
+  closeAllDropdowns();
+  try {
+    const response = await changeContractStatus(payerProviderContractUuid, 'SUSPENDED');
+    if (response.success) {
+      addToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: 'Provider has been deactivated successfully'
+      });
+      contractStore.update(payerProviderContractUuid, { status: 'SUSPENDED' });
+    } else {
+      throw new Error(response.error || 'Failed to deactivate provider');
+    }
+  } catch (error) {
+    addToast({
+      type: 'error',
+      title: 'Deactivation Failed',
+      message: error.message || 'An error occurred while deactivating the provider'
+    });
+  }
+}
+onMounted(() => {
+  window.addEventListener('click', closeAllDropdowns);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeAllDropdowns);
+});
+
 </script>
 
 <template>
@@ -186,92 +239,73 @@ function handleActivateWithClose(payerProviderContractUuid) {
     
     <!-- Actions Column -->
     <td class="p-3">
-      <div class="dropdown-container relative">
-        <button 
-          @click.stop="toggleDropdown($event, row.payerProviderContractUuid || row.id)"
-          class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none transition-colors duration-150"
-          type="button"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
-        </button>
+  <div class="flex flex-wrap gap-2 items-center justify-start">
 
-        <div 
-          :id="`dropdown-${row.payerProviderContractUuid || row.id}`"
-          class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-        >
-          <div class="py-1" role="none">
-            <!-- Common action for all statuses -->
-            <button 
-              @click.stop="handleViewWithClose(row)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
-            >
-              <!-- <div class="flex items-center justify-start pl-4 gap-4">
-                <i v-html="icons.details" />
-                View Details
-              </div> -->
-            </button>
+    <!-- 👁️ View (common for all statuses) -->
+    <!-- <button
+      @click.stop="handleViewWithClose(row)"
+      class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 hover:shadow-sm transition-all duration-200"
+    >
+      <i v-html="icons.details" class="text-gray-500" />
+      <span>View</span>
+    </button> -->
 
-            <!-- Actions for PENDING status -->
-            <template v-if="row.status?.toUpperCase() === 'PENDING'">
-              <button 
-                @click.stop="handleViewWithClose(row)"
-                class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
-              >
-                <div class="flex items-center justify-start pl-4 gap-4">
-                  <i v-html="icons.edits" />
-                  Edit
-                </div>
-              </button>
-              <button 
-                @click.stop="handleActivateWithClose(row.payerProviderContractUuid)"
-                class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100 transition-colors duration-150"
-              >
-                <div class="flex items-center justify-start pl-4 gap-4">
-                  <i v-html="icons.activate" />
-                  Activate
-                </div>
-              </button>
-            </template>
+    <!-- 🕓 PENDING -->
+    <template v-if="row.status?.toUpperCase() === 'PENDING'">
+      <!-- ✏️ Edit -->
+      <button
+        @click.stop="handleEditWithClose(row)"
+        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 hover:shadow-sm transition-all duration-200"
+      >
+        <i v-html="icons.edits" class="text-blue-500" />
+        <span>Edit</span>
+      </button>
 
-            <!-- Actions for ACTIVE status -->
-            <template v-else-if="row.status?.toUpperCase() === 'ACTIVE'">
-              <button 
-                @click.stop="handleServicesWithClose(row)"
-                class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
-              >
-                <div class="flex items-center justify-start pl-4 gap-4">
-                  <i v-html="icons.details" />
-                  Services
-                </div>
-              </button>
-              <button 
-                class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100 transition-colors duration-150"
-              >
-                <div class="flex items-center justify-start pl-4 gap-4">
-                  <i v-html="icons.deactivate" />
-                  Deactivate
-                </div>
-              </button>
-            </template>
+      <!-- ✅ Activate -->
+      <button
+        @click.stop="handleActivateWithClose(row.payerProviderContractUuid)"
+        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:shadow-sm transition-all duration-200"
+      >
+        <i v-html="icons.activate" class="text-green-500" />
+        <span>Activate</span>
+      </button>
+    </template>
 
-            <!-- Actions for SUSPENDED status -->
-            <template v-else-if="row.status?.toUpperCase() === 'SUSPENDED'">
-              <button 
-                 @click.stop="handleActivateWithClose(row.payerProviderContractUuid)"
-                class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100 transition-colors duration-150"
-              >
-                <div class="flex items-center justify-start pl-4 gap-4">
-                  <i v-html="icons.activate" />
-                  Activate
-                </div>
-              </button>
-            </template>
-          </div>
-        </div>
-      </div>
-    </td>
+    <!-- 🟢 ACTIVE -->
+    <template v-else-if="row.status?.toUpperCase() === 'ACTIVE'">
+      <!-- 🧾 Services -->
+      <button
+        @click.stop="handleServicesWithClose(row)"
+        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 hover:shadow-sm transition-all duration-200"
+      >
+        <i v-html="icons.details" class="text-indigo-500" />
+        <span>Services</span>
+      </button>
+
+      <!-- ⛔ Deactivate -->
+      <button
+        @click.stop="handleDeactivateWithClose(row.payerProviderContractUuid)"
+        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 hover:shadow-sm transition-all duration-200"
+      >
+        <i v-html="icons.deactivate" class="text-red-500" />
+        <span>Deactivate</span>
+      </button>
+    </template>
+
+    <!-- 🚫 SUSPENDED -->
+    <template v-else-if="row.status?.toUpperCase() === 'SUSPENDED'">
+      <button
+        @click.stop="handleActivateForSuspendedWithClose(row.payerProviderContractUuid)"
+        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:shadow-sm transition-all duration-200"
+      >
+        <i v-html="icons.activate" class="text-green-500" />
+        <span>Activate</span>
+      </button>
+    </template>
+
+  </div>
+</td>
+
   </tr>
 </template>
 

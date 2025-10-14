@@ -77,13 +77,9 @@ export const getPayerContractById = (id) => {
     },
   });
 };
-export const getActiveContracts = (page = 1, limit = 25) => {
+export const getActiveContracts = (query = {}) => {
   return api.addAuthenticationHeader().get(`${basePath}/provider/lists`, {
-    params: {
-      page,
-      limit,
-      status: 'ACTIVE'
-    }
+    params: query,
   });
 };
 
@@ -111,7 +107,11 @@ export const getSuspendedContracts = (page = 1, limit = 25) => {
   });
 };
 
-
+export function changeContractStatus(providerId, status) {
+  return api.addAuthenticationHeader().put(`${basePath}/changeStatus/${providerId}`, null, {
+    params: { status }
+  });
+}
 /**
  * Update existing payer-provider contract.
  */

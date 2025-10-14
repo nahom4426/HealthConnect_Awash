@@ -15,7 +15,7 @@ const dataProvider = ref();
 
 <template>
   <DefaultPage  placeholder="Search Privileges">
-    <template #filter>
+     <!-- <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
       >
@@ -23,7 +23,7 @@ const dataProvider = ref();
         <p class="text-base">Filters</p>
       </button>
     </template>
-
+  -->
     <template #add-action>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"

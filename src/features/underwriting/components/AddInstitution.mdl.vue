@@ -5,7 +5,7 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { useInstitution } from '@/features/institutions/store/institutionStore';
-import { createinstitution } from "@/features/institutions/api/institutionApi";
+import { createInstitution } from "@/features/institutions/api/institutionApi";
 import InstitutionForm from "../form/InstitutionForm.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
@@ -19,7 +19,7 @@ const showAdditionalSection = ref(false);
 
 function create({ values }) {
   req.send(
-    () => createinstitution(values),
+    () => createInstitution(values),
     (res) => {
       if (res.success) {
         institutionStore.addInstitution(res.data);

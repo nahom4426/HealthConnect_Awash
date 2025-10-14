@@ -7,7 +7,7 @@ import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref, onMounted, watch } from "vue";
 import { updateProvider, createProvider } from "../api/providerApi";
-import { useProviders } from "../store/providersStore";
+import { useAddProviders } from "../store/AddprovidersStore";
 
 // In modal-x, props are passed via the 'data' prop
 const props = defineProps({
@@ -19,7 +19,7 @@ const props = defineProps({
 });
 
 // Initialize the providers store
-const providersStore = useProviders();
+const providersStore = useAddProviders();
 
 const error = ref('');
 const pending = ref(false);

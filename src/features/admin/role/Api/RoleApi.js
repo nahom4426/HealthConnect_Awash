@@ -9,7 +9,7 @@ export function getAllRole(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/all${qr}`);
 }
 export function craeteRole(data) {
-  return api.addAuthenticationHeader().post(`${path}`, data);
+  return api.addAuthenticationHeader().post(`${path}/add`, data);
 }
 export function getRoleById(id) {
   return api.addAuthenticationHeader().get(`${path}/${id}`);

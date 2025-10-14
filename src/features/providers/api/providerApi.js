@@ -32,7 +32,7 @@ export function getInactiveProviders(query = {}) {
 export function createProvider(data) {
   return api.addAuthenticationHeader().post(`${path}`, data, {
     headers: {
-      'Content-Type': 'multipart/form-data', // Change to multipart/form-data
+      'Content-Type': 'multipart/form-data',
     },
   });
 }
@@ -68,15 +68,10 @@ export async function updateProvider(data) {
 
 /**
  * Map provider contracts to institution contracts
+ * Return AsyncResponse from ApiService.post so callers get { success, data, error }
  */
-export const mapContracts = async (contractMappings) => {
-  try {
-    const response = await api
-      .addAuthenticationHeader()
-      .post('/claimconnect/map_contract', contractMappings);
-    return response.data;
-  } catch (error) {
-    console.error('Error mapping contracts:', error);
-    throw error;
-  }
+export const mapContracts = (contractMappings) => {
+  return api
+    .addAuthenticationHeader()
+    .post('/claimconnect/map_contract', contractMappings);
 };

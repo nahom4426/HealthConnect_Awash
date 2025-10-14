@@ -18,50 +18,79 @@ const props = defineProps({
 const registerReq = useApiRequest();
 const importReq = useApiRequest();
 const downloadReq = useApiRequest();
-const fileInputRef = (ref < HTMLInputElement) | (null > null);
+const fileInputRef = ref(null);
 
-function register(formData) {
-  console.log("Registration form data received:", formData);
+async function register(payload) {
+  console.log("Registration payload received:", payload);
 
-  const insuredJson = formData.get("insured");
-  if (!insuredJson) {
-    const errorMsg = "Missing insured data";
-    toasted(false,'', errorMsg);
+  // Normalize to FormData with 'insured' JSON part
+  let formData;
+  if (payload instanceof FormData) {
+    formData = payload;
+  } else if (payload && typeof payload === 'object') {
+    formData = new FormData();
+    formData.append(
+      'insuredRequest',
+      new Blob([JSON.stringify(payload)], { type: 'application/json' })
+    );
+  } else {
+    const errorMsg = 'Invalid payload provided to register()';
+    toasted(false, '', errorMsg);
+    return Promise.reject(new Error(errorMsg));
+  }
+
+  // Extract and parse 'insured' for validation
+  const insuredPart = formData.get('insuredRequest');
+  if (!insuredPart) {
+    const errorMsg = 'Missing insured data';
+    // toasted(false, '', errorMsg);
     return Promise.reject(new Error(errorMsg));
   }
 
   try {
-    const insuredData = JSON.parse(insuredJson);
+    let insuredData;
+    if (insuredPart instanceof Blob) {
+      const text = await insuredPart.text();
+      insuredData = JSON.parse(text || '{}');
+    } else if (typeof insuredPart === 'string') {
+      insuredData = JSON.parse(insuredPart || '{}');
+    } else {
+      // Fallback: attempt to stringify unknown types
+      insuredData = JSON.parse(String(insuredPart));
+    }
 
     const requiredInsuredFields = [
-      'payerUuid',
       'firstName',
       'fatherName',
-      
       'idNumber',
     ];
 
     const missingFields = requiredInsuredFields.filter((field) => {
       const value = insuredData[field];
-      return value === undefined || value === null || value === "";
+      return value === undefined || value === null || value === '';
     });
 
     if (missingFields.length > 0) {
       const errorMsg = `Missing required Insured fields: ${missingFields.join(', ')}`;
       console.error('Validation failed:', errorMsg);
-      // toasted(false, errorMsg);
       return Promise.reject(new Error(errorMsg));
     }
 
+    // Debug: log all FormData entries
+    console.log('FormData before submit (key -> value type):');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  - ${key}:`, value instanceof File || value instanceof Blob ? `${value.constructor.name} (${value.type || 'n/a'})` : value);
+    }
+
+    // All good: send the prepared FormData directly
     return sendRegistrationRequest(formData);
   } catch (error) {
     console.error('Error parsing insured data:', error);
-    // toasted(false, 'Invalid insured data format');
     return Promise.reject(error);
   }
 }
 function sendRegistrationRequest(payload) {
-  console.log("Sending registration request:", payload);
+  console.log("Sending registration request (raw FormData):", payload);
 
   return new Promise((resolve, reject) => {
     registerReq.send(

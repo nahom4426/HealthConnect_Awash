@@ -52,7 +52,49 @@ export function toasted(type, succMsg, errMsg) {
   if (type) {
     toast.success(succMsg);
   } else {
-    toast.error(errMsg);
+    // Check if error is an object with validation errors
+    if (errMsg && typeof errMsg === 'object') {
+      const propErrors = errMsg?.properties?.errors || errMsg?.properties?.Errors;
+      const fieldErrors = errMsg?.fieldErrors;
+
+      const messages = [];
+      if (propErrors && typeof propErrors === 'object') {
+        for (const [field, errors] of Object.entries(propErrors)) {
+          const fieldName = String(field)
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, (s) => s.toUpperCase());
+          if (Array.isArray(errors)) {
+            messages.push(`${fieldName}: ${errors.join(', ')}`);
+          } else {
+            messages.push(`${fieldName}: ${errors}`);
+          }
+        }
+      }
+
+      if (Array.isArray(fieldErrors) && fieldErrors.length) {
+        for (const fe of fieldErrors) {
+          const name = String(fe?.field || fe?.name || 'Field');
+          const fieldName = name.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+          const msg = fe?.message || fe?.defaultMessage || fe?.error || 'Invalid';
+          messages.push(`${fieldName}: ${msg}`);
+        }
+      }
+
+      if (messages.length) {
+        toast.error(messages.join('; '));
+        return;
+      }
+
+      // fallback to detail/title/message if no field-level aggregation
+      const fallback = errMsg?.detail || errMsg?.title || errMsg?.message;
+      if (fallback) {
+        toast.error(fallback);
+        return;
+      }
+    }
+
+    // Fallback to original error message if not a validation error or not an object
+    toast.error((typeof errMsg === 'object' ? errMsg?.message : errMsg) || 'An error occurred');
   }
 }
 

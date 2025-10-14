@@ -17,8 +17,8 @@ const props = defineProps({
       type: 'text',
     }"
   >
-    <template #left>
-      <div class="h-full w-12 grid place-items-center">
+  <template #left>
+      <div class="h-full pt-2 w-12 grid place-items-center">
         <i v-html="icons.email" />
       </div>
     </template>

@@ -51,7 +51,7 @@ export function getInsuredPersonById(uuid) {
 }
 
 export function importInsuredPersons(
-  { institutionUuid, payerInstitutionContractUuid } = {},
+  {institutionUuid, payerInstitutionContractUuid} = {},
   data,
   config = {}
 ) {
@@ -72,7 +72,6 @@ export function importInsuredPersons(
   );
 }
 
-
 export function getInsuredMembers(query = {}) {
   return api.addAuthenticationHeader().get(`${basePath}/list`, {
     params: query
@@ -81,19 +80,12 @@ export function getInsuredMembers(query = {}) {
 
 export function createInsured(payload) {
   const config = {};
-  
-  // Handle both FormData and regular JSON
   if (payload instanceof FormData) {
-    config.headers = {
-      'Content-Type': 'multipart/form-data'
-    };
+    config.headers = { 'Content-Type': 'multipart/form-data' };
   } else {
-    config.headers = {
-      'Content-Type': 'application/json'
-    };
+    config.headers = { 'Content-Type': 'application/json' };
   }
-
-  return api.addAuthenticationHeader().post(`${basePath}/createInsuredPerson`, payload, config);
+  return api.addAuthenticationHeader().post(`${basePath}`, payload, config);
 }
 
 export function changeInsuredStatus(insuredId, newStatus) {
@@ -101,24 +93,16 @@ export function changeInsuredStatus(insuredId, newStatus) {
     params: { newStatus }
   });
 }
-export async function updateInsured(uuid, payload) {
-  try {
-    const response = await api.put(`${basePath}/${uuid}`, payload, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    return {
-      success: response.status >= 200 && response.status < 300,
-      data: response.data,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error?.response?.data?.message || error.message || 'Unknown error'
-    };
+export function updateInsured(uuid, payload) {
+  const config = {};
+  if (payload instanceof FormData) {
+    config.headers = { 'Content-Type': 'multipart/form-data' };
+  } else {
+    config.headers = { 'Content-Type': 'application/json' };
   }
+  return api.addAuthenticationHeader().put(`${basePath}/${uuid}`, payload, config);
 }
+
 export function deleteInsured(id) {
   return api.addAuthenticationHeader().delete(`${basePath}/${id}`);
 }

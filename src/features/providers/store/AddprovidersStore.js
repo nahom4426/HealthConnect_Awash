@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 
 
-export const useProviders = defineStore("providerStore", () => {
+export const useAddProviders = defineStore("AddproviderStore", () => {
   const providers = ref([]);
   // Track providers that should be excluded from the list (e.g., already added)
   const excludedIds = ref([]); // array of providerUuid

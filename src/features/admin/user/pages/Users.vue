@@ -34,7 +34,7 @@ const router = useRouter();
               'Fullname',
               'Email',
               'Mobile Phone',
-              'User Type',
+          
               'Role Name',
               'Gender',
               'Status',
@@ -44,7 +44,7 @@ const router = useRouter();
               'fullname',
               'email',
               'mobilePhone',
-              'userType',
+        
               'roleName',
               'gender',
               'status',

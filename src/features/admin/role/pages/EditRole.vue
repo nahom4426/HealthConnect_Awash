@@ -5,7 +5,7 @@ import { getRoleById, updateRolebyId } from '../Api/RoleApi';
 import { useRoles } from '../store/roleStore';
 import { ref } from 'vue';
 import NewFormParent from '../components/NewFormParent.vue';
-import PrivilegesDataProvider from '../../privilege/components/PrivilegesDataProvider.vue';
+import PrivilegesDataProvider from '../../privilege/components/RolePrivilegesDataProvider.vue';
 import Button from '@/components/Button.vue';
 import RoleForm from '../form/RoleForm.vue';
 import { useForm } from '@/components/new_form_builder/useForm';
@@ -37,9 +37,10 @@ function update({ values }) {
         (res) => {
             if (res.success) {
                 roleStore.update(roleUuid, { ...role.value, ...values });
-            }
-            toasted(res.success, 'Successfully Updated', res.error);
+                toasted(res.success, 'Successfully Updated', res.error);
             router.push('/roles');
+            }
+            
         }
     );
 }
@@ -53,10 +54,10 @@ function update({ values }) {
     class="flex justify-center h-full pb-6 bg-white"
     title="Update Role"
   >
-    <PrivilegesDataProvider :pre-page="500" v-slot="{ privileges, pending }">
+    <PrivilegesDataProvider :pre-page="5000" v-slot="{ privileges, pending }">
       <RoleForm 
         v-if="!pending && Object.keys(role).length" 
-        :selectPrivilege="role.privilegeList" 
+        :selectPrivilege="role.rolePrivileges" 
         :privileges="privileges" 
         :role="role" 
       />

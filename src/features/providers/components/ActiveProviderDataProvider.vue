@@ -32,7 +32,7 @@ const pagination = usePagination({
       getMappedActiveProvider,
       removeUndefined({
         ...data,
-        status: props.status,
+        contractStatus: props.status,
         search: props.search.trim(),
       })
     ),

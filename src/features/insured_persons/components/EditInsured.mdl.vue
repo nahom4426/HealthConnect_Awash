@@ -55,61 +55,95 @@ async function handleSubmit(formValues) {
       throw new Error('Insured UUID is missing');
     }
 
+    // Validate required fields (same as add component)
+    const requiredFields = [
+      "firstName",
+      "fatherName",
+      "idNumber",
+    ];
+
+    const missingFields = requiredFields.filter((field) => !formValues[field]);
+    if (missingFields.length > 0) {
+      toasted(false, "Validation Error", `Missing required fields: ${missingFields.join(", ")}`);
+      return;
+    }
+
+    // Prepare the insured data according to backend expectations (same as add component)
     const insuredPayload = {
       email: formValues.email || "",
-      institutionUuid: route.params.institutionUuid,
-      payerInstitutionContractUuid: route.params.id,
+      institutionUuid: formValues.institutionUuid || route.params.institutionUuid || "",
+      payerInstitutionContractUuid: formValues.payerUuid || route.params.id || "",
       premium: 0,
-      title: "Mr/Ms",
+      title: "string",
       firstName: formValues.firstName,
       fatherName: formValues.fatherName,
-      grandFatherName: formValues.grandFatherName || formValues.grandfatherName || "",
-      birthDate: formValues.birthDate ? `${formValues.birthDate}T00:00:00.000Z` : '',
+      grandFatherName: formValues.grandFatherName || "",
+      birthDate: formValues.birthDate ? new Date(formValues.birthDate).toISOString() : "",
       phone: formValues.phone || null,
-      branchOffice: "Your Branch Office",
+      branchOffice: "string",
       position: formValues.position || "",
       idNumber: formValues.idNumber,
-      insuranceId: insuredUuid.value,
+      insuranceId: formValues.insuranceId || insuredUuid.value,
       address1: formValues.woreda || "",
       address2: formValues.city || "",
       address3: formValues.subcity || "",
       state: formValues.state || "Addis Ababa",
       country: formValues.country || "Ethiopia",
       status: formValues.status || "ACTIVE",
-      gender: formValues.gender
+      gender: formValues.gender || ""
     };
 
-    const result = await updateInsured(insuredUuid.value, insuredPayload);
+    // Use FormData with multipart like the add component
+    const formData = new FormData();
+    formData.append('insuredRequest', JSON.stringify(insuredPayload));
+    if (formValues.employeePhoto) {
+      formData.append('profile', formValues.employeePhoto);
+    }
 
-    const isSuccess = result && (result.success || result.status === 200 || result.status === 'success');
+    // Debug: log what we are sending
+    console.log('EditInsured submit -> insuredUuid:', insuredUuid.value);
+    console.log('EditInsured submit -> insuredPayload:', insuredPayload);
+    console.log('EditInsured submit -> FormData entries:');
+    for (const [k, v] of formData.entries()) {
+      if (v instanceof File || v instanceof Blob) {
+        console.log(`  - ${k}:`, `${v.constructor.name} type=${v.type || 'n/a'} size=${v.size}`);
+      } else {
+        console.log(`  - ${k}:`, v);
+      }
+    }
+
+    // Call update API with insuredUuid as param and FormData
+    const result = await updateInsured(insuredUuid.value, formData);
+
+    // Handle response (adjust based on your API response structure)
+    const isSuccess = result && (result.success || result.status === 200 || result.status === 'success' || result.data);
 
     if (isSuccess) {
+      const responseData = result.data || result;
+      
+      // Process the updated insured data to include photo information
       const updatedInsured = {
-        ...insuredData.value,
-        ...formValues,
-        insuredUuid: insuredUuid.value
+        ...responseData,
+        insuredUuid: insuredUuid.value,
+        photoUrl: responseData.photoUrl || (responseData.photoPath 
+          ? `${import.meta.env.VITE_API_URL || "http://localhost:8080/api"}/insured/photo/${responseData.photoPath}`
+          : null),
       };
 
-      if (!formValues.employeePhoto) {
-        if (insuredData.value.photoBase64) {
-          updatedInsured.photoBase64 = insuredData.value.photoBase64;
-        }
-        if (insuredData.value.photoPath) {
-          updatedInsured.photoPath = insuredData.value.photoPath;
-        }
-        if (insuredData.value.photoUrl) {
-          updatedInsured.photoUrl = insuredData.value.photoUrl;
-        }
-      }
-
+      // Update store
       insuredStore.update(insuredUuid.value, updatedInsured);
-      toasted(true, 'Insured member updated successfully');
 
-      if (props.data.onUpdated && typeof props.data.onUpdated === 'function') {
+      // Show success message
+      toasted(true, "Success", "Employee updated successfully");
+
+      // Call callback if exists
+      if (props.data.onUpdated && typeof props.data.onUpdated === "function") {
         props.data.onUpdated(updatedInsured);
       }
 
       closeModal();
+    } else {
+      throw new Error(result.error || "Update failed");
     }
   } catch (err) {
     console.error('Update error:', err);
@@ -125,8 +159,8 @@ async function handleSubmit(formValues) {
   <ModalParent>
     <NewFormParent 
       size="lg" 
-      title="Edit Insured Member" 
-      subtitle="Update the insured member information in the fields below."
+      title="Edit Employee" 
+      subtitle="To update employee information, please modify the fields below."
     >
       <div class="bg-white rounded-lg">
         <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
@@ -134,7 +168,7 @@ async function handleSubmit(formValues) {
         </div>
 
         <div v-if="!insuredUuid || Object.keys(insuredData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
-          Loading insured member data...
+          Loading employee data...
         </div>
 
         <InsuredMemberForm

@@ -18,26 +18,18 @@ const props = defineProps({
 const router = useRouter();
 
 function getStatusStyle(status) {
-  const base = "px-3 py-0.5 rounded-full text-center font-semibold text-sm";
+  const base = "px-3 py-0.5 rounded-full text-center";
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      // Bright green for active
-      return `${base} bg-green-100 text-green-700`;
+      return `${base} bg-green-100 text-green-600`;
     case "PENDING":
-      // Soft amber/yellow for pending
-      return `${base} bg-amber-100 text-amber-700`;
-    case "RENEWED":
-      // Fresh blue for renewed
-      return `${base} bg-blue-100 text-blue-700`;
-    case "EXPIRED":
-      // Muted red for expired
-      return `${base} bg-red-100 text-red-700`;
+      return `${base} bg-yellow-100 text-yellow-600`;
+    case "CLOSED":
+      return `${base} bg-red-100 text-red-600`;
     default:
-      // Neutral gray for unknown statuses
       return `${base} bg-gray-100 text-gray-600`;
   }
 }
-
 function formatCurrency(val) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "ETB" }).format(val);
 }
@@ -106,9 +98,9 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     </td>
 
     <!-- Benefit -->
-    <td class="p-4 text-green-700 font-semibold">
+    <!-- <td class="p-4 text-green-700 font-semibold">
       {{ formatCurrency(row.benefit) }}
-    </td>
+    </td> -->
 
     <!-- Premium -->
     <!-- <td class="p-4 text-blue-700 font-semibold">
@@ -116,9 +108,9 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     </td> -->
 
     <!-- Date Range -->
-    <!-- <td class="p-4 text-gray-600">
+    <td class="p-4 text-gray-600">
       {{ formatDate(row.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row.endDate) }}
-    </td> -->
+    </td>
 
     <!-- Status -->
     <td class="p-4">
@@ -159,7 +151,6 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   </button> -->
 </div>
 </td>
-
   </tr>
 </template>
 

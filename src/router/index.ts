@@ -100,4 +100,38 @@ router.beforeEach(() => {
   auth.setAuth(storedUser ? JSON.parse(storedUser) : {});
 });
 
+// Enforce route permissions
+router.beforeEach((to) => {
+  // Collect all required permissions from matched routes
+  const requiredPerms: string[] = to.matched.reduce((acc: string[], r) => {
+    if (r.meta && Array.isArray((r as any).meta.permissions)) {
+      acc.push(...((r as any).meta.permissions as string[]));
+    }
+    return acc;
+  }, []);
+
+  if (!requiredPerms.length) return true;
+
+  const auth = useAuthStore();
+  let user = auth.auth?.user as any;
+  if (!user) {
+    const storedUser = localStorage.getItem("userDetail");
+    user = storedUser ? JSON.parse(storedUser) : {};
+  }
+
+  const privileges: string[] = Array.isArray(user?.privileges) ? user.privileges : [];
+
+  // Super Admin or All Privileges bypass
+  if (user?.roleName === 'Super Admin' || privileges.includes('All Privileges')) {
+    return true;
+  }
+
+  // Check at least one required permission exists in user's ROLE_ list
+  const hasAccess = requiredPerms.some((p) => privileges.includes(`ROLE_${p}`));
+  if (hasAccess) return true;
+
+  // Block access and redirect to home
+  return { path: '/' };
+});
+
 export default router;

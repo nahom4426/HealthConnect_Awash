@@ -23,7 +23,7 @@ import icons from '@/utils/icons';
     type: text ? 'text' : 'password'
   }" >
     <template #left>
-      <div @click="toggleType" class="h-full w-12 grid place-items-center border-r">
+      <div @click="toggleType" class="h-full w-12 pt-2 grid place-items-center border-r">
         <span v-html="text ? icons.eye : icons.eyeSlash" />
       </div>
     </template>

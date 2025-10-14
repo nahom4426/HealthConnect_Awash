@@ -1,9 +1,8 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
 
-export const usePrivilege = defineStore("Privilegestore", () => {
+export const useRolePrivilege = defineStore("roleprivilegeStore", () => {
   const privilege = ref([]);
-  const paginationMeta = ref(null); // Add this for pagination metadata
 
   function set(data) {
     privilege.value = data;
@@ -16,32 +15,28 @@ export const usePrivilege = defineStore("Privilegestore", () => {
   function update(id, data) {
     const idx = privilege.value.findIndex((el) => el.privilegeUuid == id);
     if (idx == -1) return;
+
     privilege.value.splice(idx, 1, data);
   }
 
   function remove(id) {
     const idx = privilege.value.findIndex((el) => el.privilegeUuid == id);
     if (idx == -1) return;
+
     privilege.value.splice(idx, 1);
   }
-
   function add(data) {
     console.log(data);
+    
     privilege.value.push(data);
   }
 
-  // Add these new functions for pagination metadata
-  function setPaginationMeta(meta) {
-    paginationMeta.value = meta;
-  }
+  // function updateStatus(id, status) {
+  //   const idx = roles.value.findIndex((el) => el.roleUuid == id);
+  //   if (idx == -1) return;
 
-  function getPaginationMeta() {
-    return paginationMeta.value;
-  }
-
-  function clearPaginationMeta() {
-    paginationMeta.value = null;
-  }
+  //   roles.value[idx].roleStatus = status;
+  // }
 
   return {
     privilege,
@@ -49,10 +44,7 @@ export const usePrivilege = defineStore("Privilegestore", () => {
     update,
     remove,
     add,
+    // updateStatus,
     set,
-    // Export the new pagination functions
-    setPaginationMeta,
-    getPaginationMeta,
-    clearPaginationMeta,
   };
 });

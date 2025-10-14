@@ -29,7 +29,7 @@ const formData = ref({
 });
 console.log(formData.value);
 
-const statusOptions = ['ACTIVE', 'INACTIVE'];
+const statusOptions = ['PENDING', 'ACTIVE', 'RENEWED','EXPIRED'];
 const submitAttempted = ref(false);
 
 // Date validation

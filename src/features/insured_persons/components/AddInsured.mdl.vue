@@ -7,13 +7,18 @@ import { useRouter } from "vue-router";
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref } from "vue";
+import { useAuthStore } from "@/stores/auth";
 import InsuredPersonFormDataProvider from "../form/InsuredPersonFormDataProvider.vue";
 import { insuredMembers } from "../store/insuredPersonsStore";
-
+import { useRoute } from "vue-router";
+const route = useRoute();
+const institutionUuid = route.params.institutionUuid;
+const payerInstitutionContractUuid = route.params.id;
 const pending = ref(false);
 const router = useRouter();
 const formDataProvider = ref();
 const insuredStore = insuredMembers();
+const authStore = useAuthStore();
 
 async function handleSubmit(formValues) {
   try {
@@ -21,7 +26,7 @@ async function handleSubmit(formValues) {
 
     // Validate required fields
     const requiredFields = [
-      "payerUuid",
+     
       "firstName",
       "fatherName",
       "idNumber",
@@ -36,8 +41,8 @@ async function handleSubmit(formValues) {
     // Prepare the insured data according to backend expectations
     const insuredPayload = {
       email: formValues.email || "",
-      institutionUuid: formValues.institutionUuid || "", // Add if required
-      payerInstitutionContractUuid: formValues.payerUuid, // Assuming this is the correct mapping
+      institutionUuid: formValues.institutionUuid || institutionUuid || "", // Add if required
+      payerInstitutionContractUuid: formValues.payerUuid || payerInstitutionContractUuid || "", // Assuming this is the correct mapping
       premium: 0, // Default value as per backend
       title: "string", // Default or from formValues if available
       firstName: formValues.firstName,
@@ -58,32 +63,30 @@ async function handleSubmit(formValues) {
       gender: formValues.gender || ""
     };
 
-    // Handle file upload if present
+    // Always send multipart FormData like Provider: 'insured' JSON + optional 'photo'
+    const formData = new FormData();
+    formData.append('insuredRequest', JSON.stringify(insuredPayload));
     if (formValues.employeePhoto) {
-      const formData = new FormData();
-      formData.append('photo', formValues.employeePhoto);
-      formData.append('insured', new Blob([JSON.stringify(insuredPayload)], {
-        type: 'application/json'
-      }));
+      formData.append('profile', formValues.employeePhoto);
+    }
 
-      console.log("Submitting with photo:", insuredPayload);
-      const result = await formDataProvider.value.register(formData);
-
-      if (result.success) {
-        handleSuccess(result.data);
+    // Debug: log what we are sending
+    console.log('AddInsured submit -> insuredPayload:', insuredPayload);
+    console.log('AddInsured submit -> FormData entries:');
+    for (const [k, v] of formData.entries()) {
+      if (v instanceof File || v instanceof Blob) {
+        console.log(`  - ${k}:`, `${v.constructor.name} type=${v.type || 'n/a'} size=${v.size}`);
       } else {
-        throw new Error(result.error || "Registration failed");
+        console.log(`  - ${k}:`, v);
       }
+    }
+
+    const result = await formDataProvider.value.register(formData);
+
+    if (result.success) {
+      handleSuccess(result.data);
     } else {
-      // Submit without photo as pure JSON
-      console.log("Submitting without photo:", insuredPayload);
-      const result = await formDataProvider.value.register(insuredPayload);
-
-      if (result.success) {
-        handleSuccess(result.data);
-      } else {
-        throw new Error(result.error || "Registration failed");
-      }
+      throw new Error(result.error || "Registration failed");
     }
   } catch (error) {
     console.error("Submission error:", error);
@@ -114,7 +117,7 @@ function handleSuccess(data) {
   }
 
   closeModal();
-  router.push("/insured_list");
+  // router.push("/insured_list");
 }
 </script>
 
@@ -131,6 +134,7 @@ function handleSuccess(data) {
           <InsuredForm
             :onSubmit="handleSubmit"
             :pending="pending"
+            :institutionId="authStore.auth?.user?.payerUuid || ''"
             :onCancel="() => closeModal()"
           />
         </InsuredPersonFormDataProvider>

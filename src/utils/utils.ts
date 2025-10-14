@@ -46,14 +46,43 @@ export async function fakeReq<T extends any >(time = 200, success: boolean = tru
   })
 }
 
-export function toasted(type: boolean, succMsg = '', errMsg = '') {
+export function toasted(
+  type: boolean,
+  succMsg: string,
+  errMsg?: string | ErrorResponse
+): void {
   if (type) {
     toast.success(succMsg);
   } else {
-    toast.error(errMsg);
+    // Check if error is an object with validation errors
+    if (
+      errMsg &&
+      typeof errMsg === 'object' &&
+      'properties' in errMsg &&
+      errMsg.properties?.errors
+    ) {
+      // Extract and display all validation errors
+      const errorMessages: string[] = [];
+      for (const [field, errors] of Object.entries(errMsg.properties.errors)) {
+        const fieldName = field
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (str) => str.toUpperCase());
+        if (Array.isArray(errors)) {
+          errorMessages.push(`${fieldName}: ${errors.join(', ')}`);
+        } else {
+          errorMessages.push(`${fieldName}: ${errors}`);
+        }
+      }
+      toast.error(errorMessages.join('; '));
+    } else {
+      // Fallback to original error message if not a validation error
+      const fallbackMsg =
+        (typeof errMsg === 'object' ? errMsg?.message : errMsg) ||
+        'An error occurred';
+      toast.error(fallbackMsg);
+    }
   }
 }
-
 export function addFullname(data) {
   if (!(data instanceof Array)) return;
   return data.reduce((el, payload) => {

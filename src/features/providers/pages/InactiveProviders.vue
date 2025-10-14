@@ -55,15 +55,15 @@ function viewDetails(id) {
 
 <template>
   <DefaultPage placeholder="Search Active Providers">
-    <template #filter>
+      <!-- <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
-      >
+      > 
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
     </template>
-
+  -->
     <template #add-action>
       <button
         @click.prevent="openModal('AddProvider')"

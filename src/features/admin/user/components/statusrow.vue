@@ -278,70 +278,50 @@ function getTypeStyle(statusOrType) {
       </span>
     </td>  
 
-    <td class="p-3" v-if="headKeys.includes('Actions') || headKeys.includes('actions')">  
-      <div class="dropdown-container relative w-full">
-        <button 
-          @click.stop="toggleDropdown($event, row.userUuid || row.id)"
-          class="inline-flex items-center justify-center p-2 w-full text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
-          type="button"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
-        </button>
+    <td class="p-3" v-if="headKeys.includes('Actions') || headKeys.includes('actions')">
+  <div class="flex flex-wrap gap-2 items-center justify-start">
 
-        <div 
-          :id="`dropdown-${row.userUuid || row.id}`"
-          class="dropdown-menu hidden absolute right-0 z-10 w-full bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-        >
-          <div class="py-1" role="none">
-            <button 
-              @click.stop="handleEditWithClose(row)"
-              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <div class="flex items-start justify-start pl-4 gap-4">
-                <i v-html="icons.edits" />
-                Edit
-              </div>
-            </button>
-            
-            <button 
-              @click.stop="handleViewWithClose(row.userUuid || row.id)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <div class="flex items-center justify-start pl-4 gap-4">
-                <i v-html="icons.details" />
-                Detail
-              </div>
-            </button>
-            
-            <template v-if="row.userStatus">
-              <button 
-                v-if="row.userStatus === 'INACTIVE' || row.userStatus === 'Inactive'"
-                @click.stop="handleActivateWithClose(row.userUuid || row.id)"
-                class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
-              >
-                <div class="flex items-center justify-start pl-4 gap-4">
-                  <i v-html="icons.activate" />
-                  Activate
-                </div>
-              </button>
-              
-              <button 
-                v-if="row.userStatus === 'ACTIVE' || row.userStatus === 'Active'"
-                @click.stop="handleDeactivateWithClose(row.userUuid || row.id)"
-                class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
-              >
-                <div class="flex items-center justify-start pl-4 gap-4">
-                  <i v-html="icons.deactivate" />
-                  Deactivate
-                </div>
-              </button>
-            </template>
-          </div>
-        </div>
-      </div>
-    </td>
+    <!-- ✏️ Edit -->
+    <button
+      @click.stop="handleEditWithClose(row)"
+      class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 hover:shadow-sm transition-all duration-200"
+    >
+      <i v-html="icons.edit" class="text-blue-500" />
+      <span>Edit</span>
+    </button>
+
+    <!-- 👁️ Detail -->
+    <!-- <button
+      @click.stop="handleViewWithClose(row.userUuid || row.id)"
+      class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 hover:shadow-sm transition-all duration-200"
+    >
+      <i v-html="icons.details" class="text-indigo-500" />
+      <span>Detail</span>
+    </button> -->
+
+    <!-- ✅ Activate -->
+    <button
+      v-if="row.userStatus === 'INACTIVE' || row.userStatus === 'Inactive'"
+      @click.stop="handleActivateWithClose(row.userUuid || row.id)"
+      class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:shadow-sm transition-all duration-200"
+    >
+      <i v-html="icons.activate" class="text-green-500" />
+      <span>Activate</span>
+    </button>
+
+    <!-- ⛔ Deactivate -->
+    <button
+      v-if="row.userStatus === 'ACTIVE' || row.userStatus === 'Active'"
+      @click.stop="handleDeactivateWithClose(row.userUuid || row.id)"
+      class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 hover:shadow-sm transition-all duration-200"
+    >
+      <i v-html="icons.deactivate" class="text-red-500" />
+      <span>Deactivate</span>
+    </button>
+  </div>
+</td>
+
+
   </tr>
 </template>
 

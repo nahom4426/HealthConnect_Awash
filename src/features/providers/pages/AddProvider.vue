@@ -9,14 +9,14 @@ import ActiveProvidersDataProvider from "../components/ProviderDataProvider.vue"
 import { useApiRequest } from "@/composables/useApiRequest";
 import providerStatusRow from "../components/providerStatusRow.vue";
 import { openModal } from "@customizer/modal-x";
-import { useProviders } from "../store/providersStore";
+import { useAddProviders } from "../store/AddprovidersStore";
 import icons from "@/utils/icons";
 // Define emits to handle the navigate event
 const emit = defineEmits(["navigate"]);
 
 const router = useRouter();
 const dataProvider = ref();
-const providersStore = useProviders();
+const providersStore = useAddProviders();
 const statusReq = useApiRequest();
 const deleteReq = useApiRequest();
 
@@ -55,16 +55,16 @@ function viewDetails(id) {
 
 <template>
   <DefaultPage placeholder="Search Active Providers">
-    <template #filter>
+      <!-- <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
-      >
+      > 
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
     </template>
 
-    <!-- <template #add-action>
+    <template #add-action>
       <button
         @click.prevent="openModal('AddProvider')"
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"

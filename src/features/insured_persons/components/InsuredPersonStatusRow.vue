@@ -151,17 +151,27 @@ async function handleDeactivateWithClose(insuredId) {
       </div>
       
       <div v-else-if="key === 'fullName'" class="text-gray-700 flex items-center gap-3 select-text">
+        <!-- Prefer API's `profile` signed URL; then other fallbacks -->
         <img 
-          v-if="row.photoBase64" 
+          v-if="row.profile" 
+          :src="row.profile" 
+          alt="Profile" 
+          class="h-10 w-10 object-cover rounded-full border border-gray-200"
+          @error="handleImageError"
+        />
+        <img 
+          v-else-if="row.photoBase64" 
           :src="row.photoBase64" 
           alt="Profile" 
           class="h-10 w-10 object-cover rounded-full border border-gray-200"
+          @error="handleImageError"
         />
         <img 
           v-else-if="row.photoUrl" 
           :src="row.photoUrl" 
           alt="Profile" 
           class="h-10 w-10 object-cover rounded-full border border-gray-200"
+          @error="handleImageError"
         />
         <img 
           v-else-if="row.photoPath" 
@@ -173,8 +183,13 @@ async function handleDeactivateWithClose(insuredId) {
         <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
           <span class="text-gray-500 text-xs">No Photo</span>
         </div>
-        <div class="truncate">
-          {{ row.firstName }} {{ row.fatherName }} {{ row.grandfatherName }}
+        <div class="truncate leading-tight">
+          <div class="font-semibold">{{ row.firstName }} {{ row.fatherName }} {{ row.grandFatherName || row.grandfatherName }}</div>
+          <div class="text-xs text-gray-500" v-if="row.insuranceId || row.idNumber">
+            <span v-if="row.insuranceId">{{ row.insuranceId }}</span>
+            <span v-if="row.insuranceId && row.idNumber" class="mx-1">•</span>
+            <span v-if="row.idNumber">ID: {{ row.idNumber }}</span>
+          </div>
         </div>
       </div>
       

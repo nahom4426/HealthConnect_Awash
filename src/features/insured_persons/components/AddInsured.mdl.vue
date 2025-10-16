@@ -90,7 +90,7 @@ async function handleSubmit(formValues) {
     }
   } catch (error) {
     console.error("Submission error:", error);
-    toasted(false, "Failed to submit form", error.message);
+    // toasted(false, "Failed to submit form", error.message);
   } finally {
     pending.value = false;
   }

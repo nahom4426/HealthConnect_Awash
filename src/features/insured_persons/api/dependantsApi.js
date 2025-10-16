@@ -2,9 +2,9 @@ import ApiService from "@/service/ApiService";
 import { useAuthStore } from "@/stores/auth"; // Make sure to import the auth store
 
 const api = new ApiService();
-const path = '/dependant';
+const path = '/claimconnect';
 const baseUrl = import.meta.env.v_API_URI;
-const basePath = '/dependant';
+const basePath = '/claimconnect';
 
 export function getInsuredByContractId(id, query = {}) {
   return api.addAuthenticationHeader().get(`${path}/list/${id}`, {
@@ -27,15 +27,16 @@ export function searchInsuredByInstitution(id, query = {}, config = {}) {
 }
 
 export function createdependant(formData) {
-  return api.post(`${basePath}/createDependant`, formData, {
+  return api.addAuthenticationHeader().post(`${basePath}/dependant`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   });
 }
 
+
 export function updatedependant(dependantUuid, formData) {
-  return api.put(`${basePath}/${dependantUuid}`, formData, {
+  return api.addAuthenticationHeader().put(`${basePath}/dependant/${dependantUuid}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -44,7 +45,7 @@ export function updatedependant(dependantUuid, formData) {
 
 export async function updateInsured(uuid, formData) {
   try {
-    const response = await api.put(`${basePath}/updateInsured/${uuid}`, formData, {
+    const response = await api.addAuthenticationHeader().put(`${basePath}/updateInsured/${uuid}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -63,7 +64,7 @@ export async function updateInsured(uuid, formData) {
 }
 
 export function updatedependantstatus(dependantUuid, newStatus) {
-  return api.patch(`${basePath}/dependant/${dependantUuid}/status`, { newStatus });
+  return api.addAuthenticationHeader().patch(`${basePath}/dependant/${dependantUuid}/status`, { newStatus });
 }
 
 export function getdependantById(uuid) {

@@ -28,11 +28,14 @@
         >
           <img
             :src="
+              insuredData.profile ||
               insuredData.profilePictureBase64 ||
-              'https://randomuser.me/api/portraits/men/75.jpg'
+              insuredData.photoUrl ||
+              'https://via.placeholder.com/160x140?text=No+Photo'
             "
             alt="Profile"
             class="rounded-lg border border-gray-200 w-full h-full object-cover"
+            @error="(e) => (e.target.src = 'https://via.placeholder.com/160x140?text=No+Photo')"
           />
         </div>
 
@@ -149,11 +152,14 @@
                     <div class="flex items-center">
                       <img
                         :src="
+                          dependent.profile ||
                           dependent.profilePictureBase64 ||
-                          'https://randomuser.me/api/portraits/lego/1.jpg'
+                          dependent.photoUrl ||
+                          'https://via.placeholder.com/80x80?text=No+Photo'
                         "
                         class="h-10 w-10 rounded-full object-cover"
                         alt="Profile"
+                        @error="(e) => (e.target.src = 'https://via.placeholder.com/80x80?text=No+Photo')"
                       />
                       <!-- <div class="ml-4">
                         <div class="text-sm font-medium text-gray-900">{{ dependent.fullName }}</div>
@@ -312,9 +318,10 @@
                           :src="
                             photoPreview ||
                             editingDependent.profilePictureBase64 ||
-                            'https://randomuser.me/api/portraits/lego/1.jpg'
+                            'https://via.placeholder.com/80x80?text=No+Photo'
                           "
                           class="w-full h-full object-cover"
+                          @error="(e) => (e.target.src = 'https://via.placeholder.com/80x80?text=No+Photo')"
                         />
                       </label>
                       <input
@@ -327,7 +334,7 @@
                   </td>
 
                   <!-- Full Name -->
-                  <td class="pr-6 py-4 pt-6">
+                  <td class="pr-6 pb-4 pt-16">
                     <Input
                       v-model="editingDependent.fullName"
                       class="text-sm p-1 border rounded w-full"
@@ -343,7 +350,7 @@
                   </td>
 
                   <!-- Relationship -->
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-6 py-2 whitespace-nowrap">
                     <Select
                       v-model="editingDependent.relationship"
                       name="relationship"
@@ -459,6 +466,7 @@
                         <img
                           :src="newDependent.photo"
                           class="w-full h-full object-cover"
+                          @error="(e) => (e.target.src = 'https://via.placeholder.com/80x80?text=No+Photo')"
                         />
                       </template>
                       <template v-else>
@@ -501,7 +509,7 @@
                 </td>
 
 
-                <td class="pr-6 py-4 pt-6">
+                <td class="mr-10 pt-8">
                   <Input
                     v-model="newDependent.fullName"
                     class="text-sm p-1 border rounded w-full"
@@ -515,7 +523,7 @@
                     Enter full name separated by spaces
                   </p>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-2 whitespace-nowrap">
                   <Select
                     v-model="newDependent.relationship"
                     name="relationship"
@@ -529,7 +537,7 @@
                   />
                 </td>
 
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-2 whitespace-nowrap">
                   <Input
                     v-model.number="newDependent.age"
                     name="age"
@@ -541,7 +549,7 @@
                     }"
                   />
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-2 whitespace-nowrap">
                   <div class="space-y-2">
                     <Select
                       v-model="newDependent.gender"
@@ -556,7 +564,7 @@
                     />
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-2 whitespace-nowrap">
                   <div class="space-y-2">
                     <Input
                       v-model="newDependent.group"
@@ -569,7 +577,7 @@
                   </div>
                 </td>
 
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-2 whitespace-nowrap">
                   <Select
                     v-model="newDependent.status"
                     name="status"
@@ -581,7 +589,7 @@
                     }"
                   />
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td class="px-6 py-2 whitespace-nowrap text-sm font-medium">
                   <div class="flex space-x-2">
                     <button
                       @click="saveDependent"
@@ -663,7 +671,11 @@ const headers = [
 ];
 
 const dependentsList = computed(() => {
-  return insuredData.value?.dependants || [];
+  return (
+    insuredData.value?.dependants ||
+    insuredData.value?.dependantResponses ||
+    []
+  );
 });
 
 const newDependent = ref({
@@ -697,8 +709,8 @@ async function fetchInsuredData() {
         insuredData.value.dependants = insuredData.value.dependants.map(
           (dep) => {
             let age = null;
-            if (dep.dependantBirthDate) {
-              const birthDate = new Date(dep.dependantBirthDate);
+            if (dep.birthDate) {
+              const birthDate = new Date(dep.birthDate);
               const today = new Date();
               age = today.getFullYear() - birthDate.getFullYear();
               const m = today.getMonth() - birthDate.getMonth();
@@ -708,9 +720,9 @@ async function fetchInsuredData() {
             }
 
             const fullName = [
-              dep.dependantFirstName || "",
-              dep.dependantFatherName || "",
-              dep.dependantGrandFatherName || "",
+              dep.firstName || "",
+              dep.fatherName || "",
+              dep.grandFatherName || "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -720,9 +732,48 @@ async function fetchInsuredData() {
               fullName,
               age,
               dependantUuid: dep.dependantUuid || dep.id,
-              gender: dep.dependantGender || dep.gender || "Male",
+              gender: dep.gender || dep.gender || "Male",
               status: dep.dependantStatus || dep.status || "ACTIVE",
               relationship: dep.relationship || "Other",
+            };
+          }
+        );
+      }
+      else if (
+        insuredData.value.dependantResponses &&
+        Array.isArray(insuredData.value.dependantResponses)
+      ) {
+        insuredData.value.dependants = insuredData.value.dependantResponses.map(
+          (dep) => {
+            let age = null;
+            if (dep.birthDate) {
+              const birthDate = new Date(dep.birthDate);
+              const today = new Date();
+              age = today.getFullYear() - birthDate.getFullYear();
+              const m = today.getMonth() - birthDate.getMonth();
+              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+              }
+            }
+
+            const fullName = [
+              dep.firstName || "",
+              dep.fatherName || "",
+              dep.grandFatherName || dep.grandfatherName || "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+
+            return {
+              ...dep,
+              fullName,
+              age,
+              dependantUuid: dep.dependantUuid || dep.id,
+              gender: dep.gender || "Male",
+              status: dep.status || "ACTIVE",
+              relationship: dep.relationship || "Other",
+              profile: dep.profile || null,
+              profilePictureBase64: dep.profilePictureBase64 || null,
             };
           }
         );
@@ -792,23 +843,24 @@ function saveDependent() {
 
   const dependantData = {
     insuredPersonUuid: insuredPersonUuid,
-    dependantFirstName: nameParts[0] || "",
-    dependantFatherName: nameParts[1] || "",
-    dependantGrandFatherName: nameParts[2] || "",
-    dependantGender: newDependent.value.gender?.toLowerCase() || "male",
-    dependantBirthDate: formattedBirthDate,
+    title: newDependent.value.title || "Mr",
+    firstName: nameParts[0] || "",
+    fatherName: nameParts[1] || "",
+    grandFatherName: nameParts[2] || "",
+    gender: newDependent.value.gender?.toLowerCase() || "male",
+    birthDate: formattedBirthDate,
     relationship: newDependent.value.relationship,
-    dependantStatus: newDependent.value.status,
+    status: newDependent.value.status,
   };
 
   const formData = new FormData();
-  formData.append("dependant", JSON.stringify(dependantData));
+  formData.append("dependantRequest ", JSON.stringify(dependantData));
 
   const fileInput = document.querySelector('input[type="file"]');
   if (fileInput && fileInput.files && fileInput.files.length > 0) {
     const photoFile = fileInput.files[0];
     console.log("Using actual file from input:", photoFile);
-    formData.append("photo", photoFile);
+    formData.append("profile", photoFile);
   }
 
   apiRequest.send(() => createdependant(formData), handleDependantResponse);
@@ -973,13 +1025,14 @@ function updateDependant(dependant) {
   const dependantData = {
     dependantUuid: dependant.dependantUuid,
     insuredPersonUuid: insuredPersonUuid,
-    dependantFirstName: dependant.fullName.split(" ")[0] || "",
-    dependantFatherName: dependant.fullName.split(" ")[1] || "",
-    dependantGrandFatherName: dependant.fullName.split(" ")[2] || "",
-    dependantGender: dependant.gender.toLowerCase(),
-    dependantBirthDate: calculateBirthDateFromAge(dependant.age),
+    title: dependant.title || "Mr",
+    firstName: dependant.fullName.split(" ")[0] || "",
+    fatherName: dependant.fullName.split(" ")[1] || "",
+    grandFatherName: dependant.fullName.split(" ")[2] || "",
+    gender: dependant.gender.toLowerCase(),
+    birthDate: calculateBirthDateFromAge(dependant.age),
     relationship: dependant.relationship,
-    dependantStatus: dependant.status,
+    status: dependant.status,
   };
 
   apiRequest.send(
@@ -1046,9 +1099,9 @@ function startEdit(dependent) {
       [dependent.firstName, dependent.fatherName, dependent.grandFatherName]
         .filter(Boolean)
         .join(" "),
-    birthDate: dependent.birthDate || dependent.dependantBirthDate,
+    birthDate: dependent.birthDate || dependent.birthDate,
     dependantGroup: dependent.dependantGroup || dependent.group || "C-Family",
-    status: dependent.status || dependent.dependantStatus || "ACTIVE",
+    status: dependent.status || dependent.status || "ACTIVE",
   };
 
   dependentCopy.originalIndex =

@@ -162,6 +162,7 @@ async function handleSubmit(formData) {
         : 'Provider created successfully';
       
       console.log('Success:', successMessage);
+      
       toasted(true, successMessage);
       closeModal();
       

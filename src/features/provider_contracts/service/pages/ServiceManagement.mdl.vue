@@ -11,6 +11,7 @@ import { useServiceListStore } from "../store/serviceListStore";
 import ModalParent from "@/components/ModalParent.vue";
 import { ref, watchEffect } from "vue";
 import { getServiceByid, updateService } from "../api/serviceApi.js";
+import { closeModal } from "@customizer/modal-x";
 
 const props = defineProps({
   data: Object,
@@ -43,12 +44,20 @@ watchEffect(() => {
 function updateServiceHandler({ values }) {
   // Prepare payload with only the price and required identifiers
   const payload = {
-    price: values.price,
-    itemID: service.value.itemID || ''
-  };
+  itemCode: service.value.itemCode || '',
+  item: service.value.item || '',
+  subCategory: service.value.subCategory || '',
+  category: service.value.category || '',
+  price: values.price || 0,
+  payerProviderContractUuid: service.value.payerProviderContractUuid || route.params.id  || '',
+  status: service.value.status || 'ACTIVE',
+  description: service.value.description || '',
+  itemID: service.value.serviceId || '',
+};
+
 
   req.send(
-    () => updateService(12, payload),
+    () => updateService(service.value.eligibleServiceUuid, payload),
     (res) => {
       toasted(res.success, 
         "Service price updated successfully", 
@@ -57,10 +66,11 @@ function updateServiceHandler({ values }) {
       
       if (res.success) {
         // Update the store with new price
-        serviceStore.update(props.data.eligibleServiceUuid, { 
+        serviceStore.update(service.value.eligibleServiceUuid, { 
           ...service.value, 
           price: values.price 
         });
+        closeModal();
       }
     }
   );

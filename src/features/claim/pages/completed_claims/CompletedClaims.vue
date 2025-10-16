@@ -99,13 +99,7 @@ const store = useCompletedClaimByInstitutionBatch();
       >
         <template #actions="{ row }">
           <Button size="xs" type="elevated">
-            <!-- <RouterLink
-              :to=" ServiceTypes.creditService == active ?
-               `/completed_claims/detail/${row.providerUuid}/${encodeURIComponent(row.batchCode)}` :
-               `/completed_claims/cash_detail/${encodeURIComponent(row.claimBatchCode)}`
-            >
-              Detail
-            </RouterLink> -->
+            <RouterLink :to="`/completed_claims/detail/${(row).claimUuid || ''}`">Detail</RouterLink>
           </Button>
         </template>
       </Table>

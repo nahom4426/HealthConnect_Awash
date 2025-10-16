@@ -78,7 +78,7 @@ export const getPayerContractById = (id) => {
   });
 };
 export const getActiveContracts = (query = {}) => {
-  return api.addAuthenticationHeader().get(`${basePath}/provider/lists`, {
+  return api.addAuthenticationHeader().get(`${basePath}/provider/lists?status=ACTIVE`, {
     params: query,
   });
 };

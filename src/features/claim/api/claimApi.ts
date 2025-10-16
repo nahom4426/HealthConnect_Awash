@@ -70,13 +70,23 @@ export function getRequestedClaimByBatchDetail(query = {}, claimUuid: string) {
 }
 
 // new: update service provided claim status (body: array of serviceProvidedUuid)
-export function updateServiceProvidedClaimStatus(claimUuid: string, claimStatus: string, body: string[] = [], remark?: string) {
-  const params: any = { ClaimStatus: claimStatus };
-  if (remark) params.remark = remark;
-  return api.addAuthenticationHeader().put(`${path}/claim/ServiceProvidedClaimStatus/${claimUuid}`, body, {
-    params,
-  });
-}
+export function updateServiceProvidedClaimStatus(
+	claimUuid: string, 
+	claimStatus: string, 
+	serviceProvidedUuids: string[] = [], 
+	remark?: string
+  ) {
+	const requestBody = {
+	  serviceProvidedUuids,
+	  claimStatus,
+	  ...(remark && { remark })
+	};
+  
+	return api.addAuthenticationHeader().put(
+	  `${path}/claim/ServiceProvidedClaimStatus/${claimUuid}`,
+	  requestBody
+	);
+  }
 
 export function getRequestedCashClaimByBatchDetail(query = {}) {
 	return api.addAuthenticationHeader().get(`${path}/cash/payment/requested/list/detail`, {

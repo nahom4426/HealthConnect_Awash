@@ -41,7 +41,7 @@ watch(() => props.modelValue, () => {
       :error="error"
       :label="$attrs.label"
     >
-      <div class="flex items-center h-full flex-1">
+      <div class="flex items-center h-10 flex-1">
         <slot name="left"></slot>
         <select
           :style="{

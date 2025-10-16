@@ -61,7 +61,9 @@ export const insuredMembers = defineStore("insuredStore", () => {
       position: item.position || "",
       gender: item.gender || "",
       status: item.status || "ACTIVE",
-      photoUrl: item.profilePictureBase64 || item.photoUrl || null,
+      // Prefer signed `profile` URL from API, then other fallbacks
+      profile: item.profile || null,
+      photoUrl: item.profile || item.profilePictureBase64 || item.photoUrl || null,
       photoPath: item.photoPath || null,
     }));
 
@@ -102,8 +104,10 @@ export const insuredMembers = defineStore("insuredStore", () => {
       position: item.position || null,
       gender: item.gender || '',
       status: item.status || 'ACTIVE',
-      photoUrl: item.photoBase64 || item.profilePictureBase64 || null,
-      photoPath: item.profilePicturePath || null,
+      // Prefer signed `profile` URL from API, then other fallbacks
+      profile: item.profile || null,
+      photoUrl: item.profile || item.photoBase64 || item.profilePictureBase64 || item.photoUrl || null,
+      photoPath: item.profilePicturePath || item.photoPath || null,
       dependants: item.dependants || []
     }));
 

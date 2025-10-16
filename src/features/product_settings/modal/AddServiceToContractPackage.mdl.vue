@@ -55,8 +55,8 @@ async function fetchProviders() {
     loadingProviders.value = true;
     const response = await getActiveContracts();
     
-    if (response?.data) {
-      providers.value = Array.isArray(response.data) ? response.data : [response.data];
+    if (response?.data.content) {
+      providers.value = Array.isArray(response.data.content) ? response.data.content : [response.data.content];
     }
   } catch (error) {
     console.error('Error fetching providers:', error);
@@ -429,7 +429,7 @@ onMounted(() => {
         <div v-if="currentStep === 2" class="space-y-4">
           <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
             <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+              <div class="w-10 h-10 bg-green-500 rounded-lg flex ">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                 </svg>

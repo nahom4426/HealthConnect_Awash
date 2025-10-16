@@ -76,7 +76,7 @@ export function createService(id, data) {
 
 // Function to update a service
 export function updateService(payerProviderContractUuid, data) {
-  return api.addAuthenticationHeader().put(`${basePath}/edit-eligible-services?payerProviderContractUuid=${payerProviderContractUuid}`, data);
+  return api.addAuthenticationHeader().put(`${basePath}/edit-eligible-services?eligibleServiceUuid=${payerProviderContractUuid}`, data);
 }
 // Function to delete a service
 export function removeService(id) {

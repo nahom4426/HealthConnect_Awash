@@ -77,7 +77,7 @@ console.log();
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input
           name="contractName"
-          label="Category Name"
+          label="Policy Name"
           validation="required"
           v-model="formData.contractName"
           :attributes="{ 
@@ -86,7 +86,7 @@ console.log();
         />
         <Input
           name="contractCode"
-          label="Category Code"
+          label="Policy Code"
           validation="required"
           v-model="formData.contractCode"
           :attributes="{ 

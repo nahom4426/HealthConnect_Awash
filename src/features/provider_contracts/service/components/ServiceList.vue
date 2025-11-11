@@ -9,7 +9,8 @@ import { useAuthStore } from "@/stores/auth";
 import ServiceListDataProvider from "../components/ServiceListDataProvider.vue";
 import { removeService } from "../api/serviceApi";
 import { useServiceListStore } from "../store/serviceListStore";
-import Dropdown from "@/components/new_form_elements/Dropdown.vue";
+import ServiceStatusCell from "../components/ServiceStatusCell.vue";
+import ServiceRow from "./ServiceRow.vue";
 // import Dropdown from "@/components/Dropdown.vue";
 const api = useApiRequest();
 const authStore = useAuthStore();
@@ -53,54 +54,8 @@ function remove(id) {
           head: ['Code', 'Service Name', 'Price (ETB)', 'Status', 'actions'],
           row: ['itemCode', 'item', 'price', 'status'],
         }"
+        :rowCom="ServiceRow"
       >
-        <template #actions="{ row }">
-          <Dropdown v-slot="{ setRef, toggleDropdown }">
-            <div
-              @click.prevent="toggleDropdown"
-              class="flex items-center gap-2 px-5 py-3 rounded-lg cursor-pointer"
-            >
-              <button>
-                <i v-html="icons.threeDots"></i>
-              </button>
-            </div>
-            <div
-              class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 w-60 bg-white"
-              :ref="setRef"
-            >
-              <button
-                @click="openModal('ServiceManagement', row?.serviceUuid)"
-                class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
-              >
-                <i v-html="icons.edits" />
-                <span>Edit</span>
-              </button>
-              <!-- <button
-                @click="openModal('ServiceManagement', row?.serviceUuid)"
-                class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
-              >
-                <i v-html="icons.details" />
-                <span>Detail</span>
-              </button> -->
-              <!-- <button
-                @click="remove(row?.serviceUuid)"
-                class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
-              >
-                <i v-html="icons.deactivate" />
-                <span>Mark as unavailable</span>
-              </button> -->
-            </div>
-          </Dropdown>
-          <!-- <div class="flex gap-4 items-center">
-            <button
-              class="size-8 shadow-md rounded-full bg-accent flex justify-center items-center"
-              @click="openModal('ServiceManagement', row?.serviceUuid)"
-            >
-              <i v-html="icons.edit" />
-            </button>
-            <button @click="remove(row?.serviceUuid)">delete</button>
-          </div> -->
-        </template>
       </Table>
     </ServiceListDataProvider>
   </div>

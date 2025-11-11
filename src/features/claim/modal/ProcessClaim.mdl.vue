@@ -7,6 +7,11 @@ import { ref } from 'vue';
 import Form from '@/components/new_form_builder/Form.vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import Textarea from '@/components/new_form_elements/Textarea.vue';
+import { approveClaimProcessedBy } from '../api/claimApi';
+import { toasted } from '@/utils/utils';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const props = defineProps({
   data: {
@@ -16,36 +21,48 @@ const props = defineProps({
 });
 
 const batchCode = ref(props.data?.batchCode || '2025');
+const claimUuid = ref(props.data?.claimUuid || '');
 const comment = ref('');
 const pending = ref(false);
 const error = ref('');
 
 async function submit() {
-  const payload = {
-    comment: comment.value?.trim() || '',
+  const commentValue = comment.value?.trim();
+  if (!commentValue) {
+    error.value = 'Comment is required';
+    return;
+  }
+
+  const body = {
+    comment: commentValue,
     batchCode: batchCode.value?.trim() || ''
   };
-  if (!payload.comment) return;
 
-  // If an async onSubmit is provided, call it and only close on success
-  if (typeof props.data?.onSubmit === 'function') {
-    try {
-      pending.value = true;
-      error.value = '';
-      const res = await props.data.onSubmit(payload);
-      if (res?.success) {
-        closeModal(res);
-      } else {
-        error.value = res?.error || 'Failed to process claim';
+  try {
+    pending.value = true;
+    error.value = '';
+    
+    const res = await approveClaimProcessedBy(claimUuid.value, body);
+    
+    if (res && res.status >= 200 && res.status < 300) {
+      toasted(true, 'Claim processed successfully');
+      closeModal({ success: true });
+      
+      // Call onSuccess callback if provided
+      if (typeof props.data?.onSuccess === 'function') {
+        props.data.onSuccess();
       }
-    } catch (e) {
-      error.value = e?.message || 'Something went wrong while processing the claim';
-    } finally {
-      pending.value = false;
+      
+      // Navigate to process_claims page
+      router.push('/process_claims');
+    } else {
+      error.value = res?.data?.message || 'Failed to process claim';
     }
-  } else {
-    // Fallback: return payload to caller
-    closeModal(payload);
+  } catch (e) {
+    console.error('Error processing claim:', e);
+    error.value = e?.response?.data?.message || e?.message || 'Something went wrong while processing the claim';
+  } finally {
+    pending.value = false;
   }
 }
 
@@ -62,7 +79,7 @@ function onBatchCodeUpdate(v) {
       subtitle="Provide details to process the claim."
       size="sm"
     >
-      <Form id="process-claim-form" :inner="false" class="bg-white p-0" @submit.prevent="submit">
+      <Form id="process-claim-form" :inner="false" class="p-0 bg-white" @submit.prevent="submit">
         <div class="flex flex-col gap-4 py-2">
           <div v-if="error" class="p-3 text-sm text-red-700 bg-red-100 rounded">
             {{ error }}
@@ -83,7 +100,7 @@ function onBatchCodeUpdate(v) {
             label="Remark"
           />
 
-          <div class="flex items-center justify-end gap-3 pt-2 border-t">
+          <div class="flex gap-3 justify-end items-center pt-2 border-t">
             <Button type="link" :disabled="pending" @click="() => !pending && closeModal(undefined)">Cancel</Button>
             <Button type="primary" :loading="pending" :disabled="pending" as="button" html-type="submit">Submit</Button>
           </div>

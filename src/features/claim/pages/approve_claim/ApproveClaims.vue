@@ -12,6 +12,7 @@ import { ref } from "vue";
 import { ServiceTypes, Status, PaymentStatus, ClaimLevel } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useApproveClaimByInstitutionBatch } from "../../store/approveClaimByInstitutionBatchStore";
+import ApproveClaimRow from "../../components/ApproveClaimRow.vue";
 
 const institutionUuid = ref();
 const contractUuid = ref();
@@ -59,16 +60,14 @@ const store = useApproveClaimByInstitutionBatch();
 
       <Table
         :pending="pending"
-        :headers="{ head: [ 'Policy Holder Name','Provider Name','Total Amount','Requested Date','Status','actions' ], row: ['institutionName','providerName','totalAmount','requestPaymentDate','claimStatus'] }"
-        :cells="{ totalAmount: formatCurrency, requestPaymentDate: secondDateFormat }"
+        :headers="{
+          head: [ 'Batch Code', 'Provider Name', 'Total Amount', 'Claim Date', 'Level', 'Status', 'Actions'],
+          row: ['', 'batchCode', 'providerName', 'totalAmount', 'claimFromDate', 'claimLevel', 'claimStatus', '']
+        }"
         :rows="claims"
-      >
-        <template #actions="{ row }">
-          <Button size="xs" type="elevated">
-            <RouterLink :to="`/approve_claims/detail/${(row).claimUuid || ''}`">Detail</RouterLink>
-          </Button>
-        </template>
-      </Table>
+        :rowCom="ApproveClaimRow"
+        placeholder="No claims to approve"
+      />
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

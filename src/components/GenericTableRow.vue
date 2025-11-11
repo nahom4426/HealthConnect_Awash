@@ -48,7 +48,8 @@ const emit = defineEmits(["row"]);
         :key="key"
         v-for="key in rowKeys"
       >
-        <span v-if="!Object.keys(cells || {}) || !cells?.[key]">
+        <slot v-if="$slots[key]" :name="key" :row="row" />
+        <span v-else-if="!Object.keys(cells || {}) || !cells?.[key]">
           {{
             key.split(".").reduce((all: any, el: string) => {
               return all?.[el];

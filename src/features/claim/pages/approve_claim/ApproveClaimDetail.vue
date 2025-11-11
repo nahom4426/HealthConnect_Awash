@@ -13,6 +13,7 @@ import { useApiRequest } from '@/composables/useApiRequest';
 import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
 import CheckProvidedItemsMdl from '../../modal/checkProvidedItems.mdl.vue';
+import ClaimDetailTableRow from '../../components/ClaimDetailTableRow.vue';
 const router = useRouter();
 
 const route = useRoute();
@@ -84,20 +85,29 @@ function batchProcessed() {
 
 // open modal to process entire claim (approve processedBy/{claimUuid})
 function openProcessWholeClaim() {
-  openModal('CompleteClaim', { title: 'Check Claim', batchCode }, async (payload) => {
-    if (!payload) return;
-    const body = { comment: payload.comment, batchCode: payload.batchCode };
-    processWholeReq.send(
-      () => approveClaimProcessedBy(String(claimUuid), body),
-      (res) => {
-        if (res && res.status >= 200 && res.status < 300) {
-          toasted(true, 'Claim CHECKED successfully');
-          router.push('/verify_claims')
-          // optionally refresh current table
-          pagination.send();
-        }
-      }
-    );
+  openModal('CompleteClaim', { 
+    title: 'Complete Claim', 
+    batchCode,
+    claimUuid: String(claimUuid),
+    onSuccess: () => {
+      toasted(true, 'Claim completed successfully');
+      router.push('/approve_claims');
+      pagination.send();
+    }
+  });
+}
+
+// open modal to reject entire claim
+function openRejectWholeClaim() {
+  openModal('RejectClaim', { 
+    title: 'Reject Claim', 
+    batchCode,
+    claimUuid: String(claimUuid),
+    onSuccess: () => {
+      toasted(true, 'Claim rejected successfully');
+      router.push('/approve_claims');
+      pagination.send();
+    }
   });
 }
 
@@ -124,30 +134,42 @@ function openItemsModal(row) {
       </Button>
     </template>
 
-    <TableWithCheckBox
-      v-model="checked"
-      toBeSelected="serviceProvidedUuid"
+    <Table
       :pending="pagination.pending.value"
       :headers="{
-        head: ['Institution','Insured Name','Items','Amount','Provided Date','Status','actions'],
-        row: ['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']
-      }"
-      :cells="{
-        insuredName: (_, row) => row?.insuredName || row?.dependantName || '',
-        itemsCount: (_, row) => (row?.providedItemResponses || []).length,
-        amount: formatCurrency,
-        providedDate: secondDateFormat
+        head: [ 'Institution','Insured Name','Items','Amount','Provided Date','Status','Actions'],
+        row: ['', 'institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']
       }"
       :rows="store.claims"
+      :rowCom="ClaimDetailTableRow"
+      placeholder="No claims found"
     >
-      <template #actions="{ row }">
-        <Button size="xs" type="elevated" @click="openItemsModal(row)">View Items</Button>
+      <template #row>
+        <ClaimDetailTableRow
+          :rowData="store.claims"
+          :rowKeys="['', 'institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']"
+          :headKeys="['#', 'Institution','Insured Name','Items','Amount','Provided Date','Status','Actions']"
+          @viewItems="openItemsModal"
+        />
       </template>
-    </TableWithCheckBox>
+    </Table>
 
-    <div class="pb-8 flex justify-end" v-if="canProcessWholeClaim">
+    <div class="pb-8 flex justify-end gap-3" v-if="canProcessWholeClaim">
+      <Button :pending="processWholeReq.pending.value" type="danger" @click="openRejectWholeClaim">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Reject Claim
+        </div>
+      </Button>
       <Button :pending="processWholeReq.pending.value" type="primary" @click="openProcessWholeClaim">
-        Complete Claim
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Complete Claim
+        </div>
       </Button>
     </div>
 

@@ -43,6 +43,12 @@ export function approveClaimProcessedBy(claimUuid: string, data: { comment: stri
 export function checkClaimProcessedBy(claimUuid: string, data: { comment: string; batchCode: string }) {
 	return api.addAuthenticationHeader().put(`${path}/claim/approve/approvedBy/${claimUuid}`, data)
   }
+
+export function rejectClaim(claimUuid: string, data: { comment: string; batchCode: string }) {
+	return api.addAuthenticationHeader().put(`${path}/claim/approve/changeStatus/${claimUuid}`, data, {
+		params: { 'claim status': 'REJECTED' }
+	})
+}
   
 export function claimVerified(data: any) {
   return api.addAuthenticationHeader().put(`${path}/approve/checkedBy`, data)

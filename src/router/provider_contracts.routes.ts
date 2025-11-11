@@ -3,6 +3,7 @@ import ActiveContracts from "@/features/provider_contracts/pages/ActiveContracts
 import ActiveProviderContractIndex from "@/features/provider_contracts/pages/ActiveProviderContractIndex.vue";
 import CreateContract from "@/features/provider_contracts/pages/CreateContract.vue";
 import EditContract from "@/features/provider_contracts/pages/EditContract.vue";
+import ExpiredContracts from "@/features/provider_contracts/pages/ExpiredContracts.vue";
 import PendingContracts from "@/features/provider_contracts/pages/PendingContracts.vue";
 import ProviderContractIndex from "@/features/provider_contracts/pages/ProviderContractIndex.vue";
 import SuspendedContracts from "@/features/provider_contracts/pages/SuspendedContracts.vue";
@@ -58,6 +59,11 @@ export default [
 		path: '/suspended_contracts',
 		name: 'Suspended Contracts', // Adjusted name for clarity
 		component: SuspendedContracts
+	},
+	{
+		path: '/expired_contracts',
+		name: 'Expired Contracts', // Adjusted name for clarity
+		component: ExpiredContracts
 	},
 	{
 		path: '/pending_contracts',

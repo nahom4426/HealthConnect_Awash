@@ -13,6 +13,7 @@ import { useApiRequest } from '@/composables/useApiRequest';
 import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
 import CheckProvidedItemsMdl from '../../modal/checkProvidedItems.mdl.vue';
+import ClaimDetailTableRow from '../../components/ClaimDetailTableRow.vue';
 const router = useRouter();
 
 const route = useRoute();
@@ -84,20 +85,15 @@ function batchProcessed() {
 
 // open modal to process entire claim (approve processedBy/{claimUuid})
 function openProcessWholeClaim() {
-  openModal('CompleteClaim', { title: 'Check Claim', batchCode }, async (payload) => {
-    if (!payload) return;
-    const body = { comment: payload.comment, batchCode: payload.batchCode };
-    processWholeReq.send(
-      () => approveClaimProcessedBy(String(claimUuid), body),
-      (res) => {
-        if (res && res.status >= 200 && res.status < 300) {
-          toasted(true, 'Claim CHECKED successfully');
-          router.push('/verify_claims')
-          // optionally refresh current table
-          pagination.send();
-        }
-      }
-    );
+  openModal('CompleteClaim', { 
+    title: 'Check Claim', 
+    batchCode,
+    claimUuid: String(claimUuid),
+    onSuccess: () => {
+      toasted(true, 'Claim CHECKED successfully');
+      router.push('/verify_claims');
+      pagination.send();
+    }
   });
 }
 
@@ -125,31 +121,24 @@ function openItemsModal(row) {
     </template>
 
     <Table
-      v-model="checked"
-      toBeSelected="serviceProvidedUuid"
       :pending="pagination.pending.value"
       :headers="{
-        head: ['Institution','Insured Name','Items','Amount','Provided Date','Status','actions'],
-        row: ['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']
-      }"
-      :cells="{
-        insuredName: (_, row) => row?.insuredName || row?.dependantName || '',
-        itemsCount: (_, row) => (row?.providedItemResponses || []).length,
-        amount: formatCurrency,
-        providedDate: secondDateFormat
+        head: [ 'Institution','Insured Name','Items','Amount','Provided Date','Status','Actions'],
+        row: ['', 'institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']
       }"
       :rows="store.claims"
+      :rowCom="ClaimDetailTableRow"
+      placeholder="No completed claims found"
     >
-      <template #actions="{ row }">
-        <Button size="xs" type="elevated" @click="openItemsModal(row)">View Items</Button>
+      <template #row>
+        <ClaimDetailTableRow
+          :rowData="store.claims"
+          :rowKeys="['', 'institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']"
+          :headKeys="['#', 'Institution','Insured Name','Items','Amount','Provided Date','Status','Actions']"
+          @viewItems="openItemsModal"
+        />
       </template>
     </Table>
-
-    <div class="pb-8 flex justify-end" v-if="canProcessWholeClaim">
-      <Button :pending="processWholeReq.pending.value" type="primary" @click="openProcessWholeClaim">
-        Complete Claim
-      </Button>
-    </div>
 
     <CheckProvidedItemsMdl
       v-if="showItemsModal"

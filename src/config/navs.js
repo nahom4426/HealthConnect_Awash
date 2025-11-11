@@ -143,6 +143,13 @@ export default [
 					<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M18 22H6v-6l4-4l-4-4V2h12v6l-4 4l4 4M8 7.5l4 4l4-4V4H8m4 8.5l-4 4V20h8v-3.5M14 18h-4v-.8l2-2l2 2Z"/></svg>
 				`,
       },
+      {
+        path: "/claim-level-limits",
+        name: "Claim Level Limits",
+        icon: `
+					<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg>
+				`,
+      },
     ],
   },
   // {
@@ -208,6 +215,13 @@ export default [
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m19 19.425l-2.125 2.1l-1.4-1.4l2.1-2.125l-2.1-2.125l1.4-1.4l2.125 2.1l2.125-2.1l1.4 1.4l-2.1 2.125l2.1 2.125l-1.4 1.4zM6 22q-1.25 0-2.125-.875T3 19v-3h3V2h15v10.375q-.475-.175-.975-.262T19 12.025V4H8v12h5.35q-.175.475-.262.975T13 18H5v1q0 .425.288.713T6 20h7.35q.2.575.5 1.075t.7.925zM9 9V7h9v2zm0 3v-2h9v2zm4.35 8H5z"/></svg>
 				`,
       },
+       {
+        path: "/expired_contracts",
+        name: "Expired Contracts",
+        icon: `
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m19 19.425l-2.125 2.1l-1.4-1.4l2.1-2.125l-2.1-2.125l1.4-1.4l2.125 2.1l2.125-2.1l1.4 1.4l-2.1 2.125l2.1 2.125l-1.4 1.4zM6 22q-1.25 0-2.125-.875T3 19v-3h3V2h15v10.375q-.475-.175-.975-.262T19 12.025V4H8v12h5.35q-.175.475-.262.975T13 18H5v1q0 .425.288.713T6 20h7.35q.2.575.5 1.075t.7.925zM9 9V7h9v2zm0 3v-2h9v2zm4.35 8H5z"/></svg>
+				`,
+      },
     ],
   },
   {
@@ -252,7 +266,7 @@ export default [
       },
     ],
   },
-    {
+  {
     path: "/users",
     name: "Users",
     icon: icons.users,

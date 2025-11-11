@@ -96,7 +96,7 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
   <tr
     v-for="(row, idx) in rowData"
     :key="row.packageUuid"
-    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
     @click="props.onRowClick(row)"
   >
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>
@@ -112,7 +112,7 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
         {{ formatCurrency(row[key]) }}
       </div>
       <div v-else-if="key === 'gender'">
-        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+        <span class="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full">
           {{ row[key] }}
         </span>
       </div>
@@ -126,28 +126,33 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
       </div>
     </td>
 
-    <td class="p-3 py-4 relative text-left">
+    <td class="relative p-3 py-4 text-left">
       <button
         @click.stop="toggleDropdown($event, row.packageUuid)"
         class="p-2 rounded-full hover:bg-gray-200"
         type="button"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
         </svg>
       </button>
-      <div :id="`dropdown-${row.packageUuid}`" class="dropdown-menu hidden absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-20">
+      <div :id="`dropdown-${row.packageUuid}`" class="hidden absolute right-0 z-20 mt-2 w-44 bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg dropdown-menu">
         <div class="py-1">
-          <button @click.stop="handleAddServices(row)" class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-blue-100 hover:text-blue-700">
-            <i v-html="icons.plus_circle || '➕'" class="w-5 h-5"></i> Add Services
-          </button>
-           <button @click.stop="handleRemoveServices(row)" class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-red-100 hover:text-blue-700">
+          <button
+  @click.stop="handleAddServices(row)"
+  class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 hover:bg-blue-100 hover:text-blue-700"
+>
+  <i v-html="icons.briefcase || '💼'" class="w-5 h-5"></i>
+  Services
+</button>
+
+           <!-- <button @click.stop="handleRemoveServices(row)" class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 hover:bg-red-100 hover:text-blue-700">
             <i v-html="icons.minus|| ''" class="w-5 h-5"></i> Remove Services
-          </button>
-          <button @click.stop="handleEdit(row)" class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-yellow-100 hover:text-yellow-700">
+          </button> -->
+          <button @click.stop="handleEdit(row)" class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 hover:bg-yellow-100 hover:text-yellow-700">
             <i v-html="icons.edit || '✏️'" class="w-5 h-5"></i> Edit
           </button>
-          <button @click.stop="toggleStatus(row)" class="flex items-center gap-3 w-full px-4 py-2 text-gray-700 hover:bg-green-100 hover:text-green-700">
+          <button @click.stop="toggleStatus(row)" class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 hover:bg-green-100 hover:text-green-700">
             <i v-html="row.status === 'ACTIVE' ? (icons.ban || '🚫') : (icons.check || '✅')" class="w-5 h-5"></i>
             {{ row.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
           </button>

@@ -11,6 +11,8 @@ import vPrivilage from '@/directives/vPrivilage'
 import vRipple from '@/directives/vRipple'
 import toast from '@/toast'
 import RoleDetailModal from '@/features/admin/role/components/RoleDetail.mdl.vue'
+import CreateClaimLevelModal from '@/features/claim/modal/CreateClaimLevel.mdl.vue'
+import EditClaimLevelModal from '@/features/claim/modal/EditClaimLevel.mdl.vue'
 
 const app = createApp(App)
 
@@ -22,5 +24,7 @@ app.directive('focus', vFocus)
 app.directive('privilage', vPrivilage)
 app.directive('ripple', vRipple)
 app.component('RoleDetail.mdl.vue', RoleDetailModal)
+app.component('CreateClaimLevel', CreateClaimLevelModal)
+app.component('EditClaimLevel', EditClaimLevelModal)
 app.mount('#app')
 

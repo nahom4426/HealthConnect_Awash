@@ -19,6 +19,7 @@ export function usePagination(options) {
   const totalElements = ref(0);
 
   const req = useApiRequest();
+  const localData = ref([]); // Store data locally when no store is provided
 
   const searching = ref(false);
   const searchPagination = useTablePagination(perPage.value);
@@ -68,8 +69,6 @@ export function usePagination(options) {
       (response) => {
         const data = response?.data || response;
         
-        console.log('API Response:', data);
-        
         if (data?.content) {
           if (paginationOptions.value.store) {
             // Store the data AND the pagination metadata in the store
@@ -83,6 +82,9 @@ export function usePagination(options) {
                 currentPage: data.page || 0
               });
             }
+          } else {
+            // Store locally if no store
+            localData.value = data.content;
           }
           
           // Update the reactive totals for UI
@@ -91,13 +93,6 @@ export function usePagination(options) {
           
           const backendPage = data.page || 0;
           currentPage.value = toFrontendPage(backendPage);
-          
-          console.log('Pagination state:', {
-            backendPage,
-            frontendPage: currentPage.value,
-            totalPages: totalPages.value,
-            totalElements: totalElements.value
-          });
         } else if (Array.isArray(data)) {
           if (paginationOptions.value.store) {
             paginationOptions.value.store.set(data);
@@ -110,6 +105,9 @@ export function usePagination(options) {
                 currentPage: 0
               });
             }
+          } else {
+            // Store locally if no store
+            localData.value = data;
           }
           totalElements.value = data.length;
           totalPages.value = 1;
@@ -117,7 +115,6 @@ export function usePagination(options) {
         }
       },
       (error) => {
-        console.error('Pagination fetch error:', error);
         totalElements.value = 0;
         totalPages.value = 1;
         currentPage.value = 1;
@@ -161,7 +158,6 @@ export function usePagination(options) {
         if (meta) {
           storeTotalElements = meta.totalElements || len;
           storeTotalPages = meta.totalPages || Math.max(1, Math.ceil(storeTotalElements / perPage.value));
-          console.log('Found pagination meta in store:', meta);
         }
       }
       
@@ -173,13 +169,6 @@ export function usePagination(options) {
       if (currentPage.value < 1 || currentPage.value > totalPages.value) {
         currentPage.value = 1;
       }
-      
-      console.log('Hydrated from store:', {
-        storeItems: len,
-        totalElements: totalElements.value,
-        totalPages: totalPages.value,
-        currentPage: currentPage.value
-      });
     }
   }
 
@@ -213,7 +202,7 @@ export function usePagination(options) {
       if (paginationOptions.value.store) {
         return paginationOptions.value.store.getAll();
       }
-      return [];
+      return localData.value;
     }),
     error: req.error,
     pending: req.pending,

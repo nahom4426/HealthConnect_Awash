@@ -14,8 +14,8 @@ import Toogle from "@/components/Toogle.vue";
 import { useProcessClaimByInstitutionBatch } from "../../store/processClaimByInstitutionBatchStore";
 import ClaimStatusRow from "../../components/ClaimStatusRow.vue";
 
-const institutionUuid = ref();
-const contractUuid = ref();
+const institutionUuid = ref(null);
+const contractUuid = ref(null);
 const active = ref(ServiceTypes.creditService);
 const store = useProcessClaimByInstitutionBatch();
 
@@ -41,7 +41,7 @@ function formatContractPeriod(row) {
     :creditService="active == ServiceTypes.creditService"
     :status="PaymentStatus.PENDING"
     :params="{
-      providerUuid: providerUuid,
+      providerUuid: contractUuid,
       institutionUuid: institutionUuid,
     }"
     v-slot="{ claims, pending, search }"
@@ -59,14 +59,18 @@ function formatContractPeriod(row) {
           <SearchSelect
             placeholder="Filter by Institution"
             :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
-            :selectCb="(result) => { institutionUuid.value = result?.institutionUuid || null; }"
+            :selectCb="(result) => { 
+              institutionUuid.value = result?.institutionUuid || '12';
+            }"
             :option="{ label: 'institutionName', value: 'institutionUuid' }"
           />
           <SearchSelect
             v-if="ServiceTypes.creditService == active"
             placeholder="Filter by a Provider / Contract"
             :searchCb="(data) => getProviders({ ...data, status: Status.ACTIVE })"
-            :selectCb="(result) => { contractUuid.value = result?.contractUuid || result?.providerUuid || null; }"
+            :selectCb="(result) => { 
+              contractUuid.value = result?.contractUuid || result?.providerUuid || null;
+            }"
             :option="{ label: 'providerName', value: 'providerUuid' }"
           />
         </FilterOnDetector>

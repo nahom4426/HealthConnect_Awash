@@ -24,7 +24,7 @@ const serviceStore = useServiceListStore();
 const req = useApiRequest();
 
 const service = ref(
-  serviceStore.serviceList.find((el) => el.serviceUuid == props.data) || {}
+  serviceStore.serviceList.find((el) => el.eligibleServiceUuid == props.data) || {}
 );
 
 // Fetch service if not in store

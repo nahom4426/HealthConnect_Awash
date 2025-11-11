@@ -22,6 +22,7 @@ import AuthorizeClaimsDetail from "@/features/claim/pages/authorize_claims/Autho
 import AuthorizeClaimIndividualDetail from "@/features/claim/pages/authorize_claims/AuthorizeClaimIndividualDetail.vue";
 import CompletedClaimsDetail from "@/features/claim/pages/completed_claims/CompletedClaimsDetail.vue";
 import CompletedClaimsIndividualDetail from "@/features/claim/pages/completed_claims/CompletedClaimsIndividualDetail.vue";
+import ClaimLevelLimits from "@/features/claim/pages/ClaimLevelLimits.vue";
 
 export default [
   {
@@ -195,5 +196,10 @@ export default [
         ]
       }
     ]
+  },
+  {
+    path: 'claim-level-limits',
+    name: 'claim level limits',
+    component: ClaimLevelLimits,
   },
 ];

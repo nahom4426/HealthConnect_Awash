@@ -5,7 +5,8 @@ import { getRequestedClaim } from "../../api/claimApi";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 import { ref } from "vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import { getProviders } from "@/features/providers/api/providerApi";
+import { getMappedActiveProviders } from "@/features/providers/api/providerApi";
+import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import { Status } from "@/types/interface";
 import SearchSelect from "@/components/SearchSelect.vue";
 import { useRequestdClaims } from "../../store/requestedCreditClaimStore";
@@ -14,6 +15,7 @@ import Button from "@/components/Button.vue";
 
 // 👇 import your detail component
 import CreditClaimDetail from "./CreditClaimDetail.vue";
+import CreditClaimTableRow from "../../components/CreditClaimTableRow.vue";
 
 const institutionUuid = ref();
 const contractUuid = ref();
@@ -32,9 +34,8 @@ const pagination = usePagination({
     }),
 });
 
-if (!claimStore.requestedClaims.length) {
-  pagination.send();
-}
+// Always fetch fresh data when component is mounted
+pagination.send();
 
 // 👇 selected row state
 const selectedRow = ref(null);
@@ -50,23 +51,23 @@ function goBack() {
 
 <template>
 <DefaultPage v-model="pagination.search.value">
-  <!-- Always define slot -->
-  <template #more>
-    <FilterOnDetector :watch="[institutionUuid, contractUuid]" v-if="!selectedRow">
+  <!-- Filter Section -->
+  <template #header v-if="!selectedRow">
+    <FilterOnDetector :watch="[institutionUuid, contractUuid]">
       <SearchSelect
         placeholder="Filter by Institution"
         :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
         :selectCb="(result) => {
-          institutionUuid.value = result?.institutionUuid || '';
+          institutionUuid = result?.institutionUuid || null;
           pagination.send();
         }"
         :option="{ label: 'institutionName', value: 'institutionUuid' }"
       />
       <SearchSelect
-        placeholder="Filter by a Provider / Contract"
-        :searchCb="(data) => getProviders({ ...data, status: Status.ACTIVE })"
+        placeholder="Filter by Provider / Contract"
+        :searchCb="(data) => getMappedActiveProviders({ ...data, status: Status.ACTIVE })"
         :selectCb="(result) => {
-          contractUuid.value = result?.contractUuid || result?.providerUuid || '';
+          contractUuid = result?.contractUuid || result?.providerUuid || null;
           pagination.send();
         }"
         :option="{ label: 'providerName', value: 'providerUuid' }"
@@ -78,11 +79,14 @@ function goBack() {
   <Table
     v-if="!selectedRow"
     :pending="pagination.pending.value"
+    :rowCom="CreditClaimTableRow"
     :headers="{
       head: [
         'Insured Name',
         'Provider Name',
-        'Group Name',
+        'Institution',
+        'Service Type',
+        'Services',
         'Total Amount',
         'Status',
         'Claim Date',
@@ -92,23 +96,18 @@ function goBack() {
         'fullname',
         'providerName',
         'institutionName',
+        'itemType',
+        'providedItems',
         'amount',
         'status',
         'providedDate',
       ],
     }"
     :cells="{
-      fullname: (_, row) => row?.insuredName || row?.dependantName || '',
-      amount: formatCurrency,
-      status: () => 'Pending',
-      providedDate: secondDateFormat,
+      onView: viewDetail
     }"
     :rows="claimStore.requestedClaims"
-  >
-    <template #actions="{ row }">
-      <Button type="link" @click="viewDetail(row)">View Details</Button>
-    </template>
-  </Table>
+  />
 
   <CreditClaimDetail
     v-else

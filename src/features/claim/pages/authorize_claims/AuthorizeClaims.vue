@@ -12,6 +12,7 @@ import { ref } from "vue";
 import { ServiceTypes, Status, PaymentStatus, ClaimLevel } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useAuthorizeClaimByInstitutionBatch } from "../../store/authorizeClaimByInstitutionBatchStore";
+import AuthorizeClaimRow from "../../components/AuthorizeClaimRow.vue";
 
 const institutionUuid = ref();
 const contractUuid = ref();
@@ -59,16 +60,14 @@ const store = useAuthorizeClaimByInstitutionBatch();
 
       <Table
         :pending="pending"
-        :headers="{ head: ['Provider Name','Total Amount','Requested Date','Status','actions' ], row: ['providerName','totalAmount','requestPaymentDate','claimStatus'] }"
-        :cells="{ totalAmount: formatCurrency, requestPaymentDate: secondDateFormat }"
+        :headers="{
+          head: ['Batch Code', 'Provider Name', 'Total Amount', 'Claim Date', 'Level', 'Status', 'Actions'],
+          row: ['', 'batchCode', 'providerName', 'totalAmount', 'claimFromDate', 'claimLevel', 'claimStatus', '']
+        }"
         :rows="claims"
-      >
-        <template #actions="{ row }">
-          <Button size="xs" type="elevated">
-            <RouterLink :to="`/authorize_claims/detail/${(row).claimUuid || ''}`">Detail</RouterLink>
-          </Button>
-        </template>
-      </Table>
+        :rowCom="AuthorizeClaimRow"
+        placeholder="No claims to authorize"
+      />
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

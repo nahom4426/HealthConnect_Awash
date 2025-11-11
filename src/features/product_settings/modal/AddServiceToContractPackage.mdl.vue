@@ -10,7 +10,7 @@ import Button from "@/components/Button.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from '@/toast/store/toast';
 import { toasted } from '@/utils/utils';
-import { getActiveContracts } from '@/features/provider_contracts/api/contractApi';
+import { getActiveContract } from '@/features/provider_contracts/api/contractApi';
 import { getAllServices } from '@/features/provider_contracts/service/api/serviceApi';
 import { addEligibleServices, getEligiblePackage } from '@/features/product_settings/api/coverageApi';
 import Spinner from "@/components/Spinner.vue";
@@ -48,12 +48,14 @@ const searchTerm = ref('');
 const loadingServices = ref(false);
 const selectAll = ref(false);
 const selectedCategories = ref([]);
+const selectedCategoryFilter = ref([]);
+const showCategoryFilter = ref(false);
 
 // Fetch providers
 async function fetchProviders() {
   try {
     loadingProviders.value = true;
-    const response = await getActiveContracts();
+    const response = await getActiveContract();
     
     if (response?.data.content) {
       providers.value = Array.isArray(response.data.content) ? response.data.content : [response.data.content];
@@ -122,16 +124,28 @@ const providerOptions = computed(() =>
   }))
 );
 
-// Filtered services based on search
+// Filtered services based on search and category
 const filteredServices = computed(() => {
-  if (!searchTerm.value) return allServices.value;
+  let filtered = allServices.value;
   
-  const term = searchTerm.value.toLowerCase();
-  return allServices.value.filter(service =>
-    (service.item || '').toLowerCase().includes(term) ||
-    (service.itemCode || '').toLowerCase().includes(term) ||
-    (service.category || '').toLowerCase().includes(term)
-  );
+  // Filter by categories if selected
+  if (selectedCategoryFilter.value.length > 0) {
+    filtered = filtered.filter(service => 
+      selectedCategoryFilter.value.includes(service.category || 'Uncategorized')
+    );
+  }
+  
+  // Filter by search term
+  if (searchTerm.value) {
+    const term = searchTerm.value.toLowerCase();
+    filtered = filtered.filter(service =>
+      (service.item || '').toLowerCase().includes(term) ||
+      (service.itemCode || '').toLowerCase().includes(term) ||
+      (service.category || '').toLowerCase().includes(term)
+    );
+  }
+  
+  return filtered;
 });
 
 // Toggle select all
@@ -155,12 +169,13 @@ function toggleSelectAll() {
 
 // Toggle service selection
 function toggleServiceSelection(service) {
-  if (service.isExisting) return;
-  
   const index = selectedServices.value.findIndex(s => s.serviceId === service.serviceId);
   
   if (index > -1) {
-    selectedServices.value.splice(index, 1);
+    // Only allow deselecting if it's not an existing service, or use the remove button
+    if (!service.isExisting) {
+      selectedServices.value.splice(index, 1);
+    }
   } else {
     selectedServices.value.push(service);
   }
@@ -235,6 +250,61 @@ function isServiceSelected(service) {
 // Check if category is selected
 function isCategorySelected(category) {
   return selectedCategories.value.includes(category);
+}
+
+// Handle category filter change
+function handleCategoryFilterChange() {
+  // Reset search when category filter changes
+  // searchTerm.value = '';
+}
+
+// Computed properties for tracking changes
+const newServicesCount = computed(() => {
+  // Count services that are selected but were NOT originally existing
+  return selectedServices.value.filter(service => {
+    // Check if this service was in the original existingServices
+    const wasOriginallyExisting = existingServices.value.some(
+      existing => existing.serviceId === service.serviceId
+    );
+    return !wasOriginallyExisting;
+  }).length;
+});
+
+const removedServicesCount = computed(() => {
+  // Count services that were originally existing but are no longer selected
+  return existingServices.value.filter(
+    existingService => !selectedServices.value.some(s => s.serviceId === existingService.serviceId)
+  ).length;
+});
+
+// Remove existing service from package
+async function removeExistingService(service) {
+  try {
+    // Remove from selectedServices
+    const index = selectedServices.value.findIndex(s => s.serviceId === service.serviceId);
+    if (index > -1) {
+      selectedServices.value.splice(index, 1);
+    }
+
+    // DON'T change isExisting - keep the original state
+    // DON'T remove from existingServices - we need it to track what was removed
+    // The existingServices array should remain as the original snapshot
+
+    addToast({
+      type: 'success',
+      title: 'Service Removed',
+      message: `"${service.item}" has been marked for removal from the package`
+    });
+
+    updateSelectAllState();
+  } catch (error) {
+    console.error('Error removing service:', error);
+    addToast({
+      type: 'error',
+      title: 'Error',
+      message: 'Failed to remove service'
+    });
+  }
 }
 
 // Watch for changes in selectedServices to update selectAll state
@@ -328,7 +398,7 @@ onMounted(() => {
     >
       <div class="space-y-6">
         <!-- Step Indicator -->
-        <div class="flex items-center justify-center space-x-8 mb-8">
+        <div class="flex justify-center items-center mb-8 space-x-8">
           <div
             v-for="step in steps"
             :key="step.number"
@@ -367,9 +437,9 @@ onMounted(() => {
 
         <!-- Step 1: Provider Selection -->
         <div v-if="currentStep === 1" class="space-y-4">
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+          <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+            <div class="flex gap-3 items-center mb-4">
+              <div class="flex justify-center items-center w-10 h-10 bg-blue-500 rounded-lg">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                 </svg>
@@ -388,7 +458,7 @@ onMounted(() => {
               <select
                 v-model="selectedpayerProviderContractUuid"
                 @change="onProviderChange($event.target.value)"
-                class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:border-blue-400 focus:ring focus:ring-blue-100 transition duration-200 bg-white"
+                class="px-4 py-2 w-full bg-white rounded-lg border border-blue-200 transition duration-200 focus:border-blue-400 focus:ring focus:ring-blue-100"
               >
                 <option value="" disabled selected>Select a provider...</option>
                 <option 
@@ -400,8 +470,8 @@ onMounted(() => {
                 </option>
               </select>
 
-              <div v-if="selectedProvider" class="mt-4 p-4 bg-white rounded-lg border border-blue-200">
-                <h4 class="font-medium text-gray-800 mb-2">Selected Provider Details:</h4>
+              <div v-if="selectedProvider" class="p-4 mt-4 bg-white rounded-lg border border-blue-200">
+                <h4 class="mb-2 font-medium text-gray-800">Selected Provider Details:</h4>
                 <div class="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span class="text-gray-500">Name:</span>
@@ -427,31 +497,31 @@ onMounted(() => {
 
         <!-- Step 2: Service Selection -->
         <div v-if="currentStep === 2" class="space-y-4">
-          <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 bg-green-500 rounded-lg flex ">
+          <div class="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+            <div class="flex gap-3 items-center mb-4">
+              <div class="flex w-10 h-10 bg-green-500 rounded-lg">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                 </svg>
               </div>
               <div>
                 <h3 class="text-xl font-bold text-gray-800">Select Services</h3>
-                <p class="text-sm text-gray-600">Choose services from {{ selectedProvider?.providerName }} to add to the package</p>
+                <p class="flex text-sm text-gray-600">Choose services from <p class="px-2 font-bold">{{ selectedProvider?.providerName }}</p> to add to the package</p>
               </div>
             </div>
 
             <!-- Search and Category Selection -->
-            <div class="flex flex-col md:flex-row gap-4 mb-4">
+            <div class="flex flex-col gap-4 mb-4 md:flex-row md:items-start">
               <!-- Search -->
-              <div class="flex-1 relative">
+              <div class="relative flex-1">
                 <Input
                   v-model="searchTerm"
                   placeholder="Search services by name, code, or category..."
                   :attributes="{
-                    class: 'pl-10 w-full bg-white border-green-200 focus:border-green-400'
+                    class: 'pl-10 h-9 w-full bg-white border-green-200 focus:border-green-400'
                   }"
                 />
-                <div class="absolute left-3 top-3 text-gray-400">
+                <div class="absolute top-2.5 left-3 text-gray-400">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                   </svg>
@@ -460,28 +530,58 @@ onMounted(() => {
               
               <!-- Category Selection -->
               <div class="flex-1">
-                <div class="flex flex-wrap gap-2 items-center">
-                  <span class="text-sm font-medium text-gray-700 whitespace-nowrap">Categories:</span>
-                  <div 
-                    v-for="category in uniqueCategories" 
-                    :key="category" 
-                    class="flex items-center"
+                <div class="flex flex-col gap-2">
+                  <button
+                    @click="showCategoryFilter = !showCategoryFilter"
+                    class="flex justify-between items-center px-4 h-10 text-sm font-medium text-gray-700 bg-white rounded-lg border border-green-200 transition-colors duration-200 hover:bg-green-50"
                   >
-                    <input
-                      type="checkbox"
-                      :id="`category-${category}`"
-                      :value="category"
-                      :checked="isCategorySelected(category)"
-                      @change="toggleCategorySelection(category)"
-                      class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                    />
-                    <label 
-                      :for="`category-${category}`" 
-                      class="ml-1 text-sm text-gray-700 whitespace-nowrap"
+                    <span class="flex gap-2 items-center">
+                      <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                      </svg>
+                      Filter by Categories
+                      <span v-if="selectedCategoryFilter.length > 0" class="px-2 py-0.5 text-xs font-semibold text-white bg-green-600 rounded-full">
+                        {{ selectedCategoryFilter.length }}
+                      </span>
+                    </span>
+                    <svg 
+                      class="w-5 h-5 text-gray-400 transition-transform duration-200"
+                      :class="{ 'rotate-180': showCategoryFilter }"
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
                     >
-                      {{ category || 'Uncategorized' }}
-                    </label>
-                  </div>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+                  
+                  <!-- Dropdown Content with Animation -->
+                  <transition
+                    enter-active-class="transition duration-200 ease-out"
+                    enter-from-class="opacity-0 transform scale-95"
+                    enter-to-class="opacity-100 transform scale-100"
+                    leave-active-class="transition duration-150 ease-in"
+                    leave-from-class="opacity-100 transform scale-100"
+                    leave-to-class="opacity-0 transform scale-95"
+                  >
+                    <div v-if="showCategoryFilter" class="flex flex-wrap gap-3 p-3 bg-white border border-green-200 rounded-lg shadow-lg max-h-[120px] overflow-y-auto">
+                      <label 
+                        v-for="category in uniqueCategories" 
+                        :key="category"
+                        class="flex gap-2 items-center px-3 py-1.5 bg-gray-50 rounded-md transition-colors duration-200 cursor-pointer hover:bg-green-50"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="category"
+                          v-model="selectedCategoryFilter"
+                          class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                        />
+                        <span class="text-sm text-gray-700">
+                          {{ category || 'Uncategorized' }}
+                        </span>
+                      </label>
+                    </div>
+                  </transition>
                 </div>
               </div>
             </div>
@@ -494,9 +594,9 @@ onMounted(() => {
                   id="selectAll"
                   v-model="selectAll"
                   @change="toggleSelectAll"
-                  class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
                 />
-                <label for="selectAll" class="ml-2 text-sm text-gray-700 font-medium">
+                <label for="selectAll" class="ml-2 text-sm font-medium text-gray-700">
                   Select All Available Services
                 </label>
               </div>
@@ -510,26 +610,26 @@ onMounted(() => {
               <Spinner size="lg" />
             </div>
 
-            <div v-else class="overflow-y-auto max-h-96 border border-green-200 rounded-lg">
+            <div v-else class="overflow-y-auto max-h-96 rounded-lg border border-green-200">
               <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50 sticky top-0">
+                <thead class="sticky top-0 bg-gray-50">
                   <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Select
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Service Code
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Service Name
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Category
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Price (ETB)
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Status
                     </th>
                   </tr>
@@ -539,8 +639,8 @@ onMounted(() => {
                     v-for="service in filteredServices"
                     :key="service.eligibleServiceUuid"
                     :class="{
-                      'bg-green-50': service.isExisting,
-                      'hover:bg-gray-50': !service.isExisting
+                      'bg-green-50': isServiceSelected(service) && service.isExisting,
+                      'hover:bg-gray-50': true
                     }"
                   >
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -548,39 +648,53 @@ onMounted(() => {
                         type="checkbox"
                         :checked="isServiceSelected(service)"
                         @change="toggleServiceSelection(service)"
-                        :disabled="service.isExisting"
-                        class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        :disabled="isServiceSelected(service) && service.isExisting"
+                        class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
                       />
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                       {{ service.itemCode || 'N/A' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                       {{ service.item || 'N/A' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                       {{ service.category || 'N/A' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                       {{ service.price?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <span
-                        v-if="service.isExisting"
-                        class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
-                      >
-                        Already in package
-                      </span>
-                      <span
-                        v-else
-                        class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
-                      >
-                        Available
-                      </span>
+                    <td class="px-6 py-4 text-sm whitespace-nowrap">
+                      <div class="flex gap-2 justify-between items-center">
+                        <span
+                          v-if="isServiceSelected(service) && service.isExisting"
+                          class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full"
+                        >
+                          Already in package
+                        </span>
+                        <span
+                          v-else
+                          class="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full"
+                        >
+                          Available
+                        </span>
+                        
+                        <!-- Remove button for existing services that are selected -->
+                        <button
+                          v-if="isServiceSelected(service) && service.isExisting"
+                          @click="removeExistingService(service)"
+                          class="p-1.5 text-red-600 rounded-lg transition-colors duration-200 hover:text-red-800 hover:bg-red-50"
+                          title="Remove from package"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   <tr v-if="filteredServices.length === 0">
-                    <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">
+                    <td colspan="6" class="px-6 py-8 text-sm text-center text-gray-500">
                       No services found matching your search
                     </td>
                   </tr>
@@ -597,7 +711,7 @@ onMounted(() => {
               v-if="currentStep === 2"
               @click="previousStep"
               variant="outline"
-              class="flex items-center gap-2"
+              class="flex gap-2 items-center"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -615,7 +729,7 @@ onMounted(() => {
               v-if="currentStep === 1"
               @click="nextStep"
               :disabled="!selectedProvider"
-              class="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+              class="flex gap-2 items-center text-white bg-blue-500 hover:bg-blue-600"
             >
               Continue to Services
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -627,10 +741,18 @@ onMounted(() => {
               v-if="currentStep === 2"
               @click="submitServices"
               :pending="api.pending.value"
-              :disabled="selectedServices.filter(s => !s.isExisting).length === 0"
-              class="bg-green-500 hover:bg-green-600 text-white"
+              :disabled="selectedServices.length === 0"
+              class="text-white bg-green-500 hover:bg-green-600"
             >
-              Add {{ selectedServices.filter(s => !s.isExisting).length }} Service(s)
+              <span class="flex gap-2 items-center">
+                Save Changes
+                <span v-if="newServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-blue-600 rounded-full">
+                  +{{ newServicesCount }}
+                </span>
+                <span v-if="removedServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-red-600 rounded-full">
+                  -{{ removedServicesCount }}
+                </span>
+              </span>
             </Button>
           </div>
         </div>

@@ -1,15 +1,14 @@
 <script setup>
 import DefaultPage from '@/components/DefaultPage.vue';
 import { usePagination } from "@/composables/usePagination";
-import { approveClaimProcessedBy, claimProccessed, getRequestedClaimByBatchDetail, updateServiceProvidedClaimStatus } from '../../api/claimApi';
+import { getRequestedClaimByBatchDetail } from '../../api/claimApi';
 import Table from '@/components/Table.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PaymentStatus } from '@/types/interface';
-import { formatCurrency, toasted, secondDateFormat } from '@/utils/utils';
+import { formatCurrency, secondDateFormat } from '@/utils/utils';
 import Button from '@/components/Button.vue';
 import TableWithCheckBox from '@/components/TableWithCheckBox.vue';
 import { ref, onMounted, computed } from 'vue';
-import { useApiRequest } from '@/composables/useApiRequest';
 import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
 import ProvidedItemsModal from '../../components/ProvidedItems.mdl.vue';
@@ -37,8 +36,6 @@ onMounted(() => {
 });
 
 const checked = ref([]);
-const processedClaimReq = useApiRequest();
-const processWholeReq = useApiRequest();
 
 // show Process Claim button only if there is NO pending serviceClaimStatus in table
 const canProcessWholeClaim = computed(() => {
@@ -49,55 +46,30 @@ const canProcessWholeClaim = computed(() => {
 
 // process/reject multiple selected
 function batchProcessed() {
-  if (processedClaimReq.pending.value) return;
+  if (!checked.value.length) return;
 
-  // remark optional with action selection
-  openModal('ProcessSelectedClaim', { title: 'Process Selected Claims' }, (result) => {
-    const body = checked.value.slice(); // these are serviceProvidedUuid
-    if (!body.length) return;
-    
-    const action = result?.action || 'PROCESSED';
-    const comment = result?.comment;
-
-    processedClaimReq.send(
-      () => updateServiceProvidedClaimStatus(claimUuid, action, body, comment),
-      (res) => {
-        if (res && res.status >= 200 && res.status < 300) {
-          const actionText = action === 'PROCESSED' ? 'PROCESSED' : 'REJECTED';
-          toasted(true, `Selected services marked ${actionText}`);
-          
-          // Update status in store instead of removing items
-          const updatedClaims = (store.claims || []).map((claim) => {
-            if (body.includes(claim.serviceProvidedUuid)) {
-              return { ...claim, serviceClaimStatus: action };
-            }
-            return claim;
-          });
-          
-          store.set ? store.set(updatedClaims) : (store.claims = updatedClaims);
-          checked.value = [];
-        }
-      }
-    );
+  openModal('ProcessSelectedClaim', { 
+    title: 'Process Selected Claims',
+    claimUuid,
+    selectedUuids: checked.value.slice(),
+    onSuccess: () => {
+      // Refresh the table data
+      pagination.send();
+      checked.value = [];
+    }
   });
 }
 
 // open modal to process entire claim (approve processedBy/{claimUuid})
 function openProcessWholeClaim() {
-  openModal('ProcessClaim', { title: 'Process Claim', batchCode }, async (payload) => {
-    if (!payload) return;
-    const body = { comment: payload.comment, batchCode: payload.batchCode };
-    processWholeReq.send(
-      () => approveClaimProcessedBy(String(claimUuid), body),
-      (res) => {
-        if (res && res.status >= 200 && res.status < 300) {
-          toasted(true, 'Claim processed successfully');
-          router.push('/process_claims')
-          // optionally refresh current table
-          pagination.send();
-        }
-      }
-    );
+  openModal('ProcessClaim', { 
+    title: 'Process Claim', 
+    batchCode,
+    claimUuid,
+    onSuccess: () => {
+      // Optionally refresh current table
+      pagination.send();
+    }
   });
 }
 
@@ -119,7 +91,7 @@ function openItemsModal(row) {
 <template>
   <DefaultPage>
     <template #more>
-      <Button :pending="processedClaimReq.pending.value" class="ml-auto" @click="batchProcessed" type="primary" v-if="checked.length">
+      <Button class="ml-auto" @click="batchProcessed" type="primary" v-if="checked.length">
         Process/Reject Selected
       </Button>
     </template>
@@ -146,7 +118,7 @@ function openItemsModal(row) {
     </TableWithCheckBox>
 
     <div class="pb-8 flex justify-end" v-if="canProcessWholeClaim">
-      <Button :pending="processWholeReq.pending.value" type="primary" @click="openProcessWholeClaim">
+      <Button type="primary" @click="openProcessWholeClaim">
         Process Claim
       </Button>
     </div>

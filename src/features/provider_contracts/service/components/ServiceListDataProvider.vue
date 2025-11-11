@@ -1,5 +1,5 @@
 <script setup>
-import { usePagination } from "@/composables/useContentPagination";
+import { usePagination } from "@/composables/usePagination";
 import { watch } from "vue";
 import { useServiceListStore } from "../store/serviceListStore";
 import { getAllServices } from "../api/serviceApi.js";
@@ -25,6 +25,7 @@ const props = defineProps({
     default: "",
   },
 });
+
 watch(
   () => props.search,
   () => {
@@ -48,7 +49,8 @@ const pagination = usePagination({
   cb: (data) =>
     getAllServices(
       route.params.id  || props.id || authStore.auth?.user?.providerUuid,
-      removeUndefined({ search: props.search, ...data })
+      removeUndefined({ search: props.search, ...data }),
+      console.log(data)
     ),
 });
 
@@ -66,5 +68,9 @@ watch(pagination.data, console.log, { immediate: true });
     :pending="pagination.pending.value"
     :error="pagination.error.value"
     :serviceList="serviceListStore.serviceList"
+    :contracts="serviceListStore.serviceList"
+    :currentPage="serviceListStore.currentPage"
+    :itemsPerPage="serviceListStore.itemsPerPage"
+    :totalPages="serviceListStore.totalPages"
   />
 </template>

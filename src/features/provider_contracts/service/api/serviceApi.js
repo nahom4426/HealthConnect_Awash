@@ -24,6 +24,18 @@ export const getServiceCategories = async (providerUuid) => {
     throw error;
   }
 };
+export const getAllService = async (providerUuid) => {
+  try {
+    const response = await api1
+      .addAuthenticationHeader()
+      .get(`/healthConnectProvider/service/search/${providerUuid}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching service categories:', error);
+    throw error;
+  }
+};
+export const searchAllService = getAllService;
 export const exportServicesByCategories = async (providerUuid, categories, providerName) => {
   try {
     const response = await api1
@@ -77,6 +89,12 @@ export function createService(id, data) {
 // Function to update a service
 export function updateService(payerProviderContractUuid, data) {
   return api.addAuthenticationHeader().put(`${basePath}/edit-eligible-services?eligibleServiceUuid=${payerProviderContractUuid}`, data);
+}
+// Add eligible service to a contract with query param payerProviderContractUuid
+export function addEligibleService(payerProviderContractUuid, data) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${basePath}/add-eligible-services?payerProviderContractUuid=${encodeURIComponent(payerProviderContractUuid)}`, data);
 }
 // Function to delete a service
 export function removeService(id) {

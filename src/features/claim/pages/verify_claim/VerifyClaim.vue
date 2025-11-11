@@ -9,9 +9,10 @@ import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import { ref } from "vue";
-import { ClaimLevel, PaymentStatus, ServiceTypes } from "@/types/interface";
+import { ClaimLevel, PaymentStatus, ServiceTypes, Status } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useVerifyClaimByInstitutionBatch } from "../../store/verifyClaimByInstitutionBatchStore";
+import VerifyClaimRow from "../../components/VerifyClaimRow.vue";
 
 const institutionUuid = ref();
 const providerUuid = ref();
@@ -74,43 +75,15 @@ const active = ref(ServiceTypes.creditService);
       <Table
         :pending="pending"
         :headers="{
-          head: [
-            'Policy Holder Name',
-            'Provider Name',
-            'Batch Code',
-            'Total Amount',
-            'Requested Date',
-            'Status',
-            'actions',
-          ],
-          row: [
-            'institutionName',
-            'providerName',
-            'totalAmount',
-            'requestPaymentDate',
-            'claimStatus',
-          ],
-        }"
-        :cells="{
-          totalAmount: formatCurrency,
-          requestPaymentDate: secondDateFormat,
-          actionDate: secondDateFormat,
+          head: [ 'Batch Code', 'Provider Name', 'Total Amount', 'Claim Date', 'Status', 'Actions'],
+          row: ['', 'batchCode', 'providerName', 'totalAmount', 'claimFromDate', 'claimStatus', '']
         }"
         :rows="claims"
-      >
-        <template #actions="{ row }">
-          <Button size="xs" type="elevated">
-            <RouterLink
-              :to="ServiceTypes.creditService == active
-                ? `/verify_claims/detail/${row.claimUuid}`
-                : `/verify_claims/cash_detail/${encodeURIComponent(row.claimBatchCode)}`
-              "
-            >
-              Detail
-            </RouterLink>
-          </Button>
-        </template>
-      </Table>
+        :rowCom="VerifyClaimRow"
+        :detailRoute="active == ServiceTypes.creditService ? '/verify_claims/detail' : '/verify_claims/cash_detail'"
+        :serviceType="active"
+        placeholder="No claims to verify"
+      />
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

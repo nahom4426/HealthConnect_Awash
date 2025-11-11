@@ -168,6 +168,13 @@ const exportServices = async () => {
             <i v-html="icons.plus_circle" class=""></i>
             Import Service
           </button>
+            <button
+            class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+            @click="openModal('AddServices')"
+          >
+            <i v-html="icons.plus_circle" class=""></i>
+            Add Service
+          </button>
         </div>
         <div v-else class="flex gap-2">
           <button

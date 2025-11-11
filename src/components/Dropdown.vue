@@ -89,7 +89,7 @@ watch(
 );
 </script>
 <template>
-  <div @click.prevent.stop="() => {}" class="relative focus-within:z-50 z-10">
+  <div @click.prevent.stop="() => {}" class="relative z-10 focus-within:z-50">
     <slot :toggle="toggle" :setRef="setRef" />
   </div>
 </template>

@@ -1,18 +1,18 @@
 <template>
-  <div class="p-6 bg-white rounded-lg shadow-md space-y-6">
+  <div class="p-6 space-y-6 bg-white rounded-lg shadow-md">
     <!-- Loading state -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div
-        class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"
+        class="w-12 h-12 rounded-full border-t-2 border-b-2 animate-spin border-primary"
       ></div>
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="text-center py-8">
-      <p class="text-red-500 text-lg">{{ error }}</p>
+    <div v-else-if="error" class="py-8 text-center">
+      <p class="text-lg text-red-500">{{ error }}</p>
       <button
         @click="fetchInsuredData"
-        class="mt-4 px-4 py-2 bg-primary text-white rounded-md"
+        class="px-4 py-2 mt-4 text-white rounded-md bg-primary"
       >
         Retry
       </button>
@@ -21,7 +21,7 @@
     <!-- Content when data is loaded -->
     <div v-else>
       <!-- Insured Info -->
-      <div class="flex flex-col md:flex-row gap-6 items-start">
+      <div class="flex flex-col gap-6 items-start md:flex-row">
         <!-- Image -->
         <div
           class="space-y-3 py-4 m-2 w-[14rem] h-[12rem] flex items-center justify-center"
@@ -31,11 +31,11 @@
               insuredData.profile ||
               insuredData.profilePictureBase64 ||
               insuredData.photoUrl ||
-              'https://via.placeholder.com/160x140?text=No+Photo'
+             imageSrc
             "
             alt="Profile"
-            class="rounded-lg border border-gray-200 w-full h-full object-cover"
-            @error="(e) => (e.target.src = 'https://via.placeholder.com/160x140?text=No+Photo')"
+            class="object-cover w-full h-full rounded-lg border border-gray-200"
+            @error="(e) => (e.target.src =imageSrc)"
           />
         </div>
 
@@ -43,20 +43,20 @@
         <div
           class="space-y-3 w-full md:w-[38rem] h-[12rem] m-2 py-4 pl-8 bg-[#F6F7FA]"
         >
-          <div class="flex items-center gap-4 py-2">
+          <div class="flex gap-4 items-center py-2">
             <h3 class="text-xs font-normal text-[#75778B] w-28">Full Name</h3>
             <p class="text-sm font-medium text-[#373946]">
               {{ insuredData.firstName }} {{ insuredData.fatherName }}
               {{ insuredData.grandFatherName }}
             </p>
           </div>
-          <div class="flex items-center gap-4 py-2">
+          <div class="flex gap-4 items-center py-2">
             <h3 class="text-xs font-normal text-[#75778B] w-28">Role</h3>
             <p class="text-sm font-medium text-[#373946]">
               {{ insuredData.position || "N/A" }}
             </p>
           </div>
-          <div class="flex items-center gap-4 py-2">
+          <div class="flex gap-4 items-center py-2">
             <h3 class="text-xs font-normal text-[#75778B] w-28">Phone</h3>
             <p class="text-sm font-medium text-[#373946]">
               {{ insuredData.phone || "N/A" }}
@@ -68,20 +68,20 @@
         <div
           class="space-y-3 w-full md:w-[38rem] h-[12rem] m-2 py-4 pl-8 bg-[#F6F7FA]"
         >
-          <div class="flex items-center gap-4 py-2">
+          <div class="flex gap-4 items-center py-2">
             <h3 class="text-xs font-normal text-[#75778B] w-28">Employee ID</h3>
             <p class="text-sm font-medium text-[#373946]">
               {{ insuredData.idNumber || insuredData.employeeId || "N/A" }}
             </p>
           </div>
-          <div class="flex items-center gap-4 py-2">
+          <div class="flex gap-4 items-center py-2">
             <h3 class="text-xs font-normal text-[#75778B] w-28">Address</h3>
             <p class="text-sm font-medium text-[#373946]">
               {{ insuredData.address || "N/A" }}, {{ insuredData.state || "" }},
               {{ insuredData.country || "" }}
             </p>
           </div>
-          <div class="flex items-center gap-4 py-2">
+          <div class="flex gap-4 items-center py-2">
             <h3 class="text-xs font-normal text-[#75778B] w-28">Gender</h3>
             <p class="text-sm font-medium text-[#373946]">
               {{ insuredData.gender || "N/A" }}
@@ -92,14 +92,14 @@
 
       <!-- Dependants Section -->
        <div v-if="insuredData.dependantCoverage === false" class="mt-6">
-  <div class="flex items-start gap-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+  <div class="flex gap-4 items-start p-4 bg-yellow-50 rounded-lg border border-yellow-300">
     <div class="text-yellow-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="mt-1 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
       </svg>
     </div>
     <div class="text-sm text-yellow-800">
-      <h3 class="font-semibold text-base">Dependants Not Allowed</h3>
+      <h3 class="text-base font-semibold">Dependants Not Allowed</h3>
       <p>This company does not allow coverage for dependants under this contract or policy.</p>
     </div>
   </div>
@@ -111,12 +111,12 @@
           <button @click="showNewDependentForm = !showNewDependentForm">
             <span
               v-if="showNewDependentForm"
-              class="px-6 py-3 border border-gray-300 rounded-md text-gray-700 bg-white"
+              class="px-6 py-3 text-gray-700 bg-white rounded-md border border-gray-300"
               >Cancel</span
             >
             <span
               v-else
-              class="px-6 py-3 bg-primary text-white rounded-md flex items-center"
+              class="flex items-center px-6 py-3 text-white rounded-md bg-primary"
               >Add Dependant</span
             >
           </button>
@@ -130,7 +130,7 @@
                 <th
                   v-for="header in headers"
                   :key="header"
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
                 >
                   {{ header }}
                 </th>
@@ -143,7 +143,7 @@
                 :key="dependent.dependantUuid"
               >
                 <template v-if="editingDependentIndex !== index">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                     {{ index + 1 }}
                   </td>
 
@@ -157,7 +157,7 @@
                           dependent.photoUrl ||
                           'https://via.placeholder.com/80x80?text=No+Photo'
                         "
-                        class="h-10 w-10 rounded-full object-cover"
+                        class="object-cover w-10 h-10 rounded-full"
                         alt="Profile"
                         @error="(e) => (e.target.src = 'https://via.placeholder.com/80x80?text=No+Photo')"
                       />
@@ -167,7 +167,7 @@
                     </div>
                   </td>
                   <td
-                    class="px-6 py-4 font-medium whitespace-nowrap text-sm text-gray-900"
+                    class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap"
                   >
                     {{
                       dependent.fullName ||
@@ -175,22 +175,22 @@
                     }}
                   </td>
                   <!-- Relationship -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                     {{ dependent.relationship }}
                   </td>
 
                   <!-- Age -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                     {{ calculateAge(dependent.birthDate) }}
                   </td>
 
                   <!-- Gender -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                     {{ capitalizeFirstLetter(dependent.gender) }}
                   </td>
 
                   <!-- Dependant Group -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                     {{ dependent.dependantGroup || "N/A" }}
                   </td>
 
@@ -202,7 +202,7 @@
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       "
-                      class="px-2 py-1 rounded-full text-xs font-medium"
+                      class="px-2 py-1 text-xs font-medium rounded-full"
                     >
                       {{
                         dependent.status === "ACTIVE" ? "Active" : "Inactive"
@@ -212,7 +212,7 @@
 
                   <!-- Actions -->
                   <td
-                    class="px-6 py-4 whitespace-nowrap text-left text-sm font-medium"
+                    class="px-6 py-4 text-sm font-medium text-left whitespace-nowrap"
                   >
                     <div class="relative">
                       <button
@@ -222,11 +222,11 @@
                             dependent.dependantUuid || index
                           )
                         "
-                        class="text-indigo-600 ml-4 hover:text-indigo-900"
+                        class="ml-4 text-indigo-600 hover:text-indigo-900"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          class="h-5 w-5"
+                          class="w-5 h-5"
                           viewBox="0 0 20 20"
                           fill="currentColor"
                         >
@@ -238,15 +238,15 @@
 
                       <div
                         :id="`dropdown-${dependent.dependantUuid || index}`"
-                        class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        class="hidden absolute right-0 z-10 w-44 bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg dropdown-menu focus:outline-none"
                       >
                         <div class="py-1">
                           <button
                             @click.stop="startEdit(dependent)"
-                            class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            class="block py-2 w-full text-sm text-gray-700 text-start hover:bg-gray-100"
                           >
                             <div
-                              class="flex items-start justify-start pl-4 gap-4"
+                              class="flex gap-4 justify-start items-start pl-4"
                             >
                               <i v-html="icons.edits" />
                               Edit
@@ -266,7 +266,7 @@
                             class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
                           >
                             <div
-                              class="flex items-center justify-start pl-4 gap-4"
+                              class="flex gap-4 justify-start items-center pl-4"
                             >
                               <i v-html="icons.activate" />
                               Activate
@@ -286,7 +286,7 @@
                             class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
                           >
                             <div
-                              class="flex items-center justify-start pl-4 gap-4"
+                              class="flex gap-4 justify-start items-center pl-4"
                             >
                               <i v-html="icons.deactivate" />
                               Deactivate
@@ -303,13 +303,13 @@
                 <!-- When editing, show the edit form -->
                 <template v-else>
                   <!-- Keep all cells in the same row structure -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                     {{ index + 1 }}
                   </td>
 
                   <!-- Photo Upload -->
-                  <td class="py-4 px-3 whitespace-nowrap">
-                    <div class="relative flex flex-col items-start">
+                  <td class="px-3 py-4 whitespace-nowrap">
+                    <div class="flex relative flex-col items-start">
                       <label
                         for="edit-photo-upload"
                         class="cursor-pointer flex items-center justify-center w-16 h-16 bg-[#DFF1F1] rounded hover:bg-blue-100 overflow-hidden relative"
@@ -320,7 +320,7 @@
                             editingDependent.profilePictureBase64 ||
                             'https://via.placeholder.com/80x80?text=No+Photo'
                           "
-                          class="w-full h-full object-cover"
+                          class="object-cover w-full h-full"
                           @error="(e) => (e.target.src = 'https://via.placeholder.com/80x80?text=No+Photo')"
                         />
                       </label>
@@ -334,17 +334,17 @@
                   </td>
 
                   <!-- Full Name -->
-                  <td class="pr-6 pb-4 pt-16">
+                  <td class="pt-4 mr-10">
                     <Input
                       v-model="editingDependent.fullName"
-                      class="text-sm p-1 border rounded w-full"
+                      class="p-1 w-full text-sm rounded border"
                       validation="required"
                       :attributes="{
                         placeholder: 'First Middle Last',
                       }"
                       required
                     />
-                    <p class="text-xs text-gray-500 mt-1">
+                    <p class="mt-1 text-xs text-gray-500">
                       Enter full name separated by spaces
                     </p>
                   </td>
@@ -421,42 +421,47 @@
                     />
                   </td>
 
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex space-x-2">
-                      <button
-                        @click="saveEdit"
-                        class="text-green-600 hover:text-green-800"
-                        :disabled="savingEdit"
-                      >
-                        <span
-                          v-if="savingEdit"
-                          class="px-6 py-3 bg-primary text-white rounded-md flex items-center"
-                          >⏳</span
-                        >
-                        <span
-                          v-else
-                          class="px-6 py-3 bg-primary text-white rounded-md flex items-center"
-                          >✓ Save</span
-                        >
-                      </button>
-                      <button
-                        @click="cancelEdit"
-                        class="text-green-600 border hover:bg-green-700 p-2"
-                      >
-                        ✕ Cancel
-                      </button>
-                    </div>
-                  </td>
+                  <td class="px-6 py-4 text-sm font-medium whitespace-nowrap">
+    <div class="flex space-x-2">
+      <!-- SAVE BUTTON -->
+      <button
+        @click="updateDependent({ values: editingDependent })"
+        class="text-green-600 hover:text-green-800"
+        :disabled="savingEdit"
+      >
+        <span
+          v-if="savingEdit"
+          class="flex items-center px-6 py-3 text-white rounded-md bg-primary"
+        >
+          ⏳
+        </span>
+        <span
+          v-else
+          class="flex items-center px-6 py-3 text-white rounded-md bg-primary"
+        >
+          ✓ Save
+        </span>
+      </button>
+
+      <!-- CANCEL BUTTON -->
+      <button
+        @click="cancelEdit"
+        class="p-2 text-green-600 border hover:bg-green-700"
+      >
+        ✕ Cancel
+      </button>
+    </div>
+  </td>
                 </template>
               </tr>
 
               <!-- New dependent form row -->
               <tr v-if="showNewDependentForm" class="">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                   {{ dependentsList.length + 1 }}
                 </td>
-                <td class="py-4 px-3 whitespace-nowrap">
-                  <div class="relative flex flex-col items-start">
+                <td class="px-3 py-4 whitespace-nowrap">
+                  <div class="flex relative flex-col items-start">
                     <!-- Upload Box -->
                     <label
                       for="dependent-photo-upload"
@@ -465,7 +470,7 @@
                       <template v-if="newDependent.photo">
                         <img
                           :src="newDependent.photo"
-                          class="w-full h-full object-cover"
+                          class="object-cover w-full h-full"
                           @error="(e) => (e.target.src = 'https://via.placeholder.com/80x80?text=No+Photo')"
                         />
                       </template>
@@ -478,13 +483,13 @@
                     <button
                       v-if="newDependent.photo"
                       @click.stop="newDependent.photo = null"
-                      class="absolute top-0 right-0 bg-white text-red-600 hover:text-red-800 rounded-full p-0.5 shadow-md"
+                      class="absolute top-0 right-0 p-0.5 text-red-600 bg-white rounded-full shadow-md hover:text-red-800"
                       title="Remove image"
                     >
                       <!-- X SVG -->
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
+                        class="w-4 h-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -509,17 +514,17 @@
                 </td>
 
 
-                <td class="mr-10 pt-8">
+                <td class="pt-4 mr-10">
                   <Input
                     v-model="newDependent.fullName"
-                    class="text-sm p-1 border rounded w-full"
+                    class="p-1 w-full text-sm rounded border"
                     validation="required"
                     :attributes="{
                       placeholder: 'First Middle Last',
                     }"
                     required
                   />
-                  <p class="text-xs text-gray-500 mt-1">
+                  <p class="mt-1 text-xs text-gray-500">
                     Enter full name separated by spaces
                   </p>
                 </td>
@@ -589,7 +594,7 @@
                     }"
                   />
                 </td>
-                <td class="px-6 py-2 whitespace-nowrap text-sm font-medium">
+                <td class="px-6 py-2 text-sm font-medium whitespace-nowrap">
                   <div class="flex space-x-2">
                     <button
                       @click="saveDependent"
@@ -598,18 +603,18 @@
                     >
                       <span
                         v-if="savingDependent"
-                        class="px-6 py-3 bg-primary text-white rounded-md flex items-center"
+                        class="flex items-center px-6 py-3 text-white rounded-md bg-primary"
                         >⏳</span
                       >
                       <span
                         v-else
-                        class="px-6 py-3 bg-primary text-white rounded-md flex items-center"
+                        class="flex items-center px-6 py-3 text-white rounded-md bg-primary"
                         >✓ save
                       </span>
                     </button>
                     <button
                       @click="cancelAddDependent"
-                      class="text-green-600 border hover:bg-green-700 p-2"
+                      class="p-2 text-green-600 border hover:bg-green-700"
                     >
                       ✕ cancel
                     </button>
@@ -642,7 +647,7 @@ import { addToast } from "@/toast";
 import { insuredMembers } from "../store/insuredPersonsStore";
 import DependantsTable from "../components/DependantsTable.vue";
 import { useDependentStore } from "../store/dependantPersonsStore";
-
+import imageSrc from '@/assets/img/profile.png';
 const dependentStore = useDependentStore();
 const route = useRoute();
 const router = useRouter();
@@ -657,7 +662,7 @@ const insuredData = ref({});
 const editingDependentIndex = ref(-1);
 const editingDependent = ref(null);
 const photoPreview = ref(null);
-
+const updateReq = useApiRequest()
 const headers = [
   "#",
   "Photo",
@@ -1111,81 +1116,58 @@ function startEdit(dependent) {
   editingDependent.value = dependentCopy;
   photoPreview.value = dependent.profilePictureBase64 || null;
 }
+async function updateDependent({ values }) {
+  const nameParts = values.fullName?.split(" ") || [];
 
-async function saveEdit() {
-  if (!editingDependent.value?.fullName?.trim()) {
-    toasted(false, "", "Full name is required");
-    return;
-  }
+  const dependantRequest = {
+    insuredPersonUuid: insuredPersonUuid,
+    title: values.title || "",
+    firstName: nameParts[0] || "",
+    fatherName: nameParts[1] || "",
+    grandFatherName: nameParts[2] || "",
+    relationship: values.relationship,
+    birthDate: values.birthDate,
+    phone: values.phone || "",
+    status: values.status,
+    gender: values.gender?.toLowerCase() || "",
+  };
 
-  try {
-    const formData = new FormData();
-    const nameParts = editingDependent.value.fullName.split(" ");
+  const formData = new FormData();
+  formData.append("dependantRequest", JSON.stringify(dependantRequest));
 
-    const updateRequest = {
-      firstName: nameParts[0] || "",
-      otherName: nameParts.slice(1).join(" ") || "",
-      gender: editingDependent.value.gender.toLowerCase(),
-      birthDate: editingDependent.value.birthDate,
-      status: editingDependent.value.status,
-      relationship: editingDependent.value.relationship,
-      title: editingDependent.value.title || "",
-      phone: editingDependent.value.phone || "",
-    };
-
-    formData.append("updateRequest", JSON.stringify(updateRequest));
-
-    if (
-      photoPreview.value &&
-      photoPreview.value !== editingDependent.value.profilePictureBase64
-    ) {
-      if (photoPreview.value.startsWith("data:")) {
-        const blob = await fetch(photoPreview.value).then((res) => res.blob());
-        formData.append("profilePicture", blob, "profile.jpg");
-      } else {
-        formData.append("profilePicture", photoPreview.value);
-      }
-    } else if (editingDependent.value.profilePictureBase64) {
-      const existingBlob = await fetch(
-        editingDependent.value.profilePictureBase64
-      ).then((res) => res.blob());
-      formData.append("profilePicture", existingBlob, "profile.jpg");
+  // Add profile picture if available
+  if (photoPreview.value && photoPreview.value !== values.profilePictureBase64) {
+    if (photoPreview.value.startsWith("data:")) {
+      const blob = await fetch(photoPreview.value).then((res) => res.blob());
+      formData.append("profile", blob, "profile.jpg");
     }
-
-    const response = await updatedependant(
-      editingDependent.value.dependantUuid,
-      formData
-    );
-
-    const updatedDependent = {
-      ...editingDependent.value,
-      ...response.data,
-      profilePictureBase64:
-        photoPreview.value || editingDependent.value.profilePictureBase64,
-      fullName: editingDependent.value.fullName,
-      gender: editingDependent.value.gender,
-    };
-
-    dependentsList.value.splice(
-      editingDependentIndex.value,
-      1,
-      updatedDependent
-    );
-
-    editingDependentIndex.value = -1;
-    photoPreview.value = null;
-
-    toasted(true, "Dependent updated successfully", "");
-  } catch (error) {
-    console.error("Update failed:", error);
-    toasted(
-      false,
-      "",
-      "Failed to update dependent: " +
-        (error.response?.data?.message || error.message)
-    );
   }
+
+  updateReq.send(
+    () => updatedependant(values.dependantUuid, formData),
+    (res) => {
+      if (res.success) {
+        toasted(true, "Dependent updated successfully", "");
+        
+        const updatedDependent = {
+          ...values,
+          ...res.data,
+          profilePictureBase64: photoPreview.value || values.profilePictureBase64,
+          fullName: values.fullName,
+          gender: values.gender,
+        };
+
+        dependentsList.value.splice(editingDependentIndex.value, 1, updatedDependent);
+        editingDependentIndex.value = -1;
+        photoPreview.value = null;
+      } else {
+        toasted(false, "", res.error || "Failed to update dependent");
+      }
+    }
+  );
 }
+
+
 
 function cancelEdit() {
   editingDependentIndex.value = -1;

@@ -13,14 +13,14 @@ export const useServiceListStore = defineStore("serviceList", () => {
   }
 
   function update(id, data) {
-    const idx = serviceList.value.findIndex((el) => el.serviceUuid == id);
+    const idx = serviceList.value.findIndex((el) => el.eligibleServiceUuid == id);
     if (idx == -1) return;
 
     serviceList.value.splice(idx, 1, data);
   }
 
   function remove(id) {
-    const idx = serviceList.value.findIndex((el) => el.serviceUuid == id);
+    const idx = serviceList.value.findIndex((el) => el.eligibleServiceUuid == id);
     if (idx == -1) return;
 
     serviceList.value.splice(idx, 1);

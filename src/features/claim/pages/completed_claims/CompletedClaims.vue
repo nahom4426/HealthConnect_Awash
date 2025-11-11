@@ -9,9 +9,10 @@ import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import { ref } from "vue";
-import { PaymentStatus, ServiceTypes } from "@/types/interface";
+import { PaymentStatus, ServiceTypes, Status } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useCompletedClaimByInstitutionBatch } from "../../store/completedClaimByInstitutionBatchStore";
+import CompletedClaimRow from "../../components/CompletedClaimRow.vue";
 
 const institutionUuid = ref();
 const providerUuid = ref();
@@ -74,35 +75,13 @@ const store = useCompletedClaimByInstitutionBatch();
       <Table
         :pending="pending"
         :headers="{
-          head: [
-        
-            'Provider Name',
-            'Total Amount',
-            'Requested Date',
-            'Status',
-            'actions',
-          ],
-          row: [
-         
-            'providerName',
-            'totalAmount',
-            'requestPaymentDate',
-            'claimStatus',
-          ],
-        }"
-        :cells="{
-          totalAmount: formatCurrency,
-          requestPaymentDate: secondDateFormat,
-          actionDate: secondDateFormat,
+          head: [ 'Batch Code', 'Provider Name', 'Total Amount', 'Claim Date', 'Level', 'Status', 'Actions'],
+          row: ['', 'batchCode', 'providerName', 'totalAmount', 'claimFromDate', 'claimLevel', 'claimStatus', '']
         }"
         :rows="claims"
-      >
-        <template #actions="{ row }">
-          <Button size="xs" type="elevated">
-            <RouterLink :to="`/completed_claims/detail/${(row).claimUuid || ''}`">Detail</RouterLink>
-          </Button>
-        </template>
-      </Table>
+        :rowCom="CompletedClaimRow"
+        placeholder="No completed claims found"
+      />
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

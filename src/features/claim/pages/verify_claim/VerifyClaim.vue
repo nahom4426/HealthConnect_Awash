@@ -75,19 +75,20 @@ const active = ref(ServiceTypes.creditService);
         :pending="pending"
         :headers="{
           head: [
-            'Policy Holder Name',
+            // 'Policy Holder Name',
             'Provider Name',
             'Batch Code',
             'Total Amount',
-            'Requested Date',
+            // 'Requested Date',
             'Status',
             'actions',
           ],
           row: [
-            'institutionName',
+            // 'institutionName',
             'providerName',
+            'batchCode',
             'totalAmount',
-            'requestPaymentDate',
+            // 'requestPaymentDate',
             'claimStatus',
           ],
         }"

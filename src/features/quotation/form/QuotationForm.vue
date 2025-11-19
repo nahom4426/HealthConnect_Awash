@@ -212,12 +212,21 @@ function addToService(packageName: string, service: QuoatedService) {
 }
 
 function Service(quote: { packageName: string; services: QuoatedService[] }, service: QuoatedService) {
-  const copy: QuoatedService = {
-    ...service,
+  const newService: QuoatedService = {
+    packageUuid: service.packageUuid,
     serviceQuotedUuid: genId.next().value as string,
+    numberOfInsured: 0,
+    description: 0,
+    rate: 0,
+    premium: 0,
+    sumInsured: 0,
+    coverage: 0,
+    planType: service.planType,
+    individualType: service.individualType,
+    spouse: service.spouse,
   };
   // Insert at the top of the same quote group
-  quote.services.unshift(copy);
+  quote.services.unshift(newService);
 }
 
 const minmax = computed(() => {
@@ -487,7 +496,7 @@ function issueSavedQuotation() {
           }"
         />
         {{ (service.premium = premium(quote.packageName, service)) ? '' : '' }}
-        <Button v-if="!issueMode && !showIssuePremiumAdvice" class="h-6 mt-auto w-fit bg-blue-500 hover:bg-blue-600 text-white" @click.prevent="Service(quote, service)">Duplicate</Button>
+        <Button v-if="!issueMode && !showIssuePremiumAdvice" class="h-6 mt-auto w-fit bg-blue-500 hover:bg-blue-600 text-white" @click.prevent="Service(quote, service)">Add+</Button>
       </div>
     </div>
   </Form>

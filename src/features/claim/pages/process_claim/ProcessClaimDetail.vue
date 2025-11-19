@@ -116,7 +116,7 @@ const modalTitle = ref('Provided Items');
 function openItemsModal(row) {
   modalRow.value = row;
   modalItems.value = row?.providedItemResponses || [];
-  modalTitle.value = `Provided Items — ${row?.insuredName || row?.institutionName || ''}`;
+  modalTitle.value = `Provided Itemsssss — ${row?.insuredName || row?.institutionName || ''}`;
   showItemsModal.value = true;
 }
 

@@ -41,16 +41,21 @@ function detectType(it) {
 async function performAction(action) {
   if (!localRow.value) return;
   const claimId = localRow.value.claimUuid || localRow.value?.claimUuid;
-  const body = [localRow.value.serviceProvidedUuid];
   const remarkVal = remark.value && remark.value.trim() ? remark.value.trim() : undefined;
+  
+  const body = {
+    serviceProvidedUuids: [localRow.value.serviceProvidedUuid],
+    claimStatus: action,
+    remark: remarkVal
+  };
 
   req.send(
-    () => updateServiceProvidedClaimStatus(claimId, action, body, remarkVal),
+    () => updateServiceProvidedClaimStatus(claimId, body),
     (res) => {
       if (res && res.status >= 200 && res.status < 300) {
         // update status in store instead of removing or relying on parent
         const updated = (store.claims || []).map((claim) => {
-          if (body.includes(claim.serviceProvidedUuid)) {
+          if (body.serviceProvidedUuids.includes(claim.serviceProvidedUuid)) {
             return { ...claim, serviceClaimStatus: action };
           }
           return claim;
@@ -62,6 +67,9 @@ async function performAction(action) {
           store.claims = updated;
         }
         emit("close");
+        toasted(true, `Claim ${action.toLowerCase()} successfully`);
+      } else {
+        toasted(false, `Failed to ${action.toLowerCase()} claim`);
       }
     }
   );

@@ -39,7 +39,7 @@ async function confirm() {
 
     // Make the API call
     await api.addAuthenticationHeader().put(
-      `/api/payer/claimconnect/claim/approve/changeStatus/${props.data.claimUuid}?claimStatus=PAYMENT_REQUESTED`,
+      `/claimconnect/claim/approve/changeStatus/${props.data.claimUuid}?claimStatus=PAYMENT_REQUESTED`,
       {
         comment: payload.comment,
         batchCode: payload.batchCode

@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue"
 
 export interface BatchClaim {
+  claimUuid: string;
   providerUuid: string;
   payerUuid: string;
   batchCode: string;

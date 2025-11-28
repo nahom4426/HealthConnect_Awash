@@ -12,6 +12,7 @@ import vRipple from '@/directives/vRipple'
 import toast from '@/toast'
 import RoleDetailModal from '@/features/admin/role/components/RoleDetail.mdl.vue'
 import CompletedPaymentModal from '@/features/claim/modal/CompletedPaymentModal.mdl.vue'
+import ClaimPaymentModal from '@/features/insured_persons/components/ClaimPayment.mdl.vue'
 
 const app = createApp(App)
 

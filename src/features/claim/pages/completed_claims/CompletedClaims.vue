@@ -37,7 +37,7 @@ const openPaymentModal = (row) => {
     title: 'Request Payment',
     message: `Are you sure you want to request payment for this claim?`,
     claimUuid: row.claimUuid,
-    batchCode: row.claimBatchCode || '',
+    batchCode: row.batchCode || '',
     comment: `Payment requested for claim ${row.claimNumber || row.claimUuid}`,
     onConfirm: () => {
       store.fetchClaims(); // Refresh the claims list
@@ -110,7 +110,7 @@ const openPaymentModal = (row) => {
             <Button size="xs" class="bg-blue-600 text-white hover:bg-blue-700">
               <RouterLink :to="active === ServiceTypes.creditService ?
                 `/completed_claims/detail/${row.claimUuid}` :
-                `/completed_claims/cash_detail/${encodeURIComponent(row.claimBatchCode)}`" class=" text-sm ">
+                `/completed_claims/cash_detail/${encodeURIComponent(row.batchCode)}`" class=" text-sm ">
                 Details
               </RouterLink>
             </Button>

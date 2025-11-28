@@ -89,3 +89,31 @@ export function getRequestedCashClaimByBatchDetail(query = {}) {
 		params: query
 	})
 }
+
+export function ClaimSettlePayment(data: { attachment: File; payClaimRequest: any }, claimUuid: string) {
+	const formData = new FormData();
+
+	// attachment -> binary file
+	if (data.attachment) {
+		formData.append('attachment', data.attachment);
+	}
+
+	// payClaimRequest -> JSON string
+	if (data.payClaimRequest) {
+		const payload =
+			typeof data.payClaimRequest === 'string'
+				? data.payClaimRequest
+				: JSON.stringify(data.payClaimRequest);
+		formData.append('payClaimRequest', payload);
+	}
+
+	return api.addAuthenticationHeader().put(
+		`${path}/claim/settle/payment/${claimUuid}`,
+		formData,
+		{
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+		}
+	);
+}

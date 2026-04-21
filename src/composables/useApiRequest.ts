@@ -23,7 +23,7 @@ export function useApiRequest<T>(provideValues = true) {
     beforeResolve = false
   ) {
     if (typeof request != "function")
-      return console.error("can not be called. not a function");
+      return Promise.reject(new Error("can not be called. not a function"));
 
     pending.value = true;
     error.value = "";
@@ -32,28 +32,26 @@ export function useApiRequest<T>(provideValues = true) {
       response.value = null;
     }
     // return new Promise((resolve, reject) => {
-    try {
-      dirty.value = true;
-      request().then((res) => {
+    dirty.value = true;
+    return request()
+      .then((res) => {
         if (beforeResolve) cb && cb(res);
 
-        // setTimeout(() => {
         pending.value = false;
-        if (!(typeof cb == "function")) return; //resolve(res);
 
         response.value = res?.data;
         error.value = res?.error || "";
 
-        cb(res);
-        // resolve(res);
-        // }, 0);
+        if (typeof cb == "function") cb(res);
+
+        return res;
+      })
+      .catch((err: any) => {
+        console.error(err);
+        pending.value = false;
+        error.value = err?.message ?? "";
+        throw err;
       });
-    } catch (err: any) {
-      console.error(err);
-      pending.value = false;
-      error.value = err?.message ?? "";
-      // reject(error.value)
-    }
     // });
   }
 

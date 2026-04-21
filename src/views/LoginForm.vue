@@ -19,7 +19,7 @@ function loginUser({ values }) {
 			if(res.success) {
 				auth.setAuth(res.data)
 				localStorage.setItem('userDetail', JSON.stringify(res.data))
-				router.replace('/')
+				router.replace('/dashboard')
 				toasted(true, 'Loggedin Successfully')
 			}
 		}
@@ -32,15 +32,15 @@ function loginUser({ values }) {
      <div
     class="bg-[#F7F7F9]  sm:w-full   shadow-lg min-h-fit py-24 px-16 items-center justify-center flex flex-col rounded-3xl gap-10"
   >
-    <div class="flex flex-col w-full gap-4 items-center">
-      <img class="h-30 " src="/src/assets/img/logo.png" />
+    <div class="flex flex-col gap-4 items-center w-full">
+      <img class="h-30" src="/src/assets/img/logo.png" />
 
-      <p class="font-bold text-2xl text-primary">HealthConnect</p>
+      <p class="text-2xl font-bold text-primary">HealthConnect</p>
     </div>
-    <div class="grid  w-full">
-			<Form v-slot="{ submit }" id="login-form" class="  flex w-full flex-col gap-8">
+    <div class="grid w-full">
+			<Form v-slot="{ submit }" id="login-form" class="flex flex-col gap-8 w-full">
 				<!-- <p class="text-3xl uppercase">Welcome to Insurance login</p> -->
-                 <div class=" space-y-4">
+                 <div class="space-y-4">
                     <Input
 					:focus="true"
 					validation="required|email"
@@ -61,7 +61,7 @@ function loginUser({ values }) {
 
                  </div>
 				
-				<Button class=" h-16 rounded-md text-base font-bold" :pending="req.pending.value" @click.prevent="submit(loginUser)" type="primary">
+				<Button class="h-16 text-base font-bold rounded-md" :pending="req.pending.value" @click.prevent="submit(loginUser)" type="primary">
 					Login
 				</Button>
 			</Form>

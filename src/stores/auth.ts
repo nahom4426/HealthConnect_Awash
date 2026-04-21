@@ -1,104 +1,129 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import router from "@/router"; // ✅ IMPORT ROUTER DIRECTLY
 
 export const useAuthStore = defineStore("authStore", () => {
-  // State
+  /* =======================
+   * STATE
+   * ======================= */
   const auth = ref<any>(null);
   const imageData = ref<string>("");
   const logoutTimer = ref<number | null>(null);
 
-  // Constants (1 second for testing)
-  const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24h: 24 * 60 * 60 * 1000
+  /* =======================
+   * CONSTANTS
+   * ======================= */
+  const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24h
   const LOGIN_TIMESTAMP_KEY = "login_timestamp";
-  const AUTH_DATA_KEY = "auth_data";
+  const USER_DETAIL_KEY = "userDetail";
   const IMAGE_DATA_KEY = "image_data";
 
-  // Router must be called inside functions
-  const getRouter = () => useRouter();
-
-  // Initialize session on store creation
+  /* =======================
+   * INITIALIZATION
+   * ======================= */
   initializeSession();
 
-  // Actions
+  /* =======================
+   * ACTIONS
+   * ======================= */
   function setAuth(val: any) {
-    auth.value = val;
+    if (!val) {
+      clearAuthData();
+      return;
+    }
 
-    if (val) {
-      localStorage.setItem(AUTH_DATA_KEY, JSON.stringify(val));
-      localStorage.setItem(LOGIN_TIMESTAMP_KEY, Date.now().toString());
-      startLogoutTimer();
-      console.log("Auth set, timer started");
+    const stripWrapperKeys = (obj: any) => {
+      if (!obj || typeof obj !== "object") return obj;
+      const clone = { ...obj };
+      delete clone.success;
+      delete clone.status;
+      delete clone.error;
+      delete clone.data;
+      delete clone.totalPages;
+      delete clone.totalElements;
+      delete clone.page;
+      delete clone.size;
+      delete clone.content;
+      return clone;
+    };
+
+    const storedUser = getStoredUser();
+
+    // Case 1: Already wrapped (from localStorage)
+    if (val?.user?.token) {
+      auth.value = val;
+    }
+    // Case 2: Login response (flat object)
+    else if (val?.token) {
+      const cleanVal = stripWrapperKeys(val);
+      auth.value = {
+        user: {
+          ...(storedUser || {}),
+          ...cleanVal,
+          token: cleanVal.token,
+          refreshToken: cleanVal.refreshToken,
+        },
+      };
     } else {
       clearAuthData();
+      return;
     }
+
+    persistAuth();
+    startLogoutTimer();
   }
 
   function setProfile(val: string) {
-    imageData.value = val;
-    if (val) localStorage.setItem(IMAGE_DATA_KEY, val);
-    else localStorage.removeItem(IMAGE_DATA_KEY);
+    imageData.value = val || "";
+    val
+      ? localStorage.setItem(IMAGE_DATA_KEY, val)
+      : localStorage.removeItem(IMAGE_DATA_KEY);
   }
 
-function logout() {
-  // Clear all state
-  auth.value = null;
-  imageData.value = "";
-  clearLogoutTimer();
-  
-  // Clear ALL auth-related localStorage (not just Pinia's)
-  localStorage.removeItem("userDetail"); // Add your app-specific keys
-  localStorage.removeItem(AUTH_DATA_KEY);
-  localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
-  localStorage.removeItem(IMAGE_DATA_KEY);
+  function logout() {
+    clearLogoutTimer();
+    clearAuthData();
+    auth.value = null;
+    imageData.value = "";
 
-  // Force reload to ensure clean state (avoid Vue/Pinia cache issues)
-  try {
-    const router = useRouter();
-    router.push("/login").then(() => {
-      window.location.reload(); // Hard refresh after redirect
-    });
-  } catch (e) {
-    window.location.href = "/login"; // Fallback if router fails
+    // ✅ SPA redirect (NO reload)
+    router.replace("/login");
   }
-}
+
   function resetLogoutTimer() {
-    if (auth.value) {
-      localStorage.setItem(LOGIN_TIMESTAMP_KEY, Date.now().toString());
-      startLogoutTimer();
-    }
+    if (!auth.value) return;
+    localStorage.setItem(LOGIN_TIMESTAMP_KEY, Date.now().toString());
+    startLogoutTimer();
   }
 
-  // Private functions
+  /* =======================
+   * SESSION HANDLING
+   * ======================= */
   function initializeSession() {
+    const userDetail = localStorage.getItem(USER_DETAIL_KEY);
+    const img = localStorage.getItem(IMAGE_DATA_KEY);
     const loginTime = localStorage.getItem(LOGIN_TIMESTAMP_KEY);
-    const authData = localStorage.getItem(AUTH_DATA_KEY);
-    const imgData = localStorage.getItem(IMAGE_DATA_KEY);
 
-    if (authData) auth.value = JSON.parse(authData);
-    if (imgData) imageData.value = imgData;
+    if (userDetail) auth.value = JSON.parse(userDetail);
+    if (img) imageData.value = img;
 
-    if (loginTime && auth.value) {
-      const elapsed = Date.now() - parseInt(loginTime);
-      const remaining = SESSION_DURATION - elapsed;
+    if (!loginTime || !auth.value) return;
 
-      if (remaining > 0) {
-        startLogoutTimer(remaining);
-      } else {
-        logout();
-      }
+    const elapsed = Date.now() - Number(loginTime);
+    const remaining = SESSION_DURATION - elapsed;
+
+    if (remaining > 0) {
+      startLogoutTimer(remaining);
+    } else {
+      clearAuthData(); // ❗ DO NOT call logout here
+      auth.value = null;
     }
   }
 
-function startLogoutTimer(duration: number = SESSION_DURATION) {
-  clearLogoutTimer();
-  console.log("[AuthStore] Timer started - will logout in", duration, "ms");
-  
-  logoutTimer.value = setTimeout(() => {
-    console.log("[AuthStore] Timer expired - executing logout");
-    logout();
-  }, duration);
-}
+  function startLogoutTimer(duration = SESSION_DURATION) {
+    clearLogoutTimer();
+    logoutTimer.value = window.setTimeout(logout, duration);
+  }
 
   function clearLogoutTimer() {
     if (logoutTimer.value) {
@@ -107,15 +132,39 @@ function startLogoutTimer(duration: number = SESSION_DURATION) {
     }
   }
 
+  /* =======================
+   * HELPERS
+   * ======================= */
+  function persistAuth() {
+    localStorage.setItem(USER_DETAIL_KEY, JSON.stringify(auth.value));
+    localStorage.setItem(LOGIN_TIMESTAMP_KEY, Date.now().toString());
+  }
+
   function clearAuthData() {
-    localStorage.removeItem(AUTH_DATA_KEY);
+    localStorage.removeItem(USER_DETAIL_KEY);
     localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
     localStorage.removeItem(IMAGE_DATA_KEY);
   }
 
-  // Watch for auth changes (clear timer if manually logged out)
-  watch(auth, (newVal) => {
-    if (!newVal) clearLogoutTimer();
+  function getStoredUser() {
+    try {
+      const stored = localStorage.getItem(USER_DETAIL_KEY);
+      return stored ? JSON.parse(stored)?.user : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /* =======================
+   * GETTERS
+   * ======================= */
+  const isAuthenticated = () => !!auth.value?.user?.token;
+
+  /* =======================
+   * WATCHERS
+   * ======================= */
+  watch(auth, (val) => {
+    if (!val) clearLogoutTimer();
   });
 
   return {
@@ -125,5 +174,6 @@ function startLogoutTimer(duration: number = SESSION_DURATION) {
     setProfile,
     logout,
     resetLogoutTimer,
+    isAuthenticated,
   };
 });

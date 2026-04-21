@@ -19,8 +19,8 @@ export function useChartData() {
       {
         label: 'Claims',
         data: claimData.value,
-        backgroundColor: '#55291B80',
-        borderColor: '#55291B',
+        backgroundColor: '#254DB080',
+        borderColor: '#254DB0',
         borderWidth: 1
       }
     ]

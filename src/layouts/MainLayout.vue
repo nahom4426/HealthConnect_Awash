@@ -58,25 +58,61 @@ function toggleMenu(name) {
 
 // Filter navs based on privileges
 const filteredNavs = computed(() => {
-  const privileges = authStore.user?.authorities || [];
-  const userRole = authStore.user?.roleName;
+  const user = authStore.auth?.user;
+  const roleName = user?.roleName;
+  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
+  const authorities = Array.isArray(authStore.user?.authorities)
+    ? authStore.user.authorities
+    : [];
+  const effectivePrivileges = [...privileges, ...authorities]
+    .filter(Boolean)
+    .map((p) => String(p).trim());
+  const userRole = roleName;
+  const hasManagesQuotation =
+    userRole === "Super Admin" ||
+    effectivePrivileges.includes("All Privileges") ||
+    effectivePrivileges.includes("ROLE_Manages_Quotation") ||
+    effectivePrivileges.includes("Manages_Quotation");
 
   const hasAccess = (path, requiredPrivileges) => {
     if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
-    if (userRole === "Super Admin" || privileges.includes("All Privileges")) return true;
-    if (privileges.length === 0) return false;
+    if (
+      userRole === "Super Admin" ||
+      effectivePrivileges.includes("All Privileges")
+    )
+      return true;
+    if (effectivePrivileges.length === 0) return false;
 
     return requiredPrivileges.some((priv) =>
-      privileges.includes(`ROLE_${priv}`)
+      effectivePrivileges.includes(`ROLE_${priv}`)
     );
+  };
+
+  const getRequiredPrivileges = (navItem) => {
+    if (navItem?.meta && Array.isArray(navItem.meta.permissions)) {
+      return navItem.meta.permissions;
+    }
+    if (Array.isArray(navItem?.privilege)) {
+      return navItem.privilege;
+    }
+    return [];
   };
 
   return navs
     .map((item) => {
+      if (hasManagesQuotation && item?.name === "Underwriting") {
+        return null;
+      }
+      if (!hasManagesQuotation && item?.name === "Quotation Underwriting") {
+        return null;
+      }
       if (item.navs) {
         const filteredChildren = item.navs.filter((child) =>
-          hasAccess(child.path, child.privilege)
+          hasAccess(child.path, getRequiredPrivileges(child))
         );
+        if (!hasAccess(item.path, getRequiredPrivileges(item))) {
+          return null;
+        }
         if (filteredChildren.length) {
           return {
             ...item,
@@ -85,7 +121,7 @@ const filteredNavs = computed(() => {
         }
         return null;
       } else {
-        return hasAccess(item.path, item.privilege) ? item : null;
+        return hasAccess(item.path, getRequiredPrivileges(item)) ? item : null;
       }
     })
     .filter(Boolean);
@@ -93,21 +129,35 @@ const filteredNavs = computed(() => {
 </script>
 
 <template>
-  <div :class="colorStore.color" class="flex h-full w-full">
+  <div
+    :class="colorStore.color"
+    class="flex w-full h-full bg-gradient-to-br from-gray-50 via-white to-blue-50/20"
+  >
     <!-- Mobile Drawer Toggle Button -->
     <div
       v-ripple
       @click="toggleDrawer"
-      class="md:hidden fixed w-fit h-fit z-30 top-4 left-4 bg-primary text-white rounded p-3 shadow-lg"
+      class="fixed top-3 left-3 z-30 p-2.5 text-white bg-gradient-to-r rounded-lg shadow-lg transition-all duration-300 md:hidden w-fit h-fit from-primary to-secondary shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-110 active:scale-95"
     >
-      <i v-html="drawerOpen ? icons.close : icons.menu"></i>
+      <i
+        v-html="drawerOpen ? icons.close : icons.menu"
+        class="text-lg transition-transform duration-300"
+        :class="{ 'rotate-90': drawerOpen }"
+      ></i>
     </div>
+
+    <!-- Mobile Overlay -->
+    <div
+      v-if="drawerOpen && !isDesktop"
+      @click="toggleDrawer"
+      class="fixed inset-0 z-10 backdrop-blur-sm transition-all duration-300 bg-black/50"
+    ></div>
 
     <!-- Sidebar Drawer -->
     <div
-      class="__drawer fixed md:static z-20 h-full transition-all duration-300 ease-in-out"
+      class="fixed z-20 h-full transition-all duration-500 ease-out __drawer md:static"
       :class="[
-        drawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+        drawerOpen ? 'translate-x-0 ' : '-translate-x-full md:translate-x-0',
         'w-drawer-width',
       ]"
     >
@@ -125,20 +175,27 @@ const filteredNavs = computed(() => {
       :class="[
         drawerOpen ? 'md:w-[calc(100%-var(--drawer-width))]' : 'md:w-full',
       ]"
-      class="flex flex-col"
+      class="flex relative z-0 flex-col min-w-0 transition-all duration-500 ease-out"
     >
       <!-- Top Navbar with Breadcrumbs -->
-      <div class="h-navbar-height flex flex-col ">
-       
-        
-       <NavBar :breadcrumbs="breadcrumbs" />
+      <div
+        class="h-navbar-height flex flex-col relative z-[100]"
+        style="z-index: 100;"
+      >
+        <NavBar :breadcrumbs="breadcrumbs" />
       </div>
 
       <!-- Page Content -->
       <div
-        class="overflow-y-auto h-[calc(100%-var(--navbar-height))] !p-2 bg-base-clr2 flex-1"
+        class="overflow-x-scroll overflow-y-scroll custom-scrollbar min-w-0 h-[calc(100%-var(--navbar-height))] py-2 md:p-4 bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 flex-1 relative z-0"
       >
-        <RouterView />
+        <div
+          class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.03),transparent_50%)] z-0"
+        ></div>
+
+        <div class="relative z-0 min-w-max h-full">
+          <RouterView />
+        </div>
       </div>
     </div>
   </div>
@@ -147,7 +204,40 @@ const filteredNavs = computed(() => {
 <style scoped>
 /* Customize drawer width and navbar height if needed */
 :root {
-  --drawer-width: 16rem;
+  --drawer-width: 18rem;
   --navbar-height: 4rem;
+}
+
+.custom-scrollbar {
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af #f3f4f6;
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar) {
+  height: 12px;
+  width: 12px;
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar-track) {
+  background: #e5e7eb;
+  border-radius: 6px;
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar-thumb) {
+  background: #6b7280;
+  border-radius: 6px;
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar-thumb:hover) {
+  background: #4b5563;
+}
+
+.__drawer {
+  backdrop-filter: blur(10px);
+}
+
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

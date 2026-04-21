@@ -14,7 +14,7 @@
       <div class="logo-compact">
         <div class="logo-orb">
           <div class="logo-core">
-            <img src="/src/assets/img/letter-logo.png" alt="Awash Insurance" class="logo" />
+            <img src="/src/assets/img/letter-logo.png " alt="Awash Insurance" class="logo" />
           </div>
           <div class="ring-1 logo-ring"></div>
           <div class="ring-2 logo-ring"></div>

@@ -68,7 +68,7 @@ function getBaseUrl() {
 }
 
 function handleImageError(event) {
-  event.target.src = '/assets/placeholder-logo.png'
+  event.target.src = '/assets/placeholder-logo.png '
 }
 
 function handleEdit(row) {

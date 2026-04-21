@@ -11,7 +11,7 @@ defineProps({
     <!-- Header Section -->
     <div class="flex relative z-10 items-center p-6 pb-4">
        <div class="flex flex-col gap-4 items-center w-full">
-      <img class="h-30" src="/src/assets/img/logo.png" />
+      <img class="h-30" src="/src/assets/img/logoD.png " />
 
       </div>
     </div>

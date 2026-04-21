@@ -33,7 +33,7 @@ function loginUser({ values }) {
     class="bg-[#F7F7F9]  sm:w-full   shadow-lg min-h-fit py-24 px-16 items-center justify-center flex flex-col rounded-3xl gap-10"
   >
     <div class="flex flex-col gap-4 items-center w-full">
-      <img class="h-30" src="/src/assets/img/logo.png" />
+      <img class="h-30" src="/src/assets/img/logo.png " />
 
       <p class="text-2xl font-bold text-primary">HealthConnect</p>
     </div>

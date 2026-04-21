@@ -108,7 +108,7 @@ async function handleSubmit(formData) {
       } else if (formData.logoBase64) {
         // Convert base64 to blob if needed
         const blob = base64ToBlob(formData.logoBase64);
-        payload.append('logo', blob, 'logo.png');
+        payload.append('logo', blob, 'logo.png ');
       } else {
       }
     } else {

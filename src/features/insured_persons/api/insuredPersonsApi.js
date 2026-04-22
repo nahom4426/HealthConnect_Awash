@@ -132,3 +132,49 @@ export function exportMemberTemplate() {
     responseType: 'blob' // Important for file download
   });
 }
+
+export function exportQuotedMainMembersTemplate(quotationUuid) {
+  return api
+    .addAuthenticationHeader()
+    .get(`${basePath}/export/quoted-main-members-template/${quotationUuid}`, {
+      responseType: 'blob'
+    });
+}
+
+export function exportQuotedDependantsTemplate(quotationUuid) {
+  return api
+    .addAuthenticationHeader()
+    .get(`${basePath}/export/quoted-dependants-template/${quotationUuid}`, {
+      responseType: 'blob'
+    });
+}
+
+export function importQuotedMainMembers({ quotationUuid, payerInstitutionContractUuid } = {}, formData, config = {}) {
+  return api.addAuthenticationHeader().post(
+    `${basePath}/import-quoted-main-members`,
+    formData,
+    {
+      ...config,
+      params: { quotationUuid, payerInstitutionContractUuid },
+      headers: {
+        ...(config?.headers || {}),
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+}
+
+export function importQuotedDependants({ quotationUuid, payerInstitutionContractUuid } = {}, formData, config = {}) {
+  return api.addAuthenticationHeader().post(
+    `${basePath}/import-quoted-dependants`,
+    formData,
+    {
+      ...config,
+      params: { quotationUuid, payerInstitutionContractUuid },
+      headers: {
+        ...(config?.headers || {}),
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+}

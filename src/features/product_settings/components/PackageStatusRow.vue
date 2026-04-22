@@ -115,17 +115,6 @@ function toggleStatus(packageData) {
     }
   );
 }
-function handleAddRate(packageData) {
-  // Opens a modal where user can input Rate, Family Type, Description, etc.
-  // The modal component (e.g., 'AddRateToPackage') should render a form and handle submission.
-  openModal('AddRateToPackage', {
-    packageUuid: packageData.packageUuid,
-    packageName: packageData.packageName,
-    minLimit: packageData.minLimit,
-    maxLimit: packageData.maxLimit,
-    gender: packageData.gender,
-  });
-}
 function handleShowRate(packageData){
   closeAllDropdowns();
   router.push({ name: 'show-rates', params: { packageUuid: packageData.packageUuid } });
@@ -310,9 +299,6 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
           >
             <i v-html="icons.briefcase || '💼'" class="flex-shrink-0 w-5 h-5"></i>
             <span class="font-medium">Services</span>
-          </button>
-   <button v-if="canManageQuotation" @click.stop="handleAddRate(row)" class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">
-            <i v-html="icons.dollar || icons.coins || '💵'" class="w-5 h-5"></i> Add Rate
           </button>
           <button v-if="canManageQuotation" @click.stop="handleShowRate(row)" class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">
             <i v-html="icons.dollar || icons.coins || '💵'" class="w-5 h-5"></i> Show Rate

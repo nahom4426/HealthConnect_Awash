@@ -217,9 +217,9 @@ router.beforeEach((to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   
   // Get user data from store (after initialization)
-  const user = authStore.auth?.user;
-  const hasValidToken = user && user.token; // Token is stored in user.token
-
+  const user = authStore.auth?.user ?? authStore.auth;
+  const hasValidToken = !!user?.token; // Token is stored in user.token
+console.log('User data:', user);
   const hasRolePrivilege = (privilegeName) => {
     if (!user) return false;
     const privileges = Array.isArray(user?.privileges) ? user.privileges : [];

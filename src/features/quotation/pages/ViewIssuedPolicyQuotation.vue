@@ -1,50 +1,59 @@
-<script setup lang="ts">
+<script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
-import Dropdown from "@/components/new_form_elements/Dropdown.vue";
-import { ref, onMounted } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { issuedPolicyQuotation } from "@/features/quotation/api/quotationApi";
+import IssuedPolicyQuotationDataProvider from "@/features/quotation/components/IssuedPolicyQuotationDataProvider.vue";
+import IssuedPolicyQuotationRow from "@/features/quotation/components/IssuedPolicyQuotationRow.vue";
 
 const route = useRoute();
 const router = useRouter();
-const pending = ref(false);
-const rows = ref<any[]>([]);
-const error = ref<string | null>(null);
+const search = ref("");
 
-function goToInsured(row: any) {
-  const payerInstitutionContractUuid = route.params.payerInstitutionContractUuid as string;
-  const institutionUuid = row?.institutionUuid || (route.params as any).institutionUuid;
+const policyUuid = computed(() => route.params.payerInstitutionContractUuid);
+
+function goToInsured(row) {
+  const payerInstitutionContractUuid = route.params.payerInstitutionContractUuid;
+  const institutionUuid = row?.institutionUuid || route.params?.institutionUuid;
   if (institutionUuid && payerInstitutionContractUuid) {
-    router.push(`/insured_persons/${payerInstitutionContractUuid}/${institutionUuid}/${row.quotationUuid}`);
+    router.push(
+      `/insured_persons/${payerInstitutionContractUuid}/${institutionUuid}/${row.quotationUuid}`
+    );
   }
 }
 
-onMounted(async () => {
-  const policyUuid = route.params.payerInstitutionContractUuid as string;
-  pending.value = true;
-  error.value = null;
-  try {
-    const resp: any = await issuedPolicyQuotation(policyUuid, { params: { status: 'PAID' } });
-    const data = resp?.data ?? resp;
-    const listRaw = Array.isArray(data) ? data : (data?.data ?? []);
-    rows.value = (listRaw || []).map((r: any) => ({
-      quotationUuid: r.quotationUuid,
-      institutionUuid: r.institutionUuid,
-      quotationCode: r.quotationCode,
-      policyDebitNumber: r.policyDebitNumber,
-      issuedDate: r.issuedDate,
-      acceptedDate: r.acceptedDate,
-      poDate: r.poDate,
-      description: r.description,
-      id: r.quotationUuid || r.id,
-    }));
-  } catch (e: any) {
-    error.value = e?.message || 'Failed to load policy quotations';
-  } finally {
-    pending.value = false;
-  }
-});
+function mapRows(listRaw) {
+  return (Array.isArray(listRaw) ? listRaw : []).map((r) => {
+    const totalPremium = Array.isArray(r?.quoatedServices)
+      ? r.quoatedServices.reduce(
+          (sum, s) => sum + (Number(s?.premium) || 0),
+          0
+        )
+      : 0;
+
+    const totalCoverage = Array.isArray(r?.quoatedServices)
+      ? r.quoatedServices.reduce(
+          (sum, s) => sum + (Number(s?.coverage) || 0),
+          0
+        )
+      : 0;
+
+    return {
+      quotationUuid: r?.quotationUuid,
+      institutionUuid: r?.institutionUuid,
+      quotationCode: r?.quotationCode,
+      policyDebitNumber: r?.policyDebitNumber,
+      issuedDate: r?.issuedDate,
+      acceptedDate: r?.acceptedDate,
+      poDate: r?.poDate,
+      description: r?.description,
+      status: r?.status,
+      totalPremium,
+      totalCoverage,
+      id: r?.quotationUuid || r?.id,
+    };
+  });
+}
 </script>
 
 <template>
@@ -53,51 +62,63 @@ onMounted(async () => {
       <h1>Policy Quotations</h1>
     </template>
 
-    <div v-if="error" class="p-3 text-red-600">{{ error }}</div>
-    <Table
-      :pending="pending"
-      :headers="{
-        head: [
-          'quotationCode',
-          'policyDebitNumber',
-          'issuedDate',
-          'acceptedDate',
-          'poDate',
-          'description',
-          'actions',
-        ],
-        row: [
-          
-          'quotationCode',
-          'policyDebitNumber',
-          'issuedDate',
-          'acceptedDate',
-          'poDate',
-          'description',
-        ],
-      }"
-      :cells="{}"
-      :rows="rows"
+    <div class="p-3">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="w-full sm:max-w-md">
+          <input
+            v-model="search"
+            class="px-3 py-2 w-full bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search by quotation code or debit number"
+            type="text"
+          />
+        </div>
+      </div>
+    </div>
+
+    <IssuedPolicyQuotationDataProvider
+      v-slot="{ quotations, pending, error }"
+      :policyUuid="policyUuid"
+      :search="search"
+      :auto="true"
     >
-      <template #actions="{ row }">
-        <Dropdown v-slot="{ setRef, toggleDropdown }">
-          <button
-            class="p-1.5 rounded hover:bg-gray-100"
-            @click.prevent="toggleDropdown"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-            </svg>
-          </button>
-          <div
-            class="absolute right-0 shadow-lg border p-2 mt-2 rounded-lg flex flex-col gap-1 w-56 bg-white z-20"
-            :ref="setRef"
-          >
-            <button class="p-2 text-left hover:bg-gray-50 rounded-md" @click.prevent="goToInsured(row)">Insured Person</button>
-            <button class="p-2 text-left hover:bg-gray-50 rounded-md" @click.prevent="(row)">Details</button>
-          </div>
-        </Dropdown>
-      </template>
-    </Table>
+      <div v-if="error" class="p-3 text-red-600">{{ error }}</div>
+
+      <Table
+        :pending="pending"
+        :rowCom="IssuedPolicyQuotationRow"
+        :rowComProps="{ onInsured: goToInsured }"
+        :headers="{
+          head: [
+            'Quotation Code',
+            'Debit Number',
+            'Issued Date',
+            'Accepted Date',
+            'PO Date',
+            'Total Premium',
+            'Total Coverage',
+            'Status',
+            'actions',
+          ],
+          row: [
+            'quotationCode',
+            'policyDebitNumber',
+            'issuedDate',
+            'acceptedDate',
+            'poDate',
+            'totalPremium',
+            'totalCoverage',
+            'status',
+          ],
+        }"
+        :cells="{
+          issuedDate: (_v, r) => (r?.issuedDate ? new Date(r.issuedDate).toLocaleString() : ''),
+          acceptedDate: (_v, r) => (r?.acceptedDate ? new Date(r.acceptedDate).toLocaleString() : ''),
+          poDate: (_v, r) => (r?.poDate ? new Date(r.poDate).toLocaleString() : ''),
+          totalPremium: (_v, r) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'ETB' }).format(Number(r?.totalPremium) || 0),
+          totalCoverage: (_v, r) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'ETB' }).format(Number(r?.totalCoverage) || 0),
+        }"
+        :rows="mapRows(quotations)"
+      />
+    </IssuedPolicyQuotationDataProvider>
   </DefaultPage>
 </template>

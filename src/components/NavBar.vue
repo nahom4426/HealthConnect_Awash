@@ -82,7 +82,7 @@ const props = defineProps({
     <div class="hidden md:block animate-zoom-in">
       <div class="px-6 py-3 bg-gradient-to-r rounded-2xl border shadow-inner backdrop-blur-sm from-primary/5 via-primary/10 to-secondary/5 border-primary/20">
         <span class="text-base font-bold tracking-wide text-primary">
-          {{ authStore.auth?.user?.companyName || 'Awash Insurance' }}
+          {{ authStore.auth?.user?.companyName || 'Nyala Insurance' }}
         </span>
       </div>
     </div>

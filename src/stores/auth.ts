@@ -104,7 +104,15 @@ export const useAuthStore = defineStore("authStore", () => {
     const img = localStorage.getItem(IMAGE_DATA_KEY);
     const loginTime = localStorage.getItem(LOGIN_TIMESTAMP_KEY);
 
-    if (userDetail) auth.value = JSON.parse(userDetail);
+    if (userDetail) {
+      try {
+        const parsedUser = JSON.parse(userDetail);
+        setAuth(parsedUser);
+      } catch {
+        clearAuthData();
+        auth.value = null;
+      }
+    }
     if (img) imageData.value = img;
 
     if (!loginTime || !auth.value) return;
@@ -149,7 +157,9 @@ export const useAuthStore = defineStore("authStore", () => {
   function getStoredUser() {
     try {
       const stored = localStorage.getItem(USER_DETAIL_KEY);
-      return stored ? JSON.parse(stored)?.user : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return parsed?.user ?? parsed;
     } catch {
       return null;
     }

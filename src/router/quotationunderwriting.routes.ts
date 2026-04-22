@@ -17,6 +17,7 @@ import InstitutionContractswithIssued from "@/features/Nyalaunderwriting/pages/I
 import AddProviderForInstitution from "@/features/providers/pages/AddProviderForInstitution.vue";
 import RemoveCatgorieServices from '@/features/providers/pages/removeCatgorieServices.vue';
 import AddInstitution from "@/features/institutions/pages/AddInstitution.vue";
+import QuotationInsured from '@/features/insured_persons/pages/quotationInsured.vue';
 
 export default [
   {
@@ -74,7 +75,7 @@ export default [
   {
     path: '/insured_persons/:id/:institutionUuid/:institutionName',
     name: 'Insured Persons',
-    component: Insured,
+    component: QuotationInsured,
     meta: {
       showActionButtons: true
     }

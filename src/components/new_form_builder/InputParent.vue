@@ -67,6 +67,7 @@ const error = ref('');
 const dirty = ref(props.autoValidate);
 const asyncValidating = ref(false);
 const inputEl = ref();
+const isMounted = ref(false);
 
 const buildInInputNames = ['INPUT', 'SELECT', 'TEXTAREA'];
 const booleaninputTypes = ['checkbox', 'radio'];
@@ -98,6 +99,10 @@ onMounted(() => {
   if (!booleaninputTypes.includes(initialAttrs.value?.type)) {
     thisValue.value = props.modelValue || props.value || '';
   }
+});
+
+onMounted(() => {
+  isMounted.value = true;
 });
 
 function getValidation(validation) {
@@ -303,7 +308,8 @@ function changeValue(value) {
 }
 
 watch(thisValue, () => {
-  if (dirty.value || !builtInInput.value) {
+  if (!isMounted.value) return;
+  if (dirty.value) {
     validate();
   }
 });

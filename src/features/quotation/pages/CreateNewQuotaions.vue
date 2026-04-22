@@ -1,7 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
-import { Status } from "@/types/interface";
 import QuotationForm from "../form/QuotationForm.vue";
 import QuotationCreationDataProvider from "../components/QuotationCreationDataProvider.vue";
 import Input from "@/components/new_form_elements/Input.vue";
@@ -9,6 +8,7 @@ import { ref } from "vue";
 import { saveQuotationDraft, issueQuotation } from "@/features/quotation/api/quotationApi";
 import { useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
+import { useApiRequest } from "@/composables/useApiRequest";
 
 const showInstitution = ref(false)
 const showMore = ref(true)
@@ -24,16 +24,16 @@ const institutionForm = ref({
 })
 
 const prefilled = ref(false)
-const currentInstitution = ref<any>(null)
-function prefillOnce(v: any) {
+const currentInstitution = ref(null)
+function prefillOnce(v) {
   if (!prefilled.value && v) {
     institutionForm.value = {
       institutionName: v.institutionName || "",
       email: v.email || "",
-      tinNumber: (v.tinNumber as any) || "",
+      tinNumber: v.tinNumber || "",
       telephone: v.telephone || "",
       description: v.description || "",
-      category: (v.category as any) || "",
+      category: v.category || "",
       referralType: v.referralType || "Direct",
       address: `${v.address1 || ''} ${v.address2 || ''} ${v.address3 || ''}, ${v.state || ''}`,
     }
@@ -45,74 +45,62 @@ function prefillOnce(v: any) {
 
 const router = useRouter();
 
-async function onFormSubmit(e: any) {
-  if (!e) return;
-  const action = e.action;
-  const data = e.data || {};
-  if (action === 'save' || action === 'issue') {
-    const quotedServices = (data.quotations || [])
-      .flatMap((q: any) => q.services || [])
-      .map((s: any) => {
-        const raw = s?.description;
-        const val = typeof raw === 'object' && raw !== null ? (raw.value ?? raw.id ?? raw) : raw;
-        let descNum: number;
-        if (typeof val === 'string') {
-          const v = val.toLowerCase();
-          if (v === 'member') descNum = 1;
-          else if (v === 'spouse') descNum = 2;
-          else if (v === 'children') descNum = 3;
-          else descNum = Number.parseInt(val as any, 10);
-        } else {
-          descNum = Number(val);
-        }
-        return {
-          ...s,
-          description: Number.isFinite(descNum) && !Number.isNaN(descNum) ? descNum : 0,
-        };
-      });
-    const payload = {
-      institutionUuid: currentInstitution.value?.institutionUuid || "",
-      description: institutionForm.value.description,
-      quoatedServices: quotedServices,
-    } as any;
-    try {
-      if (action === 'save') {
-        await saveQuotationDraft(payload);
-        toasted(true, 'Quotation saved successfully');
-        router.back();
-      } else {
-        // Directly issue without prior save as requested
-        await issueQuotation(payload);
-        toasted(true, 'Quotation issued successfully');
-        router.back();
-      }
-    } catch (err: any) {
-      const apiErr = err?.response?.data || err;
-      toasted(false, 'Failed to process quotation', apiErr);
-    }
+const saveReq = useApiRequest(false);
+const issueReq = useApiRequest(false);
+
+function normalizeDescription(raw) {
+  const val = typeof raw === 'object' && raw !== null ? (raw.value ?? raw.id ?? raw) : raw;
+  let descNum;
+
+  if (typeof val === 'string') {
+    const v = val.toLowerCase().trim();
+    if (v === 'member' || v === 'main member') descNum = 1;
+    else if (v === 'spouse') descNum = 2;
+    else if (v === 'children') descNum = 3;
+    else descNum = Number.parseInt(val, 10);
+  } else {
+    descNum = Number(val);
   }
+
+  return Number.isFinite(descNum) && !Number.isNaN(descNum) ? descNum : 0;
 }
 
-export type CreateQuotaion = {
-  institutionUuid: string;
-  description: string;
-  quoatedServices: QuoatedService[];
-};
+function onFormSubmit(e) {
+  if (!e) return;
 
-export type QuoatedService = {
-  packageUuid: string;
-  serviceQuotedUuid: string;
-  numberOfInsured: number;
-  description: number;
-  rate: number;
-  premium: number;
-  sumInsured: number;
-  coverage: number;
-  quotationUuid?: string;
-  planType: string;
-  individualType:string;
-  spouse: boolean;
-};
+  const action = e.action;
+  const data = e.data || {};
+
+  if (action !== 'save' && action !== 'issue') return;
+
+  const quotedServices = (data.quotations || [])
+    .flatMap((q) => q.services || [])
+    .map((s) => ({
+      ...s,
+      description: normalizeDescription(s?.description),
+    }));
+
+  const payload = {
+    institutionUuid: currentInstitution.value?.institutionUuid || "",
+    description: institutionForm.value.description,
+    quoatedServices: quotedServices,
+  };
+
+  const req = action === 'save' ? saveReq : issueReq;
+  const requestFn = () => (action === 'save' ? saveQuotationDraft(payload) : issueQuotation(payload));
+
+  req.send(requestFn, (res) => {
+    if (res?.success) {
+      toasted(true, action === 'save' ? 'Quotation saved successfully' : 'Quotation issued successfully', res?.error);
+      router.back();
+    } else {
+      toasted(false, 'Failed to process quotation', res?.error);
+    }
+  }).catch((err) => {
+    const apiErr = err?.response?.data || err;
+    toasted(false, 'Failed to process quotation', apiErr);
+  });
+}
 </script>
 <template>
   <SingleInstitutionDataProvider v-slot="{ instituton, pending }">

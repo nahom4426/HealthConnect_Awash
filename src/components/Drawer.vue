@@ -32,7 +32,7 @@ defineProps({
     <div class="relative z-10 p-6 pt-4 border-t border-gray-100">
       <div class="text-center">
         <p class="text-xs font-medium text-gray-500">
-          © 2026 Awash Insurance
+          © 2026 Nyala Insurance
         </p>
         <p class="mt-1 text-xs text-gray-400">
           We Flow with You

@@ -76,10 +76,12 @@ watch(
 </script>
 
 <template>
-  <slot
-    :claims="(claimStore)?.requestedClaims"
-    :pending="pagination.pending.value"
-    :search="pagination.search"
-    :send="pagination.send"
-  />
+  <div>
+    <slot
+      :claims="(claimStore)?.requestedClaims"
+      :pending="pagination.pending.value"
+      :search="pagination.search"
+      :send="pagination.send"
+    />
+  </div>
 </template>

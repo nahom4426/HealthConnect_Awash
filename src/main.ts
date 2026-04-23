@@ -10,7 +10,7 @@ import vFocus from '@/directives/vFocus'
 import vPrivilage from '@/directives/vPrivilage'
 import vRipple from '@/directives/vRipple'
 import toast from '@/toast'
-import RoleDetailModal from '@/features/admin/role/components/RoleDetail.mdl.vue'
+
 
 const app = createApp(App)
 
@@ -21,6 +21,6 @@ app.use(toast)
 app.directive('focus', vFocus)
 app.directive('privilage', vPrivilage)
 app.directive('ripple', vRipple)
-app.component('RoleDetail.mdl.vue', RoleDetailModal)
+
 app.mount('#app')
 

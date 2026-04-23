@@ -33,61 +33,101 @@ const props = defineProps({
     default: [],
   },
   cells: Object as PropType<any>,
+  hideIndex: {
+    type: Boolean,
+    default: false,
+  },
 });
+
 const emit = defineEmits(["row"]);
+
+// Helper to get nested property value
+const getNestedValue = (obj: any, path: string) => {
+  return path.split('.').reduce((current, key) => current?.[key], obj);
+};
+
+// Format cell value
+const formatCellValue = (value: any): string => {
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (value instanceof Date) return value.toLocaleDateString();
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+};
 </script>
+
 <template>
-  <template :key="(row as any)?.id ?? index" v-for="(row, index) in rowData">
+  <template v-for="(row, index) in rowData" :key="(row as any)?.id ?? index">
     <slot name="top" :row="row" />
     <tr
       @click="emit('row', row)"
       :class="[
-        'cursor-pointer hover:bg-gray-100 border-x-[0.2p border-b-[0.2p border-t-[0.2px]',
+        'cursor-pointer transition-colors duration-150 hover:bg-gray-50',
         typeof props.rowClass === 'function' ? props.rowClass(row) : props.rowClass,
       ]"
     >
-      <td v-if="firstCol" class="p-3">
+      <!-- First column slot -->
+      <td v-if="firstCol" class="px-4 py-3 whitespace-nowrap">
         <slot name="select" :row="row" />
       </td>
-      <td class="p-4 font-medium">{{ index + 1 }}</td>
+
+      <!-- Index column -->
+      <td v-if="!hideIndex" class="px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap">
+        {{ index + 1 }}
+      </td>
+
+      <!-- Dynamic data columns -->
       <td
-        class="p-2 py-4 font-medium max-w-40"
-        :key="key"
         v-for="key in rowKeys"
+        :key="key"
+        class="px-4 py-3 max-w-xs text-sm text-gray-900 truncate"
       >
         <slot v-if="$slots[key]" :name="key" :row="row" />
-        <span v-else-if="!Object.keys(cells || {}) || !(cells as any)?.[key]">
-          {{
-            key.split(".").reduce((all: any, el: string) => {
-              return all?.[el];
-            }, row)
-          }}
+        <slot v-else-if="$slots[`cell(${key})`]" :name="`cell(${key})`" :row="row" :value="getNestedValue(row, key)" />
+        <span v-else-if="!cells || !cells[key]">
+          {{ formatCellValue(getNestedValue(row, key)) }}
         </span>
         <component
-          v-else-if="Object.keys(cells || {}) && (cells as any)[key].__hmrId"
+          v-else-if="cells[key]?.__hmrId"
           :row="row"
-          :is="(cells as any)[key]"
+          :value="getNestedValue(row, key)"
+          :is="cells[key]"
         />
-        <span v-else-if="typeof (cells as any)[key] == 'function'">
-          {{ (cells as any)[key]((row as any)?.[key], row as T) }}
+        <span v-else-if="typeof cells[key] === 'function'">
+          {{ cells[key](getNestedValue(row, key), row) }}
+        </span>
+        <span v-else>
+          {{ formatCellValue(getNestedValue(row, key)) }}
         </span>
       </td>
-      <td
-        class="p-3"
-        v-if="headKeys.find((head) => head.toLowerCase() == 'actions')"
-      >
-        <slot name="actions" :row="row" />
-      </td>
-      <td
-        class="p-3"
-        v-if="headKeys.find((head) => head.toLowerCase() == 'reason')"
-      >
-        <slot name="reason" :row="row" />
-      </td>
-      <td v-if="lastCol" class="p-3">
+
+      <!-- Last column slot -->
+      <td v-if="lastCol" class="px-4 py-3 whitespace-nowrap">
         <slot name="lastCol" :row="row" />
       </td>
     </tr>
     <slot name="bottom" :row="row" />
   </template>
 </template>
+
+<style scoped>
+/* Ensure proper text truncation */
+.max-w-xs {
+  max-width: 16rem;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hover effect */
+tr {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+tr:last-child {
+  border-bottom: none;
+}
+</style>

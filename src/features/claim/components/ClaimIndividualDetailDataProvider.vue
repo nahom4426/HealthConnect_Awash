@@ -33,11 +33,13 @@ req.send(
 
 </script>
 <template>
-  <slot
-    :detail="req.response.value?.detail"
-    :claimed-services="req.response.value?.claimedServices"
-    :claim-logs="req.response.value?.claimLogs"
-    :claim-attachments="req.response.value?.claimAttachments"
-		:pending="req.pending.value"
-  />
+  <div>
+    <slot
+      :detail="req.response.value?.detail"
+      :claimed-services="req.response.value?.claimedServices"
+      :claim-logs="req.response.value?.claimLogs"
+      :claim-attachments="req.response.value?.claimAttachments"
+			:pending="req.pending.value"
+    />
+  </div>
 </template>

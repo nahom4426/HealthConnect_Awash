@@ -50,6 +50,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const institutionUuidForProvider = ref<string | null>(null)
 const draft = ref<any>(null)
+const pendingAction = ref<string>('')
 function buildPrefill(packages: any[]): { packageName: string; planType: string; services: any[] }[] {
   if (!draft.value) return [];
   const services = (draft.value.quoatedServices || []) as any[];
@@ -92,6 +93,7 @@ function onSavedFormSubmit(e: any) {
   });
 
   if (action === 'save') {
+    pendingAction.value = 'save'
     const uuid = data.quotationUuid || quotationUuid;
     
     // Transform the data to match the expected API payload structure
@@ -124,8 +126,10 @@ function onSavedFormSubmit(e: any) {
         try { sessionStorage.setItem('reloadSavedQuotations', '1') } catch {}
         router.back()
       })
-      .catch((err: any) => toasted(false, 'Failed to save quotation', err?.response?.data || err));
+      .catch((err: any) => toasted(false, 'Failed to save quotation', err?.response?.data || err))
+      .finally(() => { pendingAction.value = '' });
   } else if (action === 'accept') {
+    pendingAction.value = 'accept'
     // Handle accept action
     const payload = {
       institutionUuid: draft.value?.institutionUuid || data.institutionUuid || '',
@@ -157,8 +161,10 @@ function onSavedFormSubmit(e: any) {
       .catch((err: any) => {
         console.error('Failed to accept quotation:', err);
         toasted(false, 'Failed to accept quotation', err?.response?.data || err);
-      });
+      })
+      .finally(() => { pendingAction.value = '' });
   } else if (action === 'issue') {
+    pendingAction.value = 'issue'
     const ds = (draft.value?.quoatedServices || []) as any[];
     const payload = {
       institutionUuid: draft.value?.institutionUuid || '',
@@ -184,7 +190,8 @@ function onSavedFormSubmit(e: any) {
         try { sessionStorage.setItem('reloadSavedQuotations', '1') } catch {}
         router.back()
       })
-      .catch((err: any) => toasted(false, 'Failed to issue saved quotation', err?.response?.data || err));
+      .catch((err: any) => toasted(false, 'Failed to issue saved quotation', err?.response?.data || err))
+      .finally(() => { pendingAction.value = '' });
   }
 }
 </script>
@@ -409,6 +416,7 @@ function onSavedFormSubmit(e: any) {
                 v-else
                 :packages="packages"
                 :prefill="buildPrefill(packages)"
+                :pendingAction="pendingAction"
                 :readOnlyRows="false"
                 :acceptMode="true"
                 :acceptLabel="'Accept'"

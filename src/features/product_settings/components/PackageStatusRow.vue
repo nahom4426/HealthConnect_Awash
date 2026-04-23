@@ -8,6 +8,7 @@ import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
+import { toasted } from '@/utils/utils';
 const router = useRouter();
 const props = defineProps({
   rowData: { type: Array, required: true },
@@ -62,7 +63,7 @@ function getStatusStyle(status) {
   const base = "px-3 py-1 rounded-full text-xs font-medium";
   switch (status?.toUpperCase()) {
     case "ACTIVE": return `${base} bg-green-100 text-green-800`;
-    case "INACTIVE": return `${base} bg-red-100 text-red-800`;
+    case "SUSPENDED": return `${base} bg-red-100 text-red-800`;
     default: return `${base} bg-gray-100 text-gray-800`;
   }
 }
@@ -104,13 +105,15 @@ function handleRemoveServices(packageData) {
 }
 
 function toggleStatus(packageData) {
-  const newStatus = packageData.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  const newStatus = packageData.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
   statusApi.send(
     () => updatePackage(packageData.packageUuid, { ...packageData, status: newStatus }),
     (response) => {
       if (response.success) {
         coverageStore.updatePackage(packageData.packageUuid, { status: newStatus });
-        addToast(`Package ${newStatus.toLowerCase()} successfully`, '', 'success');
+        toasted(response.success, `Package ${newStatus.toLowerCase()} successfully`, response.error);
+      } else {
+        // toasted(false, "", response.error || "Failed to update package");
       }
     }
   );
@@ -280,47 +283,103 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
       </div>
     </td>
 
-    <td class="relative p-3 py-4 text-left">
+<td class="px-4 py-3">
+  <div class="flex gap-1.5 items-center">
+    <!-- Services Button -->
+    <button
+      @click.stop="handleAddServices(row)"
+      class="relative p-2 text-blue-600 bg-blue-50 rounded-lg transition-all duration-200 group hover:bg-blue-100 hover:text-blue-700 hover:scale-105 hover:shadow-md"
+      title="Manage Services"
+    >
+      <i v-html="icons.briefcase || '💼'" class="w-4 h-4"></i>
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+        Services
+      </span>
+    </button>
+
+    <!-- Show Rate Button (if canManageQuotation) -->
+    <button
+      v-if="canManageQuotation"
+      @click.stop="handleShowRate(row)"
+      class="relative p-2 text-indigo-600 bg-indigo-50 rounded-lg transition-all duration-200 group hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+      title="Show Rate"
+    >
+      <i v-html="icons.dollar || icons.coins || '💰'" class="w-4 h-4"></i>
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+        Show Rate
+      </span>
+    </button>
+
+    <!-- Edit Button -->
+    <button
+      @click.stop="handleEdit(row)"
+      class="relative p-2 text-amber-600 bg-amber-50 rounded-lg transition-all duration-200 group hover:bg-amber-100 hover:text-amber-700 hover:scale-105 hover:shadow-md"
+      title="Edit Package"
+    >
+      <i v-html="icons.edit || '✏️'" class="w-4 h-4"></i>
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+        Edit
+      </span>
+    </button>
+
+    <!-- Activate/Deactivate Button -->
+    <button
+      @click.stop="toggleStatus(row)"
+      class="relative p-2 rounded-lg transition-all duration-200 group hover:scale-105 hover:shadow-md"
+      :class="
+        row.status === 'ACTIVE' 
+          ? 'bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700' 
+          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700'
+      "
+      :title="row.status === 'ACTIVE' ? 'Deactivate Package' : 'Activate Package'"
+    >
+      <i v-html="row.status === 'ACTIVE' ? (icons.ban || '🚫') : (icons.check_circle || '✅')" class="w-4 h-4"></i>
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+        {{ row.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+      </span>
+    </button>
+
+    <!-- More Options Dropdown (if needed for additional actions) -->
+    <div v-if="hasMoreActions" class="relative">
       <button
         @click.stop="toggleDropdown($event, row.packageUuid)"
-        class="p-2 rounded-lg transition-colors duration-150 hover:bg-gray-100"
-        type="button"
-        title="More actions"
+        class="relative p-2 text-gray-600 bg-gray-50 rounded-lg transition-all duration-200 group hover:bg-gray-100 hover:text-gray-700 hover:scale-105 hover:shadow-md"
+        title="More options"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
         </svg>
+        <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+          More
+        </span>
       </button>
-      <div :id="`dropdown-${row.packageUuid}`" class="hidden absolute right-0 z-20 mt-2 w-48 bg-white rounded-lg ring-1 ring-black ring-opacity-10 shadow-xl dropdown-menu">
-        <div class="py-1">
-          <button
-            @click.stop="handleAddServices(row)"
-            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 border-b border-gray-100 transition-colors duration-150 hover:bg-blue-50 hover:text-blue-700"
-          >
-            <i v-html="icons.briefcase || '💼'" class="flex-shrink-0 w-5 h-5"></i>
-            <span class="font-medium">Services</span>
-          </button>
-          <button v-if="canManageQuotation" @click.stop="handleShowRate(row)" class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 hover:bg-indigo-100 hover:text-indigo-700">
-            <i v-html="icons.dollar || icons.coins || '💵'" class="w-5 h-5"></i> Show Rate
-          </button>
-          <button
-            @click.stop="handleEdit(row)"
-            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 border-b border-gray-100 transition-colors duration-150 hover:bg-amber-50 hover:text-amber-700"
-          >
-            <i v-html="icons.edit || '✏️'" class="flex-shrink-0 w-5 h-5"></i>
-            <span class="font-medium">Edit</span>
-          </button>
 
+      <!-- Dropdown Menu for extra options -->
+      <div 
+        :id="`dropdown-${row.packageUuid}`" 
+        class="hidden overflow-hidden absolute right-0 z-30 mt-2 w-48 bg-white rounded-xl border border-gray-100 ring-1 ring-black ring-opacity-5 shadow-xl dropdown-menu"
+      >
+        <div class="py-1">
+          <!-- Additional actions can go here -->
           <button
-            @click.stop="toggleStatus(row)"
-            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 transition-colors duration-150 hover:bg-emerald-50 hover:text-emerald-700"
+            @click.stop="handleDuplicate(row)"
+            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 transition-colors hover:bg-gray-50"
           >
-            <i v-html="row.status === 'ACTIVE' ? (icons.ban || '🚫') : (icons.check || '✅')" class="flex-shrink-0 w-5 h-5"></i>
-            <span class="font-medium">{{ row.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}</span>
+            <i v-html="icons.copy || '📋'" class="w-4 h-4 text-gray-500"></i>
+            <span>Duplicate</span>
+          </button>
+          <button
+            @click.stop="handleExport(row)"
+            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <i v-html="icons.download || '⬇️'" class="w-4 h-4 text-gray-500"></i>
+            <span>Export</span>
           </button>
         </div>
       </div>
-    </td>
+    </div>
+  </div>
+</td>
   </tr>
 </template>
 

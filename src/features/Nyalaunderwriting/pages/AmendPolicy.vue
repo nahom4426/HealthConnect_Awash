@@ -64,14 +64,14 @@ const handleRefetch = () => {
 
 <template>
   <DefaultPage :title="`${institutionName} Membership Category`" placeholder="Search contracts...">
-    <template #filter>
+    <!-- <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-whote"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
-    </template>
+    </template> -->
 
     <!-- <template #add-action>
       <button

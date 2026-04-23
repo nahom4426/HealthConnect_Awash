@@ -22,6 +22,12 @@ function goToInsured(row) {
   }
 }
 
+function goToDetails(row) {
+  const quotationUuid = row?.quotationUuid;
+  if (!quotationUuid) return;
+  router.push({ name: 'ViewIssuedQuotation', params: { quotationUuid }, query: { viewOnly: '1' } });
+}
+
 function mapRows(listRaw) {
   return (Array.isArray(listRaw) ? listRaw : []).map((r) => {
     const totalPremium = Array.isArray(r?.quoatedServices)
@@ -46,8 +52,14 @@ function mapRows(listRaw) {
       issuedDate: r?.issuedDate,
       acceptedDate: r?.acceptedDate,
       poDate: r?.poDate,
+      dates: {
+        issuedDate: r?.issuedDate,
+        acceptedDate: r?.acceptedDate,
+        poDate: r?.poDate,
+      },
       description: r?.description,
       status: r?.status,
+      quoatedServices: Array.isArray(r?.quoatedServices) ? r.quoatedServices : [],
       totalPremium,
       totalCoverage,
       id: r?.quotationUuid || r?.id,
@@ -62,18 +74,7 @@ function mapRows(listRaw) {
       <h1>Policy Quotations</h1>
     </template>
 
-    <div class="p-3">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="w-full sm:max-w-md">
-          <input
-            v-model="search"
-            class="px-3 py-2 w-full bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Search by quotation code or debit number"
-            type="text"
-          />
-        </div>
-      </div>
-    </div>
+  
 
     <IssuedPolicyQuotationDataProvider
       v-slot="{ quotations, pending, error }"
@@ -86,14 +87,13 @@ function mapRows(listRaw) {
       <Table
         :pending="pending"
         :rowCom="IssuedPolicyQuotationRow"
-        :rowComProps="{ onInsured: goToInsured }"
+        :rowComProps="{ onInsured: goToInsured, onDetails: goToDetails }"
         :headers="{
           head: [
             'Quotation Code',
             'Debit Number',
-            'Issued Date',
-            'Accepted Date',
-            'PO Date',
+            'Services',
+            'Dates',
             'Total Premium',
             'Total Coverage',
             'Status',
@@ -102,18 +102,26 @@ function mapRows(listRaw) {
           row: [
             'quotationCode',
             'policyDebitNumber',
-            'issuedDate',
-            'acceptedDate',
-            'poDate',
+            'quoatedServices',
+            'dates',
             'totalPremium',
             'totalCoverage',
             'status',
           ],
         }"
         :cells="{
-          issuedDate: (_v, r) => (r?.issuedDate ? new Date(r.issuedDate).toLocaleString() : ''),
-          acceptedDate: (_v, r) => (r?.acceptedDate ? new Date(r.acceptedDate).toLocaleString() : ''),
-          poDate: (_v, r) => (r?.poDate ? new Date(r.poDate).toLocaleString() : ''),
+          quoatedServices: (_v, r) => {
+            const list = Array.isArray(r?.quoatedServices) ? r.quoatedServices : [];
+            if (!list.length) return '';
+            return list
+              .map((s, i) => {
+                const planType = s?.planType || '';
+                const premium = Number(s?.premium) || 0;
+                const coverage = Number(s?.coverage) || 0;
+                return `${i + 1}. ${planType} | Premium: ${premium} | Coverage: ${coverage}`;
+              })
+              .join('\n');
+          },
           totalPremium: (_v, r) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'ETB' }).format(Number(r?.totalPremium) || 0),
           totalCoverage: (_v, r) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'ETB' }).format(Number(r?.totalCoverage) || 0),
         }"

@@ -49,9 +49,11 @@ watch(
 );
 </script>
 <template>
-  <slot
-    :instituton="institutionUuid ? institutionStore.get(String(institutionUuid)) : undefined"
-    :pending="req.pending.value"
-    :error="req.error.value"
-  />
+  <div>
+    <slot
+      :instituton="institutionUuid ? institutionStore.get(String(institutionUuid)) : undefined"
+      :pending="req.pending.value"
+      :error="req.error.value"
+    />
+  </div>
 </template>

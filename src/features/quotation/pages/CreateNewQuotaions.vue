@@ -94,7 +94,6 @@ function onFormSubmit(e) {
       toasted(true, action === 'save' ? 'Quotation saved successfully' : 'Quotation issued successfully', res?.error);
       router.back();
     } else {
-      toasted(false, 'Failed to process quotation', res?.error);
     }
   }).catch((err) => {
     const apiErr = err?.response?.data || err;

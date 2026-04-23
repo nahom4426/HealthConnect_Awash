@@ -84,30 +84,30 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     v-for="(row, idx) in rowData"
     :key="row.payerInstitutionContractUuid || idx"
     @click.self="props.onRowClick(row)"
-    class="bg-white border-b hover:shadow-md hover:bg-blue-50 transition-all duration-200 cursor-pointer group rounded-lg"
+    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-blue-50"
   >
     <!-- Index -->
-    <td class="p-4 font-semibold text-gray-400 select-none text-sm">
+    <td class="p-4 text-sm font-semibold text-gray-400 select-none">
       {{ idx + 1 }}
     </td>
 
     <!-- Contract Name -->
  
-    <td class="p-4 text-gray-800 font-medium">
+    <td class="p-4 font-medium text-gray-800">
       {{ row.institutionName }}
     </td>
-       <td class="p-4 text-gray-800 font-medium">
+       <td class="p-4 font-medium text-gray-800">
       {{ row.contractName }}
       <div class="text-xs text-gray-500">Code: {{ row.contractCode }}</div>
     </td>
 
     <!-- Benefit -->
-    <!-- <td class="p-4 text-green-700 font-semibold">
+    <!-- <td class="p-4 font-semibold text-green-700">
       {{ formatCurrency(row.benefit) }}
     </td> -->
 
     <!-- Premium -->
-    <!-- <td class="p-4 text-blue-700 font-semibold">
+    <!-- <td class="p-4 font-semibold text-blue-700">
       {{ formatCurrency(row.premium) }}
     </td> -->
 
@@ -124,70 +124,90 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     </td>
 
        <!-- Dropdown Actions -->
-    <td class="p-4 relative">
+   <td class="px-4 py-3">
+  <div class="flex gap-1.5 items-center">
+    <!-- Quotations Button -->
+    <button
+      @click.prevent="$router.push(`/providers/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}`)"
+      class="relative p-2 text-blue-600 bg-blue-50 rounded-lg transition-all duration-200 group hover:bg-blue-100 hover:text-blue-700 hover:scale-105 hover:shadow-md"
+      title="View Quotations"
+    >
+      <i v-html="icons.document || '📄'" class="w-4 h-4"></i>
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+        Quotations
+      </span>
+    </button>
+
+    <!-- Add Providers Button -->
+    <button
+      @click.prevent="$router.push(`/addInstitution/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}`)"
+      class="relative p-2 text-green-600 bg-green-50 rounded-lg transition-all duration-200 group hover:bg-green-100 hover:text-green-700 hover:scale-105 hover:shadow-md"
+      title="Add Providers"
+    >
+      <i v-html="icons.plus_circle || '➕'" class="w-4 h-4"></i>
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+        Add Providers
+      </span>
+    </button>
+
+    <!-- More Options Button (if needed) -->
+    <!-- <div class="relative">
       <button
         @click.stop="toggleDropdown($event, row.payerInstitutionContractUuid)"
-        class="p-2 rounded-full hover:bg-gray-200 transition-colors"
-        aria-label="Actions"
+        class="relative p-2 text-gray-600 bg-gray-50 rounded-lg transition-all duration-200 group hover:bg-gray-100 hover:text-gray-700 hover:scale-105 hover:shadow-md"
+        title="More options"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             class="h-5 w-5 text-gray-600 group-hover:text-gray-800 transition-colors" 
-             viewBox="0 0 20 20" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
         </svg>
+        <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+          More
+        </span>
       </button>
 
-      <!-- Dropdown Menu -->
       <div 
         :id="`dropdown-${row.payerInstitutionContractUuid}`"
-        class="dropdown-menu hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-20 overflow-hidden"
+        class="hidden overflow-hidden absolute right-0 z-30 mt-2 w-56 bg-white rounded-xl border border-gray-100 ring-1 ring-black ring-opacity-5 shadow-xl dropdown-menu"
       >
         <div class="py-1">
-          <!-- <button
+          <button
             @click.prevent="$router.push(`/packages/${row?.payerInstitutionContractUuid}`)"
-            class="dropdown-item"
+            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 transition-colors hover:bg-gray-50"
           >
-            <i v-html="icons.healthcare || '🏥'" class="w-5 h-5"></i>
-            Product Packages
-          </button> -->
-          <button
-            @click.prevent="$router.push(`/providers/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}`)"
-            class="dropdown-item"
-          >
-            <i v-html="icons.users_check || '👥'" class="w-5 h-5"></i>
-            Quotations
+            <i v-html="icons.package || '📦'" class="w-4 h-4 text-gray-500"></i>
+            <span>Product Packages</span>
           </button>
-          <!-- <button 
+          
+          <button
             @click.prevent="$router.push(`/add_new_policy/${row?.institutionUuid}/insured_persons/${row?.payerInstitutionContractUuid}`)"
-            class="dropdown-item"
+            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 transition-colors hover:bg-gray-50"
           >
-            <i v-html="icons.users_check || '👥'" class="w-5 h-5"></i>
-            Insured Persons fff
-          </button> -->
-          <button
-            @click.prevent="$router.push(`/addInstitution/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}`)"
-            class="dropdown-item"
-          >
-            <i v-html="icons.hospital_building || '🏥'" class="w-5 h-5"></i>
-            Add Providers
+            <i v-html="icons.users || '👥'" class="w-4 h-4 text-gray-500"></i>
+            <span>Insured Persons</span>
           </button>
-          <!-- <button 
+          
+          <div class="my-1 h-px bg-gray-100"></div>
+          
+          <button 
             @click.stop="openEditModal(row)"
-            class="dropdown-item"
+            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 transition-colors hover:bg-gray-50"
           >
-            <i v-html="icons.edit || '✏️'" class="w-5 h-5"></i>
-            Edit Contract
+            <i v-html="icons.edit || '✏️'" class="w-4 h-4 text-gray-500"></i>
+            <span>Edit Contract</span>
           </button>
+          
           <button 
             @click.stop="openDeleteModal(row)"
-            class="dropdown-item text-red-600 hover:text-red-700"
+            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-red-600 transition-colors hover:bg-red-50"
           >
-            <i v-html="icons.delete" class="w-5 h-5"></i>
-            Delete Contract
-          </button> -->
+            <i v-html="icons.trash || '🗑️'" class="w-4 h-4"></i>
+            <span>Delete Contract</span>
+          </button>
         </div>
       </div>
-    </td>
+    </div> -->
+  </div>
+</td>
   </tr>
 </template>
 

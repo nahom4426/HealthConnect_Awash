@@ -26,8 +26,6 @@ type RateRow = {
   packageUuid: string;
   planType: string;
   familySize: number;
-  minLimit: number;
-  maxLimit: number;
   rate: number;
   status?: string;
   description?: string;
@@ -38,6 +36,8 @@ const isManaging = ref(false)
 const manageRows = ref<RateRow[]>([])
 
 const memberOnlyOption = { label: 'Member Only', value: 1 }
+
+const DEPENDENT_SHARED_PLAN = 'Dependent_Shared_Plan'
 
 const i = icons as any
 
@@ -53,6 +53,29 @@ const stats = computed(() => {
     avg: Math.round(sum / rates.value.length)
   }
 })
+
+function planTypePriority(planType: any) {
+  const p = String(planType || '')
+  if (p === Plan['Individual Plan'] || p === 'Individual_Plan') return 1
+  if (p === Plan['Family Shared Plan'] || p === 'Family_Shared_Plan') return 2
+  if (p === DEPENDENT_SHARED_PLAN) return 3
+  return 99
+}
+
+function sortRateRows(list: any[]) {
+  return (Array.isArray(list) ? [...list] : []).sort((a: any, b: any) => {
+    const na = a?._isNew ? 1 : 0
+    const nb = b?._isNew ? 1 : 0
+    if (na !== nb) return nb - na
+
+    const pa = planTypePriority(a?.planType)
+    const pb = planTypePriority(b?.planType)
+    if (pa !== pb) return pa - pb
+    return (Number(a?.familySize) || 0) - (Number(b?.familySize) || 0)
+  })
+}
+
+const sortedRates = computed(() => sortRateRows(rates.value || []))
 
 onMounted(async () => {
   await fetchRates()
@@ -95,7 +118,7 @@ const usedByPlan = computed(() => {
 function availablePlanTypes(currentPlanType?: string) {
   const allPlans = [
     { label: 'Individual Plan', value: Plan['Individual Plan'] },
-    { label: 'Dependent Shared Plan', value: Plan['Dependent Shared Plan'] },
+    { label: 'Dependent Shared Plan', value: DEPENDENT_SHARED_PLAN },
     { label: 'Family Shared Plan', value: Plan['Family Shared Plan'] }
   ]
   
@@ -119,34 +142,39 @@ function availablePlanTypes(currentPlanType?: string) {
 
 function familySizeOptionsForPlan(planType: string) {
   if (String(planType) === Plan['Individual Plan']) return [memberOnlyOption]
-  return allMemberTYpes.filter((opt: any) => Number(opt.value) !== 1) // Exclude Member Only for Dependent Shared Plans
+  return allMemberTYpes.filter((opt: any) => Number(opt.value) !== 1) // Exclude Member Only for family plans
 }
 
-function availableFamilySizeOptions(planType: string, currentFamilySize?: number) {
+function availableFamilySizeOptions(planType: string, currentFamilySize?: number, excludeIdx?: number) {
   const options = familySizeOptionsForPlan(planType)
-  const used = usedByPlan.value.get(String(planType)) || new Set<number>()
+  const used = new Set<number>()
+
+  for (const [idx, r] of (manageRows.value || []).entries()) {
+    if (excludeIdx != null && idx === excludeIdx) continue
+    if (String(r?.planType || '') !== String(planType || '')) continue
+    used.add(Number(r?.familySize) || 1)
+  }
+
   return options.filter((o: any) => {
     const val = Number(o?.value)
-    // Allow current value when editing
-    if (currentFamilySize != null && Number(currentFamilySize) === val) return true
+    // Only allow current value if it's not already used by another row
+    if (currentFamilySize != null && Number(currentFamilySize) === val) return !used.has(val)
     return !used.has(val)
   })
 }
 
 function startManage() {
   isManaging.value = true
-  manageRows.value = (Array.isArray(rates.value) ? rates.value : []).map((r: any) => ({
+  manageRows.value = sortRateRows((Array.isArray(rates.value) ? rates.value : []).map((r: any) => ({
     familyBenefitRangeUuid: r.familyBenefitRangeUuid,
     packageUuid: String(r.packageUuid || packageUuid),
     planType: String(r.planType || Plan['Individual Plan']),
     familySize: Number(r.familySize) || 1,
-    minLimit: Number(r.minLimit) || 0,
-    maxLimit: Number(r.maxLimit) || 0,
     rate: Number(r.rate) || 0,
     status: r.status || 'ACTIVE',
     description: r.description || '',
     _isNew: false,
-  }))
+  })))
 
   if (manageRows.value.length === 0) {
     addManageRow()
@@ -156,6 +184,11 @@ function startManage() {
 function cancelManage() {
   isManaging.value = false
   manageRows.value = []
+}
+
+function startManageAndAdd() {
+  startManage()
+  addManageRow()
 }
 
 function addManageRow() {
@@ -175,27 +208,33 @@ function addManageRow() {
       packageUuid,
       planType,
       familySize: Number(sizeOptions[0]?.value) || 1,
-      minLimit: Number(rates.value?.[0]?.minLimit) || 0,
-      maxLimit: Number(rates.value?.[0]?.maxLimit) || 0,
       rate: 0,
       status: 'ACTIVE',
       description: '',
       _isNew: true,
     })
+
+    manageRows.value = sortRateRows(manageRows.value as any)
   }
 }
 
 function removeNewManageRow(idx: number) {
   const row = manageRows.value[idx]
-  if (!row?._isNew) return
-  manageRows.value.splice(idx, 1)
+  if (!row) return
+
+  if (row?._isNew) {
+    manageRows.value.splice(idx, 1)
+    return
+  }
+
+  row.status = String(row.status || '').toUpperCase() === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE'
 }
 
 function handlePlanTypeChange(idx: number) {
   const row = manageRows.value[idx]
   if (!row) return
 
-  const options = availableFamilySizeOptions(row.planType, row.familySize)
+  const options = availableFamilySizeOptions(row.planType, row.familySize, idx)
   if (String(row.planType) === Plan['Individual Plan']) {
     row.familySize = 1
   } else if (options.length > 0) {
@@ -204,6 +243,17 @@ function handlePlanTypeChange(idx: number) {
     if (!currentValid) {
       row.familySize = Number(options[0]?.value) || 1
     }
+  }
+}
+
+function handleFamilySizeChange(idx: number) {
+  const row = manageRows.value[idx]
+  if (!row) return
+
+  const options = availableFamilySizeOptions(String(row.planType), Number(row.familySize), idx)
+  const stillValid = options.some((opt: any) => Number(opt.value) === Number(row.familySize))
+  if (!stillValid && options.length > 0) {
+    row.familySize = Number(options[0]?.value) || 1
   }
 }
 
@@ -246,8 +296,6 @@ function saveManage() {
   const toCreate = manageRows.value
     .filter((r) => !r?.familyBenefitRangeUuid)
     .map((r) => ({
-      maxLimit: Number(r.maxLimit) || 0,
-      minLimit: Number(r.minLimit) || 0,
       familySize: Number(r.familySize) || 1,
       rate: Number(r.rate) || 0,
       status: r.status || 'ACTIVE',
@@ -259,8 +307,6 @@ function saveManage() {
     .filter((r) => !!r?.familyBenefitRangeUuid)
     .map((r) => ({
       familyBenefitRangeUuid: String(r.familyBenefitRangeUuid),
-      maxLimit: Number(r.maxLimit) || 0,
-      minLimit: Number(r.minLimit) || 0,
       familySize: Number(r.familySize) || 1,
       rate: Number(r.rate) || 0,
       status: r.status || 'ACTIVE',
@@ -304,7 +350,7 @@ function formatPlanType(planType: any) {
   switch (planType) {
     case Plan['Individual Plan']:
       return 'Individual Plan'
-    case Plan['Dependent Shared Plan']:
+    case DEPENDENT_SHARED_PLAN:
       return 'Dependent Shared Plan'
     case Plan['Family Shared Plan']:
       return 'Family Shared Plan'
@@ -347,7 +393,7 @@ const getStatusClass = (status: string) => {
           <button
             v-if="!isManaging"
             @click.prevent="startManage"
-            class="flex relative gap-2 items-center px-5 py-2.5 text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-xl shadow-md transition-all duration-200 group shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5"
+            class="flex relative gap-2 items-center px-5 py-2.5 text-white rounded-xl shadow-md transition-all duration-200 bg-primary group shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
           >
             <div class="absolute inset-0 rounded-xl opacity-0 blur transition-opacity duration-300 bg-white/20 group-hover:opacity-100"></div>
             <i v-html="i?.dollar || i?.coins || i?.plus_circle || i?.plus" class="relative w-4 h-4"></i>
@@ -359,7 +405,7 @@ const getStatusClass = (status: string) => {
 
     <template #default>
       <!-- Loading State Skeleton -->
-      <div v-if="loading" class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div v-if="loading" class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
         <div v-for="n in 3" :key="n" class="p-6 bg-white rounded-2xl border shadow-sm border-slate-200/60">
           <div class="space-y-4 animate-pulse">
             <div class="flex justify-between">
@@ -391,7 +437,7 @@ const getStatusClass = (status: string) => {
         <p class="mt-2 max-w-sm text-center text-slate-500">Start building your package by adding rate cards for different plan types.</p>
         <button
           @click.prevent="startManage"
-          class="flex gap-2 items-center px-6 py-3 mt-8 font-medium text-white bg-indigo-600 rounded-xl shadow-lg transition-all duration-200 shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5"
+          class="flex gap-2 items-center px-6 py-3 mt-8 font-medium text-white rounded-xl shadow-lg transition-all duration-200 bg-primary shadow-primary/20 hover:bg-primary/90 hover:-translate-y-0.5"
         >
           <i v-html="i?.plus_circle || i?.plus" class="w-4 h-4"></i>
           <span>Create First Rate</span>
@@ -401,11 +447,28 @@ const getStatusClass = (status: string) => {
       <!-- Main Content Area -->
       <div v-else class="space-y-8">
         <!-- Card Grid -->
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
           <!-- View Mode Cards -->
           <template v-if="!isManaging">
+            <button
+              type="button"
+              @click.prevent="startManageAndAdd"
+              class="flex relative justify-center items-center min-h-[320px] bg-white rounded-2xl border border-dashed shadow-sm transition-all duration-300 group border-slate-200/60 hover:border-primary/60 hover:shadow-lg"
+            >
+              <div class="absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 from-primary/10 to-primary/20 group-hover:opacity-100"></div>
+              <div class="flex relative flex-col gap-3 items-center px-8">
+                <div class="flex justify-center items-center w-14 h-14 rounded-2xl shadow-lg transition-transform duration-300 bg-primary shadow-primary/20 group-hover:scale-105">
+                  <i v-html="i?.plus" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="text-center">
+                  <p class="text-base font-semibold text-slate-900">Add Rate Card</p>
+                  <p class="mt-1 text-sm text-slate-500">Add missing member types</p>
+                </div>
+              </div>
+            </button>
+
             <div
-              v-for="(r, idx) in rates"
+              v-for="(r, idx) in sortedRates"
               :key="r?.familyBenefitRangeUuid || idx"
               class="overflow-hidden relative bg-white rounded-2xl border shadow-sm transition-all duration-300 group border-slate-200/60 hover:shadow-xl hover:border-indigo-200"
             >
@@ -439,18 +502,6 @@ const getStatusClass = (status: string) => {
                   </span>
                 </div>
 
-                <!-- Limits Grid -->
-                <div class="grid grid-cols-2 gap-4 mb-5">
-                  <div class="p-3.5 rounded-xl border bg-slate-50 border-slate-100">
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Min Limit</p>
-                    <p class="text-base font-bold text-slate-800">{{ Number(r?.minLimit || 0).toLocaleString() }}</p>
-                  </div>
-                  <div class="p-3.5 rounded-xl border bg-slate-50 border-slate-100">
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Max Limit</p>
-                    <p class="text-base font-bold text-slate-800">{{ Number(r?.maxLimit || 0).toLocaleString() }}</p>
-                  </div>
-                </div>
-
                 <!-- Rate Highlight -->
                 <div class="relative p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100/50">
                   <p class="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider mb-1">Premium Rate</p>
@@ -471,12 +522,46 @@ const getStatusClass = (status: string) => {
 
           <!-- Edit Mode Cards -->
           <template v-else>
+            <button
+              type="button"
+              @click.prevent="addManageRow"
+              :disabled="availablePlanTypes().length === 0 || api.pending.value"
+              class="flex relative justify-center items-center min-h-[320px] bg-white rounded-2xl border border-dashed shadow-sm transition-all duration-300 group border-slate-200/60 hover:border-primary/60 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div class="absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 from-primary/10 to-primary/20 group-hover:opacity-100"></div>
+              <div class="flex relative flex-col gap-3 items-center px-8">
+                <div class="flex justify-center items-center w-14 h-14 rounded-2xl shadow-lg transition-transform duration-300 bg-primary shadow-primary/20 group-hover:scale-105">
+                  <i v-html="i?.plus" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="text-center">
+                  <p class="text-base font-semibold text-slate-900">Add Rate Card</p>
+                  <p class="mt-1 text-sm text-slate-500">Add missing member types</p>
+                </div>
+              </div>
+            </button>
+
             <div
               v-for="(r, idx) in manageRows"
               :key="r?.familyBenefitRangeUuid || `edit-${idx}`"
-              class="overflow-hidden relative bg-white rounded-2xl border shadow-sm transition-all duration-300 border-slate-200/60"
+              :class="[
+                'overflow-hidden relative rounded-2xl border shadow-sm transition-all duration-300',
+                String(r?.status || '').toUpperCase() === 'INACTIVE'
+                  ? 'bg-rose-50/60 border-rose-200/70 shadow-rose-100'
+                  : r?._isNew
+                    ? 'bg-indigo-50/40 border-indigo-200/70 shadow-indigo-100'
+                    : 'bg-white border-slate-200/60'
+              ]"
             >
-              <div class="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+              <div
+                :class="[
+                  'absolute top-0 right-0 left-0 h-1',
+                  String(r?.status || '').toUpperCase() === 'INACTIVE'
+                    ? 'bg-gradient-to-r from-rose-500 to-red-500'
+                    : r?._isNew
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                ]"
+              ></div>
               
               <div class="p-6">
                 <div class="space-y-4">
@@ -503,39 +588,18 @@ const getStatusClass = (status: string) => {
                     <label class="block mb-1.5 text-xs font-semibold tracking-wider uppercase text-slate-600">Family Size</label>
                     <select
                       v-model.number="r.familySize"
+                      @change="handleFamilySizeChange(idx)"
                       :disabled="String(r.planType) === Plan['Individual Plan']"
                       class="px-1 py-2.5 w-full text-sm bg-white rounded-xl border shadow-sm transition-all duration-200 outline-none border-slate-200 text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-500"
                     >
                       <option
-                        v-for="opt in availableFamilySizeOptions(String(r.planType), Number(r.familySize))"
+                        v-for="opt in availableFamilySizeOptions(String(r.planType), Number(r.familySize), idx)"
                         :key="`${r.planType}-${opt.value}`"
                         :value="Number(opt.value)"
                       >
                         {{ opt.label }}
                       </option>
                     </select>
-                  </div>
-
-                  <!-- Limits Grid -->
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <label class="block mb-1.5 text-xs font-semibold tracking-wider uppercase text-slate-600">Min Limit</label>
-                      <input
-                        v-model.number="r.minLimit"
-                        type="number"
-                        min="0"
-                        class="px-1 py-2.5 w-full text-sm bg-white rounded-xl border shadow-sm transition-all duration-200 outline-none border-slate-200 text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label class="block mb-1.5 text-xs font-semibold tracking-wider uppercase text-slate-600">Max Limit</label>
-                      <input
-                        v-model.number="r.maxLimit"
-                        type="number"
-                        min="0"
-                        class="px-1 py-2.5 w-full text-sm bg-white rounded-xl border shadow-sm transition-all duration-200 outline-none border-slate-200 text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                    </div>
                   </div>
 
                   <!-- Rate and Status Grid -->
@@ -577,37 +641,25 @@ const getStatusClass = (status: string) => {
                     />
                   </div>
 
-                  <!-- Remove button for new rows -->
-                  <div v-if="r._isNew" class="flex justify-end pt-2">
+                  <!-- Remove/deactivate button -->
+                  <div class="flex justify-end pt-2">
                     <button
                       type="button"
                       class="text-sm font-medium text-rose-600 transition-colors hover:text-rose-700"
                       @click.prevent="removeNewManageRow(idx)"
                     >
-                      Remove Card
+                      {{
+                        r._isNew
+                          ? 'Remove Card'
+                          : (String(r?.status || '').toUpperCase() === 'INACTIVE'
+                              ? 'Activate Card'
+                              : 'Deactivate Card')
+                      }}
                     </button>
                   </div>
                 </div>
               </div>
             </div>
-
-            <button
-              type="button"
-              @click.prevent="addManageRow"
-              :disabled="availablePlanTypes().length === 0 || api.pending.value"
-              class="flex relative justify-center items-center min-h-[520px] bg-white rounded-2xl border border-dashed shadow-sm transition-all duration-300 group border-slate-200/60 hover:border-indigo-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div class="absolute inset-0 bg-gradient-to-br from-indigo-50 to-purple-50 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-              <div class="flex relative flex-col gap-3 items-center px-8">
-                <div class="flex justify-center items-center w-14 h-14 bg-indigo-600 rounded-2xl shadow-lg transition-transform duration-300 shadow-indigo-200 group-hover:scale-105">
-                  <i v-html="i?.plus" class="w-6 h-6 text-white"></i>
-                </div>
-                <div class="text-center">
-                  <p class="text-base font-semibold text-slate-900">Add Rate Card</p>
-                  <p class="mt-1 text-sm text-slate-500">Add missing member types</p>
-                </div>
-              </div>
-            </button>
           </template>
         </div>
 
@@ -623,7 +675,7 @@ const getStatusClass = (status: string) => {
           <button
             @click.prevent="saveManage"
             :disabled="api.pending.value"
-            class="flex relative gap-2 items-center px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl shadow-md transition-all duration-200 group shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-60 disabled:cursor-not-allowed"
+            class="flex relative gap-2 items-center px-6 py-2.5 text-sm font-medium text-white rounded-xl shadow-md transition-all duration-200 bg-primary group shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <template v-if="api.pending.value">
               <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -5,7 +5,8 @@ import Table from "@/components/Table.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import Select from "@/components/new_form_elements/Select.vue";
 import { computed, ref } from "vue";
-import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
+import PremiumReceiptDataProvider from "@/features/finance/components/PremiumReceiptDataProvider.vue";
+import PremiumReceiptRow from "@/features/finance/components/PremiumReceiptRow.vue";
 import PremiumPaymentModal from "@/features/finance/modal/premiumpayment.mdl.vue";
 import { paypremium } from "@/features/finance/api/FinanceApi";
 import { toasted } from "@/utils/utils";
@@ -137,9 +138,11 @@ function submitPay(payload: any) {
       <h1>Premium Receipt</h1>
     </template>
     <div class="mt-2">
-      <QuotationDataProviderByStatus v-slot="{ quotations, pending }" :status="'UNPAID'" :key="reloadKey">
+      <PremiumReceiptDataProvider v-slot="{ quotations, pending }" :status="'UNPAID'" :key="reloadKey">
         <Table
           :pending="pending"
+          :rowCom="PremiumReceiptRow"
+          :rowComProps="{ onPay: openPay }"
           :headers="{
             head: [
               'Quotation Code',
@@ -167,12 +170,8 @@ function submitPay(payload: any) {
             createdDate: (_: any, r: any) => new Date(r.createdDate).toLocaleDateString(),
           }"
           :rows="quotations"
-        >
-          <template #actions="{ row }">
-            <Button type="link" size="xs" @click.prevent="openPay(row)">Pay</Button>
-          </template>
-        </Table>
-      </QuotationDataProviderByStatus>
+        />
+      </PremiumReceiptDataProvider>
       <PremiumPaymentModal
         :open="payOpen"
         :requestedPremium="selectedQuotation?.totalPremium || 0"

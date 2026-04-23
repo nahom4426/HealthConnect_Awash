@@ -81,11 +81,13 @@ watch(
 </script>
 
 <template>
-  <slot
-    :claims="(batchClaimsStore)?.claims"
-    :pending="pagination.pending.value"
-    :error="batchClaimReq.error.value"
-    :search="pagination.search"
-    :send="pagination.send"
-  />
+  <div>
+    <slot
+      :claims="(batchClaimsStore)?.claims"
+      :pending="pagination.pending.value"
+      :error="batchClaimReq.error.value"
+      :search="pagination.search"
+      :send="pagination.send"
+    />
+  </div>
 </template>

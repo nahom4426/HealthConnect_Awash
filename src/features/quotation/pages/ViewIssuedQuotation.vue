@@ -4,7 +4,7 @@ import { Status } from "@/types/interface";
 import QuotationForm from "../form/QuotationForm.vue";
 import quotationDataProviderByStatus from "../components/quotationDataProviderByStatus.vue";
 import Input from "@/components/new_form_elements/Input.vue";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { getQuotationById, saveQuotationDraft, issueQuotation,saveSavedQuotation, acceptQuotation, savedIssueQuotation } from "@/features/quotation/api/quotationApi";
 import { useRoute, useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
@@ -12,7 +12,7 @@ import Button from "@/components/Button.vue";
 import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationCreationDataProvider from "@/features/quotation/components/QuotationCreationDataProvider.vue";
 
-const showInstitution = ref(true)
+const showInstitution = ref(false)
 const showMore = ref(true)
 const institutionForm = ref({
   institutionName: "",
@@ -25,12 +25,15 @@ const institutionForm = ref({
   address: "",
 })
 
+const pendingAction = ref<string>('')
+
 function onIssuedFormSubmit(e: any) {
   if (!e) return;
   const action = e.action;
   const data = e.data || {};
   if (action === 'accept') {
     const qid = (draft.value?.quotationUuid || route.params.quotationUuid) as string;
+    pendingAction.value = 'accept'
     acceptQuotation(qid, { quotationUuid: qid })
       .then(() => {
         toasted(true, 'Quotation accepted');
@@ -39,6 +42,9 @@ function onIssuedFormSubmit(e: any) {
       .catch((err: any) => {
         const apiErr = err?.response?.data || err;
         toasted(false, 'Failed to accept quotation', apiErr);
+      })
+      .finally(() => {
+        pendingAction.value = ''
       });
   }
 }
@@ -66,6 +72,8 @@ function prefillOnce(v: any) {
 const route = useRoute();
 const router = useRouter();
 
+const isViewOnly = computed(() => String(route.query?.viewOnly || '') === '1')
+
 const loading = ref(false)
 const isAmending = ref(false)
 const error = ref<string | null>(null)
@@ -77,6 +85,7 @@ async function handleAmend() {
   if (!draft.value?.quotationUuid) return;
   console.log(draft.value);
   isAmending.value = true;
+  pendingAction.value = 'amend'
   try {
     const quotationUuid = draft.value.quotationUuid;
     const ds = (draft.value.quoatedServices || []) as any[];
@@ -117,6 +126,7 @@ async function handleAmend() {
     toasted(false, errorMessage);
   } finally {
     isAmending.value = false;
+    pendingAction.value = ''
   }
 }
 
@@ -357,9 +367,11 @@ onMounted(async () => {
                 :showHeaderControls="false"
                 :readOnlyRows="true"
                 :acceptLabel="'Accept Quotation'"
-                :issueMode="true"
+                :issueMode="!isViewOnly"
+                :pendingAction="pendingAction"
+                :hideFooterActions="isViewOnly"
                 :onSubmit="onIssuedFormSubmit"
-                :showAmendButton="true"
+                :showAmendButton="!isViewOnly"
                 @amend="handleAmend"
               />
             </QuotationCreationDataProvider>

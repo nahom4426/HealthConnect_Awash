@@ -47,12 +47,12 @@ function selectInstitutionAndOpenPolicyModal(institution) {
 
 <template>
   <DefaultPage placeholder="Search Issued Policies">
-    <template #filter>
+    <!-- <template #filter>
       <button class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary">
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
-    </template>
+    </template> -->
 
     <template #add-action>
       <div class="flex gap-2">

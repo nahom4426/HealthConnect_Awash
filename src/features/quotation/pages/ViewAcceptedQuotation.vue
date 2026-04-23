@@ -27,6 +27,7 @@ function onAcceptedFormSubmit(e: any) {
   const action = e.action;
   if (action === 'issuePremiumAdvice') {
     const qid = (draft.value?.quotationUuid || route.params.quotationUuid) as string;
+    pendingAction.value = 'issuePremiumAdvice'
     issuePremiumAdvice(qid, { quotationUuid: qid })
       .then(() => {
         toasted(true, 'Premium advice issued');
@@ -35,6 +36,9 @@ function onAcceptedFormSubmit(e: any) {
       .catch((err: any) => {
         const apiErr = err?.response?.data || err;
         toasted(false, 'Failed to issue premium advice', apiErr);
+      })
+      .finally(() => {
+        pendingAction.value = ''
       });
   }
 }
@@ -67,6 +71,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const institutionUuidForProvider = ref<string | null>(null)
 const draft = ref<any>(null)
+const pendingAction = ref<string>('')
 
 function buildPrefill(packages: any[]): { packageName: string; planType: string; services: any[] }[] {
   if (!draft.value) return [];
@@ -325,6 +330,7 @@ onMounted(async () => {
               
               <QuotationForm
                 v-else
+                :pendingAction="pendingAction"
                 :packages="packages"
                 :prefill="buildPrefill(packages)"
                 :showHeaderControls="false"

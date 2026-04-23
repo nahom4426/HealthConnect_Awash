@@ -3,6 +3,8 @@ import { computed, defineProps } from "vue";
 import { RouterLink } from "vue-router";
 import icons from "@/utils/icons";
 
+const emit = defineEmits(['row', 'remove']);
+
 const props = defineProps({
   rowData: {
     type: Array,
@@ -75,7 +77,7 @@ const hasActions = computed(() =>
   <tr
     v-for="(row, idx) in (rowData || []).filter((r: any) => r !== null)"
     :key="row?.institutionUuid || row?.id || idx"
-    @click.self="onRowClick(row)"
+    @click.self="(onRowClick(row), emit('row', row))"
     class="bg-white border-b transition-colors duration-150 hover:bg-gray-50"
   >
     <td class="p-4 font-medium text-gray-500">

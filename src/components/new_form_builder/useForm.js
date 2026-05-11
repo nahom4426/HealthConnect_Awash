@@ -1,13 +1,13 @@
 import { ref, provide, nextTick, reactive, watch } from "vue";
 
 export function useForm(id, inner = true, childrenName) {
-  if(!inner) return {}
+  const formEl = ref();
+  
+  if(!inner) return { formEl, submit: () => {}, valid: ref(false), reset: () => {} }
 
   if(!id) {
     throw new Error("[id] is required")
   }
-
-  const formEl = ref()
   const validateAll = ref(false);
   const valid = ref(false);
   const reset = ref(false);
@@ -26,9 +26,9 @@ export function useForm(id, inner = true, childrenName) {
 
   function submit(fun = f => f) {
     validateAll.value = true
-    nextTick(() => {
+    return nextTick().then(() => {
       validateAll.value = false
-      
+
       let inputs
       let formFromId
       if(!formEl.value && id) {
@@ -39,12 +39,12 @@ export function useForm(id, inner = true, childrenName) {
       } else {
         throw new Error("no form found")
       }
-      
+
       if(!inputs || !(inputs instanceof NodeList)) return false;
 
       const allValid = [...inputs].every(el => el.dataset['valid'] == 'true')
 
-      if(!allValid) return
+      if(!allValid) return false
       valid.value = true
       let values = [...inputs].reduce((state, el) => {
         if(el.type == 'file') {
@@ -56,6 +56,7 @@ export function useForm(id, inner = true, childrenName) {
       }, {})
 
       fun({values, reset: resetValue})
+      return true
     })
   }
 

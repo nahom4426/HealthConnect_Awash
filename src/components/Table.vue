@@ -270,56 +270,61 @@ const range = (start, end) => {
       </template>
     </DataTable>
 
+    <!-- Pagination -->
     <div
       v-if="!pending && showPagination && hasData"
-      class="flex justify-between p-4 items-center flex-wrap gap-4"
+      class="flex flex-wrap items-center justify-between gap-4 px-5 py-4 bg-white border-t border-slate-100 rounded-b-xl"
     >
-      <div class="flex gap-5 items-center">
-        <span class="text-gray-600">Show</span>
+      <!-- Per-page selector -->
+      <div class="flex items-center gap-2.5">
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Show</span>
         <select
           @change="handlePerPageChange($event.target.value)"
-          class="px-3 py-2 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           :value="currentPerPage"
+          class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium
+                 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all cursor-pointer"
         >
           <option value="25">25</option>
           <option value="50">50</option>
           <option value="75">75</option>
           <option value="100">100</option>
         </select>
-        <span class="text-gray-600">entries</span>
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">entries</span>
       </div>
-      
-      <div class="text-gray-600">
-        Showing {{ rows?.length || 0 }} of {{ currentTotalElements || 0 }} records
-      </div>
-      
-      <div class="flex gap-2 items-center justify-center flex-wrap">
+
+      <!-- Record count -->
+      <p class="text-sm text-slate-500">
+        Showing <span class="font-bold text-slate-800">{{ rows?.length || 0 }}</span>
+        of <span class="font-bold text-slate-800">{{ currentTotalElements || 0 }}</span> records
+      </p>
+
+      <!-- Page buttons -->
+      <div class="flex items-center gap-1">
         <button
           @click="previousPage"
-          class="pagination-button"
           :disabled="currentPage === 1 || pending"
+          class="pagination-btn"
+          title="Previous"
         >
           <i v-html="icons.chevron_left"></i>
         </button>
-        
+
         <button
           v-for="pageNum in pageNumbers"
           :key="pageNum"
           @click="pageNum !== '...' ? handlePageChange(pageNum) : null"
-          class="pagination-button"
-          :class="{ 
-            'active-page': currentPage === pageNum,
-            'cursor-default': pageNum === '...'
-          }"
+          class="pagination-btn"
+          :class="currentPage === pageNum ? 'pagination-btn-active' : pageNum === '...' ? 'cursor-default pointer-events-none' : ''"
           :disabled="pageNum === '...'"
         >
           {{ pageNum }}
         </button>
-        
+
         <button
           @click="nextPage"
-          class="pagination-button"
           :disabled="currentPage === currentTotalPages || pending"
+          class="pagination-btn"
+          title="Next"
         >
           <i v-html="icons.chevron_right"></i>
         </button>
@@ -327,12 +332,13 @@ const range = (start, end) => {
     </div>
   </div>
 </template>
+
 <style>
 .Table-header {
   text-align: left;
   line-height: 21px;
   color: #4e585f;
-  @apply text-sm;
+  font-size: 0.875rem;
 }
 
 .Table-contents {
@@ -343,59 +349,43 @@ const range = (start, end) => {
   color: #4e585f;
 }
 
-/* Pagination styles from the second snippet */
-.pagination-button {
-  min-width: 2.5rem;
-  height: 2.5rem;
+.pagination-btn {
+  min-width: 2.25rem;
+  height: 2.25rem;
   padding: 0 0.5rem;
   border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  background-color: white;
-  color: #4a5568;
-  font-weight: 500;
+  border-radius: 0.5rem;
+  background: white;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.8125rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
-.pagination-button:hover:not(:disabled) {
-  background-color: #f7fafc;
-  border-color: #cbd5e0;
+.pagination-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
-
-.pagination-button:disabled {
-  opacity: 0.5;
+.pagination-btn:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
 }
-
-.active-page {
-  background-color: #4299e1;
-  color: white;
-  border-color: #4299e1;
+.pagination-btn-active {
+  background: var(--color-primary, #6366f1) !important;
+  color: white !important;
+  border-color: transparent !important;
+  box-shadow: 0 3px 10px rgba(99,102,241,0.35) !important;
+  transform: none !important;
 }
 
-@media (max-width: 768px) {
-  .pagination-wrapper {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .pagination-controls {
-    order: 3;
-    margin-top: 1rem;
-  }
-  
-  .pagination-info {
-    order: 2;
-  }
-  
-  .pagination-button {
-    min-width: 2.25rem;
-    height: 2.25rem;
-    font-size: 0.875rem;
-  }
+@media (max-width: 640px) {
+  .pagination-btn { min-width: 2rem; height: 2rem; font-size: 0.75rem; }
 }
 </style>
 

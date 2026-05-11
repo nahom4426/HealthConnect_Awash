@@ -3,21 +3,30 @@ import { defineProps, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { openModal } from '@customizer/modal-x';
 import icons from "@/utils/icons";
+import { useNavigationState } from '@/composables/useNavigationState';
+const emit = defineEmits(['row', 'remove']);
 
 const props = defineProps({
   rowData: { type: Array, required: true },
   rowKeys: { type: Array, required: true },
   headKeys: { type: Array, required: true },
+  cells: { 
+    type: [Object, Array],
+    default: () => ({}) 
+  },
+  isMobile: { type: Boolean, default: false },
   onView: { type: Function, default: () => {} },
   onEdit: { type: Function, default: () => {} },
   onDelete: { type: Function, default: () => {} },
-  onStatusChange: { type: Function, default: () => {} }, // new for activate/deactivate
+  onStatusChange: { type: Function, default: () => {} },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 },
 });
 
 const router = useRouter();
 
 function getStatusStyle(status) {
-  const base = "inline-flex justify-center items-center min-w-[80px] px-3 py-1 rounded text-sm font-semibold";
+  const base = "inline-flex justify-center items-center px-3 py-1 rounded-full text-xs font-semibold";
   switch (status?.toUpperCase()) {
     case "ACTIVE":
       return `${base} bg-green-100 text-green-800`;
@@ -58,77 +67,177 @@ function closeAllDropdowns() {
     menu.classList.add('hidden');
   });
 }
-
+const { setShowActionButtons } = useNavigationState();
+function navigateTo(path) {
+  // Hide action buttons when navigating from amendStatusRow
+  setShowActionButtons(false);
+  router.push(path);
+}
 onMounted(() => window.addEventListener("click", closeAllDropdowns));
 onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
 </script>
 
 <template>
-  <tr
-    v-for="(row, idx) in rowData"
-    :key="row.institutionUuid || idx"
-    class="bg-white border-b hover:bg-blue-50 transition-colors cursor-pointer"
-  >
-    <!-- Index -->
-    <td class="p-4 font-semibold text-gray-600 select-none">{{ idx + 1 }}</td>
+  <!-- Desktop Table Rows -->
+  <template v-if="!isMobile">
+    <tr
+      v-for="(row, idx) in rowData.filter(r => r !== null)"
+      :key="row.institutionUuid || idx"
+      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+    >
+      <!-- Index -->
+      <td class="p-4 font-semibold text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
-    <!-- Data Columns -->
-    <td v-for="key in rowKeys" :key="key" class="p-4 text-gray-700 whitespace-nowrap">
-      <span v-if="key === 'status'" :class="getStatusStyle(row.status)">
-        {{ row.status }}
-      </span>
-      <span v-else>
-        {{ row[key] || '—' }}
-      </span>
-    </td>
+      <!-- Institution Name -->
+      <td class="p-4">
+        <div class="flex flex-col">
+          <span class="font-semibold text-gray-900">{{ row.institutionName }}</span>
+          <span class="mt-1 text-xs text-gray-500">{{ row.email }}</span>
+        </div>
+      </td>
 
-    <!-- Action Dropdown -->
-    <td class="p-4 relative">
-      <button
-        @click.stop="toggleDropdown($event, row.institutionUuid)"
-        aria-label="Actions"
-        class="p-2 rounded-full hover:bg-gray-200 transition-colors"
-        type="button"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-        </svg>
-      </button>
+      <!-- TIN Number -->
+      
+      <td class="p-4 text-green-700">{{ row.cifNumber || '—' }}</td>
+ <td class="p-4">
+        <div class="flex flex-col">
+          <span class="font-semibold text-gray-900">{{ row.branchName }}</span>
+          <span class="mt-1 text-xs text-gray-500">{{ row.address1 }}</span>
+        </div>
+      </td>
+      <!-- Insurance Number -->
+      <!-- <td class="p-4 text-gray-700">{{ row.institutionInsuranceNumber || '—' }}</td> -->
 
-      <div
-        :id="`dropdown-${row.institutionUuid}`"
-        class="dropdown-menu hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-20"
-      >
-        <div class="py-1">
+      <!-- Phone -->
+      <td class="p-4 text-gray-700">{{ row.telephone || '—' }}</td>
+
+      <!-- Status -->
+      <td class="p-4">
+        <span :class="getStatusStyle(row.status)">
+          {{ row.status }}
+        </span>
+      </td>
+
+      <!-- Actions -->
+      <td class="p-4">
+        <div class="flex flex-wrap gap-2 justify-start items-center">
           <!-- View Policy -->
           <button
-            @click.stop="$router.push('/institution_contracts/' + row.institutionUuid)"
-            class="dropdown-item"
+             @click.stop="navigateTo(`/institution_contracts/${row?.institutionUuid}/${row?.institutionName}`)"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm"
           >
-            <i v-html="icons.eye || '👁️'" class="w-4 h-4" /> View Policy
+            <i v-html="icons.eye" class="text-blue-500" />
+            <span>View</span>
           </button>
 
-          <!-- Edit Institution -->
+          <!-- Edit -->
           <button
             @click.stop="handleEdit(row)"
-            class="dropdown-item"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-xl border border-indigo-200 transition-all duration-200 hover:bg-indigo-100 hover:shadow-sm"
           >
-            <i v-html="icons.edit || '✏️'" class="w-4 h-4" /> Edit Institution
+            <i v-html="icons.edit" class="text-indigo-500" />
+            <span>Edit</span>
           </button>
 
-          <!-- Activate / Deactivate -->
-          <button
+          <!-- Status Toggle -->
+          <!-- <button
             @click.stop="handleStatusChange(row)"
-            class="dropdown-item"
-            :class="row.status === 'ACTIVE' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'"
+            :class="row.status === 'ACTIVE' ? 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' : 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100'"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold rounded-xl border transition-all duration-200 hover:shadow-sm"
           >
-            <i v-html="row.status === 'ACTIVE' ? (icons.delete || '🛑') : (icons.add || '✅')" class="w-4 h-4" />
-            {{ row.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-          </button>
+            <svg v-if="row.status === 'ACTIVE'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{{ row.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}</span>
+          </button> -->
+        </div>
+      </td>
+    </tr>
+  </template>
+
+  <!-- Mobile Card Layout -->
+  <template v-else>
+    <div
+      v-for="(row, idx) in rowData.filter(r => r !== null)"
+      :key="row.institutionUuid || idx"
+      class="p-2 mx-0.5 mb-2 bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 cursor-pointer sm:p-3 hover:shadow-md sm:mb-3 sm:mx-2"
+    >
+      <!-- Header with name and status -->
+      <div class="flex flex-col mb-2 space-y-1 sm:flex-row sm:justify-between sm:items-start sm:space-y-0 sm:mb-3">
+        <div class="flex-1 min-w-0">
+          <h3 class="text-xs font-semibold text-gray-900 truncate sm:text-sm">
+            {{ row.institutionName }}
+          </h3>
+          <p class="text-xs text-gray-500 truncate">{{ row.email }}</p>
+        </div>
+        <div class="flex-shrink-0 mt-1 sm:mt-0">
+          <span :class="getStatusStyle(row.status)">
+            {{ row.status }}
+          </span>
         </div>
       </div>
-    </td>
-  </tr>
+
+      <!-- Institution Details -->
+      <div class="py-2 mb-2 space-y-1 border-t border-gray-100 sm:py-2 sm:mb-2">
+        <div class="flex justify-between items-start py-0.5">
+          <span class="flex-shrink-0 text-xs font-medium text-gray-500">TIN:</span>
+          <span class="ml-2 font-mono text-xs text-right text-gray-900 truncate">
+            {{ row.tinNumber || '—' }}
+          </span>
+        </div>
+        <div class="flex justify-between items-start py-0.5">
+          <span class="flex-shrink-0 text-xs font-medium text-gray-500">Phone:</span>
+          <span class="ml-2 text-xs text-right text-gray-900 truncate">
+            {{ row.telephone || '—' }}
+          </span>
+        </div>
+        <div class="flex justify-between items-start py-0.5">
+          <span class="flex-shrink-0 text-xs font-medium text-gray-500">Category:</span>
+          <span class="ml-2 text-xs text-right text-gray-900 truncate">
+            {{ row.category || '—' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col gap-1.5 pt-2 border-t border-gray-100 sm:flex-row sm:gap-2 sm:pt-2">
+        <!-- View Policy -->
+        <button
+          @click.stop="$router.push('/institution_contracts/' + row.institutionUuid)"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md border border-blue-200 transition-all duration-200 hover:bg-blue-100"
+        >
+          <i v-html="icons.eye" class="w-3 h-3 text-blue-500" />
+          <span>View</span>
+        </button>
+
+        <!-- Edit -->
+        <button
+          @click.stop="handleEdit(row)"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md border border-indigo-200 transition-all duration-200 hover:bg-indigo-100"
+        >
+          <i v-html="icons.edit" class="w-3 h-3 text-indigo-500" />
+          <span>Edit</span>
+        </button>
+
+        <!-- Status Toggle -->
+        <!-- <button
+          @click.stop="handleStatusChange(row)"
+          :class="row.status === 'ACTIVE' ? 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' : 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100'"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium rounded-md border transition-all duration-200"
+        >
+          <svg v-if="row.status === 'ACTIVE'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </button> -->
+      </div>
+    </div>
+  </template>
 </template>
 
 <style scoped>.dropdown-menu {

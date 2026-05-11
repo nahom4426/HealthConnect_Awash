@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import Button from "@/components/Button.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
 import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
+import AcceptedQuotationRow from "@/features/quotation/components/AcceptedQuotationRow.vue";
 import { useRouter } from 'vue-router'
 
 type AcceptedQuotationRow = {
@@ -28,6 +28,7 @@ const router = useRouter()
     <QuotationDataProviderByStatus v-slot="{ quotations, pending }" :status="'ACCEPTED'">
       <Table
         :pending="pending"
+        :rowCom="AcceptedQuotationRow"
         :headers="{
           head: [
             'Quotation Code',
@@ -56,13 +57,6 @@ const router = useRouter()
         }"
         :rows="quotations"
       >
-        <template #actions="{ row }">
-          <Button
-            type="info"
-            size="xs"
-            @click.prevent="router.push({ name: 'ViewAcceptedQuotation', params: { quotationUuid: row.quotationUuid } })"
-          >View</Button>
-        </template>
       </Table>
     </QuotationDataProviderByStatus>
   </DefaultPage>

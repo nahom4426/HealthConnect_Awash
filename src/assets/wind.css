@@ -5,19 +5,33 @@
 @tailwind utilities;
 
 :root {
-  --primary: 76 63 63;
-  --secondary: 107 42 0;
-  --dark: 32 34 36;
-  --text-clr: var(--dark);
-  --base-clr: 103 103 105;
-  --base-clr2: 247 248 251;
-  --base-clr3: 30 30 30;
-  --base-clr4: 255 255 255;
-  --accent: 239 239 239;
-  --orange: 255 137 0;
+  /* ── Brand Colors ── */
+  --primary:         30 64 175;      /* #1e40af  deep royal blue  */
+  --primary-light:   59 130 246;     /* #3b82f6  sky blue         */
+  --primary-dark:    15 40 120;      /* #0f2878  dark navy        */
+  --secondary:       14 165 233;     /* #0ea5e9  cyan accent      */
+  --accent:          248 250 252;    /* #f8fafc  off-white surface */
+  --dark:            15 23 42;       /* #0f172a  slate-900        */
 
-  --drawer-width: 18rem;
-  --navbar-height: 3rem;
+  /* ── Text ── */
+  --text-clr:        30 41 59;       /* #1e293b  slate-800        */
+
+  /* ── Surface / Background ── */
+  --base-clr:        100 116 139;    /* #64748b  slate-500        */
+  --base-clr2:       241 245 249;    /* #f1f5f9  slate-100        */
+  --base-clr3:       15 23 42;       /* #0f172a  near-black       */
+  --base-clr4:       255 255 255;    /* #ffffff  white            */
+
+  /* ── Utility ── */
+  --orange:          249 115 22;     /* #f97316  orange-500       */
+  --error:           239 68 68;      /* #ef4444  red-500          */
+
+  /* ── Layout ── */
+  --drawer-width:    16rem;
+  --navbar-height:   3.5rem;
+
+  /* ── Raw RGB for JS/inline usage ── */
+  --color-primary-rgb: 30, 64, 175;
 }
 
 body {
@@ -31,7 +45,7 @@ body {
   font-synthesis-weight: none;
   font-variation-settings: "wdth" 100, "YTLC" 500;
   font-style: normal;
-  @apply text-text-clr text-sm;
+  @apply text-sm text-text-clr;
 }
 
 html,
@@ -48,7 +62,7 @@ body,
 
 @layer components {
   .input-style {
-    @apply h-10 rounded-md border px-3;
+    @apply px-3 h-10 rounded-md border;
   }
 }
 
@@ -104,7 +118,7 @@ body,
 
 @layer utilities {
   .sys-focus {
-    box-shadow: 0 0 0 2px rgb(var(--primary));
+    box-shadow: 0 0 0 2px rgba(30,64,175,0.35);
   }
 }
 
@@ -134,11 +148,15 @@ body,
 
 *:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgb(var(--primary));
 }
 
-button:focus {
-  box-shadow: 0px 0px 0px 2px theme("colors.primary");
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(30,64,175,0.3);
+}
+
+button:focus-visible {
+  box-shadow: 0 0 0 2px rgba(30,64,175,0.35);
 }
 
 i,
@@ -147,7 +165,7 @@ svg {
 }
 
 .table_action {
-  @apply hover:text-primary font-medium underline italic;
+  @apply italic font-medium underline hover:text-primary;
 }
 
 /* RIpple aEffect */
@@ -194,9 +212,10 @@ svg {
 
 @layer base {
   .h1 {
-    @apply font-semibold text-base px-2;
+    @apply px-2 text-base font-semibold;
   }
   h1 {
-    @apply font-semibold text-base px-2;
+    @apply px-2 text-base font-semibold;
   }
 }
+ 

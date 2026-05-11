@@ -19,7 +19,13 @@ defineProps({
 const pendingRequest = inject("pending", false);
 </script>
 <template>
-  <Button :size="size" class=" text-sm  bg-primary text-white rounded-lg">
+  <Button
+    :size="size"
+    :pending="pending || pendingRequest"
+    :disabled="pending || pendingRequest"
+    html-type="submit"
+    class=" text-sm  bg-primary text-white rounded-lg"
+  >
     <span v-if="!pending && !pendingRequest">{{ btnText }}</span>
     <Icon icon="svg-spinners:3-dots-scale" class="text-2xl" v-else />
   </Button>

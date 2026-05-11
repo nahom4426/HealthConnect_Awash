@@ -11,7 +11,6 @@ import { useDrugStore } from "../store/drugStore";
 import { updateDrug } from "../api/drugApi";
 import DrugForm from "./form/DrugForm.vue";
 import { closeModal } from "@customizer/modal-x";
-import { data } from "autoprefixer";
 const props = defineProps({
   data: String,
 });

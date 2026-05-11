@@ -22,32 +22,19 @@ function set(data) {
   }
 
   const mappedData = dataArray.map((item) => {
-    // Extract first package key/value
-    let packageUuid = null;
-    let itemName = null;
-
-    if (item.packages && typeof item.packages === "object") {
-      const [uuid, name] = Object.entries(item.packages)[0] || [];
-      packageUuid = uuid || null;
-      itemName = name || null;
-    }
-
     return {
-      allowedUuid: item.allowedUuid || '',
-      packageUuid, // extracted
-      payerInstitutionContractUuid: item.payerInstitutionContractUuid || '',
-      item: itemName, // extracted
-      description: item.description || null,
+      serviceQuotedUuid: item.serviceQuotedUuid || item.allowedUuid || '',
+      packageUuid: item.packageUuid || null,
+      packageName: item.packageName || null,
+      numberOfInsured: Number(item.numberOfInsured) || 0,
+      numberOfDependants: Number(item.numberOfDependants) || 0,
+      description: item.description ?? null,
+      rate: Number(item.rate) || 0,
+      premium: Number(item.premium) || 0,
+      coverage: Number(item.coverage) || 0,
       planType: item.planType || 'Individual_Plan',
-      maxBenefitForEmployee: item.maxBenefitForEmployee || 0,
-      maxBenefitForSpouse: item.maxBenefitForSpouse || 0,
-      maxBenefitForChildren: item.maxBenefitForChildren || 0,
-      familyPoolBenefit: item.familyPoolBenefit || 0,
-      excessAllowed: item.excessAllowed || false,
-      maxAllowedDependants: item.maxAllowedDependants || 0,
-      maxAllowedDependantAge: item.maxAllowedDependantAge || 0,
-      status: item.status || 'ACTIVE',
-      packages: item.packages || null, // keep full object too
+      individualType: item.individualType ?? null,
+      spouse: !!item.spouse,
     };
   });
 
@@ -70,21 +57,18 @@ function add(data) {
   console.log("Adding family benefit to store:", data);
 
   const mappedItem = {
-    allowedUuid: data.allowedUuid || crypto.randomUUID(),
+    serviceQuotedUuid: data.serviceQuotedUuid || crypto.randomUUID(),
     packageUuid: data.packageUuid || null,
-    payerInstitutionContractUuid: data.payerInstitutionContractUuid || '',
-    item: data.item || null,
-    description: data.description || null,
+    packageName: data.packageName || null,
+    numberOfInsured: Number(data.numberOfInsured) || 0,
+    numberOfDependants: Number(data.numberOfDependants) || 0,
+    description: data.description ?? null,
+    rate: Number(data.rate) || 0,
+    premium: Number(data.premium) || 0,
+    coverage: Number(data.coverage) || 0,
     planType: data.planType || 'Individual_Plan',
-    maxBenefitForEmployee: data.maxBenefitForEmployee || 0,
-    maxBenefitForSpouse: data.maxBenefitForSpouse || 0,
-    maxBenefitForChildren: data.maxBenefitForChildren || 0,
-    familyPoolBenefit: data.familyPoolBenefit || 0,
-    excessAllowed: data.excessAllowed || false,
-    maxAllowedDependants: data.maxAllowedDependants || 0,
-    maxAllowedDependantAge: data.maxAllowedDependantAge || 0,
-    status: data.status || 'ACTIVE',
-    packages: data.packages || null,
+    individualType: data.individualType ?? null,
+    spouse: !!data.spouse,
   };
 
   family.value.unshift(mappedItem);
@@ -93,26 +77,31 @@ function add(data) {
 function update(id, data) {
   console.log(`Updating family benefit with UUID: ${id}`, data);
 
-  const idx = family.value.findIndex((el) => el.allowedUuid === id);
+  const idx = family.value.findIndex((el) => el.serviceQuotedUuid === id);
   if (idx === -1) {
     console.warn(`[Family Store] No family benefit found with UUID: ${id}`);
-    if (data.allowedUuid) {
+    if (data.serviceQuotedUuid) {
       console.log("Family benefit not found for update, adding instead:", data);
       add(data);
     }
     return;
   }
 
-  // Handle packageUuids to packageUuid conversion if needed
   const updatedItem = {
     ...family.value[idx],
     ...data,
-    // If packageUuids exists in data, take the first one as packageUuid
-    packageUuid: data.packageUuids && data.packageUuids.length > 0 
-      ? data.packageUuids[0] 
-      : data.packageUuid || null,
-    // Keep the packages object if it exists
-    packages: data.packages || family.value[idx].packages
+    packageUuid: data.packageUuid || family.value[idx].packageUuid,
+    packageName: data.packageName || family.value[idx].packageName,
+    serviceQuotedUuid: data.serviceQuotedUuid || family.value[idx].serviceQuotedUuid,
+    numberOfInsured: data.numberOfInsured ?? family.value[idx].numberOfInsured,
+    numberOfDependants: data.numberOfDependants ?? family.value[idx].numberOfDependants,
+    description: data.description ?? family.value[idx].description,
+    rate: data.rate ?? family.value[idx].rate,
+    premium: data.premium ?? family.value[idx].premium,
+    coverage: data.coverage ?? family.value[idx].coverage,
+    planType: data.planType ?? family.value[idx].planType,
+    individualType: data.individualType ?? family.value[idx].individualType,
+    spouse: data.spouse ?? family.value[idx].spouse,
   };
 
   family.value.splice(idx, 1, updatedItem);
@@ -120,7 +109,7 @@ function update(id, data) {
 }
 
   function remove(id) {
-    const idx = family.value.findIndex((el) => el.allowedUuid === id);
+    const idx = family.value.findIndex((el) => el.serviceQuotedUuid === id);
     if (idx === -1) {
       console.warn(`[Family Store] No family benefit found with UUID: ${id}`);
       return;

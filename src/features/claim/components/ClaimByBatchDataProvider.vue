@@ -62,15 +62,14 @@ const pagination = usePagination({
 
     return props.creditService
       ? getClaimsByInstitutionBatch(params)
-      : getCashClaimsByInstitutionBatch(params);
+      : getClaimsByInstitutionBatch(params);
   },
 });
 
-if (!(batchClaimsStore)?.claims?.length) {
   if (props.auto) {
     pagination.send();
   }
-}
+
 
 watch(
   () => props.params,
@@ -82,11 +81,13 @@ watch(
 </script>
 
 <template>
-  <slot
-    :claims="(batchClaimsStore)?.claims"
-    :pending="pagination.pending.value"
-    :error="batchClaimReq.error.value"
-    :search="pagination.search"
-    :send="pagination.send"
-  />
+  <div>
+    <slot
+      :claims="(batchClaimsStore)?.claims"
+      :pending="pagination.pending.value"
+      :error="batchClaimReq.error.value"
+      :search="pagination.search"
+      :send="pagination.send"
+    />
+  </div>
 </template>

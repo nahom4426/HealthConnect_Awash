@@ -1,40 +1,25 @@
 <script setup>
 import Table from "@/components/Table.vue";
-import { usePagination } from "@/composables/usePagination";
-import { getRequestedClaim } from "../../api/claimApi";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 import { ref } from "vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import { getProviders } from "@/features/providers/api/providerApi";
+import { getMappedActiveProviders } from "@/features/providers/api/providerApi";
+import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import { Status } from "@/types/interface";
 import SearchSelect from "@/components/SearchSelect.vue";
-import { useRequestdClaims } from "../../store/requestedCreditClaimStore";
 import FilterOnDetector from "@/components/FilterOnDetector.vue";
 import Button from "@/components/Button.vue";
+import { openModal } from "@customizer/modal-x";
 
 // 👇 import your detail component
 import CreditClaimDetail from "./CreditClaimDetail.vue";
+import CreditClaimTableRow from "../../components/CreditClaimTableRow.vue";
+import CreditClaimDataProvider from "../../components/CreditClaimDataProvider.vue";
 
-const institutionUuid = ref();
-const contractUuid = ref();
-const itemType = ref("SERVICE"); // default to SERVICE
-
-const claimStore = useRequestdClaims();
-const pagination = usePagination({
-  store: claimStore,
-  auto: false,
-  cb: (data) =>
-    getRequestedClaim({
-      ...data,
-      institutionUuid: institutionUuid.value,
-      contractUuid: contractUuid.value,
-      itemType: itemType.value,
-    }),
-});
-
-if (!claimStore.requestedClaims.length) {
-  pagination.send();
-}
+const institutionUuid = ref("");
+const contractUuid = ref("");
+const itemType = ref("SERVICE");
+const serviceType= ref("CREDIT"); // default to CREDIT
 
 // 👇 selected row state
 const selectedRow = ref(null);
@@ -43,78 +28,105 @@ function viewDetail(row) {
   selectedRow.value = row;
 }
 
+function editManual(row) {
+  openModal('UtilizeUsage', {
+    mode: 'edit_manual_credit',
+    serviceProvidedUuid: row?.serviceProvidedUuid,
+    sourceRow: row,
+    contractUuid: row?.contractUuid,
+    providerName: row?.providerName,
+    providedDate: row?.providedDate,
+    insuredUuid: row?.insuredPersonUuid,
+    dependantUuid: row?.dependantUuid,
+  });
+}
+
 function goBack() {
   selectedRow.value = null;
+}
+
+function handleInstitutionSelect(result) {
+  institutionUuid.value = result?.institutionUuid || '';
+}
+const search = ref("");
+function handleContractSelect(result) {
+  contractUuid.value = result?.contractUuid || result?.providerUuid || '';
 }
 </script>
 
 <template>
-<DefaultPage v-model="pagination.search.value">
-  <!-- Always define slot -->
-  <template #more>
-    <FilterOnDetector :watch="[institutionUuid, contractUuid]" v-if="!selectedRow">
-      <SearchSelect
-        placeholder="Filter by Institution"
-        :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
-        :selectCb="(result) => {
-          institutionUuid.value = result?.institutionUuid || '';
-          pagination.send();
+<CreditClaimDataProvider 
+  :params="{ 
+    institutionUuid, 
+    contractUuid, 
+    itemType,
+    serviceType
+  }"
+    :search="search"
+  :auto="true"
+>
+    <template #default="{ claims, pending: dataPending, search: paginationSearch, send }">
+    <DefaultPage v-model="search" :hideSearch="selectedRow ? true : false">
+      <!-- Filter Section -->
+      <template #header v-if="!selectedRow">
+        <FilterOnDetector :watch="[() => institutionUuid.value, () => contractUuid.value]">
+          <SearchSelect
+            placeholder="Filter by Institution"
+            :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
+            :selectCb="handleInstitutionSelect"
+            :option="{ label: 'institutionName', value: 'institutionUuid' }"
+          />
+          <SearchSelect
+            placeholder="Filter by Provider / Contract"
+            :searchCb="(data) => getMappedActiveProviders({ ...data, status: Status.ACTIVE })"
+            :selectCb="handleContractSelect"
+            :option="{ label: 'providerName', value: 'providerUuid' }"
+          />
+        </FilterOnDetector>
+      </template>
+
+      <!-- Conditional content -->
+      <Table
+        v-if="!selectedRow"
+        :pending="dataPending"
+        :rowCom="CreditClaimTableRow"
+        :headers="{
+          head: [
+            'Insured Name',
+            'Provider Name',
+            'Institution',
+            'Service Type',
+            'Services',
+            'Total Amount',
+            'Status',
+            'Claim Date',
+            'Actions',
+          ],
+          row: [
+            'fullname',
+            'providerName',
+            'institutionName',
+            'itemType',
+            'providedItems',
+            'amount',
+            'status',
+            'providedDate',
+          ],
         }"
-        :option="{ label: 'institutionName', value: 'institutionUuid' }"
-      />
-      <SearchSelect
-        placeholder="Filter by a Provider / Contract"
-        :searchCb="(data) => getProviders({ ...data, status: Status.ACTIVE })"
-        :selectCb="(result) => {
-          contractUuid.value = result?.contractUuid || result?.providerUuid || '';
-          pagination.send();
+        :cells="{
+          onView: viewDetail,
+          onEdit: editManual
         }"
-        :option="{ label: 'providerName', value: 'providerUuid' }"
+        :rows="claims"
       />
-    </FilterOnDetector>
+
+      <CreditClaimDetail
+        v-else
+        :row="selectedRow"
+        @back="goBack"
+      />
+    </DefaultPage>
   </template>
-
-  <!-- Conditional content -->
-  <Table
-    v-if="!selectedRow"
-    :pending="pagination.pending.value"
-    :headers="{
-      head: [
-        'Insured Name',
-        'Provider Name',
-        'Group Name',
-        'Total Amount',
-        'Status',
-        'Claim Date',
-        'Actions',
-      ],
-      row: [
-        'fullname',
-        'providerName',
-        'institutionName',
-        'amount',
-        'status',
-        'providedDate',
-      ],
-    }"
-    :cells="{
-      fullname: (_, row) => row?.insuredName || row?.dependantName || '',
-      amount: formatCurrency,
-      status: () => 'Pending',
-      providedDate: secondDateFormat,
-    }"
-    :rows="claimStore.requestedClaims"
-  >
-    <template #actions="{ row }">
-      <Button type="link" @click="viewDetail(row)">View Details</Button>
-    </template>
-  </Table>
-
-  <CreditClaimDetail
-    v-else
-    :row="selectedRow"
-    @back="goBack"
-  />
-</DefaultPage>
+</CreditClaimDataProvider>
 
 </template>

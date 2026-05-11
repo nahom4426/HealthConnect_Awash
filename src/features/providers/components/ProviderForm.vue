@@ -74,7 +74,7 @@ onMounted(() => {
     if (props.initialData.logoBase64) {
       previewImage.value = props.initialData.logoBase64;
       // Convert base64 to blob for submission
-      providerLogo.value = base64ToBlob(props.initialData.logoBase64, 'logo.png');
+      providerLogo.value = base64ToBlob(props.initialData.logoBase64, 'logo.png ');
     } else if (props.initialData.logoUrl) {
       previewImage.value = props.initialData.logoUrl;
       // If we have a logo URL but no base64, we need to handle this
@@ -122,7 +122,7 @@ async function fetchLogoFromUrl(url) {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
-    providerLogo.value = new File([blob], 'logo.png', { type: blob.type });
+    providerLogo.value = new File([blob], 'logo.png ', { type: blob.type });
     console.log('Logo fetched from URL and converted to file');
   } catch (error) {
     console.error('Error fetching logo from URL:', error);
@@ -478,7 +478,7 @@ function handleSubmit() {
     
        <ModalFormSubmitButton
         :pending="pending"
-        :btn-text="isEdit ? 'Update Provider' : 'Add Provider'"
+        :btn-text="isEdit ? 'Add Provider' : 'Add Provider'"
         class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
       />
     </div>

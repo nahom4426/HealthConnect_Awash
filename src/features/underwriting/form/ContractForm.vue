@@ -2,7 +2,8 @@
 import Form from '@/components/new_form_builder/Form.vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import Select from '@/components/new_form_elements/Select.vue';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 const props = defineProps({
   data: {
@@ -14,20 +15,89 @@ const props = defineProps({
     default: false
   }
 });
-console.log(props.data);
 const emit = defineEmits(["submit"]);
+
+const route = useRoute();
+
+// Helper function to convert ISO date to YYYY-MM-DD format
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  try {
+    return dateString.split('T')[0];
+  } catch (err) {
+    console.error('Error formatting date:', err);
+    return '';
+  }
+};
 
 // Form state with props data or defaults
 const formData = ref({
   contractName: props.data?.contractName || '',
-  contractCode: props.data?.contractCode || '',
+  policyNumber: props.data?.policyNumber || '',
   benefit: props.data?.benefit || 0,
   premium: props.data?.premium || 0,
-  beginDate: props.data?.beginDate || '',
-  endDate: props.data?.endDate || '',
+  beginDate: formatDateForInput(props.data?.beginDate) || '',
+  endDate: formatDateForInput(props.data?.endDate) || '',
   status: props.data?.status || 'ACTIVE'
 });
-console.log(formData.value);
+
+function getInstitutionCode(name) {
+  const cleaned = String(name || '').trim();
+  if (!cleaned) return 'INST';
+
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  const initials = parts.map(p => p[0]).join('').toUpperCase();
+
+  if (initials.length >= 3) return initials.slice(0, 3);
+  return cleaned.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 3) || 'INST';
+}
+
+function applyAutoDefaults() {
+  if (props.isEdit) return;
+
+  const institutionName = props.data?.institutionName || route.params?.institutionName;
+  const suffix = Date.now().toString().slice(-5);
+  const instCode = getInstitutionCode(institutionName);
+
+  const today = new Date();
+  const nextYear = new Date(today);
+  nextYear.setFullYear(today.getFullYear() + 1);
+  const todayStr = today.toISOString().split('T')[0];
+  const nextYearStr = nextYear.toISOString().split('T')[0];
+
+  if (!formData.value.contractName) {
+    formData.value.contractName = `${institutionName || 'Institution'} Awash ${suffix}`;
+  }
+  if (!formData.value.policyNumber) {
+    formData.value.policyNumber = `${instCode}-AWS-${suffix}`;
+  }
+
+  if (!formData.value.beginDate) {
+    formData.value.beginDate = todayStr;
+  }
+  if (!formData.value.endDate) {
+    formData.value.endDate = nextYearStr;
+  }
+}
+
+applyAutoDefaults();
+
+// Watch for changes in props.data and update formData with formatted dates
+watch(() => props.data, (newData) => {
+  if (newData) {
+    formData.value = {
+      contractName: newData.contractName || '',
+      policyNumber: newData.policyNumber || '',
+      benefit: newData.benefit || 0,
+      premium: newData.premium || 0,
+      beginDate: formatDateForInput(newData.beginDate) || '',
+      endDate: formatDateForInput(newData.endDate) || '',
+      status: newData.status || 'ACTIVE'
+    };
+
+    applyAutoDefaults();
+  }
+}, { deep: true });
 
 const statusOptions = ['PENDING', 'ACTIVE', 'RENEWED','EXPIRED'];
 const submitAttempted = ref(false);
@@ -46,7 +116,6 @@ const validateForm = () => {
 };
 
 const submit = () => {
-  console.log('🔹 ContractForm submit triggered with data:', formData.value);
   if (validateForm()) {
     emit('submit', formData.value);
   } else {
@@ -54,16 +123,15 @@ const submit = () => {
   }
 };
 
-console.log();
 
 </script>
 
 <template>
-  <Form id="create-contract-form" :inner="false" class="space-y-6 p-6">
+  <Form id="create-contract-form" :inner="false" class="p-6 space-y-8">
     <!-- Contract Information Section -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+    <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+      <div class="flex gap-3 items-center mb-6">
+        <div class="flex justify-center items-center w-10 h-10 bg-blue-500 rounded-lg">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
@@ -74,32 +142,32 @@ console.log();
         </div>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Input
           name="contractName"
-          label="Category Name"
+          label="Policy Name"
           validation="required"
           v-model="formData.contractName"
           :attributes="{ 
-            placeholder: 'e.g., Premium Health Plan',
+            placeholder: 'e.g., MedcoTech Awash 12345',
           }"
         />
         <Input
-          name="contractCode"
-          label="Category Code"
+          name="policyNumber"
+          label="Policy Number"
           validation="required"
-          v-model="formData.contractCode"
+          v-model="formData.policyNumber"
           :attributes="{ 
-            placeholder: 'e.g., PHP-001',
+            placeholder: 'e.g., MED-AWS-12345',
           }"
         />
       </div>
     </div>
 
     <!-- Financial Information Section -->
-    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+     <div class="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+      <div class="flex gap-3 items-center mb-6">
+        <div class="flex justify-center items-center w-10 h-10 bg-green-500 rounded-lg">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
@@ -110,12 +178,12 @@ console.log();
         </div>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Input
           name="benefit"
           label="Benefit Amount"
           type="number"
-          validation="required|numeric"
+          validation="numeric"
           v-model="formData.benefit"
           :attributes="{ 
             placeholder: '0.00', 
@@ -127,7 +195,7 @@ console.log();
           name="premium"
           label="Premium Amount"
           type="number"
-          validation="required|numeric"
+          validation="numeric"
           v-model="formData.premium"
           :attributes="{ 
             placeholder: '0.00', 
@@ -136,12 +204,12 @@ console.log();
           }"
         />
       </div>
-    </div>
+    </div> 
 
     <!-- Timeline & Status Section -->
-    <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+    <div class="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+      <div class="flex gap-3 items-center mb-6">
+        <div class="flex justify-center items-center w-10 h-10 bg-purple-500 rounded-lg">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
@@ -152,7 +220,7 @@ console.log();
         </div>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Input
           name="beginDate"
           label="Effective Date"
@@ -173,6 +241,7 @@ console.log();
           v-model="formData.endDate"
           :attributes="{
               type : 'date',
+              placeholder: 'MM/DD/YYYY',
             min: formData.beginDate || new Date().toISOString().split('T')[0]
           }"
           :error="(!formData.endDate || !isDateValid) && submitAttempted"
@@ -195,12 +264,12 @@ console.log();
       </div>
       
       <!-- Date validation error message -->
-      <div v-if="!isDateValid && formData.beginDate && formData.endDate" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-        <div class="flex items-center gap-2">
+      <div v-if="!isDateValid && formData.beginDate && formData.endDate" class="p-3 mt-4 bg-red-50 rounded-lg border border-red-200">
+        <div class="flex gap-2 items-center">
           <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          <span class="text-sm text-red-600 font-medium">End date must be after the effective date</span>
+          <span class="text-sm font-medium text-red-600">End date must be after the effective date</span>
         </div>
       </div>
     </div>

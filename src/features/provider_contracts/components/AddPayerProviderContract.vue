@@ -49,19 +49,19 @@ const createContract = async () => {
 </script>
 
 <template>
-  <div class="space-y-10 divide-y divide-gray-900/10 flex items-center justify-center">
-    <div class=" ">
+  <div class="flex justify-center items-center space-y-10 divide-y divide-gray-900/10">
+    <div class="">
       <form @submit.prevent="submit" class="md:col-span-2">
         <div class="px-4 py-6 sm:px-8 sm:py-4">
-          <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-            <div class="sm:col-span-6 text-lg font-semibold bg-gray-100 px-2">
+          <div class="grid grid-cols-1 gap-y-4 gap-x-6 max-w-2xl sm:grid-cols-6">
+            <div class="px-2 text-lg font-semibold bg-gray-100 sm:col-span-6">
               Contract Info
             </div>
             <div class="sm:col-span-3">
               <label for="contract-name" class="block font-medium leading-6 text-gray-900">Contract Name</label>
               <div class="mt-1">
                 <input type="text" v-model="contractName" name="Contract Name" id="contract-name" rules="required"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-300 sm:leading-6" />
+                  class="block py-1.5 w-full text-gray-600 rounded-md border-0 ring-1 ring-inset ring-gray-300 shadow-sm placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-300 sm:leading-6" />
                 <ErrorMessage name="Contract Name" class="text-xs text-red-600" />
               </div>
             </div>
@@ -70,7 +70,7 @@ const createContract = async () => {
               <label for="contract-code" class="block font-medium leading-6 text-gray-900">Contract Code</label>
               <div class="mt-1">
                 <input type="text" v-model="contractCode" name="Contract Code" id="contract-code" rules="required"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-300 sm:leading-6" />
+                  class="block py-1.5 w-full text-gray-600 rounded-md border-0 ring-1 ring-inset ring-gray-300 shadow-sm placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-300 sm:leading-6" />
                 <ErrorMessage name="Contract Code" class="text-xs text-red-600" />
               </div>
             </div>
@@ -79,7 +79,7 @@ const createContract = async () => {
               <label for="status" class="block font-medium leading-6 text-gray-900">Effective Date From</label>
               <div class="mt-1">
                 <input type="date" v-model="beginDate" name="beginDate" id="beginDate" rules="required"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-300 sm:leading-6" />
+                  class="block py-1.5 w-full text-gray-600 rounded-md border-0 ring-1 ring-inset ring-gray-300 shadow-sm placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-300 sm:leading-6" />
 
                 <ErrorMessage name="beginDate" class="text-xs text-red-600" />
               </div>
@@ -88,12 +88,12 @@ const createContract = async () => {
               <label for="premium" class="block font-medium leading-6 text-gray-900">Effective Date To</label>
               <div class="mt-1">
                 <input type="datetime-local" v-model="endDate" name="endDate" id="endDate" rules="required"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-300 sm:leading-6" />
+                  class="block py-1.5 w-full text-gray-600 rounded-md border-0 ring-1 ring-inset ring-gray-300 shadow-sm placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-300 sm:leading-6" />
                 <ErrorMessage name="endDate" class="text-xs text-red-600" />
               </div>
             </div>
 
-            <div class="col-span-full flex">
+            <div class="flex col-span-full">
               <div>
                 <label for="street-address" class="block font-medium leading-6 text-gray-900">Description</label>
                 <div class="mt-1">
@@ -103,14 +103,14 @@ const createContract = async () => {
         ? 'ring-1 ring-red-600 focus:ring-1 focus:ring-red-600 border-red-600 focus:border-red-600 focus:outline-none'
         : ''
         " />
-                    <small v-if="errors[0]" class="text-red-600 font-light mt-1">{{ errors[0] }}</small>
+                    <small v-if="errors[0]" class="mt-1 font-light text-red-600">{{ errors[0] }}</small>
                   </Field>
                 </div>
               </div>
 
-              <div class="flex items-end justify-start w-full gap-x-6 border-gray-900/10 py-3 ml-10">
+              <div class="flex gap-x-6 justify-start items-end py-3 ml-10 w-full border-gray-900/10">
                 <button type="submit" @click="createContract"
-                  class="rounded-md bg-indigo-600 px-3 py-2 text-xl w-full font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                  class="px-3 py-2 w-full text-xl font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                   Save
                 </button>
               </div>

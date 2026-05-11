@@ -90,48 +90,93 @@ function selectAll(checked, category) {
 </script>
 <template>
   <InputParent :validation="validation" :name="name" v-model="selected" v-slot="{ setRef, error }">
-    <div :ref="setRef" class="flex flex-col gap-2">
-      <div class="flex items-center gap-2 border-b py-2">
-        <span 
-          :data-required="`${validation}`.includes('required') ? 'true' : 'false'" 
-          :title="label" 
-          class="text-sm capitalize px-1 truncate" 
-          v-if="label"
-        >
-          {{ label }}
-        </span>
+    <div :ref="setRef" class="flex flex-col gap-4">
+      <!-- Header -->
+      <div class="flex gap-2 justify-between items-center pb-3 border-b-2 border-gray-200">
+        <div class="flex gap-2 items-center">
+          <span 
+            :data-required="`${validation}`.includes('required') ? 'true' : 'false'" 
+            :title="label" 
+            class="text-sm font-semibold text-gray-900 capitalize truncate sm:text-base" 
+            v-if="label"
+          >
+            {{ label }}
+          </span>
+          <span class="px-2 py-1 text-xs font-bold text-indigo-600 bg-indigo-100 rounded-full">
+            {{ selected.length }} selected
+          </span>
+        </div>
         <InputError :error="error" />
       </div>
       
-      <div class="grid grid-cols-4 gap-y-4">
-        <div v-for="category in Object.keys(group)" :key="category">
-          <div class="border-b py-2 flex items-center gap-2">
+      <!-- Categories Grid -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div 
+          v-for="category in Object.keys(group)" 
+          :key="category"
+          class="overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-gray-200 transition-all duration-200 hover:border-indigo-300"
+        >
+          <!-- Category Header -->
+          <div class="flex gap-3 items-center p-3 bg-gradient-to-r from-indigo-500 to-purple-600 sm:p-4">
             <input 
               :checked="isAllChecked(category)" 
               @click="(ev) => selectAll(ev.target.checked, category)"
-              class="size-5" 
+              class="w-5 h-5 rounded cursor-pointer accent-white" 
               type="checkbox" 
+              :title="`Select all ${category} privileges`"
             />
-            <p class="font-bold">{{ category }}</p>
+            <p class="flex-1 text-sm font-bold text-white truncate sm:text-base">{{ category }}</p>
+            <span class="px-2 py-1 text-xs font-semibold text-white rounded-full bg-white/20">
+              {{ group[category].filter(p => isChecked(p.privilegeUuid)).length }}/{{ group[category].length }}
+            </span>
           </div>
           
-          <div 
-            class="flex items-center py-2 gap-2" 
-            v-for="privilege in group[category]" 
-            :key="privilege.privilegeUuid"
-          >
-            <input 
-              :checked="isChecked(privilege.privilegeUuid)" 
-              @click="toggle(privilege.privilegeUuid)" 
-              class="size-4"
-              type="checkbox" 
-            />
-            <p class="text-xs truncate">{{ privilege.privilegeName }}</p>
+          <!-- Privileges List -->
+          <div class="p-3 space-y-2 sm:p-4">
+            <div 
+              v-for="privilege in group[category]" 
+              :key="privilege.privilegeUuid"
+              class="flex gap-3 items-start p-2 rounded-lg transition-all duration-150 cursor-pointer hover:bg-white group/item"
+              @click="toggle(privilege.privilegeUuid)"
+            >
+              <input 
+                :checked="isChecked(privilege.privilegeUuid)" 
+                @click.stop="toggle(privilege.privilegeUuid)" 
+                class="flex-shrink-0 mt-0.5 w-4 h-4 rounded cursor-pointer accent-indigo-600"
+                type="checkbox" 
+              />
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold text-gray-900 truncate transition-colors sm:text-sm group-hover/item:text-indigo-600">
+                  {{ privilege.privilegeName }}
+                </p>
+                <p class="mt-0.5 text-xs text-gray-600 line-clamp-2">
+                  {{ privilege.privilegeDescription }}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Summary -->
+      <div v-if="selected.length > 0" class="p-3 bg-indigo-50 rounded border-l-4 border-indigo-500 sm:p-4">
+        <p class="text-xs font-semibold text-indigo-900 sm:text-sm">
+          ✓ {{ selected.length }} privilege{{ selected.length !== 1 ? 's' : '' }} selected
+        </p>
       </div>
       
       <input type="hidden" :name="name" :value="JSON.stringify(selected)" />
     </div>
   </InputParent>
 </template>
+
+<style scoped>
+/* Custom checkbox styling */
+:deep(input[type="checkbox"]) {
+  @apply cursor-pointer;
+}
+
+:deep(input[type="checkbox"]:hover) {
+  @apply scale-110 transition-transform;
+}
+</style>

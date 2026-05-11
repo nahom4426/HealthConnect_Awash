@@ -1,4 +1,7 @@
 <script setup>
+import { useAttrs } from "vue";
+
+const attrs = useAttrs();
 const props = defineProps(["label", "error"]);
 </script>
 
@@ -7,7 +10,7 @@ const props = defineProps(["label", "error"]);
     <div class="flex flex-col">
       <span v-if="label" class="text-xs font-semibold mb-1">{{ label }}</span>
       <div
-        class="focus-within:sys-focus bg-base-clr4 flex w-full border h-8 rounded-md"
+        :class="`${attrs?.class || ''} focus-within:sys-focus bg-base-clr4 flex items-center w-full border min-h-9 h-9 rounded-md`"
       >
         <slot></slot>
       </div>

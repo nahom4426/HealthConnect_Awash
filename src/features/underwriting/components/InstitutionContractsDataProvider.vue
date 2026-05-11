@@ -41,22 +41,58 @@ const pagination = usePagination({
   },
   cb: async (params) => {
     loading.value = true; // Set loading to true before request
+    console.log('🌐 API CALL - Status:', props.status, 'Params:', params);
     try {
       const response = await getInstitutionContracts(
         props.institutionUuid,
         removeUndefined({
           status: props.status,
           // ...params,
-          search: props.search.trim(),
+          // search: props.search.trim(),
         })
       );
+      
+      console.log('✅ API Response for status [' + props.status + ']:', response);
+      
+      // Handle array response (direct array from API)
+      if (Array.isArray(response)) {
+        // For array responses, set pagination to defaults
+        console.log('📦 Array response - Setting pagination');
+        institutionContractStore.setPagination({
+          currentPage: 1,
+          itemsPerPage: 10,
+          totalPages: 1,
+          totalItems: response.length
+        });
+        return response;
+      }
+      
+      // Handle object response with data property
+      if (response?.data) {
+        console.log('📦 Object response with data property');
+        // Set pagination with defaults if data is an array
+        if (Array.isArray(response.data)) {
+          institutionContractStore.setPagination({
+            currentPage: 1,
+            itemsPerPage: 10,
+            totalPages: 1,
+            totalItems: response.data.length
+          });
+        } else {
+          institutionContractStore.setPagination(response);
+        }
+        return response.data;
+      }
+      
+      // Handle object response directly
+      console.log('📦 Direct object response');
       institutionContractStore.setPagination(response);
       return response;
     } finally {
       loading.value = false; // Ensure loading is set to false after request
     }
   },
-  auto: props.auto,
+  auto: false, // Don't auto-fetch - let parent component control when to fetch
 });
 
 // Debounce the search to prevent too many requests
@@ -66,6 +102,7 @@ watch(
   (newVal) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
+      console.log('🔍 Search changed, fetching:', newVal);
       pagination.send();
     }, 300);
   }
@@ -73,10 +110,11 @@ watch(
 
 watch(
   () => props.status,
-  () => {
+  (newStatus) => {
+    console.log('📊 Status changed to:', newStatus, '- Fetching data');
     pagination.send();
   },
-  { immediate: true }
+  { immediate: false } // Changed to false - don't fetch on initial mount
 );
 
 defineExpose({

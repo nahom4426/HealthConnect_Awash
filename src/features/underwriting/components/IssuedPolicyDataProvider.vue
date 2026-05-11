@@ -10,6 +10,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  refetch: {
+    type: Number,
+    default: 0,
+  },
   status: {
     type: String,
   },
@@ -35,6 +39,13 @@ const pagination = usePagination({
 
 watch(
   () => props.search,
+  () => {
+    pagination.send();
+  }
+);
+
+watch(
+  () => props.refetch,
   () => {
     pagination.send();
   }

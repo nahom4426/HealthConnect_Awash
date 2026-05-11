@@ -14,6 +14,20 @@ export function getMappedActiveProviders(payerInstitutionContractUuid ,query = {
     params: query,
   });
 }
+export function getAlreadyMappedActiveProviders(payerInstitutionContractUuid ,query = {}) {
+  return api.addAuthenticationHeader().get(`/claimconnect/map_contract/providers-mapped-to-contracts/${payerInstitutionContractUuid}`, {
+    params: query,
+  });
+}
+
+/**
+ * Remove a mapped contract
+ * @param {string} mapContractUuid - The UUID of the map contract to remove
+ * @returns {Promise} Response from delete operation
+ */
+export function removeMapContract(mapContractUuid) {
+  return api.addAuthenticationHeader().delete(`/claimconnect/map_contract/${mapContractUuid}`);
+}
 export function getActiveProviders(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/list`, {
     params: query,
@@ -74,4 +88,9 @@ export const mapContracts = (contractMappings) => {
   return api
     .addAuthenticationHeader()
     .post('/claimconnect/map_contract', contractMappings);
+};
+export const deleteMapContract = (mapContractUuid) => {
+  return api
+    .addAuthenticationHeader()
+    .delete(`/claimconnect/map_contract/${mapContractUuid}`);
 };

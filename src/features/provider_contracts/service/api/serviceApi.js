@@ -101,6 +101,12 @@ export function removeService(id) {
   return api.addAuthenticationHeader().delete(`${basePath}/${id}`);
 }
 
+export function undoDeleteService(eligibleServiceUuid) {
+  return api
+    .addAuthenticationHeader()
+    .put(`${basePath}/undoDelete/${encodeURIComponent(eligibleServiceUuid)}`);
+}
+
 // Function to import services
 export function importServices(id = {}, data, config) {
   const qr = getQueryFormObject(id);
@@ -117,4 +123,16 @@ export function downloadServiceTemplate() {
   return api.addAuthenticationHeader().get(`${basePath}/template`, {
     responseType: "blob",
   });
+}
+
+// Function to set service limit usage per year
+export function setServiceLimitUsage(eligibleServiceUuid, limitedPerYear = true, limitedNumber) {
+  const queryParams = new URLSearchParams({
+    limitedPerYear: limitedPerYear.toString(),
+    limitedNumber: limitedNumber.toString()
+  });
+  
+  return api.addAuthenticationHeader().put(
+    `${basePath}/limitUsage/${eligibleServiceUuid}?${queryParams.toString()}`
+  );
 }

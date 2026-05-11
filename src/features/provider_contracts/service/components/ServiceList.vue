@@ -17,6 +17,10 @@ const authStore = useAuthStore();
 const serviceListStore = useServiceListStore();
 const props = defineProps({
   search: String,
+  refetch: {
+    type: Number,
+    default: 0,
+  },
 });
 function remove(id) {
   openModal(
@@ -45,14 +49,16 @@ function remove(id) {
   <div>
     <ServiceListDataProvider
       :search="props.search"
-      v-slot="{ pending, serviceList }"
+      :refetch="props.refetch"
+      v-slot="{ pending, serviceList, currentPage, itemsPerPage, totalPages, totalElements }"
     >
       <Table
         :pending="pending"
         :rows="serviceList"
+        :pagination="{ currentPage, itemsPerPage, totalPages, totalElements }"
         :headers="{
-          head: ['Code', 'Service Name', 'Price (ETB)', 'Status', 'actions'],
-          row: ['itemCode', 'item', 'price', 'status'],
+          head: ['Code', 'Service Name', 'Category', 'Price (ETB)', 'Status', 'actions'],
+          row: ['itemCode', 'item', 'category', 'price', 'status'],
         }"
         :rowCom="ServiceRow"
       >

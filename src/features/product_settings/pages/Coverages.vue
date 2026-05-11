@@ -40,7 +40,7 @@ function viewDetails(packageUuid) {
   <DefaultPage title="Coverage Packages" placeholder="Search packages...">
       <!-- <template #filter>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
+        class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary"
       > 
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
@@ -50,10 +50,10 @@ function viewDetails(packageUuid) {
     <template #add-action>
       <button
         @click.prevent="openModal('CreatePackage')"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+        class="flex gap-2 justify-center items-center px-6 py-4 text-white rounded-md bg-primary"
       >
         <i v-html="icons.plus_circle"></i>
-        <p class="text-base">Add Package</p>
+        <p class="text-base">Add Benefits</p>
       </button>
     </template>
 
@@ -67,34 +67,29 @@ function viewDetails(packageUuid) {
           :pending="pending"
           :headers="{
             head: [
-              'Package Name',
+              'Benefit Name',
               'Category',
-              'Description',
-              'Min Limit',
-              'Max Limit',
+              'Benefit Pooling',
+              'Exclusive Benefit',
               'Gender',
-            
+              'All Services',
               'Status',
               'Actions',
             ],
-            row: [
+            row: [  
               '',
               'packageName',
               'packageCategory',
-              'packageDescription',
-              'minLimit',
-              'maxLimit',
+              'benefit_pooling',
+              'exclusive_benefit',
               'gender',
-             
+             'allServices',
               'status',
             ],
           }"
           :rows="packages"
           :rowCom="PackageStatusRow"
           :pagination="{
-            currentPage,
-            itemsPerPage,
-            totalPages,
             onPageChange: handlePageChange,
             onLimitChange: handleLimitChange,
           }"
@@ -106,9 +101,8 @@ function viewDetails(packageUuid) {
                 'index',
                 'packageName',
                 'packageCategory',
-                'packageDescription',
-                'minLimit',
-                'maxLimit',
+                'benefit_pooling',
+                'exclusive_benefit',
                 'gender',
               
                 'status',
@@ -117,9 +111,8 @@ function viewDetails(packageUuid) {
                 '#',
                 'Benefit Name',
                 'Category',
-                'Description',
-                'Min Limit',
-                'Max Limit',
+                'Benefit Pooling',
+                'Exclusive Benefit',
                 'Gender',
               
                 'Status',

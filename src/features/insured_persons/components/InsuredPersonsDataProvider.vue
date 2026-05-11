@@ -47,7 +47,6 @@ const pagination = usePagination({
       })
     );
 
-    console.log(response)
     const paginated = response?.data || response;
 
     if (paginated?.content) {

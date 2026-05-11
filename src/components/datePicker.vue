@@ -6,6 +6,14 @@ const props = defineProps({
   modelValue: String,
   label: String,
   required: Boolean,
+  min: {
+    type: String,
+    default: undefined,
+  },
+  max: {
+    type: String,
+    default: undefined,
+  },
   placeholder: {
     type: String,
     default: "mm/dd/yyyy",
@@ -34,11 +42,11 @@ const updateValue = (e) => {
 
 <template>
   <div>
-    <label v-if="label" class="block text-sm font-medium text-gray-700 mb-1">
+    <label v-if="label" class="block mb-1 text-sm font-medium text-gray-700">
       {{ label }} <span v-if="required" class="text-red-500">*</span>
     </label>
     <div
-      class="flex items-center bg-[#F6F7FA] rounded-lg px-4 py-3 text-[#75778B] cursor-pointer border border-gray-300"
+      class="flex items-center bg-[#FFFFFF] rounded-md px-4 h-10 text-[#75778B] cursor-pointer border border-gray-300"
       :class="{ 'border-red-500': error }"
       @click="openDatePicker"
     >
@@ -46,16 +54,18 @@ const updateValue = (e) => {
       <input
         ref="inputRef"
         type="date"
-        class="bg-transparent h-7 outline-none flex-1 text-sm appearance-none w-full"
+        class="flex-1 w-full h-7 text-sm bg-transparent appearance-none outline-none"
         :value="modelValue"
         @input="updateValue"
         :placeholder="placeholder"
+        :min="min"
+        :max="max"
       />
     </div>
-    <p v-if="error && errorMessage" class="text-red-500 text-xs mt-1">
+    <p v-if="error && errorMessage" class="mt-1 text-xs text-red-500">
       {{ errorMessage }}
     </p>
-    <p v-else-if="error" class="text-red-500 text-xs mt-1">
+    <p v-else-if="error" class="mt-1 text-xs text-red-500">
       {{ label }} is required
     </p>
   </div>

@@ -20,13 +20,25 @@ const statusOptions = [
 
 <template>
   <Form
-    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+    class="grid grid-cols-1 gap-6 md:grid-cols-2"
     :inner="false"
     id="serviceForm"
     v-slot="{}"
   >
     <!-- First Column -->
     <div class="space-y-6">
+        <div>
+        <Input
+          name="serviceId"
+          validation="required|min:3"
+          label="Service Id"
+          :value="props.services?.serviceId || ''"
+          :attributes="{
+            
+            placeholder: 'e.g. M-BET-2853',
+          }"
+        />
+      </div>
       <div>
         <Input
           name="item"
@@ -75,7 +87,7 @@ const statusOptions = [
       <div class="grid grid-cols-2 gap-4">
         <Input
           name="category"
-          validation="required"
+         
           label="Category"
           :value="props.services?.category || ''"
           :attributes="{
@@ -86,7 +98,7 @@ const statusOptions = [
 
         <Input
           name="subCategory"
-          validation="required"
+         
           label="Sub Category"
           :value="props.services?.subCategory || ''"
           :attributes="{

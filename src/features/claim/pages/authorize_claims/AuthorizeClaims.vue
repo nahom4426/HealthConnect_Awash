@@ -8,30 +8,55 @@ import FilterOnDetector from "@/components/FilterOnDetector.vue";
 import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
-import { ref } from "vue";
+import { ref, watch, computed } from "vue";
 import { ServiceTypes, Status, PaymentStatus, ClaimLevel } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useAuthorizeClaimByInstitutionBatch } from "../../store/authorizeClaimByInstitutionBatchStore";
-
+import AuthorizeClaimRow from "../../components/AuthorizeClaimRow.vue";
+const serviceType= ref("CREDIT");
+const active = ref(ServiceTypes.creditService);
+watch(active, (newActive) => {
+  if (newActive === ServiceTypes.creditService) {
+    serviceType.value = "CREDIT";
+    console.log('🔄 Switched to CREDIT service');
+  } else if (newActive === ServiceTypes.cashService) {
+    serviceType.value = "CASH";
+    console.log('🔄 Switched to CASH service');
+  }
+});
 const institutionUuid = ref();
 const contractUuid = ref();
-const active = ref(ServiceTypes.creditService);
 const store = useAuthorizeClaimByInstitutionBatch();
+const search = ref("");
+
+const tableRowKeys = computed(() => {
+  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
+  return [nameKey, "totalAmount", "claimFromDate", "claimLevel", "claimStatus"];
+});
+
+const tableHeaders = computed(() => {
+  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
+  return {
+    head: [nameHeader, "Total Amount", "Claim Date", "Level", "Status", "Actions"],
+    row: tableRowKeys.value,
+  };
+});
 </script>
 
 <template>
   <ClaimByBatchDataProvider
     :store="store"
     :creditService="active == ServiceTypes.creditService"
-    :status="PaymentStatus.PROCESSED"
-    :level="ClaimLevel.LEVEL3"
+    :status="PaymentStatus.APPROVED"
    :params="{
-      providerUuid: providerUuid,
+      providerUuid: contractUuid,
       institutionUuid: institutionUuid,
+      serviceType
     }"
-    v-slot="{ claims, pending, search }"
+    :search="search"
+    v-slot="{ claims, pending: dataPending, search: paginationSearch }"
   >
-    <DefaultPage v-if="search" v-model="search.value">
+    <DefaultPage v-model="search">
       <template #header>
         <Toogle
           v-model="active"
@@ -58,17 +83,12 @@ const store = useAuthorizeClaimByInstitutionBatch();
       </template>
 
       <Table
-        :pending="pending"
-        :headers="{ head: ['Provider Name','Total Amount','Requested Date','Status','actions' ], row: ['providerName','totalAmount','requestPaymentDate','claimStatus'] }"
-        :cells="{ totalAmount: formatCurrency, requestPaymentDate: secondDateFormat }"
+        :pending="dataPending"
+        :headers="tableHeaders"
         :rows="claims"
-      >
-        <template #actions="{ row }">
-          <Button size="xs" type="elevated">
-            <RouterLink :to="`/authorize_claims/detail/${(row).claimUuid || ''}`">Detail</RouterLink>
-          </Button>
-        </template>
-      </Table>
+        :rowCom="AuthorizeClaimRow"
+        placeholder="No claims to authorize"
+      />
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

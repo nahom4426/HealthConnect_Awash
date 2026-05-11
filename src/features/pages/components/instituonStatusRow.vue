@@ -39,7 +39,9 @@ const props = defineProps({
   onRowClick: {
     type: Function,
     default: () => {}
-  }
+  },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 }
 });
 
 const { addToast } = useToast();
@@ -91,7 +93,7 @@ function getBaseUrl() {
 }
 
 function handleImageError(event) {
-  event.target.src = '/assets/placeholder-logo.png';
+  event.target.src = '/assets/placeholder-logo.png ';
 }
 function handleEdit(row) {
   openModal('EditProvider', { 
@@ -116,7 +118,7 @@ function handleEditWithClose(row) {
     @click.self="onRowClick(row)" 
     class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
   >  
-    <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
+    <td class="p-4 font-semibold text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
 
     <!-- Debug row for specific provider -->
     <!-- <td v-if="row.providerName === 'Addis Hiwot'" class="debug-info p-2 text-xs bg-yellow-50">

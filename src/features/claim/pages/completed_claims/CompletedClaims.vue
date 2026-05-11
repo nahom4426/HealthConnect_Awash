@@ -8,119 +8,101 @@ import FilterOnDetector from "@/components/FilterOnDetector.vue";
 import SearchSelect from "@/components/SearchSelect.vue";
 import { getProviders } from "@/features/providers/api/providerApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
-import { ref } from "vue";
-import { PaymentStatus, ServiceTypes } from "@/types/interface";
+import { ref, watch, computed } from "vue";
+import { PaymentStatus, ServiceTypes, Status } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useCompletedClaimByInstitutionBatch } from "../../store/completedClaimByInstitutionBatchStore";
-import { openModal } from '@customizer/modal-x';
-import CompletedPaymentModal from '@/features/claim/modal/CompletedPaymentModal.mdl.vue';
-
+import CompletedClaimRow from "../../components/CompletedClaimRow.vue";
+const serviceType= ref("CREDIT");
+const active = ref(ServiceTypes.creditService);
+watch(active, (newActive) => {
+  if (newActive === ServiceTypes.creditService) {
+    serviceType.value = "CREDIT";
+    console.log('🔄 Switched to CREDIT service');
+  } else if (newActive === ServiceTypes.cashService) {
+    serviceType.value = "CASH";
+    console.log('🔄 Switched to CASH service');
+  }
+});
 const institutionUuid = ref();
 const providerUuid = ref();
-
-const active = ref(ServiceTypes.creditService);
+const search = ref("");
 
 const store = useCompletedClaimByInstitutionBatch();
 
-const openPaymentModal = (row) => {
-  console.log('Row data:', row); // Debug: Check what data we have in the row
-  
-  if (!row.claimUuid) {
-    console.error('claimUuid is missing in row data');
-    if (typeof toasted === 'function') {
-      toasted(false, 'Error: Missing claim information');
-    }
-    return;
-  }
+const tableRowKeys = computed(() => {
+  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
+  return [nameKey, "totalAmount", "claimFromDate", "claimLevel", "claimStatus"];
+});
 
-  openModal('ConfirmPayment', {
-    title: 'Request Payment',
-    message: `Are you sure you want to request payment for this claim?`,
-    claimUuid: row.claimUuid,
-    batchCode: row.batchCode || '',
-    comment: `Payment requested for claim ${row.claimNumber || row.claimUuid}`,
-    onConfirm: () => {
-      store.fetchClaims(); // Refresh the claims list
-      if (typeof toasted === 'function') {
-        toasted(true, 'Payment request submitted successfully');
-      }
-    },
-    onCancel: () => {
-      console.log('Payment request cancelled');
-    }
-  });
-};
+const tableHeaders = computed(() => {
+  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
+  return {
+    head: [nameHeader, "Total Amount", "Claim Date", "Level", "Status", "Actions"],
+    row: tableRowKeys.value,
+  };
+});
 </script>
 
 <template>
-  <ClaimByBatchDataProvider :store="store" :status="PaymentStatus.APPROVED"
-    :creditService="active == ServiceTypes.creditService" :params="{
+  <ClaimByBatchDataProvider
+    :store="store"
+    :status="PaymentStatus.COMPLETED"
+    :creditService="active == ServiceTypes.creditService"
+    :params="{
       providerUuid: providerUuid,
       institutionUuid: institutionUuid,
-    }" v-slot="{ claims, pending, search }">
-    <DefaultPage v-model="search.value">
+      serviceType
+    }"
+    :search="search"
+    v-slot="{ claims, pending: dataPending, search: paginationSearch }"
+  >
+    <DefaultPage v-model="search">
       <template #header>
-        <Toogle v-model="active" :items="[
-          {
-            name: ServiceTypes.creditService,
-          },
-          {
-            name: ServiceTypes.cashService,
-          },
-        ]" />
+        <Toogle
+          v-model="active"
+          :items="[
+            {
+              name: ServiceTypes.creditService,
+            },
+            {
+              name: ServiceTypes.cashService,
+            },
+          ]"
+        />
         <FilterOnDetector :watch="[institutionUuid, providerUuid]">
-          <SearchSelect placeholder="Filter by Institution"
-            :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })" :selectCb="(result) => {
+          <SearchSelect
+            placeholder="Filter by Institution"
+            :searchCb="(data) => getInstitutionsPolicyByStatus({...data, status: Status.ACTIVE})"
+            :selectCb="(result) => {
               institutionUuid.value = result?.institutionUuid || null;
-            }" :option="{
+            }"
+            :option="{
               label: 'institutionName',
               value: 'institutionUuid',
-            }" />
-          <SearchSelect v-if="ServiceTypes.creditService == active" placeholder="Filter by a Provider"
-            :searchCb="(data) => getProviders({ ...data, status: Status.ACTIVE })" :selectCb="(result) => {
+            }"
+          />
+          <SearchSelect
+            v-if="ServiceTypes.creditService == active"
+            placeholder="Filter by a Provider"
+            :searchCb="(data) => getProviders({...data, status: Status.ACTIVE})"
+            :selectCb="(result) => {
               providerUuid.value = result?.providerUuid || null;
-            }" :option="{
+            }"
+            :option="{
               label: 'providerName',
               value: 'providerUuid',
-            }" />
+            }"
+          />
         </FilterOnDetector>
       </template>
-      <Table :pending="pending" :headers="{
-        head: [
-          'Provider Name',
-          'Total Amount',
-          // 'Requested Date',
-          'Status',
-          'Actions',
-        ],
-        row: [
-          'providerName',
-          'totalAmount',
-          // 'requestPaymentDate',
-          'claimStatus',
-        
-        ],
-      }" :cells="{
-          totalAmount: formatCurrency,
-          requestPaymentDate: secondDateFormat,
-          claimStatus: (status) => status || 'APPROVED',
-        }" :rows="claims">
-        <template #actions="{ row }">
-          <div class="flex gap-2 ml-auto ">
-            <Button size="xs" class="bg-blue-600 text-white hover:bg-blue-700">
-              <RouterLink :to="active === ServiceTypes.creditService ?
-                `/completed_claims/detail/${row.claimUuid}` :
-                `/completed_claims/cash_detail/${encodeURIComponent(row.batchCode)}`" class=" text-sm ">
-                Details
-              </RouterLink>
-            </Button>
-
-            <Button size="xs" class="bg-green-600 text-white hover:bg-green-700" @click="openPaymentModal(row)">
-              Pay request
-            </Button>
-          </div>
-        </template>
-      </Table>
+      <Table
+        :pending="dataPending"
+        :headers="tableHeaders"
+        :rows="claims"
+        :rowCom="CompletedClaimRow"
+        placeholder="No completed claims found"
+      />
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

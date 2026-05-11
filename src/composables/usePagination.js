@@ -19,12 +19,13 @@ export function usePagination(options) {
   const totalElements = ref(0);
 
   const req = useApiRequest();
+  const localData = ref([]); // Store data locally when no store is provided
 
   const searching = ref(false);
   const searchPagination = useTablePagination(perPage.value);
   const pagination = useTablePagination(perPage.value);
 
-  const toBackendPage = (frontendPage) => frontendPage - 1;
+  const toBackendPage = (frontendPage) => frontendPage ;
   const toFrontendPage = (backendPage) => backendPage + 1;
 
   // Provide pagination data to child components
@@ -57,47 +58,66 @@ export function usePagination(options) {
   function fetch() {
     if (!paginationOptions.value.cb) return;
 
+    const backendPage = search.value ? Number(currentPage.value) : toBackendPage(currentPage.value);
     const params = {
-      page: toBackendPage(currentPage.value),
+      page: backendPage,
       limit: perPage.value,
       search: search.value,
     };
 
-    req.send(
+    return req.send(
       () => paginationOptions.value.cb(params),
       (response) => {
-        const data = response?.data || response;
-        
-        console.log('API Response:', data);
-        
-        if (data?.content) {
+        let data = response;
+        if (data && typeof data === 'object' && Object.prototype.hasOwnProperty.call(data, 'data')) {
+          data = data.data;
+        }
+        if (data && typeof data === 'object' && Object.prototype.hasOwnProperty.call(data, 'data')) {
+          const nested = data.data;
+          if (
+            (nested && typeof nested === 'object' && Object.prototype.hasOwnProperty.call(nested, 'content')) ||
+            Array.isArray(nested)
+          ) {
+            data = nested;
+          }
+        }
+
+        const isPageable =
+          !!data &&
+          typeof data === 'object' &&
+          !Array.isArray(data) &&
+          (
+            Object.prototype.hasOwnProperty.call(data, 'content') ||
+            (data.data && Object.prototype.hasOwnProperty.call(data.data, 'content'))
+          );
+
+        // Pageable response: even if content is null, treat it as an empty list
+        if (isPageable) {
+          const container = Object.prototype.hasOwnProperty.call(data, 'content') ? data : data.data;
+          const content = Array.isArray(container?.content) ? container.content : [];
           if (paginationOptions.value.store) {
             // Store the data AND the pagination metadata in the store
-            paginationOptions.value.store.set(data.content);
+            paginationOptions.value.store.set(content);
             
             // Store pagination metadata in the store so it persists
             if (typeof paginationOptions.value.store.setPaginationMeta === 'function') {
               paginationOptions.value.store.setPaginationMeta({
-                totalElements: data.totalElements || data.content.length,
-                totalPages: data.totalPages || 1,
-                currentPage: data.page || 0
+                totalElements: typeof container.totalElements === 'number' ? container.totalElements : content.length,
+                totalPages: container.totalPages || 1,
+                currentPage: container.page || 0
               });
             }
+          } else {
+            // Store locally if no store
+            localData.value = content;
           }
           
           // Update the reactive totals for UI
-          totalPages.value = data.totalPages || 1;
-          totalElements.value = data.totalElements || data.content.length;
+          totalPages.value = container.totalPages || 1;
+          totalElements.value = typeof container.totalElements === 'number' ? container.totalElements : content.length;
           
-          const backendPage = data.page || 0;
-          currentPage.value = toFrontendPage(backendPage);
-          
-          console.log('Pagination state:', {
-            backendPage,
-            frontendPage: currentPage.value,
-            totalPages: totalPages.value,
-            totalElements: totalElements.value
-          });
+          // Don't update currentPage from backend response - keep the page we requested
+          // The backend's page field is unreliable, so we trust what we sent
         } else if (Array.isArray(data)) {
           if (paginationOptions.value.store) {
             paginationOptions.value.store.set(data);
@@ -110,14 +130,32 @@ export function usePagination(options) {
                 currentPage: 0
               });
             }
+          } else {
+            // Store locally if no store
+            localData.value = data;
           }
           totalElements.value = data.length;
+          totalPages.value = 1;
+          currentPage.value = 1;
+        } else if (data && typeof data === 'object') {
+          const fallbackList =
+            (Array.isArray(data.items) && data.items) ||
+            (Array.isArray(data.results) && data.results) ||
+            (Array.isArray(data.content) && data.content) ||
+            [];
+
+          if (paginationOptions.value.store) {
+            paginationOptions.value.store.set(fallbackList);
+          } else {
+            localData.value = fallbackList;
+          }
+
+          totalElements.value = fallbackList.length;
           totalPages.value = 1;
           currentPage.value = 1;
         }
       },
       (error) => {
-        console.error('Pagination fetch error:', error);
         totalElements.value = 0;
         totalPages.value = 1;
         currentPage.value = 1;
@@ -127,20 +165,20 @@ export function usePagination(options) {
 
   function send() {
     currentPage.value = 1;
-    fetch();
+    return fetch();
   }
 
   function next() {
     if (currentPage.value < totalPages.value) {
       currentPage.value += 1;
-      fetch();
+      return fetch();
     }
   }
 
   function previous() {
     if (currentPage.value > 1) {
       currentPage.value -= 1;
-      fetch();
+      return fetch();
     }
   }
 
@@ -161,7 +199,6 @@ export function usePagination(options) {
         if (meta) {
           storeTotalElements = meta.totalElements || len;
           storeTotalPages = meta.totalPages || Math.max(1, Math.ceil(storeTotalElements / perPage.value));
-          console.log('Found pagination meta in store:', meta);
         }
       }
       
@@ -173,13 +210,6 @@ export function usePagination(options) {
       if (currentPage.value < 1 || currentPage.value > totalPages.value) {
         currentPage.value = 1;
       }
-      
-      console.log('Hydrated from store:', {
-        storeItems: len,
-        totalElements: totalElements.value,
-        totalPages: totalPages.value,
-        currentPage: currentPage.value
-      });
     }
   }
 
@@ -213,7 +243,7 @@ export function usePagination(options) {
       if (paginationOptions.value.store) {
         return paginationOptions.value.store.getAll();
       }
-      return [];
+      return localData.value;
     }),
     error: req.error,
     pending: req.pending,

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import Button from "@/components/Button.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
 import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
+import IssuedQuotationRow from "@/features/quotation/components/IssuedQuotationRow.vue";
+import { savedIssueQuotation } from '../api/quotationApi';
+import { toasted } from "@/utils/utils";
 
 type IssuedQuotationRow = {
   quotationUuid: string
@@ -22,12 +24,33 @@ type IssuedQuotationRow = {
 
 const rows = ref<IssuedQuotationRow[]>([])
 const router = useRouter()
+const isAmending = ref(false)
+
+async function handleAmend(quotationUuid: string) {
+  if (!quotationUuid) return;
+  
+  isAmending.value = true;
+  try {
+    await savedIssueQuotation(quotationUuid, { quotationUuid });
+    toasted(true, 'Quotation amended successfully');
+    router.push({ 
+      name: 'GenerateQuotation',
+      query: { quotationUuid }
+    });
+  } catch (error: any) {
+    const errorMessage = error?.response?.data?.message || 'Failed to amend quotation';
+    toasted(false, errorMessage);
+  } finally {
+    isAmending.value = false;
+  }
+}
 </script>
 <template>
   <DefaultPage>
     <QuotationDataProviderByStatus v-slot="{ quotations, pending }" :status="'ISSUED'">
       <Table
         :pending="pending"
+        :rowCom="IssuedQuotationRow"
         :headers="{
           head: [
             'Quotation Code',
@@ -56,13 +79,6 @@ const router = useRouter()
         }"
         :rows="quotations"
       >
-        <template #actions="{ row }">
-          <Button
-            type="link"
-            size="xs"
-            @click.prevent="router.push({ name: 'ViewIssuedQuotation', params: { quotationUuid: row.quotationUuid } })"
-          >View</Button>
-        </template>
       </Table>
     </QuotationDataProviderByStatus>
   </DefaultPage>

@@ -33,7 +33,7 @@ export function addEligibleServices(packageUuid, payload) {
 }
 
 export function getFamilyLevelPackages() {
-  return api.addAuthenticationHeader().get('${path}/claimconnect/familyLevelPackages');
+  return api.addAuthenticationHeader().get('${path}/familyLevelPackages');
 }
 
 export function getActivePackages() {
@@ -44,9 +44,34 @@ export function createFamilyLevelPackage(data) {
   return api.addAuthenticationHeader().post('${path}/createFamilyLevelPackage', data);
 }
 
-export function getPackageDropdown(insuredPersonUuid) {
-  return api.addAuthenticationHeader().get(`${path}/dropdown/${insuredPersonUuid}`);
+export function getPackageDropdown(insuredPersonUuid, dependantUuid = null) {
+  let url = `${path}/dropdown/${insuredPersonUuid}`;
+  if (dependantUuid) {
+    url += `?dependantUuid=${dependantUuid}`;
+  }
+  return api.addAuthenticationHeader().get(url);
 }
-export function addPackages(insuredPersonUuid, payload) {
-  return api.addAuthenticationHeader().put(`/claimconnect/insuredperson/addPackages/${insuredPersonUuid}`, payload);
+export function createPackages(query, payload) {
+  return api
+    .addAuthenticationHeader()
+    .post(`/claimconnect/serviceQuoted/benefit`, payload, { params: query });
+}
+export function addPackages(query, payload) {
+  const { payerInstitutionContractUuid, ...params } = query || {};
+  return api
+    .addAuthenticationHeader()
+    .post(
+      `/claimconnect/benefit/createBenefitUsage/${payerInstitutionContractUuid}`,
+      payload,
+      { params }
+    );
+}
+
+export function createBenefitsForAllInsured(institutionUuid, payload) {
+  return api
+    .addAuthenticationHeader()
+    .post(
+      `/claimconnect/benefit/createBenefitsForAllInsured/${institutionUuid}`,
+      payload
+    );
 }

@@ -9,3 +9,17 @@ export function login(data) {
     userName: data.email,
   });
 }
+
+export function forgotPassword(email) {
+  return api.post(`${path}/forgot-password`, {
+    email,
+  });
+}
+
+export function checkResetCodeAndSetPassword(data) {
+  return api.post(`${path}/password/checkresetcode`, {
+    passwordResetCode: data.passwordResetCode,
+    newPassword: data.newPassword,
+    confirmPassword: data.confirmPassword,
+  });
+}

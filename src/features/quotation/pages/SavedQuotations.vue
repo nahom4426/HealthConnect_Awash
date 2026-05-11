@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import Button from "@/components/Button.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
 import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
+import SavedQuotationStatusRow from "@/features/quotation/components/SavedQuotationStatusRow.vue";
 
 type SavedQuotationRow = {
   quotationUuid: string
@@ -53,12 +53,8 @@ const rows = ref<SavedQuotationRow[]>([])
           createdDate: (_: any, r: any) => new Date(r.createdDate).toLocaleDateString(),
         }"
         :rows="quotations"
+        :rowCom="SavedQuotationStatusRow"
       >
-        <template #actions="{ row }">
-          <Button type="info" size="xs">
-            <RouterLink :to="{ name: 'ViewSavedQuotation', params: { quotationUuid: row.quotationUuid } }">View</RouterLink>
-          </Button>
-        </template>
       </Table>
     </QuotationDataProviderByStatus>
   </DefaultPage>

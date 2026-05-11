@@ -744,15 +744,11 @@ export const address1sBySubCity: Record<string, string[]> = {
 
 // Helper function to get cities based on region
 export function getCitiesByRegion(region: string): string[] {
-  console.log('Getting cities for region:', region);
-  console.log('Available regions:', Object.keys(citiesByRegion));
   return citiesByRegion[region] || [];
 }
 
 // Helper function to get sub-cities based on city
 export function getSubCitiesByCity(city: string): string[] {
-  console.log('Getting sub-cities for city:', city);
-  console.log('Available cities:', Object.keys(subCitiesByCity));
   return subCitiesByCity[city] || [];
 }
 

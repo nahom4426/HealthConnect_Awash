@@ -2,7 +2,11 @@
 import icons from "@/utils/icons";
 import {
   type PropType,
+  computed,
+  useAttrs,
 } from "vue";
+
+ const attrs = useAttrs();
 
 const props = defineProps({
   pending: {
@@ -15,21 +19,28 @@ const props = defineProps({
   },
   type: {
     type: String as PropType<
-      | "primary" | "secondary" | "link" | "elevated" | "danger" | "edge-primary"
-      | "success" | "warning" | "info" | "indigo" | "purple" | "emerald" | "gray"
+      "primary" | "secondary" | "link" | "elevated" | "danger" | "edge-primary"
     >,
   },
+});
+
+const nativeButtonType = computed(() => {
+  const fromHtmlType = (attrs as any)?.["html-type"] || (attrs as any)?.htmlType;
+  const fromType = (attrs as any)?.type;
+  return fromHtmlType || fromType || "button";
 });
 </script>
 <template>
   <button
+    v-bind="attrs"
     v-ripple
+    :type="nativeButtonType"
     :class="[$style?.[size], $style?.[type ? type : '']]"
-    class="relative btn flex items-center justify-center rounded capitalize"
+    class="flex relative justify-center items-center capitalize rounded btn"
   >
     <slot></slot>
     <p
-      class="absolute bg-inherit backdrop-blur-xl inset-0 z-20 grid place-items-center"
+      class="grid absolute inset-0 z-20 place-items-center backdrop-blur-xl bg-inherit"
       v-if="pending"
       v-html="icons.spinner"
     />
@@ -115,33 +126,5 @@ const props = defineProps({
 
 .edge-primary {
   @apply border border-primary text-primary shadow-md;
-}
-
-.success {
-  @apply bg-green-600 text-white shadow-md hover:bg-green-500;
-}
-
-.warning {
-  @apply bg-amber-500 text-white shadow-md hover:bg-amber-400;
-}
-
-.info {
-  @apply bg-blue-500 text-white shadow-md hover:bg-blue-400;
-}
-
-.indigo {
-  @apply bg-indigo-600 text-white shadow-md hover:bg-indigo-500;
-}
-
-.purple {
-  @apply bg-purple-600 text-white shadow-md hover:bg-purple-500;
-}
-
-.emerald {
-  @apply bg-emerald-600 text-white shadow-md hover:bg-emerald-500;
-}
-
-.gray {
-  @apply bg-gray-600 text-white shadow-md hover:bg-gray-500;
 }
 </style>

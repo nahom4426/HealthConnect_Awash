@@ -2,10 +2,10 @@
 import { usePagination } from "@/composables/usePagination";
 import { watch, onMounted, computed, ref } from "vue";
 import { removeUndefined } from "@/utils/utils";
-import { getGroup } from "../api/groupServiceApi";
 import { useAuthStore } from "@/stores/auth";
 import { useRoute } from "vue-router";
 import { useFamily } from "../store/FamilyStore";
+import { getAllServiceQuoted } from "../api/groupServiceApi";
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -33,14 +33,20 @@ const itemsPerPage = ref(25);
 const totalPages = ref(1);
 const totalItems = ref(0);
 
+const loadingMore = ref(false);
+const hasMore = computed(() => currentPage.value < totalPages.value);
+
 // Enhanced pagination setup
 const pagination = usePagination({
   auto: false,
   cb: async (data) => {
-    const response = await getGroup(
-      route.params.id || authStore.auth?.user?.payerUuid,
+    const payerInstitutionContractUuid = route.params.id || props.id;
+    const response = await getAllServiceQuoted(
+      payerInstitutionContractUuid,
       removeUndefined({
         ...data,
+        sortBy: 'id',
+        sortDirection: 'desc',
       })
     );
 
@@ -48,7 +54,7 @@ const pagination = usePagination({
 
     if (paginated?.content) {
       familyStore.setFamilyBenefits(paginated.content);
-      currentPage.value = paginated.page ?? 1;
+      currentPage.value = (paginated.page ?? 0) + 1;
       itemsPerPage.value = paginated.size ?? 25;
       totalPages.value = paginated.totalPages ?? 1;
       totalItems.value = paginated.totalElements ?? paginated.content.length;
@@ -60,6 +66,15 @@ const pagination = usePagination({
   },
 });
 
+watch(
+  () => pagination.pending.value,
+  (isPending) => {
+    if (!isPending && loadingMore.value) {
+      loadingMore.value = false;
+    }
+  }
+);
+
 // Watch for search changes with debounce
 watch(
   () => props.search,
@@ -67,6 +82,14 @@ watch(
     pagination.send();
   }
 );
+
+function loadMore() {
+  if (loadingMore.value) return;
+  if (!hasMore.value) return;
+
+  loadingMore.value = true;
+  pagination.next();
+}
 
 // Initialize on mount
 onMounted(() => {
@@ -82,6 +105,7 @@ onMounted(() => {
 // Expose refresh functionality to parent
 defineExpose({
   refresh: pagination.send,
+  loadMore,
   setPage: (page) => {
     currentPage.value = page;
     pagination.send();
@@ -100,6 +124,8 @@ defineExpose({
     :group="familyStore.family"
     :pending="pagination.pending.value"
     :error="pagination.error.value"
+    :loadingMore="loadingMore"
+    :hasMore="hasMore"
     :currentPage="currentPage"
     :itemsPerPage="itemsPerPage"
     :totalPages="totalPages"

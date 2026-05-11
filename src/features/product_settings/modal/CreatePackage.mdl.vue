@@ -28,6 +28,12 @@ const req = useApiRequest();
     status: values.status || "ACTIVE",
     gender: values.gender,
     packageCode: generatePackageCode(values.packageCategory),
+    allServices: values.allServices === 'true' || values.allServices === true,
+     exclusive_benefit: values.exclusive_benefit === 'true' || values.exclusive_benefit === true,
+    benefit_pooling: values.benefit_pooling === 'true' || values.benefit_pooling === true,
+    benefit_pooling_from: (values.benefit_pooling === 'true' || values.benefit_pooling === true)
+      ? (values.benefit_pooling_from || null)
+      : null,
   };
 
   // Validate min/max
@@ -79,7 +85,7 @@ function generatePackageCode(category) {
       />
 
       <template #bottom>
-        <div class="flex justify-end gap-3 w-full p-4 border-t border-gray-200">
+        <div class="flex gap-3 justify-end p-4 w-full border-t border-gray-200">
           <Button
             @click="closeModal"
             type="secondary"
@@ -93,7 +99,7 @@ function generatePackageCode(category) {
             @click.prevent="submit(handleCreate)"
             type="primary"
             size="lg"
-            class="bg-blue-600 hover:bg-blue-700 text-white"
+            class="text-white bg-blue-600 hover:bg-blue-700"
           >
             Create Package
           </Button>

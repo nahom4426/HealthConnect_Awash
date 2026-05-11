@@ -48,7 +48,7 @@ watch(() => props.modelValue, () => {
             opacity: attributes?.placeholder && !value ? .6 : 1
           }"
           :ref="setRef"
-          class="appearance-none flex-1 text-text-clr h-full text-sm"
+          class="appearance-none flex-1 text-text-clr h-full text-sm px-2 bg-transparent outline-none"
         >
           <option
             selected

@@ -95,7 +95,7 @@ onMounted(fetchContracts);
         }"
         :rows="filteredContracts"
         :rowCom="ContractStatusRow"
-        :loading="isLoading"
+        :pending="isLoading"
         @row-click="navigateToServicesPage"
       >
         <template #row>

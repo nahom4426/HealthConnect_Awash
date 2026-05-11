@@ -20,16 +20,33 @@ const formDataProvider = ref();
 const insuredStore = insuredMembers();
 const authStore = useAuthStore();
 
+function normalizeEmptyToNull(value) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (value instanceof File) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "" ? null : value;
+  }
+  return value;
+}
+
+function normalizePayload(payload) {
+  const normalized = {};
+  for (const [key, value] of Object.entries(payload)) {
+    normalized[key] = normalizeEmptyToNull(value);
+  }
+  return normalized;
+}
+
 async function handleSubmit(formValues) {
   try {
     pending.value = true;
 
     // Validate required fields
     const requiredFields = [
-     
       "firstName",
       "fatherName",
-      "idNumber",
     ];
 
     const missingFields = requiredFields.filter((field) => !formValues[field]);
@@ -39,29 +56,29 @@ async function handleSubmit(formValues) {
     }
 
     // Prepare the insured data according to backend expectations
-    const insuredPayload = {
-      email: formValues.email || "",
-      institutionUuid: formValues.institutionUuid || institutionUuid || "", // Add if required
-      payerInstitutionContractUuid: formValues.payerUuid || payerInstitutionContractUuid || "", // Assuming this is the correct mapping
+    const insuredPayload = normalizePayload({
+      email: formValues.email,
+      institutionUuid: formValues.institutionUuid || institutionUuid || null, // Add if required
+      payerInstitutionContractUuid: payerInstitutionContractUuid || null, // Assuming this is the correct mapping
       premium: 0, // Default value as per backend
       title: "string", // Default or from formValues if available
       firstName: formValues.firstName,
       fatherName: formValues.fatherName,
-      grandFatherName: formValues.grandFatherName || "",
-      birthDate: formValues.birthDate ? new Date(formValues.birthDate).toISOString() : "",
+      grandFatherName: formValues.grandFatherName,
+      birthDate: formValues.birthDate ? new Date(formValues.birthDate).toISOString() : null,
       phone: formValues.phone || null,
       branchOffice: "string", // Default or from formValues
-      position: formValues.position || "",
-      idNumber: formValues.idNumber,
-      insuranceId: formValues.insuranceId || "", // Add if required
-      address1: formValues.woreda || "",
-      address2: formValues.city || "",
-      address3: formValues.subcity || "",
+      position: formValues.position,
+      idNumber: formValues.idNumber || null,
+      insuranceId: formValues.insuranceId || null, // Add if required
+      address1: formValues.woreda,
+      address2: formValues.city,
+      address3: formValues.subcity,
       state: formValues.state || "Addis Ababa",
       country: formValues.country || "Ethiopia",
       status: formValues.status || "ACTIVE",
-      gender: formValues.gender || ""
-    };
+      gender: formValues.gender || "Male"
+    });
 
     // Always send multipart FormData like Provider: 'insured' JSON + optional 'photo'
     const formData = new FormData();
@@ -90,7 +107,7 @@ async function handleSubmit(formValues) {
     }
   } catch (error) {
     console.error("Submission error:", error);
-    toasted(false, "Failed to submit form", error.message);
+    // toasted(false, "Failed to submit form", error.message);
   } finally {
     pending.value = false;
   }

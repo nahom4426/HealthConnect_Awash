@@ -5,6 +5,7 @@ import FamilyDataProvider from "../components/FamilyDataProvider.vue";
 // import FamilyRow from "../components/FamilyRow.vue";
 import Table from "@/components/Table.vue";
 import FamilyRow from "../components/familyRow.vue";
+import { useRoute } from "vue-router";
 
 const props = defineProps({
   search: String,
@@ -12,7 +13,8 @@ const props = defineProps({
 
 const dataProvider = ref();
 const auth = useAuthStore();
-const institutionId = ref(auth.auth?.user?.payerUuid || "");
+const route = useRoute();
+const institutionId = ref(route.params.id || route.params.payerInstitutionContractUuid || auth.auth?.user?.payerUuid || "");
 
 function remove(allowedUuid) {
   console.log("Removing package:", allowedUuid);
@@ -23,6 +25,12 @@ const loadMore = () => {
     dataProvider.value.loadMore();
   }
 };
+
+function handleRefetch() {
+  if (dataProvider.value?.refresh) {
+    dataProvider.value.refresh();
+  }
+}
 </script>
 
 <template>
@@ -41,22 +49,20 @@ const loadMore = () => {
       :headers="{
         head: [
           'Plan Type',
-          'Number of Packages',
-          'Max Benefit (Employee)',
-          'Max Allowed Dependant Age',
-          'Max Allowed Dependants',
-          'Max Benefit (Children)',
-          'Max Benefit (Spouse)',
+          'Benefits',
+          'Sum Assured',
+          'Number Of Insured',
+          'Number Of Dependants',
+         
           'Actions',
         ],
         row: [
           'planType',
-          'packages',
-          'maxBenefitForEmployee',
-          'maxAllowedDependantAge',
-          'maxAllowedDependants',
-          'maxBenefitForChildren',
-          'maxBenefitForSpouse',
+          'packageName',
+          'coverage',
+          'numberOfInsured',
+          'numberOfDependants',
+         
         ],
       }"
       :rows="group"
@@ -67,24 +73,23 @@ const loadMore = () => {
           :rowData="group"
           :rowKeys="[
             'planType',
-            'packages',
-            'maxBenefitForEmployee',
-            'maxAllowedDependantAge',
-            'maxAllowedDependants',
-            'maxBenefitForChildren',
-            'maxBenefitForSpouse',
+            'packageName',
+            'coverage',
+            'numberOfInsured',
+            'numberOfDependants',
+           
           ]"
           :headKeys="[
             'Plan Type',
-            'Number of Packages',
-            'Max Benefit (Employee)',
-            'Max Allowed Dependant Age',
-            'Max Allowed Dependants',
-            'Max Benefit (Children)',
-            'Max Benefit (Spouse)',
+            'Benefits',
+            'Sum Assured',
+            'Number Of Insured',
+            'Number Of Dependants',
+           
             'Actions',
           ]"
           :onRemove="remove"
+          :onRefetch="handleRefetch"
         />
       </template>
     </Table>

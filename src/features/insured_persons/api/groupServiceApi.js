@@ -4,6 +4,7 @@ import { getQueryFormObject } from "@/utils/utils";
 const api = new ApiService();
 const path = "/dependant";
 const path1 = "/claimconnect/insured-service";
+const path2 = "/claimconnect/serviceQuoted";
 
 export function addServiceToGroup(id, data) {
   return api
@@ -45,4 +46,54 @@ export function addMembersToGroup(id, data) {
   return api
     .addAuthenticationHeader()
     .put(`${path1}/mapInsureds/${id}`, data);
+}
+
+export function createServiceQuotedBenefits(payerInstitutionContractUuid, data) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path2}/benefit`, data, {
+      params: { payerInstitutionContractUuid },
+    });
+}
+
+export function updateServiceQuotedBenefit(serviceQuotedUuid, payerInstitutionContractUuid, data) {
+  return api
+    .addAuthenticationHeader()
+    .put(`${path2}/benefit/${serviceQuotedUuid}`, data, {
+      params: { payerInstitutionContractUuid },
+    });
+}
+
+export function getAllServiceQuoted(payerInstitutionContractUuid, query = {}) {
+  return api.addAuthenticationHeader().get(`${path2}/all`, {
+    params: {
+      payerInstitutionContractUuid,
+      page: query.page,
+      limit: query.limit,
+      sortBy: query.sortBy,
+      sortDirection: query.sortDirection,
+      search: query.search,
+    },
+  });
+}
+
+export function getServiceQuotedByUuid(serviceQuotedUuid) {
+  return api.addAuthenticationHeader().get(`${path2}/${serviceQuotedUuid}`);
+}
+
+export function addInsuredsToServiceQuotedBenefit(serviceQuotedUuid, data) {
+  return api
+    .addAuthenticationHeader()
+    .put(`${path2}/benefit/addInsureds${serviceQuotedUuid}`, data);
+}
+
+export function getMappedInsuredsForServiceQuotedBenefit(serviceQuotedUuid, query = {}) {
+  return api.addAuthenticationHeader().get(`${path2}/getAllInsureds/${serviceQuotedUuid}`, {
+    params: {
+      page: query.page,
+      limit: query.limit,
+      sortBy: query.sortBy,
+      sortDirection: query.sortDirection,
+    },
+  });
 }

@@ -13,9 +13,8 @@ import { getInstitution } from '../api/underwritingApi';
 
 const router = useRouter();
 const route = useRoute();
-const { addToast } = useToast();
-const underwritingStore = useUnderwriting();
-
+const { addToast } = useToast(); 
+const underwritingStore = useUnderwriting(); 
 const dataProvider = ref();
 const institutionName = ref('');
 const loading = ref(false);
@@ -64,19 +63,19 @@ const handleRefetch = () => {
 
 <template>
   <DefaultPage :title="`${institutionName} Membership Category`" placeholder="Search contracts...">
-    <template #filter>
+    <!-- <template #filter>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-whote"
+        class="flex gap-2 justify-center items-center px-6 py-4 rounded-md text-primary bg-whote"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
-    </template>
+    </template> -->
 
     <!-- <template #add-action>
       <button
         @click="openModal('CreateInstitutionContract', { institutionUuid: route.params.id, onRefetch: handleRefetch })"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+        class="flex gap-2 justify-center items-center px-6 py-4 text-white rounded-md bg-primary"
       >
         <i v-html="icons.plus_circle"></i>
         <p class="text-base">Add Category</p>
@@ -92,67 +91,38 @@ const handleRefetch = () => {
   :search="search"
   v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages }"
 >
-  {{ console.log('Pending state:', pending) }}
-  {{ console.log('Contracts data:', contracts) }}
-  <!-- rest of your template -->
+
         <Table
           :pending="pending"
           :headers="{
             head: [ 
-         
+        'Institution Name',
               'Description',
               // 'Benefit',
               // 'Premium',
-              'Effective Date',
               'Status',
               'Actions',
             ],
             row: [
               '',
-              
+              'institutionName',
               'contractName',
               // 'benefit',
               // 'premium', 
-              'dateRange',
               'status',
             ],
           }"
           :rows="contracts"
           :rowCom="amendStatusRow"
+          :rowComProps="{
+            showActionButtons: true
+          }"
           :pagination="{
-            currentPage,
-            itemsPerPage,
-            totalPages,
             onPageChange: handlePageChange,
             onLimitChange: handleLimitChange,
           }"
         >
-          <template #row>
-            <amendStatusRow
-              :rowData="contracts"
-              :rowKeys="[
-                'index',
-                'contractCode',
-                'contractName',
-                // 'benefit',
-                // 'premium',
-                'dateRange',
-                'status',
-              ]"
-              :headKeys="[
-                '#',
-                'Category Code',
-                'Description',
-                'Effective Date',
-                // 'Benefit',
-                // 'Premium',
-                'Status',
-                'Actions',
-              ]"
-              :institutionUuid="route.params.id"
-              :onRowClick="(row) => {}"
-            />
-          </template>
+          
         </Table>
       </IssuedContractsDataProvider>
     </template>

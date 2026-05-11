@@ -27,12 +27,12 @@ function createContract({ values }) {
   const contractData = {
     institutionUuid: props.data.institutionUuid || route.params.id,
     contractName: values.contractName,
-    contractCode: values.contractCode,
+    policyNumber: values.policyNumber,
     benefit: parseFloat(values.benefit) || 0,
     premium: parseFloat(values.premium) || 0,
     beginDate: values.beginDate,
     endDate: values.endDate,
-    quotationUuid: values.quotationUuid || "string",
+    quotationUuid: values.quotationUuid,
     multiGroupUuid: values.multiGroupUuid || "string",
     status: values.status || 'ACTIVE'
   };
@@ -40,12 +40,39 @@ function createContract({ values }) {
   req.send(
     () => createInstitutionContract(contractData),
     (res) => {
-      if (res.success) {
-        toasted('Institution contract created successfully', 'success');
-        institutionStore.addInstitution(res.data);
-        props.data.onRefetch?.();
-        closeModal();
+      const payload = res?.data || res;
+      const isSuccess = !!(payload?.payerInstitutionContractUuid || res?.success);
+
+      console.log('[CreateInstitutionContract] response:', res);
+      console.log('[CreateInstitutionContract] payload:', payload);
+      console.log('[CreateInstitutionContract] isSuccess:', isSuccess);
+
+      if (!isSuccess) {
+        toasted(false, "", res?.error || "Failed to create institution contract");
+        return;
       }
+
+      toasted('Institution contract created successfully', 'success');
+      if (payload) {
+        institutionStore.addInstitution(payload);
+      }
+
+      console.log('[CreateInstitutionContract] calling onRefetch:', typeof props.data.onRefetch);
+      props.data.onRefetch?.();
+
+      try {
+        window.dispatchEvent(
+          new CustomEvent('underwriting:institution-contract-created', {
+            detail: {
+              payerInstitutionContractUuid: payload?.payerInstitutionContractUuid,
+              institutionUuid: payload?.institutionUuid,
+            },
+          })
+        );
+      } catch (e) {
+        // no-op
+      }
+      closeModal();
     }
   );
 }
@@ -63,11 +90,11 @@ function createContract({ values }) {
       </div>
 
       <template #bottom>
-        <div class="flex gap-4 justify-end p-6 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+        <div class="flex gap-4 justify-end p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200">
           <Button
             type="button"
             @click="closeModal"
-            class="px-6 py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+            class="px-6 py-3 font-medium text-gray-700 rounded-lg border-2 border-gray-300 shadow-sm transition-all duration-200 hover:bg-gray-100 hover:shadow-md"
           >
             Cancel
           </Button>
@@ -75,7 +102,7 @@ function createContract({ values }) {
             type="button"
             :pending="req.pending.value"
             @click="submit(createContract)"
-            class="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2"
+            class="flex gap-2 items-center px-8 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-blue-700 hover:shadow-xl"
           >
             {{ req.pending.value ? 'Creating Contract...' : 'Create Contract' }}
           </Button>

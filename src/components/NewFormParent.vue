@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { closeModal } from "@customizer/modal-x";
 import Button from "./Button.vue";
-//import ResponseError from "./ResponseError.vue";
 import icons from "@/utils/icons";
+
 const props = defineProps({
   size: {
     type: String,
@@ -21,36 +21,44 @@ const props = defineProps({
   },
   showCloseModal: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
+
+  // ✅ ADD THIS
+  isEdit: {
+    type: Boolean,
+    default: false,
+  },
 });
 </script>
+
 <template>
   <div
     :class="[$style[size]]"
-    class="overflow-hidden flex flex-col justify-between bg-white rounded-md"
+    class="flex overflow-hidden flex-col justify-between bg-white rounded-md"
   >
     <div
-      class="flex justify-between border-b p-2 pr-4 border-text-secondary-clr/30 items-center"
+      class="flex justify-between items-center p-2 pr-4 border-b border-text-secondary-clr/30"
     >
-      <div class="flex items-center gap-4">
+      <div class="flex gap-4 items-center">
         <button
           @click="() => onGoBack && onGoBack()"
           v-if="goBack"
           class="grid place-items-center rounded-md border border-text-clr"
         >
         </button>
-        <p class="font-semibold text-base px-4 p-3">{{ title }}</p>
+        <p class="p-3 px-4 text-base font-semibold">{{ title }}</p>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex gap-4 items-center">
         <slot name="right-actions"></slot>
-        <button v-if="showCloseModal" class="border rounded-full" @click.prevent="closeModal()">
+        <button v-if="showCloseModal" class="rounded-full border" @click.prevent="closeModal()">
           <i v-html="icons.close" />
         </button>
       </div>
     </div>
     <div
-      class="flex flex-col p-4 gap-4 form-scrollbar flex-1 overflow-auto border-b border-text-secondary-clr/30"
+      class="flex overflow-y-auto flex-col flex-1 gap-4 p-4 border-b form-scrollbar border-text-secondary-clr/30"
+      style="max-height: calc(100vh - 6rem);"
     >
       <slot />
       <!--<ResponseError :error="error" />-->
@@ -62,22 +70,25 @@ const props = defineProps({
 <style module>
 .md {
   width: 35rem;
-  max-height: 37rem;
+  max-height: calc(100vh - 2rem);
 }
 
 .mdd {
-  width: 45rem;
-  max-height: 37rem;
+  width: 55rem;
+  max-height: calc(100vh - 2rem);
 }
 
 .lg {
   width: 60rem;
-  max-height: 100%;
+  max-height: calc(100vh - 2rem);
 }
-
+.xmd {
+  width: 75rem;
+  max-height: calc(100vh - 2rem);
+}
 .xl {
   width: 100%;
-  max-height: 100%;
+  max-height: calc(100vh - 2rem);
 }
 
 .xs {

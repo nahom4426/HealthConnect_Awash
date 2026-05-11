@@ -36,7 +36,7 @@ const saveInstitution = async ({ values }) => {
 </script>
 
 <template>
-  <DefaultPage :first="false">
+  <DefaultPage title="Add Policy Holders">
     <template #add-action>
       <button
         @click="router.go(-1)"
@@ -48,14 +48,14 @@ const saveInstitution = async ({ values }) => {
     </template>
 
     <template #default>
-      <div class="w-full h-full p-0">
-        <Form id="add-institution-form" class="grid gap-6">
+      <div class="w-full mx-auto bg-white rounded-xl shadow-md overflow-hidden p-8 m-3">
+        <Form id="add-institution-form" class="grid space-y-4">
           <!-- Policy Holder Information -->
-          <div class="sm:col-span-6 text-base font-semibold bg-gray-50 px-3 py-3 rounded">
+          <div class="sm:col-span-6 text-sm font-semibold bg-gray-100 px-2">
             Policy Holder Information
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input 
               name="institutionName"
               label="Group Policy Name"
@@ -77,7 +77,7 @@ const saveInstitution = async ({ values }) => {
             />
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input 
               name="category"
               label="Business Category"
@@ -94,11 +94,11 @@ const saveInstitution = async ({ values }) => {
           </div>
 
           <!-- Address Information -->
-          <div class="sm:col-span-6 text-base font-semibold bg-gray-50 px-3 py-3 rounded">
+          <div class="sm:col-span-6 text-sm font-semibold bg-gray-100 px-2">
             Address Information
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input 
               name="country"
               label="Country"
@@ -121,7 +121,7 @@ const saveInstitution = async ({ values }) => {
             />
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input 
               name="address2"
               label="Sub City" 
@@ -137,7 +137,7 @@ const saveInstitution = async ({ values }) => {
             />
           </div>
 
-          <div class="flex justify-end mt-4">
+          <div class="flex justify-end mt-8">
             <Button 
               @click="submit(saveInstitution)" 
               :pending="req.pending.value"

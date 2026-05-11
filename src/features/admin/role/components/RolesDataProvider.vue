@@ -18,7 +18,7 @@ const pagination = usePagination({
   auto: false,
 });
 
-if (!roles.roles.length) {
+if (!pagination.pending.value) {
   pagination.send();
 }
 

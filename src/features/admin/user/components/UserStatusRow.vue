@@ -44,7 +44,9 @@ const props = defineProps({
   onRowClick: {
     type: Function,
     default: () => {}
-  }
+  },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 }
 });
 
 function formatFullName(row) {
@@ -221,7 +223,7 @@ onUnmounted(() => {
   @click.self="onRowClick(row)" 
   class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
 >
-    <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
+    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
 
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <!-- Fullname field -->

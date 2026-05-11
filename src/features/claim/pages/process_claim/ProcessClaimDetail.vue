@@ -1,18 +1,17 @@
 <script setup>
 import DefaultPage from '@/components/DefaultPage.vue';
 import { usePagination } from "@/composables/usePagination";
-import { approveClaimProcessedBy, claimProccessed, getRequestedClaimByBatchDetail, updateServiceProvidedClaimStatus } from '../../api/claimApi';
+import { getRequestedClaimByBatchDetail } from '../../api/claimApi';
 import Table from '@/components/Table.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PaymentStatus } from '@/types/interface';
-import { formatCurrency, toasted, secondDateFormat } from '@/utils/utils';
+import { formatCurrency, secondDateFormat } from '@/utils/utils';
 import Button from '@/components/Button.vue';
 import TableWithCheckBox from '@/components/TableWithCheckBox.vue';
 import { ref, onMounted, computed } from 'vue';
-import { useApiRequest } from '@/composables/useApiRequest';
 import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
-import ProvidedItemsModal from '../../components/ProvidedItems.mdl.vue';
+import ProcessProvidedItemsMdl from '../../components/modals/ProcessProvidedItems.mdl.vue';
 const router = useRouter();
 
 const route = useRoute();
@@ -37,8 +36,6 @@ onMounted(() => {
 });
 
 const checked = ref([]);
-const processedClaimReq = useApiRequest();
-const processWholeReq = useApiRequest();
 
 // show Process Claim button only if there is NO pending serviceClaimStatus in table
 const canProcessWholeClaim = computed(() => {
@@ -49,61 +46,31 @@ const canProcessWholeClaim = computed(() => {
 
 // process/reject multiple selected
 function batchProcessed() {
-  if (processedClaimReq.pending.value) return;
+  if (!checked.value.length) return;
 
-  // remark optional with action selection
-  openModal('ProcessSelectedClaim', { title: 'Process Selected Claims' }, (result) => {
-    const serviceProvidedUuids = checked.value.slice(); // these are serviceProvidedUuid
-    if (!serviceProvidedUuids.length) return;
-    
-    const claimStatus = result?.action === 'PROCESSED' ? 'PROCESSED' : 'REJECTED';
-    const remark = result?.comment || '';
-
-    const payload = {
-      serviceProvidedUuids,
-      claimStatus,
-      remark
-    };
-
-    processedClaimReq.send(
-      () => updateServiceProvidedClaimStatus(claimUuid, payload),
-      (res) => {
-        if (res && res.status >= 200 && res.status < 300) {
-          const actionText = claimStatus === 'PROCESSED' ? 'PROCESSED' : 'REJECTED';
-          toasted(true, `Selected services marked ${actionText}`);
-          
-          // Update status in store
-          const updatedClaims = (store.claims || []).map((claim) => {
-            if (serviceProvidedUuids.includes(claim.serviceProvidedUuid)) {
-              return { ...claim, serviceClaimStatus: claimStatus };
-            }
-            return claim;
-          });
-          
-          store.set ? store.set(updatedClaims) : (store.claims = updatedClaims);
-          checked.value = [];
-        }
-      }
-    );
+  openModal('ProcessSelectedClaim', { 
+    title: 'Process Selected Claims',
+    claimUuid,
+    selectedUuids: checked.value.slice(),
+    store,
+    onSuccess: () => {
+      // Refresh the table data
+      pagination.send();
+      checked.value = [];
+    }
   });
 }
 
 // open modal to process entire claim (approve processedBy/{claimUuid})
 function openProcessWholeClaim() {
-  openModal('ProcessClaim', { title: 'Process Claim', batchCode }, async (payload) => {
-    if (!payload) return;
-    const body = { comment: payload.comment, batchCode: payload.batchCode };
-    processWholeReq.send(
-      () => approveClaimProcessedBy(String(claimUuid), body),
-      (res) => {
-        if (res && res.status >= 200 && res.status < 300) {
-          toasted(true, 'Claim processed successfully');
-          router.push('/process_claims')
-          // optionally refresh current table
-          pagination.send();
-        }
-      }
-    );
+  openModal('ProcessClaim', { 
+    title: 'Process Claim', 
+    batchCode,
+    claimUuid,
+    onSuccess: () => {
+      // Optionally refresh current table
+      pagination.send();
+    }
   });
 }
 
@@ -116,7 +83,7 @@ const modalTitle = ref('Provided Items');
 function openItemsModal(row) {
   modalRow.value = row;
   modalItems.value = row?.providedItemResponses || [];
-  modalTitle.value = `Provided Itemsssss — ${row?.insuredName || row?.institutionName || ''}`;
+  modalTitle.value = `Provided Items — ${row?.insuredName || row?.institutionName || ''}`;
   showItemsModal.value = true;
 }
 
@@ -125,7 +92,7 @@ function openItemsModal(row) {
 <template>
   <DefaultPage>
     <template #more>
-      <Button :pending="processedClaimReq.pending.value" class="ml-auto" @click="batchProcessed" type="primary" v-if="checked.length">
+      <Button class="ml-auto" @click="batchProcessed" type="primary" v-if="checked.length">
         Process/Reject Selected
       </Button>
     </template>
@@ -151,13 +118,13 @@ function openItemsModal(row) {
       </template>
     </TableWithCheckBox>
 
-    <div class="pb-8 flex justify-end" v-if="canProcessWholeClaim">
-      <Button :pending="processWholeReq.pending.value" type="primary" @click="openProcessWholeClaim">
+    <div class="flex justify-end pb-8" v-if="canProcessWholeClaim">
+      <Button type="primary" @click="openProcessWholeClaim">
         Process Claim
       </Button>
     </div>
 
-    <ProvidedItemsModal
+    <ProcessProvidedItemsMdl
       v-if="showItemsModal"
       :row="modalRow"
       :items="modalItems"

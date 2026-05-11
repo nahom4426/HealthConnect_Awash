@@ -9,16 +9,13 @@ import { openModal } from '@customizer/modal-x'
 <template>
 	<DefaultPage v-slot="{ search }" placeholder="Search Registered Institution">
 		<InstitutionsDataProvider :search="search" v-slot="{ institutions, pending }">
-			<div v-if="!pending && (!institutions || !institutions.length)" class="p-3 text-sm bg-yellow-50 border border-yellow-200 rounded mb-2">
-				No institutions found.
-			</div>
 			<Table
 				:pending="pending"
 				:headers="{
 					head: ['Institution Name', 'Quotation Number', 'Quoted Date', 'Paid Date', 'Payment Status', 'actions'],
 					row: ['institutionName', 'quotationCode', 'quotationAcceptedDate', 'paidDate', 'status']
 				}"
-				:rows="institutions || []"
+				:rows="institutions"
 				:cells="{
 					quotationAcceptedDate: (date: string) => {
 						return secondDateFormat(date)

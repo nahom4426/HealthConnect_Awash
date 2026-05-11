@@ -23,6 +23,10 @@ const receipts = ref<Array<{
     </template>
     <div class="mt-2">
       <Table
+        :virtual="true"
+        :itemKey="'id'"
+        :virtualHeight="600"
+        :virtualItemSize="64"
         :headers="{
           head: ['Receipt No', 'Policy', 'Payer', 'Amount', 'Mode', 'Date', 'Status'],
           row: ['receiptNo', 'policyNumber', 'payer', 'amount', 'mode', 'date', 'status']

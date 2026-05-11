@@ -12,6 +12,12 @@ export function getInsuredByContractId(id, query = {}) {
   });
 }
 
+export function getInsuredServiceProvidedHistory(query = {}) {
+	return api.addAuthenticationHeader().get('/claimconnect/service-provided/new', {
+		params: query,
+	});
+}
+
 export function searchInsuredByInstitution(id, query = {}, config = {}) {
   return api.addAuthenticationHeader().get(`${path}/active/search/${id}`, {
     params: query,
@@ -51,18 +57,17 @@ export function getInsuredPersonById(uuid) {
 }
 
 export function importInsuredPersons(
-  {institutionUuid, payerInstitutionContractUuid, quotationUuid} = {},
+  {institutionUuid, payerInstitutionContractUuid} = {},
   data,
   config = {}
 ) {
   const queryString = new URLSearchParams({
     institutionUuid,
-    payerInstitutionContractUuid,
-    quotationUuid
+    payerInstitutionContractUuid
   }).toString();
 
   return api.addAuthenticationHeader().post(
-    `${basePath}/import-insured-and-dependant?${queryString}`,
+    `${basePath}/import-insured-and-dependant`,
     data,
     {
       ...config,
@@ -89,9 +94,9 @@ export function createInsured(payload) {
   return api.addAuthenticationHeader().post(`${basePath}`, payload, config);
 }
 
-export function changeInsuredStatus(insuredId, newStatus) {
-  return api.addAuthenticationHeader().put(`${basePath}/${insuredId}/status`, null, {
-    params: { newStatus }
+export function changeInsuredStatus(insuredId, status) {
+  return api.addAuthenticationHeader().put(`${basePath}/changeStatus/${insuredId}`, null, {
+    params: { status }
   });
 }
 export function updateInsured(uuid, payload) {
@@ -114,13 +119,62 @@ export function importInsuredMembers(file) {
   
   return api.addAuthenticationHeader().post(`${basePath}/import`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data'
     }
   });
 }
 
 export function downloadInsuredTemplate() {
-  return api.addAuthenticationHeader().get(`${basePath}/export/member-template`, {
-    responseType: 'blob'
+  return api.addAuthenticationHeader().get(`${basePath}/export-template`);
+}
+
+export function exportMemberTemplate() {
+  return api.addAuthenticationHeader().get(`${basePath}/export/insured-template`, {
+    responseType: 'blob' // Important for file download
   });
+}
+
+export function exportQuotedMainMembersTemplate(quotationUuid) {
+  return api
+    .addAuthenticationHeader()
+    .get(`${basePath}/export/quoted-main-members-template/${quotationUuid}`, {
+      responseType: 'blob'
+    });
+}
+
+export function exportQuotedDependantsTemplate(quotationUuid) {
+  return api
+    .addAuthenticationHeader()
+    .get(`${basePath}/export/quoted-dependants-template/${quotationUuid}`, {
+      responseType: 'blob'
+    });
+}
+
+export function importQuotedMainMembers({ quotationUuid, payerInstitutionContractUuid } = {}, formData, config = {}) {
+  return api.addAuthenticationHeader().post(
+    `${basePath}/import-quoted-main-members`,
+    formData,
+    {
+      ...config,
+      params: { quotationUuid, payerInstitutionContractUuid },
+      headers: {
+        ...(config?.headers || {}),
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+}
+
+export function importQuotedDependants({ quotationUuid, payerInstitutionContractUuid } = {}, formData, config = {}) {
+  return api.addAuthenticationHeader().post(
+    `${basePath}/import-quoted-dependants`,
+    formData,
+    {
+      ...config,
+      params: { quotationUuid, payerInstitutionContractUuid },
+      headers: {
+        ...(config?.headers || {}),
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 }

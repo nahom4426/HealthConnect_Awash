@@ -6,6 +6,10 @@ import InputLayout from "./NewInputLayout.vue";
 import { watch, ref } from 'vue'
 
 const props = defineProps({
+  name: {
+    type: String,
+    required: true,
+  },
   pending: {
     type: Boolean,
     default: false
@@ -21,6 +25,10 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  attributes: {
+    type: Object,
+    default: () => ({}),
+  },
 })
 
 const value = ref(props.modelValue || '')
@@ -35,29 +43,29 @@ watch(() => props.modelValue, () => {
 })
 </script>
 <template>
-  <InputParent v-model="value" v-slot="{ setRef, error, value, attributes, changeValue }">
+  <InputParent :name="name" v-model="value" :attributes="{ placeholder: '— Choose —', ...attributes }" v-slot="{ setRef, error, value: slotVal, attributes: slotAttrs, changeValue }">
     <InputLayout
-      :class="$attrs.class + ' relative'"
+      :class="($attrs.class || '') + ' relative'"
       :error="error"
       :label="$attrs.label"
     >
-      <div class="flex items-center h-full flex-1">
+      <div class="flex items-center h-10 flex-1">
         <slot name="left"></slot>
         <select
           :style="{
-            opacity: attributes?.placeholder && !value ? .65 : 1
+            opacity: slotAttrs?.placeholder && !slotVal ? .65 : 1
           }"
           :ref="setRef"
-          class="appearance-none flex-1 text-text-clr h-full text-sm"
-          :value="value"
-          @change="(e) => { value = e.target.value }"
-          :aria-label="attributes?.label || attributes?.placeholder || 'select'"
+          class="appearance-none flex-1 text-text-clr h-full text-sm px-3"
+          :value="slotVal"
+          @change="(e) => changeValue(e.target.value)"
+          :aria-label="slotAttrs?.label || slotAttrs?.placeholder || 'select'"
         >
           <option
             value=""
             disabled
           >
-            {{ attributes?.placeholder || 'Select' }}
+            {{ slotAttrs?.placeholder || '— Choose —' }}
           </option>
           <template v-if="!obj">
             <option

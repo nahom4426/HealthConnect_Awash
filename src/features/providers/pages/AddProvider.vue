@@ -57,7 +57,7 @@ function viewDetails(id) {
   <DefaultPage placeholder="Search Active Providers">
       <!-- <template #filter>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
+        class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary"
       > 
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
@@ -67,7 +67,7 @@ function viewDetails(id) {
     <template #add-action>
       <button
         @click.prevent="openModal('AddProvider')"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+        class="flex gap-2 justify-center items-center px-6 py-4 text-white rounded-md bg-primary"
       >
         <i v-html="icons.plus_circle"></i>
         <p class="text-base">Add Provider</p>
@@ -103,9 +103,9 @@ function viewDetails(id) {
           :rows="providers"
           :rowCom="providerStatusRow"
           :pagination="{
-            currentPage,
-            itemsPerPage,
-            totalPages,
+            // currentPage,
+            // itemsPerPage,
+            // totalPages,
             onPageChange: handlePageChange,
             onLimitChange: handleLimitChange,
           }"

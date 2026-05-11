@@ -18,6 +18,7 @@ export default [
     path: '/privileges',
     name: 'Privileges',
     component: Privileges,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
     // meta: {
     //   privileges: ['Manage_Privileges'],
     //   requiresAuth: true
@@ -27,6 +28,7 @@ export default [
     path: '/add_privilege',
     name: 'Add Privilege',
     component: AddPrivilege,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
     // meta: {
     //   privileges: ['Manage_Privileges'],
     //   requiresAuth: true
@@ -36,6 +38,7 @@ export default [
     path: '/edit_privilege/:privilegeUuid',
     name: 'Edit Privilege',
     component: EditPrivilege,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
     // meta: {
     //   privileges: ['Manage_Privileges'],
     //   requiresAuth: true
@@ -47,21 +50,25 @@ export default [
     path: '/roles',
     name: 'Roles',
     component: Role,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
   },
   {
     path: '/create-role',
     name: 'Create Role',
     component: AddRole,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
   },
   {
     path: '/edit_role/:roleUuid',
     name: 'Edit Role',
     component: EditRole,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
   },
   {
     path: '/role_detail/:roleUuid',
     name: 'Role Detail',
     component: RoleDetail,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
   },
   
   // Users routes
@@ -69,6 +76,7 @@ export default [
     path: '/users',
     name: 'Users',
     component: Users,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
     // meta: {
     //   privileges: ['Manage_Users'],
     //   requiresAuth: true
@@ -78,6 +86,7 @@ export default [
     path: '/add_user',
     name: 'Add User',
     component: AddUser,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
     // meta: {
     //   privileges: ['Manage_Users'],
     //   requiresAuth: true
@@ -87,6 +96,7 @@ export default [
     path: '/edit_user/:userUuid',
     name: 'Edit User',
     component: EditUser,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
     // meta: {
     //   privileges: ['Manage_Users'],
     //   requiresAuth: true
@@ -96,6 +106,7 @@ export default [
     path: '/user_detail/:userUuid',
     name: 'User Detail',
     component: () => import('@/features/admin/user/pages/UserDetail.vue'),
+    meta: { requiresAuth: true, permissions: ["read_user"] },
   },
   
   // Privilege routes
@@ -103,5 +114,6 @@ export default [
     path: '/privilege_detail/:privilegeUuid',
     name: 'Privilege Detail',
     component: PrivilegeDetail,
+    meta: { requiresAuth: true, permissions: ["read_user"] },
   }
 ];

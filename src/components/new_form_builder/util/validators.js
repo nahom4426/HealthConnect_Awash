@@ -214,18 +214,42 @@ function num_minmax(value, limit, _, message) {
 }
 
 function phone(value, limit, _, message) {
-  let regex = /^(\+?2519|09)[0-9]{8}$/;
+  // Updated regex to support:
+  // +2511, +2513, 01, 03, +2519, 09, and other valid Ethiopian prefixes
+  let regex = /^(\+?251[1379]|0[1379])[0-9]{8}$/;
+  
   if (regex.test(value)) return [true];
 
-  return [false, message || `not a valid phone number`];
+  return [false, message || `Not a valid Ethiopian phone number. Valid formats: +2511..., +2513..., 01..., 03..., +2519..., 09...`];
+}
+
+function eth_mobile9(value, _, __, message) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return [true];
+
+  const compact = raw.replace(/[\s-]/g, '');
+
+  let local = compact;
+  if (local.startsWith('+251')) local = local.slice(4);
+  if (local.startsWith('251')) local = local.slice(3);
+
+  if (local.startsWith('0')) local = local.slice(1);
+
+  const regex = /^[13789]\d{8}$/;
+  if (regex.test(local)) return [true];
+
+  return [false, message || 'Not a valid Ethiopian phone number. Use 9XXXXXXXX / 09XXXXXXXX (or 1/3/7/8 prefixes)'];
 }
 
 function alpha(value, limit, _, message) {
-  let regex = /^[ a-zA-Z]+$/;
+  let regex = /^[ a-zA-Z()]+$/;
+
   if (limit instanceof Array) {
-    if (limit.length == 1) regex = new RegExp(`^[ a-zA-Z]{${limit[0]}}$`);
+    if (limit.length == 1)
+      regex = new RegExp(`^[ a-zA-Z()]{${limit[0]}}$`);
+
     if (limit.length > 1)
-      regex = new RegExp(`^[ a-zA-Z]{${limit[0]},${limit[1]}}$`);
+      regex = new RegExp(`^[ a-zA-Z()]{${limit[0]},${limit[1]}}$`);
   }
 
   if (regex.test(value)) return [true];
@@ -344,16 +368,24 @@ function price(value, args, formId, message) {
   return [false, 'not a valid price']
 }
 
+function numeric(value, args, formId, message) {
+  const regex = /^[0-9]+(\.[0-9]+)?$/
+  if(regex.test(value)) return [true]
+  return [false, message || 'must be a valid number']
+}
+
 const common = {
   alpha,
   max,
   min,
   num,
+  numeric,
   serviceRequired,
   price,
   len,
   exact,
   required,
+  email,
   equalTo,
   maxnum,
   minmax,
@@ -388,8 +420,10 @@ const file = {
 const textarea = common;
 const text = {
   ...common,
+  required,
   email,
   phone,
+  eth_mobile9,
   oneof,
 };
 

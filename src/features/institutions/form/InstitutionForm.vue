@@ -5,19 +5,27 @@ import Input from '@/components/new_form_elements/Input.vue';
 
 </script>
 <template>
-	<Form :inner="false" id="institution-form" class="grid gap-4 grid-cols-3">
+	<Form :inner="false" id="institution-form" class="grid grid-cols-3 gap-4">
 		<Input
-			label="Institution Name"
+			label="Institution Names"
 			name="institutionName"
 			validation="required|max-25"
 			:attributes="{
 				placeholder: 'Institution Name'
 			}"
 		/>
+		
+		<Input
+			label="cifNumber"
+			name="cifNumber"
+			validation="required|max-25"
+			:attributes="{
+				placeholder: 'CIF Number'
+			}"
+		/>
 		<Input
 			label="Tin Number"
 			name="tinNumber"
-			validation="required|num|max-25"
 			:attributes="{
 				placeholder: 'Tin Number'
 			}"
@@ -46,8 +54,8 @@ import Input from '@/components/new_form_elements/Input.vue';
 				placeholder: 'Category'
 			}"
 		/>
-		<p class="font-semibold col-span-3 text-base">Address</p>
-		<div class="col-span-3 grid grid-cols-5 gap-4">
+		<p class="col-span-3 text-base font-semibold">Address</p>
+		<div class="grid grid-cols-5 col-span-3 gap-4">
 			<Input
 				label="Country"
 				name="country"

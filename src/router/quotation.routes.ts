@@ -14,52 +14,62 @@ export default [
 		path: '/new_quotation',
 		name: 'Quotation',
 		component: QuotationIndex,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 		children: [
 			{
 				path: '',
 				name: 'new quotation',
-				component: NewQuotation
+				component: NewQuotation,
+				//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 			},
 			{
 				path: 'generate/:institutionUuid',
 				name: 'Generate Quotaion',
-				component: CreateNewQuotaions
+				component: CreateNewQuotaions,
+				//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 			}
 		]
 	},
 	{
 		path: '/saved_quotation',
 		name: 'saved quotation',
-		component: SavedQuotations
+		component: SavedQuotations,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
-		path: '/saved_quotation/view/:quotationUuid',
+		path: '/saved_quotation/view/:quotationUuid/:institutionId',
 		name: 'ViewSavedQuotation',
 		component: ViewSavedQuotation,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/quotations/edit/:quotationUuid',
 		name: 'Edit quotation',
-		component: EditQuotation
+		component: EditQuotation,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/issued_quotation',
 		name: 'Issued quotation',
-		component: IssuedQuotaions
+		component: IssuedQuotaions,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/quotations/view/:quotationUuid',
 		name: 'ViewIssuedQuotation',
 		component: ViewIssuedQuotation,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/accepted_quotation',
 		name: 'Accepted quotation',
-		component: AcceptedQuotations
+		component: AcceptedQuotations,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/accepted_quotation/view/:quotationUuid',
 		name: 'ViewAcceptedQuotation',
 		component: ViewAcceptedQuotation,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	}
 ]

@@ -64,7 +64,6 @@ onUnmounted(() => {
 
 <template>
   <div
-    @click.self="autoClose && handleClose()"
     :class="[
       !modal?.active ? '__inactive' : '__active',
       isClosing ? '__closing' : ''
@@ -85,7 +84,7 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   z-index: 9999;
-  overflow-y: auto;
+  overflow: hidden;
   transition: background-color 0.5s ease;
   backdrop-filter: blur(4px);
 }
@@ -101,6 +100,8 @@ onUnmounted(() => {
   border-radius: 1rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   transform-origin: top center;
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
 }
 
 .__active .modal-content {

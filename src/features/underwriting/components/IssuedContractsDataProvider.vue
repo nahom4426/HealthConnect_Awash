@@ -10,6 +10,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  refetch: {
+    type: Number,
+    default: 0,
+  },
   status: {
     type: String,
     default: "ACTIVE",
@@ -20,7 +24,8 @@ const props = defineProps({
   },
   institutionUuid: {
     type: String,
-    required: true,
+    required: false,
+    default: undefined,
   },
 });
 
@@ -43,6 +48,8 @@ const pagination = usePagination({
 watch(
   () => props.search,
   () => {
+    console.log('[IssuedContractsDataProvider] search changed -> send()', props.search);
+    pagination.page.value = 1;
     pagination.send();
   }
 );
@@ -50,9 +57,33 @@ watch(
 watch(
   () => props.status,
   () => {
+    console.log('[IssuedContractsDataProvider] status changed -> send()', props.status);
+    pagination.page.value = 1;
     pagination.send();
   }
 );
+
+watch(
+  () => props.refetch,
+  () => {
+    console.log('[IssuedContractsDataProvider] refetch changed -> send()', props.refetch);
+    pagination.send();
+  }
+);
+
+defineExpose({
+  refresh: pagination.send,
+  setPage: (page) => {
+    console.log('[IssuedContractsDataProvider] setPage', page);
+    pagination.page.value = page;
+    pagination.send();
+  },
+  setLimit: (limit) => {
+    console.log('[IssuedContractsDataProvider] setLimit', limit);
+    pagination.perPage.value = limit;
+    pagination.send();
+  },
+});
 </script>
 
 <template>
@@ -60,8 +91,9 @@ watch(
     :contracts="store.contracts"
     :pending="pagination.pending.value"
     :error="pagination.error.value"
-    :currentPage="store.currentPage"
-    :itemsPerPage="store.itemsPerPage"
-    :totalPages="store.totalPages"
+    :currentPage="pagination.page.value"
+    :itemsPerPage="pagination.perPage.value"
+    :totalPages="pagination.totalPages.value"
+    :totalElements="pagination.totalElements.value"
   />
 </template>

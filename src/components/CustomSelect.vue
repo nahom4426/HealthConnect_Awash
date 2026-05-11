@@ -25,7 +25,7 @@ const isArrayOfObjects = computed(() => {
 </script>
 <template>
   <div
-    class="inline-flex relative h-10 border border-grey-300 rounded-md min-w-48 max-w-64"
+    class="inline-flex relative h-10 rounded-md border border-grey-300 min-w-48"
   >
     <select
       v-model="value"
@@ -55,7 +55,7 @@ const isArrayOfObjects = computed(() => {
       </template>
     </select>
     <div
-      class="pointer-events-none absolute right-0 top-0 size-10 grid place-items-center"
+      class="grid absolute top-0 right-0 place-items-center pointer-events-none size-10"
     >
       <i v-if="!pending" v-html="icons.downAngle" />
       <i v-else class="animate-spin" v-html="icons.spinner" />

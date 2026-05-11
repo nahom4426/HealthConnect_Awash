@@ -9,6 +9,8 @@ import { useUsers } from "../store/userStore";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from '@/toast/store/toast';
 import { institutions } from "../../../institutions/store/userInstitutionsStore";
+import { refreshPrivileges } from "@/scripts/privilegeRefresh";
+import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps({
   data: {
@@ -16,11 +18,13 @@ const props = defineProps({
     default: () => ({})
   }
 });
+console.log("users receive:", props.data);
 
 const { addToast } = useToast();
 const userStore = useUsers();
 const institutionsStore = institutions();
 const req = useApiRequest();
+const authStore = useAuthStore();
 
 // Reactive state
 const userUuid = ref(props.data?.userUuid || '');
@@ -106,12 +110,17 @@ async function handleSubmit(formValues) {
     pending.value = true;
     error.value = '';
     console.log('Updating user with values:', formValues);
-    
-    // Prepare payload - preserve roleName for payer admins
+
     const payload = {
-      ...formValues,
-      // For payer admins, preserve the original roleName
-      ...(isPayerAdmin.value && { roleName: roleName.value })
+      email: formValues?.email,
+      title: formValues?.title,
+      firstName: formValues?.firstName,
+      fatherName: formValues?.fatherName,
+      grandFatherName: formValues?.grandFatherName,
+      mobilePhone: formValues?.mobilePhone,
+      userStatus: formValues?.userStatus,
+      roleUuid: formValues?.roleUuid,
+      gender: formValues?.gender
     };
     
     // Format gender to lowercase for API
@@ -127,8 +136,6 @@ async function handleSubmit(formValues) {
             ...userData.value,
             ...formValues,
             userUuid: userUuid.value,
-            // Preserve the role name for payer admins
-            ...(isPayerAdmin.value && { roleName: roleName.value })
           };
 
           // Update the user in the store
@@ -150,6 +157,10 @@ async function handleSubmit(formValues) {
             title: 'Success',
             message: 'User updated successfully'
           });
+
+          if (authStore.auth?.user?.userUuid === userUuid.value) {
+            await refreshPrivileges(userUuid.value);
+          }
 
           // Call the onUpdated callback if provided
           if (props.data?.onUpdated) {
@@ -183,34 +194,49 @@ async function handleSubmit(formValues) {
 <template>
   <ModalParent>
     <NewFormParent 
-      class="" 
-      size="lg" 
+      class="max-w-4xl" 
+      size="xl" 
       :title="`Edit ${userData.firstName || 'User'}`" 
       subtitle="Update the user information in the fields below."
     >
-      <div class="bg-white rounded-lg">
-        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-          {{ error }}
+      <!-- Error Alert -->
+      <div v-if="error" class="p-4 mb-6 bg-red-50 rounded-lg border border-red-200">
+        <div class="flex items-center">
+          <svg class="mr-3 w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-sm text-red-700">{{ error }}</p>
         </div>
-        
-        <div v-if="pending && Object.keys(userData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
-          Loading user data...
+      </div>
+      
+      <!-- Loading State -->
+      <div v-if="pending && Object.keys(userData).length === 0" class="p-4 mb-6 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="flex items-center">
+          <svg class="mr-3 w-5 h-5 text-blue-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <p class="text-sm text-blue-700">Loading user data...</p>
         </div>
-        
-        <UserForm
-          v-else-if="Object.keys(userData).length > 0"
-          :initial-data="userData"
-          :is-edit="true"
-          :pending="pending || req.pending.value"
-          :role-name="roleName"
-          :payer-uuid="props.data?.payerUuid"
-          :onSubmit="handleSubmit"
-          :onCancel="() => closeModal()"
-        />
-        
-        <div v-else class="p-4 text-center text-gray-500">
-          No user data available
-        </div>
+      </div>
+      
+      <!-- User Form -->
+      <UserForm
+        v-if="Object.keys(userData).length > 0"
+        :initial-data="userData"
+        :is-edit="true"
+        :pending="pending || req.pending.value"
+        :role-name="userData?.roleUuid || roleName"
+        :payer-uuid="props.data?.payerUuid"
+        :onSubmit="handleSubmit"
+        :onCancel="() => closeModal()"
+      />
+      
+      <!-- No Data State -->
+      <div v-else-if="!pending" class="p-8 text-center">
+        <svg class="mx-auto mb-4 w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p class="text-gray-500">No user data available</p>
       </div>
     </NewFormParent>
   </ModalParent>

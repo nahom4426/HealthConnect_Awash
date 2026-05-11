@@ -20,12 +20,30 @@ const props = defineProps({
   }
 });
 
-console.log('halll', props.data)
 const insuredStore = insuredMembers();
 const error = ref('');
 const pending = ref(false);
 const insuredData = ref({});
 const insuredUuid = ref('');
+
+function normalizeEmptyToNull(value) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (value instanceof File) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "" ? null : value;
+  }
+  return value;
+}
+
+function normalizePayload(payload) {
+  const normalized = {};
+  for (const [key, value] of Object.entries(payload)) {
+    normalized[key] = normalizeEmptyToNull(value);
+  }
+  return normalized;
+}
 
 onMounted(() => {
   console.log('EditInsured modal mounted with data prop:', props.data);
@@ -59,8 +77,7 @@ async function handleSubmit(formValues) {
     // Validate required fields (same as add component)
     const requiredFields = [
       "firstName",
-      "fatherName",
-      "idNumber",
+      "fatherName"
     ];
 
     const missingFields = requiredFields.filter((field) => !formValues[field]);
@@ -70,29 +87,29 @@ async function handleSubmit(formValues) {
     }
 
     // Prepare the insured data according to backend expectations (same as add component)
-    const insuredPayload = {
-      email: formValues.email || "",
-      institutionUuid: formValues.institutionUuid || route.params.institutionUuid || "",
-      payerInstitutionContractUuid: formValues.payerUuid || route.params.id || "",
+    const insuredPayload = normalizePayload({
+      email: formValues.email,
+      institutionUuid: formValues.institutionUuid || route.params.institutionUuid || null,
+      payerInstitutionContractUuid: formValues.payerUuid || route.params.id || null,
       premium: 0,
       title: "string",
       firstName: formValues.firstName,
       fatherName: formValues.fatherName,
-      grandFatherName: formValues.grandFatherName || "",
-      birthDate: formValues.birthDate ? new Date(formValues.birthDate).toISOString() : "",
+      grandFatherName: formValues.grandFatherName,
+      birthDate: formValues.birthDate ? new Date(formValues.birthDate).toISOString() : null,
       phone: formValues.phone || null,
       branchOffice: "string",
-      position: formValues.position || "",
-      idNumber: formValues.idNumber,
+      position: formValues.position,
+      idNumber: formValues.idNumber || null,
       insuranceId: formValues.insuranceId || insuredUuid.value,
-      address1: formValues.woreda || "",
-      address2: formValues.city || "",
-      address3: formValues.subcity || "",
+      address1: formValues.woreda,
+      address2: formValues.city,
+      address3: formValues.subcity,
       state: formValues.state || "Addis Ababa",
       country: formValues.country || "Ethiopia",
       status: formValues.status || "ACTIVE",
-      gender: formValues.gender || ""
-    };
+      gender: formValues.gender || "Male"
+    });
 
     // Use FormData with multipart like the add component
     const formData = new FormData();
@@ -149,7 +166,7 @@ async function handleSubmit(formValues) {
   } catch (err) {
     console.error('Update error:', err);
     error.value = err.message || 'An error occurred while updating insured member';
-    toasted(false, 'Failed to update insured member', error.value);
+    // toasted(false, 'Failed to update insured member', error.value);
   } finally {
     pending.value = false;
   }

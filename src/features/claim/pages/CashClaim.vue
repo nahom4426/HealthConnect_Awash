@@ -1,13 +1,12 @@
 <script setup>
-import CustomSelect from "@/components/CustomSelect.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import { usePagination } from "@/composables/usePagination";
-import InstitutionPolicyByStatusDataProvider from "@/features/institutions/components/InstitutionPolicyByStatusDataProvider.vue";
 import { computed, ref, watch } from "vue";
-import { getCashCreditByInstitution, requestCashClaim } from "../api/cashCreditApi";
+import { requestCashClaim } from "../api/cashCreditApi";
 import Table from "@/components/Table.vue";
 import { formatCurrency, toasted } from "@/utils/utils";
 import { searchInsuredByInstitution } from "@/features/insured_persons/api/insuredPersonsApi";
+import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import Dropdown from "@/components/Dropdown.vue";
 import icons from "@/utils/icons";
 import Button from "@/components/Button.vue";
@@ -16,29 +15,56 @@ import { useSearchedCashCreditInsuredByInstitutionStore } from "../store/searchC
 import { useApiRequest } from "@/composables/useApiRequest";
 import InsuredInformationCard from "../components/InsuredInformationCard.vue";
 import TableWithCheckBox from "@/components/TableWithCheckBox.vue";
+import { useRouter } from 'vue-router';
+import CreditClaimDataProvider from "../components/CreditClaimDataProvider.vue";
+import CreditClaimTableRow from "../components/CreditClaimTableRow.vue";
+import CreditClaimDetail from "./credit_claim/CreditClaimDetail.vue";
+import SearchSelect from "@/components/SearchSelect.vue";
+import FilterOnDetector from "@/components/FilterOnDetector.vue";
+import { Status } from "@/types/interface";
 
-const institution = ref("");
+const institutionUuid = ref("");
+const contractUuid = ref("");
+const itemType = ref("SERVICE");
+const serviceType = ref("CASH"); // default to CASH
+const selectedRow = ref(null);
+function viewDetail(row) {
+  selectedRow.value = row;
+}
+const router = useRouter();
+
+function editSubmittedService(row) {
+  const id = row?.serviceProvidedUuid;
+  if (!id) return;
+  router.push({
+    path: '/cash_services',
+    query: { editServiceProvidedUuid: String(id) },
+  });
+}
 
 const cashCreditInsuredStore = useSearchedCashCreditInsuredByInstitutionStore();
-const cashCredit = usePagination({
-  auto: false,
-  store: cashCreditInsuredStore,
-  cb: (data) => {
-    return getCashCreditByInstitution({
-      ...data,
-      institutionUuid: institution.value,
-    });
-  },
-  watch: [institution],
+
+// Initialize searchInsured composable
+const searchInsured = usePagination(
+  (params) => searchInsuredByInstitution(institutionUuid.value, params),
+  { pageSize: 10 }
+);
+function handleInstitutionSelect(result) {
+  institutionUuid.value = result?.institutionUuid || '';
+  send();
+}
+// Watch for institution changes and reset search
+watch(institutionUuid, (newInstitutionUuid) => {
+  if (newInstitutionUuid) {
+    // Reset search when institution changes
+    searchInsured.search.value = '';
+    searchInsured.data.value = [];
+  }
 });
 
-const searchInsured = usePagination({
-  auto: false,
-  cb: (data, config) => {
-    return searchInsuredByInstitution(institution.value, data, config);
-  },
-});
-
+function goBack() {
+  selectedRow.value = null;
+}
 // Selected insured details
 const selected = ref({
   insuredPersonUuid: "",
@@ -69,7 +95,6 @@ function requestClaim() {
     }
   });
 }
-
 // Insured detail structure
 const focusedInsured = ref({});
 let timeout;
@@ -82,31 +107,40 @@ function assignUser(value) {
 }
 
 const checked = ref([]);
+const search = ref("");
 
 watch(checked, () => {
   console.log('checked', checked.value);
 });
 </script>
 <template>
-  <InstitutionPolicyByStatusDataProvider v-slot="{ pending, institutions }">
-    <DefaultPage>
-      <template #header>
-        <div class="flex items-center gap-2">
-          <CustomSelect
-            :pending="pending"
-            v-model="institution"
-            placeholder="Select Institution"
-            :options="
-              institutions.map((el) => ({
-                value: el.institutionUuid,
-                label: el.institutionName,
-              })) 
-            "
+  <CreditClaimDataProvider 
+    :params="{ 
+      institutionUuid, 
+      contractUuid, 
+      itemType,
+      serviceType
+    }"
+    :search="search"
+    :auto="true"
+  >
+    <template #default="{ claims, pending: dataPending, search: paginationSearch, send }">
+      <DefaultPage v-model="search" :hideSearch="selectedRow ? true : false">
+         
+          <template #header v-if="!selectedRow">
+            <FilterOnDetector :watch="[() => institutionUuid.value, () => contractUuid.value]">
+          <SearchSelect
+            placeholder="Filter by Institution"
+            :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
+            :selectCb="handleInstitutionSelect"
+            :option="{ label: 'institutionName', value: 'institutionUuid' }"
           />
-          <Dropdown v-slot="{ setRef, toggle }">
+</FilterOnDetector>
+        
+          <!-- <Dropdown v-slot="{ setRef, toggle }">
             <div
               class="focus-within:sys-focus !pr-0 input-style flex"
-              v-if="institution"
+              v-if="institutionUuid"
             >
               <input
                 @focus="toggle(true)"
@@ -114,7 +148,7 @@ watch(checked, () => {
                 v-model="searchInsured.search.value"
                 placeholder="Search for a Patient"
               />
-              <div class="size-10 grid place-items-center">
+              <div class="grid place-items-center size-10">
                 <i
                   v-if="searchInsured.pending.value"
                   class="animate-spin"
@@ -122,7 +156,7 @@ watch(checked, () => {
                 />
               </div>
             </div>
-            <div :ref="setRef">
+       <div :ref="setRef">
               <div
                 tabindex="0"
                 class="group w-80 h-max max-h-[20rem] show-scrollbar border flex flex-col gap-2 rounded bg-base-clr4 shadow-lg !p-2"
@@ -143,7 +177,7 @@ watch(checked, () => {
                 <div
                   v-for="insured in searchInsured.data.value"
                   :key="insured.insuredUuid"
-                  class="grid insured-grid w-full items-center gap-x-2"
+                  class="grid gap-x-2 items-center w-full insured-grid"
                 >
                   <div class="grid place-items-center size-8">
                     <i class="*:size-4" v-html="icons.insured" />
@@ -187,7 +221,7 @@ watch(checked, () => {
                         v-for="dep in insured.dependants"
                       >
                         {{ dep?.dependantFullName }} (<span
-                          class="text-xxs font-semibold"
+                          class="font-semibold text-xxs"
                           >{{ dep.relationship }}</span
                         >)
                       </div>
@@ -196,14 +230,17 @@ watch(checked, () => {
                 </div>
               </div>
             </div>
-          </Dropdown>
-        </div>
+          </Dropdown> -->
+    
         <div
-          class="flex-1 flex items-center gap-2 justify-end font-semibold px-3"
+          class="flex flex-1 gap-2 justify-end items-center px-3 font-semibold"
         >
-          <span class="px-3 rounded bg-primary/10 py-1 shadow-md">{{
+          <Button type="secondary" @click="router.push('/cash_services')">
+            Add Cash Services
+          </Button>
+          <!-- <span class="px-3 py-1 rounded shadow-md bg-primary/10">{{
             selected.name
-          }}</span>
+          }}</span> -->
           <Button
             v-if="selected.insuredPersonUuid"
             @click="
@@ -222,44 +259,55 @@ watch(checked, () => {
           Process Claim
         </Button>
       </template>
-      <TableWithCheckBox
-        v-model="checked"
-        to-be-selected="cashCreditUuid"
-        :pending="cashCredit.pending.value"
-        :headers="{
-          head: [
-            'Patient Full Name',
-            'Hospital Name',
-            'Total Amount',
-            'actions',
-          ],
-          row: ['fullName', 'hospital', 'totalAmount'],
-        }"
-        :cells="{
-  totalAmount: (totalAmount) => formatCurrency(totalAmount)
-}"
-:rows="cashCreditInsuredStore.cashCreditInsured"
-      >
-        <template #actions="{ row }">
-          <button
-            @click="
-              openModal('EditClaimService', {
-                hospital: row.hospital,
-                cashCreditUuid: row.cashCreditUuid,
-                insuredPersonUuid: row.insuredPersonUuid,
-                dependantUuid: row.dependantUuid,
-                institutionUuid: row.institutionUuid,
-                cashServices: row.cashServiceResponses
-              })
-            "
-            class="text-primary italic"
-          >
-            Edit
-          </button>
-        </template>
-      </TableWithCheckBox>
-    </DefaultPage>
-  </InstitutionPolicyByStatusDataProvider>
+          <Table
+           v-if="!selectedRow"
+            :pending="dataPending"
+            :rowCom="CreditClaimTableRow"
+            :headers="{
+              head: [
+                'Insured Name',
+                'Provider Name',
+                'Institution',
+                'Service Type',
+                'Services',
+                'Total Amount',
+                'Status',
+                'Claim Date',
+                'Actions',
+              ],
+              row: [
+                'fullname',
+                'providerName',
+                'institutionName',
+                'itemType',
+                'providedItems',
+                'amount',
+                'status',
+                'providedDate',
+              ],
+            }"
+            :cells="{
+              // onView: (row) => openModal('EditClaimService', {
+              //   hospital: row.hospital,
+              //   cashCreditUuid: row.cashCreditUuid,
+              //   insuredPersonUuid: row.insuredPersonUuid,
+              //   dependantUuid: row.dependantUuid,
+              //   institutionUuid: row.institutionUuid,
+              //   cashServices: row.cashServiceResponses
+              // })
+              onView: viewDetail,
+              onEdit: editSubmittedService,
+            }"
+            :rows="claims"
+          />
+          <CreditClaimDetail
+        v-else
+        :row="selectedRow"
+        @back="goBack"
+      />
+        </DefaultPage>
+    </template>
+  </CreditClaimDataProvider>
 </template>
 
 <style>
@@ -275,3 +323,4 @@ watch(checked, () => {
   grid-area: d;
 }
 </style>
+ 

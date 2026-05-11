@@ -7,31 +7,31 @@
     >
       <div class="space-y-5">
         <!-- Search and select all -->
-        <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-          <div class="flex-1 relative">
+        <div class="flex flex-col gap-3 items-stretch md:flex-row md:items-center">
+          <div class="relative flex-1">
             <Input
               v-model="searchTerm"
               placeholder="Search by name, code, or category..."
               :attributes="{ class: 'pl-10 w-full bg-white border-gray-200 focus:border-[#02676B]' }"
             />
-            <div class="absolute left-3 top-3 text-gray-400">
+            <div class="absolute top-1 left-3 text-gray-400">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
             </div>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex gap-2 items-center">
             <input id="selectAll" type="checkbox" v-model="selectAll" @change="onToggleSelectAll" class="h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded" />
             <label for="selectAll" class="text-sm">Select all</label>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex gap-2 items-center">
             <label class="text-sm text-gray-600">Discount %</label>
-            <input type="number" min="0" max="100" step="0.01" v-model.number="discountPercent" @input="onDiscountChanged" class="w-24 px-2 py-1 border rounded" />
+            <input type="number" min="0" max="100" step="0.01" v-model.number="discountPercent" @input="onDiscountChanged" class="px-2 py-1 w-24 rounded border" />
           </div>
         </div>
 
         <!-- Info banner -->
-        <div class="p-3 rounded-lg bg-blue-50 text-blue-700 text-sm border border-blue-100">
+        <div class="p-3 text-sm text-blue-700 bg-blue-50 rounded-lg border border-blue-100">
           {{ filteredServices.length }} service(s) available to add. Existing contract services are hidden.
         </div>
 
@@ -41,15 +41,15 @@
         </div>
         <div v-else class="overflow-y-auto max-h-[60vh] border rounded-lg">
           <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50 sticky top-0">
+            <thead class="sticky top-0 bg-gray-50">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Select</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sub Category</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Base Price (ETB)</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Negotiated Price (ETB)</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Select</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Code</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Name</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Category</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sub Category</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Base Price (ETB)</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Negotiated Price (ETB)</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -70,12 +70,12 @@
                     min="0"
                     step="0.01"
                     @input="onEditPrice(svc, $event.target.value)"
-                    class="w-28 px-2 py-1 border rounded disabled:bg-gray-100"
+                    class="px-2 py-1 w-28 rounded border disabled:bg-gray-100"
                   />
                 </td>
               </tr>
               <tr v-if="filteredServices.length === 0">
-                <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500">No services to add</td>
+                <td colspan="6" class="px-4 py-8 text-sm text-center text-gray-500">No services to add</td>
               </tr>
             </tbody>
           </table>
@@ -263,6 +263,8 @@ async function submit() {
   try {
     const toCreate = filteredServices.value.filter(s => keys.includes(svcKey(s)));
 
+    let hasAnyError = false;
+
     // Build preview content
     const previewLines = toCreate.map(s => `• ${s.item || s.serviceName} — ${Number(editedPrices.value.get(svcKey(s)) ?? s.price ?? 0).toFixed(2)} ETB`).join('\n');
     const message = `Are you sure you want to add the following ${toCreate.length} service(s)?\n\n${previewLines}`;
@@ -294,11 +296,20 @@ async function submit() {
         if (res?.success) {
           serviceListStore.add(res.data);
         } else {
-          toasted(false, "", res?.error || `Failed to add ${svc.itemCode || svc.item}`);
+          hasAnyError = true;
+          const errorPayload = res?.error;
+          const message =
+            (typeof errorPayload === "object" && errorPayload
+              ? (errorPayload.detail || errorPayload.title || errorPayload.message)
+              : errorPayload) || `Failed to add ${svc.itemCode || svc.item}`;
+          // toasted(false, "", message);
         }
       }
-      toasted(true, "Services added", "Selected services have been added to the contract");
-      closeModal(true);
+
+      if (!hasAnyError) {
+        toasted(true, "Services added", "Selected services have been added to the contract");
+        closeModal(true);
+      }
     });
   } catch (e) {
     if (e?.message !== "cancelled") {

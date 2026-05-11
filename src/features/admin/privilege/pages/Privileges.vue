@@ -3,13 +3,22 @@ import { ref } from "vue";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import PrivilegesDataProvider from "../components/PrivilegesDataProvider.vue";
+import PrivilegeRow from "../components/PrivilegeRow.vue";
+import TableRowSkeleton from "@/components/TableRowSkeleton.vue";
 import icons from "@/utils/icons";
-import Dropdown from "@/components/new_form_elements/Dropdown.vue";
-import { useRouter } from "vue-router";
 
-const router = useRouter();
 const dataProvider = ref();
+const isMobile = ref(false);
 
+// Check if mobile on mount and resize
+function checkMobile() {
+  isMobile.value = window.innerWidth < 768;
+}
+
+if (typeof window !== 'undefined') {
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+}
 
 </script>
 
@@ -17,7 +26,7 @@ const dataProvider = ref();
   <DefaultPage  placeholder="Search Privileges">
      <!-- <template #filter>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
+        class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
@@ -26,7 +35,7 @@ const dataProvider = ref();
   -->
     <template #add-action>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+        class="flex gap-2 justify-center items-center px-6 py-4 text-white rounded-md bg-primary"
         @click="$router.push('/add_privilege')"
       >
         <i v-html="icons.plus_circle"></i>
@@ -38,52 +47,23 @@ const dataProvider = ref();
       <PrivilegesDataProvider
         ref="dataProvider"
         :search="search"
-        v-slot="{ privileges, pending,  }"
+        v-slot="{ privileges, pending }"
       >
-      
         <Table
           :pending="pending"
+          :virtual="true"
+          :itemKey="'privilegeUuid'"
+          :virtualHeight="600"
+          :virtualItemSize="64"
           :headers="{
-            head: ['Privilege Name', 'Description', 'Category', 'Actions'],
-            row: ['privilegeName', 'privilegeDescription', 'privilegeCategory'],
+            head: [ 'Privilege Name', 'Description', 'Category', 'Actions'],
+            row: ['index', 'privilegeName', 'privilegeDescription', 'privilegeCategory'],
           }"
           :rows="privileges"
-        
-        >
-         <template #actions="{row}">
-          <Dropdown v-slot="{ setRef, toggleDropdown }">
-        <div
-          @click.prevent="toggleDropdown"
-          class="flex items-center gap-2 px-5 py-3 rounded-lg cursor-pointer"
-        >
-          <button>
-            <i v-html="icons.threeDots"></i>
-          </button>
-        </div>
-        <div
-          class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 bg-white"
-          :ref="setRef"
-        >
-          <button @click.prevent="$router.push(`/edit_privilege/${row?.privilegeUuid}`)"
-            class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
-          >
-            <i v-html="icons.edits" />
-            <span>Edit</span>
-          </button>
-
-          <button
-            @click.prevent="$router.push(`/privilege_detail/${row?.privilegeUuid}`)"
-            class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
-          >
-            <i v-html="icons.details" />
-            <span>Detail</span>
-          </button>
-          
-        </div>
-      </Dropdown>
-      </template>
-         
-        </Table>
+          :rowCom="PrivilegeRow"
+          :Fallback="TableRowSkeleton"
+          :isMobile="isMobile"
+        />
       </PrivilegesDataProvider>
     </template>
   </DefaultPage>

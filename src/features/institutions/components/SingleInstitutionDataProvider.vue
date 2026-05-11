@@ -1,34 +1,59 @@
-<script setup lang="ts">
+<script setup>
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useSingleInstitution } from "../store/singleInstitutionStore";
 import { getInstitutionsById } from "../api/institutionApi";
+import { computed, watch } from "vue";
 import { useRoute } from "vue-router";
-import type { Institution } from "../store/institutionsStore";
 
-const props = defineProps<{ institutionUuid?: string }>();
-const req = useApiRequest<Institution>();
+const props = defineProps({
+  institutionUuid: {
+    type: [String, Number],
+    default: undefined,
+  },
+});
+
+const req = useApiRequest();
 const route = useRoute();
 
 const institutionStore = useSingleInstitution();
 
-const institutionUuid = (props.institutionUuid as string) || (route.params.institutionUuid as string);
+const institutionUuid = computed(() => {
+  return (
+    props.institutionUuid ||
+    route.params.institutionUuid ||
+    route.params.instutionId ||
+    route.params.institutionId
+  );
+});
 
-if (!institutionStore.get(institutionUuid as string)) {
+function load(id) {
+  if (!id) return;
+  if (institutionStore.get(String(id))) return;
+
   req.send(
-    () => getInstitutionsById(institutionUuid as string),
+    () => getInstitutionsById(String(id)),
     (res) => {
-      if (res.success) {
-        institutionStore.add(res.data as Institution);
+      if (res?.success) {
+        institutionStore.add(res.data);
       }
     }
   );
 }
 
+watch(
+  () => institutionUuid.value,
+  (id) => {
+    load(id);
+  },
+  { immediate: true }
+);
 </script>
 <template>
-  <slot
-    :instituton="institutionStore.get(institutionUuid as string)"
-    :pending="req.pending.value"
-    :error="req.error.value"
-  />
+  <div>
+    <slot
+      :instituton="institutionUuid ? institutionStore.get(String(institutionUuid)) : undefined"
+      :pending="req.pending.value"
+      :error="req.error.value"
+    />
+  </div>
 </template>

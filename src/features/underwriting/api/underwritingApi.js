@@ -42,3 +42,9 @@ export function deleteInstitutionContract(contractUuid) {
   return api.addAuthenticationHeader().delete(`/claimconnect/payer-institution-contract/${contractUuid}`);
 }
 
+export function renewInstitutionContract(contractUuid, data) {
+  return api
+    .addAuthenticationHeader()
+    .put(`/claimconnect/payer-institution-contract/${contractUuid}/renew`, data);
+}
+

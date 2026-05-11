@@ -52,7 +52,6 @@ const pagination = usePagination({
       :pending="pagination.pending.value"
       :headers="{
         head: [
-          
           'Policy Number',
           'Description',
           'Effective Date',

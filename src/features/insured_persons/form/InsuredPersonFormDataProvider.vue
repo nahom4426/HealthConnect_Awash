@@ -62,7 +62,7 @@ async function register(payload) {
     const requiredInsuredFields = [
       'firstName',
       'fatherName',
-      'idNumber',
+
     ];
 
     const missingFields = requiredInsuredFields.filter((field) => {

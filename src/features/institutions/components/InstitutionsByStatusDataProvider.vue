@@ -19,26 +19,17 @@ const institutionStore = useInstitutionStore();
 const pagination: any = usePagination({
   store: institutionStore,
   auto: false,
-  cb: (data: any) => {
-    const payload: any = { ...data, status: props.status };
-    if (typeof payload.search !== 'string' || payload.search.trim() === '') {
-      delete payload.search;
-    }
-    return getInstitutionsByStatus(payload);
-  },
+  cb: (data: any) => getInstitutionsByStatus({ ...data, status: props.status }),
 });
 
 if (!institutionStore.institutions.length) {
-  // Ensure empty/invalid search is not sent on first load
-  pagination.search.value = (typeof props.search === 'string' && props.search.trim() !== '') ? props.search : undefined;
   pagination.send();
 }
 
 watch(
   () => props.search,
   () => {
-    // Only set search if it's a non-empty string; otherwise remove from params
-    pagination.search.value = (typeof props.search === 'string' && props.search.trim() !== '') ? props.search : undefined;
+    pagination.search.value = props.search;
   }
 );
 </script>

@@ -44,7 +44,7 @@ function handleSave() {
 
 <template>
   <ModalParent>
-      <NewFormParent
+    <NewFormParent
       size="lg"
       :title="`Add Services to ${packageName}`"
       subtitle="Select services to add to this package"

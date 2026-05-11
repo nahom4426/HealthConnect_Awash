@@ -11,6 +11,58 @@ export function getRequestedClaim(query: any) {
 		params: query
 	})
 }
+export function getNotClaimed(query: any) {
+	return api.addAuthenticationHeader().get<RequestedClaim>(`${path}/service-provided/notClaimed`, {
+		params: query
+	})
+}
+
+
+// Create new service-provided with optional attachments (multipart/form-data)
+export function createServiceProvided(contractUuid: string | number, formData: FormData) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path}/service-provided/${contractUuid}` as any, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+}
+
+export function createCashServiceProvided(formData: FormData) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path}/service-provided/cashService` as any, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+}
+export function createCreditServiceProvided(formData: FormData) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path}/service-provided/manualCreditService` as any, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+}
+
+export function updateManualCreditServiceProvided(serviceProvidedUuid: string | number, formData: FormData) {
+  return api
+    .addAuthenticationHeader()
+    .put(`${path}/service-provided/manualCreditService/${serviceProvidedUuid}` as any, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+}
+
+export function getServiceProvidedById(serviceProvidedId: string | number) {
+  return api
+    .addAuthenticationHeader()
+    .get(`${path}/service-provided/${serviceProvidedId}` as any);
+}
+
+export function updateServiceProvided(serviceProvidedId: string | number, formData: FormData) {
+  return api
+    .addAuthenticationHeader()
+    .put(`${path}/service-provided/${serviceProvidedId}` as any, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+}
 
 export function getClaimDetail(id: string,) {
 	return api.addAuthenticationHeader().get<any>(`${path}/details/${id}`)
@@ -37,12 +89,40 @@ export function getClaimLogs(query = {}) {
   })
 }
 
+export function getFieldUpdateLogs(query: any = {}) {
+	return api.addAuthenticationHeader().get<any>(`${path}/field-update-log`, {
+		params: query,
+	})
+}
+
 export function approveClaimProcessedBy(claimUuid: string, data: { comment: string; batchCode: string }) {
-  return api.addAuthenticationHeader().put(`${path}/claim/approve/processedBy/${claimUuid}`, data)
+return api.addAuthenticationHeader().put(`${path}/claim/approve/changeStatus/${claimUuid}`, data, {
+		params: { 'claimStatus': 'PROCESSED' }
+	})
 }
 export function checkClaimProcessedBy(claimUuid: string, data: { comment: string; batchCode: string }) {
-	return api.addAuthenticationHeader().put(`${path}/claim/approve/approvedBy/${claimUuid}`, data)
-  }
+return api.addAuthenticationHeader().put(`${path}/claim/approve/changeStatus/${claimUuid}`, data, {
+		params: { 'claimStatus': 'APPROVED' }
+	}) }
+	export function checkClaimConfirmedBy(claimUuid: string, data: { comment: string; batchCode: string }) {
+return api.addAuthenticationHeader().put(`${path}/claim/approve/changeStatus/${claimUuid}`, data, {
+		params: { 'claimStatus': 'CONFIRMED' }
+	}) }
+		export function checkClaimAuthorizedBy(claimUuid: string, data: { comment: string; batchCode: string }) {
+return api.addAuthenticationHeader().put(`${path}/claim/approve/changeStatus/${claimUuid}`, data, {
+		params: { 'claimStatus': 'AUTHORIZED' }
+	}) }
+
+export function rejectClaim(claimUuid: string, data: { comment: string; batchCode: string }) {
+	return api.addAuthenticationHeader().put(`${path}/claim/approve/changeStatus/${claimUuid}`, data, {
+		params: { 'claimStatus': 'REJECTED' }
+	})
+}
+export function verifyClaim(claimUuid: string, data: { comment: string; batchCode: string }) {
+	return api.addAuthenticationHeader().put(`${path}/claim/approve/changeStatus/${claimUuid}`, data, {
+		params: { 'claimStatus': 'VERIFIED' }
+	})
+}
   
 export function claimVerified(data: any) {
   return api.addAuthenticationHeader().put(`${path}/approve/checkedBy`, data)
@@ -69,19 +149,39 @@ export function getRequestedClaimByBatchDetail(query = {}, claimUuid: string) {
     })
 }
 
-// Update service provided claim status with the new payload structure
+// new: update service provided claim status (body: array of serviceProvidedUuid)
 export function updateServiceProvidedClaimStatus(
-  claimUuid: string, 
-  payload: {
-    serviceProvidedUuids: string[];
-    claimStatus: string;
-    remark?: string;
+	claimUuid: string, 
+	claimStatus: string, 
+	serviceProvidedUuids: string[] = [], 
+	remark?: string,
+	canResubmit?: boolean
+  ) {
+	const requestBody = {
+	  serviceProvidedUuids,
+	  claimStatus,
+	  ...(typeof canResubmit === 'boolean' && { canResubmit }),
+	  ...(remark && { remark })
+	};
+  
+	return api.addAuthenticationHeader().put(
+	  `${path}/claim/ServiceProvidedClaimStatus/${claimUuid}`,
+	  requestBody
+	);
   }
+
+export function updateProvidedItemClaimStatus(
+	claimUuid: string,
+	serviceProvidedUuid: string,
+	data: Array<{ providedItemUuid: string; claimStatus: string; canResubmit?: boolean; remark?: string }>
 ) {
-  return api.addAuthenticationHeader().put(
-    `${path}/claim/ServiceProvidedClaimStatus/${claimUuid}`, 
-    payload
-  );
+	return api.addAuthenticationHeader().put(
+		`${path}/claim/ProvidedItemClaimStatus/${claimUuid}`,
+		data,
+		{
+			params: { serviceProvidedUuid },
+		}
+	)
 }
 
 export function getRequestedCashClaimByBatchDetail(query = {}) {
@@ -90,30 +190,24 @@ export function getRequestedCashClaimByBatchDetail(query = {}) {
 	})
 }
 
-export function ClaimSettlePayment(data: { attachment: File; payClaimRequest: any }, claimUuid: string) {
-	const formData = new FormData();
+// Dashboard APIs
+export function getProviderDashboard() {
+	return api.addAuthenticationHeader().get(`${path}/provider/dashboard`)
+}
 
-	// attachment -> binary file
-	if (data.attachment) {
-		formData.append('attachment', data.attachment);
-	}
+export function getActivePolicies() {
+	return api.addAuthenticationHeader().get(`${path}/payer-institution-contract/dashBoard/activePolicies`)
+}
 
-	// payClaimRequest -> JSON string
-	if (data.payClaimRequest) {
-		const payload =
-			typeof data.payClaimRequest === 'string'
-				? data.payClaimRequest
-				: JSON.stringify(data.payClaimRequest);
-		formData.append('payClaimRequest', payload);
-	}
+export function getEachMonthActivePolicies() {
+	return api.addAuthenticationHeader().get(`${path}/payer-institution-contract/dashBoard/eachMonthActivePolicies`)
+}
 
-	return api.addAuthenticationHeader().put(
-		`${path}/claim/settle/payment/${claimUuid}`,
-		formData,
-		{
-			headers: {
-				'Content-Type': 'multipart/form-data',
-			},
-		}
-	);
+export function getClaimsDashboard(claimStatus?: string) {
+	const params = claimStatus ? { claimStatus } : {};
+	return api.addAuthenticationHeader().get(`${path}/claim/dashboard`, { params })
+}
+
+export function getEachMonthCreatedClaims() {
+	return api.addAuthenticationHeader().get(`${path}/claim/dashBoard/eachMonthCreatedClaims`)
 }

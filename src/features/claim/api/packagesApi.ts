@@ -1,9 +1,9 @@
 import ApiService from "@/service/ApiService"
 
 const api = new ApiService()
-const path = '/claimconnect/package'
+const path = "/claimconnect/package";
 
-export function getPackageByInsuredId(id : string) {
+export function getPackageByInsuredId(id: string) {
 	return api.addAuthenticationHeader().get(`${path}/dropdown/${id}`)
 }
 

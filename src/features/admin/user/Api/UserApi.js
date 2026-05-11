@@ -2,8 +2,8 @@ import ApiService from "@/service/ApiService";
 import { getQueryFormObject } from "@/utils/utils.js";
 
 // Create a new API service instance with the specific base URL
-const api = new ApiService(import.meta.env.v_API_URI);
-const path = "/auth/users";
+const api = new ApiService(import.meta.env.v_API_AUTH_URI);
+const path = "/users";
 
 export function CreateUser(data) {
   const formattedData = {
@@ -27,7 +27,7 @@ export function getAllUser(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/all${qr}`);
 }
 export function getUserById(id) {
-  return api.addAuthenticationHeader().get(`${path}/${id}`);
+  return api.addAuthenticationHeader().get(`${path}/user/${id}`);
 }
 export function updateUserById(id, data) {
   const formattedData = {

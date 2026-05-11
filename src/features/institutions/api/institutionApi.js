@@ -5,6 +5,15 @@ const api = new ApiService();
 
 const path = "/claimconnect/institution";
 
+export function importInstitutions(data, config) {
+  return api.addAuthenticationHeader().post(`${path}/import`, data, {
+    ...config,
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+}
+
 export function getInstitutionsPolicyByStatus(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/list`, {
     params: query,

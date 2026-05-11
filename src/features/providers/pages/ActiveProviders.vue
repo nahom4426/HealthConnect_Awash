@@ -45,7 +45,7 @@ function viewDetails(id) {
   <DefaultPage placeholder="Search Active Providers">
     <!-- <template #filter>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
+        class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
@@ -55,7 +55,7 @@ function viewDetails(id) {
     <template #add-action>
       <button
         @click.prevent="openModal('AddProvider')"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+        class="flex gap-2 justify-center items-center px-6 py-4 text-white rounded-md bg-primary"
       >
         <i v-html="icons.plus_circle"></i>
         <p class="text-base">Add Provider</p>
@@ -70,13 +70,17 @@ function viewDetails(id) {
       >
         <Table
           :pending="pending"
+          :virtual="true"
+          :itemKey="'providerUuid'"
+          :virtualHeight="600"
+          :virtualItemSize="64"
           :headers="{
             head: [
               'Provider Name',
               'Contact Person',
               'Contact',
               'Category',
-              'Level',
+          
               'Status',
               'Actions',
             ],
@@ -85,16 +89,13 @@ function viewDetails(id) {
               'email',
               'telephone',
               'category',
-              'level',
+           
               'status',
             ],
           }"
           :rows="providers"
           :rowCom="ActiveproviderStatusRow"
           :pagination="{
-            currentPage,
-            itemsPerPage,
-            totalPages,
             onPageChange: handlePageChange,
             onLimitChange: handleLimitChange,
           }"
@@ -107,7 +108,7 @@ function viewDetails(id) {
                 'email',
                 'telephone',
                 'category',
-                'level',
+    
                 'status',
               ]"
               :headKeys="[
@@ -116,7 +117,7 @@ function viewDetails(id) {
                 'Email',
                 'Telephone',
                 'Category',
-                'Level',
+   
                 'Status',
                 'Actions',
               ]"

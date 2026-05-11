@@ -4,7 +4,7 @@ import { getQueryFormObject } from "@/utils/utils";
 
 const api = new ApiService()
 
-const path = '/insuredperson'
+const path = '/claimconnect/insuredperson'
 
 export function getInsuredByContractId(id: string, query = {}) {
 	return api.addAuthenticationHeader().get<InsuredPerson[]>(`${path}/list/${id}`, {

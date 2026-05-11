@@ -68,7 +68,7 @@ onMounted(() => {});
           }"
           :rows="contracts"
           :rowCom="ContractStatusRow"
-          :loading="pending"
+          :pending="pending"
           @row-click="navigateToServicesPage"
           :pagination="{
             currentPage,

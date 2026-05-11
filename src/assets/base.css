@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
   --vt-c-white: #ffffff;
@@ -34,21 +36,31 @@
   --color-text: var(--vt-c-text-light-1);
 
   --section-gap: 160px;
+
+  /* ── Layout Design System ── */
+  --primary:       #003E7E;
+  --primary-dark:  #00224D;
+  --primary-light: #1A5A9A;
+  --accent:        #F39200;
+
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error:   #EF4444;
+  --info:    #3B82F6;
+
+  --bg-color:   #F8FAFC;
+  --surface:    #FFFFFF;
+  --text-main:  #0F172A;
+  --text-muted: #64748B;
+  --border:     #E2E8F0;
+
+  --shadow-sm:      0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:      0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:      0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-primary: 0 10px 15px -3px rgba(0, 62, 126, 0.2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-  }
-}
+/* Dark mode intentionally disabled - app uses its own light theme */
 
 *,
 *::before,
@@ -60,27 +72,101 @@
 
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-main, rgb(30 41 59));
+  background-color: var(--bg-color, #F8FAFC);
   line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-  font-size: 15px;
-  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+  font-family: 'Outfit', sans-serif;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* ── Glassmorphism panel ── */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Base buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+.btn-primary {
+  background-color: var(--primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  box-shadow: var(--shadow-primary);
+  transform: translateY(-1px);
+}
+.btn-accent {
+  background-color: var(--accent);
+  color: #fff;
+}
+.btn-accent:hover { filter: brightness(1.1); }
+.btn-outline {
+  border: 1px solid var(--border);
+  background-color: transparent;
+  color: var(--text-main);
+}
+.btn-outline:hover {
+  background-color: var(--bg-color);
+  border-color: var(--text-muted);
+}
+
+/* ── Status badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-success { background-color: rgba(16,185,129,0.1); color: var(--success); }
+.badge-warning { background-color: rgba(245,158,11,0.1);  color: var(--warning); }
+.badge-error   { background-color: rgba(239,68,68,0.1);   color: var(--error); }
+.badge-info    { background-color: rgba(59,130,246,0.1);  color: var(--info); }
+
+/* ── Form inputs ── */
+.form-input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-main);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0,62,126,0.1);
+}
+
+/* ── Page transition ── */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(8px); }

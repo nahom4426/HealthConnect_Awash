@@ -1,36 +1,145 @@
 <script setup>
 import InputError from "./InputError.vue";
 
-const props = defineProps(["label", "error"]);
+const props = defineProps(["label", "error", "validation", "glass"]);
+
+// Check if field is required
+const isRequired = () => {
+  if (!props.validation) return false;
+  const validationStr = typeof props.validation === 'string' ? props.validation : '';
+  return validationStr.includes('required');
+};
 </script>
 
 <template>
-  <div class="flex flex-col items-start gap-1.5 w-full">
-    <div class="flex flex-col gap-1 w-full">
-      <span 
-        :title="label" 
-        class="text-sm font-semibold text-gray-700 truncate transition-colors duration-200" 
+  <div :class="glass ? 'glass-field' : 'flex flex-col items-start gap-1.5 w-full'">
+    <div :class="glass ? 'glass-field-inner' : 'flex flex-col gap-1 w-full'">
+      <span
+        :title="label"
+        :class="glass
+          ? 'glass-label'
+          : 'text-sm font-medium text-gray-700 truncate transition-colors duration-200'"
         v-if="label"
       >
         {{ label }}
+        <span v-if="isRequired()" :class="glass ? 'glass-required' : 'text-red-500 ml-1'">*</span>
       </span>
       <div
-        class="focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 
-               border-2 border-gray-200 max-w-full overflow-hidden text-base rounded-lg 
-               bg-white hover:border-gray-300 transition-all duration-200 shadow-sm"
+        v-if="!glass"
+        class="focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary
+               border border-slate-200 max-w-full overflow-hidden text-base rounded-lg
+               bg-white hover:border-slate-300 transition-all duration-200 shadow-sm"
         :class="{
-          'border-red-500': error,
-          'focus-within:ring-red-500 focus-within:border-red-500': error
+          'border-red-400 focus-within:ring-red-300 focus-within:border-red-400': error,
+          'border-slate-200': !error
         }"
       >
         <slot></slot>
       </div>
+      <div
+        v-else
+        class="glass-input-wrap"
+        :class="{ 'glass-input-wrap--error': error }"
+      >
+        <slot></slot>
+      </div>
     </div>
-    <InputError :error="error" />
+    <InputError :error="error" :glass="glass" />
   </div>
 </template>
 
 <style>
+/* ── Glass variant styles ── */
+.glass-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+.glass-field-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+.glass-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.01em;
+  display: block;
+}
+.glass-required {
+  color: #fca5a5;
+  margin-left: 2px;
+}
+.glass-input-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+  backdrop-filter: blur(10px);
+}
+.glass-input-wrap:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+.glass-input-wrap:focus-within {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(59, 130, 246, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+.glass-input-wrap--error {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+}
+.glass-input-wrap--error:focus-within {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+  border-color: rgba(239, 68, 68, 0.7) !important;
+}
+
+/* Glass variant: style inputs inside glass wrapper */
+.glass-input-wrap .custom-input,
+.glass-input-wrap .skip_custom-input,
+.glass-input-wrap input {
+  border: none !important;
+  outline: none !important;
+  width: 100%;
+  background: transparent !important;
+  padding: 0.875rem 1rem !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  font-size: 0.9375rem !important;
+  flex: 1;
+}
+
+.glass-input-wrap .custom-input::placeholder,
+.glass-input-wrap .skip_custom-input::placeholder,
+.glass-input-wrap input::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Glass variant: eye toggle button */
+.glass-input-wrap .border-r {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.glass-input-wrap button {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  border: none !important;
+  padding: 0 0.875rem !important;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.glass-input-wrap button:hover {
+  color: #fff !important;
+}
+
 .custom-input,
 .skip_custom-input {
   border: none;

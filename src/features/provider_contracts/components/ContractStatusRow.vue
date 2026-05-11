@@ -11,6 +11,10 @@ import { usecontracts } from '../store/cotractStore';
 
 const router = useRouter();
 const contractStore = usecontracts();
+
+// Define emits
+const emit = defineEmits(['row', 'remove']);
+
 const props = defineProps({
   rowData: {
     type: Array,
@@ -24,6 +28,14 @@ const props = defineProps({
     type: Array,
     required: true
   },
+  cells: {
+    type: [Object, Array],
+    default: () => ({})
+  },
+  isMobile: {
+    type: Boolean,
+    default: false
+  },
   onRowClick: {
     type: Function,
     default: () => {}
@@ -31,7 +43,9 @@ const props = defineProps({
   onView: {
     type: Function,
     default: () => {}
-  }
+  },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 }
 });
 
 const { addToast } = useToast();
@@ -116,7 +130,7 @@ function handleViewWithClose(row) {
 
 function handleServicesWithClose(row) {
   closeAllDropdowns();
-  router.push(`/active_contract/services/${row.payerProviderContractUuid}/${row.providerUuid}`);
+  router.push(`/active_contract/services/${row.payerProviderContractUuid}/${row.providerUuid}/${row.providerName}`);
 }
 
 function handleEditWithClose(row) {
@@ -157,11 +171,7 @@ async function handleActivateForSuspendedWithClose(payerProviderContractUuid) {
       throw new Error(response.error || 'Failed to activate provider');
     }
   } catch (error) {
-    addToast({
-      type: 'error',
-      title: 'Activation Failed',
-      message: error.message || 'An error occurred while activating the provider'
-    });
+    
   }
 }
 
@@ -180,12 +190,19 @@ async function handleDeactivateWithClose(payerProviderContractUuid) {
       throw new Error(response.error || 'Failed to deactivate provider');
     }
   } catch (error) {
-    addToast({
-      type: 'error',
-      title: 'Deactivation Failed',
-      message: error.message || 'An error occurred while deactivating the provider'
-    });
+  
   }
+}
+async function handleReActivateForSuspendedWithClose(row) {
+  closeAllDropdowns();
+  
+  // Open the reactivate modal
+  openModal('ReactivateContract', { data: { ...row } }, (result) => {
+    // Modal closed with success - data is already updated in store
+    if (result?.success) {
+      console.log('Contract reactivated and store updated:', result.updatedContract);
+    }
+  });
 }
 onMounted(() => {
   window.addEventListener('click', closeAllDropdowns);
@@ -202,24 +219,24 @@ onUnmounted(() => {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click.self="onRowClick(row)" 
-    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
   >
-    <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>
+    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
     
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
       <div v-if="key === 'status'" class="truncate">
-        <span :class="getStatusStyle(row.status)" class="status-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium">
+        <span :class="getStatusStyle(row.status)" class="inline-flex gap-1.5 items-center px-3 py-1.5 text-xs font-medium rounded-full status-badge">
           <span class="text-xs">{{ getStatusIcon(row.status) }}</span>
           {{ row.status || 'Unknown' }}
         </span>
       </div>
-      <div v-else-if="key === 'period'" class="text-gray-700 space-y-1">
-        <div class="flex items-center gap-1 text-sm">
-          <span class="text-gray-400 text-xs">From:</span>
+      <div v-else-if="key === 'period'" class="space-y-1 text-gray-700">
+        <div class="flex gap-1 items-center text-sm">
+          <span class="text-xs text-gray-400">From:</span>
           <span class="font-medium">{{ formatDate(row.beginDate) }}</span>
         </div>
-        <div class="flex items-center gap-1 text-sm">
-          <span class="text-gray-400 text-xs">To:</span>
+        <div class="flex gap-1 items-center text-sm">
+          <span class="text-xs text-gray-400">To:</span>
           <span class="font-medium">{{ formatDate(row.endDate) }}</span>
         </div>
       </div>
@@ -229,7 +246,7 @@ onUnmounted(() => {
       <div v-else-if="key === 'description'" class="max-w-[200px] truncate text-gray-700" :title="row[key]">
         {{ row[key] || 'No description' }}
       </div>
-      <div v-else-if="key === 'providerEmail'" class="text-blue-600 hover:text-blue-800 cursor-pointer">
+      <div v-else-if="key === 'providerEmail'" class="text-blue-600 cursor-pointer hover:text-blue-800">
         <a :href="`mailto:${row[key]}`">{{ row[key] }}</a>
       </div>
       <span v-else class="text-gray-700">
@@ -239,12 +256,12 @@ onUnmounted(() => {
     
     <!-- Actions Column -->
     <td class="p-3">
-  <div class="flex flex-wrap gap-2 items-center justify-start">
+  <div class="flex flex-wrap gap-2 justify-start items-center">
 
     <!-- 👁️ View (common for all statuses) -->
     <!-- <button
       @click.stop="handleViewWithClose(row)"
-      class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 hover:shadow-sm transition-all duration-200"
+      class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-200 hover:bg-gray-100 hover:shadow-sm"
     >
       <i v-html="icons.details" class="text-gray-500" />
       <span>View</span>
@@ -255,7 +272,7 @@ onUnmounted(() => {
       <!-- ✏️ Edit -->
       <button
         @click.stop="handleEditWithClose(row)"
-        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 hover:shadow-sm transition-all duration-200"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm"
       >
         <i v-html="icons.edits" class="text-blue-500" />
         <span>Edit</span>
@@ -264,7 +281,7 @@ onUnmounted(() => {
       <!-- ✅ Activate -->
       <button
         @click.stop="handleActivateWithClose(row.payerProviderContractUuid)"
-        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:shadow-sm transition-all duration-200"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
       >
         <i v-html="icons.activate" class="text-green-500" />
         <span>Activate</span>
@@ -276,7 +293,7 @@ onUnmounted(() => {
       <!-- 🧾 Services -->
       <button
         @click.stop="handleServicesWithClose(row)"
-        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 hover:shadow-sm transition-all duration-200"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-xl border border-indigo-200 transition-all duration-200 hover:bg-indigo-100 hover:shadow-sm"
       >
         <i v-html="icons.details" class="text-indigo-500" />
         <span>Services</span>
@@ -285,7 +302,7 @@ onUnmounted(() => {
       <!-- ⛔ Deactivate -->
       <button
         @click.stop="handleDeactivateWithClose(row.payerProviderContractUuid)"
-        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 hover:shadow-sm transition-all duration-200"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 rounded-xl border border-red-200 transition-all duration-200 hover:bg-red-100 hover:shadow-sm"
       >
         <i v-html="icons.deactivate" class="text-red-500" />
         <span>Deactivate</span>
@@ -293,13 +310,23 @@ onUnmounted(() => {
     </template>
 
     <!-- 🚫 SUSPENDED -->
-    <template v-else-if="row.status?.toUpperCase() === 'SUSPENDED'">
+    <template v-else-if="row.status?.toUpperCase() === 'SUSPENDED' ">
       <button
         @click.stop="handleActivateForSuspendedWithClose(row.payerProviderContractUuid)"
-        class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:shadow-sm transition-all duration-200"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
       >
         <i v-html="icons.activate" class="text-green-500" />
         <span>Activate</span>
+      </button>
+    </template>
+     <template v-else-if="row.status?.toUpperCase() === 'EXPIRED' ">
+      <button
+       @click.stop="handleReActivateForSuspendedWithClose(row)"
+      
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+      >
+        <i v-html="icons.activate" class="text-green-500" />
+        <span>ReActivate</span>
       </button>
     </template>
 

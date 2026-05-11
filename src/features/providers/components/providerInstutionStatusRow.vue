@@ -1,11 +1,10 @@
 <script setup>
 import { defineProps, onMounted, onUnmounted, computed } from 'vue';
-import { storeToRefs } from 'pinia';
 import { openModal } from '@customizer/modal-x';
-import { useProviders } from "@/features/providers/store/providersStore";
 import { useRoute } from 'vue-router';
 import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
+import { mapContracts } from '../api/providerApi';
 
 const props = defineProps({
   rowData: {
@@ -39,12 +38,16 @@ const props = defineProps({
   onRowClick: {
     type: Function,
     default: () => {}
-  }
+  },
+  onRefetch: {
+    type: Function,
+    default: () => {}
+  },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 }
 });
 
 const { addToast } = useToast();
-const providersStore = useProviders();
-const { providers: storeProviders } = storeToRefs(providersStore);
 const route = useRoute();
 
 function toggleDropdown(event, rowId) {
@@ -93,27 +96,32 @@ function getBaseUrl() {
 }
 
 function handleImageError(event) {
-  event.target.src = '/assets/placeholder-logo.png';
+  event.target.src = '/assets/placeholder-logo.png ';
 }
 function handleEdit(row) {
   openModal('EditProvider', { 
     providerUuid: row.providerUuid, 
     provider: row,
     onUpdated: (updatedProvider) => {
-      providersStore.update(updatedProvider.providerUuid, updatedProvider);
+      props.onRefetch();
     }
   });
 }
 function handleAdd(row) {
-  openModal('ConfirmAddProvider', {
-    providerName: row.providerName,
-    payerInstitutionContractUuid: route.params.payerProviderContractUuid || route.params.id,
-    payerProviderContractUuid: row.payerProviderContractUuid || row.providerUuid,
-    onConfirm: () => {
-      // This will be called when user confirms in the modal
-      mapProviderContract(row);
+  openModal(
+    'ConfirmAddProvider',
+    {
+      providerName: row.providerName,
+      payerInstitutionContractUuid: route.params.payerProviderContractUuid || route.params.id,
+      payerProviderContractUuid: row.payerProviderContractUuid || row.providerUuid,
+      providerUuid: row.providerUuid,
+    },
+    (res) => {
+      if (res?.success) {
+        props.onRefetch();
+      }
     }
-  });
+  );
 }
 
 // Wrapper functions with dropdown close
@@ -144,12 +152,12 @@ function handleDocumentClick(event) {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click.self="onRowClick(row)" 
-    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50" 
   >  
-    <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
+    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
 
     <!-- Debug row for specific provider -->
-    <!-- <td v-if="row.providerName === 'Addis Hiwot'" class="debug-info p-2 text-xs bg-yellow-50">
+    <!-- <td v-if="row.providerName === 'Addis Hiwot'" class="p-2 text-xs bg-yellow-50 debug-info">
       <div class="font-bold">Debug Info for {{ row.providerName }}:</div>
       <div>Has users property: {{ 'users' in row }}</div>
       <div>Users is array: {{ Array.isArray(row.users) }}</div>
@@ -164,7 +172,7 @@ function handleDocumentClick(event) {
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <div v-if="key === 'status'" class="truncate">  
         <span 
-          class="px-2.5 py-1 rounded-full text-xs font-medium"
+          class="px-2.5 py-1 text-xs font-medium rounded-full"
           :class="getStatusStyle(row.status)"
         >
           {{ row.status }}
@@ -176,30 +184,30 @@ function handleDocumentClick(event) {
         </span>
       </div>
       
-      <div v-else-if="key === 'providerName'" class="text-gray-700 flex items-center gap-2.5">
+      <div v-else-if="key === 'providerName'" class="flex gap-2.5 items-center text-gray-700">
         <div class="flex justify-center items-center">
           <img 
             v-if="row.logoBase64" 
             :src="row.logoBase64" 
             alt="Provider Logo" 
-            class="h-10 w-10 object-contain rounded-full border border-gray-200"
+            class="object-contain w-10 h-10 rounded-full border border-gray-200"
           />
           <img 
             v-else-if="row.logoUrl" 
             :src="row.logoUrl" 
             alt="Provider Logo" 
-            class="h-10 w-10 object-contain rounded-full border border-gray-200"
+            class="object-contain w-10 h-10 rounded-full border border-gray-200"
             @error="handleImageError"
           />
           <img 
             v-else-if="row.logoPath" 
             :src="`${getBaseUrl()}/provider/logo/${row.logoPath}`" 
             alt="Provider Logo" 
-            class="h-10 w-10 object-contain rounded-full border border-gray-200"
+            class="object-contain w-10 h-10 rounded-full border border-gray-200"
             @error="handleImageError"
           />
-          <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
-            <span class="text-gray-500 text-xs">No Logo</span>
+          <div v-else class="flex justify-center items-center w-10 h-10 text-center bg-gray-200 rounded-full">
+            <span class="text-xs text-gray-500">No Logo</span>
           </div>
         </div>
         <div>{{ row.providerName }}</div>
@@ -212,28 +220,28 @@ function handleDocumentClick(event) {
 
     <!-- Actions Column -->
     <td class="p-3">  
-      <div class="dropdown-container relative">
+      <div class="relative dropdown-container">
         <button 
           @click.stop="toggleDropdown($event, row.providerUuid || row.id)"
-          class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
+          class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 rounded-lg hover:text-gray-800 hover:bg-gray-100 focus:outline-none"
           type="button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
           </svg>
         </button>
 
         <div 
           :id="`dropdown-${row.providerUuid || row.id}`"
-          class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+          class="hidden absolute right-0 z-10 w-44 bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg dropdown-menu focus:outline-none"
         >
           <div class="py-1" role="none">
             <button 
               @click.stop="handleAddWithClose(row)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+              class="block py-2 w-full text-sm text-center text-gray-700 hover:bg-gray-100"
             >
-              <div class="flex items-center justify-start pl-4 gap-4">
-                <i v-html="icons.edits" />
+              <div class="flex gap-4 justify-start items-center pl-4">
+                <i v-html="icons.edit" />
                 Add This Provider
               </div>
             </button>

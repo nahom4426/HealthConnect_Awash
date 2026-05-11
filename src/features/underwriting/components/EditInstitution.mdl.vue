@@ -41,6 +41,7 @@ function update({ values }) {
     state: values.state || 'Addis Ababa',
     latitude: values.latitude || 9.145,
     longitude: values.longitude || 40.4897,
+    cashPeriodLimitPerDay: Number(values.cashPeriodLimitPerDay) || 90,
     status: 'ACTIVE',
     institutionUuid: data.value.institutionUuid
   };

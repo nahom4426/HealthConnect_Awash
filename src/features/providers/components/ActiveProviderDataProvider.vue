@@ -1,6 +1,5 @@
 <script setup>
 import { usePagination } from "@/composables/usePagination";
-import { useProviders } from "../store/providersStore";
 import { getActiveProviders, getMappedActiveProviders } from "../api/providerApi";
 import { watch, computed, onMounted } from "vue";
 import { removeUndefined } from "@/utils/utils";
@@ -13,6 +12,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  refetch: {
+    type: Number,
+    default: 0,
+  },
   status: {
     type: String,
     default: "ACTIVE", // Default to 'active' status
@@ -23,10 +26,8 @@ const props = defineProps({
   },
 });
 const getMappedActiveProvider = route.params.payerInstitutionContractUuid || route.params.id || "";
-const store = useProviders();
 
 const pagination = usePagination({
-  store: store,
   cb: (data) =>
     getMappedActiveProviders(
       getMappedActiveProvider,
@@ -46,10 +47,19 @@ watch(
     pagination.send();
   }
 );
+
+watch(
+  () => props.refetch,
+  () => {
+    console.log('[ActiveProviderDataProvider] refetch changed -> send', props.refetch);
+    pagination.send();
+  },
+  { immediate: true }
+);
 </script>
 <template>
   <slot
-    :providers="store.providers"
+    :providers="pagination.data.value"
     :pending="pagination.pending.value"
     :error="pagination.error.value"
   />

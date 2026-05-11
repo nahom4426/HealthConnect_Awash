@@ -7,15 +7,34 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { useAuthStore } from "@/stores/auth";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
-import { importServices } from "../api/serviceApi";
+import { importServices, getAllServices } from "../api/serviceApi";
 import { importDrug } from "../api/drugApi";
+import { importInstitutions } from "@/features/institutions/api/institutionApi";
 import * as XLSX from 'xlsx';
 import { useRoute } from "vue-router";
+import { useServiceListStore } from "../store/serviceListStore";
 
 const route = useRoute();
+
 const props = defineProps({
-  data: String,
+  data: {
+    type: [String, Object],
+    default: "service",
+  },
 });
+
+const importType = ref(typeof props.data === 'string' ? props.data : (props.data?.type || 'service'));
+const onRefetch = typeof props.data === 'object' ? props.data?.onRefetch : undefined;
+
+const triggerRefetch = () => {
+  if (typeof onRefetch !== 'function') return;
+  const delays = [0, 1500, 3500, 7000];
+  delays.forEach((ms) => {
+    window.setTimeout(() => {
+      onRefetch();
+    }, ms);
+  });
+};
 
 // State
 const importResults = ref(null);
@@ -23,6 +42,8 @@ const showResults = ref(false);
 const req = useApiRequest();
 const auth = useAuthStore().auth?.user?.providerUuid;
 const id = route.params.id;
+const currentProviderName = String(route.params.providerName || '').trim();
+const serviceListStore = useServiceListStore();
 const progress = ref(0);
 const importing = ref(false);
 const fileInput = ref();
@@ -30,6 +51,95 @@ const selectedFile = ref(null);
 const fileName = ref("");
 const message = ref({ type: null, text: null });
 const wasSuccessful = ref(false);
+
+const normalizeProviderName = (name) => {
+  return String(name || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+};
+
+const extractProviderNameFromFilename = (name) => {
+  const file = String(name || '');
+  // Expected export filename: services_{provider}_{YYYY-MM-DD}.xlsx
+  const m = file.match(/services_([\w\-]+)_\d{4}-\d{2}-\d{2}\.(xlsx|xls|csv)$/i);
+  if (!m) return '';
+  return String(m[1] || '').replace(/_/g, ' ').trim();
+};
+
+const extractProviderNameFromSheet = (sheetRows) => {
+  if (!Array.isArray(sheetRows)) return '';
+  const maxRows = Math.min(sheetRows.length, 15);
+  for (let r = 0; r < maxRows; r++) {
+    const row = sheetRows[r];
+    if (!Array.isArray(row)) continue;
+    for (let c = 0; c < row.length; c++) {
+      const cell = row[c];
+      const text = String(cell || '').toLowerCase();
+      if (!text) continue;
+      const isLabel = text.includes('provider') && text.includes('name');
+      if (isLabel) {
+        const right = row[c + 1];
+        if (right != null && String(right).trim()) return String(right).trim();
+        const below = sheetRows[r + 1]?.[c];
+        if (below != null && String(below).trim()) return String(below).trim();
+      }
+      if (text.startsWith('provider:')) {
+        return String(cell).split(':').slice(1).join(':').trim();
+      }
+      if (text.startsWith('provider name:')) {
+        return String(cell).split(':').slice(1).join(':').trim();
+      }
+    }
+  }
+  return '';
+};
+
+const clearSelectedFile = () => {
+  progress.value = 0;
+  importing.value = false;
+  selectedFile.value = null;
+  fileName.value = '';
+  previewData.value = [];
+  previewHeaders.value = [];
+  showPreview.value = false;
+  importResults.value = null;
+  showResults.value = false;
+  wasSuccessful.value = false;
+  if (fileInput.value) fileInput.value.value = '';
+};
+
+const validateProviderName = async (file) => {
+  if (!file) return true;
+  if (!currentProviderName) return true;
+  try {
+    const data = await readFileAsync(file);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const sheetRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    const fileProviderName = extractProviderNameFromSheet(sheetRows);
+
+    const providerFromName = extractProviderNameFromFilename(file?.name);
+    const providerToCompare = fileProviderName || providerFromName;
+
+    if (!providerToCompare) return true;
+
+    if (normalizeProviderName(providerToCompare) !== normalizeProviderName(currentProviderName)) {
+      message.value = {
+        type: 'error',
+        text: `Provider names don't match. Current: ${currentProviderName}. File: ${providerToCompare}. Please use the correct exported Excel.`
+      };
+      toasted(false, '', "Provider names don't match. Please use the correct exported Excel.");
+      clearSelectedFile();
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    return true;
+  }
+};
 
 // Preview
 const previewData = ref([]);
@@ -90,11 +200,43 @@ const parseFileForPreview = async (file) => {
   }
 };
 
+const refetchServicesList = async () => {
+  try {
+    const payerProviderContractUuid = route.params.id;
+    if (!payerProviderContractUuid) {
+      console.log("[Import] refetchServicesList skipped: missing route.params.id");
+      return;
+    }
+    console.log("[Import] refetchServicesList: fetching services for contract", payerProviderContractUuid);
+    const existingRes = await getAllServices(payerProviderContractUuid, { page: 0, limit: 25, search: "" });
+    console.log("[Import] refetchServicesList: response=", existingRes);
+
+    // ApiService returns AsyncResponse via responseHandler: { success, data, error }
+    const payload = Object.prototype.hasOwnProperty.call(existingRes || {}, "data") ? existingRes.data : existingRes;
+
+    const existingData = Array.isArray(payload?.content)
+      ? payload.content
+      : (Array.isArray(payload?.data?.content)
+          ? payload.data.content
+          : (Array.isArray(payload) ? payload : []));
+
+    serviceListStore.set(existingData || []);
+    console.log("[Import] refetchServicesList: store updated. items=", Array.isArray(existingData) ? existingData.length : 0);
+  } catch (e) {
+    console.error("Failed to refetch services after import", e);
+  }
+};
+
 // Import
 const importFile = async () => {
   if (!selectedFile.value) {
     message.value = { type: "error", text: "Please select a file first" };
     return;
+  }
+
+  if (importType.value !== "institution") {
+    const ok = await validateProviderName(selectedFile.value);
+    if (!ok) return;
   }
 
   importing.value = true;
@@ -104,41 +246,77 @@ const importFile = async () => {
   showResults.value = false;
 
   const fd = new FormData();
-  fd.append("file", selectedFile.value);
+  if (importType.value === "institution") {
+    fd.append("institutions", selectedFile.value);
+  } else {
+    fd.append("file", selectedFile.value);
+  }
 
   try {
-    const apiCall = props.data === "drug"
-      ? importDrug({ payerProviderContractUuid: id }, fd, {
+    const apiCall = importType.value === "institution"
+      ? importInstitutions(fd, {
           onUploadProgress: (e) => {
             progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
-          }
+          },
         })
-      : importServices({ payerProviderContractUuid: id }, fd, {
-          onUploadProgress: (e) => {
-            progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
-          }
-        });
+      : (importType.value === "drug"
+          ? importDrug({ payerProviderContractUuid: id }, fd, {
+              onUploadProgress: (e) => {
+                progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
+              },
+            })
+          : importServices({ payerProviderContractUuid: id }, fd, {
+              onUploadProgress: (e) => {
+                progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
+              },
+            }));
 
-    const response = await apiCall; // Directly await the API call
+    const response = await apiCall;
 
-    // Check if response exists and has data
-    if (!response || !response.data) {
-      throw new Error("No valid response data from server");
+    // ApiService returns AsyncResponse via responseHandler: { success, data, error, status }
+    if (!response?.success) {
+      throw new Error(response?.error || "Import failed");
     }
 
     const responseData = response.data;
+    if (!responseData) {
+      throw new Error("No valid response data from server");
+    }
+
     importResults.value = responseData;
 
     // Check if we have row results to process
     if (!responseData.rowResults || !Array.isArray(responseData.rowResults)) {
-      throw new Error("Invalid response format - missing row results");
+      // Some backends may return success without row details. Treat as success.
+      message.value = {
+        type: "success",
+        text: "Import completed",
+      };
+      wasSuccessful.value = true;
+      showResults.value = true;
+
+      if (importType.value === "service") {
+        console.log("[Import] success -> refetchServicesList (no rowResults)");
+        await refetchServicesList();
+        window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
+        triggerRefetch();
+      }
+
+      if (importType.value === "institution") {
+        toasted(true, "Institutions imported successfully");
+        if (typeof onRefetch === 'function') onRefetch();
+      } else {
+        toasted(true, importType.value === "drug" ? "Drug imported successfully" : "Services imported successfully");
+      }
+      closeModal(true);
+      return;
     }
 
     // Calculate actual success/error counts from rowResults if not provided
-    const successCount = responseData.successCount || 
-                       responseData.rowResults.filter(r => r.success).length;
-    const errorCount = responseData.errorCount || 
-                      responseData.rowResults.filter(r => r.error).length;
+    const successCount = responseData.successCount ||
+      responseData.rowResults.filter(r => r.success).length;
+    const errorCount = responseData.errorCount ||
+      responseData.rowResults.filter(r => r.error).length;
 
     // Update the counts in the response data
     responseData.successCount = successCount;
@@ -148,22 +326,77 @@ const importFile = async () => {
     const hasSuccess = successCount > 0;
     const firstError = responseData.rowResults.find(r => r.error);
 
+    const totalRows =
+      typeof responseData.totalRows === "number"
+        ? responseData.totalRows
+        : (Array.isArray(responseData.rowResults) ? responseData.rowResults.length : 0);
+
     if (responseData.rowResults.length > 0) {
       message.value = {
+        // HTTP request succeeded. Outcome depends on row-level results.
         type: hasSuccess ? "success" : "error",
         text: hasSuccess
           ? `Import completed: ${successCount} success, ${errorCount} failed`
-          : firstError?.message || "Import failed - see results below"
+          : (firstError?.message || `Import completed: ${successCount} success, ${errorCount} failed`)
       };
       
       wasSuccessful.value = hasSuccess;
       showResults.value = true;
 
+      // Only refetch and close if at least one row actually imported.
+      if (hasSuccess && importType.value === "service") {
+        console.log("[Import] success -> refetchServicesList (rowResults present)");
+        await refetchServicesList();
+        window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
+        triggerRefetch();
+      }
+
+      if (hasSuccess && importType.value === "institution") {
+        if (typeof onRefetch === 'function') onRefetch();
+      }
+
       if (hasSuccess) {
-        toasted(true, props.data === "drug" 
-          ? "Drug imported successfully" 
-          : "Services imported successfully");
-        setTimeout(() => closeModal(true), 20000);
+        if (importType.value === "institution") {
+          toasted(true, "Institutions imported successfully");
+        } else {
+          toasted(true, importType.value === "drug" 
+            ? "Drug imported successfully" 
+            : "Services imported successfully");
+        }
+        closeModal(true);
+      }
+    } else if (totalRows > 0) {
+      // Backend processed rows but didn't return per-row details.
+      message.value = {
+        type: hasSuccess ? "success" : "error",
+        text: hasSuccess
+          ? `Import completed: ${successCount} success, ${errorCount} failed`
+          : `Import completed: ${successCount} success, ${errorCount} failed`,
+      };
+
+      wasSuccessful.value = hasSuccess;
+      showResults.value = true;
+
+      if (hasSuccess && importType.value === "service") {
+        console.log("[Import] success -> refetchServicesList (rowResults empty, totalRows > 0)");
+        await refetchServicesList();
+        window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
+        triggerRefetch();
+      }
+
+      if (hasSuccess && importType.value === "institution") {
+        if (typeof onRefetch === 'function') onRefetch();
+      }
+
+      if (hasSuccess) {
+        if (importType.value === "institution") {
+          toasted(true, "Institutions imported successfully");
+        } else {
+          toasted(true, importType.value === "drug"
+            ? "Drug imported successfully"
+            : "Services imported successfully");
+        }
+        closeModal(true);
       }
     } else {
       message.value = { 
@@ -176,8 +409,8 @@ const importFile = async () => {
     console.error('Import error:', error);
     message.value = {
       type: "error",
-      text: error.response?.data?.message || 
-           error.message || 
+      text: error?.response?.data?.message || 
+           error?.message || 
            "Import failed due to an unexpected error"
     };
     showResults.value = true;
@@ -210,25 +443,35 @@ const handleFile = (e) => {
   selectedFile.value = file;
   fileName.value = file.name;
   message.value = { type: null, text: null };
-  parseFileForPreview(file);
+  if (importType.value === "institution") {
+    parseFileForPreview(file);
+    return;
+  }
+
+  validateProviderName(file).then((ok) => {
+    if (!ok) return;
+    parseFileForPreview(file);
+  });
 };
 
 const triggerFileInput = () => fileInput.value?.click();
 const removeFile = () => reset();
 
-const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data";
+const title = importType.value === "drug"
+  ? "Import Drug Data"
+  : (importType.value === "institution" ? "Import Institution Data" : "Import Service Data");
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/50">
     <ModalParent id="import-modal">
-      <NewFormParent size="mdd" class="bg-white rounded-xl shadow-2xl overflow-hidden">
-        <div class="p-6 space-y-6">
+      <NewFormParent size="mdd" class="flex flex-col bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-hidden">
+        <div class="overflow-y-auto overflow-x-hidden p-6 space-y-6 custom-scrollbar">
           
           <!-- Title -->
           <div class="text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
-              <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex justify-center items-center mx-auto w-12 h-12 bg-blue-100 rounded-full">
+              <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
@@ -238,7 +481,7 @@ const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data"
           </div>
 
           <!-- Message -->
-          <div v-if="message.text" class="rounded-md p-4 border shadow-sm"
+          <div v-if="message.text" class="p-4 rounded-md border shadow-sm"
             :class="{
               'bg-green-50 border-green-200 text-green-800': message.type === 'success',
               'bg-red-50 border-red-200 text-red-800': message.type === 'error',
@@ -249,10 +492,10 @@ const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data"
 
           <!-- File Upload -->
           <div @click="triggerFileInput"
-            class="relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer"
+            class="relative p-8 text-center rounded-lg border-2 border-dashed transition-all duration-200 cursor-pointer"
             :class="{ 'border-blue-400 bg-blue-50/30': selectedFile, 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/30': !selectedFile }">
             <template v-if="!selectedFile">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="mx-auto w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
@@ -261,33 +504,33 @@ const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data"
               <input ref="fileInput" type="file" class="sr-only" @change="handleFile" />
             </template>
             <template v-else>
-              <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="mx-auto w-12 h-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p class="mt-2 text-sm font-medium text-gray-700 truncate">{{ fileName }}</p>
               <p class="mt-1 text-xs text-gray-500">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
               <button @click.stop="removeFile"
-                class="mt-3 text-sm text-red-600 hover:text-red-500 font-medium">Remove file</button>
+                class="mt-3 text-sm font-medium text-red-600 hover:text-red-500">Remove file</button>
             </template>
           </div>
 
           <!-- Preview -->
           <div v-if="previewLoading" class="flex justify-center items-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <div class="w-8 h-8 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin"></div>
           </div>
 
-          <div v-if="showPreview && previewData.length > 0" class="border rounded-lg overflow-hidden shadow-sm">
-            <div class="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+          <div v-if="showPreview && previewData.length > 0" class="overflow-hidden rounded-lg border shadow-sm">
+            <div class="flex justify-between items-center px-4 py-3 bg-gray-50 border-b">
               <h3 class="text-sm font-medium text-gray-700">File Preview</h3>
               <span class="text-xs text-gray-500">{{ previewData.length }} rows</span>
             </div>
-            <div class="overflow-auto custom-scrollbar" :style="`max-height: ${maxPreviewHeight}`">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50 sticky top-0">
+            <div class="overflow-x-scroll overflow-y-scroll custom-scrollbar" :style="`height: ${maxPreviewHeight}`">
+              <table class="min-w-max divide-y divide-gray-200">
+                <thead class="sticky top-0 bg-gray-50">
                   <tr>
                     <th v-for="(header, idx) in previewHeaders" :key="idx"
-                      class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                      class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase whitespace-nowrap">
                       {{ header }}
                     </th>
                   </tr>
@@ -296,7 +539,7 @@ const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data"
                   <tr v-for="(row, rowIdx) in previewData" :key="rowIdx"
                     :class="rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100 transition-colors'">
                     <td v-for="(cell, cellIdx) in row" :key="cellIdx"
-                      class="px-4 py-2 whitespace-nowrap text-xs text-gray-500">
+                      class="px-4 py-2 text-xs text-gray-500 whitespace-nowrap">
                       {{ cell }}
                     </td>
                   </tr>
@@ -311,37 +554,37 @@ const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data"
               <span>Uploading...</span>
               <span>{{ progress }}%</span>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-              <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+            <div class="overflow-hidden w-full h-2.5 bg-gray-200 rounded-full">
+              <div class="h-2.5 bg-blue-600 rounded-full transition-all duration-300 ease-out"
                 :style="`width: ${progress}%`"></div>
             </div>
           </div>
 
           <!-- Results -->
-          <div v-if="showResults && importResults" class="border rounded-lg overflow-hidden shadow-sm">
-            <div class="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+          <div v-if="showResults && importResults" class="overflow-hidden rounded-lg border shadow-sm">
+            <div class="flex justify-between items-center px-4 py-3 bg-gray-50 border-b">
               <h3 class="text-sm font-medium text-gray-700">Import Results</h3>
               <div class="flex space-x-4">
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span class="px-2.5 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">
                   {{ importResults.successCount || 0 }} Success
                 </span>
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <span class="px-2.5 py-0.5 text-xs font-medium text-red-800 bg-red-100 rounded-full">
                   {{ importResults.errorCount || 0 }} Failed
                 </span>
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                <span class="px-2.5 py-0.5 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
                   {{ importResults.totalRows || 0 }} Total
                 </span>
               </div>
             </div>
-            <div class="overflow-auto custom-scrollbar" style="max-height: 200px">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50 sticky top-0">
+            <div class="overflow-x-scroll overflow-y-scroll custom-scrollbar" style="height: 200px">
+              <table class="min-w-max divide-y divide-gray-200">
+                <thead class="sticky top-0 bg-gray-50">
                   <tr>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Row</th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                    <th v-if="data === 'service'"
-                      class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service UUID
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Row</th>
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Message</th>
+                    <th v-if="importType === 'service'"
+                      class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Service UUID
                     </th>
                   </tr>
                 </thead>
@@ -351,17 +594,17 @@ const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data"
                       result.success ? 'bg-green-50' : result.error ? 'bg-red-50' : 'bg-white',
                       'hover:bg-gray-100 transition-colors'
                     ]">
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ result.rowNumber }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm">
+                    <td class="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">{{ result.rowNumber }}</td>
+                    <td class="px-4 py-2 text-sm whitespace-nowrap">
                       <span v-if="result.success"
-                        class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Success</span>
+                        class="px-2.5 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">Success</span>
                       <span v-else-if="result.error"
-                        class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Error</span>
+                        class="px-2.5 py-0.5 text-xs font-medium text-red-800 bg-red-100 rounded-full">Error</span>
                       <span v-else
-                        class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Skipped</span>
+                        class="px-2.5 py-0.5 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">Skipped</span>
                     </td>
                     <td class="px-4 py-2 text-sm text-gray-500">{{ result.message || '-' }}</td>
-                    <td v-if="data === 'service'" class="px-4 py-2 text-sm text-gray-500">{{ result.serviceUuid || '-' }}</td>
+                    <td v-if="importType === 'service'" class="px-4 py-2 text-sm text-gray-500">{{ result.serviceUuid || '-' }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -371,7 +614,7 @@ const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data"
 
         <!-- Footer -->
         <template #bottom>
-          <div class="bg-gray-50 px-4 py-3 flex justify-between sm:px-6 rounded-b-lg">
+          <div class="flex justify-between px-4 py-3 bg-gray-50 rounded-b-lg sm:px-6">
             <Button @click="closeModal" variant="outline" size="md" :disabled="importing">
               {{ showResults ? 'Close' : 'Cancel' }}
             </Button>
@@ -393,19 +636,25 @@ const title = props.data === "drug" ? "Import Drug Data" : "Import Service Data"
   </div>
 </template>
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  @apply h-2 w-2;
+.custom-scrollbar {
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af #f3f4f6;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-gray-100 rounded-full;
+:deep(.custom-scrollbar::-webkit-scrollbar) {
+  @apply h-3 w-3;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+:deep(.custom-scrollbar::-webkit-scrollbar-track) {
+  @apply bg-gray-200 rounded;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+:deep(.custom-scrollbar::-webkit-scrollbar-thumb) {
+  @apply bg-gray-500 rounded;
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar-thumb:hover) {
   @apply bg-gray-400;
 }
 

@@ -21,13 +21,13 @@ const pagination: any = usePagination({
 	cb: getAllPolicyPendingInstitutions
 });
 
-// Always fetch on mount to ensure data renders on first visit
-pagination.search.value = props.search
-pagination.send()
+if(!institutionStore.institutions.length) {
+	pagination.send()
+}
 
 watch(props, () => {
-  pagination.search.value = props.search
-  pagination.send()
+	pagination.search.value = props.search
+	pagination.send()
 })
 
 </script>

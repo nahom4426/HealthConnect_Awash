@@ -32,7 +32,9 @@ const props = defineProps({
   onView: {
     type: Function,
     default: () => {}
-  }
+  },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 }
 });
 
 const { addToast } = useToast();
@@ -150,31 +152,38 @@ function handleActivateWithClose(payerProviderContractUuid) {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click.self="onRowClick(row)" 
-    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
   >
-    <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>
+    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
     
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
       <div v-if="key === 'claimStatus'" class="truncate">
-        <span :class="getStatusStyle(row.claimStatus)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium">
+        <span :class="getStatusStyle(row.claimStatus)" class="inline-flex gap-1.5 items-center px-3 py-1.5 text-xs font-medium rounded-full">
           <span class="text-xs">{{ getStatusIcon(row.claimStatus) }}</span>
           {{ row.claimStatus || 'Unknown' }}
         </span>
       </div>
-      <div v-else-if="key === 'period'" class="text-gray-700 space-y-1">
-        <div class="flex items-center gap-1 text-sm">
-          <span class="text-gray-400 text-xs">From:</span>
+      
+      <div v-else-if="key === 'period'" class="space-y-1 text-gray-700">
+        <div class="flex gap-1 items-center text-sm">
+          <span class="text-xs text-gray-400">From:</span>
           <span class="font-medium">{{ formatDate(row.claimFromDate) }}</span>
         </div>
-        <div class="flex items-center gap-1 text-sm">
-          <span class="text-gray-400 text-xs">To:</span>
+        <div class="flex gap-1 items-center text-sm">
+          <span class="text-xs text-gray-400">To:</span>
           <span class="font-medium">{{ formatDate(row.claimToDate) }}</span>
         </div>
       </div>
       <div v-else-if="key.includes('Date')" class="text-gray-700">
         {{ formatDate(row[key]) }}
       </div>
-      <div v-else-if="key === 'totalAmount'" class="text-gray-700 font-semibold">
+       <div v-else-if="key === 'providerName'" class="text-gray-700">
+         {{ row.providerName || row.institutionName }}
+      </div>
+       <div v-else-if="key === 'institutionName'" class="text-gray-700">
+         {{ row.providerName || row.institutionName }}
+      </div>
+      <div v-else-if="key === 'totalAmount'" class="font-semibold text-gray-700">
         ${{ row.totalAmount?.toLocaleString() || '0.00' }}
       </div>
       <span v-else class="text-gray-700">
@@ -184,7 +193,7 @@ function handleActivateWithClose(payerProviderContractUuid) {
     
     <!-- Actions Column -->
     <td class="p-3">
-      <Button size="xs" type="elevated" class="bg-blue-600 hover:bg-blue-700 p-2 rounded text-white">
+      <Button size="xs" type="elevated" class="p-2 text-white bg-blue-600 rounded hover:bg-blue-700">
         <RouterLink :to="`/process_claims/detail/${row.claimUuid || ''}`">Detail</RouterLink>
       </Button>
     </td>

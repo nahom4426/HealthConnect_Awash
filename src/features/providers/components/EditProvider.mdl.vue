@@ -20,6 +20,7 @@ const props = defineProps({
 
 // Initialize the providers store
 const providersStore = useAddProviders();
+const isEdit = ref(true);
 
 const error = ref('');
 const pending = ref(false);
@@ -28,22 +29,18 @@ const providerUuid = ref('');
 
 // Log props for debugging
 onMounted(() => {
-  console.log('EditProvider modal mounted with data prop:', props.data);
   
   // Extract the actual props from the data object
   if (props.data) {
     providerUuid.value = props.data.providerUuid || '';
     providerData.value = props.data.provider || {};
     
-    console.log('Extracted provider UUID:', providerUuid.value);
-    console.log('Extracted provider data:', providerData.value);
   }
 });
 
 // Watch for changes in props.data
 watch(() => props.data, (newData) => {
   if (newData) {
-    console.log('Data prop updated:', newData);
     providerUuid.value = newData.providerUuid || '';
     providerData.value = newData.provider || {};
   }
@@ -57,26 +54,17 @@ async function handleSubmit(formData) {
     pending.value = true;
     error.value = '';
 
-    console.log('=== FORM SUBMISSION DEBUGGING ===');
-    console.log('1. Raw formData received:', formData);
-    console.log('2. FormData type:', typeof formData);
-    console.log('3. Is FormData instance?', formData instanceof FormData);
-    console.log('4. props.isEdit:', props.isEdit);
-    console.log('5. providerUuid:', providerUuid.value);
 
     // If formData is already a FormData object, use it directly
     let payload = formData;
 
     // If it's a regular object, convert to FormData
     if (!(formData instanceof FormData)) {
-      console.log('6. Converting regular object to FormData');
-      console.log('7. FormData object keys:', Object.keys(formData));
       
       payload = new FormData();
       
       // Log all form data properties
       for (const key in formData) {
-        console.log(`   - ${key}:`, formData[key], '(type:', typeof formData[key] + ')');
       }
       
       // Create providerRequest object
@@ -109,59 +97,38 @@ async function handleSubmit(formData) {
         providerRequest.providerUuid = providerUuid.value;
       }
 
-      console.log('8. providerRequest object:', providerRequest);
       payload.append('providerRequest', JSON.stringify(providerRequest));
 
       // Handle logo - check all possible logo properties
-      console.log('9. Logo debugging:');
-      console.log('   - providerLogo:', formData.providerLogo);
-      console.log('   - logoBase64:', formData.logoBase64 ? 'Exists (base64 string)' : 'No base64');
-      console.log('   - logo:', formData.logo);
       
       if (formData.providerLogo) {
-        console.log('10. Adding providerLogo to FormData');
         payload.append('logo', formData.providerLogo);
       } else if (formData.logo) {
-        console.log('10. Adding logo to FormData');
         payload.append('logo', formData.logo);
       } else if (formData.logoBase64) {
-        console.log('10. Converting base64 to blob and adding to FormData');
         // Convert base64 to blob if needed
         const blob = base64ToBlob(formData.logoBase64);
-        payload.append('logo', blob, 'logo.png');
+        payload.append('logo', blob, 'logo.png ');
       } else {
-        console.log('10. No logo found in form data');
-      }
-
-      // Log FormData contents
-      console.log('11. FormData contents:');
-      for (let [key, value] of payload.entries()) {
-        console.log(`   - ${key}:`, value);
       }
     } else {
-      console.log('6. Using existing FormData object');
-      console.log('7. FormData contents:');
       for (let [key, value] of payload.entries()) {
-        console.log(`   - ${key}:`, value);
       }
     }
 
-    console.log('=== END FORM DEBUGGING ===');
 
     // Determine if we're creating or updating
     const apiCall = props.isEdit ? updateProvider : createProvider;
-    console.log('Making API call with:', payload);
     
     const result = await apiCall(payload);
 
-    console.log('API response:', result);
 
     if (result && (result.success || result.status === 200 || result.status === 'success')) {
       const successMessage = props.isEdit 
         ? 'Provider updated successfully' 
         : 'Provider created successfully';
       
-      console.log('Success:', successMessage);
+      
       toasted(true, successMessage);
       closeModal();
       
@@ -179,7 +146,6 @@ async function handleSubmit(formData) {
       throw new Error(result?.error || result?.message || `Failed to ${props.isEdit ? 'update' : 'create'} provider`);
     }
   } catch (err) {
-    console.error('Submission error:', err);
     error.value = err.message || `An error occurred while ${props.isEdit ? 'updating' : 'creating'} provider`;
     // toasted(false, error.value);
   } finally {
@@ -210,6 +176,7 @@ function base64ToBlob(base64) {
 <template>
   <ModalParent>
     <NewFormParent 
+      :isEdit="true"
       class="" 
       size="lg" 
       title="Add Provider" 
@@ -227,7 +194,7 @@ function base64ToBlob(base64) {
         <ProviderForm
   v-else
   :initial-data="providerData"
-  :is-edit="isEdit"
+  :is-edit="true"
   :pending="pending"
   :onSubmit="handleSubmit"
   :onCancel="() => closeModal()"

@@ -16,38 +16,46 @@ const router = useRouter();
 <template>
   <DefaultPage v-model="search" placeholder="Search Users">
     <template #add-action>
-      <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
-        @click.prevent="openModal('AddUser')"
-      >
-        <i v-html="icons.plus_circle"></i>
-        Add User
-      </button>
+     <button
+  class="flex gap-2 justify-center items-center px-6 py-4 font-medium text-white rounded-lg transition-colors sm:px-4 sm:py-3 lg:px-6 lg:py-4 bg-primary sm:text-base hover:bg-primary/90 sm:w-auto"
+  @click.prevent="openModal('AddUser')"
+>
+  <i
+    v-html="icons.plus_circle"
+    class="flex justify-center items-center w-5 h-5 sm:w-5 sm:h-5"
+  ></i>
+  <span class="leading-none">Add User</span>
+</button>
+
     </template>
 
     <template #default="{ search }">
       <UsersDataProvider :search="search" v-slot="{ users, pending, refresh }">
         <Table
           :pending="pending"
+          :virtual="true"
+          :itemKey="'userUuid'"
+          :virtualHeight="600"
+          :virtualItemSize="64"
           :headers="{
             head: [
-              'Fullname',
+      
+              'Full Name',
               'Email',
               'Mobile Phone',
-          
-              'Role Name',
               'Gender',
               'Status',
+             
               'Actions',
             ],
             row: [
+              'index',
               'fullname',
               'email',
               'mobilePhone',
-        
-              'roleName',
               'gender',
-              'status',
+              'userStatus',
+             
             ],
           }"
           :rows="users"

@@ -56,14 +56,14 @@ const filteredClaims = computed(() => {
           <div class="flex space-x-4">
             <div class="relative">
               <input v-model="searchQuery" type="text" placeholder="Search claims..."
-                class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
                 @input="(e: Event) => searchQuery = (e.target as HTMLInputElement).value" />
             </div>
           </div>
         </div>
       </template>
 
-      <div class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="overflow-hidden bg-white rounded-lg shadow">
        
         <Table :pending="pending" :headers="{
           head: [
@@ -86,11 +86,11 @@ const filteredClaims = computed(() => {
         claimStatus: (status: string) => status || 'APPROVED',
       }" :rows="claims">
           <template #actions="{ row }">
-            <div class="flex gap-2 ml-auto ">
+            <div class="flex gap-2 ml-auto">
 
               <Button 
               
-                class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+                class="flex gap-2 items-center px-6 py-4 text-white whitespace-nowrap rounded-md bg-primary"
                 @click="openModal('ClaimPayment', { batchCode: row.batchCode, providerUuid: row.providerUuid, claimUuid: row.claimUuid, totalAmount: row.totalAmount })">
                 pay
               </Button>

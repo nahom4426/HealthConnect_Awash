@@ -24,9 +24,13 @@ const emit = defineEmits(["toggle-location", "toggle-additional"]);
 const formData = ref({
   // Basic info
   institutionName: props.data?.institutionName || '',
+  cifNumber: props.data?.cifNumber || '',
+  customerClass: props.data?.customerClass || '',
+  branchName: props.data?.branchName || '',
   tinNumber: props.data?.tinNumber || '',
-  email: props.data?.email || '',
+  email: props.data?.email || null,
   telephone: props.data?.telephone || '',
+  mobilePhone: props.data?.telephone || '',
   category: props.data?.category || '',
   description: props.data?.description || '',
   
@@ -42,6 +46,7 @@ const formData = ref({
   // Additional info
   referralType: props.data?.referralType || 'On Man',
   referredBy: props.data?.referredBy || '',
+  cashPeriodLimitPerDay: props.data?.cashPeriodLimitPerDay ?? 90,
   status: props.data?.status || 'ACTIVE',
   // System fields
   institutionUuid: props.data?.institutionUuid || ''
@@ -70,11 +75,11 @@ const openMapPicker = () => {
 
 <!-- The template remains the same -->
 <template>
-  <Form id="institution-form" :inner="false" class="space-y-8 p-6">
+  <Form id="institution-form" :inner="false" class="p-6 space-y-8">
     <!-- Basic Information Section -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+    <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+      <div class="flex gap-3 items-center mb-6">
+        <div class="flex justify-center items-center w-10 h-10 bg-blue-500 rounded-lg">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
           </svg>
@@ -85,21 +90,52 @@ const openMapPicker = () => {
         </div>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Input 
-          name="institutionName" 
-          label="Institution Name" 
-          validation="required"
-          v-model="formData.institutionName"
-          :attributes="{ 
-            placeholder: 'Enter institution name',
-          }"
-        />
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+       <Input
+			label="Institution Name"
+			name="institutionName"
+			v-model="formData.institutionName"
+			validation="required"
+			:attributes="{
+				placeholder: 'Institution Name'
+			}"
+		/>
+		
+		<Input
+			label="CIF Number"
+			name="cifNumber"
+     v-model="formData.cifNumber" 
+			validation="required|max-25"
+			:attributes="{
+				placeholder: 'CIF Number'
+			}"
+		/>
+    		<Input
+			label="Branch Name"
+			name="branchName"
+			validation="required"
+      v-model="formData.branchName"
+			:attributes="{
+				placeholder: 'Branch Name'
+			}"
+		/>
+      <div>
+          <Select
+            name="Customer Class"
+            label="Customer Class"
+            v-model="formData.customerClass"
+            :options="[
+              'Major',
+              'General',
+            ]"
+            :attributes="{
+              placeholder: 'Select Customer Class',
+            }"
+          />
+        </div>
         <Input 
           name="tinNumber" 
           label="TIN Number" 
-          validation="required"
-          type="number"
           v-model="formData.tinNumber"
           :attributes="{ 
             placeholder: 'Enter TIN number',
@@ -107,51 +143,79 @@ const openMapPicker = () => {
         />
         <Input 
           name="email" 
-          label="Email Address" 
-          validation="required|email"
+          label="Email"
+          validation="email" 
           v-model="formData.email"
           :attributes="{ 
-            placeholder: 'institution@example.com',
+           
+            placeholder: 'Enter email address',
           }"
         />
         <Input 
           name="telephone" 
-          label="Phone Number"
-          validation="required"
+          label="Phone Number" 
           v-model="formData.telephone"
+          validation="phone"
           :attributes="{ 
-            placeholder: '+251 911 123 456',
+            placeholder: 'Enter phone number',
           }"
         />
-        <Input 
-          name="category" 
-          label="Institution Category"
-          v-model="formData.category"
-          :attributes="{ 
-            placeholder: 'Hospital, Clinic, Health Center',
-          }"
-        />
+        <div>
+          <Select
+            name="category"
+            label="Institution Category"
+            v-model="formData.category"
+            :options="[
+              'Hospital',
+              'Clinic',
+              'Pharmacy',
+              'Diagnostic Center',
+              'Health Center',
+              'Medical College',
+              'Insurance Company',
+              'Government Agency',
+              'Non-Governmental Organization',
+              'Corporate',
+              'Educational Institution',
+              'Other'
+            ]"
+            :attributes="{
+              placeholder: 'Select institution category',
+            }"
+          />
+        </div>
         
         <Input 
           name="description" 
-          label="Description"
+          label="Description" 
           v-model="formData.description"
           :attributes="{ 
-            placeholder: 'Brief description of services',
+            placeholder: 'Enter description',
+            rows: 3,
           }"
+          multiline
         />
-      </div>
+          <Input
+            label="Cash Period Limit (Days)"
+            name="cashPeriodLimitPerDay"
+            v-model="formData.cashPeriodLimitPerDay"
+            :attributes="{
+              type: 'number',
+              min: 0,
+              placeholder: '90'
+            }"
+          />
     </div>
 
     <!-- Location Information Section -->
-    <div class="border border-gray-200 rounded-xl overflow-hidden">
+    <div class="overflow-hidden py-4 rounded-xl border border-gray-200">
       <button 
         type="button"
         @click="emit('toggle-location')"
-        class="w-full flex items-center justify-between p-6 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-colors duration-200"
+        class="flex justify-between items-center p-6 w-full bg-gradient-to-r from-green-50 to-emerald-50 transition-colors duration-200 hover:from-green-100 hover:to-emerald-100"
       >
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+        <div class="flex gap-3 items-center">
+          <div class="flex justify-center items-center w-10 h-10 bg-green-500 rounded-lg">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -174,10 +238,10 @@ const openMapPicker = () => {
       </button>
       
       <div v-show="showLocationSection" class="p-6 space-y-6 bg-white">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <!-- Region/State -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Region/State</label>
+            <label class="block mb-2 text-sm font-semibold text-gray-700">Region/State</label>
             <Select
               name="state"
               v-model="formData.state"
@@ -190,7 +254,7 @@ const openMapPicker = () => {
 
           <!-- City -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">City</label>
+            <label class="block mb-2 text-sm font-semibold text-gray-700">City</label>
             <Select
               name="address3"
               v-if="availableCities.length > 0"
@@ -211,7 +275,7 @@ const openMapPicker = () => {
 
           <!-- Sub City (only for Addis) -->
           <div v-if="isAddisAbaba">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Sub City</label>
+            <label class="block mb-2 text-sm font-semibold text-gray-700">Sub City</label>
             <Select
               name="address2"
               v-if="availableSubCities.length > 0"
@@ -224,6 +288,7 @@ const openMapPicker = () => {
             <Input
               v-else
               v-model="formData.address2"
+              name="address2"
               :attributes="{
                 placeholder: 'Enter sub city',
               }"
@@ -232,7 +297,7 @@ const openMapPicker = () => {
 
           <!-- Woreda -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Woreda</label>
+            <label class="block mb-2 text-sm font-semibold text-gray-700">Woreda</label>
             <Input
               name="address1"
               v-model="formData.address1"
@@ -244,7 +309,7 @@ const openMapPicker = () => {
 
           <!-- Country -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Country</label>
+            <label class="block mb-2 text-sm font-semibold text-gray-700">Country</label>
             <Input
               name="country"
               v-model="formData.country"
@@ -253,21 +318,29 @@ const openMapPicker = () => {
                 placeholder: 'Ethiopia',
               }"
             />
+             <Input 
+          name="mobilePhone" 
+          v-model="formData.telephone"
+          :attributes="{ 
+            placeholder: 'Enter phone number',
+            hidden
+          }"
+        />
           </div>
 
           <!-- Map Coordinates -->
           <div class="md:col-span-2">
-            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div class="flex items-center justify-between">
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="flex justify-between items-center">
                 <div class="flex-1">
-                  <label class="block text-sm font-semibold text-gray-700 mb-3">GPS Coordinates</label>
+                  <label class="block mb-3 text-sm font-semibold text-gray-700">GPS Coordinates</label>
                   <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white p-3 rounded-lg border border-gray-200">
-                      <div class="text-xs text-gray-500 mb-1">Latitude</div>
+                    <div class="p-3 bg-white rounded-lg border border-gray-200">
+                      <div class="mb-1 text-xs text-gray-500">Latitude</div>
                       <div class="font-mono text-sm font-semibold text-gray-800">{{ formData.latitude.toFixed(6) }}</div>
                     </div>
-                    <div class="bg-white p-3 rounded-lg border border-gray-200">
-                      <div class="text-xs text-gray-500 mb-1">Longitude</div>
+                    <div class="p-3 bg-white rounded-lg border border-gray-200">
+                      <div class="mb-1 text-xs text-gray-500">Longitude</div>
                       <div class="font-mono text-sm font-semibold text-gray-800">{{ formData.longitude.toFixed(6) }}</div>
                     </div>
                   </div>
@@ -275,7 +348,7 @@ const openMapPicker = () => {
                 <button 
                   type="button"
                   @click="openMapPicker"
-                  class="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 shadow-md hover:shadow-lg"
+                  class="flex gap-2 items-center px-4 py-2 ml-4 text-white bg-blue-500 rounded-lg shadow-md transition-colors duration-200 hover:bg-blue-600 hover:shadow-lg"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -290,14 +363,14 @@ const openMapPicker = () => {
     </div>
 
     <!-- Additional Information Section -->
-    <div class="border border-gray-200 rounded-xl overflow-hidden">
+    <div class="overflow-hidden rounded-xl border border-gray-200">
       <button 
         type="button"
         @click="emit('toggle-additional')"
-        class="w-full flex items-center justify-between p-6 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 transition-colors duration-200"
+        class="flex justify-between items-center p-6 w-full bg-gradient-to-r from-purple-50 to-pink-50 transition-colors duration-200 hover:from-purple-100 hover:to-pink-100"
       >
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+        <div class="flex gap-3 items-center">
+          <div class="flex justify-center items-center w-10 h-10 bg-purple-500 rounded-lg">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -319,9 +392,9 @@ const openMapPicker = () => {
       </button>
       
       <div v-show="showAdditionalSection" class="p-6 space-y-6 bg-white">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Referral Type</label>
+            <label class="block mb-2 text-sm font-semibold text-gray-700">Referral Type</label>
             <Select
               name="referralType"
               v-model="formData.referralType"
@@ -333,7 +406,7 @@ const openMapPicker = () => {
           </div>
           
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Referred By</label>
+            <label class="block mb-2 text-sm font-semibold text-gray-700">Referred By</label>
             <Input
               name="referredBy"
               v-model="formData.referredBy"
@@ -342,6 +415,8 @@ const openMapPicker = () => {
               }"
             />
           </div>
+
+        
         </div>
       </div>
     </div>
@@ -357,6 +432,7 @@ const openMapPicker = () => {
             readonly
           }"
         />
+  </div>
   </div>
   </Form>
 </template>

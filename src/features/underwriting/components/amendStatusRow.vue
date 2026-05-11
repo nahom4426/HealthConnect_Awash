@@ -3,20 +3,40 @@ import { defineProps, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { openModal } from '@customizer/modal-x';
 import icons from "@/utils/icons";
+import { useNavigationState } from '@/composables/useNavigationState';
+
+const emit = defineEmits(['row', 'remove']);
 
 const props = defineProps({
   rowData: { type: Array, required: true },
   rowKeys: { type: Array, required: true },
   headKeys: { type: Array, required: true },
-  payerInstitutionContractUuid: { type: String, required: true },
+  cells: {
+    type: [Object, Array],
+    default: () => ({})
+  },
+  payerInstitutionContractUuid: { 
+    type: String, 
+    required: false,
+    default: ''
+  },
+  isMobile: { type: Boolean, default: false },
   onView: { type: Function, default: () => {} },
   onEdit: { type: Function, default: () => {} },
   onDelete: { type: Function, default: () => {} },
   onRowClick: { type: Function, default: () => {} },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 }
 });
 
 const router = useRouter();
+const { setShowActionButtons } = useNavigationState();
 
+function navigateTo(path) {
+  // Hide action buttons when navigating from amendStatusRow
+  setShowActionButtons(false);
+  router.push(path);
+}
 function getStatusStyle(status) {
   const base = "px-3 py-0.5 rounded-full text-center";
   switch (status?.toUpperCase()) {
@@ -36,18 +56,6 @@ function formatCurrency(val) {
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
-
-
-function navigateTo(routeName, contractUuid) {
-  router.push({
-    name: routeName,
-    params: {
-      id: props.payerInstitutionContractUuid,
-      Uuid: contractUuid
-    }
-  });
-}
-
 function openEditModal(row) {
   openModal('EditInstitutionContract', {
     payerInstitutionContractUuid: row.payerInstitutionContractUuid,
@@ -84,33 +92,36 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     v-for="(row, idx) in rowData"
     :key="row.payerInstitutionContractUuid || idx"
     @click.self="props.onRowClick(row)"
-    class="bg-white border-b hover:shadow-md hover:bg-blue-50 transition-all duration-200 cursor-pointer group rounded-lg"
+    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-blue-50 group"
   >
     <!-- Index -->
-    <td class="p-4 font-semibold text-gray-400 select-none text-sm">
-      {{ idx + 1 }}
+    <td class="p-4 text-sm font-semibold text-gray-400 select-none">
+      {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
     </td>
-
+ <td class="p-4">
+        <div class="flex flex-col">
+          <span class="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-md shadow-sm w-fit">
+            {{ row.institutionName || '—' }}
+          </span>
+        </div>
+      </td>
     <!-- Contract Name -->
-    <td class="p-4 text-gray-800 font-medium">
+    <td class="p-4 font-medium text-gray-500">
       {{ row.contractName }}
-      <div class="text-xs text-gray-500">Code: {{ row.contractCode }}</div>
+      <div class="text-xs text-gray-500">
+        {{ formatDate(row.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row.endDate) }}
+      </div>
     </td>
 
     <!-- Benefit -->
-    <!-- <td class="p-4 text-green-700 font-semibold">
+    <!-- <td class="p-4 font-semibold text-green-700">
       {{ formatCurrency(row.benefit) }}
     </td> -->
 
     <!-- Premium -->
-    <!-- <td class="p-4 text-blue-700 font-semibold">
+    <!-- <td class="p-4 font-semibold text-blue-700">
       {{ formatCurrency(row.premium) }}
     </td> -->
-
-    <!-- Date Range -->
-    <td class="p-4 text-gray-600">
-      {{ formatDate(row.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row.endDate) }}
-    </td>
 
     <!-- Status -->
     <td class="p-4">
@@ -120,34 +131,44 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     </td>
 
        <!-- Dropdown Actions -->
-       <td class="py-4 flex items-center gap-3">
+       <td class="flex gap-3 items-center py-4">
   <!-- Edit Policy Button -->
-   <div>
+   <div class="flex gap-2 pt-2 border-gray-100">
   <button
     @click.stop="openEditModal(row)"
-    class="flex rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors p-2 rounded-full hover:bg-blue-100 text-blue-600 transition-colors"
+    class="flex p-2 text-blue-600 bg-blue-50 rounded-lg rounded-full transition-colors hover:bg-blue-100 hover:text-blue-700"
   >
     <svg xmlns="http://www.w3.org/2000/svg"
-         class="h-5 w-5"
+         class="w-5 h-5"
          fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M15.232 5.232l3.536 3.536M9 11l3 3L20.485 5.515a2.121 2.121 0 10-3-3L9 11zm0 0L4 16v4h4l5-5" />
     </svg>
-    <span class="font-medium text-sm">Edit Policy</span>
+    <span class="text-sm font-medium">Edit Policy</span>
   </button>
+  <button
+  @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}/${row?.institutionName}?pageContext=amend`)"
+  class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-red-600 bg-red-50 rounded border border-red-200 transition-all duration-200 hover:bg-red-100"
+  title="Persons"
+>
+  <svg class="flex-shrink-0 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a6 6 0 11-12 0 6 6 0 0112 0z" />
+  </svg>
+  <span class="truncate">Amend Insured Persons</span>
+</button>
 
   <!-- Delete Policy Button -->
   <!-- <button
     @click.stop="openDeleteModal(row)"
-    class="flex rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-100 text-red-600 transition-colors"
+    class="flex p-2 text-red-600 bg-red-50 rounded-lg rounded-full transition-colors hover:bg-red-100 hover:text-red-700"
   >
     <svg xmlns="http://www.w3.org/2000/svg"
-         class="h-5 w-5"
+         class="w-5 h-5"
          fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M6 18L18 6M6 6l12 12" />
     </svg>
-    <span class="font-medium text-sm">Delete Policy</span>
+    <span class="text-sm font-medium">Delete Policy</span>
   </button> -->
 </div>
 </td>

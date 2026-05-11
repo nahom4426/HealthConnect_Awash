@@ -7,7 +7,17 @@ import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps({
   search: String,
+  pageContext: {
+    type: String,
+    default: 'insured', // 'insured', 'membership', 'amend'
+  },
+  showActionButtons: {
+    type: Boolean,
+    default: true,
+  },
 });
+
+
 
 const dataProvider = ref();
 const auth = useAuthStore();
@@ -27,7 +37,6 @@ const loadMore = () => {
     :search="props.search"
     v-slot="{ insuredMembers, pending, currentPage, itemsPerPage, totalPages, loadingMore, hasMore }"
   >
-  {{ console.log(insuredMembers) }}
     <Table
       infinite-scroll
       @load-more="loadMore"
@@ -39,10 +48,11 @@ const loadMore = () => {
           'Full Name',
           'ID Number',
           'Phone',
+          'Dependents',
           'Status',
           'Actions',
         ],
-        row: ['fullName', 'idNumber', 'phone', 'status'],
+        row: ['fullName', 'idNumber', 'phone', 'dependents', 'status'],
       }"
       :rows="insuredMembers"
       :rowCom="StatusRow"
@@ -50,16 +60,18 @@ const loadMore = () => {
       <template #row>
         <StatusRow
           :rowData="insuredMembers"
-          :rowKeys="['fullName', 'idNumber', 'phone',  'status']"
+          :rowKeys="['fullName', 'idNumber', 'phone', 'dependents', 'status']"
           :headKeys="[
             '',
             'Full Name',
-            'ID Number',
+            'CIF Number',
             'Phone',
-            
+            'Dependents',
             'Status',
             'Actions',
           ]"
+          :pageContext="props.pageContext"
+          :showActionButtons="props.showActionButtons"
         />
       </template>
     </Table>

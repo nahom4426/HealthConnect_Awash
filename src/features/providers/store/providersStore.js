@@ -9,7 +9,7 @@ export const useProviders = defineStore("providerStore", () => {
 
   function getAll() {
     return providers.value;
-  }
+  } 
 
   function set(data) {
     console.log("Setting providers in store:", data);
@@ -68,7 +68,9 @@ export const useProviders = defineStore("providerStore", () => {
 
     providers.value.splice(idx, 1);
     // Also mark as excluded so future fetches keep it hidden
-    if (!excludedIds.value.includes(id)) excludedIds.value.push(id);
+     if (!excludedIds.value.includes(id)) {
+      excludedIds.value.push(id);
+    }
   }
 
   // Update provider status

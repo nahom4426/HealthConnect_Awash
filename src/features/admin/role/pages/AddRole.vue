@@ -40,7 +40,7 @@ const goBack = () => {
   <NewFormParent
     :is-modal="false"
     size="auto"
-    class="flex justify-center h-full pb-6 bg-white"
+    class="flex justify-center pb-6 h-full bg-white"
     title="Add Role"
   >
     <PrivilegesDataProvider :pre-page="5000" v-slot="{ privileges, pending }">
@@ -57,7 +57,7 @@ const goBack = () => {
       <Button
         size="sm"
         type="primary"
-        class="flex justify-center items-center mt-3 gap-3 p-2 bg-primary"
+        class="flex gap-3 justify-center items-center p-2 mt-3 bg-primary"
         :pending="req.pending.value"
         @click.prevent="submit(create)"
       >

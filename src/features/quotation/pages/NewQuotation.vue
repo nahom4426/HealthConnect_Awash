@@ -3,6 +3,7 @@ import Button from "@/components/Button.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
 import InstitutionsByStatusDataProvider from "@/features/institutions/components/InstitutionsByStatusDataProvider.vue";
+import NewQuotationInstitutionRow from "@/features/quotation/components/NewQuotationInstitutionRow.vue";
 import icons from "@/utils/icons";
 const generateQuotationPath = (r: any) => `/new_quotation/generate/${r?.institutionUuid}`;
 </script>
@@ -11,7 +12,7 @@ const generateQuotationPath = (r: any) => `/new_quotation/generate/${r?.institut
     <template #add-action>
       <RouterLink
         :to="{ path: '/institutions/add', query: { from: 'new_quotation' } }"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+        class="flex gap-2 justify-center items-center px-6 py-4 text-white rounded-md bg-primary"
       >
         <i v-html="icons.plus"></i>
         <p class="text-base">Add Institution</p>
@@ -25,6 +26,7 @@ const generateQuotationPath = (r: any) => `/new_quotation/generate/${r?.institut
       >
       <Table
         :pending="pending"
+        :rowCom="NewQuotationInstitutionRow"
         :headers="{
           head: [
             'Institution Name',
@@ -40,13 +42,6 @@ const generateQuotationPath = (r: any) => `/new_quotation/generate/${r?.institut
 				}"
         :rows="institutions"
       >
-        <template #actions="slot">
-          <Button type="link" size="xs">
-            <RouterLink :to="generateQuotationPath(((slot as unknown) as { row: any }).row)">
-              Generate Quotation
-            </RouterLink>
-          </Button>
-        </template>
       </Table>
       </InstitutionsByStatusDataProvider>
     </template>

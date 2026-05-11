@@ -33,47 +33,54 @@ const privilegeType = ref([
 </script>
 <template>
   <Form
-    class="grid grid-cols-2 gap-x-20 gap-y-4"
+    class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6"
     :inner="false"
     id="privilegeForm"
   >
-    <Input
-      name="privilegeName"
-      validation="required"
-      label="Privilege Name"
-      :value="props.privilege?.privilegeName || ''"
-      :attributes="{
-        placeholder: 'Enter Privilege',
-      }"
-    />
-    <Input
-      validation="required"
-      name="privilegeDescription"
-      :value="props.privilege?.privilegeDescription || ''"
-      label="Privilege Description"
-      :attributes="{
-        placeholder: 'Enter Privilege description',
-      }"
-    />
-    <Input
-      :value="props.privilege?.privilegeCategory || ''"
-      name="privilegeCategory"
-      label="Privilege Category"
-      validation="required"
-      :attributes="{
-        placeholder: 'Enter Privilege Category',
-      }"
-    />
-     <Input
-      :value="props.privilege?.privilegeType || ''"
-      name="privilegeType"
-      label="Privilege Type"
-      validation="required"
-      :attributes="{
-        placeholder: 'Enter Privilege Type',
-      }"
-    />
-    <div v-privilege.role="'ADMIN'">
+    <!-- Privilege Name -->
+    <div class="sm:col-span-1">
+      <Input
+        name="privilegeName"
+        validation="required"
+        label="Privilege Name"
+        :value="props.privilege?.privilegeName || ''"
+        :attributes="{
+          placeholder: 'e.g., Create_User, Delete_Role',
+         
+        }"
+      />
+    </div>
+
+    <!-- Privilege Category -->
+    <div class="sm:col-span-1">
+      <Input
+        :value="props.privilege?.privilegeCategory || ''"
+        name="privilegeCategory"
+        label="Privilege Category"
+        validation="required"
+        :attributes="{
+          placeholder: 'e.g., user, role, provider',
+         
+        }"
+      />
+    </div>
+
+    <!-- Privilege Description -->
+    <div class="sm:col-span-2">
+      <Input
+        validation="required"
+        name="privilegeDescription"
+        :value="props.privilege?.privilegeDescription || ''"
+        label="Privilege Description"
+        :attributes="{
+          placeholder: 'Describe what this privilege allows users to do',
+         
+        }"
+      />
+    </div>
+
+    <!-- Privilege Type (Admin Only) -->
+    <!-- <div v-privilege.role="'ADMIN'" class="sm:col-span-2">
       <Select
         :obj="true"
         :value="props.privilege?.privilegeType"
@@ -82,9 +89,10 @@ const privilegeType = ref([
         label="Privilege Type"
         :options="privilegeType"
         :attributes="{
-          placeholder: 'Enter Privilege Type',
+          placeholder: 'Select who can use this privilege',
+         
         }"
       />
-    </div>
+    </div> -->
   </Form>
 </template>

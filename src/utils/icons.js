@@ -13,6 +13,277 @@ email: `<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http:
 </svg>
 
 `,
+profile: `<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+.profile {
+  animation: pulse 2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.85; }
+}
+</style>
+
+<g class="profile">
+<path fill-rule="evenodd" clip-rule="evenodd"
+d="M7 0C4.92893 0 3.25 1.67893 3.25 3.75C3.25 5.82107 4.92893 7.5 7 7.5C9.07107 7.5 10.75 5.82107 10.75 3.75C10.75 1.67893 9.07107 0 7 0ZM4.4375 3.75C4.4375 2.33427 5.58427 1.1875 7 1.1875C8.41573 1.1875 9.5625 2.33427 9.5625 3.75C9.5625 5.16573 8.41573 6.3125 7 6.3125C5.58427 6.3125 4.4375 5.16573 4.4375 3.75Z"
+fill="#8B5CF6"/>
+
+<path fill-rule="evenodd" clip-rule="evenodd"
+d="M7 8.5C5.17221 8.5 3.48899 8.91561 2.24169 9.61724C1.01279 10.3084 0.0898438 11.3569 0.0898438 12.6488C0.0898438 13.5671 0.118318 14.084 0.658904 14.5243C0.956159 14.7664 1.45297 15.0025 2.30308 15.1746C3.15052 15.3461 4.30945 15.4464 7 15.4464C9.69055 15.4464 10.8495 15.3461 11.6969 15.1746C12.547 15.0025 13.0438 14.7664 13.3411 14.5243C13.8817 14.084 13.9102 13.5671 13.9102 12.6488C13.9102 11.3569 12.9872 10.3084 11.7583 9.61724C10.511 8.91561 8.82779 8.5 7 8.5Z"
+fill="#8B5CF6"/>
+</g>
+</svg>
+`,
+details: `
+<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+.details {
+  animation: pulse 2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.85; }
+}
+</style>
+
+<g class="details">
+  <!-- Document -->
+  <path
+    d="M3 1.5C3 0.947715 3.44772 0.5 4 0.5H8.5L11.5 3.5V14.5C11.5 15.0523 11.0523 15.5 10.5 15.5H4C3.44772 15.5 3 15.0523 3 14.5V1.5Z"
+    fill="#ffffff"
+    fill-opacity="0.15"
+    stroke="#ffffff"
+    stroke-width="1.2"
+  />
+
+  <!-- Folded corner -->
+  <path
+    d="M8.5 0.5V3.5H11.5"
+    stroke="#ffffff"
+    stroke-width="1.2"
+    stroke-linejoin="round"
+  />
+
+  <!-- Text lines -->
+  <path
+    d="M5 6H9.5M5 8.5H9.5M5 11H8"
+    stroke="#ffffff"
+    stroke-width="1.2"
+    stroke-linecap="round"
+  />
+</g>
+</svg>`,
+settings: `<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+.gear {
+  transform-origin: 7px 7px;
+  animation: spin 4s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+</style>
+
+<g class="gear">
+<path fill-rule="evenodd" clip-rule="evenodd"
+d="M8.03488 0H5.96512L5.65043 1.68729C5.29516 1.80592 4.96139 1.96493 4.65273 2.15829L3.06141 1.52987L1.59629 2.99499L2.22471 4.58631C2.03135 4.89497 1.87234 5.22874 1.75371 5.58401L0.0664062 5.8987V7.96846L1.75371 8.28315C1.87234 8.63842 2.03135 8.97219 2.22471 9.28085L1.59629 10.8722L3.06141 12.3373L4.65273 11.7089C4.96139 11.9022 5.29516 12.0612 5.65043 12.1799L5.96512 13.8672H8.03488L8.34957 12.1799C8.70484 12.0612 9.03861 11.9022 9.34727 11.7089L10.9386 12.3373L12.4037 10.8722L11.7753 9.28085C11.9686 8.97219 12.1277 8.63842 12.2463 8.28315L13.9336 7.96846V5.8987L12.2463 5.58401C12.1277 5.22874 11.9686 4.89497 11.7753 4.58631L12.4037 2.99499L10.9386 1.52987L9.34727 2.15829C9.03861 1.96493 8.70484 1.80592 8.34957 1.68729L8.03488 0ZM7 4.65116C5.7016 4.65116 4.64884 5.70392 4.64884 7.00232C4.64884 8.30072 5.7016 9.35348 7 9.35348C8.2984 9.35348 9.35116 8.30072 9.35116 7.00232C9.35116 5.70392 8.2984 4.65116 7 4.65116Z"
+fill="#6366F1"/>
+</g>
+</svg>
+
+`,
+dashboard: `
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="3.25" cy="3.25" r="2.75"/><circle cx="10.75" cy="3.25" r="2.75"/><circle cx="3.25" cy="10.75" r="2.75"/><circle cx="10.75" cy="10.75" r="2.75"/></g></svg>
+`,
+analytics: `
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="20"
+     height="20"
+     viewBox="0 0 14 14"
+     fill="none">
+
+<style>
+.bar1 {
+  animation: grow1 1.5s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.bar2 {
+  animation: grow2 1.5s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.bar3 {
+  animation: grow3 1.5s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+@keyframes grow1 {
+  0%,100% { transform: scaleY(0.7); opacity: 0.7; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes grow2 {
+  0%,100% { transform: scaleY(0.5); opacity: 0.7; }
+  50% { transform: scaleY(1.1); opacity: 1; }
+}
+
+@keyframes grow3 {
+  0%,100% { transform: scaleY(0.8); opacity: 0.7; }
+  50% { transform: scaleY(1.2); opacity: 1; }
+}
+</style>
+
+<g stroke="currentColor"
+   stroke-width="1.4"
+   stroke-linecap="round"
+   stroke-linejoin="round">
+
+  <!-- Bars -->
+  <line class="bar1" x1="3" y1="11" x2="3" y2="7"/>
+  
+  <line class="bar2" x1="7" y1="11" x2="7" y2="5"/>
+  
+  <line class="bar3" x1="11" y1="11" x2="11" y2="3"/>
+
+  <!-- Baseline -->
+  <line x1="1.5" y1="11.5" x2="12.5" y2="11.5"/>
+
+</g>
+</svg>`,
+claim: `<svg xmlns="http://www.w3.org/2000/svg"
+     width="20"
+     height="20"
+     viewBox="0 0 14 14"
+     fill="none">
+
+<style>
+.claim-box {
+  animation: floatBox 3s ease-in-out infinite;
+}
+
+.claim-plus {
+  transform-origin: center;
+  animation: pulsePlus 1.8s ease-in-out infinite;
+}
+
+@keyframes floatBox {
+  0%,100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-0.5px);
+  }
+}
+
+@keyframes pulsePlus {
+  0%,100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.75;
+  }
+}
+</style>
+
+<g stroke="currentColor"
+   stroke-width="1.2"
+   stroke-linecap="round"
+   stroke-linejoin="round">
+
+  <!-- Claim Briefcase -->
+  <g class="claim-box">
+    <path d="M12.5 3.5h-11a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1"/>
+
+    <path d="M10 3.5v-2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v2"/>
+  </g>
+
+  <!-- Animated Plus -->
+  <g class="claim-plus">
+    <path d="M5 8.5h4"/>
+    <path d="M7 6.5v4"/>
+  </g>
+
+</g>
+</svg>`,
+logout: `
+<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+.logout-arrow {
+  animation: slide 1.5s ease-in-out infinite;
+}
+
+@keyframes slide {
+  0% { transform: translateX(0px); opacity: 1; }
+  50% { transform: translateX(2px); opacity: 0.7; }
+  100% { transform: translateX(0px); opacity: 1; }
+}
+</style>
+
+<!-- Door -->
+<path
+d="M1.75 1.5C1.75 0.947715 2.19772 0.5 2.75 0.5H7.25C7.80228 0.5 8.25 0.947715 8.25 1.5V3C8.25 3.27614 8.02614 3.5 7.75 3.5C7.47386 3.5 7.25 3.27614 7.25 3V1.5H2.75V14.5H7.25V13C7.25 12.7239 7.47386 12.5 7.75 12.5C8.02614 12.5 8.25 12.7239 8.25 13V14.5C8.25 15.0523 7.80228 15.5 7.25 15.5H2.75C2.19772 15.5 1.75 15.0523 1.75 14.5V1.5Z"
+fill="#EF4444"/>
+
+<!-- Animated Arrow -->
+<g class="logout-arrow">
+<path
+d="M9.14645 5.64645C9.34171 5.45118 9.65829 5.45118 9.85355 5.64645L11.8536 7.64645C12.0488 7.84171 12.0488 8.15829 11.8536 8.35355L9.85355 10.3536C9.65829 10.5488 9.34171 10.5488 9.14645 10.3536C8.95118 10.1583 8.95118 9.84171 9.14645 9.64645L10.2929 8.5H5.5C5.22386 8.5 5 8.27614 5 8C5 7.72386 5.22386 7.5 5.5 7.5H10.2929L9.14645 6.35355C8.95118 6.15829 8.95118 5.84171 9.14645 5.64645Z"
+fill="#EF4444"/>
+</g>
+</svg>`,
+history:`
+<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+.clock-hand {
+  transform-origin: 7px 8px;
+  animation: rotateHand 3s linear infinite;
+}
+
+@keyframes rotateHand {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.history-ring {
+  animation: pulseRing 2s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+</style>
+
+<!-- History Circle -->
+<g class="history-ring">
+<path fill-rule="evenodd" clip-rule="evenodd"
+d="M7 1.25C3.82436 1.25 1.25 3.82436 1.25 7C1.25 10.1756 3.82436 12.75 7 12.75C10.1756 12.75 12.75 10.1756 12.75 7C12.75 3.82436 10.1756 1.25 7 1.25ZM0 7C0 3.13401 3.13401 0 7 0C10.866 0 14 3.13401 14 7C14 10.866 10.866 14 7 14C3.13401 14 0 10.866 0 7Z"
+fill="currentColor"/>
+</g>
+
+<!-- Clock Hand -->
+<g class="clock-hand">
+<path fill-rule="evenodd" clip-rule="evenodd"
+d="M7 3.25C7.34518 3.25 7.625 3.52982 7.625 3.875V6.74112L9.44194 7.64959C9.75069 7.80396 9.87583 8.17946 9.72146 8.48821C9.56709 8.79697 9.19159 8.92211 8.88283 8.76774L6.72033 7.68649C6.50857 7.58061 6.375 7.36419 6.375 7.12744V3.875C6.375 3.52982 6.65482 3.25 7 3.25Z"
+fill="currentColor"/>
+</g>
+
+<!-- Back Arrow -->
+<path fill-rule="evenodd" clip-rule="evenodd"
+d="M2.46967 2.46967C2.76256 2.17678 2.76256 1.7019 2.46967 1.40901L1.53033 0.46967C1.23744 0.176777 0.762563 0.176777 0.46967 0.46967C0.176777 0.762563 0.176777 1.23744 0.46967 1.53033L0.87868 1.93934C0.318066 2.90985 0 4.03685 0 5.2381H1.25C1.25 4.37738 1.46972 3.568 1.85663 2.86256L2.46967 2.46967Z"
+fill="currentColor"/>
+</svg>`,
   download: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14">
   <style>
     .pulse {

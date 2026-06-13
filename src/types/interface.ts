@@ -1,7 +1,9 @@
 export enum Plan  {
   "Individual Plan" = "Individual_Plan",
   "Family Plan" = "Family_Plan",
-  "Family Shared Plan" = "Family_Shared_Plan"
+  "Family Shared Plan" = "Family_Shared_Plan",
+  "Dependent Shared Plan" = "Dependent_Shared_Plan",
+  "Dual Premium Dependent Shared Plan" = "Dual_Premium_dependent_Shared_Plan"
 };
 export const allMemberTYpes = [
   {

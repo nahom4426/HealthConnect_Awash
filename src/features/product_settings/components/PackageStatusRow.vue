@@ -299,7 +299,6 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
 
     <!-- Show Rate Button (if canManageQuotation) -->
     <button
-      v-if="canManageQuotation"
       @click.stop="handleShowRate(row)"
       class="relative p-2 text-indigo-600 bg-indigo-50 rounded-lg transition-all duration-200 group hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
       title="Show Rate"

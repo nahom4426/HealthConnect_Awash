@@ -12,27 +12,24 @@ const isRequired = () => {
 </script>
 
 <template>
-  <div class="flex flex-col items-start gap-1.5 w-full">
-    <div class="flex flex-col gap-1 w-full">
-      <span 
-        :title="label" 
-        class="text-sm font-medium text-gray-700 truncate transition-colors duration-200" 
-        v-if="label"
-      >
-        {{ label }}
-        <span v-if="isRequired()" class="text-red-500 ml-1">*</span>
-      </span>
-      <div
-        class="focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 
-               border-2 border-gray-200 max-w-full overflow-hidden text-base rounded-lg 
-               bg-white hover:border-gray-300 transition-all duration-200 shadow-sm"
-        :class="{
-          'border-red-500': error,
-          'focus-within:ring-red-500 focus-within:border-red-500': error
-        }"
-      >
-        <slot></slot>
-      </div>
+  <div class="flex flex-col gap-1.5 w-full">
+    <label
+      :title="label"
+      class="text-xs font-medium text-gray-600 truncate leading-none"
+      v-if="label"
+    >
+      {{ label }}
+      <span v-if="isRequired()" class="text-red-400 ml-0.5">*</span>
+    </label>
+    <div
+      class="relative flex items-center max-w-full overflow-hidden rounded-lg border bg-white transition-all duration-150"
+      :class="[
+        error
+          ? 'border-red-300 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100'
+          : 'border-gray-200 hover:border-gray-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10'
+      ]"
+    >
+      <slot></slot>
     </div>
     <InputError :error="error" />
   </div>
@@ -47,50 +44,53 @@ const isRequired = () => {
   background-color: transparent;
   padding: 0.5rem 0.75rem;
   box-shadow: none;
-  @apply text-sm text-gray-800 placeholder-gray-400;
-  transition: all 0.2s ease-in-out;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #1f2937;
+  transition: all 0.15s ease;
+}
+
+.custom-input::placeholder,
+.skip_custom-input::placeholder {
+  color: #9ca3af;
 }
 
 .custom-input:focus,
 .skip_custom-input:focus {
   box-shadow: none;
+  outline: none;
 }
 
 textarea.custom-input,
 textarea.skip_custom-input {
-  padding: 0.75rem;
+  padding: 0.625rem 0.75rem;
   resize: vertical;
-  min-height: 6rem;
+  min-height: 5rem;
   line-height: 1.5;
 }
 
 select.custom-input,
 select.skip_custom-input {
-  height: 2.75rem;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.75rem center;
+  height: 2.5rem;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.625rem center;
   background-repeat: no-repeat;
-  background-size: 1.25em 1.25em;
-  padding-right: 2.5rem;
+  background-size: 1.125em 1.125em;
+  padding-right: 2.25rem;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
 
-.custom-input::placeholder,
-.skip_custom-input::placeholder {
-  color: theme("colors.gray.400");
-}
-
-/* Disabled state */
 .custom-input:disabled,
 .skip_custom-input:disabled {
-  @apply bg-gray-100 cursor-not-allowed;
+  background-color: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
 }
 
-/* Readonly state */
 .custom-input[readonly],
 .skip_custom-input[readonly] {
-  @apply bg-gray-50;
+  background-color: #f9fafb;
 }
 </style>

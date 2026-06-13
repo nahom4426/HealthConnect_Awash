@@ -16,6 +16,7 @@ import { useAuthStore } from "@/stores/auth";
 import adminRoutes from "./admin.routes";
 import analyticsRoutes from "./analytics.routes";
 import Profile from "@/features/profile/pages/profile.vue";
+import Settings from "@/features/settings/pages/Settings.vue";
 
 function hasManagesQuotationPrivilege() {
   try {
@@ -153,6 +154,12 @@ const router = createRouter({
           path: '/profile',
           name: 'profile',
           component: Profile,
+        },
+        {
+          path: '/settings',
+          name: 'settings',
+          component: Settings,
+          meta: { requiresAuth: true },
         },
         {
           path: ':pathMatch(.*)*',

@@ -12,6 +12,11 @@ import { useApiRequest } from "@/composables/useApiRequest";
 
 const showInstitution = ref(false)
 const showMore = ref(true)
+const isSubmitting = ref(false);
+const pendingAction = ref(''); // Track pending action for loading state
+let lastCallTime = 0;
+const DEBOUNCE_TIME = 1000;
+
 const institutionForm = ref({
   institutionName: "",
   email: "",
@@ -54,7 +59,7 @@ function normalizeDescription(raw) {
 
   if (typeof val === 'string') {
     const v = val.toLowerCase().trim();
-    if (v === 'member' || v === 'main member') descNum = 1;
+    if (v === 'member' || v === 'main member' || v === 'member only') descNum = 1;
     else if (v === 'spouse') descNum = 2;
     else if (v === 'children') descNum = 3;
     else descNum = Number.parseInt(val, 10);
@@ -66,6 +71,14 @@ function normalizeDescription(raw) {
 }
 
 function onFormSubmit(e) {
+  // Prevent default browser behavior
+  if (e && e.preventDefault) {
+    e.preventDefault();
+  }
+  if (e && e.stopPropagation) {
+    e.stopPropagation();
+  }
+  
   if (!e) return;
 
   const action = e.action;
@@ -73,18 +86,37 @@ function onFormSubmit(e) {
 
   if (action !== 'save' && action !== 'issue') return;
 
-  const quotedServices = (data.quotations || [])
-    .flatMap((q) => q.services || [])
-    .map((s) => ({
-      ...s,
-      description: normalizeDescription(s?.description),
-    }));
+  // Timestamp-based debounce
+  const now = Date.now();
+  if (now - lastCallTime < DEBOUNCE_TIME) {
+    console.log(`Debounced: Only ${now - lastCallTime}ms since last call`);
+    return;
+  }
+
+  // Flag-based prevention
+  if (isSubmitting.value) {
+    console.log('Submission already in progress, skipping...');
+    return;
+  }
+
+  lastCallTime = now;
+  isSubmitting.value = true;
+  pendingAction.value = action; // Set pending action for loading state
+
+  // Extract services from the payload structure
+  const quotedServices = (data.quoatedServices || []).map((s) => ({
+    ...s,
+    description: normalizeDescription(s?.description),
+  }));
 
   const payload = {
     institutionUuid: currentInstitution.value?.institutionUuid || "",
-    description: institutionForm.value.description,
+    description: institutionForm.value.description || "",
+    quotationType: "QUOTATION",
     quoatedServices: quotedServices,
   };
+
+  console.log(`Making ${action} API call with ${quotedServices.length} services`);
 
   const req = action === 'save' ? saveReq : issueReq;
   const requestFn = () => (action === 'save' ? saveQuotationDraft(payload) : issueQuotation(payload));
@@ -93,14 +125,24 @@ function onFormSubmit(e) {
     if (res?.success) {
       toasted(true, action === 'save' ? 'Quotation saved successfully' : 'Quotation issued successfully', res?.error);
       router.back();
-    } else {
     }
+    // Reset flags after completion
+    setTimeout(() => {
+      isSubmitting.value = false;
+      pendingAction.value = '';
+    }, 500);
   }).catch((err) => {
     const apiErr = err?.response?.data || err;
     toasted(false, 'Failed to process quotation', apiErr);
+    // Reset flags on error
+    setTimeout(() => {
+      isSubmitting.value = false;
+      pendingAction.value = '';
+    }, 500);
   });
 }
 </script>
+
 <template>
   <SingleInstitutionDataProvider v-slot="{ instituton, pending }">
     <DefaultPage :first="false">
@@ -255,6 +297,7 @@ function onFormSubmit(e) {
                 v-else
                 :packages="packages"
                 :onSubmit="onFormSubmit"
+                :pendingAction="pendingAction"
                 :showHeaderControls="true"
                 :readOnlyRows="false"
                 :acceptMode="false"

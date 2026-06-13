@@ -37,18 +37,20 @@ watch(() => props.modelValue, () => {
 <template>
   <InputParent v-model="value" v-slot="{ setRef, error, value, attributes, changeValue }">
     <QuotationInputLayout
-      :class="$attrs.class + ' relative'"
+      :class="[$attrs.class, 'relative']"
       :error="error"
       :label="$attrs.label"
     >
-      <div class="relative flex items-center h-full flex-1">
+      <div class="relative flex items-center h-full flex-1 w-full">
         <slot name="left"></slot>
         <select
+          :value="value"
           :style="{
             opacity: attributes?.placeholder && !value ? .6 : 1
           }"
           :ref="setRef"
-          class="appearance-none flex-1 text-text-clr h-full text-sm px-2 bg-transparent outline-none"
+          class="appearance-none flex-1 text-text-clr h-full text-sm pl-4 pr-10 bg-transparent outline-none cursor-pointer w-full"
+          :class="attributes?.class"
         >
           <option
             selected
@@ -78,9 +80,9 @@ watch(() => props.modelValue, () => {
             </option>
           </template>
         </select>
-        <div class="absolute h-full bg-base-clr4 rounded-md pointer-events-none top-0 right-0">
+        <div class="absolute h-full pointer-events-none top-0 right-0 flex items-center pr-3">
           <slot name="right">
-            <div class="h-full ml-auto w-8 flex items-center justify-center">
+            <div class="h-full ml-auto flex items-center justify-center">
               <i v-if="!pending" v-html="icons.downAngle" />
               <i v-else class="animate-spin" v-html="icons.spinner" />
             </div>

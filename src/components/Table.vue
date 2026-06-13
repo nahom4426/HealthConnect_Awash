@@ -172,7 +172,7 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- Desktop Table View -->
+    <!-- Table Content -->
     <div class="overflow-auto flex-1 min-h-0 custom-scrollbar">
       <DataTable
         :firstCol="firstCol"
@@ -250,9 +250,9 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
       </DataTable>
 
       <!-- Empty State -->
-      <div v-if="showEmptyState" class="flex justify-center items-center py-12">
+      <div v-if="showEmptyState" class="flex flex-col justify-center items-center py-16 px-4">
         <slot name="placeholder">
-          <AnimatedNoData 
+          <AnimatedNoData
             title="No Data Available"
             :message="placeholder || 'There are no items to display at the moment.'"
           />
@@ -263,21 +263,21 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
     <!-- Mobile Card View -->
     <div class="lg:hidden">
       <slot name="mobile">
-        <div v-if="hasData && !pending" class="space-y-3">
-          <div 
-            v-for="(row, idx) in rows" 
-            :key="idx" 
-            class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm transition-shadow hover:shadow-md"
+        <div v-if="hasData && !pending" class="space-y-2 p-1">
+          <div
+            v-for="(row, idx) in rows"
+            :key="idx"
+            class="p-3.5 bg-white rounded-lg border border-gray-200/80 transition-all duration-150 hover:shadow-soft active:scale-[0.99] cursor-pointer"
             @click="emit('row', row)"
           >
-            <div class="space-y-2">
-              <div v-for="(key, keyIdx) in spec.row" :key="keyIdx" class="flex justify-between items-start">
-                <span class="text-xs font-medium text-gray-500">{{ spec.head[keyIdx] }}:</span>
-                <span class="text-sm text-right text-gray-900">{{ row[key] || '-' }}</span>
+            <div class="space-y-1.5">
+              <div v-for="(key, keyIdx) in spec.row" :key="keyIdx" class="flex justify-between items-start gap-3">
+                <span class="text-[11px] font-medium text-gray-400 uppercase tracking-wide flex-shrink-0">{{ spec.head[keyIdx] }}</span>
+                <span class="text-sm text-right text-gray-800 font-medium">{{ row[key] || '-' }}</span>
               </div>
-              
+
               <!-- Mobile Actions -->
-              <div v-if="$slots.actions" class="flex gap-2 pt-2 mt-2 border-t border-gray-100">
+              <div v-if="$slots.actions" class="flex gap-2 pt-2 mt-1.5 border-t border-gray-100">
                 <slot name="actions" :row="row" />
               </div>
             </div>
@@ -289,68 +289,73 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
     <!-- Pagination -->
     <div
       v-if="!pending && showPagination && hasData"
-      class="flex-shrink-0 p-4 bg-white border-t border-gray-200"
+      class="flex-shrink-0 px-4 py-3 bg-white border-t border-gray-100"
     >
-      <div class="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-        <!-- Per Page Selector -->
-        <div class="flex gap-2 items-center text-sm text-gray-600">
-          <span>Show</span>
-          <select
-            @change="handlePerPageChange"
-            class="px-3 py-1.5 text-sm bg-white rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            :value="currentPerPage"
-          >
-            <option :value="25">25</option>
-            <option :value="50">50</option>
-            <option :value="75">75</option>
-            <option :value="100">100</option>
-          </select>
-          <span>entries</span>
+      <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+        <!-- Left: Info + Per Page -->
+        <div class="flex items-center gap-3">
+          <div class="flex gap-1.5 items-center">
+            <select
+              @change="handlePerPageChange"
+              class="h-8 px-2 pr-7 text-xs font-medium text-gray-600 bg-gray-50 rounded-md border border-gray-200 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+              :value="currentPerPage"
+            >
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="75">75</option>
+              <option :value="100">100</option>
+            </select>
+            <span class="text-xs text-gray-400">per page</span>
+          </div>
+          <div class="hidden sm:block h-4 w-px bg-gray-200"></div>
+          <span class="hidden sm:inline text-xs text-gray-500">
+            {{ startIndex }}-{{ endIndex }} of {{ currentTotalElements }}
+          </span>
         </div>
-        
-        <!-- Pagination Info -->
-        <div class="text-sm text-gray-600">
-          Showing {{ startIndex }} to {{ endIndex }} of {{ currentTotalElements }} records
-        </div>
-        
-        <!-- Pagination Controls -->
-        <div class="flex gap-1">
+
+        <!-- Right: Page Controls -->
+        <div class="flex items-center gap-1">
           <button
             @click="previousPage"
-            class="px-3 py-1.5 text-sm font-medium bg-white rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-500 transition-all duration-150 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             :disabled="currentPage === 1"
+            aria-label="Previous page"
           >
-            <i v-html="icons.chevron_left" class="text-sm"></i>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
-          
+
           <template v-for="pageNum in pageNumbers" :key="pageNum">
-            <button
+            <span
               v-if="pageNum === '...'"
-              class="px-3 py-1.5 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-300"
-              disabled
+              class="inline-flex items-center justify-center w-8 h-8 text-xs text-gray-400"
             >
               ...
-            </button>
+            </span>
             <button
               v-else
               @click="handlePageChange(pageNum)"
-              class="px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors"
+              class="inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-medium transition-all duration-150"
               :class="[
                 currentPage === pageNum
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-gray-600 hover:bg-gray-100'
               ]"
             >
               {{ pageNum }}
             </button>
           </template>
-          
+
           <button
             @click="nextPage"
-            class="px-3 py-1.5 text-sm font-medium bg-white rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-500 transition-all duration-150 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             :disabled="currentPage === currentTotalPages"
+            aria-label="Next page"
           >
-            <i v-html="icons.chevron_right" class="text-sm"></i>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </div>
@@ -361,25 +366,24 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
 <style scoped>
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: #e2e8f0 transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #e2e8f0;
+  border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #cbd5e1;
 }
 </style>

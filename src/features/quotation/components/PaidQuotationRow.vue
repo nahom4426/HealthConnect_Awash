@@ -37,12 +37,14 @@ function getStatusStyle(status: any) {
     case "ACTIVE":
     case "APPROVED":
     case "ACCEPTED":
+    case "PAID":
       return `${base} bg-emerald-50 text-emerald-700 ring-emerald-200`;
     case "PENDING":
     case "SUBMITTED":
       return `${base} bg-amber-50 text-amber-700 ring-amber-200`;
     case "INACTIVE":
     case "REJECTED":
+    case "UNPAID":
       return `${base} bg-rose-50 text-rose-700 ring-rose-200`;
     default:
       return `${base} bg-slate-50 text-slate-700 ring-slate-200`;
@@ -74,10 +76,12 @@ const hasActions = computed(() =>
     @click.self="onRowClick(row)"
     class="bg-white border-b transition-colors duration-150 hover:bg-gray-50"
   >
+    <!-- # -->
     <td class="p-4 font-medium text-gray-500">
       {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
     </td>
 
+    <!-- Columns -->
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
       <div v-if="key === 'status'" class="truncate">
         <span :class="getStatusStyle((row as any)?.status)">
@@ -90,13 +94,16 @@ const hasActions = computed(() =>
       </span>
     </td>
 
+    <!-- Actions at the end -->
     <td v-if="hasActions" class="p-3 text-start">
       <RouterLink
-        :to="{ name: 'ViewAcceptedQuotation', params: { quotationUuid: (row as any)?.quotationUuid } }"
-        class="inline-flex gap-1.5 items-center px-3.5 py-1.5 text-xs font-semibold text-primary bg-primary/5 hover:bg-primary hover:text-white rounded-full transition-all duration-150 shadow-sm outline-none border border-primary/20 hover:border-primary"
+        :to="{ name: 'ViewIssuedQuotation', params:  { quotationUuid: (row as any)?.quotationUuid }, query: { viewOnly: '1' } }"
+        class="inline-flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-full shadow-sm transition-all duration-200 hover:shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none"
         @click.stop
       >
-        <i v-html="icons.details" class="w-3.5 h-3.5" />
+        <span class="flex justify-center items-center w-6 h-6 rounded-full bg-white/20">
+          <i v-html="icons.details" class="w-4 h-4" />
+        </span>
         <span class="hidden sm:inline">View</span>
         <span class="sm:hidden">Open</span>
       </RouterLink>

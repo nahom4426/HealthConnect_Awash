@@ -35,7 +35,14 @@ function onIssuedFormSubmit(e: any) {
     const qid = (draft.value?.quotationUuid || route.params.quotationUuid) as string;
     pendingAction.value = 'accept'
     acceptQuotation(qid, { quotationUuid: qid })
-      .then(() => {
+      .then((res: any) => {
+        const body = res?.data ?? res;
+        if (body?.statusCode && body?.statusCode >= 400) {
+          const msg = body?.message || 'Failed to accept quotation';
+          toasted(false, msg, body);
+          return;
+        }
+
         toasted(true, 'Quotation accepted');
         router.back();
       })
@@ -130,7 +137,9 @@ async function handleAmend() {
   }
 }
 
-
+function acceptDirect() {
+  onIssuedFormSubmit({ action: 'accept', data: {} });
+}
 
 function buildPrefill(packages: any[]): { packageName: string; planType: string; services: any[] }[] {
   if (!draft.value) return [];
@@ -366,13 +375,7 @@ onMounted(async () => {
                 :prefill="buildPrefill(packages)"
                 :showHeaderControls="false"
                 :readOnlyRows="true"
-                :acceptLabel="'Accept Quotation'"
-                :issueMode="!isViewOnly"
-                :pendingAction="pendingAction"
-                :hideFooterActions="isViewOnly"
-                :onSubmit="onIssuedFormSubmit"
-                :showAmendButton="!isViewOnly"
-                @amend="handleAmend"
+                :hideFooterActions="true"
               />
             </QuotationCreationDataProvider>
             
@@ -397,6 +400,32 @@ onMounted(async () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Issued quotation actions: Amend & Accept -->
+            <div
+              v-if="draft && !isViewOnly"
+              class="flex flex-wrap gap-3 justify-end pt-6 mt-8 border-t border-slate-200"
+            >
+              <button
+                type="button"
+                @click="handleAmend"
+                :disabled="pendingAction === 'amend'"
+                class="inline-flex gap-2 items-center px-4 py-2 text-sm font-medium rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span v-if="pendingAction === 'amend'">Amending...</span>
+                <span v-else>Amend Quotation</span>
+              </button>
+
+              <button
+                type="button"
+                @click="acceptDirect"
+                :disabled="pendingAction === 'accept'"
+                class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span v-if="pendingAction === 'accept'">Accepting...</span>
+                <span v-else>Accept Quotation</span>
+              </button>
             </div>
           </div>
         </div>

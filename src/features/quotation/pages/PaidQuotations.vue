@@ -4,52 +4,42 @@ import { useRouter } from 'vue-router'
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
 import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
-import IssuedQuotationRowCom from "@/features/quotation/components/IssuedQuotationRow.vue";
-import { savedIssueQuotation } from '../api/quotationApi';
-import { toasted } from "@/utils/utils";
+import PaidQuotationRowCom from "@/features/quotation/components/PaidQuotationRow.vue";
 
 const router = useRouter()
 const search = ref("")
 const selectedType = ref("")
-const isAmending = ref(false)
+const selectedStatus = ref("PAID")
 
 function goToStageExclusion() {
   router.push('/stage_exclusion')
-}
-
-async function handleAmend(quotationUuid: string) {
-  if (!quotationUuid) return;
-  
-  isAmending.value = true;
-  try {
-    await savedIssueQuotation(quotationUuid, { quotationUuid });
-    toasted(true, 'Quotation amended successfully');
-    router.push({ 
-      name: 'GenerateQuotation',
-      query: { quotationUuid }
-    });
-  } catch (error: any) {
-    const errorMessage = error?.response?.data?.message || 'Failed to amend quotation';
-    toasted(false, errorMessage);
-  } finally {
-    isAmending.value = false;
-  }
 }
 </script>
 
 <template>
   <DefaultPage v-model="search" placeholder="Search by institution...">
     <template #filter>
-      <!-- Type Filter Select at last end top -->
-      <select
-        v-model="selectedType"
-        class="px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-700 outline-none min-w-[150px] h-10 sm:h-12"
-      >
-        <option value="">All Types</option>
-        <option value="QUOTATION">Quotation</option>
-        <option value="INCLUSION">Inclusion</option>
-        <option value="EXCLUSION">Exclusion</option>
-      </select>
+      <div class="flex gap-2 items-center">
+        <!-- Status Filter Select -->
+        <select
+          v-model="selectedStatus"
+          class="px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-700 outline-none min-w-[120px] h-10 sm:h-12"
+        >
+          <option value="PAID">Paid</option>
+          <option value="UNPAID">Unpaid</option>
+        </select>
+
+        <!-- Type Filter Select at last end top -->
+        <select
+          v-model="selectedType"
+          class="px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-700 outline-none min-w-[150px] h-10 sm:h-12"
+        >
+          <option value="">All Types</option>
+          <option value="QUOTATION">Quotation</option>
+          <option value="INCLUSION">Inclusion</option>
+          <option value="EXCLUSION">Exclusion</option>
+        </select>
+      </div>
     </template>
 
     <template #add-action>
@@ -70,14 +60,14 @@ async function handleAmend(quotationUuid: string) {
       <!-- Table Component inside Data Provider -->
       <QuotationDataProviderByStatus
         ref="provider"
-        :status="'ISSUED'"
+        :status="selectedStatus"
         :search="search"
         :type="selectedType"
         v-slot="{ quotations, pending, currentPage, itemsPerPage, totalPages, setPage, setLimit }"
       >
         <Table
           :pending="pending"
-          :rowCom="IssuedQuotationRowCom"
+          :rowCom="PaidQuotationRowCom"
           :headers="{
             head: [
               'Quotation Code',
@@ -121,4 +111,3 @@ async function handleAmend(quotationUuid: string) {
     </div>
   </DefaultPage>
 </template>
-

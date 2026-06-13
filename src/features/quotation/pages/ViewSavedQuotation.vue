@@ -2,7 +2,7 @@
 import DefaultPage from "@/components/DefaultPage.vue";
 import QuotationForm from "../form/QuotationForm.vue";
 import Input from "@/components/new_form_elements/Input.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { getQuotationById, savedIssueQuotation, saveSavedQuotation, acceptQuotation } from "@/features/quotation/api/quotationApi";
 import { useRoute, useRouter } from "vue-router";
 import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
@@ -24,6 +24,8 @@ const institutionForm = ref({
 
 const prefilled = ref(false)
 const currentInstitution = ref<any>(null)
+const isSubmitting = ref(false); // Add this flag to prevent double submission
+
 function prefillOnce(v: any) {
   if (!prefilled.value && v) {
     institutionForm.value = {
@@ -51,6 +53,12 @@ const error = ref<string | null>(null)
 const institutionUuidForProvider = ref<string | null>(null)
 const draft = ref<any>(null)
 const pendingAction = ref<string>('')
+
+const isExclusionOrInclusion = computed(() => {
+  const t = draft.value?.type;
+  return t === 'EXCLUSION' || t === 'INCLUSION';
+})
+
 function buildPrefill(packages: any[]): { packageName: string; planType: string; services: any[] }[] {
   if (!draft.value) return [];
   const services = (draft.value.quoatedServices || []) as any[];
@@ -84,6 +92,13 @@ onMounted(async () => {
 
 function onSavedFormSubmit(e: any) {
   if (!e) return;
+  
+  // Prevent double submission
+  if (isSubmitting.value) {
+    console.log('Submission already in progress, skipping...');
+    return;
+  }
+  
   const action = e.action;
   const data = e.data || {};
   const quotationUuid = (draft.value?.quotationUuid || route.params.quotationUuid) as string;
@@ -92,68 +107,80 @@ function onSavedFormSubmit(e: any) {
     return v.toString(16);
   });
 
+  const mapQuotedServices = (services: any[], uuid: string) => {
+    return services?.map((s: any) => ({
+      packageUuid: s.packageUuid,
+      benefitGroupCode: s.benefitGroupCode || '',
+      serviceQuotedUuid: (action === 'duplicate' || !s.serviceQuotedUuid || s.serviceQuotedUuid.length < 24) 
+        ? generateUuid() 
+        : s.serviceQuotedUuid,
+      numberOfInsured: Number(s.numberOfInsured) || 0,
+      description: Number(s.description) || 0,
+      sumAssured: Number(s.sumAssured ?? s.sumInsured ?? 0),
+      quotationUuid: uuid,
+      planType: s.planType || '',
+      individualType: s.individualType || 'Member',
+      spouseSumAssured: Number(s.spouseSumAssured ?? 0),
+      depSumAssured: Number(s.depSumAssured ?? 0),
+      spouse: Boolean(s.spouse) || false,
+      rate: Number(s.rate) || 0,
+      premium: Number(s.premium) || 0,
+      coverage: Number(s.coverage) || 0,
+      sumInsured: Number(s.sumInsured ?? s.sumAssured ?? 0),
+      employeeRate: Number(s.employeeRate) || 0,
+      dependentRate: Number(s.dependentRate) || 0,
+      spouseRate: Number(s.spouseRate) || 0
+    })) || [];
+  };
+
   if (action === 'save') {
     pendingAction.value = 'save'
+    isSubmitting.value = true; // Set flag
+    
     const uuid = data.quotationUuid || quotationUuid;
     
     // Transform the data to match the expected API payload structure
     const payload = {
       institutionUuid: draft.value?.institutionUuid || data.institutionUuid || '',
       description: draft.value?.description || data.description || '',
-      quotedServiceUpdateRequests: data.quotations?.flatMap((q: any) => 
-        q.services.map((s: any) => ({
-          packageUuid: s.packageUuid,
-          // Generate a new UUID if it's a duplicate operation or if the existing one is invalid
-          serviceQuotedUuid: (action === 'duplicate' || !s.serviceQuotedUuid || s.serviceQuotedUuid.length < 24) 
-            ? generateUuid() 
-            : s.serviceQuotedUuid,
-          numberOfInsured: Number(s.numberOfInsured) || 0,
-          description: Number(s.description) || 0,
-          rate: Number(s.rate) || 0,
-          premium: Number(s.premium) || 0,
-          coverage: Number(s.coverage) || 0,
-          quotationUuid: uuid,
-          planType: s.planType || '',
-          individualType: s.individualType || 'Member',
-          spouse: Boolean(s.spouse) || false
-        }))
-      ) || []
+      quotedServiceUpdateRequests: mapQuotedServices(data.quoatedServices, uuid)
     };
     
     saveSavedQuotation(uuid, payload)
-      .then(() => {
-        toasted(true, 'Saved quotation updated')
+      .then((res: any) => {
+        if (!res || !res.success) {
+          return;
+        }
+
+        toasted(true, 'Saved quotation updated');
         try { sessionStorage.setItem('reloadSavedQuotations', '1') } catch {}
-        router.back()
+        router.back();
       })
-      .catch((err: any) => toasted(false, 'Failed to save quotation', err?.response?.data || err))
-      .finally(() => { pendingAction.value = '' });
+      .catch((err: any) => {
+        toasted(false, 'Failed to save quotation', err?.response?.data || err);
+      })
+      .finally(() => { 
+        pendingAction.value = '';
+        isSubmitting.value = false; // Reset flag
+      });
   } else if (action === 'accept') {
     pendingAction.value = 'accept'
+    isSubmitting.value = true; // Set flag
+    
     // Handle accept action
     const payload = {
       institutionUuid: draft.value?.institutionUuid || data.institutionUuid || '',
       description: draft.value?.description || data.description || '',
-      quotedServiceUpdateRequests: data.quotations?.flatMap((q: any) => 
-        q.services.map((s: any) => ({
-          packageUuid: s.packageUuid,
-          serviceQuotedUuid: s.serviceQuotedUuid || '',
-          numberOfInsured: Number(s.numberOfInsured) || 0,
-          description: Number(s.description) || 0,
-          rate: Number(s.rate) || 0,
-          premium: Number(s.premium) || 0,
-          coverage: Number(s.coverage) || 0,
-          quotationUuid: quotationUuid,
-          planType: s.planType || '',
-          individualType: s.individualType || 'Member',
-          spouse: Boolean(s.spouse) || false
-        }))
-      ) || []
+      quotedServiceUpdateRequests: mapQuotedServices(data.quoatedServices, quotationUuid)
     };
     
     // Use the acceptQuotation API function
     acceptQuotation(quotationUuid, payload)
-      .then(() => {
+      .then((res: any) => {
+        if (!res || !res.success) {
+          return;
+        }
+
         toasted(true, 'Quotation accepted successfully');
         try { sessionStorage.setItem('reloadSavedQuotations', '1'); } catch {}
         router.back();
@@ -162,37 +189,46 @@ function onSavedFormSubmit(e: any) {
         console.error('Failed to accept quotation:', err);
         toasted(false, 'Failed to accept quotation', err?.response?.data || err);
       })
-      .finally(() => { pendingAction.value = '' });
+      .finally(() => { 
+        pendingAction.value = '';
+        isSubmitting.value = false; // Reset flag
+      });
   } else if (action === 'issue') {
     pendingAction.value = 'issue'
-    const ds = (draft.value?.quoatedServices || []) as any[];
+    isSubmitting.value = true; // Set flag
+    
+    const ds = (data.quoatedServices || draft.value?.quoatedServices || []) as any[];
     const payload = {
       institutionUuid: draft.value?.institutionUuid || '',
       description: draft.value?.description || '',
-      quotedServiceUpdateRequests: ds.map((s: any) => ({
-        packageUuid: s.packageUuid,
-        serviceQuotedUuid: s.serviceQuotedUuid,
-        numberOfInsured: Number(s.numberOfInsured ?? 0),
-        description: Number(s.description ?? 0),
-        rate: Number(s.rate ?? 0),
-        premium: Number(s.premium ?? 0),
-        sumInsured: Number(s.sumInsured ?? 0),
-        coverage: Number(s.coverage ?? 0),
-        quotationUuid: quotationUuid,
-        planType: s.planType,
-        individualType: s.individualType,
-        spouse: Boolean(s.spouse ?? false),
-      })),
+      quotedServiceUpdateRequests: mapQuotedServices(ds, quotationUuid)
     } as any;
+    
     savedIssueQuotation(quotationUuid, payload)
-      .then(() => {
-        toasted(true, 'Saved quotation issued successfully')
+      .then((res: any) => {
+        if (!res || !res.success) {
+          return;
+        }
+
+        toasted(true, 'Saved quotation issued successfully');
         try { sessionStorage.setItem('reloadSavedQuotations', '1') } catch {}
-        router.back()
+        router.back();
       })
-      .catch((err: any) => toasted(false, 'Failed to issue saved quotation', err?.response?.data || err))
-      .finally(() => { pendingAction.value = '' });
+      .catch((err: any) => {
+        toasted(false, 'Failed to issue saved quotation', err?.response?.data || err);
+      })
+      .finally(() => { 
+        pendingAction.value = '';
+        isSubmitting.value = false; // Reset flag
+      });
   }
+}
+
+function issueMidTerm() {
+  if (!draft.value) return;
+  // Prevent double submission for mid-term
+  if (isSubmitting.value) return;
+  onSavedFormSubmit({ action: 'issue', data: {} });
 }
 </script>
 
@@ -378,22 +414,30 @@ function onSavedFormSubmit(e: any) {
           </div>
         </div>
 
-        <!-- Saved Quotation Card -->
+        <!-- Saved Quotation / Mid-term Card -->
         <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
           <div class="px-6 py-5 bg-gradient-to-r from-amber-50 border-b to-amber-100/50 border-slate-200">
             <div class="flex justify-between items-center">
               <div class="flex gap-3 items-center">
                 <div class="w-2 h-8 bg-amber-600 rounded"></div>
                 <div>
-                  <h2 class="text-xl font-semibold text-slate-800">Edit Saved Quotation</h2>
-                  <div class="flex gap-2 items-center mt-1">
-                    <p class="text-sm text-slate-600">Saved for:</p>
-                    <span class="text-sm font-semibold text-green-700">{{ instituton?.institutionName }}</span>
+                  <h2 class="text-xl font-semibold text-slate-800">
+                    {{ isExclusionOrInclusion ? 'Mid-term Quotation' : 'Edit Saved Quotation' }}
+                  </h2>
+                  <div class="flex flex-wrap gap-2 items-center mt-1 text-sm text-slate-600">
+                    <span>Saved for:</span>
+                    <span class="font-semibold text-green-700">{{ instituton?.institutionName }}</span>
+                    <span
+                      v-if="draft?.type"
+                      class="px-2 py-0.5 text-xs font-semibold text-amber-800 bg-amber-100 rounded-full border border-amber-200"
+                    >
+                      {{ draft.type }}
+                    </span>
                   </div>
                 </div>
               </div>
-              
-              <div class="flex gap-3 items-center">
+
+              <div v-if="!isExclusionOrInclusion" class="flex gap-3 items-center">
                 <div class="text-sm text-slate-600">
                   <span class="font-medium">{{ draft?.quoatedServices?.length || 0 }}</span> services
                 </div>
@@ -401,88 +445,147 @@ function onSavedFormSubmit(e: any) {
               </div>
             </div>
           </div>
-          
+
           <div class="p-6">
-            <QuotationCreationDataProvider v-slot="{ packages, pending: pkgPending }">
-              <div v-if="pkgPending" class="flex justify-center items-center py-12">
-                <div class="w-12 h-12 rounded-full border-b-2 border-amber-600 animate-spin"></div>
-              </div>
-              
-              <div v-else-if="!draft" class="py-12 text-center text-slate-500">
-                <p>No saved quotation data available</p>
-              </div>
-              
-              <QuotationForm
-                v-else
-                :packages="packages"
-                :prefill="buildPrefill(packages)"
-                :pendingAction="pendingAction"
-                :readOnlyRows="false"
-                :acceptMode="true"
-                :acceptLabel="'Accept'"
-                :quotationUuid="draft.quotationUuid"
-                :onSubmit="onSavedFormSubmit"
-                :showHeaderControls="true"
-              />
-            </QuotationCreationDataProvider>
-            
-            <!-- Quotation Status & Actions -->
-            <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
-              <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <div class="mb-1 text-sm font-medium text-amber-700">Quotation ID</div>
-                  <div class="font-mono text-sm text-amber-900 truncate">{{ draft.quotationUuid }}</div>
+            <!-- Normal saved quotation: full editable form -->
+            <template v-if="!isExclusionOrInclusion">
+              <QuotationCreationDataProvider v-slot="{ packages, pending: pkgPending }">
+                <div v-if="pkgPending" class="flex justify-center items-center py-12">
+                  <div class="w-12 h-12 rounded-full border-b-2 border-amber-600 animate-spin"></div>
                 </div>
-                <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <div class="mb-1 text-sm font-medium text-amber-700">Status</div>
-                  <div class="flex gap-2 items-center">
-                    <div class="w-2 h-2 bg-amber-600 rounded-full"></div>
-                    <span class="font-medium text-amber-800">Saved Draft</span>
+
+                <div v-else-if="!draft" class="py-12 text-center text-slate-500">
+                  <p>No saved quotation data available</p>
+                </div>
+
+                <QuotationForm
+                  v-else
+                  :packages="packages"
+                  :prefill="buildPrefill(packages)"
+                  :pendingAction="pendingAction"
+                  :readOnlyRows="false"
+                  :acceptMode="true"
+                  :quotationUuid="draft.quotationUuid"
+                  :onSubmit="onSavedFormSubmit"
+                  :showHeaderControls="true"
+                />
+              </QuotationCreationDataProvider>
+
+              <!-- Quotation Status & Actions -->
+              <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                  <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                    <div class="mb-1 text-sm font-medium text-amber-700">Quotation ID</div>
+                    <div class="font-mono text-sm text-amber-900 truncate">{{ draft.quotationUuid }}</div>
+                  </div>
+                  <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                    <div class="mb-1 text-sm font-medium text-amber-700">Status</div>
+                    <div class="flex gap-2 items-center">
+                      <div class="w-2 h-2 bg-amber-600 rounded-full"></div>
+                      <span class="font-medium text-amber-800">Saved Draft</span>
+                    </div>
+                  </div>
+                  <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                    <div class="mb-1 text-sm font-medium text-amber-700">Last Updated</div>
+                    <div class="font-medium text-amber-800">
+                      {{ new Date(draft.lastModifiedDate || draft.createdDate || Date.now()).toLocaleDateString() }}
+                    </div>
                   </div>
                 </div>
-                <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <div class="mb-1 text-sm font-medium text-amber-700">Last Updated</div>
-                  <div class="font-medium text-amber-800">
-                    {{ new Date(draft.lastModifiedDate || draft.createdDate || Date.now()).toLocaleDateString() }}
+
+                <!-- Action Information -->
+                <div class="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2">
+                  <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex gap-3 items-start">
+                      <div class="p-2 mt-0.5 bg-blue-100 rounded-full">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 class="mb-1 font-medium text-blue-800">Save Changes</h4>
+                        <p class="text-sm text-blue-700">
+                          Update the quotation with your modifications without issuing it.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                    <div class="flex gap-3 items-start">
+                      <div class="p-2 mt-0.5 bg-emerald-100 rounded-full">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 class="mb-1 font-medium text-emerald-800">Issue Saved</h4>
+                        <p class="text-sm text-emerald-700">
+                          Finalize and issue this quotation to the client.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <!-- Action Information -->
-              <div class="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2">
-                <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            </template>
+
+            <!-- Mid-term EXCLUSION / INCLUSION quotation: no editing, just issue -->
+            <template v-else>
+              <div class="space-y-6">
+                <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                      <div class="mb-1 text-sm font-medium text-amber-700">Quotation Code</div>
+                      <div class="font-mono text-sm text-amber-900 truncate">{{ draft.quotationCode }}</div>
+                    </div>
+                    <div>
+                      <div class="mb-1 text-sm font-medium text-amber-700">Type</div>
+                      <div class="text-sm font-medium text-amber-900">{{ draft.type }}</div>
+                    </div>
+                    <div>
+                      <div class="mb-1 text-sm font-medium text-amber-700">Status</div>
+                      <div class="flex gap-2 items-center">
+                        <span class="w-2 h-2 bg-amber-600 rounded-full"></span>
+                        <span class="text-sm font-medium text-amber-900">Saved Draft</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-4 text-sm text-amber-900">
+                    {{ draft.description }}
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-lg border bg-slate-50 border-slate-200">
                   <div class="flex gap-3 items-start">
-                    <div class="p-2 mt-0.5 bg-blue-100 rounded-full">
-                      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    <div class="p-2 mt-0.5 rounded-full bg-slate-200">
+                      <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                       </svg>
                     </div>
                     <div>
-                      <h4 class="mb-1 font-medium text-blue-800">Save Changes</h4>
-                      <p class="text-sm text-blue-700">
-                        Update the quotation with your modifications without issuing it.
+                      <h4 class="mb-1 text-sm font-medium text-slate-900">Auto-generated mid-term quotation</h4>
+                      <p class="text-sm text-slate-600">
+                        This quotation was generated from an inclusion / exclusion process. Coverage packages
+                        cannot be edited here. Review the details above and issue the quotation when ready.
                       </p>
                     </div>
                   </div>
                 </div>
-                
-                <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                  <div class="flex gap-3 items-start">
-                    <div class="p-2 mt-0.5 bg-emerald-100 rounded-full">
-                      <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 class="mb-1 font-medium text-emerald-800">Issue Saved</h4>
-                      <p class="text-sm text-emerald-700">
-                        Finalize and issue this quotation to the client.
-                      </p>
-                    </div>
-                  </div>
+
+                <div class="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    @click="issueMidTerm"
+                    :disabled="pendingAction === 'issue' || isSubmitting"
+                    class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm transition-colors bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <span v-if="pendingAction === 'issue'">Issuing...</span>
+                    <span v-else>Issue Quotation</span>
+                  </button>
                 </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
       </div>

@@ -2,15 +2,19 @@
 import DefaultPage from "@/components/DefaultPage.vue";
 import QuotationForm from "../form/QuotationForm.vue";
 import Input from "@/components/new_form_elements/Input.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, nextTick } from "vue";
 import { getQuotationById, issuePremiumAdvice } from "@/features/quotation/api/quotationApi";
 import { useRoute, useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationCreationDataProvider from "@/features/quotation/components/QuotationCreationDataProvider.vue";
 
-const showInstitution = ref(false) // Hidden by default
-const showMore = ref(false) // Hidden by default
+const showInstitution = ref(false)
+const showMore = ref(false)
+const isSubmitting = ref(false);
+let lastCallTime = 0; // Add timestamp check
+const DEBOUNCE_TIME = 1000; // 1 second debounce
+
 const institutionForm = ref({
   institutionName: "",
   email: "",
@@ -24,23 +28,54 @@ const institutionForm = ref({
 
 function onAcceptedFormSubmit(e: any) {
   if (!e) return;
-  const action = e.action;
-  if (action === 'issuePremiumAdvice') {
-    const qid = (draft.value?.quotationUuid || route.params.quotationUuid) as string;
-    pendingAction.value = 'issuePremiumAdvice'
-    issuePremiumAdvice(qid, { quotationUuid: qid })
-      .then(() => {
-        toasted(true, 'Premium advice issued');
-        router.back();
-      })
-      .catch((err: any) => {
-        const apiErr = err?.response?.data || err;
-        toasted(false, 'Failed to issue premium advice', apiErr);
-      })
-      .finally(() => {
-        pendingAction.value = ''
-      });
+  
+  // Check by action type
+  if (e.action !== 'issuePremiumAdvice') return;
+  
+  // Timestamp-based debounce
+  const now = Date.now();
+  if (now - lastCallTime < DEBOUNCE_TIME) {
+    console.log(`Debounced: Only ${now - lastCallTime}ms since last call`);
+    return;
   }
+  
+  // Flag-based prevention
+  if (isSubmitting.value) {
+    console.log('Submission already in progress, skipping...');
+    return;
+  }
+  
+  lastCallTime = now;
+  
+  const qid = (draft.value?.quotationUuid || route.params.quotationUuid) as string;
+  pendingAction.value = 'issuePremiumAdvice'
+  isSubmitting.value = true;
+  
+  console.log('Making API call to issuePremiumAdvice for:', qid);
+  
+  issuePremiumAdvice(qid, { quotationUuid: qid })
+    .then((res: any) => {
+      const body = res?.data ?? res;
+      if (body?.statusCode && body?.statusCode >= 400) {
+        const msg = body?.message || 'Failed to issue premium advice';
+        toasted(false, msg, body);
+        return;
+      }
+
+      toasted(true, 'Premium advice issued');
+      router.back();
+    })
+    .catch((err: any) => {
+      const apiErr = err?.response?.data || err;
+      toasted(false, 'Failed to issue premium advice', apiErr);
+    })
+    .finally(() => {
+      pendingAction.value = '';
+      // Reset after a short delay to ensure cleanup
+      setTimeout(() => {
+        isSubmitting.value = false;
+      }, 500);
+    });
 }
 
 const prefilled = ref(false)
@@ -66,7 +101,6 @@ function prefillOnce(v: any) {
 const route = useRoute();
 const router = useRouter();
 
-// Load quotation to get its institutionUuid and services
 const loading = ref(false)
 const error = ref<string | null>(null)
 const institutionUuidForProvider = ref<string | null>(null)
@@ -148,7 +182,7 @@ onMounted(async () => {
       <template v-if="prefillOnce(instituton)"></template>
       
       <div class="mx-auto space-y-6 w-full max-w-7xl">
-        <!-- Institution Details Card - Collapsed by default -->
+        <!-- Institution Details Card -->
         <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
           <div class="px-6 py-4 bg-gradient-to-r border-b from-slate-50 to-slate-100 border-slate-200">
             <div class="flex justify-between items-center">
@@ -177,7 +211,6 @@ onMounted(async () => {
             </div>
           </div>
           
-          <!-- Institution Form - Hidden by default -->
           <div v-show="showInstitution" class="p-6">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div class="space-y-4">
@@ -275,7 +308,6 @@ onMounted(async () => {
               </div>
             </div>
             
-            <!-- Quick summary when collapsed -->
             <div v-if="!showInstitution" class="px-6 py-4 border-t border-slate-200">
               <div class="flex gap-4 items-center text-sm">
                 <div class="text-slate-600">
@@ -340,7 +372,6 @@ onMounted(async () => {
               />
             </QuotationCreationDataProvider>
             
-            <!-- Quotation Summary -->
             <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div class="p-4 bg-green-50 rounded-lg border border-green-100">
@@ -370,7 +401,6 @@ onMounted(async () => {
                 </div>
               </div>
               
-              <!-- Action Note -->
               <div class="p-4 mt-6 bg-blue-50 rounded-lg border border-blue-200">
                 <div class="flex gap-3 items-start">
                   <div class="p-2 mt-0.5 bg-blue-100 rounded-full">

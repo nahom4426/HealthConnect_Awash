@@ -8,25 +8,26 @@ import EditQuotation from "@/features/quotation/pages/EditQuotation.vue";
 import ViewIssuedQuotation from "@/features/quotation/pages/ViewIssuedQuotation.vue";
 import ViewAcceptedQuotation from "@/features/quotation/pages/ViewAcceptedQuotation.vue";
 import ViewSavedQuotation from "@/features/quotation/pages/ViewSavedQuotation.vue";
+import PaidQuotations from "@/features/quotation/pages/PaidQuotations.vue";
 
 export default [
 	{
 		path: '/new_quotation',
 		name: 'Quotation',
 		component: QuotationIndex,
-		 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 		children: [
 			{
 				path: '',
 				name: 'new quotation',
 				component: NewQuotation,
-				 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+				//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 			},
 			{
 				path: 'generate/:institutionUuid',
 				name: 'Generate Quotaion',
 				component: CreateNewQuotaions,
-				 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+				//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 			}
 		]
 	},
@@ -34,42 +35,48 @@ export default [
 		path: '/saved_quotation',
 		name: 'saved quotation',
 		component: SavedQuotations,
-		 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/saved_quotation/view/:quotationUuid/:institutionId',
 		name: 'ViewSavedQuotation',
 		component: ViewSavedQuotation,
-		 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/quotations/edit/:quotationUuid',
 		name: 'Edit quotation',
 		component: EditQuotation,
-		 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/issued_quotation',
 		name: 'Issued quotation',
 		component: IssuedQuotaions,
-		 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/quotations/view/:quotationUuid',
 		name: 'ViewIssuedQuotation',
 		component: ViewIssuedQuotation,
-		 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/accepted_quotation',
 		name: 'Accepted quotation',
 		component: AcceptedQuotations,
-		 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	},
 	{
 		path: '/accepted_quotation/view/:quotationUuid',
 		name: 'ViewAcceptedQuotation',
 		component: ViewAcceptedQuotation,
-		 meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+	},
+	{
+		path: '/paid_quotation',
+		name: 'Paid quotation',
+		component: PaidQuotations,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	}
 ]

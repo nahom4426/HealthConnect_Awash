@@ -3,10 +3,11 @@ import { usePagination } from "@/composables/usePagination";
 import { watch, reactive } from "vue";
 import { getQuotationsByStatus } from "../api/quotationApi";
 
-const props = withDefaults(defineProps<{ auto?: boolean; status?: string; search?: string }>(), {
+const props = withDefaults(defineProps<{ auto?: boolean; status?: string; search?: string; type?: string }>(), {
   auto: true,
   status: "PENDING",
   search: "",
+  type: "",
 });
 
 // Minimal local store compatible with usePagination
@@ -32,6 +33,9 @@ const pagination: any = usePagination({
   auto: props.auto,
   cb: (data: any) => {
     const payload: any = { ...data, status: props.status };
+    if (props.type && props.type !== '') {
+      payload.type = props.type;
+    }
     if (typeof payload.search !== 'string' || payload.search.trim() === '') {
       delete payload.search;
     } else {
@@ -44,8 +48,22 @@ const pagination: any = usePagination({
 watch(
   () => props.search,
   () => {
-    // update search; fetch handled by usePagination watchers
-    pagination.search.value = (typeof props.search === 'string' && props.search.trim() !== '') ? props.search : undefined as any;
+    // Update search term and immediately refetch so the search bar works
+    const trimmed = typeof props.search === 'string' ? props.search.trim() : '';
+    pagination.search.value = trimmed !== '' ? trimmed : (undefined as any);
+
+    if (typeof (pagination as any)?.send === 'function') {
+      (pagination as any).send();
+    }
+  }
+);
+
+watch(
+  () => [props.status, props.type],
+  () => {
+    if (typeof pagination?.send === 'function') {
+      pagination.send();
+    }
   }
 );
 </script>
@@ -55,5 +73,11 @@ watch(
     :quotations="quotationStore.items"
     :pending="pagination.pending.value"
     :error="pagination.error.value"
+    :currentPage="pagination.currentPage"
+    :itemsPerPage="pagination.itemsPerPage"
+    :totalPages="pagination.totalPages"
+    :setPage="pagination.setPage"
+    :setLimit="pagination.setLimit"
+    :refetch="pagination.send"
   />
 </template>

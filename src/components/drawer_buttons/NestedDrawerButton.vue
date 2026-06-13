@@ -6,6 +6,10 @@ defineProps({
     type: Array,
     required: true,
   },
+  isCollapsed: {
+    type: Boolean,
+    default: false,
+  },
 });
 </script>
 
@@ -14,5 +18,6 @@ defineProps({
     v-for="nav in navs"
     :key="nav.name"
     :navs="nav"
+    :is-collapsed="isCollapsed"
   />
 </template>

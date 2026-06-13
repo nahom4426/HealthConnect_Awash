@@ -136,7 +136,7 @@ export function exportMemberTemplate() {
 export function exportQuotedMainMembersTemplate(quotationUuid) {
   return api
     .addAuthenticationHeader()
-    .get(`${basePath}/export/quoted-main-members-template/${quotationUuid}`, {
+    .get(`${basePath}/export/quoted-combined-members-template/${quotationUuid}`, {
       responseType: 'blob'
     });
 }
@@ -151,7 +151,7 @@ export function exportQuotedDependantsTemplate(quotationUuid) {
 
 export function importQuotedMainMembers({ quotationUuid, payerInstitutionContractUuid } = {}, formData, config = {}) {
   return api.addAuthenticationHeader().post(
-    `${basePath}/import-quoted-main-members`,
+    `${basePath}/import-quoted-combined-members`,
     formData,
     {
       ...config,

@@ -18,6 +18,7 @@ import AddProviderForInstitution from "@/features/providers/pages/AddProviderFor
 import RemoveCatgorieServices from '@/features/providers/pages/removeCatgorieServices.vue';
 import AddInstitution from "@/features/institutions/pages/AddInstitution.vue";
 import QuotationInsured from '@/features/insured_persons/pages/quotationInsured.vue';
+import StageExclusion from '@/features/quotation/pages/StageExclusion.vue';
 
 export default [
   {
@@ -73,7 +74,7 @@ export default [
     component: InstitutionContracts,
   },
   {
-    path: '/insured_persons/:id/:institutionUuid/:institutionName',
+    path: '/insured_persons/:id/:institutionUuid/:quotationUuid/:institutionName',
     name: 'Insured Persons',
     component: QuotationInsured,
     meta: {
@@ -115,5 +116,10 @@ export default [
     path: '/amend_policy',
     name: 'Amend Policy',
     component: AmendPolicy
+  },
+  {
+    path: '/stage_exclusion/:payerInstitutionContractUuid?',
+    name: 'Stage Exclusion',
+    component: StageExclusion,
   }
 ]

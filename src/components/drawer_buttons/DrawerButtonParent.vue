@@ -1,12 +1,10 @@
 <script setup>
 import { computed, ref } from "vue";
-import Button from "../Button.vue";
 import NestedDrawerButton from "./NestedDrawerButton.vue";
 import icons from "@/utils/icons";
 import { RouterLink } from "vue-router";
 import { useRoute } from "vue-router";
 
-// Props
 const props = defineProps({
   navs: {
     type: Object,
@@ -18,9 +16,7 @@ const props = defineProps({
   },
 });
 
-// Local state
 const open = ref(false);
-
 const route = useRoute();
 
 const isGroupActive = computed(() => {
@@ -31,80 +27,102 @@ const isGroupActive = computed(() => {
 
 <template>
   <div>
+    <!-- Single nav item (leaf) -->
     <div
       v-privilage="navs.meta?.permissions"
-      class="__drawer"
       v-if="navs?.path && !navs?.navs"
     >
       <RouterLink
-        tabindex="-1"
-        class="flex-1 rounded transition-all duration-200 ease-linear text-base-clr6"
         :to="navs.path"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 group"
+        :class="[
+          route.path === navs.path
+            ? 'text-primary bg-primary/10 font-semibold'
+            : 'text-gray-500 hover:text-primary hover:bg-primary/5'
+        ]"
       >
-        <div class="!bg-transparent flex flex-col gap-2 flex-1">
-          <Button
-            class="hover:bg-gray-200 text-primary text-bold hover:text-secondary flex-1 max-w-full flex gap-2 !justify-start items-center"
-          >
-            <div class="grid place-items-center rounded">
-              <i v-html="navs.icon" />
-            </div>
-            <span v-if="!isCollapsed" class="!text-xs Ubuntu">{{ navs.name }}</span>
-          </Button>
-        </div>
+        <!-- Left accent bar on active -->
+        <span
+          class="flex-shrink-0 w-[3px] h-4 rounded-full transition-all duration-150 -ml-0.5"
+          :class="route.path === navs.path ? 'bg-primary' : 'bg-transparent'"
+        ></span>
+        <!-- Icon -->
+        <span
+          class="flex-shrink-0 flex items-center justify-center text-[16px] transition-colors duration-150"
+          :class="route.path === navs.path ? 'text-primary' : 'text-gray-400 group-hover:text-primary'"
+        >
+          <i v-html="navs.icon" />
+        </span>
+        <span v-if="!isCollapsed" class="truncate">{{ navs.name }}</span>
       </RouterLink>
     </div>
 
+    <!-- Parent nav group (with children) -->
     <div
       v-privilage="navs.meta?.permissions"
-      class="flex flex-col gap-2"
       v-else-if="navs?.navs"
     >
-      <div
-        class="flex-1 rounded transition-all duration-200 ease-linear link text-base-clr6"
+      <button
+        @click="open = !open"
+        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 group"
+        :class="[
+          isGroupActive || open
+            ? 'text-primary'
+            : 'text-gray-500 hover:text-primary hover:bg-primary/5'
+        ]"
       >
-        <div class="flex flex-1 gap-2 items-center">
-          <Button
-            @click="open = !open"
-            class="flex-1 max-w-full flex gap-2 !justify-start items-center"
-            :class="[
-              isGroupActive
-                ? 'bg-gray-200 text-black hover:bg-secondary'
-                : 'hover:bg-gray-200 text-primary hover:text-secondary',
-            ]"
-          >
-            <div class="grid place-items-center rounded">
-              <i v-html="navs?.icon" />
-            </div>
-            <span v-if="!isCollapsed" class="!text-xs">{{ navs?.name }}</span>
-            <div class="grid place-items-center ml-auto">
-              <i
-                class="transition-all duration-100"
-                :class="[open ? 'rotate-180' : 'rotate-0']"
-                v-html="icons.downAngle"
-              />
-            </div>
-          </Button>
-        </div>
-      </div>
+        <!-- Left accent bar on active group -->
+        <span
+          class="flex-shrink-0 w-[3px] h-4 rounded-full transition-all duration-150 -ml-0.5"
+          :class="isGroupActive ? 'bg-primary' : 'bg-transparent'"
+        ></span>
+        <!-- Icon -->
+        <span
+          class="flex-shrink-0 flex items-center justify-center text-[16px] transition-colors duration-150"
+          :class="isGroupActive || open ? 'text-primary' : 'text-gray-400 group-hover:text-primary'"
+        >
+          <i v-html="navs?.icon" />
+        </span>
+        <span v-if="!isCollapsed" class="truncate">{{ navs?.name }}</span>
+        <svg
+          v-if="!isCollapsed"
+          class="ml-auto w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
+          :class="[open ? 'rotate-180 text-primary' : 'text-gray-300']"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-      <div
-        class="flex flex-col gap-2 pl-2 ml-5 border-l"
-        v-if="open && navs?.navs"
-      >
-        <NestedDrawerButton :navs="navs?.navs" />
-      </div>
+      <!-- Children -->
+      <Transition name="expand">
+        <div
+          v-if="open && navs?.navs"
+          class="mt-0.5 ml-7 pl-3 border-l-2 border-primary/10 space-y-0.5"
+        >
+          <NestedDrawerButton :navs="navs?.navs" :is-collapsed="isCollapsed" />
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
 
 <style scoped>
-.__drawer .router-link-active button {
-  background-color: theme("colors.primary") !important;
-  color: white !important;
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.2s ease;
+  overflow: hidden;
 }
 
-.__drawer .router-link-exact-active button {
-  background-color: theme("colors.primary") !important;
-  color: white !important;
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 1000px;
 }
 </style>

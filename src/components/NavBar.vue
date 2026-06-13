@@ -46,52 +46,56 @@ const props = defineProps({
 </script>
 
 <template>
-  <div
-    class="flex sticky top-0 justify-between items-center px-4 h-16 border-b backdrop-blur-xl transition-all duration-300 sm:px-6 lg:h-20 bg-white/80 border-gray-200/50"
-    :class="{
-      'shadow-lg shadow-primary/5': isScrolled,
-      'shadow-sm': !isScrolled
-    }"
-    style="z-index: 40;"
-  > 
-    <!-- Left Section -->
-    <div class="flex gap-3 items-center sm:gap-4">
-      <button 
+  <nav
+    class="flex sticky top-0 z-40 justify-between items-center px-4 h-14 border-b backdrop-blur-xl transition-all duration-200 sm:px-5 lg:px-6 bg-white/80 border-gray-200/60"
+    :class="{ 'shadow-soft': isScrolled }"
+    role="navigation"
+    aria-label="Top navigation"
+  >
+    <!-- Left: Back + Breadcrumb -->
+    <div class="flex gap-2 items-center min-w-0 sm:gap-3">
+      <button
         @click="$router.back()"
-        class="p-2 rounded-xl transition-all duration-300 sm:p-2.5 hover:bg-primary/5 group active:scale-95"
+        class="inline-flex justify-center items-center w-8 h-8 text-gray-500 rounded-lg transition-all duration-150 outline-none hover:bg-gray-100 hover:text-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
         aria-label="Go back"
       >
-        <i 
-          v-html="icons.back" 
-          class="text-lg text-gray-600 transition-all duration-300 transform group-hover:text-primary group-hover:-translate-x-0.5"
-        />
+        <i v-html="icons.back" class="text-base" />
       </button>
 
+      <div class="hidden w-px h-5 bg-gray-200 sm:block" aria-hidden="true"></div>
+
       <div class="flex flex-col min-w-0">
-        <h1 class="text-lg font-bold text-gray-800 truncate sm:text-xl">
+        <h1 class="text-sm font-semibold leading-tight text-gray-900 truncate sm:text-base">
           {{ breadcrumbs.breadcrumbs.at(-1)?.name || "Health Connect" }}
         </h1>
-        <p v-if="breadcrumbs.breadcrumbs.length > 1" class="hidden gap-1 items-center text-xs text-gray-500 sm:flex">
-          <span v-for="(crumb, index) in breadcrumbs.breadcrumbs" :key="index">
-            <span v-if="index > 0" class="text-primary/60">•</span>
-            <span class="transition-colors cursor-pointer hover:text-primary truncate max-w-[100px]">{{ crumb.name }}</span>
-          </span>
-        </p>
+        <nav v-if="breadcrumbs.breadcrumbs.length > 1" aria-label="Breadcrumb" class="hidden sm:block">
+          <ol class="flex gap-1 items-center text-xs text-gray-400">
+            <li v-for="(crumb, index) in breadcrumbs.breadcrumbs" :key="index" class="flex gap-1 items-center">
+              <svg v-if="index > 0" class="flex-shrink-0 w-3 h-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+              <span
+                class="truncate max-w-[90px] transition-colors hover:text-gray-600 cursor-default"
+                :class="{ 'text-gray-600 font-medium': index === breadcrumbs.breadcrumbs.length - 1 }"
+              >{{ crumb.name }}</span>
+            </li>
+          </ol>
+        </nav>
       </div>
     </div>
 
-    <!-- Center Section -->
-    <div class="hidden lg:block">
-      <div class="px-4 py-2 bg-gradient-to-r rounded-xl border shadow-inner backdrop-blur-sm from-primary/5 via-primary/10 to-secondary/5 border-primary/20">
-        <span class="text-sm font-bold tracking-wide text-primary">
+    <!-- Center: Company Badge -->
+    <div class="hidden items-center lg:flex">
+      <div class="px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+        <span class="text-xs font-semibold tracking-wide text-gray-600">
           {{ authStore.auth?.user?.companyName || 'Nyala Insurance' }}
         </span>
       </div>
     </div>
 
-    <!-- Right Section -->
-    <div class="flex relative gap-2 items-center sm:gap-3" style="z-index: 50;">
-      
+    <!-- Right: Actions -->
+    <div class="flex gap-1 items-center sm:gap-1.5" style="z-index: 50;">
+
       <!-- Notification Bell -->
       <!-- <NotificationBell /> -->
 
@@ -100,126 +104,142 @@ const props = defineProps({
         <Dropdown v-slot="{ setRef, toggleDropdown, open }">
           <button
             @click.prevent="toggleDropdown"
-            class="flex gap-1 items-center px-3 py-2 rounded-xl transition-all duration-300 sm:gap-2 sm:px-4 hover:bg-primary/5 group active:scale-95"
-            aria-haspopup="true"
+            class="inline-flex gap-1 items-center px-2.5 h-8 text-xs font-medium text-gray-600 rounded-lg transition-all duration-150 outline-none hover:bg-gray-100 hover:text-gray-800 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/40"
+            aria-haspopup="listbox"
+            :aria-expanded="open"
           >
-            <span class="text-sm font-semibold text-gray-700 group-hover:text-primary">ENG</span>
-            <i 
-              v-html="icons.chevron_down" 
-              class="text-xs text-gray-500 transition-all duration-300 group-hover:text-primary"
+            <span>EN</span>
+            <svg
+              class="w-3 h-3 text-gray-400 transition-transform duration-200"
               :class="{ 'rotate-180': open }"
-            />
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
           <div
-            class="flex absolute top-full flex-col gap-1 p-2 mt-2 w-40 rounded-xl border shadow-xl backdrop-blur-md border-primary/20 bg-white/95 animate-dropdown"
+            class="absolute right-0 top-full p-1 mt-1.5 w-36 bg-white rounded-lg border border-gray-200 shadow-elevated animate-scale-in"
             :ref="setRef"
-            style="z-index: 60; right: 0;"
+            style="z-index: 60;"
+            role="listbox"
           >
-            <button class="p-3 font-medium text-left rounded-lg transition-all duration-200 hover:bg-primary/5">English</button>
+            <button class="px-3 py-2 w-full text-sm font-medium text-left text-gray-700 rounded-md transition-colors duration-100 hover:bg-gray-50" role="option" aria-selected="true">
+              English
+            </button>
           </div>
         </Dropdown>
       </div>
+
+      <!-- Divider -->
+      <div class="hidden w-px h-5 bg-gray-200 sm:block" aria-hidden="true"></div>
 
       <!-- User Profile -->
       <div class="relative">
         <Dropdown v-slot="{ setRef, toggleDropdown, open }">
-          <div
+          <button
             @click.prevent="toggleDropdown"
-            class="flex gap-2 items-center px-2 py-1.5 rounded-xl transition-all duration-300 cursor-pointer sm:gap-3 sm:px-3 sm:py-2 hover:bg-primary/5 group active:scale-95"
-            role="button"
-            tabindex="0"
+            class="flex items-center gap-2 px-1.5 py-1 rounded-lg transition-all duration-150 cursor-pointer sm:px-2 hover:bg-gray-100 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/40 outline-none"
+            :aria-expanded="open"
+            aria-haspopup="menu"
           >
             <div class="relative flex-shrink-0">
-              <div class="overflow-hidden w-8 h-8 rounded-full border-2 border-white shadow-lg sm:w-10 sm:h-10 shadow-primary/20">
+              <div class="overflow-hidden w-7 h-7 rounded-full ring-2 ring-white shadow-xs sm:w-8 sm:h-8">
                 <img
                   :src="profilePicture"
                   alt="User avatar"
-                  class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                  class="object-cover w-full h-full"
                   @error="handleImageError"
                 />
               </div>
-              <span class="absolute -right-0.5 -bottom-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm"></span>
+              <span class="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" aria-label="Online"></span>
             </div>
 
-            <div class="hidden flex-col items-start sm:flex">
-              <span class="text-sm font-bold text-gray-800 max-w-[100px] truncate">
+            <div class="hidden flex-col items-start min-w-0 sm:flex">
+              <span class="text-sm font-medium text-gray-800 truncate max-w-[100px] leading-tight">
                 {{ (authStore.auth?.user?.firstName || '') + ' ' + (authStore.auth?.user?.fatherName || '') || 'User' }}
               </span>
-              <span class="px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-gradient-to-r rounded-full border from-primary/10 to-secondary/10 text-primary border-primary/20 truncate max-w-[100px]">
+              <span class="text-[10px] text-gray-400 font-medium truncate max-w-[100px] leading-tight">
                 {{ authStore.auth?.user?.roleName || authStore.auth?.roleName || 'Admin' }}
               </span>
             </div>
-            <i 
-              v-html="icons.chevron_down" 
-              class="text-xs text-gray-500 transition-all duration-300"
+            <svg
+              class="hidden w-3 h-3 text-gray-400 transition-transform duration-200 sm:block"
               :class="{ 'rotate-180': open }"
-            />
-          </div>
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
 
-          <!-- Dropdown Menu -->
+          <!-- Profile Dropdown Menu -->
           <div
-            class="flex absolute top-full flex-col gap-1 p-2 mt-2 w-56 rounded-xl border shadow-xl backdrop-blur-md sm:w-64 border-primary/20 bg-white/95 animate-dropdown"
+            class="overflow-hidden absolute right-0 top-full mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-elevated animate-scale-in"
             :ref="setRef"
-            style="z-index: 60; right: 0;"
+            style="z-index: 60;"
+            role="menu"
           >
-            <div class="px-3 py-3 bg-gradient-to-r rounded-lg border-b border-primary/10 from-primary/5 to-secondary/5">
-              <p class="text-sm font-bold text-gray-800 truncate">{{ authStore.auth?.user?.firstName }} {{ authStore.auth?.user?.fatherName }}</p>
-              <p class="mt-1 text-xs text-gray-600 truncate">{{ authStore.auth?.user?.email }}</p>
+            <!-- User Info Header -->
+            <div class="px-3.5 py-3 bg-gray-50 border-b border-gray-100">
+              <p class="text-sm font-semibold text-gray-900 truncate">{{ authStore.auth?.user?.firstName }} {{ authStore.auth?.user?.fatherName }}</p>
+              <p class="mt-0.5 text-xs text-gray-500 truncate">{{ authStore.auth?.user?.email }}</p>
             </div>
 
-            <button @click="$router.push('/profile')" class="flex gap-3 items-center p-3 rounded-xl transition-all duration-200 hover:bg-primary/5 group">
-              <i v-html="icons.profile" class="text-gray-500 transition-colors group-hover:text-primary" />
-              <span class="text-sm font-medium">My Profile</span>
-            </button>
+            <div class="p-1.5">
+              <button @click="$router.push('/profile')" class="flex gap-2.5 items-center px-2.5 py-2 w-full text-sm text-gray-700 rounded-lg transition-colors duration-100 hover:bg-gray-50 group" role="menuitem">
+                <i v-html="icons.profile" class="w-4 text-gray-400 transition-colors group-hover:text-gray-600" />
+                <span class="font-medium">My Profile</span>
+              </button>
 
-            <button @click="$router.push('/settings')" class="flex gap-3 items-center p-3 rounded-xl transition-all duration-200 hover:bg-primary/5 group">
-              <i v-html="icons.settings" class="text-gray-500 transition-colors group-hover:text-primary" />
-              <span class="text-sm font-medium">Settings</span>
-            </button>
+              <button @click="$router.push('/settings')" class="flex gap-2.5 items-center px-2.5 py-2 w-full text-sm text-gray-700 rounded-lg transition-colors duration-100 hover:bg-gray-50 group" role="menuitem">
+                <i v-html="icons.settings" class="w-4 text-gray-400 transition-colors group-hover:text-gray-600" />
+                <span class="font-medium">Settings</span>
+              </button>
+            </div>
 
-            <div class="my-1 border-t border-primary/10"></div>
+            <div class="border-t border-gray-100"></div>
 
-            <button
-              @click="logout()"
-              :disabled="isLoggingOut"
-              class="flex gap-3 items-center p-3 text-red-500 rounded-xl transition-all duration-200 hover:bg-red-50 group"
-              :class="isLoggingOut ? 'opacity-60 cursor-not-allowed' : ''"
-            >
-              <i v-html="icons.logout" class="transition-colors group-hover:text-red-600" />
-              <span class="text-sm font-medium">{{ isLoggingOut ? 'Logging out...' : 'Logout' }}</span>
-            </button>
+            <div class="p-1.5">
+              <button
+                @click="logout()"
+                :disabled="isLoggingOut"
+                class="flex gap-2.5 items-center px-2.5 py-2 w-full text-sm rounded-lg transition-colors duration-100 hover:bg-red-50 group"
+                :class="isLoggingOut ? 'opacity-50 cursor-not-allowed text-red-300' : 'text-red-600'"
+                role="menuitem"
+              >
+                <i v-html="icons.logout" class="w-4 transition-colors" :class="isLoggingOut ? '' : 'group-hover:text-red-700'" />
+                <span class="font-medium">{{ isLoggingOut ? 'Logging out...' : 'Logout' }}</span>
+              </button>
+            </div>
           </div>
         </Dropdown>
       </div>
     </div>
-  </div>
+  </nav>
 </template>
 
 <style scoped>
-@keyframes dropdown {
-  from { 
-    transform: translateY(-10px); 
-    opacity: 0; 
+.animate-scale-in {
+  animation: scaleIn 0.15s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
   }
-  to { 
-    transform: translateY(0); 
-    opacity: 1; 
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
-.animate-dropdown { 
-  animation: dropdown 0.2s ease-out; 
-}
-
-/* Responsive dropdown positioning */
 @media (max-width: 640px) {
-  .animate-dropdown {
+  .animate-scale-in {
     position: fixed !important;
     right: 8px !important;
     left: 8px !important;
     width: auto !important;
     max-width: none !important;
-    transform: translateY(0) !important;
   }
 }
 </style>

@@ -20,6 +20,10 @@ function formatPlanType(planType) {
       return 'Family Plan';
     case Plan['Family Shared Plan']:
       return 'Family Shared Plan';
+    case Plan['Dependent Shared Plan']:
+      return 'Dependent Shared Plan';
+    case Plan['Dual Premium Dependent Shared Plan']:
+      return 'Dual Premium Dependent Shared Plan';
     default:
       return planType;
   }

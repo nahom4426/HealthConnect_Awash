@@ -35,7 +35,7 @@ const props = defineProps({
 <template>
   <div
     :class="[$style[size]]"
-    class="flex overflow-hidden flex-col justify-between bg-white rounded-md"
+    class="flex flex-col justify-between bg-white rounded-md"
   >
     <div
       class="flex justify-between items-center p-2 pr-4 border-b border-text-secondary-clr/30"
@@ -102,13 +102,27 @@ const props = defineProps({
   display: grid;
 }
 
+.form-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #f1f5f9;
+}
+
 .form-scrollbar::-webkit-scrollbar {
   display: block;
-  width: 5px;
+  width: 6px;
+}
+
+.form-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
 }
 
 .form-scrollbar::-webkit-scrollbar-thumb {
-  background-color: red;
+  background-color: #4b5563;
   border-radius: 50px;
+}
+
+.form-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #1f2937;
 }
 </style>

@@ -213,7 +213,7 @@ onMounted(() => {
                 class="p-2 text-left rounded-md hover:bg-gray-50"
                 @click.prevent="downloadSample('quoted-main')"
               >
-                Export insured format
+                Export insured and dependant format
               </button>
 
               <button

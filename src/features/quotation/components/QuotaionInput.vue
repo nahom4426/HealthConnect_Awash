@@ -10,10 +10,15 @@ const props = defineProps({
 });
 </script>
 <template>
-  <InputParent v-slot="{ setRef, error, value, changeValue }">
+  <InputParent v-slot="{ setRef, error, value, attributes, changeValue }">
     <QuotationInputLayout :error="error" :label="$attrs.label" :class="$attrs.class" >
 			<slot class="" name="left" />
-			<input v-focus="focus" :ref="setRef" class="flex-1 h-full px-2 bg-transparent outline-none text-sm" />
+			<input
+        v-focus="focus"
+        :ref="setRef"
+        class="flex-1 h-full px-2 bg-transparent outline-none text-sm"
+        :class="attributes?.class"
+      />
 			<slot name="right" />
 		</QuotationInputLayout>
   </InputParent>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import icons from "@/utils/icons";
 
@@ -102,17 +102,17 @@ onUnmounted(() => {
 
 <template>
   <tr
-    v-for="(row, idx) in rowData.filter((r: any) => r !== null)"
+    v-for="(row, idx) in (rowData as any[] || []).filter((r: any) => r !== null)"
     :key="idx"
     @click.self="onRowClick(row)"
     class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
   >
     <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
-    <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
+    <td class="p-3 py-4" v-for="key in rowKeys" :key="key as any">
       <div v-if="key === 'status'" class="truncate">
-        <span :class="getStatusStyle(row?.status)">
-          {{ row?.status }}
+        <span :class="getStatusStyle((row as any)?.status)">
+          {{ (row as any)?.status }}
         </span>
       </div>
 
@@ -122,23 +122,18 @@ onUnmounted(() => {
     </td>
 
   <td
-  class="p-3 text-start"
-  v-if="headKeys.includes('Actions') || headKeys.includes('actions')"
->
-  <button
-    :id="`detail-btn-${row?.quotationUuid || row?.id}`"
-    @click.stop="handleViewWithClose(row)"
-    class="inline-flex gap-2 items-center px-3 py-1.5 text-sm font-medium text-gray-600 bg-white rounded-full border border-gray-200 shadow-sm transition-all duration-200 group hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 focus:outline-none"
+    class="p-3 text-start"
+    v-if="headKeys.includes('Actions') || headKeys.includes('actions')"
   >
-    <span
-      class="flex justify-center items-center w-6 h-6 bg-gray-100 rounded-full transition group-hover:bg-gray-200"
+    <button
+      :id="`detail-btn-${(row as any)?.quotationUuid || (row as any)?.id}`"
+      @click.stop="handleViewWithClose(row)"
+      class="inline-flex gap-1.5 items-center px-3.5 py-1.5 text-xs font-semibold rounded-full border shadow-sm transition-all duration-150 outline-none text-primary bg-primary/5 hover:bg-primary hover:text-white border-primary/20 hover:border-primary"
     >
-      <i v-html="icons.details" class="w-4 h-4 text-gray-600" />
-    </span>
-
-    <span class="hidden sm:inline">Detail</span>
-  </button>
-</td>
+      <i v-html="icons.eye" class="" />
+      <span>Detail</span>
+    </button>
+  </td>
 
   </tr>
 </template>

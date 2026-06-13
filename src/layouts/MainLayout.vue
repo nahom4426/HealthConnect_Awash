@@ -1,36 +1,39 @@
 <template>
   <div
     :class="colorStore.color"
-    class="flex overflow-hidden w-screen h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/20"
+    class="flex overflow-hidden w-screen h-screen bg-gray-50"
   >
-    <!-- Mobile Drawer Toggle Button -->
+    <!-- Mobile Drawer Toggle -->
     <button
-      v-ripple
       @click="toggleDrawer"
-      class="fixed top-3 left-3 z-30 p-3 text-white bg-gradient-to-r rounded-xl shadow-lg transition-all duration-300 lg:hidden w-fit h-fit from-primary to-secondary shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-105 active:scale-95"
+      class="fixed top-3 left-3 z-30 inline-flex items-center justify-center w-10 h-10 text-white bg-primary rounded-lg shadow-medium transition-all duration-200 lg:hidden hover:bg-primary/90 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-none"
       :aria-label="drawerOpen ? 'Close menu' : 'Open menu'"
+      :aria-expanded="drawerOpen"
     >
       <i
         v-html="drawerOpen ? icons.close : icons.menu"
-        class="text-lg transition-transform duration-300"
+        class="text-base transition-transform duration-200"
         :class="{ 'rotate-90': drawerOpen }"
       ></i>
     </button>
 
     <!-- Mobile Overlay -->
-    <div
-      v-if="drawerOpen && !isDesktop"
-      @click="toggleDrawer"
-      class="fixed inset-0 z-10 backdrop-blur-sm transition-all duration-300 bg-black/50 lg:hidden"
-    ></div>
+    <Transition name="overlay">
+      <div
+        v-if="drawerOpen && !isDesktop"
+        @click="toggleDrawer"
+        class="fixed inset-0 z-10 bg-gray-900/30 backdrop-blur-sm lg:hidden"
+        aria-hidden="true"
+      ></div>
+    </Transition>
 
-    <!-- Sidebar Drawer -->
+    <!-- Sidebar -->
     <aside
-      class="fixed top-0 z-20 h-full transition-all duration-500 ease-out lg:sticky"
+      class="fixed top-0 z-20 h-full transition-all duration-300 ease-smooth lg:sticky lg:flex-shrink-0"
       :class="[
         drawerOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-        isCollapsed ? 'lg:w-20' : 'lg:w-56 xl:w-60 2xl:w-64',
-        'w-64'
+        isCollapsed ? 'lg:w-[72px]' : 'lg:w-[240px]',
+        'w-[260px]'
       ]"
     >
       <Drawer
@@ -42,27 +45,17 @@
       />
     </aside>
 
-    <!-- Main Content -->
-    <main
-      class="flex overflow-hidden relative z-0 flex-col flex-1 min-w-0 h-full"
-    >
-      <!-- Top Navbar -->
+    <!-- Main Content Area -->
+    <main class="flex overflow-hidden relative z-0 flex-col flex-1 min-w-0 h-full">
+      <!-- Navbar -->
       <header class="flex-shrink-0">
         <NavBar :breadcrumbs="breadcrumbs" />
       </header>
 
       <!-- Page Content -->
-      <div
-        class="overflow-auto flex-1 p-3 min-h-0 sm:p-4 lg:p-6 xl:p-8 custom-scrollbar"
-      >
-        <div class="relative w-full min-w-0 h-full">
-          <!-- Background Pattern -->
-          <div
-            class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.03),transparent_50%)] pointer-events-none"
-          ></div>
-          
-          <!-- Content Container -->
-          <div class="relative w-full max-w-[1600px] mx-auto h-full">
+      <div class="overflow-auto flex-1 min-h-0 custom-scrollbar">
+        <div class="p-4 sm:p-5 lg:p-6">
+          <div class="w-full max-w-[1440px] mx-auto">
             <RouterView v-slot="{ Component }">
               <Transition name="page" mode="out-in">
                 <component :is="Component" :key="route.fullPath" />
@@ -72,15 +65,17 @@
         </div>
       </div>
 
-      <!-- Scroll to Top Button -->
+      <!-- Scroll to Top -->
       <Transition name="fade">
         <button
           v-if="showScrollTop"
           @click="scrollToTop"
-          class="fixed right-6 bottom-6 z-40 p-3 text-white bg-gradient-to-r rounded-full shadow-lg transition-all duration-300 from-primary to-secondary shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-110 active:scale-95"
+          class="fixed right-5 bottom-5 z-40 inline-flex items-center justify-center w-9 h-9 text-gray-600 bg-white rounded-lg shadow-medium border border-gray-200 transition-all duration-200 hover:shadow-elevated hover:text-gray-800 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/40 outline-none"
           aria-label="Scroll to top"
         >
-          <i v-html="icons.chevron_up" class="text-xl"></i>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
         </button>
       </Transition>
     </main>
@@ -264,52 +259,50 @@ const filteredNavs = computed(() => {
 </script>
 
 <style scoped>
-/* Custom Scrollbar */
+/* Scrollbar */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: #e2e8f0 transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-  transition: background 0.2s ease;
+  background: #e2e8f0;
+  border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #cbd5e1;
 }
 
-/* Page Transitions */
+/* Page Transition */
 .page-enter-active,
 .page-leave-active {
-  transition: all 0.3s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .page-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(6px);
 }
 
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-4px);
 }
 
-/* Fade Transition */
+/* Fade */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,
@@ -317,16 +310,15 @@ const filteredNavs = computed(() => {
   opacity: 0;
 }
 
-/* Smooth transitions */
-* {
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+/* Overlay */
+.overlay-enter-active,
+.overlay-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-/* Ensure proper box-sizing */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+.overlay-enter-from,
+.overlay-leave-to {
+  opacity: 0;
 }
 
 /* Prevent body scroll */
@@ -336,19 +328,11 @@ const filteredNavs = computed(() => {
   padding: 0;
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .custom-scrollbar {
-    padding: 0.75rem;
-  }
-}
-
-/* Print styles */
+/* Print */
 @media print {
   aside, header, .fixed {
     display: none !important;
   }
-  
   main {
     margin: 0 !important;
     padding: 0 !important;

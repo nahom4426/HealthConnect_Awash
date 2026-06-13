@@ -77,3 +77,17 @@ export function saveSavedQuotation(quotationUuid, data) {
     .addAuthenticationHeader()
     .put(`${path}/${quotationUuid}`, data);
 }
+
+// Stage exclusion - POST array of exclusion strings for a policy (policyUuid)
+export function stageExclusion(policyUuid, exclusions) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path}/policy/${policyUuid}/stage-exclusion`, exclusions);
+}
+
+// Get active insured persons by contract UUID
+export function getActiveInsuredByContract(payerInstitutionContractUuid, params = {}) {
+  return api
+    .addAuthenticationHeader()
+    .get(`/claimconnect/insuredperson/active/search/${payerInstitutionContractUuid}`, { params });
+}

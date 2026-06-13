@@ -1,1377 +1,2035 @@
 <template>
-  <div class="quotation-builder">
-    <!-- Step 1: Package Selection -->
-    <div v-if="showHeaderControls" class="mb-8">
-      <div class="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900">Create New Quotation</h2>
-          <p class="mt-1 text-sm text-gray-500">Select coverage types and configure services</p>
-        </div>
-        
-        <div v-if="selectedPackages.length > 0" class="flex gap-3 items-center">
-          <span class="inline-flex items-center px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full">
-            {{ selectedPackages.length }} selected
-          </span>
-          
-          <label class="inline-flex gap-2 items-center text-sm text-gray-600 cursor-pointer">
-            <input
-              v-model="editPackages"
-              type="checkbox"
-              class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
-            />
-            Edit Packages
-          </label>
-        </div>
+  <div class="qb-wrap">
+    <!-- Header -->
+    <div class="qb-header">
+      <div>
+        <h3 class="qb-title">Benefit Configuration</h3>
+        <p class="qb-subtitle">Configure plan types, descriptions, and coverages for each benefit group.</p>
       </div>
-
-      <!-- Package Cards Grid -->
-      <div v-if="selectedPackages.length === 0 || editPackages" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div
-          v-for="pkg in allPackages"
-          :key="pkg.packageUuid"
-          @click="togglePackageSelection(pkg.packageUuid)"
-          class="relative p-6 bg-white rounded-2xl border-2 transition-all duration-300 cursor-pointer group hover:shadow-lg"
-          :class="isPackageSelected(pkg.packageUuid) 
-            ? 'border-primary ring-2 ring-primary/20 shadow-md' 
-            : 'border-gray-200 hover:border-primary/30'"
-        >
-          <!-- Selection Indicator -->
-          <div class="absolute top-3 right-3">
-            <div 
-              class="flex justify-center items-center w-6 h-6 rounded-full border-2 transition-all"
-              :class="isPackageSelected(pkg.packageUuid) ? 'bg-primary border-primary' : 'border-gray-300 group-hover:border-primary/50'"
-            >
-              <svg v-if="isPackageSelected(pkg.packageUuid)" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Package Content -->
-          <div class="mb-4">
-            <div class="flex gap-3 items-start">
-              <div class="flex flex-shrink-0 justify-center items-center w-10 h-10 bg-primary rounded-xl">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <h3 class="text-lg font-semibold text-gray-900 truncate">{{ pkg.packageName }}</h3>
-                <span class="inline-block px-2 py-1 mt-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
-                  {{ pkg.packageCategory }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Limits -->
-          <div class="p-4 space-y-2 bg-gray-50 rounded-xl">
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-500">Min Limit</span>
-              <span class="font-medium text-gray-700">{{ formatCurrency(getPackageMinLimit(pkg.packageUuid)) }}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-500">Max Limit</span>
-              <span class="font-medium text-gray-700">{{ formatCurrency(getPackageMaxLimit(pkg.packageUuid)) }}</span>
-            </div>
-          </div>
-
-          <!-- Gender Badge -->
-          <div v-if="pkg.gender" class="mt-3">
-            <span class="inline-flex gap-1 items-center px-3 py-1 text-xs font-medium rounded-full" 
-                  :class="pkg.gender === 'FEMALE' ? 'bg-pink-50 text-pink-700' : 'bg-gray-100 text-gray-600'">
-              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-              {{ pkg.gender === 'FEMALE' ? 'Female Only' : 'All Genders' }}
-            </span>
-          </div>
-
-          <!-- Loading State -->
-          <div v-if="loadingRates[pkg.packageUuid]" class="flex gap-2 items-center mt-3 text-xs text-gray-500">
-            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            Loading rates...
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 2: Service Configuration -->
-    <div v-if="selectedPackages.length > 0" class="space-y-6">
-      <div
-        v-for="(packageUuid, index) in selectedPackages"
-        :key="packageUuid"
-        class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm"
-      >
-        <!-- Package Header -->
-        <div class="px-6 py-4 bg-primary/5 border-b border-gray-200">
-          <div class="flex justify-between items-center">
-            <div class="flex gap-4 items-center">
-              <div class="flex justify-center items-center w-8 h-8 text-sm font-bold text-white bg-primary rounded-full">
-                {{ index + 1 }}
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900">{{ getPackageName(packageUuid) }}</h3>
-                <p class="text-xs text-gray-500">Configure services and coverage amounts</p>
-              </div>
-            </div>
-            <Button
-              v-if="!readOnlyRows"
-              @click="deselectPackage(packageUuid)"
-              class="px-3 py-1.5 text-sm text-red-600 rounded-lg transition-colors hover:text-red-700 hover:bg-red-50"
-            >
-              Remove
-            </Button>
-          </div>
-        </div>
-
-        <!-- Services Table -->
-        <div class="p-6">
-          <!-- Mobile Cards -->
-          <div class="block space-y-4 lg:hidden">
-            <div
-              v-for="(service, serviceIndex) in getPackageServices(packageUuid)"
-              :key="`service-${serviceIndex}`"
-              class="p-4 space-y-4 bg-gray-50 rounded-xl"
-            >
-              <div class="grid grid-cols-2 gap-3">
-                <!-- Insured -->
-                <div>
-                  <label class="block mb-1 text-xs font-medium text-gray-700">Insured</label>
-                  <QuotaionInput
-                    v-model="service.numberOfInsured"
-                    validation="required|num"
-                    name="numberOfInsured"
-                    @update:modelValue="() => updateLastUsedValues(service)"
-                    :attributes="{
-                      placeholder: '0',
-                      class: 'w-full h-10 rounded-lg border-gray-300 text-sm text-center focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    }"
-                  />
-                </div>
-
-                <!-- Plan Type -->
-                <div>
-                  <label class="block mb-1 text-xs font-medium text-gray-700">Plan Type</label>
-                  <QuotationSelect
-                    :obj="true"
-                    v-model="service.planType"
-                    validation="required"
-                    name="rowPlanType"
-                    :options="getPlanOptionsForPackage(packageUuid, serviceIndex)"
-                    @update:modelValue="() => handlePlanTypeChange(service, packageUuid)"
-                    :attributes="{
-                      placeholder: 'Select plan',
-                      class: 'w-full h-10 rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    }"
-                  />
-                </div>
-
-                <!-- Description -->
-                <div>
-                  <label class="block mb-1 text-xs font-medium text-gray-700">Description</label>
-                  <QuotationSelect
-                    :obj="true"
-                    v-model="service.description"
-                    validation="required"
-                    name="description"
-                    :options="getDescriptionOptions(packageUuid, service.planType, serviceIndex)"
-                    @update:modelValue="() => handleDescriptionChange(service, packageUuid)"
-                    :attributes="{
-                      placeholder: 'Select',
-                      class: 'w-full h-10 rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    }"
-                  />
-                </div>
-
-                <!-- Sum Insured -->
-                <div>
-                  <label class="block mb-1 text-xs font-medium text-gray-700">Sum Insured</label>
-                  <QuotaionInput
-                    v-model="service.coverage"
-                    :validation="getCoverageValidationForService(service, packageUuid)"
-                    name="coverage"
-                    @update:modelValue="() => updatePremium(service, packageUuid)"
-                    :attributes="{
-                      placeholder: 'Amount',
-                      class: 'w-full h-10 rounded-lg border-gray-300 text-sm text-right focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    }"
-                  />
-                  <p class="mt-1 text-xs text-gray-500">Range: {{ getRangeDisplayForService(service, packageUuid) }}</p>
-                </div>
-
-                <!-- Rate & Premium -->
-                <div>
-                  <label class="block mb-1 text-xs font-medium text-gray-700">Rate</label>
-                  <QuotaionInput
-                    :value="formatRate(service.rate)"
-                    name="rate"
-                    :attributes="{
-                      disabled: true,
-                      class: 'w-full h-10 rounded-lg bg-gray-100 border-gray-200 text-sm text-right font-medium text-primary'
-                    }"
-                  />
-                </div>
-
-                <div>
-                  <label class="block mb-1 text-xs font-medium text-gray-700">Premium</label>
-                  <QuotaionInput
-                    :value="formatCurrency(calculatePremium(service))"
-                    name="premium"
-                    :attributes="{
-                      disabled: true,
-                      class: 'w-full h-10 rounded-lg bg-green-50 border-gray-200 text-sm text-right font-semibold text-green-700'
-                    }"
-                  />
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="flex gap-2 justify-end items-center pt-2 border-t border-gray-200">
-                <button
-                  v-if="!readOnlyRows && getPackageServices(packageUuid).length > 1"
-                  @click="removeServiceFromPackage(packageUuid, serviceIndex)"
-                  class="p-2 text-red-600 rounded-lg transition-colors hover:bg-red-50"
-                  title="Remove"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                  </svg>
-                </button>
-                <button
-                  v-if="!readOnlyRows"
-                  @click="duplicateServiceInPackage(packageUuid, service)"
-                  class="p-2 text-primary rounded-lg transition-colors hover:bg-primary/10"
-                  title="Duplicate"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Desktop Table -->
-          <div class="hidden lg:block">
-            <div class="grid grid-cols-12 gap-4 px-4 py-3 mb-3 text-xs font-medium tracking-wider text-gray-600 uppercase bg-gray-50 rounded-lg">
-              <div class="col-span-2">Insured</div>
-              <div class="col-span-2">Plan Type</div>
-              <div class="col-span-2">Description</div>
-              <div class="col-span-2">Sum Insured</div>
-              <div class="col-span-1 text-right">Rate</div>
-              <div class="col-span-2 text-right">Premium</div>
-              <div class="col-span-1 text-right">Action</div>
-            </div>
-
-            <div class="space-y-3">
-              <div
-                v-for="(service, serviceIndex) in getPackageServices(packageUuid)"
-                :key="`service-${serviceIndex}`"
-                class="grid grid-cols-12 gap-4 items-start px-4 py-4 bg-white rounded-lg border border-gray-100 transition-colors hover:bg-gray-50/50"
-              >
-                <div class="col-span-2">
-                  <QuotaionInput
-                    v-model="service.numberOfInsured"
-                    validation="required|num"
-                    name="numberOfInsured"
-                    @update:modelValue="() => updateLastUsedValues(service)"
-                    :attributes="{
-                      placeholder: '0',
-                      class: 'w-full h-10 rounded-lg border-gray-300 text-sm text-center focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    }"
-                  />
-                </div>
-
-                <div class="col-span-2">
-                  <QuotationSelect
-                    :obj="true"
-                    v-model="service.planType"
-                    validation="required"
-                    name="rowPlanType"
-                    :options="getPlanOptionsForPackage(packageUuid, serviceIndex)"
-                    @update:modelValue="() => handlePlanTypeChange(service, packageUuid)"
-                    :attributes="{
-                      placeholder: 'Select plan',
-                      class: 'w-full h-10 rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    }"
-                  />
-                </div>
-
-                <div class="col-span-2">
-                  <QuotationSelect
-                    :obj="true"
-                    v-model="service.description"
-                    validation="required"
-                    name="description"
-                    :options="getDescriptionOptions(packageUuid, service.planType, serviceIndex)"
-                    @update:modelValue="() => handleDescriptionChange(service, packageUuid)"
-                    :attributes="{
-                      placeholder: 'Select',
-                      class: 'w-full h-10 rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    }"
-                  />
-                </div>
-
-                <div class="col-span-2">
-                  <QuotaionInput
-                    v-model="service.coverage"
-                    :validation="getCoverageValidationForService(service, packageUuid)"
-                    name="coverage"
-                    @update:modelValue="() => updatePremium(service, packageUuid)"
-                    :attributes="{
-                      placeholder: 'Amount',
-                      class: 'w-full h-10 rounded-lg border-gray-300 text-sm text-right focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    }"
-                  />
-                  <p class="mt-1 text-xs text-right text-gray-500">
-                    Range: {{ getRangeDisplayForService(service, packageUuid) }}
-                  </p>
-                </div>
-
-                <div class="col-span-1">
-                  <QuotaionInput
-                    :value="formatRate(service.rate)"
-                    name="rate"
-                    :attributes="{
-                      disabled: true,
-                      class: 'w-full h-10 rounded-lg bg-gray-100 border-gray-200 text-sm text-right font-medium text-primary'
-                    }"
-                  />
-                </div>
-
-                <div class="col-span-2">
-                  <QuotaionInput
-                    :value="formatCurrency(calculatePremium(service))"
-                    name="premium"
-                    :attributes="{
-                      disabled: true,
-                      class: 'w-full h-10 rounded-lg bg-green-50 border-gray-200 text-sm text-right font-semibold text-green-700'
-                    }"
-                  />
-                </div>
-
-                <div class="flex col-span-1 gap-1 justify-end">
-                  <button
-                    v-if="!readOnlyRows && getPackageServices(packageUuid).length > 1"
-                    @click="removeServiceFromPackage(packageUuid, serviceIndex)"
-                    class="p-2 text-red-600 rounded-lg transition-colors hover:bg-red-50"
-                    title="Remove"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                    </svg>
-                  </button>
-                  <button
-                    v-if="!readOnlyRows"
-                    @click="duplicateServiceInPackage(packageUuid, service)"
-                    class="p-2 text-primary rounded-lg transition-colors hover:bg-primary/10"
-                    title="Duplicate"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Add Row Button -->
-          <div v-if="!readOnlyRows" class="pt-4 mt-4 border-t border-gray-200">
-            <button
-              @click="addServiceToPackage(packageUuid)"
-              class="inline-flex gap-2 items-center px-4 py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-xl transition-colors hover:bg-primary/20"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              Add Service Row
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-if="selectedPackages.length === 0 && showHeaderControls"
-      class="flex flex-col items-center px-4 py-16 bg-gray-50 rounded-2xl border-2 border-gray-300 border-dashed"
-    >
-      <div class="flex justify-center items-center mb-6 w-20 h-20 bg-primary/10 rounded-full">
-        <svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      <button v-if="!readOnlyRows" type="button" @click="addGroupRow" class="btn btn-primary">
+        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
-      </div>
-      <h3 class="mb-2 text-lg font-semibold text-gray-900">No Coverage Selected</h3>
-      <p class="max-w-md text-sm text-center text-gray-500">
-        Choose from the available coverage packages above to start building your quotation
-      </p>
+        Add Benefit Group
+      </button>
     </div>
 
-    <!-- Footer Actions -->
-    <div v-if="selectedPackages.length > 0 && !hideFooterActions" class="pt-6 mt-8 border-t border-gray-200">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="text-sm text-gray-600">
-          <span class="font-medium">{{ selectedPackages.length }}</span> package{{ selectedPackages.length > 1 ? 's' : '' }} selected
-        </div>
-        
-        <div class="flex flex-wrap gap-3">
-          <Button 
-            v-if="showAmendButton"
-            type="secondary" 
-            :disabled="!!pendingAction"
-            :pending="pendingAction === 'amend'"
-            @click="$emit('amend')"
-            class="px-6 py-2.5 text-sm font-medium rounded-xl border border-gray-300 transition-colors hover:bg-gray-50"
+    <!-- Groups -->
+    <div class="qb-groups">
+      <div v-for="(row, rowIndex) in groupRows" :key="row.id" class="qb-card">
+
+        <!-- Card Header row: packages / actions -->
+        <div class="qb-card-header">
+          <div class="qb-field-group-header">
+            <div class="qb-header-inputs">
+              <!-- Packages multi-select dropdown -->
+              <div
+                class="qb-field package-dropdown-wrapper"
+                :data-rowid="row.id"
+                :style="{ zIndex: openDropdownRowId === row.id ? 50 : 1 }"
+              >
+                <label class="qb-label">
+                  Benefits / Packages
+                  <span v-if="row.selectedPackageUuuids.length === 1" class="qb-header-limit">
+                    (Limit: {{ getRangeDisplayForPackage(row.selectedPackageUuuids[0]) }})
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  :ref="el => { if (el) pkgBtnRefs[row.id] = el }"
+                  :disabled="readOnlyRows"
+                  @click="toggleDropdown(row.id)"
+                  class="qb-pkg-btn"
+                  :class="{ 'qb-pkg-btn--open': openDropdownRowId === row.id }"
+                >
+                  <span class="qb-pkg-btn__text">{{ getSelectedPackagesLabel(row.selectedPackageUuuids) }}</span>
+                  <svg class="qb-pkg-btn__chevron" :class="{ rotated: openDropdownRowId === row.id }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                <!-- Teleported dropdown -->
+                <Teleport to="body">
+                  <div
+                    v-if="openDropdownRowId === row.id"
+                    class="qb-pkg-dropdown"
+                    :style="getDropdownStyle(row.id)"
+                  >
+                    <div
+                      v-for="pkg in allPackages"
+                      :key="pkg.packageUuid"
+                      class="qb-pkg-option"
+                      :class="{ 'qb-pkg-option--checked': row.selectedPackageUuuids.includes(pkg.packageUuid) }"
+                      @click="togglePackageInRow(row, pkg.packageUuid)"
+                    >
+                      <span class="qb-pkg-checkbox">
+                        <svg v-if="row.selectedPackageUuuids.includes(pkg.packageUuid)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                      </span>
+                      <div>
+                        <p class="qb-pkg-name">{{ pkg.packageName }}</p>
+                        <p class="qb-pkg-cat">{{ pkg.packageCategory }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Teleport>
+              </div>
+
+              <!-- Description -->
+              <div class="qb-field">
+                <label class="qb-label">Description</label>
+                <select
+                  v-model="row.description"
+                  :disabled="readOnlyRows || !row.selectedPackageUuuids.length"
+                  class="qb-select"
+                  @change="() => handleRowChange(row)"
+                >
+                  <option value="" disabled>Select description</option>
+                  <option
+                    v-for="opt in getDescriptionOptionsForPackages(row.selectedPackageUuuids, getGroupPlanTypeForDescOptions(row))"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >{{ opt.label }}</option>
+                </select>
+              </div>
+
+              <!-- Number of Employees -->
+              <div class="qb-field">
+                <label class="qb-label">Number of Employees</label>
+                <input
+                  v-model="row.numberOfInsured"
+                  type="number"
+                  min="0"
+                  :disabled="readOnlyRows || !row.description"
+                  class="qb-input qb-input--center"
+                  placeholder="0"
+                  @input="() => handleRowChange(row)"
+                />
+              </div>
+            </div>
+
+            <!-- Row Actions -->
+            <div class="qb-row-actions">
+              <button
+                v-if="!readOnlyRows && groupRows.length > 1"
+                @click="removeGroupRow(rowIndex)"
+                class="qb-action-btn qb-action-btn--danger"
+                title="Remove Group"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+              <button
+                v-if="!readOnlyRows"
+                @click="duplicateGroupRow(row)"
+                class="qb-action-btn qb-action-btn--primary"
+                title="Duplicate Group"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                </svg>
+              </button>
+            </div>
+
+          </div><!-- /.qb-field-group-header -->
+        </div><!-- /.qb-card-header -->
+
+        <!-- Package detail rows -->
+        <div class="qb-pkg-list">
+          <div v-if="row.selectedPackageUuuids.length === 0" class="qb-empty">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 12H4"/>
+            </svg>
+            <p>No packages selected. Use the dropdown above to add packages.</p>
+          </div>
+
+          <div
+            v-for="pkgUuid in row.selectedPackageUuuids"
+            :key="pkgUuid"
+            class="qb-pkg-row"
           >
-            Amend Quotation
-          </Button>
+            <!-- Package name & Plan Type column -->
+            <div class="qb-pkg-info-col">
+              <div class="qb-pkg-info">
+                <span class="qb-pkg-bar"></span>
+                <div>
+                  <p class="qb-pkg-row-name">{{ getPackageName(pkgUuid) }}</p>
+                  <p v-if="row.selectedPackageUuuids.length >= 2" class="qb-pkg-row-hint">Sum Insured Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                </div>
+              </div>
+              
+              <!-- Plan Type Select -->
+              <div class="qb-pkg-field qb-plan-type-field">
+                <label class="qb-label">Plan Type</label>
+                <select
+                  v-model="row.packageConfigs[pkgUuid].planType"
+                  :disabled="readOnlyRows"
+                  class="qb-select"
+                  @change="() => handlePackagePlanTypeChange(row, pkgUuid)"
+                >
+                  <option value="" disabled>Select plan type</option>
+                  <option
+                    v-for="opt in getPlanOptionsForPackages([pkgUuid])"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >{{ opt.label }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Cascade Coverage List Column -->
+            <div class="qb-pkg-cascade-col">
+              <!-- INDIVIDUAL PLAN -->
+              <template v-if="isIndividualPlan(row.packageConfigs[pkgUuid].planType)">
+                <!-- Employee Sum Assured Row -->
+                <div class="qb-cascade-row">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].sumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      placeholder="Enter amount"
+                      @input="() => recalculateRowPackage(row, pkgUuid)"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Dependent Sum Assured Row -->
+                <div v-if="!isMemberOnly(row.description)" class="qb-cascade-row">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      placeholder="Enter amount"
+                      @input="() => recalculateRowPackage(row, pkgUuid)"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+              </template>
+
+              <!-- DUAL PREMIUM DEPENDENT SHARED -->
+              <template v-else-if="isDualPremiumPlan(row.packageConfigs[pkgUuid].planType)">
+                <!-- Employee Sum Assured Row -->
+                <div class="qb-cascade-row">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].sumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      placeholder="Enter amount"
+                      @input="() => recalculateRowPackage(row, pkgUuid)"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Spouse Sum Assured Row -->
+                <div class="qb-cascade-row">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Spouse Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].spouseSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      placeholder="Enter amount"
+                      @input="() => recalculateRowPackage(row, pkgUuid)"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].spouseRate)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].spousePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Dependent Sum Assured Row -->
+                <div v-if="!isMemberPlusOne(row.description)" class="qb-cascade-row">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      placeholder="Enter amount"
+                      @input="() => recalculateRowPackage(row, pkgUuid)"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+              </template>
+
+              <!-- DEPENDENT SHARED PLAN -->
+              <template v-else-if="isDependentSharedPlan(row.packageConfigs[pkgUuid].planType)">
+                <!-- Employee Sum Assured Row -->
+                <div class="qb-cascade-row">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].sumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      placeholder="Enter amount"
+                      @input="() => recalculateRowPackage(row, pkgUuid)"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Dependent Sum Assured Row -->
+                <div class="qb-cascade-row">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      placeholder="Enter amount"
+                      @input="() => recalculateRowPackage(row, pkgUuid)"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+              </template>
+
+              <!-- FAMILY SHARED OR OTHER -->
+              <template v-else>
+                <div class="qb-cascade-row">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Coverage Amount</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].coverage"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      placeholder="Enter amount"
+                      @input="() => recalculateRowPackage(row, pkgUuid)"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].rate)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].premium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Total Premium Badge Column -->
+            <div class="qb-pkg-total-col">
+              <div class="qb-pkg-field">
+                <label class="qb-label">Premium</label>
+                <div class="qb-pkg-total-badge">
+                  {{ formatCurrency(row.packageConfigs[pkgUuid].premium) }}
+                </div>
+                <p class="qb-pkg-total-hint">Calculated premium</p>
+              </div>
+            </div>
+          </div><!-- /.qb-pkg-row -->
+        </div><!-- /.qb-pkg-list -->
+
+      </div><!-- /.qb-card -->
+    </div><!-- /.qb-groups -->
+
+    <!-- Footer -->
+    <div v-if="!hideFooterActions" class="qb-footer">
+      <div class="qb-footer-summary">
+        <p class="qb-footer-count">{{ groupRows.length }} benefit group{{ groupRows.length > 1 ? 's' : '' }} configured</p>
+        <p class="qb-footer-total">
+          Total Premium:
+          <span class="qb-footer-amount">{{ formatCurrency(totalPremium) }}</span>
+        </p>
+      </div>
+
+      <div class="qb-footer-actions">
+        <button
+          v-if="showAmendButton"
+          type="button"
+          :disabled="!!pendingAction"
+          @click="$emit('amend')"
+          class="btn btn-outline"
+        >
+          <span v-if="pendingAction === 'amend'" class="flex gap-2 items-center">
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing…
+          </span>
+          <span v-else>Amend Quotation</span>
+        </button>
+
+        <button
+          v-if="showIssuePremiumAdvice"
+          type="button"
+          :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
+          @click.prevent="submitAction('issuePremiumAdvice')"
+          class="btn btn-purple"
+        >
+          <span v-if="pendingAction === 'issuePremiumAdvice'" class="flex gap-2 items-center">
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing…
+          </span>
+          <span v-else>Issue Premium Advice</span>
+        </button>
+
+        <template v-else-if="issueMode">
+          <button type="button" :disabled="!!pendingAction || !formIsValid" @click="submitAction('accept')" class="btn btn-green">
+            <span v-if="pendingAction === 'accept'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing…
+            </span>
+            <span v-else>{{ acceptLabel }}</span>
+          </button>
+        </template>
+
+        <template v-else-if="!acceptMode">
+          <button type="button" :disabled="!!pendingAction || !formIsValid" @click="submitAction('save')" class="btn btn-outline">
+            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving…
+            </span>
+            <span v-else>Save Draft</span>
+          </button>
           
-          <Button 
-            v-if="showIssuePremiumAdvice"
-            type="primary" 
-            :disabled="!!pendingAction || !formIsValid"
-            :pending="pendingAction === 'issuePremiumAdvice'"
-            @click="submitAction('issuePremiumAdvice')"
-            class="px-6 py-2.5 text-sm font-medium text-white bg-purple-600 rounded-xl shadow-sm transition-all hover:bg-purple-700"
-          >
-            Issue Premium Advice
-          </Button>
+          <button type="button" :disabled="!!pendingAction || !formIsValid" @click="submitAction('issue')" class="btn btn-primary">
+            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Issuing…
+            </span>
+            <span v-else>Issue Quotation</span>
+          </button>
+        </template>
+
+        <template v-else>
+          <button type="button" :disabled="!!pendingAction || !formIsValid" @click="submitAction('save')" class="btn btn-soft">
+            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving…
+            </span>
+            <span v-else>Save Changes</span>
+          </button>
           
-          <Button 
-            v-else-if="issueMode"
-            type="primary" 
-            :disabled="!!pendingAction || !formIsValid"
-            :pending="pendingAction === 'accept'"
-            @click="submitAction('accept')"
-            class="px-6 py-2.5 text-sm font-medium text-white bg-green-600 rounded-xl shadow-sm transition-all hover:bg-green-700"
-          >
-            {{ acceptLabel }}
-          </Button>
-          
-          <template v-else-if="!acceptMode">
-            <Button 
-              :disabled="!formIsValid"
-              @click="submitAction('save')"
-              class="px-6 py-2.5 text-sm font-medium rounded-xl border border-gray-300 transition-colors hover:bg-gray-50"
-            >
-              Save Draft
-            </Button>
-            
-            <Button 
-              :disabled="!formIsValid"
-              @click="submitAction('issue')"
-              class="px-6 py-2.5 text-sm font-medium text-white bg-primary rounded-xl shadow-sm transition-all"
-            >
-              Issue Quotation
-            </Button>
-          </template>
-          
-          <template v-else>
-            <Button 
-              :disabled="!formIsValid"
-              @click="submitAction('save')"
-              class="px-6 py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-xl transition-colors hover:bg-primary/20"
-            >
-              Save Changes
-            </Button>
-            
-            <Button 
-              :disabled="!formIsValid"
-              @click="submitAction('issue')"
-              class="px-6 py-2.5 text-sm font-medium text-white bg-primary rounded-xl shadow-sm transition-all"
-            >
-              Issue Saved
-            </Button>
-          </template>
-        </div>
+          <button type="button" :disabled="!!pendingAction || !formIsValid" @click="submitAction('issue')" class="btn btn-primary">
+            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Issuing…
+            </span>
+            <span v-else>Issue Saved</span>
+          </button>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import Button from "@/components/Button.vue";
-import QuotaionInput from "../components/QuotaionInput.vue";
-import QuotationSelect from "../components/QuotationSelect.vue";
 import {
   allMemberTYpes,
-  getFamilyTypes,
+  SharedlMemberTYpes,
+  MaternityMemberTypes,
   isFemaleOnlyPackage,
   Plan,
 } from "@/types/interface";
-import { formatCurrency, formatNumber, genId } from "@/utils/utils";
+import { formatCurrency, formatNumber, genId, generateUUID } from "@/utils/utils"; 
 import { getPackageRate } from "@/features/quotation/api/quotationApi";
 import { getPackageRatesPerCover } from "@/features/product_settings/api/benefitRangeApi";
 
+// ── helpers ─────────────────────────────────────────────────────
+function localNormalizeDescription(raw) {
+  const val = typeof raw === "object" && raw !== null ? (raw.value ?? raw.id ?? raw) : raw;
+  let descNum;
+  if (typeof val === "string") {
+    const v = val.toLowerCase().trim();
+    if (v === "member" || v === "main member" || v === "member only") descNum = 1;
+    else if (v === "spouse") descNum = 2;
+    else if (v === "children" || v === "child") descNum = 3;
+    else descNum = Number.parseInt(val, 10);
+  } else {
+    descNum = Number(val);
+  }
+  return Number.isFinite(descNum) && !Number.isNaN(descNum) ? descNum : 0;
+}
+
+function emptyConfig() {
+  return { 
+    planType: "",
+    coverage: "", 
+    sumAssured: "", 
+    depSumAssured: "", 
+    spouseSumAssured: "", 
+    rate: 0, 
+    premium: 0,
+    sumInsured: 0,
+    // Track rates separately for mixed plans
+    employeeRate: 0,
+    dependentRate: 0,
+    spouseRate: 0,
+    employeePremium: 0,
+    dependentPremium: 0,
+    spousePremium: 0,
+  };
+}
+
 export default {
   name: "QuotationBuilder",
-  components: {
-    Button,
-    QuotaionInput,
-    QuotationSelect,
-  },
+
   props: {
-    pending: { type: Boolean, default: false },
-    hideFooterActions: { type: Boolean, default: false },
-    pendingAction: { type: String, default: '' },
-    quotations: Object,
-    packages: { type: Array, required: true },
-    onSubmit: { type: Function },
-    prefill: { type: Array, required: false, default: undefined },
-    showHeaderControls: { type: Boolean, default: true },
-    readOnlyRows: { type: Boolean, default: false },
-    acceptMode: { type: Boolean, default: false },
-    issueMode: { type: Boolean, default: false },
-    acceptLabel: { type: String, default: "Accept" },
-    quotationUuid: { type: String, default: "" },
-    viewIssued: { type: Object, default: () => ({}) },
-    viewAccepted: { type: Object, default: () => ({}) },
-    viewSaved: { type: Object, default: () => ({}) },
-    viewAcccepted: { type: Object, default: () => ({}) },
+    pending:              { type: Boolean, default: false },
+    hideFooterActions:    { type: Boolean, default: false },
+    pendingAction:        { type: String,  default: "" },
+    quotations:           Object,
+    packages:             { type: Array,   required: true },
+    onSubmit:             { type: Function },
+    prefill:              { type: Array,   required: false, default: undefined },
+    showHeaderControls:   { type: Boolean, default: true },
+    readOnlyRows:         { type: Boolean, default: false },
+    acceptMode:           { type: Boolean, default: false },
+    issueMode:            { type: Boolean, default: false },
+    acceptLabel:          { type: String,  default: "Accept" },
+    quotationUuid:        { type: String,  default: "" },
+    viewIssued:           { type: Object,  default: () => ({}) },
+    viewAccepted:         { type: Object,  default: () => ({}) },
+    viewSaved:            { type: Object,  default: () => ({}) },
+    viewAcccepted:        { type: Object,  default: () => ({}) },
     showIssuePremiumAdvice: { type: Boolean, default: false },
-    showAmendButton: { type: Boolean, default: false },
+    showAmendButton:        { type: Boolean, default: false },
   },
+
   emits: ["amend", "submit"],
+
   data() {
     return {
-      selectedPackages: [],
-      expandedPackageUuid: null,
-      packageServicesMap: {},
+      groupRows: [],
+      openDropdownRowId: null,
+      dropdownAnchorMap: {},
+      pkgBtnRefs: {},
       packageRatesCache: {},
       loadingRates: {},
-      editPackages: true,
       Plan,
-      lastUsedValues: {
-        numberOfInsured: "",
-        description: "",
-        planType: null,
-      },
+      clickOutsideHandler: null,
+      scrollHandler: null,
     };
   },
+
   computed: {
-    allPackages() {
-      return this.packages;
-    },
+    allPackages() { return this.packages; },
+
     formIsValid() {
-      const selected = Array.isArray(this.selectedPackages)
-        ? this.selectedPackages.filter(Boolean)
-        : [];
-      if (!selected.length) return false;
+      if (!Array.isArray(this.groupRows) || this.groupRows.length === 0) return false;
+      for (const row of this.groupRows) {
+        if (!row.selectedPackageUuuids?.length) return false;
 
-      for (const packageUuid of selected) {
-        const services = this.packageServicesMap?.[packageUuid] || [];
-        if (!Array.isArray(services) || services.length === 0) return false;
+        const insured = Number(this.normalizeValue(row.numberOfInsured));
+        if (!Number.isFinite(insured) || insured <= 0) return false;
+        if (row.description === "" || row.description == null) return false;
 
-        for (const s of services) {
-          if (!this.isServiceValid(s, packageUuid)) return false;
+        for (const pkgUuid of row.selectedPackageUuuids) {
+          const config = row.packageConfigs[pkgUuid];
+          if (!config) return false;
+
+          if (!config.planType) return false;
+
+          if (this.isIndividualPlan(config.planType)) {
+            const emp = Number(config.sumAssured);
+            if (!emp) return false;
+            if (!this.isMemberOnly(row.description)) {
+              const dep = Number(config.depSumAssured);
+              if (!dep) return false;
+            }
+          } else if (this.isDualPremiumPlan(config.planType)) {
+            const emp = Number(config.sumAssured);
+            const spouse = Number(config.spouseSumAssured);
+            if (!emp || !spouse) return false;
+            if (!this.isMemberPlusOne(row.description)) {
+              const dep = Number(config.depSumAssured);
+              if (!dep) return false;
+            }
+          } else if (this.isDependentSharedPlan(config.planType)) {
+            const emp = Number(config.sumAssured);
+            const dep = Number(config.depSumAssured);
+            if (!emp || !dep) return false;
+          } else {
+            const coverage = Number(this.normalizeValue(config.coverage));
+            if (!Number.isFinite(coverage) || coverage <= 0) return false;
+            const min = Number(this.getPackageMinLimit(pkgUuid)) || 0;
+            const max = Number(this.getPackageMaxLimit(pkgUuid)) || 0;
+            if ((min > 0 || max > 0) && (coverage < min || coverage > max)) return false;
+          }
+
+          const rate = Number(config.rate);
+          if (!Number.isFinite(rate) || rate <= 0) return false;
         }
       }
-
       return true;
     },
+
+    totalPremium() {
+      let total = 0;
+      this.groupRows.forEach(row =>
+        row.selectedPackageUuuids.forEach(pkgUuid => {
+          total += Number(row.packageConfigs[pkgUuid]?.premium) || 0;
+        })
+      );
+      return total;
+    },
   },
+
   watch: {
     prefill: {
       handler(newVal) {
-        if (newVal && Array.isArray(newVal) && newVal.length) {
-          this.initializeFromPrefill(newVal);
-        }
+        if (newVal?.length) this.initializeFromPrefill(newVal);
+        else if (!this.groupRows?.length) this.initializeDefaultRow();
       },
       immediate: true,
       deep: true,
     },
   },
+
+  mounted() {
+    this.clickOutsideHandler = (e) => {
+      if (this.openDropdownRowId && !e.target.closest(".package-dropdown-wrapper") && !e.target.closest(".qb-pkg-dropdown")) {
+        this.openDropdownRowId = null;
+      }
+    };
+    this.scrollHandler = () => { if (this.openDropdownRowId) this.openDropdownRowId = null; };
+    document.addEventListener("click", this.clickOutsideHandler);
+    window.addEventListener("scroll", this.scrollHandler, true);
+  },
+
+  beforeUnmount() {
+    document.removeEventListener("click", this.clickOutsideHandler);
+    window.removeEventListener("scroll", this.scrollHandler, true);
+  },
+
   methods: {
-    normalizePlanTypeFromPrefill(planType) {
-      const v = this.normalizeValue(planType);
-      if (
-        v === Plan["Individual Plan"] ||
-        v === Plan["Dependent Shared Plan"] ||
-        v === Plan["Family Shared Plan"]
-      ) {
-        return v;
+    // ── Helpers ───────────────────────────────────────────────
+    isMemberOnly(description) {
+      const desc = this.normalizeValue(description);
+      return desc === 1 || desc === "1" || desc === "Member Only" || desc === "member only";
+    },
+
+    isMemberPlusOne(description) {
+      const desc = this.normalizeValue(description);
+      return desc === 2 || desc === "2" || desc === "Member + 1 Dependent";
+    },
+
+    isIndividualPlan(planType) {
+      return this.normalizeValue(planType) === Plan["Individual Plan"];
+    },
+    isDualPremiumPlan(planType) {
+      return this.normalizeValue(planType) === Plan["Dual Premium Dependent Shared Plan"];
+    },
+    isFamilySharedPlan(planType) {
+      return this.normalizeValue(planType) === Plan["Family Shared Plan"];
+    },
+    isDependentSharedPlan(planType) {
+      return this.normalizeValue(planType) === Plan["Dependent Shared Plan"];
+    },
+
+    // ── Dropdown ──────────────────────────────────────────────
+    toggleDropdown(rowId) {
+      if (this.openDropdownRowId === rowId) { this.openDropdownRowId = null; return; }
+      const btn = this.pkgBtnRefs[rowId];
+      if (btn) {
+        const rect = btn.getBoundingClientRect();
+        this.dropdownAnchorMap[rowId] = {
+          top:   rect.bottom + window.scrollY + 4,
+          left:  rect.left   + window.scrollX,
+          width: Math.max(rect.width, 280),
+        };
       }
-
-      if (typeof v === "string") {
-        if (v === "Individual Plan") return Plan["Individual Plan"];
-        if (v === "Dependent Shared Plan") return Plan["Dependent Shared Plan"];
-        if (v === "Family Shared Plan") return Plan["Family Shared Plan"];
-        if (v.includes("_")) return this.mapPlanTypeToEnum(v);
-      }
-
-      return v;
-    },
-    formatCurrency,
-    formatNumber,
-
-    formatRate(rate) {
-      if (!rate && rate !== 0) return "0.0000";
-      return Number(rate).toFixed(4);
+      this.openDropdownRowId = rowId;
     },
 
-    isServiceValid(service, packageUuid) {
-      if (!service) return false;
-      const planType = this.normalizeValue(service.planType);
-      const description = this.normalizeValue(service.description);
-
-      const insured = Number(this.normalizeValue(service.numberOfInsured));
-      if (!Number.isFinite(insured) || insured <= 0) return false;
-
-      if (!planType) return false;
-      if (description === "" || description == null) return false;
-
-      const coverage = Number(this.normalizeValue(service.coverage));
-      if (!Number.isFinite(coverage) || coverage <= 0) return false;
-
-      const min = Number(this.getPackageMinLimit(packageUuid)) || 0;
-      const max = Number(this.getPackageMaxLimit(packageUuid)) || 0;
-      if ((min > 0 || max > 0) && (coverage < min || coverage > max)) return false;
-
-      const rate = Number(this.normalizeValue(service.rate));
-      if (!Number.isFinite(rate) || rate <= 0) return false;
-
-      return true;
+    getDropdownStyle(rowId) {
+      const a = this.dropdownAnchorMap[rowId];
+      if (!a) return {};
+      return { position: "absolute", top: a.top + "px", left: a.left + "px", width: a.width + "px", zIndex: 9999 };
     },
 
-    submitAction(action) {
-      if (!this.formIsValid) return;
-      this.$emit("submit", { action, data: this.buildPayload() });
+    getSelectedPackagesLabel(uuids) {
+      if (!uuids?.length) return "Select packages";
+      return uuids.map(u => this.packages.find(p => p.packageUuid === u)?.packageName).filter(Boolean).join(", ");
     },
 
+    // ── Rates cache ──────────────────────────────────────────
     async ensureRatesLoaded(packageUuid) {
-      if (!packageUuid) return;
-      if (this.packageRatesCache[packageUuid]) return;
-
+      if (!packageUuid || this.packageRatesCache[packageUuid]) return;
       this.loadingRates = { ...this.loadingRates, [packageUuid]: true };
-
       try {
         const res = await getPackageRatesPerCover(packageUuid);
         const data = res?.data || res || [];
-        this.packageRatesCache = {
-          ...this.packageRatesCache,
-          [packageUuid]: Array.isArray(data) ? data : [],
-        };
+        this.packageRatesCache = { ...this.packageRatesCache, [packageUuid]: Array.isArray(data) ? data : [] };
       } catch (e) {
         console.error("Failed to load package rates:", e);
-        this.packageRatesCache = {
-          ...this.packageRatesCache,
-          [packageUuid]: [],
-        };
+        this.packageRatesCache = { ...this.packageRatesCache, [packageUuid]: [] };
       } finally {
         this.loadingRates = { ...this.loadingRates, [packageUuid]: false };
       }
     },
 
-    getRatesForPackage(packageUuid) {
-      return this.packageRatesCache[packageUuid] || [];
-    },
+    getRatesForPackage(uuid) { return this.packageRatesCache[uuid] || []; },
+    getPackageName(uuid)     { return this.packages.find(p => p.packageUuid === uuid)?.packageName || ""; },
 
-    getPackageName(packageUuid) {
-      const pkg = this.packages.find((p) => p.packageUuid === packageUuid);
-      return pkg?.packageName || "";
-    },
-
-    getPackageMinLimit(packageUuid) {
-      const pkg = this.packages.find((p) => p.packageUuid === packageUuid);
-      const pkgMin =
-        Number(
-          pkg?.minLimit ??
-            pkg?.min_limit ??
-            pkg?.minimumLimit ??
-            pkg?.minimum_limit ??
-            pkg?.minCoverage ??
-            pkg?.min_coverage ??
-            0
-        ) || 0;
-
-      if (pkgMin > 0) return pkgMin;
-
-      const rates = this.getRatesForPackage(packageUuid);
-      if (rates.length > 0) {
-        const mins = rates.map((r) => r.minLimit).filter((v) => v != null);
-        return mins.length ? Math.min(...mins) : 0;
-      }
-
+    getPackageMinLimit(uuid) {
+      const pkg = this.packages.find(p => p.packageUuid === uuid);
+      const v = Number(pkg?.minLimit ?? pkg?.min_limit ?? pkg?.minimumLimit ?? pkg?.minimum_limit ?? pkg?.minCoverage ?? pkg?.min_coverage ?? 0) || 0;
+      if (v > 0) return v;
+      const rates = this.getRatesForPackage(uuid);
+      if (rates.length) { const mins = rates.map(r => r.minLimit).filter(x => x != null); return mins.length ? Math.min(...mins) : 0; }
       return 0;
     },
 
-    getPackageMaxLimit(packageUuid) {
-      const pkg = this.packages.find((p) => p.packageUuid === packageUuid);
-      const pkgMax =
-        Number(
-          pkg?.maxLimit ??
-            pkg?.max_limit ??
-            pkg?.maximumLimit ??
-            pkg?.maximum_limit ??
-            pkg?.maxCoverage ??
-            pkg?.max_coverage ??
-            0
-        ) || 0;
-
-      if (pkgMax > 0) return pkgMax;
-
-      const rates = this.getRatesForPackage(packageUuid);
-      if (rates.length > 0) {
-        const maxs = rates.map((r) => r.maxLimit).filter((v) => v != null);
-        return maxs.length ? Math.max(...maxs) : 0;
-      }
-
+    getPackageMaxLimit(uuid) {
+      const pkg = this.packages.find(p => p.packageUuid === uuid);
+      const v = Number(pkg?.maxLimit ?? pkg?.max_limit ?? pkg?.maximumLimit ?? pkg?.maximum_limit ?? pkg?.maxCoverage ?? pkg?.max_coverage ?? 0) || 0;
+      if (v > 0) return v;
+      const rates = this.getRatesForPackage(uuid);
+      if (rates.length) { const maxs = rates.map(r => r.maxLimit).filter(x => x != null); return maxs.length ? Math.max(...maxs) : 0; }
       return 0;
     },
 
-    isPackageSelected(packageUuid) {
-      return this.selectedPackages.includes(packageUuid);
+    getRangeDisplayForPackage(uuid) {
+      return `${formatNumber(this.getPackageMinLimit(uuid))} – ${formatNumber(this.getPackageMaxLimit(uuid))}`;
     },
 
-    async togglePackageSelection(packageUuid) {
-      if (this.isPackageSelected(packageUuid)) {
-        this.deselectPackage(packageUuid);
-        return;
-      }
-
-      await this.selectPackage(packageUuid);
-    },
-
-    async selectPackage(packageUuid) {
-      await this.ensureRatesLoaded(packageUuid);
-
-      // Keep most recently selected at the top
-      this.selectedPackages = [
-        packageUuid,
-        ...(this.selectedPackages || []).filter((id) => id !== packageUuid),
+    // ── Plan/description options ─────────────────────────────
+    getPlanOptionsForPackages(uuids) {
+      const defaults = [
+        { label: "Individual Plan",                        value: Plan["Individual Plan"] },
+        { label: "Dependent Shared Plan",                  value: Plan["Dependent Shared Plan"] },
+        { label: "Dual Premium Dependent Shared Plan",     value: Plan["Dual Premium Dependent Shared Plan"] },
+        { label: "Family Shared Plan",                     value: Plan["Family Shared Plan"] },
       ];
+      if (!uuids?.length) return defaults;
+      const allTypes = new Set();
+      uuids.forEach(uuid => this.getRatesForPackage(uuid).forEach(r => r.planType && allTypes.add(r.planType)));
+      if (!allTypes.size) return defaults;
+      return Array.from(allTypes).map(pt => ({ label: this.formatPlanTypeLabel(pt), value: this.mapPlanTypeToEnum(pt) }));
+    },
+
+    getDescriptionOptionsForPackages(uuids, planType) {
+      const effectivePlan = this.normalizeValue(planType);
+      if (!effectivePlan) return [];
+
+      let femaleOnly = false;
+      if (Array.isArray(uuids) && uuids.length) {
+        femaleOnly = uuids.some(uuid => {
+          const pkg = this.packages.find(p => p.packageUuid === uuid);
+          return pkg && isFemaleOnlyPackage(this.packages, pkg.packageName);
+        });
+      }
+      if (femaleOnly) return MaternityMemberTypes;
+
+      if (effectivePlan === Plan["Individual Plan"]) {
+        const maxFamilySize = 5;
+        const options = [];
+        for (let size = 1; size <= maxFamilySize; size++) {
+          let label;
+          if (size === 1) label = "Member Only";
+          else if (size === 2) label = "Member + 1 Dependent";
+          else if (size === 3) label = "Member + 2 Dependents";
+          else if (size === 4) label = "Member + 3 Dependents";
+          else if (size === 5) label = "Member + 4 Dependents";
+          else label = `Member + ${size - 1} Dependents`;
+          
+          options.push({ label, value: size });
+        }
+        return options;
+      }
+
+      if (Array.isArray(uuids) && uuids.length) {
+        const allSizes = new Set();
+        uuids.forEach(uuid => {
+          this.getRatesForPackage(uuid)
+            .filter(r => r.planType === this.mapPlanTypeToApi(effectivePlan))
+            .forEach(r => { 
+              if (r.familySize != null) allSizes.add(r.familySize); 
+            });
+        });
+
+        if (allSizes.size) {
+          return Array.from(allSizes)
+            .sort((a, b) => Number(a) - Number(b))
+            .map(size => {
+              let label;
+              if (size === 1) label = "Member Only";
+              else if (size === 2) label = "Member + 1 Dependent";
+              else if (size === 3) label = "Member + 2 Dependents";
+              else if (size === 4) label = "Member + 3 Dependents";
+              else if (size === 5) label = "Member + 4 Dependents";
+              else label = `Member + ${size - 1} Dependents`;
+              
+              return { label, value: size };
+            });
+        }
+      }
+
+      if (effectivePlan === Plan["Individual Plan"]) return SharedlMemberTYpes;
+      return allMemberTYpes;
+    },
+
+    // ── Package toggle ───────────────────────────────────────
+    async togglePackageInRow(row, packageUuid) {
+      const idx = row.selectedPackageUuuids.indexOf(packageUuid);
+      if (idx > -1) {
+        row.selectedPackageUuuids.splice(idx, 1);
+        delete row.packageConfigs[packageUuid];
+      } else {
+        row.selectedPackageUuuids.push(packageUuid);
+        row.packageConfigs = { ...row.packageConfigs, [packageUuid]: emptyConfig() };
+        await this.ensureRatesLoaded(packageUuid);
+      }
+      this.handleRowChange(row);
+    },
+
+    // ── Rate/premium calculation ─────────────────────────────
+    findRateForAmount(matchedRates, amount) {
+      if (!matchedRates || !matchedRates.length) return 0;
+      const numAmount = Number(amount) || 0;
+      const match = matchedRates.find(r => {
+        const min = Number(r.minLimit ?? 0);
+        const max = Number(r.maxLimit ?? 0);
+        return numAmount >= min && numAmount <= max;
+      });
+      return match ? Number(match.rate) || 0 : (Number(matchedRates[0].rate) || 0);
+    },
+
+    handleRowChange(row) {
+      row.selectedPackageUuuids.forEach(pkgUuid => {
+        this.updatePackageRateAndPremium(row, pkgUuid);
+      });
+    },
+
+    handlePackageRowChange(row, packageUuid) {
+      this.updatePackageRateAndPremium(row, packageUuid);
+    },
+
+    updatePackageRateAndPremium(row, packageUuid) {
+      const config = row.packageConfigs[packageUuid];
+      if (!config) return;
       
-      if (!this.packageServicesMap[packageUuid]) {
-        this.initializePackageServices(packageUuid);
-      }
-
-      if (!this.expandedPackageUuid) {
-        this.expandedPackageUuid = packageUuid;
-      }
-    },
-
-    deselectPackage(packageUuid) {
-      this.selectedPackages = this.selectedPackages.filter((id) => id !== packageUuid);
-
-      if (this.expandedPackageUuid === packageUuid) {
-        this.expandedPackageUuid = this.selectedPackages[0] || null;
-      }
-    },
-
-    initializePackageServices(packageUuid) {
+      const planType = this.normalizeValue(config.planType);
+      const description = this.normalizeValue(row.description);
       const rates = this.getRatesForPackage(packageUuid);
-      const planTypes = [...new Set(rates.map((r) => r.planType))];
-      const defaultPlanType = planTypes[0] || "Individual_Plan";
+      
+      // Reset rates & premiums
+      config.employeeRate = 0;
+      config.dependentRate = 0;
+      config.spouseRate = 0;
+      config.rate = 0;
+      config.employeePremium = 0;
+      config.dependentPremium = 0;
+      config.spousePremium = 0;
+      config.premium = 0;
 
-      const selectedTemplateUuid = this.selectedPackages.find(
-        (id) => id !== packageUuid && (this.packageServicesMap?.[id] || []).length
-      );
-      const templateServices = selectedTemplateUuid
-        ? this.packageServicesMap[selectedTemplateUuid] || []
-        : [];
+      if (this.isIndividualPlan(planType)) {
+        const matched = rates.filter(r => 
+          r.planType === "Individual_Plan" && Number(r.familySize) === 1
+        );
+        config.employeeRate = this.findRateForAmount(matched, config.sumAssured);
+        config.dependentRate = this.findRateForAmount(matched, config.depSumAssured);
+        config.rate = config.employeeRate;
 
-      const canUseTemplate = templateServices.length > 0;
-      const nextServices = [];
+      } else if (this.isFamilySharedPlan(planType)) {
+        const familySize = Number(description) || 1;
+        const matched = rates.filter(r => 
+          r.planType === "Family_Shared_Plan" && Number(r.familySize) === familySize
+        );
+        config.rate = this.findRateForAmount(matched, config.coverage);
 
-      const pushIfSupported = (candidate) => {
-        const planApi = this.mapPlanTypeToApi(candidate.planType);
-        const descVal = this.normalizeValue(candidate.description);
-        const familySize = Number(descVal);
+      } else if (this.isDependentSharedPlan(planType)) {
+        const familySize = Number(description) || 1;
+        const dependentFamilySize = Math.max(1, familySize - 1);
+        
+        const empMatched = rates.filter(r => 
+          r.planType === "Individual_Plan" && Number(r.familySize) === 1
+        );
+        const depMatched = rates.filter(r => 
+          r.planType === "Family_Shared_Plan" && Number(r.familySize) === dependentFamilySize
+        );
+        
+        config.employeeRate = this.findRateForAmount(empMatched, config.sumAssured);
+        config.dependentRate = this.findRateForAmount(depMatched, config.depSumAssured);
+        config.rate = (config.employeeRate + config.dependentRate) / 2;
 
-        const hasPlan = rates.some((r) => String(r?.planType) === String(planApi));
-        if (!hasPlan) return;
-
-        if (Number.isFinite(familySize) && familySize > 0) {
-          const hasFamilySize = rates.some(
-            (r) => String(r?.planType) === String(planApi) && Number(r?.familySize) === familySize
-          );
-          if (!hasFamilySize) return;
+      } else if (this.isDualPremiumPlan(planType)) {
+        const familySize = Number(description) || 1;
+        const dependentFamilySize = Math.max(1, familySize - 2);
+        
+        const empMatched = rates.filter(r => 
+          r.planType === "Individual_Plan" && Number(r.familySize) === 1
+        );
+        const depMatched = rates.filter(r => 
+          r.planType === "Family_Shared_Plan" && Number(r.familySize) === dependentFamilySize
+        );
+        
+        config.employeeRate = this.findRateForAmount(empMatched, config.sumAssured);
+        config.spouseRate = this.findRateForAmount(empMatched, config.spouseSumAssured);
+        config.dependentRate = this.findRateForAmount(depMatched, config.depSumAssured);
+        
+        if (this.isMemberPlusOne(description)) {
+          config.rate = config.employeeRate;
+        } else {
+          config.rate = (config.employeeRate * 2 + config.dependentRate) / 3;
         }
+      }
 
-        nextServices.push(candidate);
-      };
+      this._calcPremium(row, packageUuid);
+    },
 
-      if (canUseTemplate) {
-        templateServices.forEach((s) => {
-          const planType =
-            this.normalizeValue(s?.planType) || this.mapPlanTypeToEnum(defaultPlanType);
-          const desc = this.normalizeValue(s?.description);
-          pushIfSupported({
-            packageUuid,
-            serviceQuotedUuid: genId.next().value,
-            numberOfInsured:
-              this.normalizeValue(s?.numberOfInsured) || this.lastUsedValues.numberOfInsured || "",
-            description: desc ?? "",
-            rate: 0,
-            premium: 0,
-            sumInsured: 0,
-            coverage: "",
-            planType,
-            individualType: "NA",
-            spouse: false,
+    recalculateRowPackage(row, packageUuid) {
+      // Re-fetch rates and recalculate
+      this.setRateFromCacheForPackage(row, packageUuid);
+      this._calcPremium(row, packageUuid);
+    },
+
+    _calcPremium(row, packageUuid) {
+      const config = row.packageConfigs[packageUuid];
+      if (!config) return;
+      
+      const planType = this.normalizeValue(config.planType);
+      const insured = Number(row.numberOfInsured) || 0;
+      const description = this.normalizeValue(row.description);
+
+      if (this.isIndividualPlan(planType)) {
+        const empCov = Number(config.sumAssured) || 0;
+        const rate = config.employeeRate || 0;
+        const isMemberOnly = this.isMemberOnly(description);
+        
+        config.employeePremium = empCov * insured * rate;
+        
+        if (isMemberOnly) {
+          config.dependentPremium = 0;
+          config.sumInsured = empCov * insured;
+        } else {
+          const depCov = Number(config.depSumAssured) || 0;
+          const numberOfDependents = (Number(description) - 1) || 0;
+          const depRate = config.dependentRate || rate || 0;
+          
+          config.dependentPremium = depCov * insured * numberOfDependents * depRate;
+          config.sumInsured = (empCov * insured) + (depCov * insured * numberOfDependents);
+        }
+        config.premium = config.employeePremium + config.dependentPremium;
+
+      } else if (this.isDependentSharedPlan(planType)) {
+        const empCov = Number(config.sumAssured) || 0;
+        const depCov = Number(config.depSumAssured) || 0;
+        const empRate = config.employeeRate || 0;
+        const depRate = config.dependentRate || 0;
+        
+        config.employeePremium = empCov * insured * empRate;
+        config.dependentPremium = depCov * insured * depRate;
+        
+        config.sumInsured = (empCov * insured) + (depCov * insured);
+        config.premium = config.employeePremium + config.dependentPremium;
+
+      } else if (this.isDualPremiumPlan(planType)) {
+        const empCov = Number(config.sumAssured) || 0;
+        const spouseCov = Number(config.spouseSumAssured) || 0;
+        const depCov = Number(config.depSumAssured) || 0;
+        const empRate = config.employeeRate || 0;
+        const spouseRate = config.spouseRate || empRate || 0;
+        const depRate = config.dependentRate || 0;
+        const isMemberPlusOne = this.isMemberPlusOne(description);
+        
+        config.employeePremium = empCov * insured * empRate;
+        config.spousePremium = spouseCov * insured * spouseRate;
+        
+        if (isMemberPlusOne) {
+          config.dependentPremium = 0;
+          config.sumInsured = (empCov * insured) + (spouseCov * insured);
+        } else {
+          config.dependentPremium = depCov * insured * depRate;
+          config.sumInsured = (empCov * insured) + (spouseCov * insured) + (depCov * insured);
+        }
+        config.premium = config.employeePremium + config.spousePremium + config.dependentPremium;
+
+      } else if (this.isFamilySharedPlan(planType)) {
+        const coverage = Number(config.coverage) || 0;
+        const rate = config.rate || 0;
+        
+        config.sumInsured = coverage * insured;
+        config.premium = coverage * insured * rate;
+      }
+    },
+
+    setRateFromCacheForPackage(row, packageUuid) {
+      const config = row.packageConfigs[packageUuid];
+      if (!config) return false;
+      
+      const planType = this.normalizeValue(config.planType);
+      const description = this.normalizeValue(row.description);
+      const rates = this.getRatesForPackage(packageUuid);
+      let found = false;
+
+      if (this.isIndividualPlan(planType)) {
+        const matched = rates.filter(r => 
+          r.planType === "Individual_Plan" && Number(r.familySize) === 1
+        );
+        if (matched.length) { 
+          config.employeeRate = this.findRateForAmount(matched, config.sumAssured);
+          config.dependentRate = this.findRateForAmount(matched, config.depSumAssured);
+          config.rate = config.employeeRate;
+          found = true;
+        }
+      } else if (this.isFamilySharedPlan(planType)) {
+        const familySize = Number(description) || 1;
+        const matched = rates.filter(r => 
+          r.planType === "Family_Shared_Plan" && Number(r.familySize) === familySize
+        );
+        if (matched.length) { 
+          config.rate = this.findRateForAmount(matched, config.coverage);
+          found = true;
+        }
+      } else if (this.isDependentSharedPlan(planType)) {
+        const familySize = Number(description) || 1;
+        const dependentFamilySize = Math.max(1, familySize - 1);
+        
+        const empMatched = rates.filter(r => 
+          r.planType === "Individual_Plan" && Number(r.familySize) === 1
+        );
+        const depMatched = rates.filter(r => 
+          r.planType === "Family_Shared_Plan" && Number(r.familySize) === dependentFamilySize
+        );
+        
+        if (empMatched.length) {
+          config.employeeRate = this.findRateForAmount(empMatched, config.sumAssured);
+          found = true;
+        }
+        if (depMatched.length) {
+          config.dependentRate = this.findRateForAmount(depMatched, config.depSumAssured);
+          found = true;
+        }
+        if (empMatched.length || depMatched.length) {
+          config.rate = (config.employeeRate + config.dependentRate) / 2;
+        }
+      } else if (this.isDualPremiumPlan(planType)) {
+        const familySize = Number(description) || 1;
+        const dependentFamilySize = Math.max(1, familySize - 2);
+        
+        const empMatched = rates.filter(r => 
+          r.planType === "Individual_Plan" && Number(r.familySize) === 1
+        );
+        const depMatched = rates.filter(r => 
+          r.planType === "Family_Shared_Plan" && Number(r.familySize) === dependentFamilySize
+        );
+        
+        if (empMatched.length) {
+          config.employeeRate = this.findRateForAmount(empMatched, config.sumAssured);
+          config.spouseRate = this.findRateForAmount(empMatched, config.spouseSumAssured);
+          found = true;
+        }
+        if (depMatched.length) {
+          config.dependentRate = this.findRateForAmount(depMatched, config.depSumAssured);
+          found = true;
+        }
+        if (empMatched.length || depMatched.length) {
+          if (this.isMemberPlusOne(description)) {
+            config.rate = config.employeeRate;
+          } else {
+            config.rate = (config.employeeRate * 2 + config.dependentRate) / 3;
+          }
+        }
+      }
+
+      if (!found) {
+        config.rate = 0;
+        config.employeeRate = 0;
+        config.dependentRate = 0;
+        config.spouseRate = 0;
+      }
+      return found;
+    },
+
+    handlePackagePlanTypeChange(row, packageUuid) {
+      const config = row.packageConfigs[packageUuid];
+      if (!config) return;
+      config.sumAssured = "";
+      config.depSumAssured = "";
+      config.spouseSumAssured = "";
+      config.coverage = "";
+      config.rate = 0;
+      config.employeeRate = 0;
+      config.dependentRate = 0;
+      config.spouseRate = 0;
+      config.employeePremium = 0;
+      config.dependentPremium = 0;
+      config.spousePremium = 0;
+      config.premium = 0;
+      config.sumInsured = 0;
+    },
+
+    async handlePackageDescriptionChange(row, pkgUuid) {
+      const config = row.packageConfigs[pkgUuid];
+      if (!config) return;
+
+      const planType = this.normalizeValue(config.planType);
+      const description = this.normalizeValue(row.description);
+      
+      const resolved = this.setRateFromCacheForPackage(row, pkgUuid);
+      if (!resolved && !this.getRatesForPackage(pkgUuid).length) {
+        try {
+          let requests = [];
+          
+          if (this.isIndividualPlan(planType) || 
+              this.isDependentSharedPlan(planType) || 
+              this.isDualPremiumPlan(planType)) {
+            requests.push(
+              getPackageRate({ 
+                packageUuid: pkgUuid, 
+                planType: "Individual_Plan", 
+                familySize: 1 
+              })
+            );
+          }
+          
+          if (this.isFamilySharedPlan(planType)) {
+            const familySize = Number(description) || 1;
+            requests.push(
+              getPackageRate({ 
+                packageUuid: pkgUuid, 
+                planType: "Family_Shared_Plan", 
+                familySize 
+              })
+            );
+          } else if (this.isDependentSharedPlan(planType)) {
+            const dependentFamilySize = Math.max(1, (Number(description) || 1) - 1);
+            requests.push(
+              getPackageRate({ 
+                packageUuid: pkgUuid, 
+                planType: "Family_Shared_Plan", 
+                familySize: dependentFamilySize 
+              })
+            );
+          } else if (this.isDualPremiumPlan(planType) && !this.isMemberPlusOne(description)) {
+            const dependentFamilySize = Math.max(1, (Number(description) || 1) - 2);
+            requests.push(
+              getPackageRate({ 
+                packageUuid: pkgUuid, 
+                planType: "Family_Shared_Plan", 
+                familySize: dependentFamilySize 
+              })
+            );
+          }
+          
+          const responses = await Promise.all(requests);
+          responses.forEach(resp => {
+            const rate = resp?.data?.rate || resp?.rate || 0;
+            const planTypeResp = resp?.data?.planType || resp?.planType || "";
+            
+            if (row.packageConfigs[pkgUuid]) {
+              if (planTypeResp === "Individual_Plan") {
+                row.packageConfigs[pkgUuid].employeeRate = Number(rate) || 0;
+                row.packageConfigs[pkgUuid].spouseRate = Number(rate) || 0;
+              } else if (planTypeResp === "Family_Shared_Plan") {
+                row.packageConfigs[pkgUuid].dependentRate = Number(rate) || 0;
+              }
+            }
           });
-        });
-      }
-
-      if (!nextServices.length) {
-        let initialService = {
-          packageUuid,
-          serviceQuotedUuid: genId.next().value,
-          numberOfInsured: this.lastUsedValues.numberOfInsured || "",
-          description: "",
-          rate: 0,
-          premium: 0,
-          sumInsured: 0,
-          coverage: "",
-          planType: this.mapPlanTypeToEnum(defaultPlanType),
-          individualType: defaultPlanType === "Individual_Plan" ? "Member" : "NA",
-          spouse: false,
-        };
-
-        if (this.lastUsedValues.planType) {
-          const lastPlanApi = this.mapPlanTypeToApi(this.lastUsedValues.planType);
-          if (planTypes.includes(lastPlanApi)) {
-            initialService.planType = this.lastUsedValues.planType;
+          
+          if (row.packageConfigs[pkgUuid]) {
+            const conf = row.packageConfigs[pkgUuid];
+            if (this.isIndividualPlan(planType)) {
+              conf.rate = conf.employeeRate;
+            } else if (this.isFamilySharedPlan(planType)) {
+              conf.rate = conf.dependentRate;
+            } else if (this.isDependentSharedPlan(planType)) {
+              conf.rate = (conf.employeeRate + conf.dependentRate) / 2;
+            } else if (this.isDualPremiumPlan(planType)) {
+              if (this.isMemberPlusOne(description)) {
+                conf.rate = conf.employeeRate;
+              } else {
+                conf.rate = (conf.employeeRate * 2 + conf.dependentRate) / 3;
+              }
+            }
           }
+        } catch (e) { 
+          console.error("Failed to fetch rate:", e); 
         }
-
-        nextServices.push(initialService);
       }
+      this.recalculateRowPackage(row, pkgUuid);
+    },
 
-      this.packageServicesMap = {
-        ...this.packageServicesMap,
-        [packageUuid]: nextServices,
+    getGroupPlanTypeForDescOptions(row) {
+      if (row.selectedPackageUuuids?.length) {
+        const firstPkg = row.selectedPackageUuuids[0];
+        const config = row.packageConfigs[firstPkg];
+        if (config?.planType) return config.planType;
+      }
+      return Plan["Individual Plan"];
+    },
+
+  initializeFromPrefill(prefillData) {
+  if (!prefillData) return;
+  const services = [];
+  prefillData.forEach(item => {
+    if (Array.isArray(item?.services)) services.push(...item.services);
+    else if (item?.packageUuid) services.push(item);
+  });
+  if (!services.length) { this.initializeDefaultRow(); return; }
+
+  const groups = {};
+  services.forEach(s => {
+    const key = s.benefitGroupCode || `${s.planType}_${s.description}_${s.numberOfInsured}`;
+    if (!groups[key]) groups[key] = { 
+      benefitGroupCode: s.benefitGroupCode || generateUUID(),
+      numberOfInsured: s.numberOfInsured, 
+      description: s.description,
+      services: [] 
+    };
+    groups[key].services.push(s);
+  });
+
+  this.groupRows = Object.values(groups).map(group => {
+    const selectedPackageUuuids = [];
+    const packageConfigs = {};
+    group.services.forEach(s => {
+      if (!selectedPackageUuuids.includes(s.packageUuid)) selectedPackageUuuids.push(s.packageUuid);
+      
+      // Normalize the plan type from the service
+      const normalizedPlanType = this.normalizePlanTypeFromPrefill(s.planType) || "";
+      
+      // Determine the correct mapping based on plan type
+      let coverageValue = "";
+      let sumAssuredValue = "";
+      let depSumAssuredValue = "";
+      let spouseSumAssuredValue = "";
+      
+      if (this.isFamilySharedPlan(normalizedPlanType)) {
+        // For Family Shared: sumAssured → coverage
+        coverageValue = s.sumAssured ?? s.coverage ?? "";
+        sumAssuredValue = s.sumAssured ?? s.coverage ?? "";
+      } else if (this.isIndividualPlan(normalizedPlanType)) {
+        // For Individual: keep sumAssured as-is
+        sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
+        depSumAssuredValue = s.depSumAssured ?? "";
+        coverageValue = "";
+      } else if (this.isDependentSharedPlan(normalizedPlanType)) {
+        // For Dependent Shared: keep separate fields
+        sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
+        depSumAssuredValue = s.depSumAssured ?? "";
+        coverageValue = "";
+      } else if (this.isDualPremiumPlan(normalizedPlanType)) {
+        // For Dual Premium: keep separate fields
+        sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
+        depSumAssuredValue = s.depSumAssured ?? "";
+        spouseSumAssuredValue = s.spouseSumAssured ?? "";
+        coverageValue = "";
+      } else {
+        // Default fallback
+        coverageValue = s.coverage ?? "";
+        sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
+        depSumAssuredValue = s.depSumAssured ?? "";
+        spouseSumAssuredValue = s.spouseSumAssured ?? "";
+      }
+      
+      packageConfigs[s.packageUuid] = {
+        ...emptyConfig(),
+        planType: normalizedPlanType,
+        coverage: coverageValue,
+        sumAssured: sumAssuredValue,
+        depSumAssured: depSumAssuredValue,
+        spouseSumAssured: spouseSumAssuredValue,
+        rate: s.rate || 0,
+        premium: s.premium || 0,
+        sumInsured: s.sumInsured || 0,
+        employeeRate: s.employeeRate || s.rate || 0,
+        dependentRate: s.dependentRate || s.rate || 0,
+        spouseRate: s.spouseRate || s.rate || 0,
+        employeePremium: s.employeePremium || 0,
+        dependentPremium: s.dependentPremium || 0,
+        spousePremium: s.spousePremium || 0,
       };
+      
+      this.ensureRatesLoaded(s.packageUuid).then(() => {
+        const row = this.groupRows.find(r => r.benefitGroupCode === group.benefitGroupCode);
+        if (row) {
+          this.setRateFromCacheForPackage(row, s.packageUuid);
+          this._calcPremium(row, s.packageUuid);
+        }
+      });
+    });
+    return { 
+      id: genId.next().value, 
+      benefitGroupCode: group.benefitGroupCode, 
+      numberOfInsured: group.numberOfInsured, 
+      description: group.description,
+      selectedPackageUuuids, 
+      packageConfigs 
+    };
+  });
+},
 
-      this.$nextTick(() => {
-        nextServices.forEach((s) => {
-          if (s.description) {
-            this.handleDescriptionChange(s, packageUuid);
-          }
-        });
+    initializeDefaultRow() {
+      this.groupRows = [{ 
+        id: genId.next().value, 
+        benefitGroupCode: generateUUID(),
+        numberOfInsured: "", 
+        description: "",
+        selectedPackageUuuids: [], 
+        packageConfigs: {} 
+      }];
+    },
+
+    addGroupRow() {
+      this.groupRows.push({ 
+        id: genId.next().value, 
+        benefitGroupCode: generateUUID(),
+        numberOfInsured: "", 
+        description: "",
+        selectedPackageUuuids: [], 
+        packageConfigs: {} 
       });
     },
 
-    initializeFromPrefill(prefillData) {
-      const resolvePackageUuid = (quote) => {
-        if (quote?.packageUuid) return quote.packageUuid;
-        const first = Array.isArray(quote?.services) ? quote.services[0] : undefined;
-        return first?.packageUuid;
+    duplicateGroupRow(row) {
+      const dup = { 
+        id: genId.next().value, 
+        benefitGroupCode: generateUUID(),
+        numberOfInsured: row.numberOfInsured, 
+        description: row.description,
+        selectedPackageUuuids: [...row.selectedPackageUuuids], 
+        packageConfigs: {} 
       };
-
-      const incoming = Array.isArray(prefillData) ? prefillData : [];
-      const mergedByPackage = new Map();
-
-      incoming.forEach((q) => {
-        const packageUuid = resolvePackageUuid(q);
-        if (!packageUuid) return;
-
-        const list = Array.isArray(q?.services) ? q.services : [];
-        const normalizedServices = list.map((s) => ({
-          ...s,
-          packageUuid: packageUuid,
-          serviceQuotedUuid: s?.serviceQuotedUuid || genId.next().value,
-          planType: this.normalizePlanTypeFromPrefill(s?.planType),
-        }));
-
-        const prev = mergedByPackage.get(packageUuid) || [];
-        mergedByPackage.set(packageUuid, [...prev, ...normalizedServices]);
+      row.selectedPackageUuuids.forEach(uuid => { 
+        dup.packageConfigs[uuid] = { ...row.packageConfigs[uuid] }; 
       });
-
-      this.selectedPackages = Array.from(mergedByPackage.keys());
-
-      const servicesMap = {};
-      this.selectedPackages.forEach((packageUuid) => {
-        const list = mergedByPackage.get(packageUuid) || [];
-        servicesMap[packageUuid] = list;
-
-        if (list.length > 0) {
-          const firstService = list[0];
-          this.lastUsedValues = {
-            numberOfInsured: firstService.numberOfInsured,
-            description: firstService.description,
-            planType: firstService.planType,
-          };
-        }
-
-        this.ensureRatesLoaded(packageUuid);
-      });
-
-      this.packageServicesMap = servicesMap;
-
-      if (!this.expandedPackageUuid && this.selectedPackages.length) {
-        this.expandedPackageUuid = this.selectedPackages[0];
+      this.groupRows.push(dup);
+    },
+    removeGroupRow(index) {
+      if (this.groupRows.length > 1) {
+        const id = this.groupRows[index]?.id;
+        this.groupRows.splice(index, 1);
+        if (id) delete this.pkgBtnRefs[id];
       }
     },
 
-    getPackageServices(packageUuid) {
-      return this.packageServicesMap[packageUuid] || [];
+
+
+
+// ── Payload ──────────────────────────────────────────────
+buildPayload() {
+  const servicesList = [];
+  this.groupRows.forEach(row => {
+    row.selectedPackageUuuids.forEach(packageUuid => {
+      const config = row.packageConfigs[packageUuid];
+      if (!config) return;
+      const planType = this.mapPlanTypeToApi(config.planType);
+      const description = this.normalizeValue(row.description);
+      let individualType = "NA";
+      if (planType === "Individual_Plan") {
+        const d = String(description || "").trim().toLowerCase();
+        individualType = d === "1" || d === "member" || d === "main member" || d === "member only" ? "Member"
+          : d === "2" || d === "spouse" ? "Spouse"
+          : d === "3" || d === "children" || d === "child" ? "Children"
+          : "Member";
+      }
+      
+      // Determine the correct sumAssured/coverage based on plan type
+      let sumAssured = 0;
+      let coverage = 0;
+      
+      if (this.isFamilySharedPlan(config.planType)) {
+        // For Family Shared Plan: coverage → sumAssured
+        sumAssured = Number(config.coverage) || 0;
+        coverage = Number(config.coverage) || 0;
+      } else if (this.isIndividualPlan(config.planType)) {
+        sumAssured = Number(config.sumAssured) || 0;
+        coverage = Number(config.sumAssured) || 0;
+      } else {
+        sumAssured = Number(config.sumAssured) || 0;
+        coverage = Number(config.coverage) || 0;
+      }
+      
+      servicesList.push({
+        packageUuid,
+        benefitGroupCode: row.benefitGroupCode,
+        numberOfInsured: Number(row.numberOfInsured) || 0,
+        description: localNormalizeDescription(description),
+        rate: Number(config.rate) || 0,
+        premium: Number(config.premium) || 0,
+        coverage: coverage,  // Keep for backward compatibility
+        sumInsured: Number(config.sumInsured) || 0,
+        sumAssured: sumAssured,  // This is the important field
+        depSumAssured: Number(config.depSumAssured) || 0,
+        spouseSumAssured: Number(config.spouseSumAssured) || 0,
+        planType,
+        individualType,
+        spouse: individualType === "Spouse",
+        // Include individual rates for mixed plans
+        employeeRate: Number(config.employeeRate) || 0,
+        dependentRate: Number(config.dependentRate) || 0,
+        spouseRate: Number(config.spouseRate) || 0,
+      });
+    });
+  });
+
+  const payload = { quoatedServices: servicesList };
+  if (this.quotationUuid) payload.quotationUuid = this.quotationUuid;
+  const uuids = [...new Set(servicesList.map(s => s.packageUuid))];
+  payload.quotations = uuids.map(uuid => ({ packageUuid: uuid, services: servicesList.filter(s => s.packageUuid === uuid) }));
+  return payload;
+},
+    submitAction(action) {
+      if (!this.formIsValid && !this.readOnlyRows) return;
+      const payload = { action, data: this.buildPayload() };
+      if (typeof this.onSubmit === "function") this.onSubmit(payload);
+      this.$emit("submit", payload);
+    },
+
+    // ── Mapping helpers ──────────────────────────────────────
+    normalizePlanTypeFromPrefill(planType) {
+      const v = this.normalizeValue(planType);
+      const all = [Plan["Individual Plan"], Plan["Dependent Shared Plan"], Plan["Dual Premium Dependent Shared Plan"], Plan["Family Shared Plan"]];
+      if (all.includes(v)) return v;
+      if (typeof v === "string") {
+        if (v === "Individual Plan"                    || v === "Individual_Plan")                    return Plan["Individual Plan"];
+        if (v === "Dependent Shared Plan"              || v === "Dependent_Shared_Plan")              return Plan["Dependent Shared Plan"];
+        if (v === "Dual Premium Dependent Shared Plan" || v === "Dual_Premium_dependent_Shared_Plan") return Plan["Dual Premium Dependent Shared Plan"];
+        if (v === "Family Shared Plan"                 || v === "Family_Shared_Plan")                 return Plan["Family Shared Plan"];
+      }
+      return v;
     },
 
     mapPlanTypeToEnum(planType) {
-      const mapping = {
-        Individual_Plan: Plan["Individual Plan"],
-        Dependent_Shared_Plan: Plan["Dependent Shared Plan"],
-        Family_Shared_Plan: Plan["Family Shared Plan"],
+      const m = { 
+        Individual_Plan: Plan["Individual Plan"], 
+        Dependent_Shared_Plan: Plan["Dependent Shared Plan"], 
+        Dual_Premium_dependent_Shared_Plan: Plan["Dual Premium Dependent Shared Plan"], 
+        Family_Shared_Plan: Plan["Family Shared Plan"] 
       };
-      return mapping[planType] || planType;
+      return m[planType] || planType;
     },
 
     mapPlanTypeToApi(planType) {
-      const normalized = this.normalizeValue(planType);
-      const mapping = {
-        [Plan["Individual Plan"]]: "Individual_Plan",
-        [Plan["Dependent Shared Plan"]]: "Dependent_Shared_Plan",
-        [Plan["Family Shared Plan"]]: "Family_Shared_Plan",
+      const n = this.normalizeValue(planType);
+      const m = { 
+        [Plan["Individual Plan"]]: "Individual_Plan", 
+        [Plan["Dependent Shared Plan"]]: "Dependent_Shared_Plan", 
+        [Plan["Dual Premium Dependent Shared Plan"]]: "Dual_Premium_dependent_Shared_Plan", 
+        [Plan["Family Shared Plan"]]: "Family_Shared_Plan" 
       };
-      return mapping[normalized] || normalized;
+      return m[n] || n;
     },
 
-    normalizeValue(val) {
-      if (typeof val === "object" && val !== null) {
-        return val.value ?? val.id ?? val.label ?? val;
-      }
-      return val;
+    normalizeValue(val) { 
+      return typeof val === "object" && val !== null ? (val.value ?? val.id ?? val.label ?? val) : val; 
     },
 
-    getPlanOptionsForPackage(packageUuid, currentIndex = -1) {
-      const rates = this.getRatesForPackage(packageUuid);
-      const pkg = this.packages.find((p) => p.packageUuid === packageUuid);
-
-      if (pkg && isFemaleOnlyPackage(this.packages, pkg.packageName)) {
-        return [{ label: "Individual Plan", value: Plan["Individual Plan"] }];
-      }
-
-      const services = this.packageServicesMap?.[packageUuid] || [];
-      const taken = new Set(
-        services
-          .filter((s, idx) => idx !== currentIndex)
-          .map((s) => this.normalizeValue(s?.planType))
-          .filter((v) => v !== "undefined" && v !== "null" && v !== "")
-      );
-
-      const base = (() => {
-        if (rates.length === 0) {
-          return [
-            { label: "Individual Plan", value: Plan["Individual Plan"] },
-            { label: "Dependent Shared Plan", value: Plan["Dependent Shared Plan"] },
-            { label: "Family Shared Plan", value: Plan["Family Shared Plan"] },
-          ];
-        }
-
-        const uniquePlanTypes = [...new Set(rates.map((r) => r.planType))];
-        return uniquePlanTypes.map((pt) => ({
-          label: this.formatPlanTypeLabel(pt),
-          value: this.mapPlanTypeToEnum(pt),
-        }));
-      })();
-
-      if (taken.has(Plan["Individual Plan"])) {
-        const current = services?.[currentIndex]?.planType;
-        const currentNorm = this.normalizeValue(current);
-        return base.filter((opt) => {
-          if (this.normalizeValue(opt?.value) !== Plan["Individual Plan"]) return true;
-          return currentNorm === Plan["Individual Plan"];
-        });
-      }
-
-      return base;
-    },
-
-    formatPlanTypeLabel(planType) {
-      const labels = {
-        Individual_Plan: "Individual Plan",
-        Dependent_Shared_Plan: "Dependent Shared Plan",
-        Family_Shared_Plan: "Family Shared Plan",
+    formatPlanTypeLabel(pt) {
+      const m = { 
+        Individual_Plan: "Individual Plan", 
+        Dependent_Shared_Plan: "Dependent Shared Plan", 
+        Dual_Premium_dependent_Shared_Plan: "Dual Premium Dependent Shared Plan", 
+        Family_Shared_Plan: "Family Shared Plan" 
       };
-      return labels[planType] || String(planType).replace(/_/g, " ");
+      return m[pt] || String(pt).replace(/_/g, " ");
     },
 
-    getDescriptionOptions(packageUuid, planType, currentIndex) {
-      const baseOptions = (() => {
-        const rates = this.getRatesForPackage(packageUuid);
-        const effectivePlan = this.normalizeValue(planType);
-        const apiPlanType = this.mapPlanTypeToApi(effectivePlan);
-        const pkg = this.packages.find((p) => p.packageUuid === packageUuid);
-
-        if (effectivePlan === Plan["Individual Plan"]) {
-          return allMemberTYpes;
-        }
-
-        if (rates.length === 0) {
-          return getFamilyTypes(this.packages, pkg?.packageName, effectivePlan);
-        }
-
-        const planRates = rates.filter((r) => r.planType === apiPlanType);
-
-        if (planRates.length === 0) {
-          return getFamilyTypes(this.packages, pkg?.packageName, effectivePlan);
-        }
-
-        const familySizes = [...new Set(planRates.map((r) => r.familySize))].sort(
-          (a, b) => a - b
-        );
-
-        return familySizes.map((size) => {
-          const found = allMemberTYpes.find((opt) => Number(opt.value) === Number(size));
-          return found || { label: `Family Size ${size}`, value: size };
-        });
-      })();
-
-      const effectivePlan = this.normalizeValue(planType);
-      if (effectivePlan === Plan["Individual Plan"]) {
-        return baseOptions;
-      }
-
-      const services = this.packageServicesMap?.[packageUuid] || [];
-      const taken = new Set(
-        services
-          .filter((s, idx) => idx !== currentIndex)
-          .filter((s) => this.normalizeValue(s?.planType) === effectivePlan)
-          .map((s) => String(this.normalizeValue(s?.description)))
-          .filter((v) => v !== "undefined" && v !== "null" && v !== "")
-      );
-
-      return baseOptions.filter((opt) => !taken.has(String(this.normalizeValue(opt?.value))));
-    },
-
-    getRatesForService(service, packageUuid) {
-      const rates = this.getRatesForPackage(packageUuid);
-      const planType = this.normalizeValue(service.planType);
-      const apiPlanType = this.mapPlanTypeToApi(planType);
-      const description = this.normalizeValue(service.description);
-      const familySize =
-        planType === Plan["Individual Plan"] ? 1 : Number(description) || 1;
-
-      return rates.filter(
-        (r) => r.planType === apiPlanType && Number(r.familySize) === familySize
-      );
-    },
-
-    getRangeDisplayForService(service, packageUuid) {
-      const min = Number(this.getPackageMinLimit(packageUuid)) || 0;
-      const max = Number(this.getPackageMaxLimit(packageUuid)) || 0;
-      return `${formatNumber(min)} - ${formatNumber(max)}`;
-    },
-
-    getCoverageValidationForService(service, packageUuid) {
-      const min = Number(this.getPackageMinLimit(packageUuid)) || 0;
-      const max = Number(this.getPackageMaxLimit(packageUuid)) || 0;
-
-      const base = { required: true, num: true };
-
-      if (min > 0 || max > 0) {
-        return {
-          ...base,
-          num_minmax: {
-            args: [min, max],
-            message: `${formatNumber(min)} - ${formatNumber(max)}`,
-          },
-        };
-      }
-
-      return base;
-    },
-
-    handlePlanTypeChange(service, packageUuid) {
-      service.description = "";
-      service.rate = 0;
-      this.lastUsedValues.planType = service.planType;
-    },
-
-    setRateFromCache(service, packageUuid) {
-      const list = this.getRatesForService(service, packageUuid);
-      if (Array.isArray(list) && list.length > 0) {
-        const rate = list[0]?.rate;
-        service.rate = Number(rate) || 0;
-        return true;
-      }
-      service.rate = 0;
-      return false;
-    },
-
-    async handleDescriptionChange(service, packageUuid) {
-      try {
-        const planType = this.normalizeValue(service.planType);
-        const description = this.normalizeValue(service.description);
-
-        const resolved = this.setRateFromCache(service, packageUuid);
-
-        if (!resolved && (this.getRatesForPackage(packageUuid) || []).length === 0) {
-          const apiPlanType = this.mapPlanTypeToApi(planType);
-
-          let familySize = 1;
-          if (
-            planType === Plan["Dependent Shared Plan"] ||
-            planType === Plan["Family Shared Plan"]
-          ) {
-            familySize = Number(description) || 1;
-          }
-
-          const resp = await getPackageRate({
-            packageUuid: service.packageUuid || packageUuid,
-            planType: apiPlanType,
-            familySize,
-          });
-
-          const rate = resp?.data?.rate || resp?.rate || 0;
-          service.rate = Number(rate) || 0;
-        }
-
-        this.lastUsedValues.description = service.description;
-        this.updatePremium(service, packageUuid);
-      } catch (e) {
-        console.error("Failed to fetch rate:", e);
-        service.rate = 0;
-      }
-    },
-
-    calculateTotalSumInsured(service) {
-      const coverage = Number(service.coverage) || 0;
-      const insured = Number(service.numberOfInsured) || 0;
-      const planType = this.normalizeValue(service.planType);
-
-      let sum = coverage * insured;
-
-      if (planType === Plan["Family Shared Plan"] || planType === Plan["Individual Plan"]) {
-        const description = this.normalizeValue(service.description);
-        const multiplier = Number(description) || 1;
-        sum = sum * multiplier;
-      }
-
-      service.sumInsured = sum;
-      return sum;
-    },
-
-    calculatePremium(service) {
-      const sumInsured = this.calculateTotalSumInsured(service);
-      const rate = Number(service.rate) || 0;
-      const premium = sumInsured * rate;
-      service.premium = premium;
-      return premium;
-    },
-
-    updatePremium(service, packageUuid) {
-      this.calculatePremium(service);
-    },
-
-    updateLastUsedValues(service) {
-      if (service.numberOfInsured) {
-        this.lastUsedValues.numberOfInsured = service.numberOfInsured;
-      }
-    },
-
-    addServiceToPackage(packageUuid) {
-      const services = this.packageServicesMap[packageUuid] || [];
-      const firstService = services[0] || {};
-      const rates = this.getRatesForPackage(packageUuid);
-      const planTypes = [...new Set(rates.map((r) => r.planType))];
-      const defaultPlanType = planTypes[0] || "Individual_Plan";
-
-      const rawDesiredPlanType =
-        firstService.planType || this.mapPlanTypeToEnum(defaultPlanType);
-      const desiredPlanType = (() => {
-        const hasIndividual = services.some(
-          (s) => this.normalizeValue(s?.planType) === Plan["Individual Plan"]
-        );
-        if (!hasIndividual) return rawDesiredPlanType;
-        if (this.normalizeValue(rawDesiredPlanType) !== Plan["Individual Plan"]) return rawDesiredPlanType;
-
-        const options = this.getPlanOptionsForPackage(packageUuid, services.length);
-        const firstNonIndividual = (options || []).find(
-          (o) => this.normalizeValue(o?.value) !== Plan["Individual Plan"]
-        );
-        return firstNonIndividual?.value || rawDesiredPlanType;
-      })();
-
-      const newRow = {
-        packageUuid,
-        serviceQuotedUuid: genId.next().value,
-        numberOfInsured:
-          this.lastUsedValues.numberOfInsured || firstService.numberOfInsured || "",
-        description: "",
-        rate: 0,
-        premium: 0,
-        sumInsured: 0,
-        coverage: "",
-        planType: desiredPlanType,
-        individualType: defaultPlanType === "Individual_Plan" ? "Member" : "NA",
-        spouse: false,
-      };
-
-      services.push(newRow);
-
-      this.packageServicesMap = {
-        ...this.packageServicesMap,
-        [packageUuid]: services,
-      };
-
-      this.selectedPackages
-        .filter((id) => id !== packageUuid)
-        .forEach((otherUuid) => {
-          const otherRates = this.getRatesForPackage(otherUuid);
-          const otherServices = this.packageServicesMap?.[otherUuid] || [];
-          if (!Array.isArray(otherServices) || !otherServices.length) return;
-
-          const desiredPlanApi = this.mapPlanTypeToApi(desiredPlanType);
-          const planSupported = otherRates.some(
-            (r) => String(r?.planType) === String(desiredPlanApi)
-          );
-          const otherPlanType = planSupported
-            ? desiredPlanType
-            : otherServices?.[0]?.planType ||
-              this.mapPlanTypeToEnum(
-                new Set(otherRates.map((r) => r.planType)).values().next().value || "Individual_Plan"
-              );
-
-          otherServices.push({
-            packageUuid: otherUuid,
-            serviceQuotedUuid: genId.next().value,
-            numberOfInsured: newRow.numberOfInsured,
-            description: "",
-            rate: 0,
-            premium: 0,
-            sumInsured: 0,
-            coverage: "",
-            planType: otherPlanType,
-            individualType: "NA",
-            spouse: false,
-          });
-
-          this.packageServicesMap = {
-            ...this.packageServicesMap,
-            [otherUuid]: otherServices,
-          };
-        });
-    },
-
-    removeServiceFromPackage(packageUuid, serviceIndex) {
-      const services = this.packageServicesMap[packageUuid] || [];
-      if (services.length > 1) {
-        services.splice(serviceIndex, 1);
-        this.packageServicesMap = {
-          ...this.packageServicesMap,
-          [packageUuid]: services,
-        };
-      }
-    },
-
-    duplicateServiceInPackage(packageUuid, service) {
-      const services = this.packageServicesMap[packageUuid] || [];
-      services.unshift({
-        ...service,
-        serviceQuotedUuid: genId.next().value,
-      });
-
-      this.packageServicesMap = {
-        ...this.packageServicesMap,
-        [packageUuid]: services,
-      };
-    },
-
-    buildPayload() {
-      const norm = (v) =>
-        typeof v === "object" && v !== null ? v.value ?? v.id ?? v.label ?? v : v;
-
-      const quotations = (this.selectedPackages || [])
-        .filter(Boolean)
-        .map((packageUuid) => {
-          const pkg = this.packages.find((p) => p.packageUuid === packageUuid);
-          const services = this.packageServicesMap[packageUuid] || [];
-
-          return {
-            packageUuid,
-            packageName: pkg?.packageName || "",
-            planType: services[0]?.planType || "",
-            services: services.map((s) => {
-              const planType = norm(s.planType);
-              const description = norm(s.description);
-
-              let individualType = s.individualType;
-              if (planType === Plan["Individual Plan"]) {
-                const desc = String(description || "").trim();
-                if (["Member", "Spouse", "Children"].includes(desc)) {
-                  individualType = desc;
-                } else {
-                  individualType = "Member";
-                }
-              } else {
-                individualType = "NA";
-              }
-
-              return {
-                ...s,
-                planType,
-                description,
-                individualType,
-                numberOfInsured: Number(s.numberOfInsured) || 0,
-                coverage: Number(s.coverage) || 0,
-                rate: Number(s.rate) || 0,
-                premium: Number(s.premium) || 0,
-                sumInsured: Number(s.sumInsured) || 0,
-              };
-            }),
-          };
-        });
-
-      const payload = { quotations };
-      if (this.quotationUuid) {
-        payload.quotationUuid = this.quotationUuid;
-      }
-
-      return payload;
+    formatCurrency,
+    formatNumber,
+    formatRate(rate) { 
+      return (!rate && rate !== 0) ? "0.0000" : Number(rate).toFixed(4); 
     },
   },
 };
 </script>
 
 <style scoped>
-.quotation-builder {
-  @apply max-w-6xl mx-auto;
+/* ── Wrapper ─────────────────────────────────────────────────── */
+.qb-wrap {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-/* Smooth transitions */
-.transition-all {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+/* ── Header ──────────────────────────────────────────────────── */
+.qb-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.qb-title    { font-size: 1.125rem; font-weight: 700; color: #1e293b; margin: 0 0 .15rem; }
+.qb-subtitle { font-size: 0.75rem;  color: #94a3b8; margin: 0; }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .55rem 1.1rem;
+  font-size: .8125rem;
+  font-weight: 600;
+  border-radius: .75rem;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: background .15s, box-shadow .15s, opacity .15s;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-icon { width: 1rem; height: 1rem; }
+
+.btn-primary  { background: var(--color-primary, #6366f1); color: #fff; }
+.btn-primary:not(:disabled):hover { background: color-mix(in srgb, var(--color-primary,#6366f1) 85%, #000); box-shadow: 0 2px 8px rgba(99,102,241,.25); }
+
+.btn-green    { background: #16a34a; color: #fff; }
+.btn-green:not(:disabled):hover   { background: #15803d; }
+
+.btn-purple   { background: #9333ea; color: #fff; }
+.btn-purple:not(:disabled):hover  { background: #7e22ce; }
+
+.btn-outline  { background: #fff; color: #475569; border-color: #cbd5e1; }
+.btn-outline:not(:disabled):hover { background: #f8fafc; }
+
+.btn-soft     { background: color-mix(in srgb, var(--color-primary,#6366f1) 10%, transparent); color: var(--color-primary,#6366f1); }
+.btn-soft:not(:disabled):hover    { background: color-mix(in srgb, var(--color-primary,#6366f1) 18%, transparent); }
+
+/* ── Card ────────────────────────────────────────────────────── */
+.qb-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  overflow: visible;
+  transition: box-shadow .2s;
+}
+.qb-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.09); }
+
+.qb-card-header {
+  padding: 1.25rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 1.25rem 1.25rem 0 0;
 }
 
-/* Custom scrollbar for tables */
+/* ── Field grid inside header ────────────────────────────────── */
+.qb-field-group-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: end;
+}
+.qb-field-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: end;
+}
+@media (min-width: 640px) {
+  .qb-field-group {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1fr) auto;
+  }
+}
+
+.qb-field           { display: flex; flex-direction: column; gap: .375rem; }
+.qb-field--sm       { max-width: 130px; }
+
+/* ── Labels ──────────────────────────────────────────────────── */
+.qb-label {
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+.qb-label--colored { color: color-mix(in srgb, var(--color-primary,#6366f1) 70%, #64748b); }
+
+/* ── Select ──────────────────────────────────────────────────── */
+.qb-select {
+  height: 2.75rem;
+  width: 100%;
+  padding: 0 2.5rem 0 .875rem;
+  font-size: .875rem;
+  font-weight: 500;
+  color: #334155;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right .75rem center / 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: .75rem;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  cursor: pointer;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+.qb-select:focus {
+  border-color: var(--color-primary, #6366f1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,#6366f1) 15%, transparent);
+  z-index: 2;
+}
+.qb-select:disabled {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+/* ── Input ───────────────────────────────────────────────────── */
+.qb-input {
+  height: 2.75rem;
+  width: 100%;
+  padding: 0 .875rem;
+  font-size: .875rem;
+  font-weight: 500;
+  color: #334155;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: .75rem;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  box-sizing: border-box;
+}
+.qb-input:focus {
+  border-color: var(--color-primary, #6366f1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,#6366f1) 15%, transparent);
+}
+.qb-input:disabled       { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+.qb-input--center        { text-align: center; font-weight: 700; }
+.qb-input--right         { text-align: right; }
+.qb-input--muted         { background: #f8fafc !important; color: #64748b !important; font-weight: 600; }
+.qb-input--premium       { background: #f0fdf4 !important; border-color: #bbf7d0 !important; color: #15803d !important; font-weight: 700; }
+.qb-input[type="number"]::-webkit-inner-spin-button,
+.qb-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+.qb-input[type="number"] { -moz-appearance: textfield; }
+
+.qb-input-hint            { font-size: .6875rem; color: #94a3b8; text-align: right; margin-top: .2rem; }
+.qb-input-hint--green     { color: #16a34a; font-weight: 600; }
+
+/* ── Package dropdown button ─────────────────────────────────── */
+.package-dropdown-wrapper { position: relative; }
+
+.qb-pkg-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 2.75rem;
+  width: 100%;
+  padding: 0 .875rem;
+  font-size: .875rem;
+  font-weight: 500;
+  color: #334155;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: .75rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s, box-shadow .15s;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+.qb-pkg-btn:hover              { border-color: #cbd5e1; }
+.qb-pkg-btn--open,
+.qb-pkg-btn:focus              { border-color: var(--color-primary,#6366f1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,#6366f1) 15%, transparent); outline: none; z-index: 2; }
+.qb-pkg-btn:disabled           { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+.qb-pkg-btn__text              { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qb-pkg-btn__chevron           { flex-shrink: 0; width: 1rem; height: 1rem; color: #94a3b8; margin-left: .5rem; transition: transform .2s; }
+.qb-pkg-btn__chevron.rotated   { transform: rotate(180deg); }
+
+/* ── Teleported dropdown ─────────────────────────────────────── */
+.qb-pkg-dropdown {
+  position: absolute;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,.15);
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: .4rem;
+  min-width: 280px;
+}
+.qb-pkg-option {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem .75rem;
+  border-radius: .75rem;
+  cursor: pointer;
+  transition: background .1s;
+  user-select: none;
+}
+.qb-pkg-option:hover             { background: #f8fafc; }
+.qb-pkg-option--checked          { background: color-mix(in srgb, var(--color-primary,#6366f1) 6%, transparent); }
+.qb-pkg-checkbox {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: .3rem;
+  border: 1.5px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #fff;
+  transition: background .1s, border-color .1s;
+}
+.qb-pkg-option--checked .qb-pkg-checkbox {
+  background: var(--color-primary, #6366f1);
+  border-color: var(--color-primary, #6366f1);
+}
+.qb-pkg-checkbox svg { width: .7rem; height: .7rem; stroke: #fff; }
+.qb-pkg-name { font-size: .8125rem; font-weight: 600; color: #1e293b; }
+.qb-pkg-cat  { font-size: .6875rem; color: #94a3b8; margin-top: .1rem; }
+
+/* ── Row action buttons ──────────────────────────────────────── */
+.qb-row-actions { display: flex; gap: .25rem; align-items: center; justify-content: flex-end; padding-bottom: .1rem; }
+.qb-action-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: .625rem;
+  border: none;
+  cursor: pointer;
+  transition: background .15s;
+  background: transparent;
+}
+.qb-action-btn svg            { width: 1.125rem; height: 1.125rem; }
+.qb-action-btn--danger        { color: #ef4444; }
+.qb-action-btn--danger:hover  { background: #fef2f2; color: #dc2626; }
+.qb-action-btn--primary       { color: var(--color-primary, #6366f1); }
+.qb-action-btn--primary:hover { background: color-mix(in srgb, var(--color-primary,#6366f1) 10%, transparent); }
+
+/* ── Package list ────────────────────────────────────────────── */
+.qb-pkg-list { padding: 0 1.5rem; }
+
+.qb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+  gap: .5rem;
+}
+.qb-empty svg { width: 2.25rem; height: 2.25rem; color: #cbd5e1; }
+.qb-empty p   { font-size: .8125rem; color: #94a3b8; font-weight: 500; text-align: center; margin: 0; }
+
+.qb-pkg-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: stretch;
+}
+.qb-pkg-row:last-child { border-bottom: none; }
+
+.qb-header-inputs {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .qb-header-inputs {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+}
+.qb-header-limit {
+  color: var(--color-primary, #6366f1);
+  font-weight: 600;
+  text-transform: none;
+  margin-left: 0.25rem;
+}
+
+.qb-pkg-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.qb-pkg-row:last-child { border-bottom: none; }
+
+.qb-pkg-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.qb-pkg-cascade-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.qb-cascade-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  border: 1px dashed #e2e8f0;
+}
+
+@media (min-width: 640px) {
+  .qb-cascade-row {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  }
+}
+
+.qb-pkg-total-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 0.25rem;
+}
+
+.qb-pkg-total-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.75rem;
+  padding: 0 1rem;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 0.75rem;
+  color: #15803d;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.qb-pkg-total-hint {
+  font-size: 0.6875rem;
+  color: #16a34a;
+  text-align: center;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
 @media (min-width: 1024px) {
-  .space-y-3::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .space-y-3::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-  }
-  
-  .space-y-3::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-  }
-  
-  .space-y-3::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+  .qb-pkg-row {
+    grid-template-columns: 240px 1fr 180px;
+    align-items: start;
   }
 }
 
-/* Pulse animation for loading */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+.qb-pkg-info     { display: flex; align-items: center; gap: .625rem; padding-top: .25rem; }
+.qb-pkg-bar      { width: .25rem; height: 1.75rem; border-radius: .25rem; background: var(--color-primary,#6366f1); flex-shrink: 0; }
+.qb-pkg-row-name { font-size: .875rem; font-weight: 700; color: #1e293b; }
+.qb-pkg-row-hint { font-size: .6875rem; color: #94a3b8; margin-top: .1rem; }
+
+.qb-pkg-field { display: flex; flex-direction: column; gap: .3rem; }
+
+/* ── Coverage block ─────────────────────────────────────────── */
+.qb-coverage-block { display: flex; flex-direction: column; gap: .75rem; }
+
+.qb-coverage-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.qb-coverage-triple {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: .75rem;
 }
+
+@media (max-width: 639px) {
+  .qb-coverage-pair,
+  .qb-coverage-triple { grid-template-columns: 1fr; }
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.qb-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+.qb-footer-summary { display: flex; flex-direction: column; gap: .25rem; }
+.qb-footer-count   { font-size: .875rem; font-weight: 600; color: #64748b; margin: 0; }
+.qb-footer-total   { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0; }
+.qb-footer-amount  { font-size: 1.25rem; font-weight: 800; color: #16a34a; }
+.qb-footer-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+/* ── Animations ───────────────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-spin { animation: spin 1s linear infinite; }
 </style>

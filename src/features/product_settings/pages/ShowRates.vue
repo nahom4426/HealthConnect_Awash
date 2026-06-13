@@ -38,6 +38,7 @@ const manageRows = ref<RateRow[]>([])
 const memberOnlyOption = { label: 'Member Only', value: 1 }
 
 const DEPENDENT_SHARED_PLAN = 'Dependent_Shared_Plan'
+const DUAL_PREMIUM_DEPENDENT_SHARED_PLAN = 'Dual_Premium_dependent_Shared_Plan'
 
 const i = icons as any
 
@@ -59,6 +60,7 @@ function planTypePriority(planType: any) {
   if (p === Plan['Individual Plan'] || p === 'Individual_Plan') return 1
   if (p === Plan['Family Shared Plan'] || p === 'Family_Shared_Plan') return 2
   if (p === DEPENDENT_SHARED_PLAN) return 3
+  if (p === DUAL_PREMIUM_DEPENDENT_SHARED_PLAN) return 4
   return 99
 }
 
@@ -119,6 +121,7 @@ function availablePlanTypes(currentPlanType?: string) {
   const allPlans = [
     { label: 'Individual Plan', value: Plan['Individual Plan'] },
     { label: 'Dependent Shared Plan', value: DEPENDENT_SHARED_PLAN },
+    { label: 'Dual Premium Dependent Shared Plan', value: DUAL_PREMIUM_DEPENDENT_SHARED_PLAN },
     { label: 'Family Shared Plan', value: Plan['Family Shared Plan'] }
   ]
   
@@ -352,6 +355,8 @@ function formatPlanType(planType: any) {
       return 'Individual Plan'
     case DEPENDENT_SHARED_PLAN:
       return 'Dependent Shared Plan'
+    case DUAL_PREMIUM_DEPENDENT_SHARED_PLAN:
+      return 'Dual Premium Dependent Shared Plan'
     case Plan['Family Shared Plan']:
       return 'Family Shared Plan'
     default:

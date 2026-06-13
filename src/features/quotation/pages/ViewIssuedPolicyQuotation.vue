@@ -17,7 +17,7 @@ function goToInsured(row) {
   const institutionUuid = row?.institutionUuid || route.params?.institutionUuid;
   if (institutionUuid && payerInstitutionContractUuid) {
     router.push(
-      `/insured_persons/${payerInstitutionContractUuid}/${institutionUuid}/${row.quotationUuid}`
+      `/insured_persons/${payerInstitutionContractUuid}/${institutionUuid}/${payerInstitutionContractUuid}/${row?.institutionName}`
     );
   }
 }

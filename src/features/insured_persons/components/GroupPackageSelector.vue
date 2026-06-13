@@ -174,6 +174,8 @@ onMounted(() => {
                 <option value="Individual_Plan">Individual Plan</option>
                 <option value="Family_Plan">Family Plan</option>
                 <option value="Family_Shared_Plan">Family Shared Plan</option>
+                <option value="Dependent_Shared_Plan">Dependent Shared Plan</option>
+                <option value="Dual_Premium_dependent_Shared_Plan">Dual Premium Dependent Shared Plan</option>
               </select>
             </div>
           </div>

@@ -407,7 +407,7 @@ onMounted(async () => {
               v-if="draft && !isViewOnly"
               class="flex flex-wrap gap-3 justify-end pt-6 mt-8 border-t border-slate-200"
             >
-              <button
+            <!--  <button
                 type="button"
                 @click="handleAmend"
                 :disabled="pendingAction === 'amend'"
@@ -416,7 +416,7 @@ onMounted(async () => {
                 <span v-if="pendingAction === 'amend'">Amending...</span>
                 <span v-else>Amend Quotation</span>
               </button>
-
+-->
               <button
                 type="button"
                 @click="acceptDirect"

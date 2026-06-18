@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import Table from "@/components/Table.vue";
 import InsuredPersonsDataProvider from "../components/InsuredPersonsDataProvider.vue";
 import StatusRow from "../components/InsuredPersonStatusRow.vue";
 import { useAuthStore } from "@/stores/auth";
+import { useInsuredPersonsRefreshStore } from "../store/insuredPersonsRefreshStore";
 
 const props = defineProps({
   search: String,
@@ -17,11 +18,17 @@ const props = defineProps({
   },
 });
 
-
-
 const dataProvider = ref();
 const auth = useAuthStore();
 const institutionId = ref(auth.auth?.user?.payerUuid || "");
+const refreshStore = useInsuredPersonsRefreshStore();
+
+// Listen for refresh triggers
+watch(() => refreshStore.refreshTrigger, () => {
+  if (dataProvider.value) {
+    dataProvider.value.refresh();
+  }
+});
 
 const loadMore = () => {
   if (dataProvider.value) {

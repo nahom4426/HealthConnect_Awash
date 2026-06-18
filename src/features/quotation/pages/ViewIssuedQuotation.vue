@@ -5,7 +5,7 @@ import QuotationForm from "../form/QuotationForm.vue";
 import quotationDataProviderByStatus from "../components/quotationDataProviderByStatus.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import { computed, onMounted, ref } from "vue";
-import { getQuotationById, saveQuotationDraft, issueQuotation,saveSavedQuotation, acceptQuotation, savedIssueQuotation } from "@/features/quotation/api/quotationApi";
+import { getQuotationById, saveQuotationDraft, issueQuotation,saveSavedQuotation, acceptQuotation, savedIssueQuotation, downloadQuotationAttachment, viewQuotationAttachment } from "@/features/quotation/api/quotationApi";
 import { useRoute, useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 import Button from "@/components/Button.vue";
@@ -81,11 +81,27 @@ const router = useRouter();
 
 const isViewOnly = computed(() => String(route.query?.viewOnly || '') === '1')
 
+const hasAttachment = computed(() => {
+  return draft.value?.status === 'PAID' && draft.value?.file;
+})
+
+const formatFileSize = (bytes: number): string => {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 10) / 10 + ' ' + sizes[i];
+}
+
 const loading = ref(false)
 const isAmending = ref(false)
 const error = ref<string | null>(null)
 const institutionUuidForProvider = ref<string | null>(null)
 const draft = ref<any>(null)
+const attachmentLoading = ref(false)
+const showImageModal = ref(false)
+const imageModalSrc = ref<string | null>(null)
+const imageFileName = ref<string | null>(null)
 
 
 async function handleAmend() {
@@ -139,6 +155,56 @@ async function handleAmend() {
 
 function acceptDirect() {
   onIssuedFormSubmit({ action: 'accept', data: {} });
+}
+
+async function viewAttachment() {
+  if (!draft.value?.file) return;
+  
+  attachmentLoading.value = true;
+  try {
+    const fileName = draft.value.file;
+    imageFileName.value = fileName;
+    const response = await viewQuotationAttachment(fileName);
+    // Create a blob URL from the response
+    const imageUrl = URL.createObjectURL(response.data);
+    imageModalSrc.value = imageUrl;
+    showImageModal.value = true;
+  } catch (error: any) {
+    console.error('Error viewing attachment:', error);
+    toasted(false, 'Failed to view attachment');
+  } finally {
+    attachmentLoading.value = false;
+  }
+}
+
+async function downloadAttachmentFromModal() {
+  if (!imageFileName.value) return;
+  
+  try {
+    const response = await downloadQuotationAttachment(imageFileName.value);
+    // Create a temporary download link
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = imageFileName.value.split('/').pop() || 'attachment';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toasted(true, 'File downloaded successfully');
+  } catch (error: any) {
+    console.error('Error downloading attachment:', error);
+    toasted(false, 'Failed to download attachment');
+  }
+}
+
+function closeImageModal() {
+  if (imageModalSrc.value) {
+    URL.revokeObjectURL(imageModalSrc.value);
+  }
+  showImageModal.value = false;
+  imageModalSrc.value = null;
+  imageFileName.value = null;
 }
 
 function buildPrefill(packages: any[]): { packageName: string; planType: string; services: any[] }[] {
@@ -355,6 +421,24 @@ onMounted(async () => {
                 <div class="text-sm text-slate-600">
                   <span class="font-medium">{{ draft?.quoatedServices?.length || 0 }}</span> services
                 </div>
+                
+                <!-- View Attachment Button (PAID status) -->
+                <button
+                  v-if="hasAttachment"
+                  @click="viewAttachment"
+                  :disabled="attachmentLoading"
+                  class="inline-flex gap-2 items-center px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg transition-colors hover:bg-amber-100 hover:border-amber-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                  :title="`${draft?.file} (${formatFileSize(draft?.fileSize || 0)})`"
+                >
+                  <svg v-if="!attachmentLoading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                  </svg>
+                  <span>View</span>
+                </button>
               </div>
             </div>
           </div>
@@ -431,5 +515,53 @@ onMounted(async () => {
         </div>
       </div>
     </SingleInstitutionDataProvider>
+
+    <!-- Image Modal -->
+    <div v-if="showImageModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+      <div class="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-lg shadow-2xl flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center p-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">{{ imageFileName?.split('/').pop() }}</h2>
+          <button
+            @click="closeImageModal"
+            class="text-gray-400 hover:text-gray-600 transition-colors"
+            title="Close"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Image Container -->
+        <div class="flex-1 overflow-auto flex items-center justify-center p-4 bg-gray-100">
+          <img
+            v-if="imageModalSrc"
+            :src="imageModalSrc"
+            :alt="imageFileName?.split('/').pop()"
+            class="max-w-full max-h-full object-contain"
+          />
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
+          <button
+            @click="closeImageModal"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Close
+          </button>
+          <button
+            @click="downloadAttachmentFromModal"
+            class="inline-flex gap-2 items-center px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            <span>Download</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </DefaultPage>
 </template>

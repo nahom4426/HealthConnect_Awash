@@ -5,6 +5,7 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
 import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
 import PaidQuotationRowCom from "@/features/quotation/components/PaidQuotationRow.vue";
+import { toasted } from "@/utils/utils";
 
 const router = useRouter()
 const search = ref("")

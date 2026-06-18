@@ -4,7 +4,7 @@ import SingleInstitutionDataProvider from "@/features/institutions/components/Si
 import QuotationForm from "../form/QuotationForm.vue";
 import QuotationCreationDataProvider from "../components/QuotationCreationDataProvider.vue";
 import Input from "@/components/new_form_elements/Input.vue";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { saveQuotationDraft, issueQuotation } from "@/features/quotation/api/quotationApi";
 import { useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
@@ -16,6 +16,56 @@ const isSubmitting = ref(false);
 const pendingAction = ref(''); // Track pending action for loading state
 let lastCallTime = 0;
 const DEBOUNCE_TIME = 1000;
+
+// ── Date defaults (today to 1 year from now) ─────────────────
+function getDefaultBeginDate() {
+  const today = new Date();
+  return today.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+}
+
+function getDefaultEndDate() {
+  const today = new Date();
+  const nextYear = new Date(today);
+  nextYear.setFullYear(today.getFullYear() + 1);
+  return nextYear.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+}
+
+// Calculate duration between dates
+function calculateDuration(startDate, endDate) {
+  if (!startDate || !endDate) return '';
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Calculate difference in months and days
+  const yearDiff = end.getFullYear() - start.getFullYear();
+  const monthDiff = end.getMonth() - start.getMonth();
+  const totalMonths = yearDiff * 12 + monthDiff;
+  
+  if (totalMonths === 12) return '1 year';
+  if (totalMonths < 12) return `${totalMonths} month${totalMonths !== 1 ? 's' : ''}`;
+  
+  const years = Math.floor(totalMonths / 12);
+  const remainingMonths = totalMonths % 12;
+  
+  if (remainingMonths === 0) return `${years} year${years !== 1 ? 's' : ''}`;
+  return `${years} year${years !== 1 ? 's' : ''} ${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
+}
+
+// Reactive date fields with defaults
+const beginDate = ref(getDefaultBeginDate());
+const endDate = ref(getDefaultEndDate());
+
+// Computed property for date validation
+const dateError = computed(() => {
+  if (!beginDate.value || !endDate.value) {
+    return 'Both dates are required';
+  }
+  if (new Date(endDate.value) <= new Date(beginDate.value)) {
+    return 'End date must be after begin date';
+  }
+  return null;
+});
 
 const institutionForm = ref({
   institutionName: "",
@@ -99,6 +149,12 @@ function onFormSubmit(e) {
     return;
   }
 
+  // Validate dates before submission
+  if (dateError.value) {
+    toasted(false, dateError.value);
+    return;
+  }
+
   lastCallTime = now;
   isSubmitting.value = true;
   pendingAction.value = action; // Set pending action for loading state
@@ -114,9 +170,13 @@ function onFormSubmit(e) {
     description: institutionForm.value.description || "",
     quotationType: "QUOTATION",
     quoatedServices: quotedServices,
+    // Add dates to the payload with proper ISO format
+    beginDate: new Date(beginDate.value).toISOString(),
+    endDate: new Date(endDate.value).toISOString(),
   };
 
   console.log(`Making ${action} API call with ${quotedServices.length} services`);
+  console.log('Date range:', beginDate.value, 'to', endDate.value);
 
   const req = action === 'save' ? saveReq : issueReq;
   const requestFn = () => (action === 'save' ? saveQuotationDraft(payload) : issueQuotation(payload));
@@ -288,6 +348,43 @@ function onFormSubmit(e) {
             </div>
           </div>
           
+          <!-- Date Range Section -->
+          <div class="px-6 py-4 border-b bg-slate-50 border-slate-200">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">
+                  Coverage Begin Date
+                </label>
+                <input
+                  v-model="beginDate"
+                  type="date"
+                  class="px-3 py-2 w-4/5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  :class="{ 'border-red-500': dateError && !beginDate }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">
+                  Coverage End Date
+                </label>
+                <input
+                  v-model="endDate"
+                  type="date"
+                  class="px-3 py-2 w-4/5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  :class="{ 'border-red-500': dateError && !endDate }"
+                />
+              </div>
+            </div>
+            <!-- Date error message -->
+            <div v-if="dateError" class="mt-2 text-sm text-red-600">
+              {{ dateError }}
+            </div>
+            <!-- Date summary -->
+            <div v-else class="mt-2 text-sm text-slate-600">
+              Coverage period: <span class="font-semibold text-slate-800">{{ beginDate }}</span> to <span class="font-semibold text-slate-800">{{ endDate }}</span>
+              <span class="ml-2 text-emerald-600">({{ calculateDuration(beginDate, endDate) }})</span>
+            </div>
+          </div>
+          
           <div class="p-6">
             <QuotationCreationDataProvider v-slot="{ packages, pending }">
               <div v-if="pending" class="flex justify-center items-center py-12">
@@ -301,6 +398,8 @@ function onFormSubmit(e) {
                 :showHeaderControls="true"
                 :readOnlyRows="false"
                 :acceptMode="false"
+                :beginDate="beginDate"
+                :endDate="endDate"
               />
             </QuotationCreationDataProvider>
           </div>

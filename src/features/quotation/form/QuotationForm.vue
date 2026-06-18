@@ -6,7 +6,7 @@
         <h3 class="qb-title">Benefit Configuration</h3>
         <p class="qb-subtitle">Configure plan types, descriptions, and coverages for each benefit group.</p>
       </div>
-      <button v-if="!readOnlyRows" type="button" @click="addGroupRow" class="btn btn-primary">
+      <button v-if="!readOnlyRows && !inclusionMode" type="button" @click="addGroupRow" class="btn btn-primary">
         <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
@@ -37,7 +37,7 @@
                 <button
                   type="button"
                   :ref="el => { if (el) pkgBtnRefs[row.id] = el }"
-                  :disabled="readOnlyRows"
+                  :disabled="readOnlyRows || inclusionMode"
                   @click="toggleDropdown(row.id)"
                   class="qb-pkg-btn"
                   :class="{ 'qb-pkg-btn--open': openDropdownRowId === row.id }"
@@ -129,7 +129,7 @@
                 </svg>
               </button>
               <button
-                v-if="!readOnlyRows"
+                v-if="!readOnlyRows && !inclusionMode"
                 @click="duplicateGroupRow(row)"
                 class="qb-action-btn qb-action-btn--primary"
                 title="Duplicate Group"
@@ -172,7 +172,7 @@
                 <label class="qb-label">Plan Type</label>
                 <select
                   v-model="row.packageConfigs[pkgUuid].planType"
-                  :disabled="readOnlyRows"
+                  :disabled="readOnlyRows || inclusionMode"
                   class="qb-select"
                   :class="{ 'qb-select--error': getPlanTypeError(row, pkgUuid) && (row.packageConfigs[pkgUuid].planTypeTouched || attemptedSubmit) }"
                   @change="() => { 
@@ -577,8 +577,44 @@
       </div>
 
       <div class="qb-footer-actions">
+        <!-- Inclusion-specific footer buttons -->
+        <template v-if="inclusionMode">
+          <button
+            type="button"
+            :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
+            @click="submitAction('save')"
+            class="btn btn-outline"
+          >
+            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing…
+            </span>
+            <span v-else>Save Inclusion</span>
+          </button>
+          
+          <button
+            type="button"
+            :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
+            @click="submitAction('issue')"
+            class="btn btn-primary"
+          >
+            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing…
+            </span>
+            <span v-else>Create Inclusion</span>
+          </button>
+        </template>
+
+        <!-- Amend button -->
         <button
-          v-if="showAmendButton"
+          v-else-if="showAmendButton"
           type="button"
           :disabled="!!pendingAction"
           @click="$emit('amend')"
@@ -594,8 +630,9 @@
           <span v-else>Amend Quotation</span>
         </button>
 
+        <!-- Issue premium advice button -->
         <button
-          v-if="showIssuePremiumAdvice"
+          v-else-if="showIssuePremiumAdvice"
           type="button"
           :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
           @click.prevent="submitAction('issuePremiumAdvice')"
@@ -611,6 +648,7 @@
           <span v-else>Issue Premium Advice</span>
         </button>
 
+        <!-- Issue mode buttons (accept/reject) -->
         <template v-else-if="issueMode">
           <button type="button" :disabled="!!pendingAction || !formIsValid" @click="submitAction('accept')" class="btn btn-green">
             <span v-if="pendingAction === 'accept'" class="flex gap-2 items-center">
@@ -624,6 +662,7 @@
           </button>
         </template>
 
+        <!-- Normal mode (create quotation) save/issue buttons -->
         <template v-else-if="!acceptMode">
           <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('save')" class="btn btn-outline">
             <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
@@ -648,6 +687,7 @@
           </button>
         </template>
 
+        <!-- Accept mode save/issue buttons -->
         <template v-else>
           <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('save')" class="btn btn-soft">
             <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
@@ -719,7 +759,6 @@ function emptyConfig() {
     rate: 0, 
     premium: 0,
     sumInsured: 0,
-    // Track rates separately for mixed plans
     employeeRate: 0,
     dependentRate: 0,
     spouseRate: 0,
@@ -752,6 +791,10 @@ export default {
     viewAcccepted:        { type: Object,  default: () => ({}) },
     showIssuePremiumAdvice: { type: Boolean, default: false },
     showAmendButton:        { type: Boolean, default: false },
+    inclusionMode:        { type: Boolean, default: false },
+    // Date props
+    beginDate:            { type: String, default: "" },
+    endDate:              { type: String, default: "" },
   },
 
   emits: ["amend", "submit"],
@@ -764,6 +807,7 @@ export default {
       pkgBtnRefs: {},
       packageRatesCache: {},
       loadingRates: {},
+      pendingRateRequests: {},
       Plan,
       clickOutsideHandler: null,
       scrollHandler: null,
@@ -1042,24 +1086,51 @@ export default {
       return uuids.map(u => this.packages.find(p => p.packageUuid === u)?.packageName).filter(Boolean).join(", ");
     },
 
-    // ── Rates cache ──────────────────────────────────────────
+    // ── Rates cache with deduplication ──────────────────────
     async ensureRatesLoaded(packageUuid) {
-      if (!packageUuid || this.packageRatesCache[packageUuid]) return;
+      if (!packageUuid) return;
+      
+      if (this.packageRatesCache[packageUuid]) {
+        return this.packageRatesCache[packageUuid];
+      }
+      
+      if (this.pendingRateRequests[packageUuid]) {
+        return this.pendingRateRequests[packageUuid];
+      }
+      
+      this.pendingRateRequests[packageUuid] = this._fetchRates(packageUuid);
+      
+      try {
+        const result = await this.pendingRateRequests[packageUuid];
+        return result;
+      } finally {
+        delete this.pendingRateRequests[packageUuid];
+      }
+    },
+
+    async _fetchRates(packageUuid) {
       this.loadingRates = { ...this.loadingRates, [packageUuid]: true };
       try {
         const res = await getPackageRatesPerCover(packageUuid);
         const data = res?.data || res || [];
         this.packageRatesCache = { ...this.packageRatesCache, [packageUuid]: Array.isArray(data) ? data : [] };
+        return this.packageRatesCache[packageUuid];
       } catch (e) {
         console.error("Failed to load package rates:", e);
         this.packageRatesCache = { ...this.packageRatesCache, [packageUuid]: [] };
+        throw e;
       } finally {
         this.loadingRates = { ...this.loadingRates, [packageUuid]: false };
       }
     },
 
-    getRatesForPackage(uuid) { return this.packageRatesCache[uuid] || []; },
-    getPackageName(uuid)     { return this.packages.find(p => p.packageUuid === uuid)?.packageName || ""; },
+    getRatesForPackage(uuid) { 
+      return this.packageRatesCache[uuid] || []; 
+    },
+    
+    getPackageName(uuid) { 
+      return this.packages.find(p => p.packageUuid === uuid)?.packageName || ""; 
+    },
 
     getPackageMinLimit(uuid) {
       const pkg = this.packages.find(p => p.packageUuid === uuid);
@@ -1118,7 +1189,6 @@ export default {
       if (!uuids?.length) return defaults;
       const allTypes = new Set();
       uuids.forEach(uuid => this.getRatesForPackage(uuid).forEach(r => r.planType && allTypes.add(r.planType)));
-      // Merge any additional types not already in defaults
       const additional = Array.from(allTypes).filter(pt => !defaults.some(d => d.value === this.mapPlanTypeToEnum(pt)));
       const extraOpts = additional.map(pt => ({ label: this.formatPlanTypeLabel(pt), value: this.mapPlanTypeToEnum(pt) }));
       return defaults.concat(extraOpts);
@@ -1196,14 +1266,16 @@ export default {
       } else {
         row.selectedPackageUuuids.push(packageUuid);
         const newConfig = emptyConfig();
-        // Initialize touch states to false for new config
         newConfig.planTypeTouched = false;
         newConfig.coverageTouched = false;
         newConfig.sumAssuredTouched = false;
         newConfig.depSumAssuredTouched = false;
         newConfig.spouseSumAssuredTouched = false;
         row.packageConfigs = { ...row.packageConfigs, [packageUuid]: newConfig };
+        
         await this.ensureRatesLoaded(packageUuid);
+        this.setRateFromCacheForPackage(row, packageUuid);
+        this._calcPremium(row, packageUuid);
       }
       this.handleRowChange(row);
     },
@@ -1234,7 +1306,6 @@ export default {
       const config = row.packageConfigs[packageUuid];
       if (!config) return;
       
-      // Helper to clamp a numeric value within min/max limits
       const clamp = (val, min, max) => {
         const n = Number(val);
         if (isNaN(n)) return val;
@@ -1242,11 +1313,11 @@ export default {
         if (n > max) return max;
         return n;
       };
-      // Retrieve package limits
+      
       const minLimit = this.getPackageMinLimit(packageUuid);
       const maxLimit = this.getPackageMaxLimit(packageUuid);
-      // Clamp sumAssured fields if present and show toast only if it was actually changed
       let wasClamped = false;
+      
       if (config.sumAssured != null && config.sumAssured !== "") {
         const clamped = clamp(config.sumAssured, minLimit, maxLimit);
         if (clamped !== Number(config.sumAssured)) {
@@ -1277,7 +1348,6 @@ export default {
       const description = this.normalizeValue(row.description);
       const rates = this.getRatesForPackage(packageUuid);
       
-      // Reset rates & premiums
       config.employeeRate = 0;
       config.dependentRate = 0;
       config.spouseRate = 0;
@@ -1343,7 +1413,6 @@ export default {
     },
 
     recalculateRowPackage(row, packageUuid) {
-      // Re-fetch rates and recalculate
       this.setRateFromCacheForPackage(row, packageUuid);
       this._calcPremium(row, packageUuid);
     },
@@ -1522,7 +1591,6 @@ export default {
       config.spousePremium = 0;
       config.premium = 0;
       config.sumInsured = 0;
-      // Don't reset touched states - they should stay as is
     },
 
     async handlePackageDescriptionChange(row, pkgUuid) {
@@ -1626,7 +1694,6 @@ export default {
     },
 
     showToast(message, type = 'error') {
-      // Simple toast implementation - you can replace with your preferred toast library
       const toast = document.createElement('div');
       toast.textContent = message;
       toast.style.cssText = `
@@ -1651,113 +1718,120 @@ export default {
       }, 3000);
     },
 
-  initializeFromPrefill(prefillData) {
-  if (!prefillData) return;
-  const services = [];
-  prefillData.forEach(item => {
-    if (Array.isArray(item?.services)) services.push(...item.services);
-    else if (item?.packageUuid) services.push(item);
-  });
-  if (!services.length) { this.initializeDefaultRow(); return; }
-
-  const groups = {};
-  services.forEach(s => {
-    const key = s.benefitGroupCode || `${s.planType}_${s.description}_${s.numberOfInsured}`;
-    if (!groups[key]) groups[key] = { 
-      benefitGroupCode: s.benefitGroupCode || generateUUID(),
-      numberOfInsured: s.numberOfInsured, 
-      description: s.description,
-      services: [] 
-    };
-    groups[key].services.push(s);
-  });
-
-  this.groupRows = Object.values(groups).map(group => {
-    const selectedPackageUuuids = [];
-    const packageConfigs = {};
-    group.services.forEach(s => {
-      if (!selectedPackageUuuids.includes(s.packageUuid)) selectedPackageUuuids.push(s.packageUuid);
-      
-      // Normalize the plan type from the service
-      const normalizedPlanType = this.normalizePlanTypeFromPrefill(s.planType) || "";
-      
-      // Determine the correct mapping based on plan type
-      let coverageValue = "";
-      let sumAssuredValue = "";
-      let depSumAssuredValue = "";
-      let spouseSumAssuredValue = "";
-      
-      if (this.isFamilySharedPlan(normalizedPlanType)) {
-        // For Family Shared: sumAssured → coverage
-        coverageValue = s.sumAssured ?? s.coverage ?? "";
-        sumAssuredValue = s.sumAssured ?? s.coverage ?? "";
-      } else if (this.isIndividualPlan(normalizedPlanType)) {
-        // For Individual: keep sumAssured as-is
-        sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
-        depSumAssuredValue = s.depSumAssured ?? "";
-        coverageValue = "";
-      } else if (this.isDependentSharedPlan(normalizedPlanType)) {
-        // For Dependent Shared: keep separate fields
-        sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
-        depSumAssuredValue = s.depSumAssured ?? "";
-        coverageValue = "";
-      } else if (this.isDualPremiumPlan(normalizedPlanType)) {
-        // For Dual Premium: keep separate fields
-        sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
-        depSumAssuredValue = s.depSumAssured ?? "";
-        spouseSumAssuredValue = s.spouseSumAssured ?? "";
-        coverageValue = "";
-      } else {
-        // Default fallback
-        coverageValue = s.coverage ?? "";
-        sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
-        depSumAssuredValue = s.depSumAssured ?? "";
-        spouseSumAssuredValue = s.spouseSumAssured ?? "";
-      }
-      
-      packageConfigs[s.packageUuid] = {
-        ...emptyConfig(),
-        planType: normalizedPlanType,
-        planTypeTouched: true,
-        coverage: coverageValue,
-        coverageTouched: !!coverageValue,
-        sumAssured: sumAssuredValue,
-        sumAssuredTouched: !!sumAssuredValue,
-        depSumAssured: depSumAssuredValue,
-        depSumAssuredTouched: !!depSumAssuredValue,
-        spouseSumAssured: spouseSumAssuredValue,
-        spouseSumAssuredTouched: !!spouseSumAssuredValue,
-        rate: s.rate || 0,
-        premium: s.premium || 0,
-        sumInsured: s.sumInsured || 0,
-        employeeRate: s.employeeRate || s.rate || 0,
-        dependentRate: s.dependentRate || s.rate || 0,
-        spouseRate: s.spouseRate || s.rate || 0,
-        employeePremium: s.employeePremium || 0,
-        dependentPremium: s.dependentPremium || 0,
-        spousePremium: s.spousePremium || 0,
-      };
-      
-      this.ensureRatesLoaded(s.packageUuid).then(() => {
-        const row = this.groupRows.find(r => r.benefitGroupCode === group.benefitGroupCode);
-        if (row) {
-          this.setRateFromCacheForPackage(row, s.packageUuid);
-          this._calcPremium(row, s.packageUuid);
-        }
+    // ── Initialize from prefill ──────────────────────────────
+    initializeFromPrefill(prefillData) {
+      if (!prefillData) return;
+      const services = [];
+      prefillData.forEach(item => {
+        if (Array.isArray(item?.services)) services.push(...item.services);
+        else if (item?.packageUuid) services.push(item);
       });
-    });
-    return { 
-      id: genId.next().value, 
-      benefitGroupCode: group.benefitGroupCode, 
-      numberOfInsured: group.numberOfInsured,
-      description: group.description,
-      descriptionTouched: !!group.description,
-      employeesTouched: !!group.numberOfInsured,
-      selectedPackageUuuids, 
-      packageConfigs 
-    };
-  });
-},
+      if (!services.length) { this.initializeDefaultRow(); return; }
+
+      const groups = {};
+      services.forEach(s => {
+        const key = s.benefitGroupCode || `${s.planType}_${s.description}_${s.numberOfInsured}`;
+        if (!groups[key]) groups[key] = { 
+          benefitGroupCode: s.benefitGroupCode || generateUUID(),
+          numberOfInsured: s.numberOfInsured, 
+          description: s.description,
+          services: [] 
+        };
+        groups[key].services.push(s);
+      });
+
+      this.groupRows = Object.values(groups).map(group => {
+        const selectedPackageUuuids = [];
+        const packageConfigs = {};
+        group.services.forEach(s => {
+          if (!selectedPackageUuuids.includes(s.packageUuid)) selectedPackageUuuids.push(s.packageUuid);
+          
+          const normalizedPlanType = this.normalizePlanTypeFromPrefill(s.planType) || "";
+          
+          let coverageValue = "";
+          let sumAssuredValue = "";
+          let depSumAssuredValue = "";
+          let spouseSumAssuredValue = "";
+          
+          if (this.isFamilySharedPlan(normalizedPlanType)) {
+            coverageValue = s.sumAssured ?? s.coverage ?? "";
+            sumAssuredValue = s.sumAssured ?? s.coverage ?? "";
+          } else if (this.isIndividualPlan(normalizedPlanType)) {
+            sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
+            depSumAssuredValue = s.depSumAssured ?? "";
+            coverageValue = "";
+          } else if (this.isDependentSharedPlan(normalizedPlanType)) {
+            sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
+            depSumAssuredValue = s.depSumAssured ?? "";
+            coverageValue = "";
+          } else if (this.isDualPremiumPlan(normalizedPlanType)) {
+            sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
+            depSumAssuredValue = s.depSumAssured ?? "";
+            spouseSumAssuredValue = s.spouseSumAssured ?? "";
+            coverageValue = "";
+          } else {
+            coverageValue = s.coverage ?? "";
+            sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
+            depSumAssuredValue = s.depSumAssured ?? "";
+            spouseSumAssuredValue = s.spouseSumAssured ?? "";
+          }
+          
+          packageConfigs[s.packageUuid] = {
+            ...emptyConfig(),
+            planType: normalizedPlanType,
+            planTypeTouched: true,
+            coverage: coverageValue,
+            coverageTouched: !!coverageValue,
+            sumAssured: sumAssuredValue,
+            sumAssuredTouched: !!sumAssuredValue,
+            depSumAssured: depSumAssuredValue,
+            depSumAssuredTouched: !!depSumAssuredValue,
+            spouseSumAssured: spouseSumAssuredValue,
+            spouseSumAssuredTouched: !!spouseSumAssuredValue,
+            rate: s.rate || 0,
+            premium: s.premium || 0,
+            sumInsured: s.sumInsured || 0,
+            employeeRate: s.employeeRate || s.rate || 0,
+            dependentRate: s.dependentRate || s.rate || 0,
+            spouseRate: s.spouseRate || s.rate || 0,
+            employeePremium: s.employeePremium || 0,
+            dependentPremium: s.dependentPremium || 0,
+            spousePremium: s.spousePremium || 0,
+          };
+        });
+        
+        return { 
+          id: genId.next().value, 
+          benefitGroupCode: group.benefitGroupCode, 
+          numberOfInsured: group.numberOfInsured,
+          description: group.description,
+          descriptionTouched: !!group.description,
+          employeesTouched: !!group.numberOfInsured,
+          selectedPackageUuuids, 
+          packageConfigs 
+        };
+      });
+
+      // BATCH LOAD RATES
+      const allPackageUuids = new Set();
+      this.groupRows.forEach(row => {
+        row.selectedPackageUuuids.forEach(uuid => allPackageUuids.add(uuid));
+      });
+
+      if (allPackageUuids.size > 0) {
+        const loadPromises = Array.from(allPackageUuids).map(uuid => this.ensureRatesLoaded(uuid));
+        Promise.all(loadPromises).then(() => {
+          this.groupRows.forEach(row => {
+            row.selectedPackageUuuids.forEach(pkgUuid => {
+              this.setRateFromCacheForPackage(row, pkgUuid);
+              this._calcPremium(row, pkgUuid);
+            });
+          });
+        }).catch(err => {
+          console.error('Failed to load some package rates:', err);
+        });
+      }
+    },
 
     initializeDefaultRow() {
       this.groupRows = [{ 
@@ -1801,6 +1875,7 @@ export default {
       });
       this.groupRows.push(dup);
     },
+    
     removeGroupRow(index) {
       if (this.groupRows.length > 1) {
         const id = this.groupRows[index]?.id;
@@ -1809,72 +1884,77 @@ export default {
       }
     },
 
-
-
-
-// ── Payload ──────────────────────────────────────────────
-buildPayload() {
-  const servicesList = [];
-  this.groupRows.forEach(row => {
-    row.selectedPackageUuuids.forEach(packageUuid => {
-      const config = row.packageConfigs[packageUuid];
-      if (!config) return;
-      const planType = this.mapPlanTypeToApi(config.planType);
-      const description = this.normalizeValue(row.description);
-      let individualType = "NA";
-      if (planType === "Individual_Plan") {
-        const d = String(description || "").trim().toLowerCase();
-        individualType = d === "1" || d === "member" || d === "main member" || d === "member only" ? "Member"
-          : d === "2" || d === "spouse" ? "Spouse"
-          : d === "3" || d === "children" || d === "child" ? "Children"
-          : "Member";
-      }
-      
-      // Determine the correct sumAssured/coverage based on plan type
-      let sumAssured = 0;
-      let coverage = 0;
-      
-      if (this.isFamilySharedPlan(config.planType)) {
-        // For Family Shared Plan: coverage → sumAssured
-        sumAssured = Number(config.coverage) || 0;
-        coverage = Number(config.coverage) || 0;
-      } else if (this.isIndividualPlan(config.planType)) {
-        sumAssured = Number(config.sumAssured) || 0;
-        coverage = Number(config.sumAssured) || 0;
-      } else {
-        sumAssured = Number(config.sumAssured) || 0;
-        coverage = Number(config.coverage) || 0;
-      }
-      
-      servicesList.push({
-        packageUuid,
-        benefitGroupCode: row.benefitGroupCode,
-        numberOfInsured: Number(row.numberOfInsured) || 0,
-        description: localNormalizeDescription(description),
-        rate: Number(config.rate) || 0,
-        premium: Number(config.premium) || 0,
-        coverage: coverage,  // Keep for backward compatibility
-        sumInsured: Number(config.sumInsured) || 0,
-        sumAssured: sumAssured,  // This is the important field
-        depSumAssured: Number(config.depSumAssured) || 0,
-        spouseSumAssured: Number(config.spouseSumAssured) || 0,
-        planType,
-        individualType,
-        spouse: individualType === "Spouse",
-        // Include individual rates for mixed plans
-        employeeRate: Number(config.employeeRate) || 0,
-        dependentRate: Number(config.dependentRate) || 0,
-        spouseRate: Number(config.spouseRate) || 0,
+    // ── Payload ──────────────────────────────────────────────
+    buildPayload() {
+      const servicesList = [];
+      this.groupRows.forEach(row => {
+        row.selectedPackageUuuids.forEach(packageUuid => {
+          const config = row.packageConfigs[packageUuid];
+          if (!config) return;
+          const planType = this.mapPlanTypeToApi(config.planType);
+          const description = this.normalizeValue(row.description);
+          let individualType = "NA";
+          if (planType === "Individual_Plan") {
+            const d = String(description || "").trim().toLowerCase();
+            individualType = d === "1" || d === "member" || d === "main member" || d === "member only" ? "Member"
+              : d === "2" || d === "spouse" ? "Spouse"
+              : d === "3" || d === "children" || d === "child" ? "Children"
+              : "Member";
+          }
+          
+          let sumAssured = 0;
+          let coverage = 0;
+          
+          if (this.isFamilySharedPlan(config.planType)) {
+            sumAssured = Number(config.coverage) || 0;
+            coverage = Number(config.coverage) || 0;
+          } else if (this.isIndividualPlan(config.planType)) {
+            sumAssured = Number(config.sumAssured) || 0;
+            coverage = Number(config.sumAssured) || 0;
+          } else {
+            sumAssured = Number(config.sumAssured) || 0;
+            coverage = Number(config.coverage) || 0;
+          }
+          
+          servicesList.push({
+            packageUuid,
+            benefitGroupCode: row.benefitGroupCode,
+            numberOfInsured: Number(row.numberOfInsured) || 0,
+            description: localNormalizeDescription(description),
+            rate: Number(config.rate) || 0,
+            premium: Number(config.premium) || 0,
+            coverage: coverage,
+            sumInsured: Number(config.sumInsured) || 0,
+            sumAssured: sumAssured,
+            depSumAssured: Number(config.depSumAssured) || 0,
+            spouseSumAssured: Number(config.spouseSumAssured) || 0,
+            planType,
+            individualType,
+            spouse: individualType === "Spouse",
+            employeeRate: Number(config.employeeRate) || 0,
+            dependentRate: Number(config.dependentRate) || 0,
+            spouseRate: Number(config.spouseRate) || 0,
+          });
+        });
       });
-    });
-  });
 
-  const payload = { quoatedServices: servicesList };
-  if (this.quotationUuid) payload.quotationUuid = this.quotationUuid;
-  const uuids = [...new Set(servicesList.map(s => s.packageUuid))];
-  payload.quotations = uuids.map(uuid => ({ packageUuid: uuid, services: servicesList.filter(s => s.packageUuid === uuid) }));
-  return payload;
-},
+      const payload = { 
+        quoatedServices: servicesList,
+        // Add beginDate and endDate to the payload
+        beginDate: this.beginDate ? new Date(this.beginDate).toISOString() : null,
+        endDate: this.endDate ? new Date(this.endDate).toISOString() : null
+      };
+      
+      if (this.quotationUuid) payload.quotationUuid = this.quotationUuid;
+      const uuids = [...new Set(servicesList.map(s => s.packageUuid))];
+      payload.quotations = uuids.map(uuid => ({ 
+        packageUuid: uuid, 
+        services: servicesList.filter(s => s.packageUuid === uuid) 
+      }));
+      
+      return payload;
+    },
+
     submitAction(action) {
       this.attemptedSubmit = true;
       if (!this.formIsValid && !this.readOnlyRows) {

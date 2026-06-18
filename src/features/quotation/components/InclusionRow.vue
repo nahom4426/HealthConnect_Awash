@@ -31,11 +31,27 @@ const props = defineProps({
   isMobile: { type: Boolean, default: false },
 });
 
-function goToInclusion(quotationUuid: string) {
-  router.push({
-    name: 'InclusionCreate',
-    params: { quotationUuid }
-  })
+function goToInclusion(row: any) {
+  console.log('Full row data:', row);
+  console.log('All row keys:', Object.keys(row));
+  
+  const quotationUuid = row?.quotationUuid;
+  const payerInstitutionContractUuid = row?.payerInstitutionContractUuid;
+  
+  console.log('UUIDs:', { quotationUuid, payerInstitutionContractUuid });
+  
+  if (!quotationUuid || !payerInstitutionContractUuid) {
+    console.error('Missing UUIDs. Available keys:', Object.keys(row));
+    return;
+  }
+  
+  // Use path-based navigation instead of named route
+  const path = `/inclusion/create/${quotationUuid}/${payerInstitutionContractUuid}`;
+  console.log('Navigating to:', path);
+  
+  router.push(path).catch(err => {
+    console.error('Navigation failed:', err);
+  });
 }
 
 function getStatusStyle(status: any) {
@@ -98,6 +114,11 @@ const hasActions = computed(() =>
         </span>
       </div>
 
+      <!-- Hide the UUID column visually but keep data -->
+      <div v-else-if="key === 'quotationUuid'" class="hidden">
+        <!-- Hidden - just for data passing -->
+      </div>
+
       <span v-else class="text-gray-700">
         {{ formatCellValue(key as any, row) }}
       </span>
@@ -119,7 +140,7 @@ const hasActions = computed(() =>
         </RouterLink>
 
         <button
-          @click.stop="() => goToInclusion((row as any)?.quotationUuid)"
+          @click.stop="() => goToInclusion(row)"
           class="inline-flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-full shadow-sm transition-all duration-200 hover:shadow-md hover:from-green-700 hover:to-green-800 focus:outline-none"
           title="Create Inclusion"
         >

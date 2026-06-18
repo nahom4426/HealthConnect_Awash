@@ -101,10 +101,10 @@ function openItemsModal(row) {
       v-model="checked"
       toBeSelected="serviceProvidedUuid"
       :pending="pagination.pending.value"
-      :headers="{
-        head: ['Institution','Insured Name','Items','Amount','Provided Date','Status','actions'],
-        row: ['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']
-      }"
+     :headers="{
+  head: ['Institution','Insured Name','Items','Amount','Provided Date','Status','actions'],
+  row: ['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus','actions']
+}"
       :cells="{
         insuredName: (_, row) => row?.insuredName || row?.dependantName || '',
         itemsCount: (_, row) => (row?.providedItemResponses || []).length,

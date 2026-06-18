@@ -24,6 +24,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  pending: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emit event for model update
@@ -79,6 +83,7 @@ watch(() => props.modelValue, () => {
     :headers="headers"
     :cells="cells"
     :rows="rows"
+    :pending="pending"
   >
     <template #headerLast>
       <input :checked="allSelected" @change="toggleSelectAll" type="checkbox" />
@@ -90,6 +95,7 @@ watch(() => props.modelValue, () => {
         type="checkbox"
       />
     </template>
+    <!-- Fix: Use template with slot forwarding -->
     <template #actions="{ row }">
       <slot name="actions" :row="row" />
     </template>

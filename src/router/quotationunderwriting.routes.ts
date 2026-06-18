@@ -25,31 +25,49 @@ export default [
     path: '/add_new_policy',
     name: 'QuotationUnderwritingMain',
     component: UnderwritingIndex,
+    meta: {
+      permissions: ['Manages_Quotation'],
+    },
     children: [
       {
         path: '',
         name: 'QuotationUnderwritingInstitutions',
-        component: AddNewPolicy
+        component: AddNewPolicy,
+        meta: {
+          permissions: ['View_Institutions'],
+        },
       },
       {
         path: 'detail/:institutionUuid',
         name: 'QuotationUnderwritingDetail',
         component: InstitutionContractIndex,
+        meta: {
+          permissions: ['View_Institutions'],
+        },
         children: [
           {
             path: '',
             name: 'QuotationUnderwritingContractDetail',
-            component: InstitutionContractDetail
+            component: InstitutionContractDetail,
+            meta: {
+              permissions: ['View_Institutions'],
+            },
           },
           {
             path: 'institution_coverage/:payerInstitutionContractUuid',
             name: 'QuotationUnderwritingInstitutionCoverage',
-            component: InstitutionCoverage
+            component: InstitutionCoverage,
+            meta: {
+              permissions: ['View_Institutions'],
+            },
           },
           {
             path: 'insured_persons/:payerInstitutionContractUuid',
             name: 'QuotationUnderwritingPolicyHolders',
-            component: InstitutionsInsuredPersons // Added missing component
+            component: InstitutionsInsuredPersons,
+            meta: {
+              permissions: ['View_Institutions'],
+            },
           }
         ]
       }
@@ -60,24 +78,31 @@ export default [
     name: 'Institutions',
     component: Institution,
     meta: {
-      permissions: ['Read-Institutions','Create-Institutions','Update-Institutions','Delete_institutions'],
+      permissions: ['View_Institutions'],
     },
   },
   {
-		path: '/institutions/add',
-		name: 'Add Institution',
-		component: AddInstitution,
-	},
+    path: '/institutions/add',
+    name: 'Add Institution',
+    component: AddInstitution,
+    meta: {
+      permissions: ['Create_Institutions'],
+    },
+  },
   {
     path: '/institution_contracts/:id/:institutionName',
     name: 'Add Institutions',
     component: InstitutionContracts,
+    meta: {
+      permissions: ['View_Institutions'],
+    },
   },
   {
     path: '/insured_persons/:id/:institutionUuid/:quotationUuid/:institutionName',
     name: 'Insured Persons',
     component: QuotationInsured,
     meta: {
+      permissions: ['View_Issued_Policy'],
       showActionButtons: true
     }
   },
@@ -85,41 +110,65 @@ export default [
     path: '/addInstitution/:id/:institutionUuid',
     name: 'addInstitution',
     component: AddProviderForInstitution,
+    meta: {
+      permissions: ['View_Issued_Policy'],
+    },
   },
   {
     path: '/packages/:id',
     name: 'Packages',
     component: Coverages,
+    meta: {
+      permissions: ['View_Institutions'],
+    },
   },	
-    {
+  {
     path: '/removeServiceCatagories/:id/:institutionUuid/:contractUuid',
     name: 'Remove Services',
     component: RemoveCatgorieServices,
+    meta: {
+      permissions: ['Update_Institutions'],
+    },
   },
   {
     path: '/insured_list/detail/:insuredPersonUuid',
     name: 'Insured Person Details',
     component: InsuredDetails,
     props: true,
+    meta: {
+      permissions: ['View_Institutions'],
+    },
   },
   {
     path: '/issued_policy',
     name: 'Issued Policy',
-    component: InstitutionContractswithIssued
+    component: InstitutionContractswithIssued,
+    meta: {
+      permissions: ['View_Issued_Policy'],
+    },
   },
   {
     path: '/issued_policys',
     name: 'Issued Policys',
-    component: IssuedPolicy
+    component: IssuedPolicy,
+    meta: {
+      permissions: ['View_Issued_Policy'],
+    },
   },
   {
     path: '/amend_policy',
     name: 'Amend Policy',
-    component: AmendPolicy
+    component: AmendPolicy,
+    meta: {
+      permissions: ['Amend_Policy'],
+    },
   },
   {
     path: '/stage_exclusion/:payerInstitutionContractUuid?',
     name: 'Stage Exclusion',
     component: StageExclusion,
+    meta: {
+      permissions: ['Manage_Exclusion'],
+    },
   }
 ]

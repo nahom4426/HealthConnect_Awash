@@ -179,10 +179,7 @@ function pay() {
     return;
   }
   
-  if (!attachmentFile.value) {
-    toasted(false, null, "Please attach a file (PDF, Image, or Document)");
-    return;
-  }
+  // Attachment is now optional - removed the validation check
 
   const quotationUuid = props.data?.quotationUuid || props.data?.id;
 
@@ -197,7 +194,11 @@ function pay() {
 
   const formData = new FormData();
   formData.append("quotationPaymentRequest", JSON.stringify(quotationPaymentRequest));
-  formData.append("attachment", attachmentFile.value);
+  
+  // Only append attachment if a file was selected
+  if (attachmentFile.value) {
+    formData.append("attachment", attachmentFile.value);
+  }
   
   req.send(
     () => paypremium(quotationUuid, formData),
@@ -233,7 +234,7 @@ async function processPayment() {
 </script>
 
 <template>
-  <div class="bg-black/50 min-h-full p-4 grid place-items-center">
+  <div class="grid place-items-center p-4 min-h-full bg-black/50">
     <NewFormParent
       size="md"
       class="flex justify-center bg-white"
@@ -241,14 +242,14 @@ async function processPayment() {
       subtitle="Fill in the details below to process payment"
     >
       <form id="premiumPaymentForm" @submit.prevent="processPayment">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 p-4">
+        <div class="grid grid-cols-1 gap-5 p-4 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-semibold text-gray-700">
               Receipt Number <span class="text-red-500">*</span>
             </label>
             <input
               v-model="receiptNumber"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+              class="px-4 py-3 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               placeholder="Enter receipt number"
               :disabled="req.pending.value"
             />
@@ -261,7 +262,7 @@ async function processPayment() {
             <input
               v-model="receiptDate"
               type="date"
-              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+              class="px-4 py-3 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               :disabled="req.pending.value"
             />
           </div>
@@ -269,11 +270,11 @@ async function processPayment() {
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-semibold text-gray-700">Requested Premium</label>
             <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">ETB</span>
+              <span class="absolute left-4 top-1/2 text-sm font-medium text-gray-400 -translate-y-1/2">ETB</span>
               <input
                 v-model.number="state.requestedPremium"
                 type="number"
-                class="w-full border border-gray-100 rounded-xl pl-12 pr-4 py-3 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                class="py-3 pr-4 pl-12 w-full text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-100 cursor-not-allowed"
                 disabled
               />
             </div>
@@ -282,22 +283,22 @@ async function processPayment() {
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-semibold text-gray-700">Revenue Stamp</label>
             <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">ETB</span>
+              <span class="absolute left-4 top-1/2 text-sm font-medium text-gray-400 -translate-y-1/2">ETB</span>
               <input
                 v-model.number="state.revenueStamp"
                 type="number"
                 step="0.01"
                 placeholder="0.00"
-                class="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                class="py-3 pr-4 pl-12 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 :disabled="req.pending.value"
               />
             </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between items-center">
               <label class="text-sm font-semibold text-gray-700">Tax Percentage</label>
-              <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Default: 3%</span>
+              <span class="px-2 py-0.5 text-xs text-gray-400 bg-gray-100 rounded-full">Default: 3%</span>
             </div>
             <div class="relative">
               <input
@@ -307,28 +308,28 @@ async function processPayment() {
                 step="0.5"
                 min="0"
                 max="100"
-                class="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                class="px-4 py-3 pr-10 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 :disabled="req.pending.value"
               />
-              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">%</span>
+              <span class="absolute right-4 top-1/2 text-sm font-semibold text-gray-400 -translate-y-1/2">%</span>
             </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between items-center">
               <label class="text-sm font-semibold text-gray-700">Withholding Tax</label>
               <button
                 v-if="!state.calculateTax"
                 @click="recalcTax"
                 type="button"
-                class="text-xs text-green-600 hover:text-green-700 font-semibold transition-colors duration-200"
+                class="text-xs font-semibold text-green-600 transition-colors duration-200 hover:text-green-700"
                 :disabled="req.pending.value"
               >
                 Auto-calculate
               </button>
             </div>
             <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">ETB</span>
+              <span class="absolute left-4 top-1/2 text-sm font-medium text-gray-400 -translate-y-1/2">ETB</span>
               <input
                 :value="state.withHoldingTax"
                 @input="(e) => { state.withHoldingTax = parseFloat(e.target.value) || 0; state.calculateTax = false; }"
@@ -336,35 +337,33 @@ async function processPayment() {
                 step="0.01"
                 min="0"
                 :disabled="state.calculateTax || req.pending.value"
-                class="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                class="py-3 pr-4 pl-12 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 :class="{ 'bg-gray-50 text-gray-500 cursor-not-allowed': state.calculateTax }"
               />
             </div>
           </div>
 
-          <div class="sm:col-span-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl px-5 py-4 flex items-center justify-between">
+          <div class="flex justify-between items-center px-5 py-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 sm:col-span-2">
             <div>
-              <p class="text-xs text-green-700 font-medium">Net Premium</p>
+              <p class="text-xs font-medium text-green-700">Net Premium</p>
               <p class="text-xs text-green-600 opacity-70">Requested + Stamp − WHT</p>
             </div>
-            <span class="text-2xl font-bold text-green-700 tracking-tight">
+            <span class="text-2xl font-bold tracking-tight text-green-700">
               ETB {{ formatCurrency(netPremium) }}
             </span>
           </div>
 
-          <!-- Custom File Attachment - Updated to accept all document types -->
-          <div class="sm:col-span-2 flex flex-col gap-2">
+          <!-- Custom File Attachment - Optional -->
+          <div class="flex flex-col gap-2 sm:col-span-2">
             <label class="text-sm font-semibold text-gray-700">
               Attachment 
-              <span class="text-red-500">*</span>
-              <span class="ml-1 text-xs text-gray-400 font-normal">(PDF, Image, Word, Excel, or text files, max 10MB)</span>
+              <span class="ml-1 text-xs font-normal text-gray-400">(Optional - PDF, Image, Word, Excel, or text files, max 10MB)</span>
             </label>
 
             <div
-              class="relative border-2 border-dashed rounded-2xl p-6 transition-all duration-200 cursor-pointer group"
+              class="relative p-6 rounded-2xl border-2 border-dashed transition-all duration-200 cursor-pointer group"
               :class="{
                 'border-green-400 bg-green-50': attachmentFile,
-                'border-red-300 bg-red-50': !attachmentFile,
                 'border-gray-200 hover:border-green-400 hover:bg-green-50/40': !attachmentFile && !req.pending.value,
                 'opacity-50 cursor-not-allowed': req.pending.value
               }"
@@ -399,9 +398,9 @@ async function processPayment() {
               />
 
               <!-- Empty state -->
-              <div v-if="!attachmentFile" class="flex flex-col items-center gap-3 py-2">
-                <div class="w-12 h-12 bg-gray-100 group-hover:bg-green-100 rounded-2xl flex items-center justify-center transition-colors duration-200">
-                  <svg class="w-6 h-6 text-gray-400 group-hover:text-green-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div v-if="!attachmentFile" class="flex flex-col gap-3 items-center py-2">
+                <div class="flex justify-center items-center w-12 h-12 bg-gray-100 rounded-2xl transition-colors duration-200 group-hover:bg-green-100">
+                  <svg class="w-6 h-6 text-gray-400 transition-colors duration-200 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
@@ -409,17 +408,17 @@ async function processPayment() {
                   <p class="text-sm font-medium text-gray-600">
                     <span class="text-green-600">Click to upload</span> or drag and drop
                   </p>
-                  <p class="text-xs text-gray-400 mt-0.5">PDF, Images, Word, Excel, or text files</p>
+                  <p class="mt-0.5 text-xs text-gray-400">PDF, Images, Word, Excel, or text files (optional)</p>
                 </div>
               </div>
 
               <!-- File attached state -->
-              <div v-else class="flex items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
+              <div v-else class="flex gap-4 justify-between items-center">
+                <div class="flex gap-4 items-center">
                   <!-- Dynamic icon based on file type -->
-                  <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                  <div class="flex justify-center items-center w-12 h-12 rounded-xl shrink-0"
                     :class="{
-                      'bg-blue-100': fileName.endsWith('.pdf'),
+                      'bg-red-100': fileName.endsWith('.pdf'),
                       'bg-green-100': fileName.match(/\.(xlsx|xls|csv)$/i),
                       'bg-blue-100': fileName.match(/\.(doc|docx|txt|rtf)$/i),
                       'bg-purple-100': fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i),
@@ -449,7 +448,7 @@ async function processPayment() {
                   </div>
                   <div class="min-w-0">
                     <p class="text-sm font-semibold text-gray-800 truncate">{{ fileName }}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">
+                    <p class="mt-0.5 text-xs text-gray-400">
                       {{ (attachmentFile.size / 1024).toFixed(2) }} KB · 
                       {{ getFileTypeDisplay(fileName.split('.').pop()?.toLowerCase()) }}
                     </p>
@@ -457,7 +456,7 @@ async function processPayment() {
                 </div>
                 <button
                   @click.stop="removeFile"
-                  class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 shrink-0"
+                  class="flex justify-center items-center w-8 h-8 text-gray-400 rounded-lg transition-all duration-200 hover:text-red-500 hover:bg-red-50 shrink-0"
                   type="button"
                   :disabled="req.pending.value"
                 >
@@ -467,14 +466,12 @@ async function processPayment() {
                 </button>
               </div>
             </div>
-            
-            <p v-if="!attachmentFile" class="text-xs text-red-500 mt-1">Please attach a file (PDF, Image, or Document)</p>
           </div>
         </div>
       </form>
 
       <template #bottom>
-        <div class="flex justify-end w-full p-2 px-4 gap-3">
+        <div class="flex gap-3 justify-end p-2 px-4 w-full">
           <Button 
             class="!text-gray-600" 
             type="secondary" 

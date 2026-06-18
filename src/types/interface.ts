@@ -120,6 +120,7 @@ export enum ClaimStatus {
   PROCESSED = "Processed",
   CHECKED = 'Checked',
   APPROVED = 'Approved',
+  VERIFIED= 'VERIFIED',
   REQUESTED = 'Requested',
   AUTHORIZED = 'Authorized'
 
@@ -138,7 +139,10 @@ export enum PaymentStatus {
   CHECKED = "CHECKED",
   APPROVED = "APPROVED",
   AUTHORIZED = "AUTHORIZED",
-  REJECTED = "REJECTED"
+  REJECTED = "REJECTED",
+  VERIFIED = "VERIFIED",
+  CONFIRMED = "CONFIRMED",
+  COMPLETED ="COMPLETED"
 }
 export enum ClaimLevel {
 LEVEL1="LEVEL1",

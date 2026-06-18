@@ -6,7 +6,7 @@
     <!-- Mobile Drawer Toggle -->
     <button
       @click="toggleDrawer"
-      class="fixed top-3 left-3 z-30 inline-flex items-center justify-center w-10 h-10 text-white bg-primary rounded-lg shadow-medium transition-all duration-200 lg:hidden hover:bg-primary/90 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 outline-none"
+      class="inline-flex fixed top-3 left-3 z-30 justify-center items-center w-10 h-10 text-white rounded-lg transition-all duration-200 outline-none bg-primary shadow-medium lg:hidden hover:bg-primary/90 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
       :aria-label="drawerOpen ? 'Close menu' : 'Open menu'"
       :aria-expanded="drawerOpen"
     >
@@ -22,7 +22,7 @@
       <div
         v-if="drawerOpen && !isDesktop"
         @click="toggleDrawer"
-        class="fixed inset-0 z-10 bg-gray-900/30 backdrop-blur-sm lg:hidden"
+        class="fixed inset-0 z-10 backdrop-blur-sm bg-gray-900/30 lg:hidden"
         aria-hidden="true"
       ></div>
     </Transition>
@@ -70,7 +70,7 @@
         <button
           v-if="showScrollTop"
           @click="scrollToTop"
-          class="fixed right-5 bottom-5 z-40 inline-flex items-center justify-center w-9 h-9 text-gray-600 bg-white rounded-lg shadow-medium border border-gray-200 transition-all duration-200 hover:shadow-elevated hover:text-gray-800 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/40 outline-none"
+          class="inline-flex fixed right-5 bottom-5 z-40 justify-center items-center w-9 h-9 text-gray-600 bg-white rounded-lg border border-gray-200 transition-all duration-200 outline-none shadow-medium hover:shadow-elevated hover:text-gray-800 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/40"
           aria-label="Scroll to top"
         >
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -187,6 +187,7 @@ function toggleMenu(name) {
 }
 
 // Filter navs based on privileges
+
 const filteredNavs = computed(() => {
   const user = authStore.auth?.user;
   const roleName = user?.roleName;
@@ -198,28 +199,37 @@ const filteredNavs = computed(() => {
     .filter(Boolean)
     .map((p) => String(p).trim());
   const userRole = roleName;
-  const hasManagesQuotation =
-    userRole === "Super Admin" ||
-    effectivePrivileges.includes("All Privileges") ||
-    effectivePrivileges.includes("ROLE_Manages_Quotation") ||
-    effectivePrivileges.includes("Manages_Quotation");
 
-  const hasAccess = (path, requiredPrivileges) => {
-    if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
-    if (
-      userRole === "Super Admin" ||
-      effectivePrivileges.includes("All Privileges")
-    )
+  // Helper to check if user has a specific privilege
+  const hasPrivilege = (privilege) => {
+    if (userRole === "Super Admin" || effectivePrivileges.includes("All Privileges")) {
       return true;
-    if (effectivePrivileges.length === 0) return false;
-
-    return requiredPrivileges.some((priv) =>
-      effectivePrivileges.includes(`ROLE_${priv}`)
-    );
+    }
+    return effectivePrivileges.includes(`ROLE_${privilege}`) || 
+           effectivePrivileges.includes(privilege);
   };
 
+  // Helper to check if user has ALL required privileges (AND logic)
+  const hasAllPrivileges = (requiredPrivileges) => {
+    if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
+    if (userRole === "Super Admin" || effectivePrivileges.includes("All Privileges")) {
+      return true;
+    }
+    return requiredPrivileges.every(priv => hasPrivilege(priv));
+  };
+
+  // Helper to check if user has ANY required privileges (OR logic)
+  const hasAnyPrivilege = (requiredPrivileges) => {
+    if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
+    if (userRole === "Super Admin" || effectivePrivileges.includes("All Privileges")) {
+      return true;
+    }
+    return requiredPrivileges.some(priv => hasPrivilege(priv));
+  };
+
+  // Helper to get required privileges from a nav item
   const getRequiredPrivileges = (navItem) => {
-    if (navItem?.meta && Array.isArray(navItem.meta.permissions)) {
+    if (navItem?.meta?.permissions && Array.isArray(navItem.meta.permissions)) {
       return navItem.meta.permissions;
     }
     if (Array.isArray(navItem?.privilege)) {
@@ -228,34 +238,96 @@ const filteredNavs = computed(() => {
     return [];
   };
 
+  // Check if user has Manages_Quotation privilege
+  const hasManagesQuotation = hasPrivilege("Manages_Quotation");
+
   return navs
     .map((item) => {
-      if (hasManagesQuotation && item?.name === "Underwriting") {
-        return null;
-      }
-      if (!hasManagesQuotation && item?.name === "Quotation Underwriting") {
-        return null;
-      }
       if (item.navs) {
-        const filteredChildren = item.navs.filter((child) =>
-          hasAccess(child.path, getRequiredPrivileges(child))
-        );
-        if (!hasAccess(item.path, getRequiredPrivileges(item))) {
-          return null;
-        }
-        if (filteredChildren.length) {
+        const isUnderwriting = item.name === "Underwriting";
+        const isQuotationRelated = item.name === "Quotation" || item.name === "Quotation Underwriting";
+
+        // For "Underwriting" section
+        if (isUnderwriting) {
+          if (hasManagesQuotation) {
+            return null;
+          }
+          
+          // Filter children using OR logic
+          const filteredChildren = item.navs.filter((child) => {
+            const childPrivs = getRequiredPrivileges(child);
+            return hasAnyPrivilege(childPrivs);
+          });
+          
+          if (filteredChildren.length === 0) {
+            return null;
+          }
+          
           return {
             ...item,
-            navs: filteredChildren,
+            navs: filteredChildren
           };
         }
-        return null;
+
+        // For "Quotation" and "Quotation Underwriting"
+        if (isQuotationRelated) {
+          if (!hasManagesQuotation) {
+            return null;
+          }
+          
+          // Filter children using AND logic
+          const filteredChildren = item.navs.filter((child) => {
+            const childPrivs = getRequiredPrivileges(child);
+            return hasAllPrivileges(childPrivs);
+          });
+          
+          if (filteredChildren.length === 0) {
+            return null;
+          }
+          
+          return {
+            ...item,
+            navs: filteredChildren
+          };
+        }
+
+        // For any other sections
+       // For any other sections
+const parentPrivs = getRequiredPrivileges(item);
+const hasParentAccess = hasAnyPrivilege(parentPrivs); // ← Changed to OR
+
+const filteredChildren = item.navs.filter((child) => {
+  const childPrivs = getRequiredPrivileges(child);
+  return hasAllPrivileges(childPrivs);
+});
+
+if (filteredChildren.length === 0) {
+  return null;
+}
+
+if (hasParentAccess) {
+  return {
+    ...item,
+    navs: filteredChildren
+  };
+}
+
+return null;
       } else {
-        return hasAccess(item.path, getRequiredPrivileges(item)) ? item : null;
+        const requiredPrivs = getRequiredPrivileges(item);
+        return hasAllPrivileges(requiredPrivs) ? item : null;
       }
     })
     .filter(Boolean);
 });
+
+// Initialize expanded menus when filtered navs change
+watch(filteredNavs, (newNavs) => {
+  // Keep only expanded menus that still exist
+  expandedMenus.value = expandedMenus.value.filter(menuName => 
+    newNavs.some(item => item.name === menuName)
+  );
+}, { deep: true });
 </script>
 
 <style scoped>

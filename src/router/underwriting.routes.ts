@@ -19,36 +19,55 @@ import InstitutionContractswithIssued from "@/features/underwriting/pages/Instit
 import AddProviderForInstitution from "@/features/providers/pages/AddProviderForInstitution.vue";
 import RemoveCatgorieServices from '@/features/providers/pages/removeCatgorieServices.vue';
 import AddInstitution from "@/features/institutions/pages/AddInstitution.vue";
+
 export default [
   {
     path: '/add_new_policy',
     name: 'UnderwritingMain',
     component: UnderwritingIndex,
+    meta: {
+      permissions: ['Institutions', 'Issued Policy', 'Amend Policy'], // Parent needs ALL of these
+    },
     children: [
       {
         path: '',
         name: 'UnderwritingInstitutions',
-        component: AddNewPolicy
+        component: AddNewPolicy,
+        meta: {
+          permissions: ['Institutions'],
+        },
       },
       {
         path: 'detail/:institutionUuid',
         name: 'UnderwritingDetail',
         component: InstitutionContractIndex,
+        meta: {
+          permissions: ['Institutions'],
+        },
         children: [
           {
             path: '',
             name: 'UnderwritingContractDetail',
-            component: InstitutionContractDetail
+            component: InstitutionContractDetail,
+            meta: {
+              permissions: ['Institutions'],
+            },
           },
           {
             path: 'institution_coverage/:payerInstitutionContractUuid',
             name: 'UnderwritingInstitutionCoverage',
-            component: InstitutionCoverage
+            component: InstitutionCoverage,
+            meta: {
+              permissions: ['Institutions'],
+            },
           },
           {
             path: 'insured_persons/:payerInstitutionContractUuid',
             name: 'UnderwritingPolicyHolders',
-            component: InstitutionsInsuredPersons // Added missing component
+            component: InstitutionsInsuredPersons,
+            meta: {
+              permissions: ['Institutions'],
+            },
           }
         ]
       }
@@ -59,29 +78,31 @@ export default [
     name: 'Institutions',
     component: Institution,
     meta: {
-      requiresAuth: true,
-      permissions: ["Read_institutions", "Create_institution", "Update_institution", "Read_institution"],
+      permissions: ['Institutions'],
     },
   },
-    {
-      path: '/institutions/add',
-      name: 'Add Institution',
-      component: AddInstitution,
-      meta: {
-        requiresAuth: true,
-        permissions: ['Create_institution'],
-      },
+  {
+    path: '/institutions/add',
+    name: 'Add Institution',
+    component: AddInstitution,
+    meta: {
+      permissions: ['Create_institution'],
     },
+  },
   {
     path: '/institution_contracts/:id/:institutionName',
     name: 'Add Institutions',
     component: InstitutionContracts,
+    meta: {
+      permissions: ['Institutions'],
+    },
   },
   {
     path: '/insured_persons/:id/:institutionUuid/:institutionName',
     name: 'Insured Persons',
     component: Insured,
     meta: {
+      permissions: ['Institutions'],
       showActionButtons: true
     }
   },
@@ -89,46 +110,73 @@ export default [
     path: '/addInstitution/:id/:institutionUuid',
     name: 'Add Providers To Institutions',
     component: AddProviderForInstitution,
+    meta: {
+      permissions: ['Create_institution'],
+    },
   },
   {
     path: '/packages/:id',
     name: 'Packages',
     component: Coverages,
+    meta: {
+      permissions: ['Institutions'],
+    },
   },	
-    {
+  {
     path: '/removeServiceCatagories/:id/:institutionUuid/:contractUuid',
     name: 'Remove Services',
     component: RemoveCatgorieServices,
+    meta: {
+      permissions: ['Update_institution'],
+    },
   },
   {
     path: '/insured_list/detail/:insuredPersonUuid',
     name: 'Insured Person Details',
     component: InsuredDetails,
     props: true,
+    meta: {
+      permissions: ['Institutions'],
+    },
   },
   {
     path: '/issued_policy',
     name: 'Issued Policy',
-    component: InstitutionContractswithIssued
+    component: InstitutionContractswithIssued,
+    meta: {
+      permissions: ['Issued Policy'],
+    },
   },
   {
     path: '/issued_policys',
     name: 'Issued Policys',
-    component: IssuedPolicy
+    component: IssuedPolicy,
+    meta: {
+      permissions: ['Issued Policy'],
+    },
   },
   {
     path: '/amend_policy',
     name: 'Amend Policy',
-    component: AmendPolicy
+    component: AmendPolicy,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
   },
   {
     path: '/utilization',
     name: 'Utilization',
-    component: Utilization
+    component: Utilization,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
   },
   {
     path: '/expired_contracts',
     name: 'Expired Contracts',
-    component: ExpiredContracts
+    component: ExpiredContracts,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
   }
 ]

@@ -107,7 +107,7 @@ function openItemsModal(row) {
       :pending="pagination.pending.value"
       :headers="{
         head: ['Institution','Insured Name','Items','Amount','Provided Date','Status','actions'],
-        row: ['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']
+        row: ['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus','actions']
       }"
       :cells="{
         insuredName: (_, row) => row?.insuredName || row?.dependantName || '',

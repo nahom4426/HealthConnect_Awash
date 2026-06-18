@@ -23,7 +23,6 @@ function hasManagesQuotationPrivilege() {
     const storedUser = localStorage.getItem("userDetail");
     if (!storedUser) return false;
     const parsedUser = JSON.parse(storedUser);
-    // userDetail can be stored as { user: {...} } or as a flat user object.
     const user = parsedUser?.user ?? parsedUser;
 
     const normalizePrivilege = (priv) => {
@@ -49,13 +48,7 @@ function hasManagesQuotationPrivilege() {
   }
 }
 
-// NOTE: We intentionally start with underwritingRoutes and then (after auth is loaded)
-// swap routes dynamically in beforeEach. This prevents a wrong route set being chosen
-// during cold start before login/privilege refresh completes.
 const selectedUnderwritingRoutes = underwritingRoutes;
-
-// Since we mount underwritingRoutes initially, treat that as the applied variant.
-// This ensures switching to quotation removes the existing underwriting routes first.
 let appliedUnderwritingVariant = "underwriting";
 
 function flattenRouteNames(routes) {
@@ -74,7 +67,6 @@ function applyUnderwritingVariant(router, variant) {
   const nextRoutes = variant === "quotation" ? quotationUnderwritingRoutes : underwritingRoutes;
   const prevRoutes = appliedUnderwritingVariant === "quotation" ? quotationUnderwritingRoutes : underwritingRoutes;
 
-  // Remove previously-applied variant routes first (by name)
   if (appliedUnderwritingVariant) {
     const prevNames = flattenRouteNames(prevRoutes);
     prevNames.forEach((name) => {
@@ -82,9 +74,7 @@ function applyUnderwritingVariant(router, variant) {
     });
   }
 
-  // Add new variant routes under MainLayout (/app)
   nextRoutes.forEach((r) => router.addRoute("app", r));
-
   appliedUnderwritingVariant = variant;
   console.info(
     "[router] underwriting route set:",
@@ -94,7 +84,7 @@ function applyUnderwritingVariant(router, variant) {
 
 function addMetaToRoutes(routes) {
   return routes.map(route => {
-    if (route.meta?.privilege && !route.meta.requiresAuth) {
+    if (route.meta?.permissions && !route.meta.requiresAuth) {
       route.meta.requiresAuth = true;
     }
 
@@ -111,15 +101,14 @@ const router = createRouter({
   routes: addMetaToRoutes([
     {
       path: '/',
-      redirect: '/login' // Root path redirects to login
+      redirect: '/login'
     },
     {
       path: '/login',
       name: 'login',
       component: Login,
-      meta: { requiresAuth: false } // Explicitly set for login page
+      meta: { requiresAuth: false }
     },
-     
     {
       path: '/dashboard',
       name: 'dashboard',
@@ -174,12 +163,40 @@ const router = createRouter({
   ]),
 });
 
+// Helper function to check if user has a specific privilege
+function hasPrivilege(user, privilegeName) {
+  if (!user) return false;
+  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
+  if (user?.roleName === 'Super Admin') return true;
+  if (privileges.includes('All Privileges') || privileges.includes('ROLE_All Privileges')) return true;
+  return privileges.includes(`ROLE_${privilegeName}`) || privileges.includes(privilegeName);
+}
+
+// Helper to check if user has ALL required privileges (AND logic)
+function hasAllPrivileges(user, requiredPrivileges) {
+  if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
+  if (!user) return false;
+  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
+  if (user?.roleName === 'Super Admin') return true;
+  if (privileges.includes('All Privileges') || privileges.includes('ROLE_All Privileges')) return true;
+  return requiredPrivileges.every(priv => hasPrivilege(user, priv));
+}
+
+// Helper to check if user has ANY required privileges (OR logic)
+function hasAnyPrivilege(user, requiredPrivileges) {
+  if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
+  if (!user) return false;
+  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
+  if (user?.roleName === 'Super Admin') return true;
+  if (privileges.includes('All Privileges') || privileges.includes('ROLE_All Privileges')) return true;
+  return requiredPrivileges.some(priv => hasPrivilege(user, priv));
+}
+
 // Consolidated beforeEach with proper authentication check
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const breadcrumbStore = useBreadcrumb();
   
-  // Initialize auth from localStorage if not already loaded
   if (!authStore.auth) {
     const storedUser = localStorage.getItem("userDetail");
     if (storedUser) {
@@ -193,7 +210,6 @@ router.beforeEach((to, from, next) => {
     }
   }
   
-  // Handle breadcrumbs
   const routes = to.matched.reduce((routes, route) => {
     if (routes.find(el => el.name === route.name)) return routes;
 
@@ -220,31 +236,14 @@ router.beforeEach((to, from, next) => {
 
   breadcrumbStore.breadcrumbs = routes;
   
-  // Check if route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  
-  // Get user data from store (after initialization)
   const user = authStore.auth?.user ?? authStore.auth;
-  const hasValidToken = !!user?.token; // Token is stored in user.token
-console.log('User data:', user);
-  const hasRolePrivilege = (privilegeName) => {
-    if (!user) return false;
-    const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
-    if (user?.roleName === 'Super Admin') return true;
-    if (privileges.includes('All Privileges') || privileges.includes('ROLE_All Privileges')) return true;
-    return privileges.includes(`ROLE_${privilegeName}`) || privileges.includes(privilegeName);
-  };
+  const hasValidToken = !!user?.token;
 
   // Dynamically swap underwriting route set after auth is available
   if (hasValidToken) {
-    const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
-    const shouldUseQuotation =
-      user?.roleName === "Super Admin" ||
-      privileges.includes("All Privileges") ||
-      privileges.includes("ROLE_All Privileges") ||
-      privileges.includes("ROLE_Manages_Quotation");
-
-    const desiredVariant = shouldUseQuotation ? "quotation" : "underwriting";
+    const hasManagesQuotation = hasPrivilege(user, "Manages_Quotation");
+    const desiredVariant = hasManagesQuotation ? "quotation" : "underwriting";
     if (appliedUnderwritingVariant !== desiredVariant) {
       applyUnderwritingVariant(router, desiredVariant);
       next({ ...to, replace: true });
@@ -253,47 +252,72 @@ console.log('User data:', user);
   }
 
   if (requiresAuth && !hasValidToken) {
-    // Redirect to login if authentication is required but no token
     next('/login');
-  } else if (to.path === '/login' && hasValidToken) {
-    // Redirect to dashboard if user is already logged in and tries to access login
+    return;
+  }
+  
+  if (to.path === '/login' && hasValidToken) {
     next('/dashboard');
-  } else {
-    // Check route permissions for authenticated users
-    if (hasValidToken && requiresAuth) {
-      if (to?.query?.pageContext === 'amend' && !hasRolePrivilege('Update_policy')) {
-        const { pageContext, ...restQuery } = to.query || {};
-        next({ name: to.name, params: to.params, query: restQuery, replace: true });
+    return;
+  }
+
+  // Check route permissions for authenticated users
+  if (hasValidToken && requiresAuth) {
+    // Collect all permissions from route and its children
+    const requiredPerms = to.matched.reduce((acc, record) => {
+      if (record.meta?.permissions && Array.isArray(record.meta.permissions)) {
+        acc.push(...record.meta.permissions);
+      }
+      return acc;
+    }, []);
+
+    // If route requires permissions, check them
+    if (requiredPerms.length > 0) {
+      const privileges = Array.isArray(user.privileges) ? user.privileges : [];
+      
+      // Super Admin or All Privileges bypass
+      if (user.roleName === 'Super Admin' || privileges.includes('All Privileges')) {
+        next();
         return;
       }
 
-      const requiredPerms = to.matched.reduce((acc, r) => {
-        if (r.meta && Array.isArray(r.meta.permissions)) {
-          acc.push(...r.meta.permissions);
-        }
-        return acc;
-      }, []);
+      // Check if user has ALL required permissions for the route
+      const hasAccess = hasAllPrivileges(user, requiredPerms);
+      
+      if (!hasAccess) {
+        // Check if route is under "Quotation Underwriting" or "Underwriting" section
+        // and apply appropriate logic
+        const isQuotationUnderwriting = to.matched.some(record => 
+          record.name?.toString().startsWith('QuotationUnderwriting')
+        );
+        const isUnderwriting = to.matched.some(record => 
+          record.name?.toString().startsWith('Underwriting') || 
+          record.name?.toString() === 'UnderwritingMain'
+        );
 
-      if (requiredPerms.length > 0) {
-        const privileges = Array.isArray(user.privileges) ? user.privileges : [];
-        
-        // Super Admin or All Privileges bypass
-        if (user.roleName === 'Super Admin' || privileges.includes('All Privileges')) {
-          next();
+        // For Quotation Underwriting routes, user needs Manages_Quotation
+        if (isQuotationUnderwriting && !hasPrivilege(user, "Manages_Quotation")) {
+          next('/dashboard');
           return;
         }
 
-        // Check at least one required permission exists in user's ROLE_ list
-        const hasAccess = requiredPerms.some((p) => privileges.includes(`ROLE_${p}`));
-        if (!hasAccess) {
+        // For Underwriting routes, check if user has ANY of the required permissions
+        if (isUnderwriting) {
+          const hasAnyAccess = hasAnyPrivilege(user, requiredPerms);
+          if (!hasAnyAccess) {
+            next('/dashboard');
+            return;
+          }
+        } else {
+          // For other routes, use strict AND logic
           next('/dashboard');
           return;
         }
       }
     }
-    
-    next();
   }
+  
+  next();
 });
 
 export default router;

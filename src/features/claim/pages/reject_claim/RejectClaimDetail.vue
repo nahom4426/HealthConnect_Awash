@@ -12,8 +12,8 @@ import { ref, onMounted, computed } from 'vue';
 import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
 import ProvidedItemsModal from '../../components/ProvidedItems.mdl.vue';
-const router = useRouter();
 
+const router = useRouter();
 const route = useRoute();
 const batchCode = route.params.batchCode;
 const claimUuid = route.params.claimUuid;
@@ -42,10 +42,10 @@ const canProcessWholeClaim = computed(() => {
   const rows = store.claims || [];
   if (!rows.length) return false;
   return rows.every((r) =>
-  !['PENDING', 'REJECTION_REQUESTED'].includes(
-    (r?.serviceClaimStatus || '').toUpperCase()
-  )
-);
+    !['PENDING', 'REJECTION_REQUESTED'].includes(
+      (r?.serviceClaimStatus || '').toUpperCase()
+    )
+  );
 });
 
 // process/reject multiple selected
@@ -90,7 +90,6 @@ function openItemsModal(row) {
   modalTitle.value = `Provided Items — ${row?.insuredName || row?.institutionName || ''}`;
   showItemsModal.value = true;
 }
-
 </script>
 
 <template>
@@ -107,7 +106,7 @@ function openItemsModal(row) {
       :pending="pagination.pending.value"
       :headers="{
         head: ['Institution','Insured Name','Items','Amount','Provided Date','Status','actions'],
-        row: ['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']
+        row: ['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus','actions']
       }"
       :cells="{
         insuredName: (_, row) => row?.insuredName || row?.dependantName || '',
@@ -116,6 +115,7 @@ function openItemsModal(row) {
         providedDate: secondDateFormat
       }"
       :rows="store.claims"
+      :rowClass="(row) => row?.serviceClaimStatus?.toUpperCase() === 'REJECTED' ? 'bg-red-50 text-red-700 line-through' : ''"
     >
       <template #actions="{ row }">
         <Button size="xs" type="elevated" @click="openItemsModal(row)">View Items</Button>
@@ -133,6 +133,7 @@ function openItemsModal(row) {
       :row="modalRow"
       :items="modalItems"
       :title="modalTitle"
+      :isServiceClaimRejected="modalRow?.serviceClaimStatus?.toUpperCase() === 'REJECTED'"
       @close="showItemsModal = false; pagination.send()"
     />
   </DefaultPage>

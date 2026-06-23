@@ -28,53 +28,75 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  rowCom: {
+    type: Object,
+    default: null,
+  },
+  rowComProps: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 // Emit event for model update
 const emit = defineEmits(['update:modelValue']);
 
-const selected = ref(props.modelValue ? [...props.modelValue] : []);
+// Helper to get value from row using dot-notation path
+function getNestedValue(obj, path) {
+  return path.split(".").reduce((state, name) => state?.[name], obj);
+}
 
 // Function to toggle selection of all rows
 function toggleSelectAll(ev) {
   const target = ev.target;
   if (target.checked) {
-    selected.value = props.rows.map((el) => {
-      return props.toBeSelected
-        .split(".")
-        .reduce((state, name) => {
-          return state[name];
-        }, el);
-    });
+    const allVals = props.rows.map((el) => getNestedValue(el, props.toBeSelected));
+    emit('update:modelValue', allVals);
   } else {
-    selected.value = [];
+    emit('update:modelValue', []);
   }
 }
 
 // Function to toggle individual data selection
 function toggleData(data) {
-  const idx = selected.value.findIndex((el) => el === data);
+  const current = props.modelValue ? [...props.modelValue] : [];
+  const idx = current.findIndex((el) => el === data);
   if (idx === -1) {
-    selected.value.push(data);
+    current.push(data);
   } else {
-    selected.value.splice(idx, 1);
+    current.splice(idx, 1);
   }
+  emit('update:modelValue', current);
+}
+
+// Check if a specific row is selected
+function isSelected(row) {
+  const val = getNestedValue(row, props.toBeSelected);
+  return (props.modelValue || []).includes(val);
 }
 
 // Computed property to check if all rows are selected
 const allSelected = computed(() => {
-  return selected.value.length === props.rows.length;
+  const modelVal = props.modelValue || [];
+  return props.rows.length > 0 && modelVal.length === props.rows.length;
 });
 
-// Watch for changes in selected items
-watch(selected, () => {
-  emit('update:modelValue', selected.value);
-}, { deep: true, flush: 'post' });
-
-// Watch for changes in modelValue prop
-watch(() => props.modelValue, () => {
-  selected.value = props.modelValue;
+// Computed: some but not all selected (for indeterminate state)
+const someSelected = computed(() => {
+  const modelVal = props.modelValue || [];
+  return modelVal.length > 0 && modelVal.length < props.rows.length;
 });
+
+// When rows change (e.g. after refetch), clean up stale selections
+watch(() => props.rows, (newRows) => {
+  if (newRows.length === 0) {
+    emit('update:modelValue', []);
+  }
+});
+
+// Expose for parent components
+const selected = computed(() => props.modelValue || []);
+defineExpose({ selected, toggleSelectAll, toggleData, isSelected, allSelected });
 </script>
 
 <template>
@@ -84,16 +106,34 @@ watch(() => props.modelValue, () => {
     :cells="cells"
     :rows="rows"
     :pending="pending"
+    :rowCom="rowCom"
+    :rowComProps="{
+      ...rowComProps,
+      selectedItems: selected,
+      toBeSelected: toBeSelected,
+      onToggleSelect: toggleData,
+    }"
   >
     <template #headerLast>
-      <input :checked="allSelected" @change="toggleSelectAll" type="checkbox" />
+      <div class="flex items-center justify-center">
+        <input
+          :checked="allSelected"
+          :indeterminate="someSelected"
+          @change="toggleSelectAll"
+          type="checkbox"
+          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+        />
+      </div>
     </template>
     <template #lastCol="{ row }">
-      <input
-        :checked="selected.includes(row?.[toBeSelected])"
-        @change="() => toggleData(row?.[toBeSelected])"
-        type="checkbox"
-      />
+      <div class="flex items-center justify-center">
+        <input
+          :checked="isSelected(row)"
+          @change="() => toggleData(getNestedValue(row, toBeSelected))"
+          type="checkbox"
+          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+        />
+      </div>
     </template>
     <!-- Fix: Use template with slot forwarding -->
     <template #actions="{ row }">

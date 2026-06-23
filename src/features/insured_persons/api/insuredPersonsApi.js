@@ -31,6 +31,19 @@ export function searchInsuredByInstitution(id, query = {}, config = {}) {
   });
 }
 
+export function searchActiveInsuredByContract(payerInstitutionContractUuid, query = {}, config = {}) {
+  return api.addAuthenticationHeader().get(`${path}/active/search/${payerInstitutionContractUuid}`, {
+    params: {
+      ...query,
+      status: 'ACTIVE'
+    },
+    ...config
+  }).then(response => {
+    return response.data;
+  }).catch(error => {
+    throw error;
+  });
+}
 export function getInsuredById(id, query = {}, config = {}) {
   return api.addAuthenticationHeader().get(`${path}/${id}`, {
     params: query,

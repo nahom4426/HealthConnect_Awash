@@ -68,7 +68,7 @@
                       </span>
                       <div>
                         <p class="qb-pkg-name">{{ pkg.packageName }}</p>
-                        <p class="qb-pkg-cat">{{ pkg.packageCategory }}</p>
+                        <p class="qb-pkg-cat">{{ pkg.packageCategory }} <span v-if="pkg.gender && pkg.gender !== 'BOTH'" class="qb-gender-badge">{{ pkg.gender }}</span></p>
                       </div>
                     </div>
                   </div>
@@ -163,7 +163,10 @@
                 <span class="qb-pkg-bar"></span>
                 <div>
                   <p class="qb-pkg-row-name">{{ getPackageName(pkgUuid) }}</p>
-                  <p v-if="row.selectedPackageUuuids.length >= 2" class="qb-pkg-row-hint">Sum Insured Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                  <p v-if="row.selectedPackageUuuids.length >= 2" class="qb-pkg-row-hint">
+                    Sum Insured Limit: {{ getRangeDisplayForPackage(pkgUuid) }}
+                    <span v-if="getPackageGender(pkgUuid) !== 'BOTH'" class="qb-gender-badge">{{ getPackageGender(pkgUuid) }}</span>
+                  </p>
                 </div>
               </div>
               
@@ -189,6 +192,28 @@
                 </select>
                 <div v-if="getPlanTypeError(row, pkgUuid) && (row.packageConfigs[pkgUuid].planTypeTouched || attemptedSubmit)" class="qb-error-hint">
                   {{ getPlanTypeError(row, pkgUuid) }}
+                </div>
+              </div>
+
+              <!-- Gender-specific input (below Plan Type) -->
+              <div v-if="getPackageGender(pkgUuid) !== 'BOTH'" class="qb-pkg-field">
+                <label class="qb-label qb-label--colored">
+                  {{ getPackageGender(pkgUuid) === 'FEMALE' ? 'Number of Adult Females' : 'Number of Adult Males' }}
+                </label>
+                <input
+                  :value="getGenderCountForPackage(row, pkgUuid)"
+                  @input="(e) => handleGenderCountInput(row, pkgUuid, e.target.value)"
+                  type="number"
+                  min="0"
+                  :max="row.numberOfInsured"
+                  :disabled="readOnlyRows || !row.description"
+                  class="qb-input qb-input--center"
+                  :class="{ 'qb-input--error': getGenderError(row, pkgUuid) && (getGenderTouchedForPackage(row, pkgUuid) || attemptedSubmit) }"
+                  placeholder="0"
+                />
+                <p class="qb-input-hint">{{ getPackageGender(pkgUuid) === 'FEMALE' ? 'Female' : 'Male' }} employees covered</p>
+                <div v-if="getGenderError(row, pkgUuid) && (getGenderTouchedForPackage(row, pkgUuid) || attemptedSubmit)" class="qb-error-hint">
+                  {{ getGenderError(row, pkgUuid) }}
                 </div>
               </div>
             </div>
@@ -765,6 +790,8 @@ function emptyConfig() {
     employeePremium: 0,
     dependentPremium: 0,
     spousePremium: 0,
+    genderCount: 0,
+    genderTouched: false,
   };
 }
 
@@ -792,7 +819,6 @@ export default {
     showIssuePremiumAdvice: { type: Boolean, default: false },
     showAmendButton:        { type: Boolean, default: false },
     inclusionMode:        { type: Boolean, default: false },
-    // Date props
     beginDate:            { type: String, default: "" },
     endDate:              { type: String, default: "" },
   },
@@ -843,6 +869,16 @@ export default {
         for (const pkgUuid of row.selectedPackageUuuids) {
           const config = row.packageConfigs[pkgUuid];
           if (!config) continue;
+
+          const pkgGender = this.getPackageGender(pkgUuid);
+          if (pkgGender !== 'BOTH') {
+            const genderCount = Number(config.genderCount) || 0;
+            if (genderCount <= 0) {
+              errors.push(`${this.getPackageName(pkgUuid)}: Number of adult ${pkgGender.toLowerCase()}s is required.`);
+            } else if (genderCount > insured) {
+              errors.push(`${this.getPackageName(pkgUuid)}: Number of adult ${pkgGender.toLowerCase()}s (${genderCount}) cannot exceed total employees (${insured}).`);
+            }
+          }
 
           if (!config.planType) {
             errors.push(`${this.getPackageName(pkgUuid)}: Please select a plan type.`);
@@ -969,6 +1005,53 @@ export default {
   },
 
   methods: {
+    // ── Gender-related methods ───────────────────────────────
+    getPackageGender(packageUuid) {
+      const pkg = this.packages.find(p => p.packageUuid === packageUuid);
+      return pkg?.gender || "BOTH";
+    },
+
+    getGenderCountForPackage(row, packageUuid) {
+      const config = row.packageConfigs[packageUuid];
+      if (!config) return 0;
+      return config.genderCount;
+    },
+
+    getGenderTouchedForPackage(row, packageUuid) {
+      const config = row.packageConfigs[packageUuid];
+      if (!config) return false;
+      return config.genderTouched;
+    },
+
+    handleGenderCountInput(row, packageUuid, value) {
+      const config = row.packageConfigs[packageUuid];
+      if (config) {
+        config.genderCount = value;
+        config.genderTouched = true;
+        this.handleRowChange(row);
+      }
+    },
+
+    getGenderError(row, packageUuid) {
+      const config = row.packageConfigs[packageUuid];
+      if (!config) return null;
+      
+      const pkgGender = this.getPackageGender(packageUuid);
+      if (pkgGender === 'BOTH') return null;
+      
+      const count = Number(config.genderCount) || 0;
+      if (count <= 0) {
+        return `Number of adult ${pkgGender.toLowerCase()}s is required`;
+      }
+      
+      const insured = Number(this.normalizeValue(row.numberOfInsured)) || 0;
+      if (count > insured) {
+        return `Cannot exceed total employees (${insured})`;
+      }
+      
+      return null;
+    },
+
     // ── Helpers ───────────────────────────────────────────────
     isMemberOnly(description) {
       const desc = this.normalizeValue(description);
@@ -1198,15 +1281,6 @@ export default {
       const effectivePlan = this.normalizeValue(planType);
       if (!effectivePlan) return [];
 
-      let femaleOnly = false;
-      if (Array.isArray(uuids) && uuids.length) {
-        femaleOnly = uuids.some(uuid => {
-          const pkg = this.packages.find(p => p.packageUuid === uuid);
-          return pkg && isFemaleOnlyPackage(this.packages, pkg.packageName);
-        });
-      }
-      if (femaleOnly) return MaternityMemberTypes;
-
       if (effectivePlan === Plan["Individual Plan"]) {
         const maxFamilySize = 5;
         const options = [];
@@ -1266,17 +1340,15 @@ export default {
       } else {
         row.selectedPackageUuuids.push(packageUuid);
         const newConfig = emptyConfig();
-        newConfig.planTypeTouched = false;
-        newConfig.coverageTouched = false;
-        newConfig.sumAssuredTouched = false;
-        newConfig.depSumAssuredTouched = false;
-        newConfig.spouseSumAssuredTouched = false;
+        newConfig.genderCount = 0;
+        newConfig.genderTouched = false;
         row.packageConfigs = { ...row.packageConfigs, [packageUuid]: newConfig };
         
         await this.ensureRatesLoaded(packageUuid);
         this.setRateFromCacheForPackage(row, packageUuid);
         this._calcPremium(row, packageUuid);
       }
+      
       this.handleRowChange(row);
     },
 
@@ -1424,24 +1496,30 @@ export default {
       const planType = this.normalizeValue(config.planType);
       const insured = Number(row.numberOfInsured) || 0;
       const description = this.normalizeValue(row.description);
+      const pkgGender = this.getPackageGender(packageUuid);
+      
+      let effectiveCount = insured;
+      if (pkgGender !== 'BOTH') {
+        effectiveCount = Number(config.genderCount) || 0;
+      }
 
       if (this.isIndividualPlan(planType)) {
         const empCov = Number(config.sumAssured) || 0;
         const rate = config.employeeRate || 0;
         const isMemberOnly = this.isMemberOnly(description);
         
-        config.employeePremium = empCov * insured * rate;
+        config.employeePremium = empCov * effectiveCount * rate;
         
         if (isMemberOnly) {
           config.dependentPremium = 0;
-          config.sumInsured = empCov * insured;
+          config.sumInsured = empCov * effectiveCount;
         } else {
           const depCov = Number(config.depSumAssured) || 0;
           const numberOfDependents = (Number(description) - 1) || 0;
           const depRate = config.dependentRate || rate || 0;
           
-          config.dependentPremium = depCov * insured * numberOfDependents * depRate;
-          config.sumInsured = (empCov * insured) + (depCov * insured * numberOfDependents);
+          config.dependentPremium = depCov * effectiveCount * numberOfDependents * depRate;
+          config.sumInsured = (empCov * effectiveCount) + (depCov * effectiveCount * numberOfDependents);
         }
         config.premium = config.employeePremium + config.dependentPremium;
 
@@ -1451,10 +1529,10 @@ export default {
         const empRate = config.employeeRate || 0;
         const depRate = config.dependentRate || 0;
         
-        config.employeePremium = empCov * insured * empRate;
-        config.dependentPremium = depCov * insured * depRate;
+        config.employeePremium = empCov * effectiveCount * empRate;
+        config.dependentPremium = depCov * effectiveCount * depRate;
         
-        config.sumInsured = (empCov * insured) + (depCov * insured);
+        config.sumInsured = (empCov * effectiveCount) + (depCov * effectiveCount);
         config.premium = config.employeePremium + config.dependentPremium;
 
       } else if (this.isDualPremiumPlan(planType)) {
@@ -1466,15 +1544,15 @@ export default {
         const depRate = config.dependentRate || 0;
         const isMemberPlusOne = this.isMemberPlusOne(description);
         
-        config.employeePremium = empCov * insured * empRate;
-        config.spousePremium = spouseCov * insured * spouseRate;
+        config.employeePremium = empCov * effectiveCount * empRate;
+        config.spousePremium = spouseCov * effectiveCount * spouseRate;
         
         if (isMemberPlusOne) {
           config.dependentPremium = 0;
-          config.sumInsured = (empCov * insured) + (spouseCov * insured);
+          config.sumInsured = (empCov * effectiveCount) + (spouseCov * effectiveCount);
         } else {
-          config.dependentPremium = depCov * insured * depRate;
-          config.sumInsured = (empCov * insured) + (spouseCov * insured) + (depCov * insured);
+          config.dependentPremium = depCov * effectiveCount * depRate;
+          config.sumInsured = (empCov * effectiveCount) + (spouseCov * effectiveCount) + (depCov * effectiveCount);
         }
         config.premium = config.employeePremium + config.spousePremium + config.dependentPremium;
 
@@ -1482,8 +1560,8 @@ export default {
         const coverage = Number(config.coverage) || 0;
         const rate = config.rate || 0;
         
-        config.sumInsured = coverage * insured;
-        config.premium = coverage * insured * rate;
+        config.sumInsured = coverage * effectiveCount;
+        config.premium = coverage * effectiveCount * rate;
       }
     },
 
@@ -1776,6 +1854,14 @@ export default {
             spouseSumAssuredValue = s.spouseSumAssured ?? "";
           }
           
+          let genderCount = 0;
+          const pkgGender = this.getPackageGender(s.packageUuid);
+          if (pkgGender === 'FEMALE') {
+            genderCount = s.numberOfAdultFemale || 0;
+          } else if (pkgGender === 'MALE') {
+            genderCount = s.numberOfAdultMale || 0;
+          }
+          
           packageConfigs[s.packageUuid] = {
             ...emptyConfig(),
             planType: normalizedPlanType,
@@ -1797,6 +1883,8 @@ export default {
             employeePremium: s.employeePremium || 0,
             dependentPremium: s.dependentPremium || 0,
             spousePremium: s.spousePremium || 0,
+            genderCount: genderCount,
+            genderTouched: genderCount > 0,
           };
         });
         
@@ -1812,7 +1900,6 @@ export default {
         };
       });
 
-      // BATCH LOAD RATES
       const allPackageUuids = new Set();
       this.groupRows.forEach(row => {
         row.selectedPackageUuuids.forEach(uuid => allPackageUuids.add(uuid));
@@ -1916,10 +2003,22 @@ export default {
             coverage = Number(config.coverage) || 0;
           }
           
+          const pkgGender = this.getPackageGender(packageUuid);
+          let numberOfAdultFemale = 0;
+          let numberOfAdultMale = 0;
+          
+          if (pkgGender === 'FEMALE') {
+            numberOfAdultFemale = Number(config.genderCount) || 0;
+          } else if (pkgGender === 'MALE') {
+            numberOfAdultMale = Number(config.genderCount) || 0;
+          }
+          
           servicesList.push({
             packageUuid,
             benefitGroupCode: row.benefitGroupCode,
             numberOfInsured: Number(row.numberOfInsured) || 0,
+            numberOfAdultFemale,
+            numberOfAdultMale,
             description: localNormalizeDescription(description),
             rate: Number(config.rate) || 0,
             premium: Number(config.premium) || 0,
@@ -1940,7 +2039,6 @@ export default {
 
       const payload = { 
         quoatedServices: servicesList,
-        // Add beginDate and endDate to the payload
         beginDate: this.beginDate ? new Date(this.beginDate).toISOString() : null,
         endDate: this.endDate ? new Date(this.endDate).toISOString() : null
       };
@@ -2080,6 +2178,19 @@ export default {
 .btn-soft     { background: color-mix(in srgb, var(--color-primary,#6366f1) 10%, transparent); color: var(--color-primary,#6366f1); }
 .btn-soft:not(:disabled):hover    { background: color-mix(in srgb, var(--color-primary,#6366f1) 18%, transparent); }
 
+/* ── Gender badge ───────────────────────────────────────────── */
+.qb-gender-badge {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: 0.25rem;
+  background: #f1f5f9;
+  color: #64748b;
+  margin-left: 0.375rem;
+  text-transform: uppercase;
+}
+
 /* ── Card ────────────────────────────────────────────────────── */
 .qb-card {
   background: #fff;
@@ -2105,20 +2216,9 @@ export default {
   gap: 1rem;
   align-items: end;
 }
-.qb-field-group {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  align-items: end;
-}
-@media (min-width: 640px) {
-  .qb-field-group {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1fr) auto;
-  }
-}
 
+/* ── Fields ──────────────────────────────────────────────────── */
 .qb-field           { display: flex; flex-direction: column; gap: .375rem; }
-.qb-field--sm       { max-width: 130px; }
 
 /* ── Labels ──────────────────────────────────────────────────── */
 .qb-label {
@@ -2165,10 +2265,6 @@ export default {
   border-color: #ef4444;
   background-color: #fef2f2;
 }
-.qb-select--error:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
 
 /* ── Input ───────────────────────────────────────────────────── */
 .qb-input {
@@ -2197,10 +2293,6 @@ export default {
 .qb-input--error {
   border-color: #ef4444;
   background-color: #fef2f2;
-}
-.qb-input--error:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 .qb-input[type="number"]::-webkit-inner-spin-button,
 .qb-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -2363,16 +2455,6 @@ export default {
 .qb-empty svg { width: 2.25rem; height: 2.25rem; color: #cbd5e1; }
 .qb-empty p   { font-size: .8125rem; color: #94a3b8; font-weight: 500; text-align: center; margin: 0; }
 
-.qb-pkg-row {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.25rem 0;
-  border-bottom: 1px solid #f1f5f9;
-  align-items: stretch;
-}
-.qb-pkg-row:last-child { border-bottom: none; }
-
 .qb-header-inputs {
   display: grid;
   grid-template-columns: 1fr;
@@ -2472,26 +2554,6 @@ export default {
 .qb-pkg-row-hint { font-size: .6875rem; color: #94a3b8; margin-top: .1rem; }
 
 .qb-pkg-field { display: flex; flex-direction: column; gap: .3rem; }
-
-/* ── Coverage block ─────────────────────────────────────────── */
-.qb-coverage-block { display: flex; flex-direction: column; gap: .75rem; }
-
-.qb-coverage-pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: .75rem;
-}
-
-.qb-coverage-triple {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: .75rem;
-}
-
-@media (max-width: 639px) {
-  .qb-coverage-pair,
-  .qb-coverage-triple { grid-template-columns: 1fr; }
-}
 
 /* ── Footer ──────────────────────────────────────────────────── */
 .qb-footer {

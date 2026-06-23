@@ -16,6 +16,8 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   title: { type: String, default: "Provided Items" },
   isServiceClaimRejected: { type: Boolean, default: false },
+  isServiceClaimProcessed: { type: Boolean, default: false },
+  isServiceClaimCompleted: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["close"]);
@@ -62,12 +64,20 @@ const showAuthorizationColumn = computed(() => {
   return localItems.value.some(item => item?.authorizationUuid);
 });
 
+const showExtraAmountColumn = computed(() => {
+  return localItems.value.some(item => {
+    const extra = Number(item.extraAmount);
+    return !isNaN(extra) && extra > 0;
+  });
+});
+
 // Build headers dynamically based on what data is available
 const tableHeaders = computed(() => {
   const head = ['Item ID', 'Code', 'Name', 'Type', 'Package'];
   if (showCoverageColumn.value) head.push('Coverage');
   if (showAuthorizationColumn.value) head.push('Authorization');
   if (showExcessUsedColumn.value) head.push('Excess Used');
+  if (showExtraAmountColumn.value) head.push('Extra Amount');
   head.push('Qty', 'Unit Price', 'Total', 'Status', 'Actions');
   return head;
 });
@@ -77,6 +87,7 @@ const tableRowFields = computed(() => {
   if (showCoverageColumn.value) row.push('coverage');
   if (showAuthorizationColumn.value) row.push('authorizationUuid');
   if (showExcessUsedColumn.value) row.push('excessUsed');
+  if (showExtraAmountColumn.value) row.push('extraAmount');
   row.push('quantity', 'unitPrice', 'totalPrice', 'itemClaimStatus', 'actions');
   return row;
 });
@@ -243,7 +254,7 @@ async function openAttachment() {
 
 <template>
   <div class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/45">
-    <div class="overflow-hidden w-full max-w-5xl bg-white rounded-lg shadow-xl">
+    <div class="overflow-hidden w-full max-w-6xl bg-white rounded-lg shadow-xl">
 
       <!-- Header -->
       <div class="flex gap-4 justify-between items-start px-6 py-4 border-b">
@@ -257,9 +268,15 @@ async function openAttachment() {
               {{ localItems.length }} item{{ localItems.length !== 1 ? "s" : "" }} •
               total: <span class="font-medium">{{ formatCurrency(total) }}</span>
             </p>
-            <!-- Show rejected badge if service claim is rejected -->
+            <!-- Status badges -->
             <span v-if="isServiceClaimRejected" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
               ⛔ Claim Rejected
+            </span>
+            <span v-else-if="isServiceClaimProcessed" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+              ✓ Claim Processed
+            </span>
+            <span v-else-if="isServiceClaimCompleted" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+              ✓ Claim Completed
             </span>
           </div>
         </div>
@@ -341,6 +358,13 @@ async function openAttachment() {
               <span class="block text-right">{{ formatCurrency(row.excessUsed) }}</span>
             </template>
 
+            <!-- Only render extra amount template if column is shown -->
+            <template v-if="showExtraAmountColumn" #extraAmount="{ row }">
+              <span class="block font-medium text-right text-purple-600">
+                {{ formatCurrency(row.extraAmount) }}
+              </span>
+            </template>
+
             <template #unitPrice="{ row }">
               <span class="block text-right">{{ formatCurrency(row.unitPrice) }}</span>
             </template>
@@ -398,14 +422,14 @@ async function openAttachment() {
           </div>
         </div>
 
-        <!-- Remark section (hidden if service claim is rejected) -->
-        <div v-if="!isServiceClaimRejected" class="mt-4">
+        <!-- Remark section (hidden if service claim is rejected, processed, or completed) -->
+        <div v-if="!isServiceClaimRejected && !isServiceClaimProcessed && !isServiceClaimCompleted" class="mt-4">
           <label class="block mb-2 text-sm text-gray-600">Remark (optional)</label>
           <textarea v-model="remark" rows="2" class="p-2 w-full text-sm rounded border" placeholder="Add a remark (optional)"></textarea>
         </div>
 
-        <!-- Resubmit option (hidden if service claim is rejected) -->
-        <div v-if="!isServiceClaimRejected" class="mt-4">
+        <!-- Resubmit option (hidden if service claim is rejected, processed, or completed) -->
+        <div v-if="!isServiceClaimRejected && !isServiceClaimProcessed && !isServiceClaimCompleted" class="mt-4">
           <label class="flex gap-3 items-center text-sm text-gray-700">
             <input v-model="canResubmit" type="checkbox" class="w-4 h-4" />
             <span>Allow resubmission after rejection</span>
@@ -433,17 +457,25 @@ async function openAttachment() {
           </Button>
         </div>
         
-        <!-- Only show Process/Reject buttons if the service claim is NOT rejected -->
-        <div v-if="!isServiceClaimRejected" class="flex gap-3 items-center">
-          <Button type="danger" @click="performAction('REJECTED')" :pending="req.pending.value">Reject</Button>
-          <Button type="primary" @click="performAction('CHECKED')" :pending="req.pending.value">Checked</Button>
-        </div>
-        
-        <!-- Show a message when the service claim is rejected -->
-        <div v-else class="flex gap-3 items-center">
+        <!-- If rejected - show view only message (no buttons) -->
+        <div v-if="isServiceClaimRejected" class="flex gap-3 items-center">
           <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg border border-red-200">
             <span class="mr-2">⛔</span> This claim has been rejected - View Only
           </span>
+        </div>
+        
+        <!-- If processed or completed - show status message and Checked button only (no Reject) -->
+        <div v-else-if="isServiceClaimProcessed || isServiceClaimCompleted" class="flex gap-3 items-center">
+          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-lg border border-green-200">
+            <span class="mr-2">✓</span> This claim is {{ isServiceClaimProcessed ? 'processed' : 'completed' }}
+          </span>
+          <Button type="primary" @click="performAction('CHECKED')" :pending="req.pending.value">Checked</Button>
+        </div>
+        
+        <!-- Normal state - show both Reject and Checked buttons -->
+        <div v-else class="flex gap-3 items-center">
+          <Button type="danger" @click="performAction('REJECTED')" :pending="req.pending.value">Reject</Button>
+          <Button type="primary" @click="performAction('CHECKED')" :pending="req.pending.value">Checked</Button>
         </div>
       </div>
 

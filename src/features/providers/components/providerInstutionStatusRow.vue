@@ -44,8 +44,35 @@ const props = defineProps({
     default: () => {}
   },
   currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 25 }
+  perPage: { type: Number, default: 25 },
+  // Checkbox selection props (from TableWithCheckBox)
+  selectedItems: {
+    type: Array,
+    default: null,
+  },
+  toBeSelected: {
+    type: String,
+    default: '',
+  },
+  onToggleSelect: {
+    type: Function,
+    default: null,
+  },
+  showActions: {
+    type: Boolean,
+    default: true,
+  },
+  cells: {
+    type: Object,
+    default: () => ({}),
+  },
+  hideIndex: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const emit = defineEmits(['row', 'remove']);
 
 const { addToast } = useToast();
 const route = useRoute();
@@ -145,6 +172,21 @@ function handleDocumentClick(event) {
   closeAllDropdowns();
 }
 
+// Checkbox helpers
+const hasCheckbox = computed(() => props.selectedItems !== null && props.onToggleSelect !== null);
+
+function isRowSelected(row) {
+  if (!hasCheckbox.value || !props.toBeSelected) return false;
+  const val = props.toBeSelected.split('.').reduce((s, k) => s?.[k], row);
+  return props.selectedItems.includes(val);
+}
+
+function handleToggleRow(row) {
+  if (!props.onToggleSelect || !props.toBeSelected) return;
+  const val = props.toBeSelected.split('.').reduce((s, k) => s?.[k], row);
+  props.onToggleSelect(val);
+}
+
 </script>
 
 <template>
@@ -218,8 +260,8 @@ function handleDocumentClick(event) {
       </span>
     </td>  
 
-    <!-- Actions Column -->
-    <td class="p-3">  
+    <!-- Actions Column (only when showActions is true and no checkbox mode) -->
+    <td v-if="showActions && !hasCheckbox" class="p-3">  
       <div class="relative dropdown-container">
         <button 
           @click.stop="toggleDropdown($event, row.providerUuid || row.id)"
@@ -247,6 +289,19 @@ function handleDocumentClick(event) {
             </button>
           </div>
         </div>
+      </div>
+    </td>
+
+    <!-- Checkbox Column (when in checkbox/selection mode) -->
+    <td v-if="hasCheckbox" class="p-3">
+      <div class="flex items-center justify-center">
+        <input
+          :checked="isRowSelected(row)"
+          @change="handleToggleRow(row)"
+          @click.stop
+          type="checkbox"
+          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+        />
       </div>
     </td>
   </tr>

@@ -4,7 +4,7 @@ import Button from '@/components/Button.vue';
 import EmployeeTable from './EmployeeTable.vue';
 import { getActiveInstitutions } from '@/features/institutions/api/institutionApi';
 import { getInstitutionContracts } from '@/features/underwriting/api/underwritingApi';
-import { searchInsuredByInstitution } from '@/features/insured_persons/api/insuredPersonsApi';
+import { searchActiveInsuredByContract } from '@/features/insured_persons/api/insuredPersonsApi';
 
 // Format profile image source to handle both URLs and base64
 const formatImageSource = (profile) => {
@@ -37,6 +37,8 @@ const institutions = ref([]);
 const institutionLoading = ref(false);
 const institutionUuid = ref('');
 const selectedContract = ref(null);
+const contracts = ref([]);
+const contractLoading = ref(false);
 const selectedInstitution = ref(null);
 
 // Employee search state
@@ -60,6 +62,38 @@ const selectedInsured = reactive({
 
 const canContinue = computed(() => !!(institutionUuid.value && selectedContract.value && selectedInsured.insuredUuid));
 
+function resetSelectedInsured() {
+  Object.assign(selectedInsured, {
+    insuredUuid: '',
+    dependantUuid: null,
+    name: '',
+    idNumber: '',
+    phone: '',
+    gender: '',
+    profile: '',
+    __dependants: []
+  });
+}
+
+function resetEmployeeState() {
+  employeeSearchTerm.value = '';
+  employees.value = [];
+  error.value = null;
+  selectedEmployee.value = null;
+  employeeDetails.value = null;
+  resetSelectedInsured();
+}
+
+function normalizeContractsResponse(res) {
+  const raw = res?.data ?? res;
+
+  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw?.content)) return raw.content;
+  if (Array.isArray(res?.content)) return res.content;
+
+  return [];
+}
+
 // Load institutions on mount
 async function loadInstitutions({ page = 0, limit = 500000, search = '', status = 'ACTIVE' } = {}) {
   institutionLoading.value = true;
@@ -75,7 +109,6 @@ async function loadInstitutions({ page = 0, limit = 500000, search = '', status 
   }
 }
 
-
 // Filtered institutions based on search
 const filteredInstitutions = computed(() => {
   if (!institutionSearchTerm.value) return institutions.value;
@@ -90,27 +123,40 @@ async function selectInstitution(inst) {
   institutionSearchTerm.value = inst.institutionName;
   showInstitutionDropdown.value = false;
   selectedContract.value = null;
+  contracts.value = [];
   selectedInstitution.value = inst;
-  employees.value = [];
-  selectedInsured.insuredUuid = '';
+  resetEmployeeState();
   
   // Load contract
+  contractLoading.value = true;
   try {
     const res = await getInstitutionContracts(inst.institutionUuid, {
-  status: 'ACTIVE'
-});
-    const arr = res?.data || res;
-    if (Array.isArray(arr) && arr.length) {
+      status: 'ACTIVE'
+    });
+    const arr = normalizeContractsResponse(res);
+    contracts.value = arr;
+    if (arr.length === 1) {
       selectedContract.value = arr[0];
     }
   } catch (error) {
     console.error('Error loading contracts:', error);
+    contracts.value = [];
   }
+  finally {
+    contractLoading.value = false;
+  }
+}
+
+function handleContractChange(contractUuid) {
+  selectedContract.value = contracts.value.find(
+    (contract) => contract.payerInstitutionContractUuid === contractUuid
+  ) || null;
+  resetEmployeeState();
 }
 
 // Load employees with error handling
 async function loadEmployees() {
-  if (!institutionUuid.value || !employeeSearchTerm.value) {
+  if (!institutionUuid.value || !selectedContract.value?.payerInstitutionContractUuid || !employeeSearchTerm.value) {
     employees.value = [];
     error.value = null;
     return;
@@ -119,7 +165,9 @@ async function loadEmployees() {
   employeeLoading.value = true;
   error.value = null;
   try {
-    const res = await searchInsuredByInstitution(institutionUuid.value, { search: employeeSearchTerm.value });
+    const res = await searchActiveInsuredByContract(selectedContract.value.payerInstitutionContractUuid, {
+      search: employeeSearchTerm.value,
+    });
     console.log('=== API Response ===');
     console.log('Full response:', res);
     console.log('res?.content:', res?.content);
@@ -249,22 +297,7 @@ function finish() {
 }
 
 function resetForNextPerson() {
-  employeeSearchTerm.value = '';
-  employees.value = [];
-  error.value = null;
-  selectedEmployee.value = null;
-  employeeDetails.value = null;
-
-  Object.assign(selectedInsured, {
-    insuredUuid: '',
-    dependantUuid: null,
-    name: '',
-    idNumber: '',
-    phone: '',
-    gender: '',
-    profile: '',
-    __dependants: [],
-  });
+  resetEmployeeState();
 
   activeTab.value = 'select';
 }
@@ -339,89 +372,162 @@ watch(employeeSearchTerm, () => {
       </div>
 
       <!-- Search and Filter Section -->
-      <div class="p-4 bg-gradient-to-r from-blue-100 to-gray-50 rounded-lg border border-gray-200">
-        <div class="flex flex-wrap gap-4">
-          <!-- Institution Search -->
-          <div class="w-3/4 md:w-72">
-            <label class="block mb-2 text-sm font-medium text-gray-700">🏢 Select Institution</label>
-            <div class="relative">
-              <input
-                v-model="institutionSearchTerm"
-                type="text"
-                placeholder="Search institutions..."
-                @focus="showInstitutionDropdown = true"
-                @blur="setTimeout(() => showInstitutionDropdown = false, 200)"
-                class="py-2 pr-24 pl-2 bg-white rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              />
-              <button
-                v-if="institutionSearchTerm"
-                @click="institutionSearchTerm = ''; institutionUuid = ''"
-                class="absolute right-2 top-1/2 text-gray-400 transform -translate-y-1/2 hover:text-gray-600"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-              <div v-if="institutionLoading" class="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <svg class="w-4 h-4 animate-spin text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </div>
-              
-              <div 
-                v-if="showInstitutionDropdown && filteredInstitutions.length > 0"
-                class="overflow-y-auto absolute z-50 mt-1 w-full max-h-60 bg-white rounded-md border border-gray-300 shadow-lg"
-              >
-                <div
-                  v-for="inst in filteredInstitutions"
-                  :key="inst.institutionUuid"
-                  @mousedown.prevent="selectInstitution(inst)"
-                  class="px-3 py-2 text-sm border-b border-gray-100 transition-colors cursor-pointer hover:bg-blue-50 last:border-b-0"
-                  :class="{ 'bg-blue-100': institutionUuid === inst.institutionUuid }"
-                >
-                  <div class="font-medium text-gray-900">{{ inst.institutionName }}</div>
-                  <div class="mt-1 text-xs text-gray-500">{{ inst.email || 'No email' }}</div>
-                </div>
-              </div>
-              
-              <div 
-                v-else-if="showInstitutionDropdown && institutionSearchTerm && filteredInstitutions.length === 0"
-                class="absolute z-50 p-3 mt-1 w-full bg-white rounded-md border border-gray-300 shadow-lg"
-              >
-                <div class="text-sm text-center text-gray-500">No institutions found</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Employee Search -->
-          <div class="w-3/4 md:flex-1">
-            <label class="block mb-2 text-sm font-medium text-gray-700">👤 Search Employees</label>
-            <div class="relative">
-              <input
-                v-model="employeeSearchTerm"
-                type="text"
-                placeholder="Search by name, ID, or insurance number..."
-                :disabled="!selectedContract"
-                class="py-2 pl-2 w-full bg-white rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-              <button
-                v-if="employeeSearchTerm"
-                @click="employeeSearchTerm = ''; employees = []; selectedInsured.insuredUuid = ''; error = null"
-                class="absolute right-2 top-1/2 text-gray-400 transform -translate-y-1/2 hover:text-gray-600"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-              <div v-if="employeeLoading" class="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <svg class="w-4 h-4 animate-spin text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </div>
+     <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-lg">
+  <div class="flex flex-wrap gap-5 items-end">
+    <!-- Institution Search -->
+    <div class="w-4/5 md:w-64 shrink-0">
+      <label class="block mb-2.5 text-sm font-semibold text-gray-700">
+        <span class="inline-flex gap-2 items-center">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          Select Institution
+        </span>
+      </label>
+      <div class="relative">
+        <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          v-model="institutionSearchTerm"
+          type="text"
+          placeholder="Search institutions..."
+          @focus="showInstitutionDropdown = true"
+          @blur="setTimeout(() => showInstitutionDropdown = false, 200)"
+          class="py-2.5 pr-10 pl-10 w-3/4 text-sm bg-gray-50 rounded-lg border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white"
+        />
+        <button
+          v-if="institutionSearchTerm"
+          @click="institutionSearchTerm = ''; institutionUuid = ''; selectedInstitution = null; selectedContract = null; contracts = []; resetEmployeeState()"
+          class="absolute right-3 top-1/2 p-0.5 text-gray-400 rounded-full transition-colors transform -translate-y-1/2 hover:text-gray-600 hover:bg-gray-100"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        <div v-if="institutionLoading" class="absolute right-10 top-1/2 transform -translate-y-1/2">
+          <svg class="w-4 h-4 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+        
+        <div 
+          v-if="showInstitutionDropdown && filteredInstitutions.length > 0"
+          class="overflow-y-auto absolute z-50 mt-2 w-full max-h-60 bg-white rounded-lg border border-gray-200 shadow-xl"
+        >
+          <div
+            v-for="inst in filteredInstitutions"
+            :key="inst.institutionUuid"
+            @mousedown.prevent="selectInstitution(inst)"
+            class="px-4 py-3 border-b border-gray-100 transition-all cursor-pointer hover:bg-blue-50 last:border-b-0"
+            :class="{ 'bg-blue-50 border-l-4 border-l-blue-500': institutionUuid === inst.institutionUuid }"
+          >
+            <div class="text-sm font-medium text-gray-900">{{ inst.institutionName }}</div>
+            <div class="flex gap-1 items-center mt-1 text-xs text-gray-500">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              {{ inst.email || 'No email' }}
             </div>
           </div>
         </div>
+        
+        <div 
+          v-else-if="showInstitutionDropdown && institutionSearchTerm && filteredInstitutions.length === 0"
+          class="absolute z-50 p-4 mt-2 w-full bg-white rounded-lg border border-gray-200 shadow-xl"
+        >
+          <div class="flex gap-2 justify-center items-center text-sm text-center text-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            No institutions found
+          </div>
+        </div>
       </div>
+    </div>
+
+    <!-- Policy Selector -->
+    <div v-if="contracts.length > 1" class="w-4/5 md:w-64 shrink-0">
+      <label class="block mb-2.5 ml-2 text-sm font-semibold text-gray-700">
+        <span class="inline-flex gap-2 items-center">
+          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Select Policy
+        </span>
+      </label>
+      <div class="relative">
+        <select
+          :value="selectedContract?.payerInstitutionContractUuid || ''"
+          @change="handleContractChange($event.target.value)"
+          class="py-2.5 pr-10 pl-3 ml-2 w-4/5 text-sm bg-gray-50 rounded-lg border border-gray-200 transition-all duration-200 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white"
+        >
+          <option value="" disabled>-- Select a policy --</option>
+          <option
+            v-for="contract in contracts"
+            :key="contract.payerInstitutionContractUuid"
+            :value="contract.payerInstitutionContractUuid"
+          >
+            {{ contract.contractName || contract.contractCode || contract.policyNumber }}
+          </option>
+        </select>
+        <div class="flex absolute inset-y-0 right-0 items-center pr-3 pointer-events-none">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        <div v-if="contractLoading" class="absolute right-10 top-1/2 text-purple-600 transform -translate-y-1/2">
+          <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Search -->
+    <div class="w-4/5 min-w-0 md:flex-1">
+      <label class="block mb-2.5 ml-2 text-sm font-semibold text-gray-700">
+        <span class="inline-flex gap-2 items-center">
+          <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          Search Employees
+        </span>
+      </label>
+      <div class="relative">
+        <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          v-model="employeeSearchTerm"
+          type="text"
+          placeholder="Search by name, ID, or insurance number..."
+          :disabled="!selectedContract"
+          class="py-2.5 pr-10 pl-10 ml-2 w-[90%] text-sm bg-gray-50 rounded-lg border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-75"
+        />
+        <button
+          v-if="employeeSearchTerm"
+          @click="employeeSearchTerm = ''; employees = []; selectedInsured.insuredUuid = ''; error = null"
+          class="absolute right-3 top-1/2 p-0.5 text-gray-400 rounded-full transition-colors transform -translate-y-1/2 hover:text-gray-600 hover:bg-gray-100"
+          :disabled="!selectedContract"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        <div v-if="employeeLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+          <svg class="w-4 h-4 text-green-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
       <!-- Results Summary Card -->
       <div v-if="!employeeLoading && employees.length > 0" class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -438,6 +544,9 @@ watch(employeeSearchTerm, () => {
               </h3>
               <p class="text-xs text-gray-500">
                 {{ employeeSearchTerm ? `Filtered by: "${employeeSearchTerm}"` : 'Showing eligible employees' }}
+              </p>
+              <p v-if="selectedContract?.policyNumber" class="mt-1 text-xs text-slate-500">
+                Policy: {{ selectedContract.policyNumber }}
               </p>
             </div>
           </div>

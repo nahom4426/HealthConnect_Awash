@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { Form } from '@/components/new_form_builder';
 import Input from '@/components/new_form_elements/Input.vue';
 import InputPassword from '@/components/new_form_elements/InputPassword.vue';
+import Button from '@/components/Button.vue';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { login } from '@/features/auth/authApi';
 import { useAuthStore } from '@/stores/auth';
@@ -62,7 +63,6 @@ function openForgot() {
 }
 
 function handleForgotPassword() {
-  // Implement forgot password logic
   forgotReq.send(
     () => Promise.resolve({ success: true }),
     () => {
@@ -73,7 +73,6 @@ function handleForgotPassword() {
 }
 
 function handleResetPassword() {
-  // Implement reset password logic
   resetReq.send(
     () => Promise.resolve({ success: true }),
     () => {
@@ -85,41 +84,49 @@ function handleResetPassword() {
 </script>
 
 <template>
-  <div class="relative">
+  <div class="lf-root">
     
-    <!-- Success Overlay -->
+    <!-- ── Success Overlay ── -->
     <Transition name="success">
-      <div v-if="showSuccess" class="flex absolute inset-0 z-50 justify-center items-center bg-white rounded-3xl">
-        <div class="text-center">
-          <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full animate-bounce-in">
-            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-            </svg>
+      <div v-if="showSuccess" class="lf-success-overlay">
+        <div class="lf-success-inner">
+          <div class="lf-success-ring">
+            <div class="lf-success-icon animate-bounce-in">
+              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
           </div>
-          <h3 class="mb-2 text-2xl font-bold text-gray-900">Welcome Back!</h3>
-          <p class="mb-6 text-gray-500">Redirecting to your dashboard...</p>
-          <div class="overflow-hidden mx-auto w-48 h-1 bg-gray-100 rounded-full">
-            <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full animate-progress"></div>
+          <h3 class="lf-success-title">Welcome Back!</h3>
+          <p class="lf-success-sub">Redirecting to your dashboard...</p>
+          <div class="lf-progress-track">
+            <div class="lf-progress-bar animate-progress"></div>
           </div>
         </div>
       </div>
     </Transition>
 
-    <!-- Main Card -->
-    <div class="p-8 bg-white rounded-3xl shadow-2xl shadow-blue-500/10 lg:p-10 animate-fade-in">
-      
-      <!-- Login View -->
-      <div v-if="!showForgot">
+    <!-- ── Main content ── -->
+    <div class="lf-body">
+
+      <!-- LOGIN VIEW -->
+      <div v-if="!showForgot" class="animate-fade-in">
+
         <!-- Header -->
-        <div class="mb-8 text-center">
-          <h2 class="mb-2 text-3xl font-bold text-gray-900">Welcome Back</h2>
-          <p class="text-gray-500">Sign in to access your dashboard</p>
+        <div class="lf-header">
+          <div class="lf-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-7 h-7 text-white">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <h2 class="lf-title">Welcome Back</h2>
+          <p class="lf-subtitle">Sign in to access your dashboard</p>
         </div>
 
         <!-- Form -->
         <Form v-slot="{ submit }" id="login-form">
-          <div class="space-y-5" @keydown.enter.prevent="submit(loginUser)">
-            
+          <div class="lf-fields" @keydown.enter.prevent="submit(loginUser)">
+
             <Input
               :focus="true"
               validation="required|email"
@@ -135,216 +142,496 @@ function handleResetPassword() {
               :attributes="{ placeholder: '••••••••', autocomplete: 'current-password' }"
             />
 
-            <!-- Options -->
-            <div class="flex justify-between items-center text-sm">
-              <label class="flex gap-2 items-center cursor-pointer group">
-                <input type="checkbox" v-model="rememberMe" 
-                       class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
-                <span class="text-gray-600 transition-colors group-hover:text-gray-900">Remember me</span>
+            <!-- Remember + Forgot -->
+            <div class="lf-options">
+              <label class="lf-remember">
+                <input type="checkbox" v-model="rememberMe" class="lf-checkbox" />
+                <span>Remember me</span>
               </label>
-              <button type="button" @click.prevent="openForgot" 
-                      class="font-medium text-blue-600 transition-colors hover:text-blue-700">
+              <button type="button" @click.prevent="openForgot" class="lf-forgot">
                 Forgot password?
               </button>
             </div>
 
-            <!-- Submit Button -->
-            <button
+            <!-- Sign In Button -->
+            <Button
               type="button"
-              :disabled="req.pending.value"
+              :pending="req.pending.value"
               @click.prevent="submit(loginUser)"
-              class="relative w-full group"
+              class="lf-submit-btn"
             >
-              <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl opacity-60 blur transition duration-300 group-hover:opacity-100"></div>
-              <div class="flex relative justify-center items-center px-6 py-3.5 leading-none bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl">
-                <span v-if="!req.pending.value" class="flex gap-2 items-center font-semibold text-white">
-                  Sign In
-                  <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                  </svg>
-                </span>
-                <span v-else class="flex gap-2 items-center font-semibold text-white">
-                  <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                  Authenticating...
-                </span>
-              </div>
-            </button>
+              <span class="lf-btn-shimmer"></span>
+              <span class="lf-btn-content">
+                Sign In
+                <svg class="lf-btn-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+              </span>
+            </Button>
 
           </div>
         </Form>
 
-        <!-- Trust Badges -->
-        <div class="flex gap-4 justify-center items-center mt-8 text-xs text-gray-400">
-          <div class="flex gap-1.5 items-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        <!-- Trust strip -->
+        <div class="lf-trust">
+          <div class="lf-trust-item">
+            <svg class="lf-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
             256-bit SSL
           </div>
-          <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
-          <div class="flex gap-1.5 items-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          <div class="lf-trust-dot"></div>
+          <div class="lf-trust-item">
+            <svg class="lf-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
             Secure Auth
+          </div>
+          <div class="lf-trust-dot"></div>
+          <div class="lf-trust-item">
+            <svg class="lf-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            99.9% Uptime
           </div>
         </div>
       </div>
 
-      <!-- Forgot Password View -->
-      <div v-else>
-        <!-- Back Button -->
-        <button type="button" @click="showForgot = false" 
-                class="flex gap-2 items-center mb-6 text-gray-500 transition-colors hover:text-gray-700 group">
-          <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- FORGOT PASSWORD VIEW -->
+      <div v-else class="animate-fade-in">
+
+        <!-- Back -->
+        <button type="button" @click="showForgot = false" class="lf-back-btn">
+          <svg class="lf-back-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
           Back to Sign In
         </button>
 
         <!-- Header -->
-        <div class="mb-8 text-center">
-          <div class="flex justify-center items-center mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl">
-            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="lf-header" style="margin-bottom: 1.5rem;">
+          <div class="lf-header-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
             </svg>
           </div>
-          <h2 class="mb-2 text-2xl font-bold text-gray-900">{{ forgotStep === 'request' ? 'Reset Password' : 'New Password' }}</h2>
-          <p class="text-gray-500">{{ forgotStep === 'request' ? 'Enter your email to receive a reset code' : 'Enter the code and choose a new password' }}</p>
+          <h2 class="lf-title">{{ forgotStep === 'request' ? 'Reset Password' : 'New Password' }}</h2>
+          <p class="lf-subtitle">{{ forgotStep === 'request' ? 'Enter your email to receive a reset code' : 'Enter the code and choose a new password' }}</p>
         </div>
 
-        <!-- Request Reset -->
-        <div v-if="forgotStep === 'request'" class="space-y-5">
-          <div>
-            <label class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
-            <input v-model="forgotEmail" type="email" placeholder="you@company.com"
-                   class="px-4 py-3 w-full rounded-xl border border-gray-200 transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-          </div>
-          <button type="button" @click="handleForgotPassword" :disabled="forgotReq.pending.value"
-                  class="relative w-full group">
-            <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl opacity-60 blur transition duration-300 group-hover:opacity-100"></div>
-            <div class="flex relative justify-center items-center px-6 py-3.5 leading-none bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl">
-              <span class="flex gap-2 items-center font-semibold text-white">
-                <span v-if="!forgotReq.pending.value">Send Reset Code</span>
-                <span v-else>Sending...</span>
-              </span>
-            </div>
-          </button>
+        <!-- Step: Request reset -->
+        <div v-if="forgotStep === 'request'" class="lf-fields">
+          <Input
+            name="forgotEmail"
+            label="Email Address"
+            :attributes="{ placeholder: 'you@company.com', type: 'email' }"
+            :modelValue="forgotEmail"
+            @update:modelValue="forgotEmail = $event"
+            :glass="true"
+          />
+          <Button
+            type="button"
+            size="lg"
+            :pending="forgotReq.pending.value"
+            @click="handleForgotPassword"
+            class="lf-submit-btn"
+          >
+            <span class="lf-btn-shimmer"></span>
+            <span class="lf-btn-content">Send Reset Code</span>
+          </Button>
         </div>
 
-        <!-- Reset Password -->
-        <div v-else class="space-y-5">
-          <div>
-            <label class="block mb-2 text-sm font-medium text-gray-700">Reset Code</label>
-            <input v-model="resetCode" type="text" placeholder="Enter code from email"
-                   class="px-4 py-3 w-full font-mono text-lg tracking-widest text-center rounded-xl border border-gray-200 transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-          </div>
-          <div>
-            <label class="block mb-2 text-sm font-medium text-gray-700">New Password</label>
-            <input v-model="newPassword" type="password" placeholder="Create a strong password"
-                   class="px-4 py-3 w-full rounded-xl border border-gray-200 transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-          </div>
-          <div>
-            <label class="block mb-2 text-sm font-medium text-gray-700">Confirm Password</label>
-            <input v-model="confirmPassword" type="password" placeholder="Re-enter your password"
-                   :class="{'border-red-300 focus:border-red-500 focus:ring-red-100': passwordMismatch}"
-                   class="px-4 py-3 w-full rounded-xl border border-gray-200 transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-            <p v-if="passwordMismatch" class="mt-1 text-sm text-red-500">Passwords do not match</p>
-          </div>
-          <div class="flex gap-3">
-            <button type="button" @click="forgotStep = 'request'"
-                    class="px-6 py-3 font-medium text-gray-700 rounded-xl border-2 border-gray-200 transition-colors hover:bg-gray-50">
-              Back
-            </button>
-            <button type="button" @click="handleResetPassword" 
-                    :disabled="resetReq.pending.value || passwordMismatch"
-                    class="relative flex-1 group">
-              <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl opacity-60 blur transition duration-300 group-hover:opacity-100"></div>
-              <div class="flex relative justify-center items-center px-6 py-3 leading-none bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl">
-                <span class="flex gap-2 items-center font-semibold text-white">
-                  <span v-if="!resetReq.pending.value">Update Password</span>
-                  <span v-else>Updating...</span>
-                </span>
-              </div>
-            </button>
+        <!-- Step: Reset password -->
+        <div v-else class="lf-fields">
+          <Input
+            name="resetCode"
+            label="Reset Code"
+            :attributes="{ placeholder: '· · · · · ·', type: 'text', class: 'text-center font-mono tracking-widest text-lg' }"
+            :modelValue="resetCode"
+            @update:modelValue="resetCode = $event"
+            :glass="true"
+          />
+          <Input
+            name="newPassword"
+            label="New Password"
+            :attributes="{ placeholder: 'Create a strong password', type: 'password' }"
+            :modelValue="newPassword"
+            @update:modelValue="newPassword = $event"
+            :glass="true"
+          />
+          <Input
+            name="confirmPassword"
+            label="Confirm Password"
+            :attributes="{ placeholder: 'Re-enter your password', type: 'password' }"
+            :modelValue="confirmPassword"
+            @update:modelValue="confirmPassword = $event"
+            :glass="true"
+          />
+          <p v-if="passwordMismatch" class="lf-error-msg">Passwords do not match</p>
+          <div class="lf-reset-actions">
+            <Button
+              type="button"
+              size="md"
+              @click="forgotStep = 'request'"
+              class="lf-btn-ghost-comp"
+            >Back</Button>
+            <Button
+              type="button"
+              size="lg"
+              :pending="resetReq.pending.value"
+              :disabled="passwordMismatch"
+              @click="handleResetPassword"
+              class="lf-submit-btn lf-btn-flex"
+            >
+              <span class="lf-btn-shimmer"></span>
+              <span class="lf-btn-content">Update Password</span>
+            </Button>
           </div>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="pt-6 mt-8 text-center border-t border-gray-100">
-        <p class="text-sm text-gray-400">
-          Need help? 
-          <a href="#" class="font-medium text-blue-600 hover:text-blue-700">Contact Support</a>
-        </p>
+      <div class="lf-footer">
+        Need help?&nbsp;
+        <a href="#" class="lf-footer-link">Contact Support</a>
       </div>
-    </div>
 
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* Success animations */
-.success-enter-active {
-  transition: all 0.3s ease-out;
+/* ── Root wrapper ──────────────────────────────────────────────────────────── */
+.lf-root { position: relative; }
+
+/* ── Success overlay ───────────────────────────────────────────────────────── */
+.lf-success-overlay {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(20px);
+  border-radius: inherit;
 }
 
-.success-leave-active {
-  transition: all 0.2s ease-in;
+.lf-success-inner { text-align: center; padding: 2rem; }
+
+.lf-success-ring {
+  width: 90px; height: 90px; border-radius: 50%;
+  background: conic-gradient(from 180deg, #10b981, #34d399, #10b981);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem;
+  padding: 3px;
+  animation: spinRing 2s linear infinite;
 }
 
-.success-enter-from {
-  opacity: 0;
-  transform: scale(0.95);
+@keyframes spinRing {
+  to { transform: rotate(360deg); }
 }
 
-.success-leave-to {
-  opacity: 0;
-  transform: scale(1.05);
+.lf-success-icon {
+  width: 84px; height: 84px; border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 40px rgba(16,185,129,0.4);
 }
 
-@keyframes bounce-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% { transform: scale(0.9); }
-  100% { transform: scale(1); }
+.lf-success-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 0.4rem; }
+.lf-success-sub   { font-size: 0.875rem; color: rgba(255,255,255,0.55); margin: 0 0 1.5rem; }
+
+.lf-progress-track {
+  width: 180px; height: 4px; border-radius: 9999px;
+  background: rgba(255,255,255,0.1); margin: 0 auto; overflow: hidden;
 }
 
-.animate-bounce-in {
-  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+.lf-progress-bar {
+  height: 100%; border-radius: 9999px;
+  background: linear-gradient(90deg, #3b82f6, #6366f1, #10b981);
+  background-size: 200% 100%;
+  animation: progress 1.2s ease-in-out forwards, shimmerBar 1.5s ease infinite;
 }
 
 @keyframes progress {
   from { width: 0%; }
-  to { width: 100%; }
+  to   { width: 100%; }
+}
+@keyframes shimmerBar {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-.animate-progress {
-  animation: progress 1s ease-in-out;
+/* ── Body ──────────────────────────────────────────────────────────────────── */
+.lf-body { padding: 2rem 2rem 1.5rem; }
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.lf-header { text-align: center; margin-bottom: 2rem; }
+
+.lf-header-icon {
+  width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 1rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 30px rgba(99,102,241,0.35);
+  animation: iconPulse 3s ease-in-out infinite;
 }
 
-/* Fade in animation */
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.3); }
+  50%       { box-shadow: 0 0 40px rgba(99,102,241,0.6); }
+}
+
+.lf-title    { font-size: 1.75rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; margin: 0 0 0.4rem; }
+.lf-subtitle { font-size: 0.875rem; color: rgba(255,255,255,0.45); margin: 0; }
+
+/* ── Fields ────────────────────────────────────────────────────────────────── */
+.lf-fields { display: flex; flex-direction: column; gap: 1.1rem; }
+
+/* Stagger children */
+.lf-fields > *:nth-child(1) { animation: fadeUp 0.5s 0.05s ease-out both; }
+.lf-fields > *:nth-child(2) { animation: fadeUp 0.5s 0.12s ease-out both; }
+.lf-fields > *:nth-child(3) { animation: fadeUp 0.5s 0.19s ease-out both; }
+.lf-fields > *:nth-child(4) { animation: fadeUp 0.5s 0.26s ease-out both; }
+.lf-fields > *:nth-child(5) { animation: fadeUp 0.5s 0.33s ease-out both; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Deep overrides — form builder inputs */
+:deep(.form-group),
+:deep(.input-wrapper) {
+  position: relative;
+}
+
+:deep(label),
+:deep(.form-label) {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+:deep(input:not([type='checkbox'])),
+:deep(textarea) {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 0.75rem !important;
+  color: #fff !important;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+
+:deep(input:not([type='checkbox']):hover) {
+  border-color: rgba(255,255,255,0.22) !important;
+  background: rgba(255,255,255,0.09) !important;
+}
+
+:deep(input:not([type='checkbox']):focus),
+:deep(textarea:focus) {
+  border-color: #6366f1 !important;
+  background: rgba(99,102,241,0.08) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
+}
+
+:deep(input::placeholder),
+:deep(textarea::placeholder) {
+  color: rgba(255,255,255,0.28) !important;
+}
+
+/* Password toggle button inside InputPassword */
+:deep(.pw-toggle),
+:deep(.input-suffix button),
+:deep([class*="eye"]) {
+  color: rgba(255,255,255,0.4) !important;
+}
+:deep(.pw-toggle:hover),
+:deep(.input-suffix button:hover) {
+  color: rgba(255,255,255,0.8) !important;
+}
+
+/* Validation error text */
+:deep(.error-msg),
+:deep(.field-error),
+:deep([class*="error-text"]) {
+  color: #f87171 !important;
+  font-size: 0.75rem;
+  margin-top: 0.3rem;
+}
+
+/* ── Options row ───────────────────────────────────────────────────────────── */
+.lf-options {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.82rem;
+}
+
+.lf-remember {
+  display: flex; align-items: center; gap: 0.5rem; cursor: pointer;
+  color: rgba(255,255,255,0.45);
+  transition: color 0.2s;
+}
+.lf-remember:hover { color: rgba(255,255,255,0.75); }
+
+.lf-checkbox {
+  width: 15px; height: 15px; border-radius: 4px;
+  accent-color: #6366f1; cursor: pointer;
+}
+
+.lf-forgot {
+  font-weight: 600; color: #818cf8;
+  background: none; border: none; cursor: pointer;
+  transition: color 0.2s;
+  font-size: 0.82rem;
+}
+.lf-forgot:hover { color: #a5b4fc; }
+
+/* ── Submit button (wraps Button component) ────────────────────────────────── */
+.lf-submit-btn {
+  position: relative; width: 100%; overflow: hidden;
+  background: linear-gradient(135deg, #4f46e5, #6366f1, #818cf8) !important;
+  background-size: 200% 200% !important;
+  border: none !important; border-radius: 0.875rem !important;
+  padding: 0.875rem 1.5rem !important;
+  cursor: pointer; font-size: 0.9rem;
+  transition: background-position 0.4s ease, transform 0.15s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 24px rgba(99,102,241,0.35), 0 0 0 1px rgba(99,102,241,0.2) !important;
+  min-width: 100% !important;
+  min-height: auto !important;
+}
+.lf-submit-btn:hover {
+  background-position: right center !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(99,102,241,0.5), 0 0 0 1px rgba(99,102,241,0.3) !important;
+}
+.lf-submit-btn:active { transform: translateY(0); }
+.lf-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.lf-btn-flex { flex: 1; min-width: 0 !important; }
+
+.lf-btn-shimmer {
+  position: absolute; top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: skewX(-20deg);
+  animation: shimmer 2.5s ease infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  0%   { left: -100%; }
+  60%  { left: 140%; }
+  100% { left: 140%; }
+}
+
+.lf-btn-content {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-weight: 700; color: #fff; letter-spacing: 0.01em;
+}
+
+.lf-btn-arrow {
+  width: 18px; height: 18px;
+  transition: transform 0.3s ease;
+}
+.lf-submit-btn:hover .lf-btn-arrow { transform: translateX(4px); }
+
+/* ── Ghost button (Button component variant) ───────────────────────────────── */
+.lf-btn-ghost-comp {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  border-radius: 0.875rem !important;
+  color: rgba(255,255,255,0.65) !important;
+  font-size: 0.875rem !important; font-weight: 600 !important;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: auto !important;
+  padding: 0.875rem 1.25rem !important;
+}
+.lf-btn-ghost-comp:hover {
+  background: rgba(255,255,255,0.12) !important;
+  color: #fff !important;
+}
+
+/* ── Trust strip ───────────────────────────────────────────────────────────── */
+.lf-trust {
+  display: flex; justify-content: center; align-items: center;
+  gap: 0.75rem; flex-wrap: wrap;
+  margin-top: 1.5rem; padding-top: 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 0.72rem; color: rgba(255,255,255,0.35);
+}
+
+.lf-trust-item { display: flex; align-items: center; gap: 0.3rem; font-weight: 500; }
+.lf-trust-icon { width: 12px; height: 12px; color: #34d399; flex-shrink: 0; }
+.lf-trust-dot  { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+
+/* ── Back button ───────────────────────────────────────────────────────────── */
+.lf-back-btn {
+  display: flex; align-items: center; gap: 0.4rem;
+  color: rgba(255,255,255,0.45); font-size: 0.82rem; font-weight: 600;
+  background: none; border: none; cursor: pointer;
+  margin-bottom: 1.5rem; transition: color 0.2s;
+}
+.lf-back-btn:hover { color: rgba(255,255,255,0.85); }
+.lf-back-btn:hover .lf-back-arrow { transform: translateX(-3px); }
+
+.lf-back-arrow {
+  width: 16px; height: 16px; transition: transform 0.25s ease;
+}
+
+/* ── Inline input fields (forgot password section) ─────────────────────────── */
+.lf-field-wrap { display: flex; flex-direction: column; }
+.lf-label { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 0.4rem; letter-spacing: 0.03em; text-transform: uppercase; }
+
+.lf-input {
+  padding: 0.8rem 1rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 0.75rem;
+  color: #fff; font-size: 0.9rem;
+  outline: none; transition: all 0.2s ease;
+  width: 100%; box-sizing: border-box;
+}
+.lf-input::placeholder { color: rgba(255,255,255,0.28); }
+.lf-input:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.09); }
+.lf-input:focus { border-color: #6366f1; background: rgba(99,102,241,0.08); box-shadow: 0 0 0 3px rgba(99,102,241,0.18); }
+.lf-input-code { text-align: center; font-family: monospace; font-size: 1.1rem; letter-spacing: 0.3em; }
+.lf-input-error { border-color: #f87171 !important; }
+.lf-input-error:focus { box-shadow: 0 0 0 3px rgba(248,113,113,0.2) !important; }
+
+.lf-error-msg { font-size: 0.75rem; color: #f87171; margin-top: 0.35rem; }
+
+.lf-reset-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.lf-footer {
+  margin-top: 1.25rem; padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  text-align: center; font-size: 0.8rem; color: rgba(255,255,255,0.3);
+}
+.lf-footer-link { color: #818cf8; font-weight: 600; text-decoration: none; transition: color 0.2s; }
+.lf-footer-link:hover { color: #a5b4fc; }
+
+/* ── Entry animations ──────────────────────────────────────────────────────── */
+.success-enter-active { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.success-leave-active { transition: all 0.25s ease-in; }
+.success-enter-from   { opacity: 0; transform: scale(0.92); }
+.success-leave-to     { opacity: 0; transform: scale(1.04); }
+
+@keyframes bounce-in {
+  0%   { opacity: 0; transform: scale(0.3); }
+  50%  { opacity: 1; transform: scale(1.12); }
+  70%  { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+.animate-bounce-in { animation: bounce-in 0.65s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+
 @keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out;
-}
+.animate-fade-in { animation: fade-in 0.45s ease-out both; }
 </style>

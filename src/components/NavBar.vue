@@ -55,11 +55,11 @@ function navigate(path) {
     <!-- Brand + collapse toggle -->
     <div class="sidebar-brand">
       <div class="brand-mark" @click="navigate('/module-select')" title="Switch module">
-        <img src="/src/assets/img/letter-logo.png" alt="Awash" class="brand-logo-img" />
+        <img src="/src/assets/img/logo.png" alt="EIC" class="brand-logo-img" />
       </div>
       <Transition name="fade-text">
         <div v-if="!collapsed" class="brand-text" @click="navigate('/module-select')">
-          <span class="brand-name">Awash Insurance</span>
+          <span class="brand-name">Ethiopian Insurance Corporation</span>
           <span class="brand-sub">HealthConnect</span>
         </div>
       </Transition>
@@ -219,9 +219,8 @@ function navigate(path) {
 }
 .brand-mark:hover { background: rgba(243,146,0,0.3); }
 .brand-logo-img {
-  width: 1.25rem; height: 1.25rem;
+  width: 2.25rem; height: 2.25rem;
   object-fit: contain;
-  filter: brightness(0) invert(1);
 }
 
 .brand-text {

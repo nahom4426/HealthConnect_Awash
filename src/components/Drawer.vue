@@ -25,10 +25,10 @@ const profilePicture = computed(() => {
     <!-- ── Logo Header ── -->
     <div class="sidebar-logo flex items-center gap-3 px-5 py-4 flex-shrink-0">
       <div class="logo-icon flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 flex-shrink-0">
-        <img src="/src/assets/img/letter-logo.png" alt="Awash" class="h-6 w-auto brightness-0 invert" />
+        <img src="/src/assets/img/logo.png" alt="EIC" class="h-10 w-auto" />
       </div>
       <div v-if="!collapsed" class="flex flex-col leading-tight overflow-hidden">
-        <span class="text-white font-bold text-sm tracking-wide truncate">Awash Insurance</span>
+        <span class="text-white font-bold text-sm tracking-wide truncate">Ethiopian Insurance Corporation</span>
         <span class="text-white/40 text-[10px] font-medium uppercase tracking-widest">Portal</span>
       </div>
     </div>

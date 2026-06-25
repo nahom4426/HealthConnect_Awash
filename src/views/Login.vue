@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import LoginForm from "./LoginForm.vue";
-import awashLogo from '../assets/img/awashlogo.svg';
+import eicLogo from '../assets/img/logo.png';
 
 const activeProduct = ref(0);
 let rotateTimer = null;
@@ -171,10 +171,10 @@ function stopRotate() {
         <!-- Logo with Glass Effect -->
         <div class="brand-row">
           <div class="brand-logo-wrap">
-            <img :src="awashLogo" alt="Awash Insurance" class="brand-logo-img" />
+            <img :src="eicLogo" alt="Ethiopian Insurance Corporation" class="brand-logo-img" />
           </div>
           <div>
-            <div class="brand-name">Awash Insurance</div>
+            <div class="brand-name">Ethiopian Insurance Corporation</div>
             <div class="brand-sub">Unified Insurance Platform</div>
           </div>
         </div>
@@ -306,8 +306,8 @@ function stopRotate() {
         </div>
         <!-- Mobile brand badge -->
         <div class="mobile-brand">
-          <img :src="awashLogo" alt="Awash Insurance" class="mobile-logo" />
-          <span class="mobile-brand-name">Awash Insurance</span>
+          <img :src="eicLogo" alt="Ethiopian Insurance Corporation" class="mobile-logo" />
+          <span class="mobile-brand-name">Ethiopian Insurance Corporation</span>
         </div>
       </div>
     </div>
@@ -517,8 +517,8 @@ function stopRotate() {
 }
 
 .brand-logo-wrap {
-  width: 56px; 
-  height: 56px; 
+  width: 72px; 
+  height: 72px; 
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -550,7 +550,6 @@ function stopRotate() {
   width: 100%; 
   height: 100%; 
   object-fit: contain; 
-  filter: brightness(0) invert(1); 
 }
 
 .brand-name { 

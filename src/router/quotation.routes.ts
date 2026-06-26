@@ -8,6 +8,9 @@ import EditQuotation from "@/features/quotation/pages/EditQuotation.vue";
 import ViewIssuedQuotation from "@/features/quotation/pages/ViewIssuedQuotation.vue";
 import ViewAcceptedQuotation from "@/features/quotation/pages/ViewAcceptedQuotation.vue";
 import ViewSavedQuotation from "@/features/quotation/pages/ViewSavedQuotation.vue";
+import PaidQuotations from "@/features/quotation/pages/PaidQuotations.vue";
+import InclusionCreate from "@/features/quotation/pages/InclusionCreate.vue";
+import Inclusion from "@/features/quotation/pages/Inclusion.vue";
 
 export default [
 	{
@@ -70,6 +73,24 @@ export default [
 		path: '/accepted_quotation/view/:quotationUuid',
 		name: 'ViewAcceptedQuotation',
 		component: ViewAcceptedQuotation,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+	},
+	{
+		path: '/paid_quotation',
+		name: 'Paid quotation',
+		component: PaidQuotations,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+	},
+	{
+		path: '/inclusion',
+		name: 'Inclusion',
+		component: Inclusion,
+		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+	},
+	{
+		path: '/inclusion/create/:quotationUuid/:payerInstitutionContractUuid',
+		name: 'InclusionCreate',
+		component: InclusionCreate,
 		//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 	}
 ]

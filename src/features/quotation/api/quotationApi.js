@@ -4,6 +4,7 @@ const api = new ApiService();
 
 const ratePath = "/claimconnect/benefitRange";
 const path = "/claimconnect/quotation";
+const paymentPath = "/claimconnect";
 
 // Fetch rate for a package/plan/familySize combination
 export function getPackageRate(query) {
@@ -77,3 +78,50 @@ export function saveSavedQuotation(quotationUuid, data) {
     .addAuthenticationHeader()
     .put(`${path}/${quotationUuid}`, data);
 }
+
+// Stage exclusion - POST array of exclusion strings for a policy (policyUuid)
+export function stageExclusion(policyUuid, exclusions) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path}/policy/${policyUuid}/stage-exclusion`, exclusions);
+}
+
+// Get active insured persons by contract UUID
+export function getActiveInsuredByContract(payerInstitutionContractUuid, params = {}) {
+  return api
+    .addAuthenticationHeader()
+    .get(`/claimconnect/insuredperson/active/search/${payerInstitutionContractUuid}`, { params });
+}
+
+// View quotation attachment
+export function viewQuotationAttachment(fileName) {
+  return api
+    .addAuthenticationHeader()
+    .get(`${paymentPath}/files/download`, {
+      params: {
+        fileName,
+        action: 'view',
+      },
+      responseType: "blob",
+    });
+}
+
+// Download quotation attachment
+export function downloadQuotationAttachment(fileName) {
+  return api
+    .addAuthenticationHeader()
+    .get(`${paymentPath}/files/download`, {
+      params: {
+        fileName,
+      },
+      responseType: "blob",
+    });
+}
+
+// Create inclusion/exclusion quotation
+export function createInclusionExclusionQuotation(data) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path}`, data);
+}
+// In your quotationApi.ts file, add logging to createInclusionExclusionQuotation:

@@ -2,16 +2,22 @@
 import DrawerButtonParent from "./DrawerButtonParent.vue";
 
 defineProps({
-  navs: { type: Array, required: true },
-  collapsed: { type: Boolean, default: false },
+  navs: {
+    type: Array,
+    required: true,
+  },
+  isCollapsed: {
+    type: Boolean,
+    default: false,
+  },
 });
 </script>
 
 <template>
   <DrawerButtonParent
     v-for="nav in navs"
-    :key="nav.name || nav.path"
+    :key="nav.name"
     :navs="nav"
-    :collapsed="collapsed"
+    :is-collapsed="isCollapsed"
   />
 </template>

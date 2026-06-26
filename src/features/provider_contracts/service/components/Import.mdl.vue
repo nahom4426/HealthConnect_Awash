@@ -424,16 +424,38 @@ const handleFile = (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  const validTypes = [
-    "text/csv",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ];
-
-  if (!validTypes.includes(file.type)) {
-    message.value = { type: "error", text: "Please upload Excel/CSV file" };
+  // Check file extension instead of MIME type
+  const name = file.name.toLowerCase();
+  const validExtensions = ['.csv', '.xls', '.xlsx'];
+  
+  // Get the file extension properly
+  const lastDotIndex = name.lastIndexOf('.');
+  if (lastDotIndex === -1) {
+    message.value = { type: "error", text: "Please upload Excel (.xls, .xlsx) or CSV file" };
     return;
   }
+  
+  const fileExtension = name.substring(lastDotIndex);
+  
+  console.log('File name:', name);
+  console.log('File extension:', fileExtension);
+  console.log('Valid extensions:', validExtensions);
+  console.log('Is valid:', validExtensions.includes(fileExtension));
+  
+  if (!validExtensions.includes(fileExtension)) {
+    message.value = { type: "error", text: "Please upload Excel (.xls, .xlsx) or CSV file" };
+    return;
+  }
+
+  // Remove or comment out the MIME type check for now, or make it more permissive
+  // if (file.type && file.type !== "" && 
+  //     file.type !== "application/octet-stream" &&
+  //     file.type !== "text/csv" &&
+  //     file.type !== "application/vnd.ms-excel" &&
+  //     file.type !== "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+  //   message.value = { type: "error", text: "Please upload Excel/CSV file" };
+  //   return;
+  // }
 
   if (file.size > 5 * 1024 * 1024) {
     message.value = { type: "error", text: "File size exceeds 5MB limit" };
@@ -441,8 +463,9 @@ const handleFile = (e) => {
   }
 
   selectedFile.value = file;
-  fileName.value = file.name;
+  fileName.value = file.name; // Use the ref, not local variable
   message.value = { type: null, text: null };
+  
   if (importType.value === "institution") {
     parseFileForPreview(file);
     return;

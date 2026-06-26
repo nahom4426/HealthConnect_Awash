@@ -38,6 +38,8 @@ function reRoute() {
 }
 
 function loginUser({ values }) {
+  // Guard against double-submission
+  if (req.pending.value) return;
   req.send(
     () => login(values),
     (res) => {
@@ -125,7 +127,7 @@ function handleResetPassword() {
 
         <!-- Form -->
         <Form v-slot="{ submit }" id="login-form">
-          <div class="lf-fields" @keydown.enter.prevent="submit(loginUser)">
+          <div class="lf-fields">
 
             <Input
               :focus="true"
@@ -158,6 +160,7 @@ function handleResetPassword() {
               type="button"
               :pending="req.pending.value"
               @click.prevent="submit(loginUser)"
+              @keydown.enter.prevent="submit(loginUser)"
               class="lf-submit-btn"
             >
               <span class="lf-btn-shimmer"></span>
@@ -378,8 +381,8 @@ function handleResetPassword() {
   50%       { box-shadow: 0 0 40px rgba(99,102,241,0.6); }
 }
 
-.lf-title    { font-size: 1.75rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; margin: 0 0 0.4rem; }
-.lf-subtitle { font-size: 0.875rem; color: rgba(255,255,255,0.45); margin: 0; }
+.lf-title    { font-size: 1.75rem; font-weight: 800; color: var(--text-primary, #0f172a); letter-spacing: -0.02em; margin: 0 0 0.4rem; }
+.lf-subtitle { font-size: 0.875rem; color: var(--text-secondary, #475569); margin: 0; }
 
 /* ── Fields ────────────────────────────────────────────────────────────────── */
 .lf-fields { display: flex; flex-direction: column; gap: 1.1rem; }
@@ -408,7 +411,7 @@ function handleResetPassword() {
   margin-bottom: 0.45rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.65);
+  color: var(--text-secondary, #475569) !important;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -417,10 +420,10 @@ function handleResetPassword() {
 :deep(textarea) {
   width: 100%;
   padding: 0.8rem 1rem;
-  background: rgba(255,255,255,0.06) !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: var(--input-bg, rgba(241,245,249,0.8)) !important;
+  border: 1px solid var(--input-border, rgba(99,102,241,0.2)) !important;
   border-radius: 0.75rem !important;
-  color: #fff !important;
+  color: var(--text-primary, #0f172a) !important;
   font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
@@ -428,31 +431,31 @@ function handleResetPassword() {
 }
 
 :deep(input:not([type='checkbox']):hover) {
-  border-color: rgba(255,255,255,0.22) !important;
-  background: rgba(255,255,255,0.09) !important;
+  border-color: var(--input-border-hover, rgba(99,102,241,0.35)) !important;
+  background: var(--input-bg-hover, rgba(241,245,249,1)) !important;
 }
 
 :deep(input:not([type='checkbox']):focus),
 :deep(textarea:focus) {
   border-color: #6366f1 !important;
-  background: rgba(99,102,241,0.08) !important;
+  background: var(--input-bg-focus, rgba(99,102,241,0.06)) !important;
   box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
 }
 
 :deep(input::placeholder),
 :deep(textarea::placeholder) {
-  color: rgba(255,255,255,0.28) !important;
+  color: var(--input-placeholder, #94a3b8) !important;
 }
 
 /* Password toggle button inside InputPassword */
 :deep(.pw-toggle),
 :deep(.input-suffix button),
 :deep([class*="eye"]) {
-  color: rgba(255,255,255,0.4) !important;
+  color: var(--text-muted, #94a3b8) !important;
 }
 :deep(.pw-toggle:hover),
 :deep(.input-suffix button:hover) {
-  color: rgba(255,255,255,0.8) !important;
+  color: var(--text-primary, #0f172a) !important;
 }
 
 /* Validation error text */
@@ -472,10 +475,10 @@ function handleResetPassword() {
 
 .lf-remember {
   display: flex; align-items: center; gap: 0.5rem; cursor: pointer;
-  color: rgba(255,255,255,0.45);
+  color: var(--text-muted, #94a3b8);
   transition: color 0.2s;
 }
-.lf-remember:hover { color: rgba(255,255,255,0.75); }
+.lf-remember:hover { color: var(--text-primary, #0f172a); }
 
 .lf-checkbox {
   width: 15px; height: 15px; border-radius: 4px;
@@ -483,12 +486,12 @@ function handleResetPassword() {
 }
 
 .lf-forgot {
-  font-weight: 600; color: #818cf8;
+  font-weight: 600; color: #6366f1;
   background: none; border: none; cursor: pointer;
   transition: color 0.2s;
   font-size: 0.82rem;
 }
-.lf-forgot:hover { color: #a5b4fc; }
+.lf-forgot:hover { color: #818cf8; }
 
 /* ── Submit button (wraps Button component) ────────────────────────────────── */
 .lf-submit-btn {
@@ -560,13 +563,13 @@ function handleResetPassword() {
   display: flex; justify-content: center; align-items: center;
   gap: 0.75rem; flex-wrap: wrap;
   margin-top: 1.5rem; padding-top: 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
-  font-size: 0.72rem; color: rgba(255,255,255,0.35);
+  border-top: 1px solid var(--glass-header-border, rgba(226,232,240,0.8));
+  font-size: 0.72rem; color: var(--text-muted, #94a3b8);
 }
 
 .lf-trust-item { display: flex; align-items: center; gap: 0.3rem; font-weight: 500; }
 .lf-trust-icon { width: 12px; height: 12px; color: #34d399; flex-shrink: 0; }
-.lf-trust-dot  { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+.lf-trust-dot  { width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted, #94a3b8); }
 
 /* ── Back button ───────────────────────────────────────────────────────────── */
 .lf-back-btn {
@@ -609,11 +612,11 @@ function handleResetPassword() {
 /* ── Footer ────────────────────────────────────────────────────────────────── */
 .lf-footer {
   margin-top: 1.25rem; padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
-  text-align: center; font-size: 0.8rem; color: rgba(255,255,255,0.3);
+  border-top: 1px solid var(--glass-header-border, rgba(226,232,240,0.8));
+  text-align: center; font-size: 0.8rem; color: var(--text-muted, #94a3b8);
 }
-.lf-footer-link { color: #818cf8; font-weight: 600; text-decoration: none; transition: color 0.2s; }
-.lf-footer-link:hover { color: #a5b4fc; }
+.lf-footer-link { color: #6366f1; font-weight: 600; text-decoration: none; transition: color 0.2s; }
+.lf-footer-link:hover { color: #818cf8; }
 
 /* ── Entry animations ──────────────────────────────────────────────────────── */
 .success-enter-active { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }

@@ -1,24 +1,32 @@
 <script setup>
 import { ref, defineEmits, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import Table from "@/components/Table.vue";
+import TableWithCheckBox from "@/components/TableWithCheckBox.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import ActiveProvidersDataProvider from "../components/ActiveProviderDataProvider.vue";
 import MappedContractsDataProvider from "../components/MappedContractsDataProvider.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import providerStatusRow from "../components/providerInstutionStatusRow.vue";
 import MappedContractRow from "../components/MappedContractRow.vue";
+import { mapContracts } from "../api/providerApi";
 import { openModal } from "@customizer/modal-x";
+import { toasted } from "@/utils/utils";
 import icons from "@/utils/icons";
 // Define emits to handle the navigate event
 const emit = defineEmits(["navigate"]);
 
 const router = useRouter();
+const route = useRoute();
 const dataProvider = ref();
 const mappedDataProvider = ref();
 const statusReq = useApiRequest();
 const deleteReq = useApiRequest();
+const mapReq = useApiRequest();
 const active = ref(0);
+
+// Selected provider contract UUIDs for bulk mapping
+const selectedProviders = ref([]);
 
 const refetchToBeMappedCounter = ref(0);
 const refetchMappedCounter = ref(0);
@@ -92,6 +100,32 @@ function viewDetails(id) {
   router.push(`/providers/${id}`);
 }
 
+// Bulk mapping function
+function mapSelectedContracts() {
+  if (selectedProviders.value.length === 0) return;
+
+  const payerInstitutionContractUuid = route.params.payerProviderContractUuid || route.params.id;
+  
+  const payload = selectedProviders.value.map((payerProviderContractUuid) => ({
+    payerProviderContractUuid,
+    payerInstitutionContractUuid,
+  }));
+
+  mapReq.send(
+    () => mapContracts(payload),
+    (res) => {
+      if (res.success) {
+        toasted(res.success, `${selectedProviders.value.length} contract(s) mapped successfully`, res.error);
+        selectedProviders.value = [];
+        window.dispatchEvent(new CustomEvent('provider-mapping-changed', { detail: { action: 'bulk-add' } }));
+        refetchBothTabs();
+      } else {
+        toasted(false, "Failed to map contracts", res.error || res.message);
+      }
+    }
+  );
+}
+
 </script>
 
 <template>
@@ -125,14 +159,48 @@ function viewDetails(id) {
             :refetch="refetchToBeMappedCounter"
             v-slot="{ providers, pending }"
           >
-            <Table
+            <!-- Bulk action bar -->
+            <div
+              v-if="selectedProviders.length > 0"
+              class="flex items-center justify-between px-4 py-3 mb-3 bg-blue-50 rounded-lg border border-blue-200 transition-all duration-300"
+            >
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-600 rounded-full">
+                  {{ selectedProviders.length }}
+                </span>
+                <span class="text-sm font-medium text-blue-800">
+                  provider{{ selectedProviders.length > 1 ? 's' : '' }} selected
+                </span>
+              </div>
+              <div class="flex items-center gap-3">
+                <button
+                  @click="selectedProviders = []"
+                  class="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Clear Selection
+                </button>
+                <button
+                  @click="mapSelectedContracts"
+                  :disabled="mapReq.pending.value"
+                  class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  <svg v-if="mapReq.pending.value" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>{{ mapReq.pending.value ? 'Mapping...' : `Map Selected (${selectedProviders.length})` }}</span>
+                </button>
+              </div>
+            </div>
+
+            <TableWithCheckBox
+              v-model="selectedProviders"
               :pending="pending"
               :headers="{
                 head: [
                   'Provider Name',
                   'Contract Name',
                   'Contract Code',
-                  'Actions',
                 ],
                 row: [
                   'providerName',
@@ -142,34 +210,14 @@ function viewDetails(id) {
               }"
               :rows="providers"
               :rowCom="providerStatusRow"
-            >
-              <template #row>
-                <providerStatusRow
-                  :rowData="providers"
-                  :rowKeys="[
-                    'providerName',
-                    'email',
-                    'telephone',
-                    'category',
-                    'level',
-                    'status',
-                  ]"
-                  :headKeys="[
-                    '',
-                    'Provider Name',
-                    'Email',
-                    'Telephone',
-                    'Category',
-                    'Level',
-                    'Status',
-                    'Actions',
-                  ]"
-                  :onView="viewDetails"
-                  :onRowClick="(row) => {}"
-                  :onRefetch="refetchBothTabs"
-                />
-              </template>
-            </Table>
+              toBeSelected="payerProviderContractUuid"
+              :rowComProps="{
+                onView: viewDetails,
+                onRowClick: (row) => {},
+                onRefetch: refetchBothTabs,
+                showActions: false,
+              }"
+            />
           </ActiveProvidersDataProvider>
         </template>
       </DefaultPage>

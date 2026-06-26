@@ -66,7 +66,7 @@ function applyAutoDefaults() {
   const nextYearStr = nextYear.toISOString().split('T')[0];
 
   if (!formData.value.contractName) {
-    formData.value.contractName = `${institutionName || 'Institution'} EIC ${suffix}`;
+    formData.value.contractName = `${institutionName || 'Institution'} Awash ${suffix}`;
   }
   if (!formData.value.policyNumber) {
     formData.value.policyNumber = `${instCode}-AWS-${suffix}`;
@@ -149,7 +149,7 @@ const submit = () => {
           validation="required"
           v-model="formData.contractName"
           :attributes="{ 
-            placeholder: 'e.g., MedcoTech EIC 12345',
+            placeholder: 'e.g., MedcoTech Awash 12345',
           }"
         />
         <Input

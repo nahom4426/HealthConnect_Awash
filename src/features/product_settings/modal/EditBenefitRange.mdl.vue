@@ -93,6 +93,8 @@ function handleSubmit() {
               { label: 'Individual Plan', value: Plan['Individual Plan'] },
               { label: 'Family Plan', value: Plan['Family Plan'] },
               { label: 'Family Shared Plan', value: Plan['Family Shared Plan'] },
+              { label: 'Dependent Shared Plan', value: Plan['Dependent Shared Plan'] },
+              { label: 'Dual Premium Dependent Shared Plan', value: Plan['Dual Premium Dependent Shared Plan'] },
             ]"
             :obj="true"
             :attributes="{ placeholder: 'Select Plan Type' }"

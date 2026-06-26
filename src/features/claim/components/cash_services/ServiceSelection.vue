@@ -24,6 +24,8 @@ interface Props {
   person?: any;
   cashPeriodLimitPerDay?: any;
   editServiceProvided?: any;
+  contractBeginDate?: string;
+  contractEndDate?: string;
 }
 const props = defineProps<Props>();
 
@@ -84,12 +86,25 @@ function toISODate(d: Date): string {
 
 const cashLimitDays = computed(() => parseCashPeriodLimitDays(props.cashPeriodLimitPerDay));
 
-const maxDispensingDate = computed(() => toISODate(new Date()));
+const maxDispensingDate = computed(() => {
+  const todayStr = toISODate(new Date());
+  if (props.contractEndDate) {
+    const endStr = props.contractEndDate.slice(0, 10);
+    return endStr < todayStr ? endStr : todayStr;
+  }
+  return todayStr;
+});
+
 const minDispensingDate = computed(() => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() - cashLimitDays.value);
-  return toISODate(d);
+  const limitDateStr = toISODate(d);
+  if (props.contractBeginDate) {
+    const beginStr = props.contractBeginDate.slice(0, 10);
+    return beginStr > limitDateStr ? beginStr : limitDateStr;
+  }
+  return limitDateStr;
 });
 
 const isDispensingDateOutOfRange = computed(() => {

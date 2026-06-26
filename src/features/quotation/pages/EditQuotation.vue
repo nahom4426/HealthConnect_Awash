@@ -48,8 +48,7 @@ async function onFormSubmit(e: any) {
   const action = e.action;
   const data = e.data || {};
   if (action !== 'save' && action !== 'issue') return;
-  const quotedServices = (data.quotations || [])
-    .flatMap((q: any) => q.services || [])
+  const quotedServices = (data.quoatedServices || [])
     .map((s: any) => {
       const raw = s?.description;
       const val = typeof raw === 'object' && raw !== null ? (raw.value ?? raw.id ?? raw) : raw;

@@ -12,9 +12,12 @@ import { getPackages } from "@/features/product_settings/api/coverageApi";
 import { getAuthorization } from "@/features/authorization/api/authorizationApi";
 
 const props = defineProps({
-  row: { type: Object, default: null },         // full row (serviceProvidedUuid + claimUuid)
+  row: { type: Object, default: null },
   items: { type: Array, default: () => [] },
   title: { type: String, default: "Provided Items" },
+  isServiceClaimRejected: { type: Boolean, default: false },
+  isServiceClaimProcessed: { type: Boolean, default: false },
+  isServiceClaimCompleted: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["close"]);
@@ -22,8 +25,8 @@ const emit = defineEmits(["close"]);
 const localRow = ref(props.row);
 const localItems = ref([...props.items]);
 
-watch(() => props.row, (v) => (localRow.value = v), { immediate: true });
-watch(() => props.items, (v) => (localItems.value = v ? [...v] : []), { immediate: true });
+watch(() => props.row, (v) => { localRow.value = v }, { immediate: true });
+watch(() => props.items, (v) => { localItems.value = v ? [...v] : [] }, { immediate: true });
 
 const total = computed(() =>
   localItems.value.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0)
@@ -50,6 +53,53 @@ const showRejectItemModal = ref(false);
 const rejectItemRemark = ref("");
 const rejectItemCanResubmit = ref(true);
 const rejectTargetItem = ref(null);
+
+// Computed to determine which columns to show
+const showCoverageColumn = computed(() => {
+  return localItems.value.some(item => {
+    const coverage = getCoverageLabel(item);
+    return coverage && coverage !== '-';
+  });
+});
+
+const showExcessUsedColumn = computed(() => {
+  return localItems.value.some(item => {
+    const excess = Number(item.excessUsed);
+    return !isNaN(excess) && excess > 0;
+  });
+});
+
+const showExtraAmountColumn = computed(() => {
+  return localItems.value.some(item => {
+    const extra = Number(item.extraAmount);
+    return !isNaN(extra) && extra > 0;
+  });
+});
+
+const showAuthorizationColumn = computed(() => {
+  return localItems.value.some(item => item?.authorizationUuid);
+});
+
+// Build headers dynamically based on what data is available
+const tableHeaders = computed(() => {
+  const head = ['Name', 'Type', 'Package'];
+  if (showCoverageColumn.value) head.push('Coverage');
+  if (showAuthorizationColumn.value) head.push('Authorization');
+  if (showExcessUsedColumn.value) head.push('Excess Used');
+  if (showExtraAmountColumn.value) head.push('Extra Amount');
+  head.push('Qty', 'Unit Price', 'Total', 'Status', 'Actions');
+  return head;
+});
+
+const tableRowFields = computed(() => {
+  const row = ['itemName', 'type', 'packageUuid'];
+  if (showCoverageColumn.value) row.push('coverage');
+  if (showAuthorizationColumn.value) row.push('authorizationUuid');
+  if (showExcessUsedColumn.value) row.push('excessUsed');
+  if (showExtraAmountColumn.value) row.push('extraAmount');
+  row.push('quantity', 'unitPrice', 'totalPrice', 'itemClaimStatus', 'actions');
+  return row;
+});
 
 function openRejectItemModal(item) {
   rejectTargetItem.value = item;
@@ -125,20 +175,18 @@ async function openAttachment() {
     loadingAttachment.value = true;
     const id = props.row?.serviceProvidedUuid || props.row?.claimUuid;
     if (!id) {
-      toasted(false,"", "No attachment ID found");
+      toasted(false, "", "No attachment ID found");
       return;
     }
 
-    // Call API to get attachments data
     const res = await getAttachmentUrl(id);
     const attachments = Array.isArray(res?.data) ? res.data : [res?.data?.url || res?.data];
     
     if (!attachments.length || !attachments[0]) {
-      toasted(false,"", "No attachments found.");
+      toasted(false, "", "No attachments found.");
       return;
     }
 
-    // Open the attachments in a modal
     openModal('AttachmentViewer', { 
       attachments: attachments,
       title: 'Service Provided Attachments'
@@ -146,11 +194,12 @@ async function openAttachment() {
     
   } catch (err) {
     console.error("❌ Failed to load attachments", err);
-    toasted(false,"", "Could not load attachments. Please try again.");
+    toasted(false, "", "Could not load attachments. Please try again.");
   } finally {
     loadingAttachment.value = false;
   }
 }
+
 function detectType(it) {
   if (!it) return "Service";
   if (it.itemType) {
@@ -235,7 +284,6 @@ async function performAction(action) {
   const body = [localRow.value.serviceProvidedUuid];
   const remarkVal = remark.value && remark.value.trim() ? remark.value.trim() : undefined;
 
-  // Use appropriate request instance based on action
   const apiRequest = action === 'REJECTED' ? rejectReq : req;
 
   apiRequest.send(
@@ -249,13 +297,10 @@ async function performAction(action) {
       ),
     (res) => {
       if (res && res.status >= 200 && res.status < 300) {
-        // Update store with new status
         let updated;
         if (action === 'REJECTED') {
-          // Remove rejected items from table
           updated = (store.claims || []).filter((claim) => !body.includes(claim.serviceProvidedUuid));
         } else {
-          // Update status for processed items
           updated = (store.claims || []).map((claim) => {
             if (body.includes(claim.serviceProvidedUuid)) {
               return { ...claim, serviceClaimStatus: action };
@@ -266,7 +311,6 @@ async function performAction(action) {
         if (store.set) {
           store.set(updated);
         } else {
-          // fallback when set is not available
           store.claims = updated;
         }
         emit("close");
@@ -278,7 +322,7 @@ async function performAction(action) {
 
 <template>
   <div class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/45">
-    <div class="overflow-hidden w-full max-w-5xl bg-white rounded-lg shadow-xl">
+    <div class="overflow-hidden w-full max-w-6xl bg-white rounded-lg shadow-xl">
       <div class="flex gap-4 justify-between items-start px-6 py-4 border-b">
         <div class="flex gap-3 items-center">
           <div class="flex justify-center items-center w-12 h-12 text-white bg-gradient-to-br rounded-md from-primary to-secondary">
@@ -290,7 +334,16 @@ async function performAction(action) {
               {{ localItems.length }} item{{ localItems.length !== 1 ? "s" : "" }} •
               total: <span class="font-medium">{{ formatCurrency(total) }}</span>
             </p>
-            <!-- <p class="mt-1 text-xs text-gray-500">ServiceProvided UUID: {{ localRow?.serviceProvidedUuid }}</p> -->
+            <!-- Status badges -->
+            <span v-if="isServiceClaimRejected" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
+              ⛔ Claim Rejected
+            </span>
+            <span v-else-if="isServiceClaimProcessed" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+              ✓ Claim Processed
+            </span>
+            <span v-else-if="isServiceClaimCompleted" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+              ✓ Claim Completed
+            </span>
           </div>
         </div>
 
@@ -301,28 +354,14 @@ async function performAction(action) {
 
       <div class="p-4">
         <div class="overflow-auto">
-          <!-- <th class="px-4 py-3 text-left">Item ID</th>
-          <th class="px-4 py-3 text-left">Code</th> -->
-          <!-- <th class="px-4 py-3 text-left">Authorization</th> -->
           <Table
             :pending="false"
             :showPagination="false"
             class="w-full"
-            :rowClass="(r) => (isRejectedItem(r) ? 'bg-red-50 text-red-800 hover:bg-red-50' : '')"
+            :rowClass="(r) => (isRejectedItem(r) ? 'bg-red-50 text-red-800 hover:bg-red-50 line-through' : '')"
             :headers="{
-              head: [
-                'Name',
-                'Type',
-            
-                'Package',
-                'Coverage',
-                'Excess Used',
-                'Qty',
-                'Unit Price',
-                'Total',
-                'Actions',
-              ],
-              row: ['itemName', 'type',  'packageUuid', 'coverage', 'excessUsed', 'quantity', 'unitPrice', 'totalPrice'],
+              head: tableHeaders,
+              row: tableRowFields
             }"
             :rows="localItems"
           >
@@ -331,6 +370,12 @@ async function performAction(action) {
                 <div v-html="icons.no_data" class="mx-auto mb-3 w-16 h-16"></div>
                 No items available
               </div>
+            </template>
+
+            <template #itemName="{ row }">
+              <span :class="isRejectedItem(row) ? 'text-red-700 font-medium' : 'text-gray-800'">
+                {{ row?.itemName || '-' }}
+              </span>
             </template>
 
             <template #type="{ row }">
@@ -342,18 +387,13 @@ async function performAction(action) {
               </span>
             </template>
 
-            <template #itemName="{ row }">
-              <span :class="isRejectedItem(row) ? 'text-red-700 font-medium' : 'text-gray-800'">
-                {{ row?.itemName || '-' }}
-              </span>
-            </template>
-
             <template #packageUuid="{ row }">
               <span v-if="loadingPackages" class="text-xs text-gray-400">Loading...</span>
               <span v-else>{{ getPackageName(row.packageUuid) }}</span>
             </template>
 
-            <template #coverage="{ row }">
+            <!-- Only render coverage template if column is shown -->
+            <template v-if="showCoverageColumn" #coverage="{ row }">
               <span
                 class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
                 :class="getCoverageLabel(row) === 'AUTHORIZED' ? 'bg-green-100 text-green-700' : (getCoverageLabel(row) === 'EXCESS' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600')"
@@ -362,8 +402,21 @@ async function performAction(action) {
               </span>
             </template>
 
-            <template #excessUsed="{ row }">
+            <!-- Only render authorization template if column is shown -->
+            <template v-if="showAuthorizationColumn" #authorizationUuid="{ row }">
+              <span class="font-mono text-xs">{{ row.authorizationUuid || '-' }}</span>
+            </template>
+
+            <!-- Only render excess used template if column is shown -->
+            <template v-if="showExcessUsedColumn" #excessUsed="{ row }">
               <span class="block text-right">{{ formatCurrency(row.excessUsed) }}</span>
+            </template>
+
+            <!-- Only render extra amount template if column is shown -->
+            <template v-if="showExtraAmountColumn" #extraAmount="{ row }">
+              <span class="block font-medium text-right text-purple-600">
+                {{ formatCurrency(row.extraAmount) }}
+              </span>
             </template>
 
             <template #unitPrice="{ row }">
@@ -374,11 +427,20 @@ async function performAction(action) {
               <span class="block font-medium text-right">{{ formatCurrency(row.totalPrice) }}</span>
             </template>
 
+            <!-- Status column with modern badge -->
             <template #itemClaimStatus="{ row }">
               <span
-                class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
-                :class="isRejectedItem(row) ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'"
+                v-if="isRejectedItem(row)"
+                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full border border-red-200"
               >
+                <span class="mr-1.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                REJECTED
+              </span>
+              <span
+                v-else
+                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full border border-amber-200"
+              >
+                <span class="mr-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
                 {{ row?.itemClaimStatus || 'PENDING' }}
               </span>
             </template>
@@ -391,10 +453,11 @@ async function performAction(action) {
                   class="!text-blue-600 hover:!text-blue-800"
                   @click.stop="openAuthorizationDetails(row.authorizationUuid)"
                 >
-                  Authorization Details
+                  Auth Details
                 </Button>
+                <!-- Only show Reject button if item is NOT rejected AND service claim is NOT rejected/processed/completed -->
                 <Button
-                  v-if="!isRejectedItem(row)"
+                  v-if="!isRejectedItem(row) && !isServiceClaimRejected && !isServiceClaimProcessed && !isServiceClaimCompleted"
                   type="danger"
                   size="sm"
                   class="border border-red-200 !bg-red-50 !text-red-700 hover:!bg-red-100"
@@ -402,7 +465,10 @@ async function performAction(action) {
                 >
                   Reject
                 </Button>
-                <span v-else class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded-lg border border-red-100">
+                <span v-else-if="isRejectedItem(row)" class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded-lg border border-red-100">
+                  <svg class="mr-1 w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  </svg>
                   Rejected
                 </span>
               </div>
@@ -415,47 +481,66 @@ async function performAction(action) {
           </div>
         </div>
 
-        <div class="mt-4">
-          <label class="block mb-2 text-sm text-gray-600">Remark (optional)</label>
-          <textarea v-model="remark" rows="2" class="p-2 w-full text-sm rounded border" placeholder="Add a remark (optional)"></textarea>
-        </div>
+        <!-- Hide remark and resubmit options if service claim is rejected, processed, or completed -->
+        <div v-if="!isServiceClaimRejected && !isServiceClaimProcessed && !isServiceClaimCompleted">
+          <div class="mt-4">
+            <label class="block mb-2 text-sm text-gray-600">Remark (optional)</label>
+            <textarea v-model="remark" rows="2" class="p-2 w-full text-sm rounded border" placeholder="Add a remark (optional)"></textarea>
+          </div>
 
-        <div  class="mt-4">
-          <label class="flex gap-3 items-center text-sm text-gray-700">
-            <input v-model="canResubmit" type="checkbox" class="w-4 h-4" />
-            <span>Allow resubmission after rejection</span>
-          </label>
-          <p class="mt-1 text-xs text-gray-500">
-            If enabled, the provider can fix the issue and resubmit.
-          </p>
+          <div class="mt-4">
+            <label class="flex gap-3 items-center text-sm text-gray-700">
+              <input v-model="canResubmit" type="checkbox" class="w-4 h-4" />
+              <span>Allow resubmission after rejection</span>
+            </label>
+            <p class="mt-1 text-xs text-gray-500">
+              If enabled, the provider can fix the issue and resubmit.
+            </p>
+          </div>
         </div>
       </div>
 
       <div class="flex justify-between items-center px-6 py-4 bg-gray-50 border-t">
-         <div class="flex gap-3 items-center">
-           <div class="text-sm text-gray-600">Items: <span class="font-medium">{{ localItems.length }}</span></div>
-              <Button
-                type="primary"
-                class="!bg-purple-600 hover:!bg-purple-700"
-                @click="openHistory"
-              >
-                History
-              </Button>
-              <Button type="primary" @click="openAttachment" :disabled="loadingAttachment">
-          <span v-if="loadingAttachment">Loading...</span>
-          <span v-else>View Attachment</span>
-        </Button>
+        <div class="flex gap-3 items-center">
+          <div class="text-sm text-gray-600">Items: <span class="font-medium">{{ localItems.length }}</span></div>
+          <Button
+            type="primary"
+            class="!bg-purple-600 hover:!bg-purple-700"
+            @click="openHistory"
+          >
+            History
+          </Button>
+          <Button type="primary" @click="openAttachment" :disabled="loadingAttachment">
+            <span v-if="loadingAttachment">Loading...</span>
+            <span v-else>View Attachment</span>
+          </Button>
         </div>
-        <div
-         v-if="row.claimstatus !== 'REJECTED'"
-        class="flex gap-3 items-center">
+        
+        <!-- If rejected - show view only message (no buttons) -->
+        <div v-if="isServiceClaimRejected" class="flex gap-3 items-center">
+          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg border border-red-200">
+            <span class="mr-2">⛔</span> This claim has been rejected - View Only
+          </span>
+        </div>
+        
+        <!-- If processed or completed - show status message and Process button only (no Reject) -->
+        <div v-else-if="isServiceClaimProcessed || isServiceClaimCompleted" class="flex gap-3 items-center">
+          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-lg border border-green-200">
+            <span class="mr-2">✓</span> This claim is {{ isServiceClaimProcessed ? 'processed' : 'completed' }}
+          </span>
+          <Button type="primary" @click="rejectMode = false; performAction('PROCESSED')" :pending="req.pending.value">Process</Button>
+        </div>
+        
+        <!-- Normal state - show both Reject and Process buttons -->
+        <div v-else class="flex gap-3 items-center">
           <Button type="danger" @click="rejectMode = true; performAction('REJECTED')" :pending="rejectReq.pending.value">Reject</Button>
-          <Button  type="primary" @click="rejectMode = false; performAction('PROCESSED')" :pending="req.pending.value">Process</Button>
+          <Button type="primary" @click="rejectMode = false; performAction('PROCESSED')" :pending="req.pending.value">Process</Button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Authorization Details Modal -->
   <div v-if="showAuthorizationModal" class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/45">
     <div class="overflow-hidden w-full max-w-2xl bg-white rounded-lg shadow-xl">
       <div class="flex justify-between items-start px-6 py-4 border-b">
@@ -476,6 +561,7 @@ async function performAction(action) {
     </div>
   </div>
 
+  <!-- Reject Item Modal -->
   <div v-if="showRejectItemModal" class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/45">
     <div class="overflow-hidden w-full max-w-xl bg-white rounded-lg shadow-xl">
       <div class="flex justify-between items-start px-6 py-4 border-b">
@@ -525,5 +611,30 @@ async function performAction(action) {
 </template>
 
 <style scoped>
-.table-badge { display: inline-block; padding: .125rem .5rem; border-radius: 9999px; font-size: .75rem; }
+.table-badge { 
+  display: inline-block; 
+  padding: .125rem .5rem; 
+  border-radius: 9999px; 
+  font-size: .75rem; 
+}
+
+/* Additional modern styling for rejected items */
+:deep(.bg-red-50) {
+  --tw-bg-opacity: 0.5;
+}
+
+:deep(.bg-red-50 td) {
+  position: relative;
+}
+
+:deep(.bg-red-50 td::before) {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #ef4444;
+  border-radius: 2px;
+}
 </style>

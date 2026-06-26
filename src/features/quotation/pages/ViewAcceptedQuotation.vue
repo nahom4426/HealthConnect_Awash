@@ -2,15 +2,19 @@
 import DefaultPage from "@/components/DefaultPage.vue";
 import QuotationForm from "../form/QuotationForm.vue";
 import Input from "@/components/new_form_elements/Input.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, nextTick, computed } from "vue";
 import { getQuotationById, issuePremiumAdvice } from "@/features/quotation/api/quotationApi";
 import { useRoute, useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationCreationDataProvider from "@/features/quotation/components/QuotationCreationDataProvider.vue";
 
-const showInstitution = ref(false) // Hidden by default
-const showMore = ref(false) // Hidden by default
+const showInstitution = ref(false)
+const showMore = ref(false)
+const isSubmitting = ref(false);
+let lastCallTime = 0; // Add timestamp check
+const DEBOUNCE_TIME = 1000; // 1 second debounce
+
 const institutionForm = ref({
   institutionName: "",
   email: "",
@@ -22,25 +26,111 @@ const institutionForm = ref({
   address: "",
 })
 
+// Discount-related computed properties
+const hasDiscounts = computed(() => {
+  if (!draft.value?.quoatedServices) return false;
+  return draft.value.quoatedServices.some((s: any) => (s.discount || 0) > 0);
+});
+
+const discountedServices = computed(() => {
+  if (!draft.value?.quoatedServices) return [];
+  return draft.value.quoatedServices
+    .filter((s: any) => (s.discount || 0) > 0)
+    .map((s: any) => ({
+      ...s,
+      originalPremium: s.discount > 0 ? s.premium / (1 - s.discount / 100) : s.premium,
+      packageName: s.packageName || 'Unknown Package'
+    }));
+});
+
+const discountMapFromServices = computed(() => {
+  if (!draft.value?.quoatedServices) return {};
+  const map: Record<string, number> = {};
+  draft.value.quoatedServices.forEach((s: any) => {
+    if (s.discount > 0) {
+      map[s.packageUuid] = s.discount;
+    }
+  });
+  return map;
+});
+
+const totalOriginalPremium = computed(() => {
+  if (!draft.value?.quoatedServices) return 0;
+  return draft.value.quoatedServices.reduce((total: number, s: any) => {
+    const originalPremium = s.discount > 0 ? s.premium / (1 - s.discount / 100) : s.premium;
+    return total + originalPremium;
+  }, 0);
+});
+
+const totalDiscountedPremium = computed(() => {
+  if (!draft.value?.quoatedServices) return 0;
+  return draft.value.quoatedServices.reduce((total: number, s: any) => {
+    return total + (s.premium || 0);
+  }, 0);
+});
+
+const totalDiscountAmount = computed(() => {
+  return totalOriginalPremium.value - totalDiscountedPremium.value;
+});
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount || 0);
+}
+
 function onAcceptedFormSubmit(e: any) {
   if (!e) return;
-  const action = e.action;
-  if (action === 'issuePremiumAdvice') {
-    const qid = (draft.value?.quotationUuid || route.params.quotationUuid) as string;
-    pendingAction.value = 'issuePremiumAdvice'
-    issuePremiumAdvice(qid, { quotationUuid: qid })
-      .then(() => {
-        toasted(true, 'Premium advice issued');
-        router.back();
-      })
-      .catch((err: any) => {
-        const apiErr = err?.response?.data || err;
-        toasted(false, 'Failed to issue premium advice', apiErr);
-      })
-      .finally(() => {
-        pendingAction.value = ''
-      });
+  
+  // Check by action type
+  if (e.action !== 'issuePremiumAdvice') return;
+  
+  // Timestamp-based debounce
+  const now = Date.now();
+  if (now - lastCallTime < DEBOUNCE_TIME) {
+    console.log(`Debounced: Only ${now - lastCallTime}ms since last call`);
+    return;
   }
+  
+  // Flag-based prevention
+  if (isSubmitting.value) {
+    console.log('Submission already in progress, skipping...');
+    return;
+  }
+  
+  lastCallTime = now;
+  
+  const qid = (draft.value?.quotationUuid || route.params.quotationUuid) as string;
+  pendingAction.value = 'issuePremiumAdvice'
+  isSubmitting.value = true;
+  
+  console.log('Making API call to issuePremiumAdvice for:', qid);
+  
+  issuePremiumAdvice(qid, { quotationUuid: qid })
+    .then((res: any) => {
+      const body = res?.data ?? res;
+      if (body?.statusCode && body?.statusCode >= 400) {
+        const msg = body?.message || 'Failed to issue premium advice';
+        toasted(false, msg, body);
+        return;
+      }
+
+      toasted(true, 'Premium advice issued');
+      router.back();
+    })
+    .catch((err: any) => {
+      const apiErr = err?.response?.data || err;
+      toasted(false, 'Failed to issue premium advice', apiErr);
+    })
+    .finally(() => {
+      pendingAction.value = '';
+      // Reset after a short delay to ensure cleanup
+      setTimeout(() => {
+        isSubmitting.value = false;
+      }, 500);
+    });
 }
 
 const prefilled = ref(false)
@@ -66,7 +156,6 @@ function prefillOnce(v: any) {
 const route = useRoute();
 const router = useRouter();
 
-// Load quotation to get its institutionUuid and services
 const loading = ref(false)
 const error = ref<string | null>(null)
 const institutionUuidForProvider = ref<string | null>(null)
@@ -78,12 +167,16 @@ function buildPrefill(packages: any[]): { packageName: string; planType: string;
   const services = (draft.value.quoatedServices || []) as any[];
   const groups: Record<string, { packageName: string; planType: string; services: any[] }> = {};
   for (const s of services) {
-    const pkgName = packages.find((p: any) => p.packageUuid === s.packageUuid)?.packageName || '';
+    const pkgName = packages.find((p: any) => p.packageUuid === s.packageUuid)?.packageName || s.packageName || '';
     const key = `${pkgName}__${s.planType}`;
     if (!groups[key]) {
       groups[key] = { packageName: pkgName, planType: s.planType, services: [] };
     }
-    groups[key].services.push({ ...s });
+    groups[key].services.push({ 
+      ...s,
+      discount: s.discount || 0,
+      originalPremium: s.discount > 0 ? s.premium / (1 - s.discount / 100) : s.premium
+    });
   }
   return Object.values(groups);
 }
@@ -148,7 +241,7 @@ onMounted(async () => {
       <template v-if="prefillOnce(instituton)"></template>
       
       <div class="mx-auto space-y-6 w-full max-w-7xl">
-        <!-- Institution Details Card - Collapsed by default -->
+        <!-- Institution Details Card -->
         <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
           <div class="px-6 py-4 bg-gradient-to-r border-b from-slate-50 to-slate-100 border-slate-200">
             <div class="flex justify-between items-center">
@@ -177,7 +270,6 @@ onMounted(async () => {
             </div>
           </div>
           
-          <!-- Institution Form - Hidden by default -->
           <div v-show="showInstitution" class="p-6">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div class="space-y-4">
@@ -275,7 +367,6 @@ onMounted(async () => {
               </div>
             </div>
             
-            <!-- Quick summary when collapsed -->
             <div v-if="!showInstitution" class="px-6 py-4 border-t border-slate-200">
               <div class="flex gap-4 items-center text-sm">
                 <div class="text-slate-600">
@@ -337,10 +428,54 @@ onMounted(async () => {
                 :readOnlyRows="true"
                 :showIssuePremiumAdvice="true"
                 :onSubmit="onAcceptedFormSubmit"
+                :discountMap="discountMapFromServices"
               />
             </QuotationCreationDataProvider>
             
-            <!-- Quotation Summary -->
+            <!-- Discount Summary -->
+            <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-amber-50 border border-amber-200">
+              <div class="flex gap-3 items-start">
+                <svg class="w-5 h-5 mt-0.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
+                </svg>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-amber-800">Discounts Applied</h4>
+                  <div class="mt-2 space-y-2">
+                    <div v-for="service in discountedServices" :key="service.serviceQuotedUuid" class="flex justify-between items-center p-2 rounded bg-white/60">
+                      <div>
+                        <span class="font-medium text-slate-700">{{ service.packageName }}</span>
+                        <span class="ml-2 text-sm text-slate-500">{{ service.planType?.replace(/_/g, ' ') }}</span>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-sm">
+                          <span class="text-slate-500 line-through">{{ formatCurrency(service.originalPremium) }}</span>
+                          <span class="ml-2 font-semibold text-green-700">{{ formatCurrency(service.premium) }}</span>
+                        </div>
+                        <div class="text-xs font-medium text-amber-700">
+                          {{ service.discount }}% discount
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Total Savings -->
+                  <div class="flex justify-between items-center pt-3 mt-3 border-t border-amber-200">
+                    <div class="text-sm font-medium text-slate-700">
+                      <span>Total Savings</span>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-sm">
+                        <span class="font-bold text-green-700">{{ formatCurrency(totalDiscountAmount) }}</span>
+                      </div>
+                      <div class="text-xs text-slate-500">
+                        {{ formatCurrency(totalOriginalPremium) }} → {{ formatCurrency(totalDiscountedPremium) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div class="p-4 bg-green-50 rounded-lg border border-green-100">
@@ -370,7 +505,6 @@ onMounted(async () => {
                 </div>
               </div>
               
-              <!-- Action Note -->
               <div class="p-4 mt-6 bg-blue-50 rounded-lg border border-blue-200">
                 <div class="flex gap-3 items-start">
                   <div class="p-2 mt-0.5 bg-blue-100 rounded-full">

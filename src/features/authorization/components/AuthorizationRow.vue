@@ -47,6 +47,11 @@ function formatDate(dateValue) {
   return match ? match[1] : str;
 }
 
+function formatAmount(amount) {
+  if (amount === null || amount === undefined) return "-";
+  return `ETB ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function getStatusStyle(status) {
   const base = "inline-flex justify-center items-center min-w-[90px] px-3 py-1 rounded-full text-xs font-semibold";
 
@@ -136,6 +141,12 @@ function openChangeStatusModal(row) {
       </div>
       <div v-else-if="key === 'endDate'" class="text-gray-700">
         {{ formatDate(row?.endDate) }}
+      </div>
+      <div v-else-if="key === 'authorizedAmount'" class="text-gray-700 font-medium">
+        <span class="text-emerald-600">{{ formatAmount(row?.authorizedAmount) }}</span>
+      </div>
+      <div v-else-if="key === 'usedAmount'" class="text-gray-700">
+        <span class="text-blue-600">{{ formatAmount(row?.usedAmount) }}</span>
       </div>
       <div v-else class="text-gray-700">
         {{ safeCell(key, row) }}

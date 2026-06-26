@@ -6,10 +6,6 @@ import icons from '@/utils/icons';
   const props = defineProps({
     attributes: {
       type: Object,
-    },
-    glass: {
-      type: Boolean,
-      default: false,
     }
   })
 
@@ -25,9 +21,9 @@ import icons from '@/utils/icons';
   <Input :attributes="{
     ...attributes,
     type: text ? 'text' : 'password'
-  }" :glass="glass">
+  }" >
     <template #left>
-      <div @click="toggleType" class="h-full w-12 pt-2 grid place-items-center border-r">
+      <div @click="toggleType" class="h-full w-12 grid place-items-center border-r cursor-pointer" style="display:flex;align-items:center;justify-content:center;min-height:100%;">
         <span v-html="text ? icons.eye : icons.eyeSlash" />
       </div>
     </template>

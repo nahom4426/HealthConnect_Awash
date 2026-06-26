@@ -1,12 +1,8 @@
 <script setup>
-	const props = defineProps(['error', 'glass'])
+	const props = defineProps(['error'])
 </script>
 <template>
-	<p v-if='error' :title='error'
-		:class="glass
-			? 'capitalize px-1 text-xs font-semibold text-red-300'
-			: 'capitalize px-1 text-xs text-red-700'"
-	>
+	<p v-if='error' :title='error' class="capitalize px-1 text-xs text-red-700">
 		{{error}}
 	</p>
 </template>

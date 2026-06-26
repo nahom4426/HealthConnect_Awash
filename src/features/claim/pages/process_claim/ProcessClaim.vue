@@ -131,7 +131,17 @@ function handleContractSelect(result) {
         :headers="tableHeaders"
         :rows="claims"
         :rowCom="ClaimStatusRow"
+         @row-click="navigateToServicesPage"
       >
+      <template #row>
+          <ClaimStatusRow
+            :rowData="filteredContracts"
+            :rowKeys="tableRowKeys"
+            :onView="navigateToServicesPage"
+            :onRowClick="navigateToServicesPage"
+          />
+        </template>
+
       </Table>
     </DefaultPage>
   </ClaimByBatchDataProvider>

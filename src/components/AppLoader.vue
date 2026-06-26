@@ -14,7 +14,7 @@
       <div class="logo-compact">
         <div class="logo-orb">
           <div class="logo-core">
-            <img src="/src/assets/img/logo.png " alt="Ethiopian Insurance Corporation" class="logo" />
+            <img src="/src/assets/img/letter-logo.png " alt="Nyala Insurance" class="logo" />
           </div>
           <div class="ring-1 logo-ring"></div>
           <div class="ring-2 logo-ring"></div>
@@ -40,7 +40,7 @@
         <!-- Animated title -->
         <div class="title-compact">
           <h1 class="compact-title">
-            <span class="title-gradient">EIC</span>
+            <span class="title-gradient">Awash</span>
             <span class="title-solid">Insurance</span>
           </h1>
         </div>

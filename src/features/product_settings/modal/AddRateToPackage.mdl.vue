@@ -72,7 +72,7 @@ function availableFamilySizeOptions(planType: string) {
 
 function addRateRow() {
   const planType = Plan['Family Plan']
-  const candidates = [Plan['Family Plan'], Plan['Family Shared Plan'], Plan['Individual Plan']]
+  const candidates = [Plan['Family Plan'], Plan['Family Shared Plan'], Plan['Dependent Shared Plan'], Plan['Dual Premium Dependent Shared Plan'], Plan['Individual Plan']]
 
   for (const p of candidates) {
     const opts = availableFamilySizeOptions(p)
@@ -191,6 +191,8 @@ function handleSubmit() {
                   { label: 'Individual Plan', value: Plan['Individual Plan'] },
                   { label: 'Family Plan', value: Plan['Family Plan'] },
                   { label: 'Family Shared Plan', value: Plan['Family Shared Plan'] },
+                  { label: 'Dependent Shared Plan', value: Plan['Dependent Shared Plan'] },
+                  { label: 'Dual Premium Dependent Shared Plan', value: Plan['Dual Premium Dependent Shared Plan'] },
                 ]"
                 :obj="true"
                 :attributes="{ placeholder: 'Select Plan Type', disabled: !row._isNew }"

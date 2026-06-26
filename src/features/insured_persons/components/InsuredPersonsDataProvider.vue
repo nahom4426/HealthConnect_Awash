@@ -39,7 +39,7 @@ const pagination = usePagination({
   auto: false,
   cb: async (data: any) => {
     const response = await searchInsuredByInstitution(
-      route.params.institutionUuid,
+      route.params.id,
       removeUndefined({
         ...data,
         status: props.status,

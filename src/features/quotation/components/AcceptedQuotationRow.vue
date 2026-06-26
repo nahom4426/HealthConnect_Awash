@@ -93,12 +93,10 @@ const hasActions = computed(() =>
     <td v-if="hasActions" class="p-3 text-start">
       <RouterLink
         :to="{ name: 'ViewAcceptedQuotation', params: { quotationUuid: (row as any)?.quotationUuid } }"
-        class="inline-flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-full shadow-sm transition-all duration-200 hover:shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none"
+        class="inline-flex gap-1.5 items-center px-3.5 py-1.5 text-xs font-semibold text-primary bg-primary/5 hover:bg-primary hover:text-white rounded-full transition-all duration-150 shadow-sm outline-none border border-primary/20 hover:border-primary"
         @click.stop
       >
-        <span class="flex justify-center items-center w-6 h-6 bg-white/20 rounded-full">
-          <i v-html="icons.details" class="w-4 h-4" />
-        </span>
+        <i v-html="icons.details" class="w-3.5 h-3.5" />
         <span class="hidden sm:inline">View</span>
         <span class="sm:hidden">Open</span>
       </RouterLink>

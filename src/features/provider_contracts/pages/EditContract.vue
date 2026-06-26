@@ -113,7 +113,7 @@ const generateContractCode = (providerName) => {
 const generateContractName = (providerName) => {
   const providerPrefix = providerName.substring(0, 5).toUpperCase();
   const randomNumber = Math.floor(10 + Math.random() * 90);
-  return `${providerPrefix}-EIC-${randomNumber}`;
+  return `${providerPrefix}-Awash-${randomNumber}`;
 };
 
 // Function to regenerate contract code

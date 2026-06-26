@@ -7,12 +7,14 @@ import Button from "@/components/Button.vue";
 import { closeModal } from "@customizer/modal-x";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
+import { useInsuredPersonsRefreshStore } from "../store/insuredPersonsRefreshStore";
 import {
   importQuotedMainMembers,
   importQuotedDependants,
 } from "../api/insuredPersonsApi";
 
 const route = useRoute();
+const refreshStore = useInsuredPersonsRefreshStore();
 
 const quotationUuid = computed(() => route.params.quotationUuid || route.params.institutionName);
 const payerInstitutionContractUuid = computed(() => route.params.id);
@@ -179,6 +181,8 @@ function importNow() {
         // Only close modal if all rows were successful
         if (importResult.value.errorCount === 0) {
           toasted(true, `Successfully imported ${importResult.value.successCount} records`, "");
+          // Trigger refresh to update the insured persons table
+          refreshStore.triggerRefresh();
           setTimeout(() => closeModal(), 1500);
         } else {
           // Show toast with summary
@@ -187,9 +191,13 @@ function importNow() {
             : `Successfully imported ${importResult.value.successCount} records`;
           
           toasted(importResult.value.errorCount === 0, message, "");
+          // Trigger refresh even with partial success
+          refreshStore.triggerRefresh();
         }
       } else {
         toasted(true, "Import completed successfully", "");
+        // Trigger refresh
+        refreshStore.triggerRefresh();
         closeModal();
       }
     },
@@ -252,9 +260,9 @@ function closeAndReset() {
                       <span class="text-xl" :class="importType === 'main' ? 'text-blue-600' : 'text-gray-500'">👤</span>
                     </div>
                     <div class="flex-1">
-                      <div class="font-medium text-gray-900">Main Members</div>
+                      <div class="font-medium text-gray-900">Main Members With their Dependents</div>
                       <div class="mt-1 text-xs text-gray-500">
-                        Import primary insured members
+                        Import primary insured members With their depndents 
                       </div>
                     </div>
                     <div

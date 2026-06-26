@@ -118,9 +118,17 @@ function toggleStatus(packageData) {
     }
   );
 }
-function handleShowRate(packageData){
-  closeAllDropdowns();
-  router.push({ name: 'show-rates', params: { packageUuid: packageData.packageUuid } });
+function handleShowRate(packageData) {
+  closeAllDropdowns()
+  router.push({ 
+    name: 'show-rates', 
+    params: { 
+      packageUuid: packageData.packageUuid
+    },
+    query: {
+      packageName: packageData.packageName || ''
+    }
+  })
 }
 function handleDelete(packageData) {
   openModal('DeletePackage', { ...packageData });

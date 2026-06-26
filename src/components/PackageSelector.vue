@@ -49,6 +49,7 @@ const insuredPlanTypeOptions = shallowRef([
 
 const dependentExtraPlanTypeOptions = shallowRef([
   { value: 'Dependent_Shared_Plan', label: 'Dependent Shared Plan' },
+  { value: 'Dual_Premium_dependent_Shared_Plan', label: 'Dual Premium Dependent Shared Plan' },
 ]);
 
 const allSelectedPackages = computed(() => {
@@ -84,7 +85,7 @@ function normalizePlanType(value) {
   if (planTypeCache.has(cacheKey)) return planTypeCache.get(cacheKey);
   
   const normalized = String(value).trim();
-  const allowed = new Set(['Individual_Plan', 'Family_Shared_Plan', 'Dependent_Shared_Plan']);
+  const allowed = new Set(['Individual_Plan', 'Family_Shared_Plan', 'Dependent_Shared_Plan', 'Dual_Premium_dependent_Shared_Plan']);
   const result = allowed.has(normalized) ? normalized : null;
   planTypeCache.set(cacheKey, result);
   return result;
@@ -126,7 +127,8 @@ function isFamilySharedPlan(planType) {
 }
 
 function isDependentSharedPlan(planType) {
-  return normalizePlanType(planType) === 'Dependent_Shared_Plan';
+  const pt = normalizePlanType(planType);
+  return pt === 'Dependent_Shared_Plan' || pt === 'Dual_Premium_dependent_Shared_Plan';
 }
 
 function normalizeGender(value) {
@@ -169,13 +171,14 @@ function isDependentRowReadOnly(pkg) {
 function shouldShowDependentLimitInputs(pkg) {
   if (!props.dependantUuid || !pkg?.planType) return false;
   const pt = normalizePlanType(pkg.planType);
-  return pt === 'Family_Shared_Plan' || pt === 'Dependent_Shared_Plan';
+  return pt === 'Family_Shared_Plan' || pt === 'Dependent_Shared_Plan' || pt === 'Dual_Premium_dependent_Shared_Plan';
 }
 
 function shouldShowDepSharedFields(pkg) {
-  // On insured screen: Dependent_Shared_Plan has two extra inputs (dep sum assured + dep used benefit)
+  // On insured screen: Dependent_Shared_Plan / Dual_Premium_dependent_Shared_Plan has two extra inputs (dep sum assured + dep used benefit)
   if (props.dependantUuid) return false;
-  return normalizePlanType(pkg?.planType) === 'Dependent_Shared_Plan';
+  const pt = normalizePlanType(pkg?.planType);
+  return pt === 'Dependent_Shared_Plan' || pt === 'Dual_Premium_dependent_Shared_Plan';
 }
 
 function shouldShowDepSumAssuredOnly(pkg) {
@@ -232,6 +235,9 @@ function optionsForPackage(pkg) {
   }
   if (insuredPt === 'Dependent_Shared_Plan') {
     return dependentExtraPlanTypeOptions.value.filter(o => o.value === 'Dependent_Shared_Plan');
+  }
+  if (insuredPt === 'Dual_Premium_dependent_Shared_Plan') {
+    return dependentExtraPlanTypeOptions.value.filter(o => o.value === 'Dual_Premium_dependent_Shared_Plan');
   }
   return insuredPlanTypeOptions.value.filter(o => o.value === 'Individual_Plan');
 }
@@ -569,7 +575,8 @@ function buildPackageObject(pkg, selectedPkg) {
   const selectedPlanType = normalizePlanType(selectedPkg?.planType);
   const defaultPlanType = props.dependantUuid
     ? (insuredPkgPlanType === 'Family_Shared_Plan' ? 'Family_Shared_Plan' : 
-       insuredPkgPlanType === 'Dependent_Shared_Plan' ? 'Dependent_Shared_Plan' : 'Individual_Plan')
+       insuredPkgPlanType === 'Dependent_Shared_Plan' ? 'Dependent_Shared_Plan' :
+       insuredPkgPlanType === 'Dual_Premium_dependent_Shared_Plan' ? 'Dual_Premium_dependent_Shared_Plan' : 'Individual_Plan')
     : 'Individual_Plan';
 
   const insuredSumAssured = props.dependantUuid ? getInsuredPackageSumAssuredByPackageUuid(pkg.packageUuid) : null;

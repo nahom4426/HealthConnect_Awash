@@ -1,5 +1,6 @@
 <script setup>
 import { useAuthStore } from "@/stores/auth";
+import { useDarkModeStore } from "@/stores/darkMode";
 import { ref, computed } from "vue";
 import imageSrc from "@/assets/img/profile.png";
 import { useRouter } from "vue-router";
@@ -11,6 +12,8 @@ const props = defineProps({
 
 const router    = useRouter();
 const authStore = useAuthStore();
+const darkStore = useDarkModeStore();
+const isDark    = computed(() => darkStore.isDark);
 
 // ── Collapse state ──
 const collapsed  = ref(false);
@@ -47,7 +50,7 @@ function navigate(path) {
 
 <template>
   <!-- ════════ LEFT SIDEBAR ════════ -->
-  <aside class="sidebar" :class="{ 'sidebar-collapsed': collapsed }">
+  <aside class="sidebar" :class="{ 'sidebar-collapsed': collapsed, 'sidebar-light': !isDark }">
 
     <!-- Top accent stripe -->
     <div class="sidebar-accent"></div>
@@ -60,7 +63,7 @@ function navigate(path) {
       <Transition name="fade-text">
         <div v-if="!collapsed" class="brand-text" @click="navigate('/module-select')">
           <span class="brand-name">Ethiopian Insurance Corporation</span>
-          <span class="brand-sub">HealthConnect</span>
+          <span class="brand-sub">InsureConnect</span>
         </div>
       </Transition>
       <button class="collapse-btn" @click="toggleCollapse" :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'">
@@ -173,7 +176,13 @@ function navigate(path) {
   top: 0;
   z-index: 200;
   box-shadow: 4px 0 24px rgba(0,0,0,0.3);
-  transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+  transition: width 0.25s cubic-bezier(0.4,0,0.2,1), background 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* Light mode sidebar */
+.sidebar-light {
+  background: #1e3a5f;
+  box-shadow: 4px 0 20px rgba(0,34,77,0.18);
 }
 .sidebar-collapsed { width: 68px; }
 .sidebar::-webkit-scrollbar { display: none; }

@@ -62,17 +62,17 @@ const formatCellValue = (value: any): string => {
     <tr
       @click="emit('row', row)"
       :class="[
-        'cursor-pointer transition-colors duration-150 hover:bg-gray-50',
+        'group cursor-pointer transition-colors duration-100 hover:bg-gray-50/80',
         typeof props.rowClass === 'function' ? props.rowClass(row) : props.rowClass,
       ]"
     >
       <!-- First column slot -->
-      <td v-if="firstCol" class="px-4 py-3 whitespace-nowrap">
+      <td v-if="firstCol" class="px-4 py-2.5 whitespace-nowrap">
         <slot name="select" :row="row" />
       </td>
 
       <!-- Index column -->
-      <td v-if="!hideIndex" class="px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap">
+      <td v-if="!hideIndex" class="px-4 py-2.5 text-xs font-medium text-gray-400 whitespace-nowrap tabular-nums w-12">
         {{ index + 1 }}
       </td>
 
@@ -80,7 +80,7 @@ const formatCellValue = (value: any): string => {
       <td
         v-for="key in rowKeys"
         :key="key"
-        class="px-4 py-3 max-w-xs text-sm text-gray-900 truncate"
+        class="px-4 py-2.5 max-w-[200px] text-sm text-gray-700 truncate"
       >
         <slot v-if="$slots[key]" :name="key" :row="row" />
         <slot v-else-if="$slots[`cell(${key})`]" :name="`cell(${key})`" :row="row" :value="getNestedValue(row, key)" />
@@ -102,7 +102,7 @@ const formatCellValue = (value: any): string => {
       </td>
 
       <!-- Last column slot -->
-      <td v-if="lastCol" class="px-4 py-3 whitespace-nowrap">
+      <td v-if="lastCol" class="px-4 py-2.5 whitespace-nowrap">
         <slot name="lastCol" :row="row" />
       </td>
     </tr>
@@ -111,23 +111,7 @@ const formatCellValue = (value: any): string => {
 </template>
 
 <style scoped>
-/* Ensure proper text truncation */
-.max-w-xs {
-  max-width: 16rem;
-}
-
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Hover effect */
 tr {
-  border-bottom: 1px solid #f3f4f6;
-}
-
-tr:last-child {
-  border-bottom: none;
+  transition: background-color 0.1s ease;
 }
 </style>

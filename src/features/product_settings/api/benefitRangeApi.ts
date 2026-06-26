@@ -7,16 +7,16 @@ export function createBenefitRange(data: {
   packageUuid: string;
   planType: string;
   familySize: number;
-  minLimit: number;
-  maxLimit: number;
+  minBalance: number;
+  maxBalance: number;
   rate: number;
   description?: string;
 } | Array<{
   packageUuid: string;
   planType: string;
   familySize: number;
-  minLimit: number;
-  maxLimit: number;
+  minBalance: number;
+  maxBalance: number;
   rate: number;
   description?: string;
   familyBenefitRangeUuid?: string;
@@ -28,8 +28,8 @@ export function createBenefitRange(data: {
 export function createBenefitRangesForPackage(
   packageUuid: string,
   data: Array<{
-    maxLimit: number;
-    minLimit: number;
+    maxBalance: number;
+    minBalance: number;
     familySize: number;
     rate: number;
     status: string;
@@ -46,8 +46,8 @@ export function updateBenefitRangesForPackage(
   packageUuid: string,
   data: Array<{
     familyBenefitRangeUuid: string;
-    maxLimit: number;
-    minLimit: number;
+    maxBalance: number;
+    minBalance: number;
     familySize: number;
     rate: number;
     status: string;
@@ -73,8 +73,8 @@ export function updateBenefitRange(
     packageUuid: string;
     planType: string;
     familySize: number;
-    minLimit: number;
-    maxLimit: number;
+    minBalance: number;
+    maxBalance: number;
     rate: number;
     status: string;
     description?: string;

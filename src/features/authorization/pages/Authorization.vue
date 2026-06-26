@@ -50,7 +50,7 @@ watch(
 function clearFilters() {
   selected.contractUuid = null;
   selected.policyUuid = null;
-   selected.institutionUuid = null;
+  selected.institutionUuid = null;
   selected.insuredUuid = null;
   selected.dependantUuid = null;
 }
@@ -252,37 +252,29 @@ function clearFilters() {
           :rows="authorizations"
           :headers="{
             head: [
-        
               'Provider Name',
               'Institution Name',
               'Member',
               'Status',
               'End Date',
               'Active Days',
+              'Authorized Amount',
+              'Used Amount',
               'Actions'
             ],
             row: [
-            
               'providerName',
               'institutionName',
               'member',
               'status',
               'endDate',
-              'activeDays'
+              'activeDays',
+              'authorizedAmount',
+              'usedAmount'
             ]
           }"
         >
-          <!-- <template #placeholder>
-            <div class="py-12 text-center">
-              <div class="flex flex-col justify-center items-center">
-                <i v-html="icons.document"></i>
-                <p class="text-gray-500">No authorizations found</p>
-                <p v-if="search" class="mt-1 text-sm text-gray-400">
-                  No results match your search criteria
-                </p>
-              </div>
-            </div>
-          </template> -->
+          <!-- Optional placeholder for empty state -->
         </Table>
       </AuthorizationDataProvider>
     </template>

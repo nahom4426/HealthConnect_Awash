@@ -138,7 +138,7 @@
       </td>  
 
       <!-- Actions Column -->
-      <td class="relative p-3 text-left">
+      <td class="p-3 text-left">
         <!-- Dropdown Button (only if NOT on amend page and showActionButtons is true) -->
         <button 
           v-if="showActionButtons && actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history'"
@@ -153,52 +153,53 @@
           </svg>
         </button>
 
-        <!-- Dropdown Menu -->
-        <div 
-          v-if="actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history' && showActionButtons"
-          :id="`dropdown-${getRowId(row)}`"
-          class="hidden absolute right-0 z-50 w-44 bg-white rounded-md ring-1 ring-black ring-opacity-5 shadow-lg dropdown-menu focus:outline-none"
-          :class="getDropdownMenuClass(row)"
-        >
-          <div class="py-1" role="none">
-            <button 
-              @click.stop="handleEditWithClose(row)"
-              class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
-            >
-              <i v-html="icons.edits || '✏️'" class="w-5 h-5" />
-              Edit
-            </button>
+        <!-- Fixed Dropdown Portal (rendered at body level via teleport) -->
+        <Teleport to="body" v-if="actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history' && showActionButtons">
+          <div 
+            :id="`dropdown-${getRowId(row)}`"
+            class="hidden fixed z-[9999] w-48 bg-white rounded-lg ring-1 ring-black ring-opacity-5 shadow-xl dropdown-menu focus:outline-none"
+            :class="getDropdownMenuClass(row)"
+          >
+            <div class="py-1" role="none">
+              <button 
+                @click.stop="handleEditWithClose(row)"
+                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+              >
+                <i v-html="icons.edits || '✏️'" class="w-5 h-5" />
+                Edit
+              </button>
 
-            <button
-              class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
-              @click.stop="openModal('AddPackages', {
-                payerInstitutionContractUuid: route.params.id  || row?.payerInstitutionContractUuid,
-                insuredUuid: row?.insuredUuid,
-                quotationUuid: row?.quotationUuid,
-                gender: row?.gender,
-              })"
-            >
-              <i v-html="icons.Benefits || '🎁'" class=""></i>
-              Benefits
-            </button>
+              <button
+                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                @click.stop="openModal('AddPackages', {
+                  payerInstitutionContractUuid: route.params.id || row?.payerInstitutionContractUuid,
+                  insuredUuid: row?.insuredUuid,
+                  quotationUuid: row?.quotationUuid,
+                  gender: row?.gender,
+                })"
+              >
+                <i v-html="icons.Benefits || '🎁'" class=""></i>
+                Benefits
+              </button>
 
-            <button 
-              @click.stop="$router.push(`/insured_list/detail/${getRowId(row)}`)"
-              class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
-            >
-              <i v-html="icons.Dependants || '👥'" class="w-5 h-5" />
-              Dependents
-            </button>
-            
-            <button
-              @click.stop="handleHistoryWithClose(row)"
-              class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
-            >
-              <i v-html="icons.historys || '🕘'" class="w-4 h-4 text-gray-700" />
-              History
-            </button>
+              <button 
+                @click.stop="$router.push(`/insured_list/detail/${getRowId(row)}`)"
+                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+              >
+                <i v-html="icons.Dependants || '👥'" class="w-5 h-5" />
+                Dependents
+              </button>
+              
+              <button
+                @click.stop="handleHistoryWithClose(row)"
+                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+              >
+                <i v-html="icons.historys || '🕘'" class="w-4 h-4 text-gray-700" />
+                History
+              </button>
+            </div>
           </div>
-        </div>
+        </Teleport>
 
         <!-- UTILIZATION PAGE: Only Utilization Action -->
         <div v-if="actionPage === 'utilization'" class="flex flex-row gap-2 items-center">
@@ -682,7 +683,28 @@ function toggleDropdown(event, rowId) {
   event.stopPropagation();
   closeAllDropdowns();
   const dropdown = document.getElementById(`dropdown-${rowId}`);
-  if (dropdown) dropdown.classList.toggle('hidden');
+  if (!dropdown) return;
+
+  const btn = event.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const dropdownHeight = 180; // approx height of menu
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const openUpward = spaceBelow < dropdownHeight + 8;
+
+  // Position horizontally: align right edge of dropdown to right edge of button
+  const right = window.innerWidth - rect.right;
+  dropdown.style.right = `${right}px`;
+  dropdown.style.left = 'auto';
+
+  if (openUpward) {
+    dropdown.style.bottom = `${window.innerHeight - rect.top + 4}px`;
+    dropdown.style.top = 'auto';
+  } else {
+    dropdown.style.top = `${rect.bottom + 4}px`;
+    dropdown.style.bottom = 'auto';
+  }
+
+  dropdown.classList.remove('hidden');
 }
 
 function closeAllDropdowns() {

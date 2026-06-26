@@ -3,9 +3,7 @@ import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import Select from "@/components/new_form_elements/Select.vue";
 import { useAuthStore } from "@/stores/auth";
-import { computed } from "vue";
 const authStore = useAuthStore();
-const u = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
 </script>
 
 <template>
@@ -17,28 +15,28 @@ const u = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
         <Input
           label="First Name"
           validation="required"
-          :value="u.firstName"
+          :value="authStore.auth?.user?.firstName"
           name="firstName"
           :attributes="{
             placeholder: 'Enter your First Name',
           }"
         />
         <Input
-          label="Father's Name"
-          :value="u.fatherName"
+          label="Father’s Name"
+          :value="authStore.auth?.user?.fatherName"
           validation="required"
           name="fatherName"
           :attributes="{
-            placeholder: 'Enter your Father\'s Name',
+            placeholder: 'Enter your Father’s Name',
           }"
         />
         <Input
-          label="Grandfather's Name"
-          :value="u.grandFatherName"
+          label="Grandfather’s Name"
+          :value="authStore.auth?.user?.grandFatherName"
           validation="required"
           name="grandFatherName"
           :attributes="{
-            placeholder: 'Enter your Grandfather\'s Name',
+            placeholder: 'Enter your Grandfather’s Name',
           }"
         />
         <Select
@@ -49,7 +47,7 @@ const u = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
             type: 'text',
             placeholder: 'Enter Your Gender',
           }"
-          :modelValue="u.gender"
+          :value="authStore.auth?.user?.gender"
         />
       </div>
       <div
@@ -57,7 +55,7 @@ const u = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
       >
         <Input
           label="Phone Number"
-          :value="u.mobilePhone"
+          :value="authStore.auth?.user?.mobilePhone"
           validation="required"
           name="phone"
           :attributes="{
@@ -66,7 +64,7 @@ const u = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
         />
         <Input
           label="Email"
-          :value="u.email"
+          :value="authStore.auth?.user?.email"
           validation="required"
           name="email"
           :attributes="{

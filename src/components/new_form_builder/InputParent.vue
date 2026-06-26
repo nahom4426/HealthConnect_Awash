@@ -67,6 +67,7 @@ const error = ref('');
 const dirty = ref(props.autoValidate);
 const asyncValidating = ref(false);
 const inputEl = ref();
+const isMounted = ref(false);
 
 const buildInInputNames = ['INPUT', 'SELECT', 'TEXTAREA'];
 const booleaninputTypes = ['checkbox', 'radio'];
@@ -98,6 +99,10 @@ onMounted(() => {
   if (!booleaninputTypes.includes(initialAttrs.value?.type)) {
     thisValue.value = props.modelValue || props.value || '';
   }
+});
+
+onMounted(() => {
+  isMounted.value = true;
 });
 
 function getValidation(validation) {
@@ -240,7 +245,21 @@ function removeAttibutes(attrs = {}) {
 function setAttributes() {
   Object.keys(initialAttrs.value || {}).forEach((key) => {
     if (key != 'value') {
-      inputEl.value.setAttribute(key, initialAttrs.value[key]);
+      if (key === 'class') {
+        const existing = String(inputEl.value.className || '');
+        const incoming = String(initialAttrs.value[key] || '');
+        const merged = Array.from(
+          new Set(
+            `${existing} ${incoming}`
+              .split(/\s+/)
+              .map((c) => c.trim())
+              .filter(Boolean)
+          )
+        ).join(' ');
+        inputEl.value.className = merged;
+      } else {
+        inputEl.value.setAttribute(key, initialAttrs.value[key]);
+      }
     }
 
     if (booleaninputTypes.includes(initialAttrs.value?.type)) {
@@ -289,13 +308,8 @@ function changeValue(value) {
 }
 
 watch(thisValue, () => {
-  if (dirty.value || !builtInInput.value) {
-    validate();
-  }
-});
-
-watch(thisValue, () => {
-  if (dirty.value || !builtInInput.value) {
+  if (!isMounted.value) return;
+  if (dirty.value) {
     validate();
   }
 });
@@ -324,14 +338,16 @@ watch(thisValue, () => updateEl(dirty.value || !builtInInput.value), {
   deep: true,
 });
 
-watch(validateAll, () => {
-  if (validateAll.value && inputEl.value.dataset['valid'] != 'true') {
+watch(() => validateAll?.value ?? validateAll, () => {
+  const nextValidateAll = validateAll?.value ?? validateAll;
+  if (nextValidateAll && inputEl.value.dataset['valid'] != 'true') {
     validate();
   }
 });
 
-watch(reset, () => {
-  if (reset.value) {
+watch(() => reset?.value ?? reset, () => {
+  const nextReset = reset?.value ?? reset;
+  if (nextReset) {
     thisValue.value = initialValue.value || '';
 
     if (booleaninputTypes.includes(initialAttrs.value?.type)) {

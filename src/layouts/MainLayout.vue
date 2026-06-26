@@ -77,23 +77,67 @@ const filteredNavs = computed(() => {
   }
 
   // Health module: filter by user privileges
-  const privileges = authStore.auth?.user?.authorities || [];
-  const userRole = authStore.auth?.user?.roleName;
+  const user = authStore.auth?.user ?? authStore.auth;
+  const roleName = user?.roleName;
+  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
+  const rolePrivileges = Array.isArray(user?.role?.privilegeList) ? user.role.privilegeList : [];
+  const authorities = Array.isArray(user?.authorities) ? user.authorities : [];
+  
+  const effectivePrivileges = [...privileges, ...rolePrivileges, ...authorities]
+    .filter(Boolean)
+    .map((p) => String(p).trim());
 
-  const hasAccess = (requiredPrivileges) => {
-    if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
-    if (userRole === "Super Admin" || privileges.includes("All Privileges")) return true;
-    if (privileges.length === 0) return false;
-    return requiredPrivileges.some((p) => privileges.includes(`ROLE_${p}`));
+  const hasPrivilege = (privilege) => {
+    if (roleName === "Super Admin" || effectivePrivileges.includes("All Privileges") || effectivePrivileges.includes("ROLE_All Privileges")) {
+      return true;
+    }
+    return effectivePrivileges.includes(`ROLE_${privilege}`) || 
+           effectivePrivileges.includes(privilege);
+  };
+
+  const hasManagesQuotation = hasPrivilege("Manages_Quotation");
+
+  const getRequiredPrivileges = (navItem) => {
+    if (navItem?.meta?.permissions && Array.isArray(navItem.meta.permissions)) {
+      return navItem.meta.permissions;
+    }
+    if (Array.isArray(navItem?.privilege)) {
+      return navItem.privilege;
+    }
+    return [];
+  };
+
+  const hasAccess = (navItem) => {
+    const requiredPrivs = getRequiredPrivileges(navItem);
+    if (requiredPrivs.length === 0) return true;
+    if (roleName === "Super Admin" || effectivePrivileges.includes("All Privileges") || effectivePrivileges.includes("ROLE_All Privileges")) {
+      return true;
+    }
+    return requiredPrivs.some((p) => hasPrivilege(p));
   };
 
   return healthNavs
     .map((item) => {
+      const isUnderwriting = item.name === "Underwriting";
+      const isQuotationRelated = item.name === "Quotation" || item.name === "Quotation Underwriting";
+
+      if (isUnderwriting) {
+        if (hasManagesQuotation) return null;
+      }
+      if (isQuotationRelated) {
+        if (!hasManagesQuotation) return null;
+      }
+
       if (item.navs) {
-        const children = item.navs.filter((c) => hasAccess(c.privilege));
+        const children = item.navs.filter((c) => {
+          if (item.name === "Quotation Underwriting") {
+            return true;
+          }
+          return hasAccess(c);
+        });
         return children.length ? { ...item, navs: children } : null;
       }
-      return hasAccess(item.privilege) ? item : null;
+      return hasAccess(item) ? item : null;
     })
     .filter(Boolean);
 });

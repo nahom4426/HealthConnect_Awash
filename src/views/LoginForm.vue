@@ -458,6 +458,18 @@ function handleResetPassword() {
   color: var(--text-primary, #0f172a) !important;
 }
 
+/* Ensure the input row and right-slot (eye button) fill height and align center */
+:deep(.flex.w-full) {
+  align-items: stretch !important;
+  min-height: 100%;
+}
+:deep(.flex.w-full > button),
+:deep(.flex.w-full > div[style*="display: flex"]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 /* Validation error text */
 :deep(.error-msg),
 :deep(.field-error),

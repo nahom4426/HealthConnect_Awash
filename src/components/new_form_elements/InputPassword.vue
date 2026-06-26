@@ -22,8 +22,8 @@ import icons from '@/utils/icons';
     ...attributes,
     type: text ? 'text' : 'password'
   }" >
-    <template #left>
-      <div @click="toggleType" class="h-full w-12 grid place-items-center border-r cursor-pointer" style="display:flex;align-items:center;justify-content:center;min-height:100%;">
+    <template #right>
+      <div @click="toggleType" class="cursor-pointer" style="position:absolute; right:16px; top:50%; transform:translateY(-50%); display:flex; align-items:center; justify-content:center; z-index: 10;">
         <span v-html="text ? icons.eye : icons.eyeSlash" />
       </div>
     </template>

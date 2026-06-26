@@ -49,7 +49,7 @@ function loginUser({ values }) {
         localStorage.setItem('userDetail', JSON.stringify(res.data));
         setTimeout(() => reRoute(), 1000);
       } else {
-        toasted(false, '', res.error || 'Invalid credentials');
+        // toasted(false, '', res.error || 'Invalid credentials');
       }
     }
   );

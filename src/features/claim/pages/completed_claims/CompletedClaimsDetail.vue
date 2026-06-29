@@ -301,17 +301,26 @@ function handleCheckboxChange(selected) {
   checked.value = selected.map(item => item.serviceProvidedUuid);
 }
 
-// Calculate totals for display
+// Calculate totals for display - Updated to only count PROCESSED and CHECKED
 const totals = computed(() => {
   const rows = store.claims || [];
-  const totalAmount = rows.reduce((sum, row) => sum + (row.amount || 0), 0);
+  
+  // Only include PROCESSED and CHECKED claims for amount calculation
+  const approvedClaims = rows.filter(r => 
+    r.serviceClaimStatus === 'PROCESSED' || r.serviceClaimStatus === 'CHECKED'
+  );
+  
+  const totalAmount = approvedClaims.reduce((sum, row) => sum + (row.amount || 0), 0);
+  
   const totalItems = rows.reduce((sum, row) => {
     const items = row.providedItemResponses || [];
     return sum + items.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0);
   }, 0);
+  
   const processedCount = rows.filter(r => r.serviceClaimStatus === 'PROCESSED').length;
   const pendingCount = rows.filter(r => r.serviceClaimStatus === 'PENDING').length;
   const checkedCount = rows.filter(r => r.serviceClaimStatus === 'CHECKED').length;
+  const rejectedCount = rows.filter(r => r.serviceClaimStatus === 'REJECTED').length;
   
   return {
     totalAmount,
@@ -319,6 +328,7 @@ const totals = computed(() => {
     processedCount,
     pendingCount,
     checkedCount,
+    rejectedCount,
     totalCount: rows.length
   };
 });
@@ -390,11 +400,13 @@ const totals = computed(() => {
             <div v-html="icons.currencyDollar" class="w-6 h-6 text-emerald-600"></div>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Total Amount</p>
+            <p class="text-sm font-medium text-gray-600">Approved Amount</p>
             <div class="flex items-baseline">
               <p class="text-2xl font-bold text-gray-900">ETB {{ formatCurrency(totals.totalAmount) }}</p>
             </div>
-            <p class="mt-1 text-xs text-gray-500">Average: ETB {{ formatCurrency(totals.totalAmount / totals.totalCount) || 0 }}</p>
+            <p class="mt-1 text-xs text-gray-500">
+              {{ totals.processedCount + totals.checkedCount }} approved claims ({{ totals.rejectedCount }} rejected excluded)
+            </p>
           </div>
         </div>
       </div>
@@ -435,6 +447,10 @@ const totals = computed(() => {
               <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-100 rounded-full">
                 <div v-html="icons.shieldCheck" class="mr-1 w-3 h-3"></div>
                 {{ totals.checkedCount }}
+              </span>
+              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
+                <div v-html="icons.xCircle" class="mr-1 w-3 h-3"></div>
+                {{ totals.rejectedCount }}
               </span>
             </div>
           </div>

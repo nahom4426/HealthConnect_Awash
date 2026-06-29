@@ -26,6 +26,61 @@ const prefilled = ref(false)
 const currentInstitution = ref<any>(null)
 const isSubmitting = ref(false);
 
+// Discount-related computed properties
+const hasDiscounts = computed(() => {
+  if (!draft.value?.quoatedServices) return false;
+  return draft.value.quoatedServices.some((s: any) => (s.discount || 0) > 0);
+});
+
+const discountedServices = computed(() => {
+  if (!draft.value?.quoatedServices) return [];
+  return draft.value.quoatedServices
+    .filter((s: any) => (s.discount || 0) > 0)
+    .map((s: any) => ({
+      ...s,
+      originalPremium: s.discount > 0 ? s.premium / (1 - s.discount / 100) : s.premium,
+      packageName: s.packageName || 'Unknown Package'
+    }));
+});
+
+const discountMapFromServices = computed(() => {
+  if (!draft.value?.quoatedServices) return {};
+  const map: Record<string, number> = {};
+  draft.value.quoatedServices.forEach((s: any) => {
+    if (s.discount > 0) {
+      map[s.packageUuid] = s.discount;
+    }
+  });
+  return map;
+});
+
+const totalOriginalPremium = computed(() => {
+  if (!draft.value?.quoatedServices) return 0;
+  return draft.value.quoatedServices.reduce((total: number, s: any) => {
+    const originalPremium = s.discount > 0 ? s.premium / (1 - s.discount / 100) : s.premium;
+    return total + originalPremium;
+  }, 0);
+});
+
+const totalDiscountedPremium = computed(() => {
+  if (!draft.value?.quoatedServices) return 0;
+  return draft.value.quoatedServices.reduce((total: number, s: any) => {
+    return total + (s.premium || 0);
+  }, 0);
+});
+
+const totalDiscountAmount = computed(() => {
+  return totalOriginalPremium.value - totalDiscountedPremium.value;
+});
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount || 0);
+}
+
 function prefillOnce(v: any) {
   if (!prefilled.value && v) {
     institutionForm.value = {
@@ -74,13 +129,16 @@ function buildPrefill(packages: any[]): any[] {
         services: []
       };
     }
-    groups[key].services.push({ ...s });
+    groups[key].services.push({ 
+      ...s,
+      discount: s.discount || 0,
+      originalPremium: s.discount > 0 ? s.premium / (1 - s.discount / 100) : s.premium
+    });
   }
   
   // Return as array of groups with their services
   return Object.values(groups).map(group => ({
     ...group,
-    // Each group will be processed by QuotationForm
   }));
 }
 
@@ -138,7 +196,8 @@ function onSavedFormSubmit(e: any) {
       sumInsured: Number(s.sumInsured ?? s.sumAssured ?? 0),
       employeeRate: Number(s.employeeRate) || 0,
       dependentRate: Number(s.dependentRate) || 0,
-      spouseRate: Number(s.spouseRate) || 0
+      spouseRate: Number(s.spouseRate) || 0,
+      discount: Number(s.discount) || 0
     })) || [];
   };
 
@@ -162,9 +221,8 @@ function onSavedFormSubmit(e: any) {
         }
 
         toasted(true, 'Saved quotation updated successfully');
-        try { sessionStorage.setItem('reloadSavedQuotations', '1') } catch {}
-        // Refresh the page to show updated data
-        window.location.reload();
+        // Navigate to saved quotations list instead of reloading
+        router.push('/saved_quotation');
       })
       .catch((err: any) => {
         toasted(false, 'Failed to save quotation', err?.response?.data || err);
@@ -173,7 +231,7 @@ function onSavedFormSubmit(e: any) {
         pendingAction.value = '';
         isSubmitting.value = false;
       });
-  } else if (action === 'accept') {
+}else if (action === 'accept') {
     pendingAction.value = 'accept'
     isSubmitting.value = true;
     
@@ -509,8 +567,53 @@ function issueMidTerm() {
                   :showHeaderControls="true"
                   :showIssuePremiumAdvice="false"
                   :showAmendButton="false"
+                  :discountMap="discountMapFromServices"
                 />
               </QuotationCreationDataProvider>
+
+              <!-- Discount Summary (Read-only, shown during editing) -->
+              <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-amber-50 border border-amber-200">
+                <div class="flex gap-3 items-start">
+                  <svg class="w-5 h-5 mt-0.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
+                  </svg>
+                  <div class="flex-1">
+                    <h4 class="font-semibold text-amber-800">Current Discounts</h4>
+                    <div class="mt-2 space-y-2">
+                      <div v-for="service in discountedServices" :key="service.serviceQuotedUuid" class="flex justify-between items-center p-2 rounded bg-white/60">
+                        <div>
+                          <span class="font-medium text-slate-700">{{ service.packageName }}</span>
+                          <span class="ml-2 text-sm text-slate-500">{{ service.planType?.replace(/_/g, ' ') }}</span>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-sm">
+                            <span class="text-slate-500 line-through">{{ formatCurrency(service.originalPremium) }}</span>
+                            <span class="ml-2 font-semibold text-green-700">{{ formatCurrency(service.premium) }}</span>
+                          </div>
+                          <div class="text-xs font-medium text-amber-700">
+                            {{ service.discount }}% discount
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Total Savings -->
+                    <div class="flex justify-between items-center pt-3 mt-3 border-t border-amber-200">
+                      <div class="text-sm font-medium text-slate-700">
+                        <span>Total Savings</span>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-sm">
+                          <span class="font-bold text-green-700">{{ formatCurrency(totalDiscountAmount) }}</span>
+                        </div>
+                        <div class="text-xs text-slate-500">
+                          {{ formatCurrency(totalOriginalPremium) }} → {{ formatCurrency(totalDiscountedPremium) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <!-- Quotation Status & Actions -->
               <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
@@ -559,6 +662,33 @@ function issueMidTerm() {
                   </div>
                   <div class="mt-4 text-sm text-amber-900">
                     {{ draft.description }}
+                  </div>
+                </div>
+
+                <!-- Discount Summary for Mid-term -->
+                <div v-if="hasDiscounts" class="p-4 rounded-lg bg-amber-50 border border-amber-200">
+                  <div class="flex gap-3 items-start">
+                    <svg class="w-5 h-5 mt-0.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
+                    </svg>
+                    <div class="flex-1">
+                      <h4 class="font-semibold text-amber-800">Discounts Applied</h4>
+                      <div class="mt-2 space-y-2">
+                        <div v-for="service in discountedServices" :key="service.serviceQuotedUuid" class="flex justify-between items-center p-2 rounded bg-white/60">
+                          <div>
+                            <span class="font-medium text-slate-700">{{ service.packageName }}</span>
+                          </div>
+                          <div class="text-right">
+                            <div class="text-sm">
+                              <span class="font-semibold text-green-700">{{ formatCurrency(service.premium) }}</span>
+                            </div>
+                            <div class="text-xs font-medium text-amber-700">
+                              {{ service.discount }}% off
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

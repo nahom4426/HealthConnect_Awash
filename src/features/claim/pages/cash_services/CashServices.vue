@@ -212,6 +212,8 @@ onMounted(() => {
             :person="selection.person"
             :cashPeriodLimitPerDay="selection.cashPeriodLimitPerDay"
             :editServiceProvided="editServiceProvided"
+            :contractBeginDate="selection.beginDate"
+            :contractEndDate="selection.endDate"
             @submitted="handleCashServiceSubmitted"
           />
         </div>

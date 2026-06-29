@@ -124,61 +124,77 @@ function handleUpdateProfile({values}){
 
 </script>
 <template>
-  <div class="box-border overflow-auto max-w-full min-h-full">
-    <div class="relative">
-      <div class="h-56 rounded-2xl bg-primary"></div>
-      <div class="flex absolute right-8 left-8 top-28 gap-8">
-        <div class="p-4 space-y-4 bg-white rounded-2xl w-fit h-fit">
-          <img
-            :src="profilePicture || imageSrc"
-            class="rounded-lg w-[259px] h-[206px] object-cover"
-            alt="Profile"
-          />
+  <div class="min-h-screen bg-gray-50">
+    <div class="p-6">
+      <div class="relative">
+        <!-- Banner -->
+        <div class="h-56 rounded-2xl bg-primary"></div>
 
-          <!-- Hidden file input -->
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            @change="handleFileChange"
-          />
+        <!-- Content -->
+        <div class="relative z-10 flex gap-8 px-8 -mt-28">
+          <!-- Left Profile Card -->
+          <div class="p-4 space-y-4 bg-white rounded-2xl shadow-sm w-fit h-fit">
+            <img
+              :src="profilePicture || imageSrc"
+              class="rounded-lg w-[259px] h-[206px] object-cover"
+              alt="Profile"
+            />
 
-          <button
-            @click.prevent="triggerFileInput"
-            class="flex gap-4 justify-center items-center w-full h-12 font-medium text-white rounded bg-primary hover:bg-primary/80"
-            size="xs"
-            type="primary"
-          >
-          <i v-if="profileApi.pending.value" v-html="icons.spinner"/>
-          <p v-else>Change Photo</p>
-            
-          </button>
-        </div>
-        <div class="p-6 space-y-14 w-full bg-white rounded-2xl">
-         <div class="flex justify-between items-center w-full">
-           <div class="flex rounded border border-base-clr w-fit">
-            <div
-              v-for="(item, index) in components"
-              :key="index"
-              @click="setActive(index)"
-              :class="[
-                'px-4 py-3 transition-colors cursor-pointer duration-300',
-                active === index
-                  ? index === 0
-                    ? 'bg-base-clr w-fit text-white rounded-l font-medium'
-                    : 'bg-base-clr text-white rounded-r  font-medium'
-                  : '',
-              ]"
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleFileChange"
+            />
+
+            <button
+              @click.prevent="triggerFileInput"
+              class="flex gap-4 justify-center items-center w-full h-12 font-medium text-white rounded bg-primary hover:bg-primary/80"
             >
-              {{ item.name }}
-            </div>
+              <i
+                v-if="profileApi.pending.value"
+                v-html="icons.spinner"
+              />
+              <p v-else>Change Photo</p>
+            </button>
           </div>
-          <Button v-if="active===0" :pending="api.pending.value" @click.prevent="submit(handleUpdateProfile)" class=" bg-[#FFD665]  font-medium leading-5" type="">Edit</Button>
-         </div>
-          <component
-            :is="components[active].component"
-          ></component>
+
+          <!-- Right Content -->
+          <div class="flex-1 p-6 bg-white rounded-2xl shadow-sm">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-10">
+              <div class="flex overflow-hidden rounded-lg border border-base-clr">
+                <button
+                  v-for="(item, index) in components"
+                  :key="index"
+                  @click="setActive(index)"
+                  :class="[
+                    'px-6 py-3 transition-all duration-200',
+                    active === index
+                      ? 'bg-base-clr text-white font-medium'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ]"
+                >
+                  {{ item.name }}
+                </button>
+              </div>
+
+              <Button
+                v-if="active === 0"
+                :pending="api.pending.value"
+                @click.prevent="submit(handleUpdateProfile)"
+                class="bg-[#FFD665] font-medium text-gray-900"
+              >
+                Edit
+              </Button>
+            </div>
+
+            <!-- Form Content -->
+            <component
+              :is="components[active].component"
+            />
+          </div>
         </div>
       </div>
     </div>

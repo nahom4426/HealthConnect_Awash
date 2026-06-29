@@ -30,8 +30,8 @@
               >
                 <label class="qb-label">
                   Benefits / Packages
-                  <span v-if="row.selectedPackageUuuids.length === 1" class="qb-header-limit">
-                    (Limit: {{ getRangeDisplayForPackage(row.selectedPackageUuuids[0]) }})
+                  <span v-if="row.selectedPackageUuuids.length === 1 && row.description" class="qb-header-limit">
+                    (Limit: {{ getRangeDisplayForPackage(row.selectedPackageUuuids[0], getGroupPlanTypeForDescOptions(row), row.description) }})
                   </span>
                 </label>
                 <button
@@ -47,29 +47,75 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                   </svg>
                 </button>
-                <!-- Teleported dropdown -->
+                <!-- Teleported dropdown with search -->
                 <Teleport to="body">
                   <div
                     v-if="openDropdownRowId === row.id"
                     class="qb-pkg-dropdown"
                     :style="getDropdownStyle(row.id)"
+                    @click.stop
+                    @mousedown.stop
                   >
-                    <div
-                      v-for="pkg in allPackages"
-                      :key="pkg.packageUuid"
-                      class="qb-pkg-option"
-                      :class="{ 'qb-pkg-option--checked': row.selectedPackageUuuids.includes(pkg.packageUuid) }"
-                      @click="togglePackageInRow(row, pkg.packageUuid)"
-                    >
-                      <span class="qb-pkg-checkbox">
-                        <svg v-if="row.selectedPackageUuuids.includes(pkg.packageUuid)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                        </svg>
-                      </span>
-                      <div>
-                        <p class="qb-pkg-name">{{ pkg.packageName }}</p>
-                        <p class="qb-pkg-cat">{{ pkg.packageCategory }} <span v-if="pkg.gender && pkg.gender !== 'BOTH'" class="qb-gender-badge">{{ pkg.gender }}</span></p>
+                    <!-- Search input -->
+                    <div class="qb-pkg-search-wrapper">
+                      <svg class="qb-pkg-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                      </svg>
+                      <input
+                        type="text"
+                        :value="getSearchQuery(row.id)"
+                        @input="(e) => setSearchQuery(row.id, e.target.value)"
+                        placeholder="Search packages..."
+                        class="qb-pkg-search-input"
+                        @click.stop
+                        @mousedown.stop
+                        @keydown.stop
+                      />
+                    </div>
+                    
+                    <!-- Package list -->
+                    <div class="qb-pkg-options-list" @click.stop @mousedown.stop>
+                      <div
+                        v-for="pkg in filteredPackages(row.id)"
+                        :key="pkg.packageUuid"
+                        class="qb-pkg-option"
+                        :class="{ 'qb-pkg-option--checked': row.selectedPackageUuuids.includes(pkg.packageUuid) }"
+                        @click.stop="togglePackageInRow(row, pkg.packageUuid)"
+                      >
+                        <span class="qb-pkg-checkbox">
+                          <svg v-if="row.selectedPackageUuuids.includes(pkg.packageUuid)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                          </svg>
+                        </span>
+                        <div>
+                          <p class="qb-pkg-name">{{ pkg.packageName }}</p>
+                          <p class="qb-pkg-cat">{{ pkg.packageCategory }} <span v-if="pkg.gender && pkg.gender !== 'BOTH'" class="qb-gender-badge">{{ pkg.gender }}</span></p>
+                        </div>
                       </div>
+                      <div v-if="filteredPackages(row.id).length === 0" class="qb-pkg-no-results">
+                        No packages found matching your search.
+                      </div>
+                    </div>
+
+                    <!-- Bulk actions -->
+                    <div v-if="filteredPackages(row.id).length > 0" class="qb-pkg-bulk-actions" @click.stop @mousedown.stop>
+                      <button 
+                        type="button" 
+                        @click.stop="selectAllFiltered(row)"
+                        class="qb-pkg-bulk-btn"
+                      >
+                        Select All
+                      </button>
+                      <button 
+                        type="button" 
+                        @click.stop="clearAllFiltered(row)"
+                        class="qb-pkg-bulk-btn"
+                      >
+                        Clear All
+                      </button>
+                      <span class="qb-pkg-bulk-count">
+                        {{ filteredPackages(row.id).length }} package{{ filteredPackages(row.id).length > 1 ? 's' : '' }}
+                      </span>
                     </div>
                   </div>
                 </Teleport>
@@ -164,7 +210,7 @@
                 <div>
                   <p class="qb-pkg-row-name">{{ getPackageName(pkgUuid) }}</p>
                   <p v-if="row.selectedPackageUuuids.length >= 2" class="qb-pkg-row-hint">
-                    Sum Insured Limit: {{ getRangeDisplayForPackage(pkgUuid) }}
+                    Sum Insured Limit: {{ getRangeDisplayForPackage(pkgUuid, row.packageConfigs[pkgUuid].planType, row.description) }}
                     <span v-if="getPackageGender(pkgUuid) !== 'BOTH'" class="qb-gender-badge">{{ getPackageGender(pkgUuid) }}</span>
                   </p>
                 </div>
@@ -222,6 +268,21 @@
             <div class="qb-pkg-cascade-col">
               <!-- INDIVIDUAL PLAN -->
               <template v-if="isIndividualPlan(row.packageConfigs[pkgUuid].planType)">
+                <!-- Same Sum Assured toggle -->
+                <div class="qb-same-sa-toggle">
+                  <label class="qb-toggle-wrap">
+                    <input
+                      type="checkbox"
+                      v-model="row.packageConfigs[pkgUuid].sameSumAssured"
+                      :disabled="readOnlyRows"
+                      @change="handleSameSumAssuredToggle(row, pkgUuid)"
+                      class="qb-toggle-checkbox"
+                    />
+                    <span class="qb-toggle-slider"></span>
+                    <span class="qb-toggle-text">Same Sum Assured for all members</span>
+                  </label>
+                </div>
+
                 <!-- Employee Sum Assured Row -->
                 <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }">
                   <div class="qb-pkg-field">
@@ -235,10 +296,11 @@
                       placeholder="Enter amount"
                       @input="() => { 
                         row.packageConfigs[pkgUuid].sumAssuredTouched = true;
+                        handleSameSumAssuredSync(row, pkgUuid);
                         recalculateRowPackage(row, pkgUuid); 
                       }"
                     />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
                     <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
                       {{ getSumAssuredError(row, pkgUuid, 'employee') }}
                     </div>
@@ -246,7 +308,7 @@
                   <div class="qb-pkg-field qb-meta-field">
                     <label class="qb-label">Rate</label>
                     <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate) + '%'"
                       type="text" disabled
                       class="qb-input qb-input--right qb-input--muted"
                     />
@@ -263,23 +325,72 @@
                   </div>
                 </div>
 
-                <!-- Dependent Sum Assured Row -->
-                <div v-if="!isMemberOnly(row.description)" class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }">
+                <!-- Spouse Sum Assured Row (Member+1 or more) -->
+                <div
+                  v-if="!isMemberOnly(row.description)"
+                  class="qb-cascade-row"
+                  :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit) }"
+                >
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Spouse Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].spouseSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured || row.packageConfigs[pkgUuid].sameSumAssured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit), 'qb-input--muted': row.packageConfigs[pkgUuid].sameSumAssured }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].spouseSumAssuredTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'spouse', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'spouse') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].spouseRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].spousePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Dependent Sum Assured Row (Member+2 or more) -->
+                <div
+                  v-if="!isMemberOnly(row.description) && !isMemberPlusOne(row.description)"
+                  class="qb-cascade-row"
+                  :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }"
+                >
                   <div class="qb-pkg-field">
                     <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
                     <input
                       v-model="row.packageConfigs[pkgUuid].depSumAssured"
                       type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      :disabled="readOnlyRows || !row.numberOfInsured || row.packageConfigs[pkgUuid].sameSumAssured"
                       class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit), 'qb-input--muted': row.packageConfigs[pkgUuid].sameSumAssured }"
                       placeholder="Enter amount"
                       @input="() => { 
                         row.packageConfigs[pkgUuid].depSumAssuredTouched = true;
                         recalculateRowPackage(row, pkgUuid); 
                       }"
                     />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
                     <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
                       {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
                     </div>
@@ -287,7 +398,7 @@
                   <div class="qb-pkg-field qb-meta-field">
                     <label class="qb-label">Rate</label>
                     <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate) + '%'"
                       type="text" disabled
                       class="qb-input qb-input--right qb-input--muted"
                     />
@@ -323,7 +434,7 @@
                         recalculateRowPackage(row, pkgUuid); 
                       }"
                     />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
                     <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
                       {{ getSumAssuredError(row, pkgUuid, 'employee') }}
                     </div>
@@ -331,7 +442,7 @@
                   <div class="qb-pkg-field qb-meta-field">
                     <label class="qb-label">Rate</label>
                     <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate) + '%'"
                       type="text" disabled
                       class="qb-input qb-input--right qb-input--muted"
                     />
@@ -364,7 +475,7 @@
                         recalculateRowPackage(row, pkgUuid); 
                       }"
                     />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'spouse', row.description) }}</p>
                     <div v-if="getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
                       {{ getSumAssuredError(row, pkgUuid, 'spouse') }}
                     </div>
@@ -372,7 +483,7 @@
                   <div class="qb-pkg-field qb-meta-field">
                     <label class="qb-label">Rate</label>
                     <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].spouseRate)"
+                      :value="formatRate(row.packageConfigs[pkgUuid].spouseRate) + '%'"
                       type="text" disabled
                       class="qb-input qb-input--right qb-input--muted"
                     />
@@ -405,7 +516,7 @@
                         recalculateRowPackage(row, pkgUuid); 
                       }"
                     />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
                     <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
                       {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
                     </div>
@@ -413,7 +524,7 @@
                   <div class="qb-pkg-field qb-meta-field">
                     <label class="qb-label">Rate</label>
                     <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate) + '%'"
                       type="text" disabled
                       class="qb-input qb-input--right qb-input--muted"
                     />
@@ -449,7 +560,7 @@
                         recalculateRowPackage(row, pkgUuid); 
                       }"
                     />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
                     <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
                       {{ getSumAssuredError(row, pkgUuid, 'employee') }}
                     </div>
@@ -457,7 +568,7 @@
                   <div class="qb-pkg-field qb-meta-field">
                     <label class="qb-label">Rate</label>
                     <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate) + '%'"
                       type="text" disabled
                       class="qb-input qb-input--right qb-input--muted"
                     />
@@ -490,7 +601,7 @@
                         recalculateRowPackage(row, pkgUuid); 
                       }"
                     />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
                     <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
                       {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
                     </div>
@@ -498,7 +609,7 @@
                   <div class="qb-pkg-field qb-meta-field">
                     <label class="qb-label">Rate</label>
                     <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate) + '%'"
                       type="text" disabled
                       class="qb-input qb-input--right qb-input--muted"
                     />
@@ -533,7 +644,7 @@
                         recalculateRowPackage(row, pkgUuid); 
                       }"
                     />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid) }}</p>
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid, row.packageConfigs[pkgUuid].planType, row.description) }}</p>
                     <div v-if="getCoverageError(row, pkgUuid) && (row.packageConfigs[pkgUuid].coverageTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
                       {{ getCoverageError(row, pkgUuid) }}
                     </div>
@@ -541,7 +652,7 @@
                   <div class="qb-pkg-field qb-meta-field">
                     <label class="qb-label">Rate</label>
                     <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].rate)"
+                      :value="formatRate(row.packageConfigs[pkgUuid].rate) + '%'"
                       type="text" disabled
                       class="qb-input qb-input--right qb-input--muted"
                     />
@@ -567,7 +678,12 @@
                 <div class="qb-pkg-total-badge">
                   {{ formatCurrency(row.packageConfigs[pkgUuid].premium) }}
                 </div>
-                <p class="qb-pkg-total-hint">Calculated premium</p>
+                <p class="qb-pkg-total-hint">
+                  Calculated premium
+                  <span v-if="activeDiscountMap[pkgUuid] > 0" class="qb-discount-note">
+                    ({{ activeDiscountMap[pkgUuid] }}% discount applied)
+                  </span>
+                </p>
               </div>
             </div>
           </div><!-- /.qb-pkg-row -->
@@ -575,6 +691,61 @@
 
       </div><!-- /.qb-card -->
     </div><!-- /.qb-groups -->
+
+    <!-- Discount Panel -->
+    <div v-if="!readOnlyRows" class="qb-discount-panel">
+      <button type="button" class="qb-discount-toggle-btn" @click="discountPanelOpen = !discountPanelOpen">
+        <svg class="qb-discount-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
+        </svg>
+        <span>Discount Configuration</span>
+        <span v-if="Object.values(activeDiscountMap).some(d => d > 0)" class="qb-discount-active-badge">Active</span>
+        <svg class="qb-pkg-btn__chevron" :class="{ rotated: discountPanelOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+
+      <div v-if="discountPanelOpen && allSelectedPackageUuids.length > 0" class="qb-discount-body">
+        <p class="qb-discount-hint">Set discount percentage per package. Discounts apply across all benefit groups using the same package.</p>
+        <div class="qb-discount-list">
+          <div v-for="pkgUuid in allSelectedPackageUuids" :key="pkgUuid" class="qb-discount-item">
+            <div class="qb-discount-item-info">
+              <span class="qb-pkg-bar"></span>
+              <span class="qb-discount-pkg-name">{{ getPackageName(pkgUuid) }}</span>
+            </div>
+            <div class="qb-discount-controls">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.5"
+                :data-pkg="pkgUuid"
+                :style="{ '--val': activeDiscountMap[pkgUuid] || 0 }"
+                :value="activeDiscountMap[pkgUuid] || 0"
+                @input="(e) => setDiscount(pkgUuid, e.target.value)"
+                class="qb-discount-slider"
+              />
+              <div class="qb-discount-input-wrap">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  :value="activeDiscountMap[pkgUuid] || 0"
+                  @input="(e) => setDiscount(pkgUuid, e.target.value)"
+                  class="qb-input qb-input--center qb-discount-number"
+                />
+                <span class="qb-discount-pct">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="discountPanelOpen && allSelectedPackageUuids.length === 0" class="qb-discount-body qb-discount-empty">
+        <p>No packages selected yet. Add packages to benefit groups first.</p>
+      </div>
+    </div>
 
     <!-- Validation Summary (only shown after attempted submit) -->
     <div v-if="attemptedSubmit && validationErrors.length > 0" class="qb-validation-summary">
@@ -781,6 +952,7 @@ function emptyConfig() {
     depSumAssuredTouched: false,
     spouseSumAssured: "", 
     spouseSumAssuredTouched: false,
+    sameSumAssured: false,
     rate: 0, 
     premium: 0,
     sumInsured: 0,
@@ -821,6 +993,7 @@ export default {
     inclusionMode:        { type: Boolean, default: false },
     beginDate:            { type: String, default: "" },
     endDate:              { type: String, default: "" },
+    discountMap:          { type: Object, default: () => ({}) },
   },
 
   emits: ["amend", "submit"],
@@ -838,12 +1011,27 @@ export default {
       clickOutsideHandler: null,
       scrollHandler: null,
       attemptedSubmit: false,
+      discountPanelOpen: false,
+      internalDiscountMap: {},
+      packageSearchQuery: {},
     };
   },
 
   computed: {
     allPackages() { return this.packages; },
 
+    allSelectedPackageUuids() {
+      const seen = new Set();
+      this.groupRows.forEach(row =>
+        row.selectedPackageUuuids.forEach(u => seen.add(u))
+      );
+      return Array.from(seen);
+    },
+  
+    activeDiscountMap() {
+      return { ...this.discountMap, ...this.internalDiscountMap };
+    },
+    
     validationErrors() {
       const errors = [];
       if (!Array.isArray(this.groupRows) || this.groupRows.length === 0) {
@@ -885,71 +1073,111 @@ export default {
             continue;
           }
 
-          const minLimit = this.getPackageMinLimit(pkgUuid);
-          const maxLimit = this.getPackageMaxLimit(pkgUuid);
-          const rangeText = `${this.formatNumber(minLimit)} – ${this.formatNumber(maxLimit)}`;
+          const planType = this.normalizeValue(config.planType);
+          const description = this.normalizeValue(row.description);
+          
+          let empMinLimit, empMaxLimit, spouseMinLimit, spouseMaxLimit, depMinLimit, depMaxLimit;
+          
+          if (this.isIndividualPlan(planType)) {
+            empMinLimit = this.getMinLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+            empMaxLimit = this.getMaxLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+            spouseMinLimit = empMinLimit;
+            spouseMaxLimit = empMaxLimit;
+            depMinLimit = empMinLimit;
+            depMaxLimit = empMaxLimit;
+          } else if (this.isDualPremiumPlan(planType)) {
+            empMinLimit = this.getMinLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+            empMaxLimit = this.getMaxLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+            spouseMinLimit = empMinLimit;
+            spouseMaxLimit = empMaxLimit;
+            const depFamilySize = Math.max(1, (Number(description) || 1) - 2);
+            depMinLimit = this.getMinLimitForPlanType(pkgUuid, "Family_Shared_Plan", depFamilySize);
+            depMaxLimit = this.getMaxLimitForPlanType(pkgUuid, "Family_Shared_Plan", depFamilySize);
+          } else if (this.isDependentSharedPlan(planType)) {
+            empMinLimit = this.getMinLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+            empMaxLimit = this.getMaxLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+            const depFamilySize = Math.max(1, (Number(description) || 1) - 1);
+            depMinLimit = this.getMinLimitForPlanType(pkgUuid, "Family_Shared_Plan", depFamilySize);
+            depMaxLimit = this.getMaxLimitForPlanType(pkgUuid, "Family_Shared_Plan", depFamilySize);
+          } else {
+            empMinLimit = this.getPackageMinLimit(pkgUuid, config.planType, row.description);
+            empMaxLimit = this.getPackageMaxLimit(pkgUuid, config.planType, row.description);
+          }
 
-          if (this.isIndividualPlan(config.planType)) {
+          const empRangeText = `${this.formatNumber(empMinLimit)} – ${this.formatNumber(empMaxLimit)}`;
+
+          if (this.isIndividualPlan(planType)) {
             const emp = Number(config.sumAssured);
             if (!emp || emp <= 0) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured is required (Limit: ${rangeText}).`);
-            } else if (emp < minLimit || emp > maxLimit) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured must be between ${rangeText}. Current value: ${this.formatNumber(emp)}.`);
+              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured is required (Limit: ${empRangeText}).`);
+            } else if (emp < empMinLimit || emp > empMaxLimit) {
+              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured must be between ${empRangeText}. Current value: ${this.formatNumber(emp)}.`);
             }
             
             if (!this.isMemberOnly(row.description)) {
-              const dep = Number(config.depSumAssured);
-              if (!dep || dep <= 0) {
-                errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured is required (Limit: ${rangeText}).`);
-              } else if (dep < minLimit || dep > maxLimit) {
-                errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured must be between ${rangeText}. Current value: ${this.formatNumber(dep)}.`);
+              const spouse = Number(config.spouseSumAssured);
+              if (!spouse || spouse <= 0) {
+                errors.push(`${this.getPackageName(pkgUuid)}: Spouse Sum Assured is required (Limit: ${empRangeText}).`);
+              } else if (spouse < spouseMinLimit || spouse > spouseMaxLimit) {
+                errors.push(`${this.getPackageName(pkgUuid)}: Spouse Sum Assured must be between ${empRangeText}. Current value: ${this.formatNumber(spouse)}.`);
               }
             }
-          } else if (this.isDualPremiumPlan(config.planType)) {
+            
+            if (!this.isMemberOnly(row.description) && !this.isMemberPlusOne(row.description)) {
+              const dep = Number(config.depSumAssured);
+              if (!dep || dep <= 0) {
+                errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured is required (Limit: ${empRangeText}).`);
+              } else if (dep < depMinLimit || dep > depMaxLimit) {
+                errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured must be between ${empRangeText}. Current value: ${this.formatNumber(dep)}.`);
+              }
+            }
+          } else if (this.isDualPremiumPlan(planType)) {
             const emp = Number(config.sumAssured);
             const spouse = Number(config.spouseSumAssured);
+            const depRangeText = `${this.formatNumber(depMinLimit)} – ${this.formatNumber(depMaxLimit)}`;
             
             if (!emp || emp <= 0) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured is required (Limit: ${rangeText}).`);
-            } else if (emp < minLimit || emp > maxLimit) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured must be between ${rangeText}. Current value: ${this.formatNumber(emp)}.`);
+              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured is required (Limit: ${empRangeText}).`);
+            } else if (emp < empMinLimit || emp > empMaxLimit) {
+              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured must be between ${empRangeText}. Current value: ${this.formatNumber(emp)}.`);
             }
             
             if (!spouse || spouse <= 0) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Spouse Sum Assured is required (Limit: ${rangeText}).`);
-            } else if (spouse < minLimit || spouse > maxLimit) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Spouse Sum Assured must be between ${rangeText}. Current value: ${this.formatNumber(spouse)}.`);
+              errors.push(`${this.getPackageName(pkgUuid)}: Spouse Sum Assured is required (Limit: ${empRangeText}).`);
+            } else if (spouse < spouseMinLimit || spouse > spouseMaxLimit) {
+              errors.push(`${this.getPackageName(pkgUuid)}: Spouse Sum Assured must be between ${empRangeText}. Current value: ${this.formatNumber(spouse)}.`);
             }
             
             if (!this.isMemberPlusOne(row.description)) {
               const dep = Number(config.depSumAssured);
               if (!dep || dep <= 0) {
-                errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured is required (Limit: ${rangeText}).`);
-              } else if (dep < minLimit || dep > maxLimit) {
-                errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured must be between ${rangeText}. Current value: ${this.formatNumber(dep)}.`);
+                errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured is required (Limit: ${depRangeText}).`);
+              } else if (dep < depMinLimit || dep > depMaxLimit) {
+                errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured must be between ${depRangeText}. Current value: ${this.formatNumber(dep)}.`);
               }
             }
-          } else if (this.isDependentSharedPlan(config.planType)) {
+          } else if (this.isDependentSharedPlan(planType)) {
             const emp = Number(config.sumAssured);
             const dep = Number(config.depSumAssured);
+            const depRangeText = `${this.formatNumber(depMinLimit)} – ${this.formatNumber(depMaxLimit)}`;
             
             if (!emp || emp <= 0) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured is required (Limit: ${rangeText}).`);
-            } else if (emp < minLimit || emp > maxLimit) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured must be between ${rangeText}. Current value: ${this.formatNumber(emp)}.`);
+              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured is required (Limit: ${empRangeText}).`);
+            } else if (emp < empMinLimit || emp > empMaxLimit) {
+              errors.push(`${this.getPackageName(pkgUuid)}: Employee Sum Assured must be between ${empRangeText}. Current value: ${this.formatNumber(emp)}.`);
             }
             
             if (!dep || dep <= 0) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured is required (Limit: ${rangeText}).`);
-            } else if (dep < minLimit || dep > maxLimit) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured must be between ${rangeText}. Current value: ${this.formatNumber(dep)}.`);
+              errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured is required (Limit: ${depRangeText}).`);
+            } else if (dep < depMinLimit || dep > depMaxLimit) {
+              errors.push(`${this.getPackageName(pkgUuid)}: Dependent Sum Assured must be between ${depRangeText}. Current value: ${this.formatNumber(dep)}.`);
             }
           } else {
             const coverage = Number(this.normalizeValue(config.coverage));
             if (!Number.isFinite(coverage) || coverage <= 0) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Coverage amount is required (Limit: ${rangeText}).`);
-            } else if ((minLimit > 0 || maxLimit > 0) && (coverage < minLimit || coverage > maxLimit)) {
-              errors.push(`${this.getPackageName(pkgUuid)}: Coverage amount must be between ${rangeText}. Current value: ${this.formatNumber(coverage)}.`);
+              errors.push(`${this.getPackageName(pkgUuid)}: Coverage amount is required (Limit: ${empRangeText}).`);
+            } else if ((empMinLimit > 0 || empMaxLimit > 0) && (coverage < empMinLimit || coverage > empMaxLimit)) {
+              errors.push(`${this.getPackageName(pkgUuid)}: Coverage amount must be between ${empRangeText}. Current value: ${this.formatNumber(coverage)}.`);
             }
           }
 
@@ -986,15 +1214,34 @@ export default {
       immediate: true,
       deep: true,
     },
+    discountMap: {
+      handler(newVal) {
+        this.internalDiscountMap = newVal ? { ...newVal } : {};
+      },
+      immediate: true,
+      deep: true,
+    },
   },
 
   mounted() {
     this.clickOutsideHandler = (e) => {
-      if (this.openDropdownRowId && !e.target.closest(".package-dropdown-wrapper") && !e.target.closest(".qb-pkg-dropdown")) {
+      const isInsideDropdown = e.target.closest(".qb-pkg-dropdown");
+      const isInsideButton = e.target.closest(".qb-pkg-btn");
+      const isInsideWrapper = e.target.closest(".package-dropdown-wrapper");
+      
+      if (this.openDropdownRowId && !isInsideDropdown && !isInsideButton && !isInsideWrapper) {
+        const rowId = this.openDropdownRowId;
         this.openDropdownRowId = null;
+        this.packageSearchQuery[rowId] = '';
       }
     };
-    this.scrollHandler = () => { if (this.openDropdownRowId) this.openDropdownRowId = null; };
+    this.scrollHandler = () => { 
+      if (this.openDropdownRowId) {
+        const rowId = this.openDropdownRowId;
+        this.openDropdownRowId = null;
+        this.packageSearchQuery[rowId] = '';
+      }
+    };
     document.addEventListener("click", this.clickOutsideHandler);
     window.addEventListener("scroll", this.scrollHandler, true);
   },
@@ -1005,6 +1252,133 @@ export default {
   },
 
   methods: {
+    // ── Format Rate as Percentage ─────────────────────────────
+   formatRate(rate) { 
+  if (!rate && rate !== 0) return "0.0000";
+  
+  // Convert to percentage
+  const percentage = Number(rate) * 100;
+  
+  // Use toFixed with 10 decimal places to handle floating point precision
+  let formatted = percentage.toFixed(10);
+  
+  // Remove trailing zeros but keep at least 4 decimal places
+  let parts = formatted.split('.');
+  let decimalPart = parts[1];
+  
+  // Find where significant digits end
+  let significantEnd = decimalPart.length;
+  for (let i = decimalPart.length - 1; i >= 4; i--) {
+    if (decimalPart[i] !== '0') {
+      significantEnd = i + 1;
+      break;
+    }
+  }
+  
+  // Keep at least 4 decimal places
+  if (significantEnd < 4) significantEnd = 4;
+  
+  decimalPart = decimalPart.substring(0, significantEnd);
+  formatted = parts[0] + '.' + decimalPart;
+  
+  // If all decimal places are zeros, remove the decimal point
+  if (decimalPart.replace(/0/g, '').length === 0) {
+    formatted = parts[0];
+  }
+  
+  return formatted;
+},
+
+    // ── Search methods ──────────────────────────────────────
+    getSearchQuery(rowId) {
+      return this.packageSearchQuery[rowId] || '';
+    },
+
+    setSearchQuery(rowId, value) {
+      this.packageSearchQuery = { ...this.packageSearchQuery, [rowId]: value };
+    },
+
+    filteredPackages(rowId) {
+      const query = this.getSearchQuery(rowId);
+      if (!query.trim()) return this.allPackages;
+      
+      const lowerQuery = query.toLowerCase().trim();
+      return this.allPackages.filter(pkg => 
+        pkg.packageName.toLowerCase().includes(lowerQuery) ||
+        pkg.packageCategory.toLowerCase().includes(lowerQuery)
+      );
+    },
+
+    selectAllFiltered(row) {
+      const filtered = this.filteredPackages(row.id);
+      filtered.forEach(pkg => {
+        if (!row.selectedPackageUuuids.includes(pkg.packageUuid)) {
+          row.selectedPackageUuuids.push(pkg.packageUuid);
+          const newConfig = emptyConfig();
+          newConfig.genderCount = 0;
+          newConfig.genderTouched = false;
+          row.packageConfigs = { ...row.packageConfigs, [pkg.packageUuid]: newConfig };
+          this.ensureRatesLoaded(pkg.packageUuid);
+        }
+      });
+      row.selectedPackageUuuids.forEach(pkgUuid => {
+        this.setRateFromCacheForPackage(row, pkgUuid);
+        this._calcPremium(row, pkgUuid);
+      });
+      this.handleRowChange(row);
+    },
+
+    clearAllFiltered(row) {
+      const filtered = this.filteredPackages(row.id);
+      filtered.forEach(pkg => {
+        const idx = row.selectedPackageUuuids.indexOf(pkg.packageUuid);
+        if (idx > -1) {
+          row.selectedPackageUuuids.splice(idx, 1);
+          delete row.packageConfigs[pkg.packageUuid];
+        }
+      });
+      this.handleRowChange(row);
+    },
+
+    // ── Same Sum Assured methods ────────────────────────────────
+    handleSameSumAssuredToggle(row, pkgUuid) {
+      const config = row.packageConfigs[pkgUuid];
+      if (!config) return;
+      if (config.sameSumAssured && config.sumAssured) {
+        config.spouseSumAssured = config.sumAssured;
+        config.depSumAssured    = config.sumAssured;
+        config.spouseSumAssuredTouched = true;
+        config.depSumAssuredTouched    = true;
+      }
+      this.recalculateRowPackage(row, pkgUuid);
+    },
+
+    handleSameSumAssuredSync(row, pkgUuid) {
+      const config = row.packageConfigs[pkgUuid];
+      if (!config) return;
+      if (config.sameSumAssured) {
+        config.spouseSumAssured = config.sumAssured;
+        config.depSumAssured    = config.sumAssured;
+      }
+    },
+
+    setDiscount(pkgUuid, value) {
+      const v = Math.min(100, Math.max(0, Number(value) || 0));
+      this.internalDiscountMap = { ...this.internalDiscountMap, [pkgUuid]: v };
+      
+      this.$nextTick(() => {
+        document.querySelectorAll('.qb-discount-slider').forEach(el => {
+          el.style.setProperty('--val', String(this.activeDiscountMap[el.dataset.pkg] || 0));
+        });
+      });
+      this.groupRows.forEach(row => {
+        if (row.selectedPackageUuuids.includes(pkgUuid)) {
+          this.setRateFromCacheForPackage(row, pkgUuid);
+          this._calcPremium(row, pkgUuid);
+        }
+      });
+    },
+
     // ── Gender-related methods ───────────────────────────────
     getPackageGender(packageUuid) {
       const pkg = this.packages.find(p => p.packageUuid === packageUuid);
@@ -1076,6 +1450,68 @@ export default {
       return this.normalizeValue(planType) === Plan["Dependent Shared Plan"];
     },
 
+    // ── New helper methods for limits ──────────────────────────
+    getMinLimitForPlanType(uuid, planType, familySize) {
+      const rates = this.getRatesForPackage(uuid);
+      let filteredRates = rates.filter(r => 
+        r.planType === planType && Number(r.familySize) === familySize
+      );
+      
+      if (!filteredRates.length) {
+        filteredRates = rates.filter(r => r.planType === planType);
+      }
+      
+      if (filteredRates.length) {
+        const mins = filteredRates.map(r => r.minBalance ?? r.minLimit).filter(x => x != null);
+        return mins.length ? Math.min(...mins) : 0;
+      }
+      return 0;
+    },
+
+    getMaxLimitForPlanType(uuid, planType, familySize) {
+      const rates = this.getRatesForPackage(uuid);
+      let filteredRates = rates.filter(r => 
+        r.planType === planType && Number(r.familySize) === familySize
+      );
+      
+      if (!filteredRates.length) {
+        filteredRates = rates.filter(r => r.planType === planType);
+      }
+      
+      if (filteredRates.length) {
+        const maxs = filteredRates.map(r => r.maxBalance ?? r.maxLimit).filter(x => x != null);
+        return maxs.length ? Math.max(...maxs) : 0;
+      }
+      return 0;
+    },
+
+    getLimitDisplayForMember(pkgUuid, planType, memberType, description) {
+      const desc = Number(description) || 1;
+      
+      if (memberType === 'employee' || memberType === 'spouse') {
+        const min = this.getMinLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+        const max = this.getMaxLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+        return `Individual Plan: ${this.formatNumber(min)} – ${this.formatNumber(max)}`;
+      } else if (memberType === 'dependent') {
+        if (this.isDualPremiumPlan(planType)) {
+          const depSize = Math.max(1, desc - 2);
+          const min = this.getMinLimitForPlanType(pkgUuid, "Family_Shared_Plan", depSize);
+          const max = this.getMaxLimitForPlanType(pkgUuid, "Family_Shared_Plan", depSize);
+          return `Family Shared (size ${depSize}): ${this.formatNumber(min)} – ${this.formatNumber(max)}`;
+        } else if (this.isDependentSharedPlan(planType)) {
+          const depSize = Math.max(1, desc - 1);
+          const min = this.getMinLimitForPlanType(pkgUuid, "Family_Shared_Plan", depSize);
+          const max = this.getMaxLimitForPlanType(pkgUuid, "Family_Shared_Plan", depSize);
+          return `Family Shared (size ${depSize}): ${this.formatNumber(min)} – ${this.formatNumber(max)}`;
+        } else {
+          const min = this.getMinLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+          const max = this.getMaxLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+          return `Individual Plan: ${this.formatNumber(min)} – ${this.formatNumber(max)}`;
+        }
+      }
+      return '';
+    },
+
     // ── Validation Error Methods ───────────────────────────────
     getDescriptionError(row) {
       if (row.description === "" || row.description == null) {
@@ -1114,8 +1550,29 @@ export default {
         return `${type.charAt(0).toUpperCase() + type.slice(1)} sum assured is required`;
       }
       
-      const minLimit = this.getPackageMinLimit(pkgUuid);
-      const maxLimit = this.getPackageMaxLimit(pkgUuid);
+      const planType = this.normalizeValue(config.planType);
+      const description = this.normalizeValue(row.description);
+      const desc = Number(description) || 1;
+      
+      let minLimit, maxLimit;
+      
+      if (type === 'employee' || type === 'spouse') {
+        minLimit = this.getMinLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+        maxLimit = this.getMaxLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+      } else if (type === 'dependent') {
+        if (this.isDualPremiumPlan(planType)) {
+          const depSize = Math.max(1, desc - 2);
+          minLimit = this.getMinLimitForPlanType(pkgUuid, "Family_Shared_Plan", depSize);
+          maxLimit = this.getMaxLimitForPlanType(pkgUuid, "Family_Shared_Plan", depSize);
+        } else if (this.isDependentSharedPlan(planType)) {
+          const depSize = Math.max(1, desc - 1);
+          minLimit = this.getMinLimitForPlanType(pkgUuid, "Family_Shared_Plan", depSize);
+          maxLimit = this.getMaxLimitForPlanType(pkgUuid, "Family_Shared_Plan", depSize);
+        } else {
+          minLimit = this.getMinLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+          maxLimit = this.getMaxLimitForPlanType(pkgUuid, "Individual_Plan", 1);
+        }
+      }
       
       if (value < minLimit || value > maxLimit) {
         return `Must be between ${this.formatNumber(minLimit)} – ${this.formatNumber(maxLimit)}`;
@@ -1133,8 +1590,8 @@ export default {
         return "Coverage amount is required";
       }
       
-      const minLimit = this.getPackageMinLimit(pkgUuid);
-      const maxLimit = this.getPackageMaxLimit(pkgUuid);
+      const minLimit = this.getPackageMinLimit(pkgUuid, config.planType, row.description);
+      const maxLimit = this.getPackageMaxLimit(pkgUuid, config.planType, row.description);
       
       if ((minLimit > 0 || maxLimit > 0) && (coverage < minLimit || coverage > maxLimit)) {
         return `Must be between ${this.formatNumber(minLimit)} – ${this.formatNumber(maxLimit)}`;
@@ -1145,7 +1602,17 @@ export default {
 
     // ── Dropdown ──────────────────────────────────────────────
     toggleDropdown(rowId) {
-      if (this.openDropdownRowId === rowId) { this.openDropdownRowId = null; return; }
+      if (this.openDropdownRowId === rowId) { 
+        this.openDropdownRowId = null;
+        this.packageSearchQuery[rowId] = '';
+        return; 
+      }
+      
+      if (this.openDropdownRowId) {
+        const oldRowId = this.openDropdownRowId;
+        this.packageSearchQuery[oldRowId] = '';
+      }
+      
       const btn = this.pkgBtnRefs[rowId];
       if (btn) {
         const rect = btn.getBoundingClientRect();
@@ -1156,6 +1623,7 @@ export default {
         };
       }
       this.openDropdownRowId = rowId;
+      this.packageSearchQuery = { ...this.packageSearchQuery, [rowId]: '' };
     },
 
     getDropdownStyle(rowId) {
@@ -1215,50 +1683,62 @@ export default {
       return this.packages.find(p => p.packageUuid === uuid)?.packageName || ""; 
     },
 
-    getPackageMinLimit(uuid) {
+    getPackageMinLimit(uuid, planType = null, description = null) {
       const pkg = this.packages.find(p => p.packageUuid === uuid);
       const v = Number(
-        pkg?.minBalance ??
-        pkg?.minLimit ??
-        pkg?.min_limit ??
-        pkg?.minimumLimit ??
-        pkg?.minimum_limit ??
-        pkg?.minCoverage ??
-        pkg?.min_coverage ??
-        0
+        pkg?.minBalance ?? pkg?.minLimit ?? pkg?.min_limit ?? pkg?.minimumLimit ?? pkg?.minimum_limit ?? pkg?.minCoverage ?? pkg?.min_coverage ?? 0
       );
       if (v > 0) return v;
+      
       const rates = this.getRatesForPackage(uuid);
       if (rates.length) {
-        const mins = rates.map(r => r.minBalance ?? r.minLimit).filter(x => x != null);
-        return mins.length ? Math.min(...mins) : 0;
+        let filteredRates = rates;
+        if (planType) {
+          const apiPlanType = this.mapPlanTypeToApi(planType);
+          filteredRates = filteredRates.filter(r => r.planType === apiPlanType);
+        }
+        if (description) {
+          const familySize = Number(description) || 1;
+          filteredRates = filteredRates.filter(r => Number(r.familySize) === familySize);
+        }
+        
+        if (filteredRates.length) {
+          const mins = filteredRates.map(r => r.minBalance ?? r.minLimit).filter(x => x != null);
+          return mins.length ? Math.min(...mins) : 0;
+        }
       }
       return 0;
     },
 
-    getPackageMaxLimit(uuid) {
+    getPackageMaxLimit(uuid, planType = null, description = null) {
       const pkg = this.packages.find(p => p.packageUuid === uuid);
       const v = Number(
-        pkg?.maxBalance ??
-        pkg?.maxLimit ??
-        pkg?.max_limit ??
-        pkg?.maximumLimit ??
-        pkg?.maximum_limit ??
-        pkg?.maxCoverage ??
-        pkg?.max_coverage ??
-        0
+        pkg?.maxBalance ?? pkg?.maxLimit ?? pkg?.max_limit ?? pkg?.maximumLimit ?? pkg?.maximum_limit ?? pkg?.maxCoverage ?? pkg?.max_coverage ?? 0
       );
       if (v > 0) return v;
+      
       const rates = this.getRatesForPackage(uuid);
       if (rates.length) {
-        const maxs = rates.map(r => r.maxBalance ?? r.maxLimit).filter(x => x != null);
-        return maxs.length ? Math.max(...maxs) : 0;
+        let filteredRates = rates;
+        if (planType) {
+          const apiPlanType = this.mapPlanTypeToApi(planType);
+          filteredRates = filteredRates.filter(r => r.planType === apiPlanType);
+        }
+        if (description) {
+          const familySize = Number(description) || 1;
+          filteredRates = filteredRates.filter(r => Number(r.familySize) === familySize);
+        }
+        
+        if (filteredRates.length) {
+          const maxs = filteredRates.map(r => r.maxBalance ?? r.maxLimit).filter(x => x != null);
+          return maxs.length ? Math.max(...maxs) : 0;
+        }
       }
       return 0;
     },
 
-    getRangeDisplayForPackage(uuid) {
-      return `${this.formatNumber(this.getPackageMinLimit(uuid))} – ${this.formatNumber(this.getPackageMaxLimit(uuid))}`;
+    getRangeDisplayForPackage(uuid, planType = null, description = null) {
+      return `${this.formatNumber(this.getPackageMinLimit(uuid, planType, description))} – ${this.formatNumber(this.getPackageMaxLimit(uuid, planType, description))}`;
     },
 
     // ── Plan/description options ─────────────────────────────
@@ -1386,38 +1866,59 @@ export default {
         return n;
       };
       
-      const minLimit = this.getPackageMinLimit(packageUuid);
-      const maxLimit = this.getPackageMaxLimit(packageUuid);
+      const planType = this.normalizeValue(config.planType);
+      const description = this.normalizeValue(row.description);
+      const desc = Number(description) || 1;
+      
+      let empMinLimit, empMaxLimit, depMinLimit, depMaxLimit;
+      
+      if (this.isDualPremiumPlan(planType)) {
+        empMinLimit = this.getMinLimitForPlanType(packageUuid, "Individual_Plan", 1);
+        empMaxLimit = this.getMaxLimitForPlanType(packageUuid, "Individual_Plan", 1);
+        const depFamilySize = Math.max(1, desc - 2);
+        depMinLimit = this.getMinLimitForPlanType(packageUuid, "Family_Shared_Plan", depFamilySize);
+        depMaxLimit = this.getMaxLimitForPlanType(packageUuid, "Family_Shared_Plan", depFamilySize);
+      } else if (this.isDependentSharedPlan(planType)) {
+        empMinLimit = this.getMinLimitForPlanType(packageUuid, "Individual_Plan", 1);
+        empMaxLimit = this.getMaxLimitForPlanType(packageUuid, "Individual_Plan", 1);
+        const depFamilySize = Math.max(1, desc - 1);
+        depMinLimit = this.getMinLimitForPlanType(packageUuid, "Family_Shared_Plan", depFamilySize);
+        depMaxLimit = this.getMaxLimitForPlanType(packageUuid, "Family_Shared_Plan", depFamilySize);
+      } else {
+        empMinLimit = this.getMinLimitForPlanType(packageUuid, "Individual_Plan", 1);
+        empMaxLimit = this.getMaxLimitForPlanType(packageUuid, "Individual_Plan", 1);
+        depMinLimit = empMinLimit;
+        depMaxLimit = empMaxLimit;
+      }
+      
       let wasClamped = false;
       
       if (config.sumAssured != null && config.sumAssured !== "") {
-        const clamped = clamp(config.sumAssured, minLimit, maxLimit);
+        const clamped = clamp(config.sumAssured, empMinLimit, empMaxLimit);
         if (clamped !== Number(config.sumAssured)) {
           wasClamped = true;
           config.sumAssured = clamped;
         }
       }
-      if (config.depSumAssured != null && config.depSumAssured !== "") {
-        const clamped = clamp(config.depSumAssured, minLimit, maxLimit);
-        if (clamped !== Number(config.depSumAssured)) {
-          wasClamped = true;
-          config.depSumAssured = clamped;
-        }
-      }
       if (config.spouseSumAssured != null && config.spouseSumAssured !== "") {
-        const clamped = clamp(config.spouseSumAssured, minLimit, maxLimit);
+        const clamped = clamp(config.spouseSumAssured, empMinLimit, empMaxLimit);
         if (clamped !== Number(config.spouseSumAssured)) {
           wasClamped = true;
           config.spouseSumAssured = clamped;
         }
       }
-      
-      if (wasClamped && (config.sumAssuredTouched || config.depSumAssuredTouched || config.spouseSumAssuredTouched)) {
-        this.showToast(`Value adjusted to within limit (${this.formatNumber(minLimit)} - ${this.formatNumber(maxLimit)})`, 'warning');
+      if (config.depSumAssured != null && config.depSumAssured !== "") {
+        const clamped = clamp(config.depSumAssured, depMinLimit, depMaxLimit);
+        if (clamped !== Number(config.depSumAssured)) {
+          wasClamped = true;
+          config.depSumAssured = clamped;
+        }
       }
       
-      const planType = this.normalizeValue(config.planType);
-      const description = this.normalizeValue(row.description);
+      if (wasClamped && (config.sumAssuredTouched || config.depSumAssuredTouched || config.spouseSumAssuredTouched)) {
+        this.showToast(`Value adjusted to within limit`, 'warning');
+      }
+      
       const rates = this.getRatesForPackage(packageUuid);
       
       config.employeeRate = 0;
@@ -1433,20 +1934,23 @@ export default {
         const matched = rates.filter(r => 
           r.planType === "Individual_Plan" && Number(r.familySize) === 1
         );
-        config.employeeRate = this.findRateForAmount(matched, config.sumAssured);
-        config.dependentRate = this.findRateForAmount(matched, config.depSumAssured);
-        config.rate = config.employeeRate;
+        const ratesToUse = matched.length > 0 ? matched : rates.filter(r => r.planType === "Individual_Plan");
+        
+        config.employeeRate = this.findRateForAmount(ratesToUse, config.sumAssured);
+        config.spouseRate = this.findRateForAmount(ratesToUse, config.spouseSumAssured || config.sumAssured);
+        config.dependentRate = this.findRateForAmount(ratesToUse, config.depSumAssured || config.sumAssured);
+        config.rate = config.employeeRate || config.spouseRate || config.dependentRate;
 
       } else if (this.isFamilySharedPlan(planType)) {
-        const familySize = Number(description) || 1;
+        const familySize = desc;
         const matched = rates.filter(r => 
           r.planType === "Family_Shared_Plan" && Number(r.familySize) === familySize
         );
-        config.rate = this.findRateForAmount(matched, config.coverage);
+        const ratesToUse = matched.length > 0 ? matched : rates.filter(r => r.planType === "Family_Shared_Plan");
+        config.rate = this.findRateForAmount(ratesToUse, config.coverage);
 
       } else if (this.isDependentSharedPlan(planType)) {
-        const familySize = Number(description) || 1;
-        const dependentFamilySize = Math.max(1, familySize - 1);
+        const dependentFamilySize = Math.max(1, desc - 1);
         
         const empMatched = rates.filter(r => 
           r.planType === "Individual_Plan" && Number(r.familySize) === 1
@@ -1455,13 +1959,15 @@ export default {
           r.planType === "Family_Shared_Plan" && Number(r.familySize) === dependentFamilySize
         );
         
-        config.employeeRate = this.findRateForAmount(empMatched, config.sumAssured);
-        config.dependentRate = this.findRateForAmount(depMatched, config.depSumAssured);
+        const empRatesToUse = empMatched.length > 0 ? empMatched : rates.filter(r => r.planType === "Individual_Plan");
+        const depRatesToUse = depMatched.length > 0 ? depMatched : rates.filter(r => r.planType === "Family_Shared_Plan");
+        
+        config.employeeRate = this.findRateForAmount(empRatesToUse, config.sumAssured);
+        config.dependentRate = this.findRateForAmount(depRatesToUse, config.depSumAssured);
         config.rate = (config.employeeRate + config.dependentRate) / 2;
 
       } else if (this.isDualPremiumPlan(planType)) {
-        const familySize = Number(description) || 1;
-        const dependentFamilySize = Math.max(1, familySize - 2);
+        const dependentFamilySize = Math.max(1, desc - 2);
         
         const empMatched = rates.filter(r => 
           r.planType === "Individual_Plan" && Number(r.familySize) === 1
@@ -1470,14 +1976,18 @@ export default {
           r.planType === "Family_Shared_Plan" && Number(r.familySize) === dependentFamilySize
         );
         
-        config.employeeRate = this.findRateForAmount(empMatched, config.sumAssured);
-        config.spouseRate = this.findRateForAmount(empMatched, config.spouseSumAssured);
-        config.dependentRate = this.findRateForAmount(depMatched, config.depSumAssured);
+        const empRatesToUse = empMatched.length > 0 ? empMatched : rates.filter(r => r.planType === "Individual_Plan");
+        const depRatesToUse = depMatched.length > 0 ? depMatched : rates.filter(r => r.planType === "Family_Shared_Plan");
+        
+        config.employeeRate = this.findRateForAmount(empRatesToUse, config.sumAssured);
+        config.spouseRate = this.findRateForAmount(empRatesToUse, config.spouseSumAssured);
+        config.dependentRate = this.findRateForAmount(depRatesToUse, config.depSumAssured);
         
         if (this.isMemberPlusOne(description)) {
-          config.rate = config.employeeRate;
+          config.dependentRate = 0;
+          config.rate = (config.employeeRate + config.spouseRate) / 2;
         } else {
-          config.rate = (config.employeeRate * 2 + config.dependentRate) / 3;
+          config.rate = (config.employeeRate + config.spouseRate + config.dependentRate) / 3;
         }
       }
 
@@ -1503,25 +2013,38 @@ export default {
         effectiveCount = Number(config.genderCount) || 0;
       }
 
+      let baseEmployeePremium = 0;
+      let baseSpousePremium = 0;
+      let baseDependentPremium = 0;
+      let baseTotalPremium = 0;
+
       if (this.isIndividualPlan(planType)) {
         const empCov = Number(config.sumAssured) || 0;
-        const rate = config.employeeRate || 0;
-        const isMemberOnly = this.isMemberOnly(description);
-        
-        config.employeePremium = empCov * effectiveCount * rate;
-        
-        if (isMemberOnly) {
-          config.dependentPremium = 0;
+        const spouseCov = Number(config.spouseSumAssured) || 0;
+        const depCov = Number(config.depSumAssured) || 0;
+        const empRate = config.employeeRate || 0;
+        const spouseRate = config.spouseRate || empRate;
+        const depRate = config.dependentRate || empRate;
+        const isMO = this.isMemberOnly(description);
+        const isMPO = this.isMemberPlusOne(description);
+
+        baseEmployeePremium = empCov * effectiveCount * empRate;
+
+        if (isMO) {
+          baseSpousePremium = 0;
+          baseDependentPremium = 0;
           config.sumInsured = empCov * effectiveCount;
+        } else if (isMPO) {
+          baseSpousePremium = spouseCov * effectiveCount * spouseRate;
+          baseDependentPremium = 0;
+          config.sumInsured = (empCov + spouseCov) * effectiveCount;
         } else {
-          const depCov = Number(config.depSumAssured) || 0;
-          const numberOfDependents = (Number(description) - 1) || 0;
-          const depRate = config.dependentRate || rate || 0;
-          
-          config.dependentPremium = depCov * effectiveCount * numberOfDependents * depRate;
-          config.sumInsured = (empCov * effectiveCount) + (depCov * effectiveCount * numberOfDependents);
+          const numberOfDependents = (Number(description) - 2) || 0;
+          baseSpousePremium = spouseCov * effectiveCount * spouseRate;
+          baseDependentPremium = depCov * effectiveCount * numberOfDependents * depRate;
+          config.sumInsured = (empCov * effectiveCount) + (spouseCov * effectiveCount) + (depCov * effectiveCount * numberOfDependents);
         }
-        config.premium = config.employeePremium + config.dependentPremium;
+        baseTotalPremium = baseEmployeePremium + baseSpousePremium + baseDependentPremium;
 
       } else if (this.isDependentSharedPlan(planType)) {
         const empCov = Number(config.sumAssured) || 0;
@@ -1529,11 +2052,11 @@ export default {
         const empRate = config.employeeRate || 0;
         const depRate = config.dependentRate || 0;
         
-        config.employeePremium = empCov * effectiveCount * empRate;
-        config.dependentPremium = depCov * effectiveCount * depRate;
+        baseEmployeePremium = empCov * effectiveCount * empRate;
+        baseDependentPremium = depCov * effectiveCount * depRate;
         
         config.sumInsured = (empCov * effectiveCount) + (depCov * effectiveCount);
-        config.premium = config.employeePremium + config.dependentPremium;
+        baseTotalPremium = baseEmployeePremium + baseDependentPremium;
 
       } else if (this.isDualPremiumPlan(planType)) {
         const empCov = Number(config.sumAssured) || 0;
@@ -1544,24 +2067,37 @@ export default {
         const depRate = config.dependentRate || 0;
         const isMemberPlusOne = this.isMemberPlusOne(description);
         
-        config.employeePremium = empCov * effectiveCount * empRate;
-        config.spousePremium = spouseCov * effectiveCount * spouseRate;
+        baseEmployeePremium = empCov * effectiveCount * empRate;
+        baseSpousePremium = spouseCov * effectiveCount * spouseRate;
         
         if (isMemberPlusOne) {
-          config.dependentPremium = 0;
+          baseDependentPremium = 0;
           config.sumInsured = (empCov * effectiveCount) + (spouseCov * effectiveCount);
         } else {
-          config.dependentPremium = depCov * effectiveCount * depRate;
+          baseDependentPremium = depCov * effectiveCount * depRate;
           config.sumInsured = (empCov * effectiveCount) + (spouseCov * effectiveCount) + (depCov * effectiveCount);
         }
-        config.premium = config.employeePremium + config.spousePremium + config.dependentPremium;
+        baseTotalPremium = baseEmployeePremium + baseSpousePremium + baseDependentPremium;
 
       } else if (this.isFamilySharedPlan(planType)) {
         const coverage = Number(config.coverage) || 0;
         const rate = config.rate || 0;
         
         config.sumInsured = coverage * effectiveCount;
-        config.premium = coverage * effectiveCount * rate;
+        baseTotalPremium = coverage * effectiveCount * rate;
+      }
+
+      const disc = Number(this.activeDiscountMap[packageUuid]) || 0;
+      if (disc > 0) {
+        config.employeePremium  = baseEmployeePremium * (1 - disc / 100);
+        config.spousePremium    = baseSpousePremium * (1 - disc / 100);
+        config.dependentPremium = baseDependentPremium * (1 - disc / 100);
+        config.premium          = baseTotalPremium * (1 - disc / 100);
+      } else {
+        config.employeePremium  = baseEmployeePremium;
+        config.spousePremium    = baseSpousePremium;
+        config.dependentPremium = baseDependentPremium;
+        config.premium          = baseTotalPremium;
       }
     },
 
@@ -1571,6 +2107,7 @@ export default {
       
       const planType = this.normalizeValue(config.planType);
       const description = this.normalizeValue(row.description);
+      const desc = Number(description) || 1;
       const rates = this.getRatesForPackage(packageUuid);
       let found = false;
 
@@ -1578,24 +2115,27 @@ export default {
         const matched = rates.filter(r => 
           r.planType === "Individual_Plan" && Number(r.familySize) === 1
         );
-        if (matched.length) { 
-          config.employeeRate = this.findRateForAmount(matched, config.sumAssured);
-          config.dependentRate = this.findRateForAmount(matched, config.depSumAssured);
-          config.rate = config.employeeRate;
+        const ratesToUse = matched.length > 0 ? matched : rates.filter(r => r.planType === "Individual_Plan");
+        
+        if (ratesToUse.length) { 
+          config.employeeRate = this.findRateForAmount(ratesToUse, config.sumAssured);
+          config.spouseRate = this.findRateForAmount(ratesToUse, config.spouseSumAssured || config.sumAssured);
+          config.dependentRate = this.findRateForAmount(ratesToUse, config.depSumAssured || config.sumAssured);
+          config.rate = config.employeeRate || config.spouseRate || config.dependentRate;
           found = true;
         }
       } else if (this.isFamilySharedPlan(planType)) {
-        const familySize = Number(description) || 1;
+        const familySize = desc;
         const matched = rates.filter(r => 
           r.planType === "Family_Shared_Plan" && Number(r.familySize) === familySize
         );
-        if (matched.length) { 
-          config.rate = this.findRateForAmount(matched, config.coverage);
+        const ratesToUse = matched.length > 0 ? matched : rates.filter(r => r.planType === "Family_Shared_Plan");
+        if (ratesToUse.length) { 
+          config.rate = this.findRateForAmount(ratesToUse, config.coverage);
           found = true;
         }
       } else if (this.isDependentSharedPlan(planType)) {
-        const familySize = Number(description) || 1;
-        const dependentFamilySize = Math.max(1, familySize - 1);
+        const dependentFamilySize = Math.max(1, desc - 1);
         
         const empMatched = rates.filter(r => 
           r.planType === "Individual_Plan" && Number(r.familySize) === 1
@@ -1604,20 +2144,22 @@ export default {
           r.planType === "Family_Shared_Plan" && Number(r.familySize) === dependentFamilySize
         );
         
-        if (empMatched.length) {
-          config.employeeRate = this.findRateForAmount(empMatched, config.sumAssured);
+        const empRatesToUse = empMatched.length > 0 ? empMatched : rates.filter(r => r.planType === "Individual_Plan");
+        const depRatesToUse = depMatched.length > 0 ? depMatched : rates.filter(r => r.planType === "Family_Shared_Plan");
+        
+        if (empRatesToUse.length) {
+          config.employeeRate = this.findRateForAmount(empRatesToUse, config.sumAssured);
           found = true;
         }
-        if (depMatched.length) {
-          config.dependentRate = this.findRateForAmount(depMatched, config.depSumAssured);
+        if (depRatesToUse.length) {
+          config.dependentRate = this.findRateForAmount(depRatesToUse, config.depSumAssured);
           found = true;
         }
-        if (empMatched.length || depMatched.length) {
+        if (empRatesToUse.length || depRatesToUse.length) {
           config.rate = (config.employeeRate + config.dependentRate) / 2;
         }
       } else if (this.isDualPremiumPlan(planType)) {
-        const familySize = Number(description) || 1;
-        const dependentFamilySize = Math.max(1, familySize - 2);
+        const dependentFamilySize = Math.max(1, desc - 2);
         
         const empMatched = rates.filter(r => 
           r.planType === "Individual_Plan" && Number(r.familySize) === 1
@@ -1626,20 +2168,23 @@ export default {
           r.planType === "Family_Shared_Plan" && Number(r.familySize) === dependentFamilySize
         );
         
-        if (empMatched.length) {
-          config.employeeRate = this.findRateForAmount(empMatched, config.sumAssured);
-          config.spouseRate = this.findRateForAmount(empMatched, config.spouseSumAssured);
+        const empRatesToUse = empMatched.length > 0 ? empMatched : rates.filter(r => r.planType === "Individual_Plan");
+        const depRatesToUse = depMatched.length > 0 ? depMatched : rates.filter(r => r.planType === "Family_Shared_Plan");
+        
+        if (empRatesToUse.length) {
+          config.employeeRate = this.findRateForAmount(empRatesToUse, config.sumAssured);
+          config.spouseRate = this.findRateForAmount(empRatesToUse, config.spouseSumAssured);
           found = true;
         }
-        if (depMatched.length) {
-          config.dependentRate = this.findRateForAmount(depMatched, config.depSumAssured);
+        if (depRatesToUse.length) {
+          config.dependentRate = this.findRateForAmount(depRatesToUse, config.depSumAssured);
           found = true;
         }
-        if (empMatched.length || depMatched.length) {
+        if (empRatesToUse.length || depRatesToUse.length) {
           if (this.isMemberPlusOne(description)) {
-            config.rate = config.employeeRate;
+            config.rate = (config.employeeRate + config.spouseRate) / 2;
           } else {
-            config.rate = (config.employeeRate * 2 + config.dependentRate) / 3;
+            config.rate = (config.employeeRate + config.spouseRate + config.dependentRate) / 3;
           }
         }
       }
@@ -1660,6 +2205,7 @@ export default {
       config.depSumAssured = "";
       config.spouseSumAssured = "";
       config.coverage = "";
+      config.sameSumAssured = false;
       config.rate = 0;
       config.employeeRate = 0;
       config.dependentRate = 0;
@@ -1749,9 +2295,9 @@ export default {
               conf.rate = (conf.employeeRate + conf.dependentRate) / 2;
             } else if (this.isDualPremiumPlan(planType)) {
               if (this.isMemberPlusOne(description)) {
-                conf.rate = conf.employeeRate;
+                conf.rate = (conf.employeeRate + conf.spouseRate) / 2;
               } else {
-                conf.rate = (conf.employeeRate * 2 + conf.dependentRate) / 3;
+                conf.rate = (conf.employeeRate + conf.spouseRate + conf.dependentRate) / 3;
               }
             }
           }
@@ -1837,6 +2383,7 @@ export default {
           } else if (this.isIndividualPlan(normalizedPlanType)) {
             sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
             depSumAssuredValue = s.depSumAssured ?? "";
+            spouseSumAssuredValue = s.spouseSumAssured ?? "";
             coverageValue = "";
           } else if (this.isDependentSharedPlan(normalizedPlanType)) {
             sumAssuredValue = s.sumAssured ?? s.sumInsured ?? "";
@@ -1861,6 +2408,9 @@ export default {
           } else if (pkgGender === 'MALE') {
             genderCount = s.numberOfAdultMale || 0;
           }
+
+          const discountPercent = Number(s.discount) || 0;
+          const discountMultiplier = discountPercent > 0 ? (1 - discountPercent / 100) : 1;
           
           packageConfigs[s.packageUuid] = {
             ...emptyConfig(),
@@ -1874,15 +2424,15 @@ export default {
             depSumAssuredTouched: !!depSumAssuredValue,
             spouseSumAssured: spouseSumAssuredValue,
             spouseSumAssuredTouched: !!spouseSumAssuredValue,
-            rate: s.rate || 0,
-            premium: s.premium || 0,
+            rate: discountMultiplier < 1 ? (Number(s.rate || 0) / discountMultiplier) : (Number(s.rate) || 0),
+            premium: discountMultiplier < 1 ? (Number(s.premium || 0) / discountMultiplier) : (Number(s.premium) || 0),
             sumInsured: s.sumInsured || 0,
-            employeeRate: s.employeeRate || s.rate || 0,
+            employeeRate: discountMultiplier < 1 ? (Number(s.employeeRate || s.rate || 0) / discountMultiplier) : (Number(s.employeeRate || s.rate) || 0),
             dependentRate: s.dependentRate || s.rate || 0,
             spouseRate: s.spouseRate || s.rate || 0,
-            employeePremium: s.employeePremium || 0,
-            dependentPremium: s.dependentPremium || 0,
-            spousePremium: s.spousePremium || 0,
+            employeePremium: discountMultiplier < 1 ? (Number(s.employeePremium || 0) / discountMultiplier) : (Number(s.employeePremium) || 0),
+            dependentPremium: discountMultiplier < 1 ? (Number(s.dependentPremium || 0) / discountMultiplier) : (Number(s.dependentPremium) || 0),
+            spousePremium: discountMultiplier < 1 ? (Number(s.spousePremium || 0) / discountMultiplier) : (Number(s.spousePremium) || 0),
             genderCount: genderCount,
             genderTouched: genderCount > 0,
           };
@@ -2033,6 +2583,7 @@ export default {
             employeeRate: Number(config.employeeRate) || 0,
             dependentRate: Number(config.dependentRate) || 0,
             spouseRate: Number(config.spouseRate) || 0,
+            discount: Number(this.activeDiscountMap[packageUuid]) || 0,
           });
         });
       });
@@ -2115,9 +2666,6 @@ export default {
 
     formatCurrency,
     formatNumber,
-    formatRate(rate) { 
-      return (!rate && rate !== 0) ? "0.0000" : Number(rate).toFixed(4); 
-    },
   },
 };
 </script>
@@ -2385,11 +2933,93 @@ export default {
   border: 1.5px solid #e2e8f0;
   border-radius: 1rem;
   box-shadow: 0 8px 40px rgba(0,0,0,.15);
-  max-height: 18rem;
-  overflow-y: auto;
-  padding: .4rem;
+  max-height: 22rem;
+  overflow: hidden;
   min-width: 280px;
+  display: flex;
+  flex-direction: column;
 }
+
+/* ── Package dropdown search ─────────────────────────────────── */
+.qb-pkg-search-wrapper {
+  position: relative;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.qb-pkg-search-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.qb-pkg-search-input {
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 0.875rem 0 2.25rem;
+  font-size: 0.875rem;
+  color: #334155;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.625rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+.qb-pkg-search-input:focus {
+  border-color: var(--color-primary, #6366f1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #6366f1) 15%, transparent);
+}
+
+.qb-pkg-search-input::placeholder {
+  color: #94a3b8;
+}
+
+/* ── Package options list with scrollbar ────────────────────── */
+.qb-pkg-options-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.25rem 0.5rem;
+  max-height: 14rem;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* WebKit scrollbar styles */
+.qb-pkg-options-list::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.qb-pkg-options-list::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.qb-pkg-options-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.qb-pkg-options-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Firefox scrollbar */
+.qb-pkg-options-list {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* ── Package option items ────────────────────────────────────── */
 .qb-pkg-option {
   display: flex;
   align-items: center;
@@ -2400,8 +3030,15 @@ export default {
   transition: background .1s;
   user-select: none;
 }
-.qb-pkg-option:hover             { background: #f8fafc; }
-.qb-pkg-option--checked          { background: color-mix(in srgb, var(--color-primary,#6366f1) 6%, transparent); }
+
+.qb-pkg-option:hover { 
+  background: #f8fafc; 
+}
+
+.qb-pkg-option--checked { 
+  background: color-mix(in srgb, var(--color-primary,#6366f1) 6%, transparent); 
+}
+
 .qb-pkg-checkbox {
   width: 1.125rem;
   height: 1.125rem;
@@ -2414,13 +3051,72 @@ export default {
   background: #fff;
   transition: background .1s, border-color .1s;
 }
+
 .qb-pkg-option--checked .qb-pkg-checkbox {
   background: var(--color-primary, #6366f1);
   border-color: var(--color-primary, #6366f1);
 }
-.qb-pkg-checkbox svg { width: .7rem; height: .7rem; stroke: #fff; }
-.qb-pkg-name { font-size: .8125rem; font-weight: 600; color: #1e293b; }
-.qb-pkg-cat  { font-size: .6875rem; color: #94a3b8; margin-top: .1rem; }
+
+.qb-pkg-checkbox svg { 
+  width: .7rem; 
+  height: .7rem; 
+  stroke: #fff; 
+}
+
+.qb-pkg-name { 
+  font-size: .8125rem; 
+  font-weight: 600; 
+  color: #1e293b; 
+}
+
+.qb-pkg-cat { 
+  font-size: .6875rem; 
+  color: #94a3b8; 
+  margin-top: .1rem; 
+}
+
+.qb-pkg-no-results {
+  padding: 1.5rem 0.75rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* ── Bulk actions ────────────────────────────────────────────── */
+.qb-pkg-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 0 0 1rem 1rem;
+  flex-shrink: 0;
+}
+
+.qb-pkg-bulk-btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary, #6366f1);
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.qb-pkg-bulk-btn:hover {
+  background: color-mix(in srgb, var(--color-primary, #6366f1) 8%, transparent);
+}
+
+.qb-pkg-bulk-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
 
 /* ── Row action buttons ──────────────────────────────────────── */
 .qb-row-actions { display: flex; gap: .25rem; align-items: center; justify-content: flex-end; padding-bottom: .1rem; }
@@ -2541,6 +3237,11 @@ export default {
   font-weight: 600;
 }
 
+.qb-discount-note {
+  color: #9333ea;
+  font-weight: 700;
+}
+
 @media (min-width: 1024px) {
   .qb-pkg-row {
     grid-template-columns: 240px 1fr 180px;
@@ -2570,6 +3271,190 @@ export default {
 .qb-footer-total   { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0; }
 .qb-footer-amount  { font-size: 1.25rem; font-weight: 800; color: #16a34a; }
 .qb-footer-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+/* ── Same Sum Assured toggle ─────────────────────────────────── */
+.qb-same-sa-toggle {
+  margin-bottom: 0.5rem;
+}
+.qb-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  user-select: none;
+}
+.qb-toggle-checkbox { display: none; }
+.qb-toggle-slider {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  background: #cbd5e1;
+  border-radius: 9999px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.qb-toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.qb-toggle-checkbox:checked + .qb-toggle-slider {
+  background: var(--color-primary, #6366f1);
+}
+.qb-toggle-checkbox:checked + .qb-toggle-slider::after {
+  transform: translateX(1rem);
+}
+.qb-toggle-text {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* ── Discount panel ──────────────────────────────────────────── */
+.qb-discount-panel {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: #fff;
+}
+.qb-discount-toggle-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #334155;
+  text-align: left;
+  transition: background 0.15s;
+}
+.qb-discount-toggle-btn:hover { background: #f1f5f9; }
+.qb-discount-icon { width: 1.25rem; height: 1.25rem; color: #6366f1; flex-shrink: 0; }
+.qb-discount-active-badge {
+  margin-left: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  background: #fef9c3;
+  color: #92400e;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  border: 1px solid #fde68a;
+}
+.qb-discount-body {
+  padding: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+.qb-discount-hint {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin: 0 0 1rem;
+}
+.qb-discount-empty {
+  color: #94a3b8;
+  font-size: 0.8125rem;
+  font-style: italic;
+}
+.qb-discount-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.qb-discount-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border-radius: 0.875rem;
+  border: 1px solid #e2e8f0;
+}
+@media (min-width: 640px) {
+  .qb-discount-item {
+    grid-template-columns: 1fr auto;
+  }
+}
+.qb-discount-item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+.qb-discount-pkg-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qb-discount-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+.qb-discount-slider {
+  width: 10rem;
+  height: 0.375rem;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    var(--color-primary, #6366f1) 0%,
+    var(--color-primary, #6366f1) calc(var(--val, 0) * 1%),
+    #e2e8f0 calc(var(--val, 0) * 1%),
+    #e2e8f0 100%
+  );
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+.qb-discount-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: var(--color-primary, #6366f1);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(99,102,241,0.4);
+  cursor: pointer;
+}
+.qb-discount-slider::-moz-range-thumb {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: var(--color-primary, #6366f1);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(99,102,241,0.4);
+  cursor: pointer;
+}
+.qb-discount-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.qb-discount-number {
+  width: 4.5rem !important;
+  height: 2.25rem !important;
+  font-size: 0.875rem !important;
+}
+.qb-discount-pct {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #64748b;
+}
 
 /* ── Animations ───────────────────────────────────────────────── */
 @keyframes spin {

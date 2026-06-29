@@ -282,6 +282,8 @@ function finish() {
     institutionUuid: institutionUuid.value,
     institutionName: institutionSearchTerm.value,
     payerInstitutionContractUuid: selectedContract.value?.payerInstitutionContractUuid,
+    beginDate: selectedContract.value?.beginDate,
+    endDate: selectedContract.value?.endDate,
     cashPeriodLimitPerDay:
       selectedContract.value?.cashPeriodLimitPerDay ??
       selectedInstitution.value?.cashPeriodLimitPerDay,

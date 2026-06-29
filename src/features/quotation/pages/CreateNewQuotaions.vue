@@ -4,7 +4,7 @@ import SingleInstitutionDataProvider from "@/features/institutions/components/Si
 import QuotationForm from "../form/QuotationForm.vue";
 import QuotationCreationDataProvider from "../components/QuotationCreationDataProvider.vue";
 import Input from "@/components/new_form_elements/Input.vue";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { saveQuotationDraft, issueQuotation } from "@/features/quotation/api/quotationApi";
 import { useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
@@ -17,16 +17,18 @@ const pendingAction = ref(''); // Track pending action for loading state
 let lastCallTime = 0;
 const DEBOUNCE_TIME = 1000;
 
-// ── Date defaults (today to 1 year from now) ─────────────────
+// ── Date defaults (today to 1 year minus 1 day) ─────────────────
 function getDefaultBeginDate() {
   const today = new Date();
   return today.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
 }
 
-function getDefaultEndDate() {
-  const today = new Date();
-  const nextYear = new Date(today);
-  nextYear.setFullYear(today.getFullYear() + 1);
+function getDefaultEndDate(startDate = null) {
+  const baseDate = startDate ? new Date(startDate) : new Date();
+  const nextYear = new Date(baseDate);
+  nextYear.setFullYear(baseDate.getFullYear() + 1);
+  // Subtract 1 day to make it 1 year minus 1 day
+  nextYear.setDate(nextYear.getDate() - 1);
   return nextYear.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
 }
 
@@ -37,33 +39,79 @@ function calculateDuration(startDate, endDate) {
   const start = new Date(startDate);
   const end = new Date(endDate);
   
-  // Calculate difference in months and days
-  const yearDiff = end.getFullYear() - start.getFullYear();
-  const monthDiff = end.getMonth() - start.getMonth();
-  const totalMonths = yearDiff * 12 + monthDiff;
+  // Check if dates are valid
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return '';
   
-  if (totalMonths === 12) return '1 year';
-  if (totalMonths < 12) return `${totalMonths} month${totalMonths !== 1 ? 's' : ''}`;
+  // Calculate total days
+  const diffTime = Math.abs(end - start);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
   
-  const years = Math.floor(totalMonths / 12);
-  const remainingMonths = totalMonths % 12;
+  if (diffDays === 365) return '1 year';
+  if (diffDays === 366) return '1 year (leap year)';
   
-  if (remainingMonths === 0) return `${years} year${years !== 1 ? 's' : ''}`;
-  return `${years} year${years !== 1 ? 's' : ''} ${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
+  // Calculate years and remaining days
+  const years = Math.floor(diffDays / 365);
+  const remainingDays = diffDays % 365;
+  
+  if (years === 0) {
+    const months = Math.floor(diffDays / 30);
+    const days = diffDays % 30;
+    
+    if (months === 0) return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+    if (days === 0) return `${months} month${months !== 1 ? 's' : ''}`;
+    return `${months} month${months !== 1 ? 's' : ''} ${days} day${days !== 1 ? 's' : ''}`;
+  }
+  
+  if (remainingDays === 0) return `${years} year${years !== 1 ? 's' : ''}`;
+  
+  const months = Math.floor(remainingDays / 30);
+  const days = remainingDays % 30;
+  
+  if (months === 0 && days === 0) return `${years} year${years !== 1 ? 's' : ''}`;
+  if (months === 0) return `${years} year${years !== 1 ? 's' : ''} ${days} day${days !== 1 ? 's' : ''}`;
+  if (days === 0) return `${years} year${years !== 1 ? 's' : ''} ${months} month${months !== 1 ? 's' : ''}`;
+  return `${years} year${years !== 1 ? 's' : ''} ${months} month${months !== 1 ? 's' : ''} ${days} day${days !== 1 ? 's' : ''}`;
 }
 
 // Reactive date fields with defaults
 const beginDate = ref(getDefaultBeginDate());
 const endDate = ref(getDefaultEndDate());
 
+// Watch for changes to begin date and auto-update end date
+watch(beginDate, (newBeginDate) => {
+  if (newBeginDate) {
+    // Automatically set end date to 1 year minus 1 day from new begin date
+    endDate.value = getDefaultEndDate(newBeginDate);
+  }
+});
+
 // Computed property for date validation
 const dateError = computed(() => {
   if (!beginDate.value || !endDate.value) {
     return 'Both dates are required';
   }
-  if (new Date(endDate.value) <= new Date(beginDate.value)) {
+  
+  const begin = new Date(beginDate.value);
+  const end = new Date(endDate.value);
+  
+  if (isNaN(begin.getTime())) {
+    return 'Invalid begin date';
+  }
+  
+  if (isNaN(end.getTime())) {
+    return 'Invalid end date';
+  }
+  
+  if (end <= begin) {
     return 'End date must be after begin date';
   }
+  
+  // Optional: Add maximum duration validation (e.g., max 5 years)
+  const maxDuration = 5 * 365 * 24 * 60 * 60 * 1000; // 5 years in milliseconds
+  if (end.getTime() - begin.getTime() > maxDuration) {
+    return 'Coverage period cannot exceed 5 years';
+  }
+  
   return null;
 });
 
@@ -177,6 +225,7 @@ function onFormSubmit(e) {
 
   console.log(`Making ${action} API call with ${quotedServices.length} services`);
   console.log('Date range:', beginDate.value, 'to', endDate.value);
+  console.log('Duration:', calculateDuration(beginDate.value, endDate.value));
 
   const req = action === 'save' ? saveReq : issueReq;
   const requestFn = () => (action === 'save' ? saveQuotationDraft(payload) : issueQuotation(payload));
@@ -354,6 +403,7 @@ function onFormSubmit(e) {
               <div>
                 <label class="block mb-1 text-sm font-medium text-slate-700">
                   Coverage Begin Date
+                  <span class="text-red-500">*</span>
                 </label>
                 <input
                   v-model="beginDate"
@@ -361,10 +411,12 @@ function onFormSubmit(e) {
                   class="px-3 py-2 w-4/5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   :class="{ 'border-red-500': dateError && !beginDate }"
                 />
+                <p class="mt-1 text-xs text-slate-500">Select the start date of coverage</p>
               </div>
               <div>
                 <label class="block mb-1 text-sm font-medium text-slate-700">
                   Coverage End Date
+                  <span class="text-red-500">*</span>
                 </label>
                 <input
                   v-model="endDate"
@@ -372,6 +424,7 @@ function onFormSubmit(e) {
                   class="px-3 py-2 w-4/5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   :class="{ 'border-red-500': dateError && !endDate }"
                 />
+                <p class="mt-1 text-xs text-slate-500">Auto-set to 1 year from begin date. Change if needed.</p>
               </div>
             </div>
             <!-- Date error message -->
@@ -379,9 +432,23 @@ function onFormSubmit(e) {
               {{ dateError }}
             </div>
             <!-- Date summary -->
-            <div v-else class="mt-2 text-sm text-slate-600">
-              Coverage period: <span class="font-semibold text-slate-800">{{ beginDate }}</span> to <span class="font-semibold text-slate-800">{{ endDate }}</span>
-              <span class="ml-2 text-emerald-600">({{ calculateDuration(beginDate, endDate) }})</span>
+            <div v-else-if="beginDate && endDate" class="mt-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <div>
+                  <p class="text-sm text-slate-700">
+                    <span class="font-semibold">Coverage Period:</span> 
+                    <span class="text-slate-800">{{ beginDate }}</span> 
+                    <span class="text-slate-500">to</span> 
+                    <span class="text-slate-800">{{ endDate }}</span>
+                  </p>
+                  <p class="text-sm font-semibold text-emerald-700">
+                    Duration: {{ calculateDuration(beginDate, endDate) }}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
           

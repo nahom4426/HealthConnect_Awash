@@ -9,6 +9,7 @@ import financeRoutes from "./finance.routes";
 import provider_contractsRoutes from "./provider_contracts.routes";
 import providersRoutes from "./providers.routes";
 import product_settingsRoutes from "./product_settings.routes";
+import brokerManagementRoutes from "./broker.routes";
 import authorizationRoutes from "./authorization.routes";
 import Login from "@/views/Login.vue";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
@@ -138,6 +139,7 @@ const router = createRouter({
         ...provider_contractsRoutes,
         ...providersRoutes,
         ...product_settingsRoutes,
+        ...brokerManagementRoutes,
         ...authorizationRoutes,
         {
           path: '/profile',
@@ -196,7 +198,7 @@ function hasAnyPrivilege(user, requiredPrivileges) {
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const breadcrumbStore = useBreadcrumb();
-  
+
   if (!authStore.auth) {
     const storedUser = localStorage.getItem("userDetail");
     if (storedUser) {
@@ -209,7 +211,7 @@ router.beforeEach((to, from, next) => {
       }
     }
   }
-  
+
   const routes = to.matched.reduce((routes, route) => {
     if (routes.find(el => el.name === route.name)) return routes;
 
@@ -235,7 +237,7 @@ router.beforeEach((to, from, next) => {
   }, []);
 
   breadcrumbStore.breadcrumbs = routes;
-  
+
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const user = authStore.auth?.user ?? authStore.auth;
   const hasValidToken = !!user?.token;
@@ -255,7 +257,7 @@ router.beforeEach((to, from, next) => {
     next('/login');
     return;
   }
-  
+
   if (to.path === '/login' && hasValidToken) {
     next('/dashboard');
     return;
@@ -274,7 +276,7 @@ router.beforeEach((to, from, next) => {
     // If route requires permissions, check them
     if (requiredPerms.length > 0) {
       const privileges = Array.isArray(user.privileges) ? user.privileges : [];
-      
+
       // Super Admin or All Privileges bypass
       if (user.roleName === 'Super Admin' || privileges.includes('All Privileges')) {
         next();
@@ -283,15 +285,15 @@ router.beforeEach((to, from, next) => {
 
       // Check if user has ALL required permissions for the route
       const hasAccess = hasAllPrivileges(user, requiredPerms);
-      
+
       if (!hasAccess) {
         // Check if route is under "Quotation Underwriting" or "Underwriting" section
         // and apply appropriate logic
-        const isQuotationUnderwriting = to.matched.some(record => 
+        const isQuotationUnderwriting = to.matched.some(record =>
           record.name?.toString().startsWith('QuotationUnderwriting')
         );
-        const isUnderwriting = to.matched.some(record => 
-          record.name?.toString().startsWith('Underwriting') || 
+        const isUnderwriting = to.matched.some(record =>
+          record.name?.toString().startsWith('Underwriting') ||
           record.name?.toString() === 'UnderwritingMain'
         );
 
@@ -316,7 +318,7 @@ router.beforeEach((to, from, next) => {
       }
     }
   }
-  
+
   next();
 });
 

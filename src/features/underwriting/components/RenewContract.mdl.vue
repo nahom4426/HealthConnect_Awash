@@ -51,7 +51,7 @@ function addYears(dateStr, years) {
 function appendRenewSuffix(policy) {
   const base = String(policy || '').trim();
   if (!base) return '';
-  const suffix = '-renewd';
+  const suffix = '-Renewed';
   if (base.toLowerCase().endsWith(suffix)) return base;
   return `${base}${suffix}`;
 }
@@ -140,9 +140,7 @@ function handleSubmit() {
     (res) => {
       if (res?.success) {
         toasted(true, 'Contract renewed successfully', '');
-        if (typeof props.data?.onRefetch === 'function') {
-          props.data.onRefetch();
-        }
+        window.dispatchEvent(new CustomEvent('renewContractSuccess'));
         closeModal();
       } else {
         // toasted(false, '', res?.error || 'Failed to renew contract');
@@ -196,7 +194,7 @@ function handleSubmit() {
           </div>
 
           <div class="flex gap-3 justify-end pt-4 border-t">
-            <Button type="button" @click="closeModal" class="p-2 bg-white border border-primary">
+            <Button type="button" @click="closeModal" class="p-2 bg-red-500 border border-primary">
               Cancel
             </Button>
             <Button type="primary" html-type="submit" class="p-2 pt-4 text-white bg-primary" :pending="req.pending.value">

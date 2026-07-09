@@ -11,7 +11,7 @@ const route = useRoute();
 const dataProvider = ref();
 const institutionName = ref('');
 const status = ref('EXPIRED');
-const statusOptions = ['EXPIRED', 'RENEWED'];
+const statusOptions = ['EXPIRED', 'RENEWED',"RENEWAL_IN_PROGRESS","RENEWAL_SCHEDULED"];
 
 function refreshData() {
   if (dataProvider.value) {

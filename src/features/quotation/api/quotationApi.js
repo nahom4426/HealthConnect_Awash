@@ -27,6 +27,18 @@ export function getQuotationById(id) {
   return api.addAuthenticationHeader().get(`${path}/${id}`);
 }
 
+// Load benefit packages for a payer institution contract.
+export function getRenewalBenefitPackages(contractUuid, query = {}) {
+  if (!contractUuid) {
+    throw new Error('Missing renewal contract UUID');
+  }
+
+  return api.addAuthenticationHeader().get(
+    `/claimconnect/payer-institution-contract/${contractUuid}/benefit-packages`,
+    { params: query }
+  );
+}
+
 // Get quotations with optional status & search
 export function getQuotationsByStatus(params) {
   return api.addAuthenticationHeader().get(`${path}`, { params });

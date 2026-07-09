@@ -8,12 +8,15 @@ const props = defineProps({
   rowData: { type: Array, required: true },
   rowKeys: { type: Array, required: true },
   headKeys: { type: Array, required: true },
-  payerInstitutionContractUuid: { type: String, required: true },
+  payerInstitutionContractUuid: { type: String, required: false, default: '' },
   institutionUuid: { type: String, default: '' },
   onView: { type: Function, default: () => {} },
   onEdit: { type: Function, default: () => {} },
   onDelete: { type: Function, default: () => {} },
   onRowClick: { type: Function, default: () => {} },
+  onRefetch: { type: Function, default: () => {} },
+  cells: { type: [Object, Array], default: () => ({}) },
+  hideIndex: { type: Boolean, default: false },
 });
 
 const router = useRouter();
@@ -63,9 +66,19 @@ function navigateToAmendInsuredPersons(row) {
 
 function openEditModal(row) {
   openModal('EditInstitutionContract', {
-    payerInstitutionContractUuid: row.payerInstitutionContractUuid,
+    payerInstitutionContractUuid: row.payerInstitutionContractUuid || props.payerInstitutionContractUuid,
     contract: row,
-    payerInstitutionContractUuid: props.payerInstitutionContractUuid
+    onRefetch: props.onRefetch
+  });
+}
+
+function openRenewModal(row) {
+  openModal('RenewContract', {
+    contractUuid: row.payerInstitutionContractUuid || props.payerInstitutionContractUuid,
+    contract: row,
+    policyNumber: row.policyNumber || '',
+    previousEndDate: row.endDate || '',
+    onRefetch: props.onRefetch
   });
 }
 
@@ -137,6 +150,19 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
                   d="M15.232 5.232l3.536 3.536M9 11l3 3L20.485 5.515a2.121 2.121 0 10-3-3L9 11zm0 0L4 16v4h4l5-5" />
           </svg>
           <span class="text-sm font-medium">Edit Policy</span>
+        </button>
+
+        <button
+          @click.stop="openRenewModal(row)"
+          class="flex p-2 text-green-600 bg-green-50 rounded-lg rounded-full transition-colors hover:bg-green-100 hover:text-green-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg"
+               class="w-5 h-5"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+          </svg>
+          <span class="text-sm font-medium">Renew</span>
         </button>
         
         <button

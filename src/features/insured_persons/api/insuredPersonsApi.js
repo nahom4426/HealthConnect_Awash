@@ -13,9 +13,9 @@ export function getInsuredByContractId(id, query = {}) {
 }
 
 export function getInsuredServiceProvidedHistory(query = {}) {
-	return api.addAuthenticationHeader().get('/claimconnect/service-provided/new', {
-		params: query,
-	});
+  return api.addAuthenticationHeader().get('/claimconnect/service-provided/new', {
+    params: query,
+  });
 }
 
 export function searchInsuredByInstitution(id, query = {}, config = {}) {
@@ -44,6 +44,17 @@ export function searchActiveInsuredByContract(payerInstitutionContractUuid, quer
     throw error;
   });
 }
+
+export function searchActiveInsured(query = {}, config = {}) {
+  return api.addAuthenticationHeader().get(`${path}/active/search`, {
+    params: query,
+    ...config
+  }).then(response => {
+    return response.data;
+  }).catch(error => {
+    throw error;
+  });
+}
 export function getInsuredById(id, query = {}, config = {}) {
   return api.addAuthenticationHeader().get(`${path}/${id}`, {
     params: query,
@@ -58,19 +69,19 @@ export function getInsuredById(id, query = {}, config = {}) {
 }
 
 export function createInsuredPerson(data) {
-  return api.addAuthenticationHeader().post(`${baseUrl}/insuredperson`, data);
+  return api.addAuthenticationHeader().post(`${baseUrl}/claimconnect/insuredperson`, data);
 }
 
 export function updateInsuredPerson(uuid, data) {
-  return api.addAuthenticationHeader().put(`${baseUrl}/insuredperson/${uuid}`, data);
+  return api.addAuthenticationHeader().put(`${baseUrl}/claimconnect/insuredperson/${uuid}`, data);
 }
 
 export function getInsuredPersonById(uuid) {
-  return api.addAuthenticationHeader().get(`${baseUrl}/insuredperson/${uuid}`);
+  return api.addAuthenticationHeader().get(`${baseUrl}/claimconnect/insuredperson/${uuid}`);
 }
 
 export function importInsuredPersons(
-  {institutionUuid, payerInstitutionContractUuid} = {},
+  { institutionUuid, payerInstitutionContractUuid } = {},
   data,
   config = {}
 ) {
@@ -129,7 +140,7 @@ export function deleteInsured(id) {
 export function importInsuredMembers(file) {
   const formData = new FormData();
   formData.append('file', file);
-  
+
   return api.addAuthenticationHeader().post(`${basePath}/import`, formData, {
     headers: {
     }

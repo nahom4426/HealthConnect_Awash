@@ -91,6 +91,8 @@ async function handleSubmit(formValues) {
       email: formValues.email,
       institutionUuid: formValues.institutionUuid || route.params.institutionUuid || null,
       payerInstitutionContractUuid: formValues.payerUuid || route.params.id || null,
+      hasInstitution: false,
+      group: false,
       premium: 0,
       title: "string",
       firstName: formValues.firstName,

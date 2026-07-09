@@ -1,3 +1,4 @@
+<!-- CompletedClaimsDetail.vue - Updated with institution name handling -->
 <script setup>
 import DefaultPage from '@/components/DefaultPage.vue';
 import { usePagination } from "@/composables/usePagination";
@@ -20,6 +21,34 @@ import icons from "@/utils/icons";
 
 const router = useRouter();
 const route = useRoute();
+
+// Get institution name from multiple sources with priority
+const institutionName = computed(() => {
+  // 1. Try to get from route state (passed via router.push or RouterLink)
+  if (route.state?.institutionName) {
+    return route.state.institutionName;
+  }
+  
+  // 2. Try to get from query params
+  if (route.query.institutionName) {
+    return route.query.institutionName;
+  }
+  
+  // 3. Try to get from the first claim in the store
+  const firstClaim = store.claims?.[0];
+  if (firstClaim?.institutionName) {
+    return firstClaim.institutionName;
+  }
+  
+  // 4. Try to get from route params (if institution name is in the URL)
+  if (route.params.institutionName) {
+    return route.params.institutionName;
+  }
+  
+  // 5. Fallback to N/A
+  return 'N/A';
+});
+
 const batchCode = route.params.batchCode;
 const claimUuid = route.params.claimUuid;
 
@@ -52,8 +81,8 @@ function formatDate(dateString) {
 
 // Export functionality - updated date formatting
 const { exporting: exportingExcel, exportExcel } = useExportExcel({
-  reportTitle: 'CLAIM DETAILS REPORT',
-  fileName: `Claim_Details_${batchCode}`,
+  reportTitle: 'COMPLETED CLAIM DETAILS REPORT',
+  fileName: `Completed_Claim_${batchCode}`,
   worksheetName: 'Claim Details',
   claimInfo: {
     batchCode,
@@ -72,19 +101,19 @@ const { exporting: exportingExcel, exportExcel } = useExportExcel({
     'Provided Date',
     'Status'
   ],
-  mergeColumns: [1, 2, 9, 10], // Columns to merge across multiple items (0-indexed)
+  mergeColumns: [1, 2, 9, 10],
   columnWidths: [
-    { width: 8 },  // #
-    { width: 20 }, // Institution
-    { width: 45 }, // Insured Name
-    { width: 15 }, // Item Code
-    { width: 30 }, // Item Name
-    { width: 12 }, // Quantity
-    { width: 25 }, // Unit Price
-    { width: 25 }, // Total Price
-    { width: 22 }, // Amount
-    { width: 15 }, // Provided Date
-    { width: 15 }, // Status
+    { width: 8 },
+    { width: 20 },
+    { width: 45 },
+    { width: 15 },
+    { width: 30 },
+    { width: 12 },
+    { width: 25 },
+    { width: 25 },
+    { width: 22 },
+    { width: 15 },
+    { width: 15 },
   ],
   fetchDataFn: async () => {
     if (store.claims?.length) {
@@ -98,21 +127,20 @@ const { exporting: exportingExcel, exportExcel } = useExportExcel({
     const providerName = store.claims?.[0]?.providerName || row.providerName;
     const institutionName = store.claims?.[0]?.institutionName || row.institutionName;
     
-    // Updated date formatting
     const providedDate = formatDate(row.providedDate);
     
     return [
-      isFirstItem ? rowIndex : '', // #
-      isFirstItem ? institutionName : '', // Institution
-      isFirstItem ? (row.insuredName || 'N/A') : '', // Insured Name
-      item?.itemCode || 'N/A', // Item Code
-      item?.itemName || 'N/A', // Item Name
-      item?.quantity || 0, // Quantity
-      formatCurrency(item?.unitPrice || 0), // Unit Price
-      formatCurrency(item?.totalPrice || 0), // Total Price
-      isFirstItem ? formatCurrency(row.amount || 0) : '', // Amount
-      isFirstItem ? providedDate : '', // Provided Date
-      isFirstItem ? (row.serviceClaimStatus || 'PENDING') : '' // Status
+      isFirstItem ? rowIndex : '',
+      isFirstItem ? institutionName : '',
+      isFirstItem ? (row.insuredName || 'N/A') : '',
+      item?.itemCode || 'N/A',
+      item?.itemName || 'N/A',
+      item?.quantity || 0,
+      formatCurrency(item?.unitPrice || 0),
+      formatCurrency(item?.totalPrice || 0),
+      isFirstItem ? formatCurrency(row.amount || 0) : '',
+      isFirstItem ? providedDate : '',
+      isFirstItem ? (row.serviceClaimStatus || 'PENDING') : ''
     ];
   }
 });
@@ -125,8 +153,8 @@ function formatBirr(amount) {
 }
 
 const { exporting: exportingPdf, exportPdf } = useExportPdf({
-  reportTitle: 'CLAIM DETAILS REPORT',
-  fileName: `Claim_Details_${batchCode}`,
+  reportTitle: 'COMPLETED CLAIM DETAILS REPORT',
+  fileName: `Completed_Claim_${batchCode}`,
   claimInfo: {
     batchCode,
     claimUuid
@@ -286,7 +314,7 @@ const modalTitle = ref('Provided Items');
 const isViewOnly = computed(() => {
   if (!modalRow.value) return false;
   const status = (modalRow.value?.serviceClaimStatus || '').toUpperCase();
-  return status === 'PROCESSED' || status === 'CHECKED' || status === 'REJECTED';
+  return status === 'PROCESSED' || status === 'CHECKED' || status === 'REJECTED' || status === 'COMPLETED';
 });
 
 function openItemsModal(row) {
@@ -296,18 +324,23 @@ function openItemsModal(row) {
   showItemsModal.value = true;
 }
 
+function getInitials(name) {
+  if (!name || name === 'N/A') return 'I';
+  return name.charAt(0).toUpperCase();
+}
+
 // Handle checkbox selection
 function handleCheckboxChange(selected) {
   checked.value = selected.map(item => item.serviceProvidedUuid);
 }
 
-// Calculate totals for display - Updated to only count PROCESSED and CHECKED
+// Calculate totals for display
 const totals = computed(() => {
   const rows = store.claims || [];
   
   // Only include PROCESSED and CHECKED claims for amount calculation
   const approvedClaims = rows.filter(r => 
-    r.serviceClaimStatus === 'PROCESSED' || r.serviceClaimStatus === 'CHECKED'
+    r.serviceClaimStatus === 'PROCESSED' || r.serviceClaimStatus === 'CHECKED' || r.serviceClaimStatus === 'COMPLETED'
   );
   
   const totalAmount = approvedClaims.reduce((sum, row) => sum + (row.amount || 0), 0);
@@ -321,6 +354,7 @@ const totals = computed(() => {
   const pendingCount = rows.filter(r => r.serviceClaimStatus === 'PENDING').length;
   const checkedCount = rows.filter(r => r.serviceClaimStatus === 'CHECKED').length;
   const rejectedCount = rows.filter(r => r.serviceClaimStatus === 'REJECTED').length;
+  const completedCount = rows.filter(r => r.serviceClaimStatus === 'COMPLETED').length;
   
   return {
     totalAmount,
@@ -329,13 +363,44 @@ const totals = computed(() => {
     pendingCount,
     checkedCount,
     rejectedCount,
+    completedCount,
     totalCount: rows.length
   };
 });
+
+// Log for debugging
+console.log('Completed Claim Detail - Institution name:', institutionName.value);
+console.log('Completed Claim Detail - Route state:', route.state);
+console.log('Completed Claim Detail - Route query:', route.query);
 </script>
 
 <template>
   <DefaultPage>
+    <!-- Header with Institution Name -->
+    <template #header>
+      <div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg">
+              {{ getInitials(institutionName) }}
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">{{ institutionName }}</h1>
+              <p class="text-sm text-gray-500">Completed Claim Details</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
+            <span class="text-xs font-medium text-gray-600">Batch:</span>
+            <span class="text-xs font-mono text-gray-800">{{ batchCode || 'N/A' }}</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
+            <span class="text-xs font-medium text-green-600">Status:</span>
+            <span class="text-xs font-semibold text-green-700">COMPLETED</span>
+          </div>
+        </div>
+      </div>
+    </template>
+
     <template #more>
       <div class="flex gap-3 items-center ml-auto">
         <!-- Export Buttons -->
@@ -400,12 +465,12 @@ const totals = computed(() => {
             <div v-html="icons.currencyDollar" class="w-6 h-6 text-emerald-600"></div>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Approved Amount</p>
+            <p class="text-sm font-medium text-gray-600">Total Amount</p>
             <div class="flex items-baseline">
               <p class="text-2xl font-bold text-gray-900">ETB {{ formatCurrency(totals.totalAmount) }}</p>
             </div>
             <p class="mt-1 text-xs text-gray-500">
-              {{ totals.processedCount + totals.checkedCount }} approved claims ({{ totals.rejectedCount }} rejected excluded)
+              {{ totals.processedCount + totals.checkedCount + totals.completedCount }} completed claims
             </p>
           </div>
         </div>
@@ -452,6 +517,10 @@ const totals = computed(() => {
                 <div v-html="icons.xCircle" class="mr-1 w-3 h-3"></div>
                 {{ totals.rejectedCount }}
               </span>
+              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full">
+                <div v-html="icons.checkCircle" class="mr-1 w-3 h-3"></div>
+                {{ totals.completedCount }}
+              </span>
             </div>
           </div>
         </div>
@@ -489,8 +558,8 @@ const totals = computed(() => {
       <Table
         :pending="pagination.pending.value"
         :headers="{
-          head: [ 'Institution', 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions'],
-          row: ['', 'institutionName', 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus']
+          head: ['Institution', 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions'],
+          row: [ 'institutionName', 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus']
         }"
         :rows="store.claims"
         :selectedRows="checked"
@@ -501,8 +570,9 @@ const totals = computed(() => {
         <template #row>
           <ClaimDetailTableRow
             :rowData="store.claims"
-            :rowKeys="['', 'institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']"
-            :headKeys="['#', 'Institution','Insured Name','Items','Amount','Provided Date','Status','Actions']"
+            :rowKeys="[ 'institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']"
+            :headKeys="['Institution','Insured Name','Items','Amount','Provided Date','Status','Actions']"
+            :institutionName="institutionName"
             @viewItems="openItemsModal"
           />
         </template>
@@ -531,7 +601,7 @@ const totals = computed(() => {
             <div>
               <p class="text-sm font-bold text-blue-900">Export Options Available</p>
               <p class="mt-1 text-sm text-blue-800">
-                Download this claim data for reporting, auditing, or analysis purposes.
+                Download this completed claim data for reporting, auditing, or analysis purposes.
               </p>
             </div>
             <div class="flex gap-2">
@@ -573,15 +643,15 @@ const totals = computed(() => {
       </div>
     </div>
 
-<CheckProvidedItemsMdl
-  v-if="showItemsModal"
-  :row="modalRow"
-  :items="modalItems"
-  :title="modalTitle"
-  :isServiceClaimRejected="modalRow?.serviceClaimStatus === 'REJECTED'"
-  :isServiceClaimCompleted="modalRow?.serviceClaimStatus === 'CHECKED' || modalRow?.serviceClaimStatus === 'PROCESSED'"
-  @close="showItemsModal = false"
-/>
+    <CheckProvidedItemsMdl
+      v-if="showItemsModal"
+      :row="modalRow"
+      :items="modalItems"
+      :title="modalTitle"
+      :isServiceClaimRejected="modalRow?.serviceClaimStatus === 'REJECTED'"
+      :isServiceClaimCompleted="modalRow?.serviceClaimStatus === 'CHECKED' || modalRow?.serviceClaimStatus === 'PROCESSED' || modalRow?.serviceClaimStatus === 'COMPLETED'"
+      @close="showItemsModal = false"
+    />
   </DefaultPage>
 </template>
 

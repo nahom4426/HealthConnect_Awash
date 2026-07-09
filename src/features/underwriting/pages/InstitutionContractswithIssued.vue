@@ -3,6 +3,7 @@ import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useToast } from '@/toast/store/toast';
 import DefaultPage from '@/components/DefaultPage.vue';
+import TabGroup from '@/components/TabGroup.vue';
 import Table from '@/components/Table.vue';
 import { openModal } from '@customizer/modal-x';
 import IssuedContractsDataProvider from '../components/IssuedContractsDataProvider.vue';
@@ -18,6 +19,7 @@ const { addToast } = useToast();
 const underwritingStore = useUnderwriting();
 
 const dataProvider = ref();
+const activeTab = ref('GENERAL');
 const institutionName = ref('');
 const loading = ref(false);
 const status = ref('ACTIVE');
@@ -108,9 +110,17 @@ function selectInstitutionAndOpenPolicyModal(institution) {
   closeInstitutionPicker();
 }
 
-// onMounted(() => {
-//   status.value = route.params.status === 'ACTIVE' ? 'ACTIVE' : 'PENDING';
-// });
+// Fetch institution name on mount
+onMounted(async () => {
+  try {
+    const institution = await getInstitution(route.params.id);
+    if (institution) {
+      institutionName.value = institution.institutionName || '';
+    }
+  } catch (error) {
+    console.error('Failed to fetch institution:', error);
+  }
+});
 </script>
 
 <template>
@@ -126,7 +136,11 @@ function selectInstitutionAndOpenPolicyModal(institution) {
     </template>
 
     <template #default="{ search }">
-      <div v-if="showInstitutionPicker" class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <!-- Primary colored tabs for Individual / General policies -->
+      <TabGroup :tabs="['GENERAL','INDIVIDUAL']" v-model="activeTab" />
+
+      <!-- Institution Picker -->
+      <div v-if="showInstitutionPicker" class="p-4 mb-4 bg-gray-50 rounded-lg border border-gray-200">
         <div class="flex gap-3 items-center">
           <div class="flex-1">
             <div class="flex overflow-hidden items-center w-full h-10 bg-white rounded-lg border border-gray-200 focus-within:border-primary">
@@ -174,20 +188,24 @@ function selectInstitutionAndOpenPolicyModal(institution) {
         </div>
       </div>
 
+      <!-- Individual Policies -->
       <IssuedContractsDataProvider
-        v-else
         ref="dataProvider"
         :institutionUuid="route.params.id"
         :status="status"
         :search="search"
+        :policyType="activeTab"
         :refetch="refetchContracts"
         v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages, totalElements }"
       >
         <!-- Update contractsData when contracts change -->
-      
+        <div v-if="contracts && contracts.length > 0">
+          <!-- This will capture the contracts data for the hasContracts computed property -->
+          <span style="display: none;">{{ contractsData = contracts }}</span>
+        </div>
 
         <!-- Empty State -->
-        <!-- <div v-if="!pending && (!contracts || contracts.length === 0)" class="py-12 text-center">
+        <div v-if="!pending && (!contracts || contracts.length === 0)" class="py-12 text-center">
           <div class="flex flex-col justify-center items-center">
             <svg class="mb-4 w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.5a1 1 0 00-.8.4l-3-4a1 1 0 00-1.6 1.2l2.5 3.333H7a2 2 0 00-2 2v4a2 2 0 002 2z" />
@@ -195,10 +213,10 @@ function selectInstitutionAndOpenPolicyModal(institution) {
             <p class="text-lg font-semibold text-gray-600">No Membership Polices</p>
             <p class="mt-2 text-sm text-gray-400">No Polices are currently available</p>
           </div>
-        </div> -->
+        </div>
 
         <!-- Polices Table/Cards -->
-        <div>
+        <div v-else>
           <Table
             :pending="pending"
             :headers="{
@@ -228,7 +246,6 @@ function selectInstitutionAndOpenPolicyModal(institution) {
                 :headKeys="[
                   'Institution Name',
                   'Category Name',
-              
                   'Status',
                   'Actions',
                 ]"
@@ -243,3 +260,7 @@ function selectInstitutionAndOpenPolicyModal(institution) {
     </template>
   </DefaultPage>
 </template>
+
+<style scoped>
+/* Tailwind primary color is used via utility classes */
+</style>

@@ -175,7 +175,7 @@ const openMapPicker = () => {
               'Insurance Company',
               'Government Agency',
               'Non-Governmental Organization',
-              'Corporate',
+              'GENERAL',
               'Educational Institution',
               'Other'
             ]"

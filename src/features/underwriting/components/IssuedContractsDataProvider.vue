@@ -27,6 +27,11 @@ const props = defineProps({
     required: false,
     default: undefined,
   },
+  policyType: {
+    type: String,
+    required: false,
+    default: "GENERAL",
+  },
 });
 
 const store = useUnderwriting();
@@ -41,6 +46,7 @@ const pagination = usePagination({
         status: props.status,
         search: props.search.trim(),
         institutionUuid: props.institutionUuid,
+        policyType: props.policyType,
       })
     ),
 });
@@ -67,6 +73,14 @@ watch(
   () => props.refetch,
   () => {
     console.log('[IssuedContractsDataProvider] refetch changed -> send()', props.refetch);
+    pagination.send();
+  }
+);
+
+watch(
+  () => props.policyType,
+  () => {
+    pagination.page.value = 1;
     pagination.send();
   }
 );

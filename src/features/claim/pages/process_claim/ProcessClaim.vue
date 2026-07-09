@@ -14,7 +14,8 @@ import Toogle from "@/components/Toogle.vue";
 import { useProcessClaimByInstitutionBatch } from "../../store/processClaimByInstitutionBatchStore";
 import ClaimStatusRow from "../../components/ClaimStatusRow.vue";
 import { useRouter } from "vue-router";
-const serviceType= ref("CREDIT");
+
+const serviceType = ref("CREDIT");
 const institutionUuid = ref(null);
 const contractUuid = ref(null);
 const active = ref(ServiceTypes.creditService);
@@ -23,14 +24,14 @@ const store = useProcessClaimByInstitutionBatch();
 const router = useRouter();
 
 const tableRowKeys = computed(() => {
-  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
-  return [nameKey, "totalAmount", "period", "claimStatus"];
+  // Add institutionName as a separate column
+  return ["institutionName", "providerName", "totalAmount", "period", "claimStatus"];
 });
 
 const tableHeaders = computed(() => {
-  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
+  const nameHeader = active.value === ServiceTypes.cashService ? "Provider Name" : "Provider Name";
   return {
-    head: [nameHeader, "Total Amount", "Contract Period", "Status", "Actions"],
+    head: [ "Institution", nameHeader, "Total Amount", "Contract Period", "Status", "Actions"],
     row: tableRowKeys.value,
   };
 });
@@ -45,6 +46,7 @@ watch(active, (newActive) => {
     console.log('🔄 Switched to CASH service');
   }
 });
+
 function formatDate(date) {
   if (!date) return "-";
   return new Date(date).toLocaleDateString("en-GB", {
@@ -53,9 +55,11 @@ function formatDate(date) {
     day: "numeric",
   });
 }
+
 function navigateToCreateCashClaims() {
   router.push('/create_cash_claims');
 }
+
 function formatContractPeriod(row) {
   return row.beginDate || row.endDate
     ? `${formatDate(row.beginDate)} - ${formatDate(row.endDate)}`
@@ -75,6 +79,45 @@ function handleContractSelect(result) {
     contractUuid.value = result.contractUuid || result.providerUuid;
   } else {
     contractUuid.value = null;
+  }
+}
+
+function navigateToServicesPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/process_claims/detail/${row.claimUuid}`,
+      state: { institutionName }
+    });
+  }
+}
+function navigateToCashDetailPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/process_claims/cash_detail/${row.batchCode}`,
+      state: { institutionName }
+    });function navigateToServicesPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/process_claims/detail/${row.claimUuid}`,
+      state: { institutionName },
+      query: { institutionName } // Also pass as query param for fallback
+    });
+  }
+}
+
+function navigateToCashDetailPage(row) {
+  if (row && row.batchCode) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/process_claims/cash_detail/${row.batchCode}`,
+      state: { institutionName },
+      query: { institutionName } // Also pass as query param for fallback
+    });
+  }
+}
   }
 }
 </script>
@@ -131,17 +174,19 @@ function handleContractSelect(result) {
         :headers="tableHeaders"
         :rows="claims"
         :rowCom="ClaimStatusRow"
-         @row-click="navigateToServicesPage"
+        @row-click="navigateToServicesPage"
       >
-      <template #row>
-          <ClaimStatusRow
-            :rowData="filteredContracts"
-            :rowKeys="tableRowKeys"
-            :onView="navigateToServicesPage"
-            :onRowClick="navigateToServicesPage"
-          />
-        </template>
-
+        <template #row>
+  <ClaimStatusRow
+    :rowData="claims"
+    :rowKeys="tableRowKeys"
+    :serviceType="active"
+    :onView="navigateToServicesPage"
+    :onRowClick="navigateToServicesPage"
+    :currentPage="1"
+    :perPage="25"
+  />
+</template>
       </Table>
     </DefaultPage>
   </ClaimByBatchDataProvider>

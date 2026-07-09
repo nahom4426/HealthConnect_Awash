@@ -38,36 +38,33 @@ async function handleAmend(quotationUuid: string) {
 </script>
 
 <template>
-  <DefaultPage v-model="search" placeholder="Search by institution...">
+  <DefaultPage v-model="search" placeholder="Search by institution or insured name...">
     <template #filter>
-      <!-- Type Filter Select at last end top -->
       <select
         v-model="selectedType"
-        class="px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-700 outline-none min-w-[150px] h-10 sm:h-12"
+        class="px-4 py-2.5 text-sm bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-700 min-w-[160px] h-11 transition-all duration-200 hover:border-gray-300"
       >
-        <option value="">All Types</option>
-        <option value="QUOTATION">Quotation</option>
-        <option value="INCLUSION">Inclusion</option>
-        <option value="EXCLUSION">Exclusion</option>
+        <option value="">📋 All Types</option>
+        <option value="QUOTATION">📄 Quotation</option>
+        <option value="INCLUSION">➕ Inclusion</option>
+        <option value="EXCLUSION">➖ Exclusion</option>
       </select>
     </template>
 
     <template #add-action>
-      <!-- Action Button if INCLUSION or EXCLUSION is chosen -->
       <button
         v-if="selectedType === 'INCLUSION' || selectedType === 'EXCLUSION'"
         @click="goToStageExclusion"
-        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-lg shadow-sm transition-colors h-10 sm:h-12"
+        class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 h-11"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
-        <span>New</span>
+        <span>Create New</span>
       </button>
     </template>
 
     <div class="flex flex-col gap-4">
-      <!-- Table Component inside Data Provider -->
       <QuotationDataProviderByStatus
         ref="provider"
         :status="'ISSUED'"
@@ -80,32 +77,37 @@ async function handleAmend(quotationUuid: string) {
           :rowCom="IssuedQuotationRowCom"
           :headers="{
             head: [
+        
               'Quotation Code',
-              'Institution',
-              'Phone',
-              'Total Premium',
-              'Total Sum Insured',
-              'Created Date',
-              'Type',
+              'Policy Holder',
+              'Premium / Sum Insured',
+              'Issue Date / Type',
               'Status',
-              'actions',
+              'Actions',
             ],
             row: [
+         
               'quotationCode',
-              'institutionName',
-              'institutionPhone',
-              'totalPremium',
-              'totalSumInsured',
-              'createdDate',
-              'type',
+              'policyHolderInfo',
+              'premiumInfo',
+              'dateTypeInfo',
               'status',
+              'actions',
             ],
           }"
           :cells="{
-            totalPremium: (_: any, r: any) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'ETB' }).format(r.totalPremium || 0),
-            totalSumInsured: (_: any, r: any) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'ETB' }).format(r.totalSumInsured || 0),
-            createdDate: (_: any, r: any) => r.createdDate ? new Date(r.createdDate).toLocaleDateString() : '—',
-            type: (_: any, r: any) => r.type || 'QUOTATION',
+            policyHolderInfo: (_: any, r: any) => ({
+              name: r.institutionName || r.insuredName || '—',
+              policyType: r.policyType || 'N/A'
+            }),
+            premiumInfo: (_: any, r: any) => ({
+              totalPremium: new Intl.NumberFormat('en-ET', { style: 'currency', currency: 'ETB', minimumFractionDigits: 2 }).format(r.totalPremium || 0),
+              totalSumInsured: new Intl.NumberFormat('en-ET', { style: 'currency', currency: 'ETB', minimumFractionDigits: 2 }).format(r.totalSumInsured || 0)
+            }),
+            dateTypeInfo: (_: any, r: any) => ({
+              issuedDate: r.issuedDate ? new Date(r.issuedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—',
+              type: r.type || 'QUOTATION'
+            }),
           }"
           :rows="quotations"
           :pagination="{
@@ -115,10 +117,8 @@ async function handleAmend(quotationUuid: string) {
             onPageChange: (p: number) => setPage(p),
             onLimitChange: (l: number) => setLimit(l),
           }"
-        >
-        </Table>
+        />
       </QuotationDataProviderByStatus>
     </div>
   </DefaultPage>
 </template>
-

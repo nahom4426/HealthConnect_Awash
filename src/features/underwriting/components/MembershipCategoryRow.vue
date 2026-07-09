@@ -123,7 +123,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
 
           <!-- Insured Persons -->
           <button
-            @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}/${row?.institutionName}`)"
+            @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}/${row?.institutionName}?hasInstitution=false`)"
             class="inline-flex gap-1 items-center px-2 py-0.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded border border-blue-200 transition-all duration-200 hover:bg-blue-100"
             title="Persons"
           >
@@ -197,7 +197,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
 
         <!-- Insured Persons -->
         <button
-          @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}?pageContext=membership`)"
+          @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}?hasInstitution=false&pageContext=membership`)"
           class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-blue-600 bg-blue-50 rounded border border-blue-200 transition-all duration-200 hover:bg-blue-100"
           title="Persons"
         >

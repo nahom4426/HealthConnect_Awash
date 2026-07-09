@@ -639,7 +639,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       <Button
         type="button"
         @click="props.onCancel"
-        class="px-6 py-2 text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50"
+        class="px-6 py-2 text-gray-700 bg-red-500 rounded-md border border-gray-300 hover:bg-gray-50"
         :disabled="pending"
       >
         Cancel

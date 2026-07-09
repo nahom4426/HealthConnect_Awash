@@ -16,8 +16,8 @@ import {
 const route = useRoute();
 const refreshStore = useInsuredPersonsRefreshStore();
 
-const quotationUuid = computed(() => route.params.quotationUuid || route.params.institutionName);
-const payerInstitutionContractUuid = computed(() => route.params.id);
+const quotationUuid = computed(() => route.params.quotationUuid || route.params.payerInstitutionContractUuid);
+const payerInstitutionContractUuid = computed(() => route.params.id || route.params.payerInstitutionContractUuid);
 
 const importType = ref("main");
 const fileInput = ref(null);
@@ -487,7 +487,7 @@ function closeAndReset() {
           <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
             <div class="flex gap-3 justify-end">
               <Button
-                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                class="px-4 py-2 text-gray-700 bg-red-500 border border-gray-300 hover:bg-gray-50"
                 @click.prevent="closeAndReset"
                 :disabled="importing"
               >

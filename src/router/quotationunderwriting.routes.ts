@@ -18,7 +18,12 @@ import AddProviderForInstitution from "@/features/providers/pages/AddProviderFor
 import RemoveCatgorieServices from '@/features/providers/pages/removeCatgorieServices.vue';
 import AddInstitution from "@/features/institutions/pages/AddInstitution.vue";
 import QuotationInsured from '@/features/insured_persons/pages/quotationInsured.vue';
+import ImportInsuredsPage from '@/features/insured_persons/pages/ImportInsuredsPage.vue';
 import StageExclusion from '@/features/quotation/pages/StageExclusion.vue';
+import ExpiredContracts from '@/features/Nyalaunderwriting/pages/ExpiredContracts.vue';
+import PendingRenewalContracts from '@/features/Nyalaunderwriting/pages/PendingRenewalContracts.vue';
+import EditPendingRenewalQuotation from '@/features/Nyalaunderwriting/pages/EditPendingRenewalQuotation.vue';
+
 
 export default [
   {
@@ -98,13 +103,21 @@ export default [
     },
   },
   {
-    path: '/insured_persons/:id/:institutionUuid/:quotationUuid/:institutionName',
+    path: '/insured_persons/:payerInstitutionContractUuid/:institutionUuid/:quotationUuid?/:institutionName?',
     name: 'Insured Persons',
     component: QuotationInsured,
     meta: {
       permissions: ['View_Issued_Policy'],
       showActionButtons: true
     }
+  },
+  {
+    path: '/import-insureds/:payerInstitutionContractUuid',
+    name: 'Import Insureds',
+    component: ImportInsuredsPage,
+    meta: {
+      permissions: ['View_Issued_Policy'],
+    },
   },
   {
     path: '/addInstitution/:id/:institutionUuid',
@@ -121,7 +134,7 @@ export default [
     meta: {
       permissions: ['View_Institutions'],
     },
-  },	
+  },
   {
     path: '/removeServiceCatagories/:id/:institutionUuid/:contractUuid',
     name: 'Remove Services',
@@ -170,5 +183,29 @@ export default [
     meta: {
       permissions: ['Manage_Exclusion'],
     },
-  }
+  },
+  {
+    path: '/expired_contracts',
+    name: 'Expired Contracts',
+    component: ExpiredContracts,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
+  },
+   {
+    path: '/pending_renewal_contracts',
+    name: 'Pending Renewal Contracts',
+    component: PendingRenewalContracts,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
+  },
+  {
+    path: '/pending_renewal_contracts/edit/:contractUuid',
+    name: 'EditPendingRenewalQuotation',
+    component: EditPendingRenewalQuotation,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
+  },
 ]

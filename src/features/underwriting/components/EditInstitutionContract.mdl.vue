@@ -40,6 +40,7 @@ function update({ values }) {
       if (res.success) {
         institution.updateInstitution(res.data.payerInstitutionContractUuid, res.data);
         toasted(res.success, 'Institution updated successfully', res.error);
+        window.dispatchEvent(new CustomEvent('editContractSuccess'));
         closeModal();
       }
     }

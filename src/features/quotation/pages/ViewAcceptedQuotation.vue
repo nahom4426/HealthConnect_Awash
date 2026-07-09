@@ -4,12 +4,14 @@ import QuotationForm from "../form/QuotationForm.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import { onMounted, ref, nextTick, computed } from "vue";
 import { getQuotationById, issuePremiumAdvice } from "@/features/quotation/api/quotationApi";
+import { getInsuredPersonById } from "@/features/insured_persons/api/insuredPersonsApi";
 import { useRoute, useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationCreationDataProvider from "@/features/quotation/components/QuotationCreationDataProvider.vue";
 
 const showInstitution = ref(false)
+const showIndividual = ref(false)
 const showMore = ref(false)
 const isSubmitting = ref(false);
 let lastCallTime = 0; // Add timestamp check
@@ -23,6 +25,16 @@ const institutionForm = ref({
   description: "",
   category: "",
   referralType: "",
+  address: "",
+})
+
+const individualForm = ref({
+  fullName: "",
+  email: "",
+  phone: "",
+  idNumber: "",
+  gender: "",
+  status: "",
   address: "",
 })
 
@@ -135,6 +147,9 @@ function onAcceptedFormSubmit(e: any) {
 
 const prefilled = ref(false)
 const currentInstitution = ref<any>(null)
+const currentIndividual = ref<any>(null)
+const isIndividualQuotation = ref(false)
+
 function prefillOnce(v: any) {
   if (!prefilled.value && v) {
     institutionForm.value = {
@@ -149,6 +164,23 @@ function prefillOnce(v: any) {
     }
     prefilled.value = true
     currentInstitution.value = v
+  }
+  return true
+}
+
+function prefillIndividual(v: any) {
+  if (!prefilled.value && v) {
+    individualForm.value = {
+      fullName: `${v.firstName || ''} ${v.fatherName || ''} ${v.grandFatherName || ''}`.trim(),
+      email: v.email || "",
+      idNumber: v.idNumber || v.insuranceId || "",
+      phone: v.phone || "",
+      gender: v.gender || "",
+      status: v.status || "",
+      address: `${v.address1 || ''} ${v.address2 || ''} ${v.address3 || ''}, ${v.state || ''}`,
+    }
+    prefilled.value = true
+    currentIndividual.value = v
   }
   return true
 }
@@ -189,7 +221,22 @@ onMounted(async () => {
     const resp: any = await getQuotationById(quotationUuid)
     const q = resp?.data || {}
     draft.value = q
-    institutionUuidForProvider.value = q.institutionUuid || q.institution?.institutionUuid || null
+    
+    // Check if it's an individual quotation
+    if (q.policyType === 'INDIVIDUAL' && q.insuredUuid) {
+      isIndividualQuotation.value = true;
+      try {
+        const indRes = await getInsuredPersonById(q.insuredUuid);
+        if (indRes?.data || indRes) {
+          prefillIndividual(indRes.data || indRes);
+        }
+      } catch (e) {
+        console.error('Failed to load individual details', e);
+      }
+    } else {
+      isIndividualQuotation.value = false;
+      institutionUuidForProvider.value = q.institutionUuid || q.institution?.institutionUuid || null;
+    }
   } catch (e: any) {
     error.value = e?.message || 'Failed to load quotation'
   } finally {
@@ -232,9 +279,9 @@ onMounted(async () => {
       </div>
     </div>
     
+    <!-- Institution Details -->
     <SingleInstitutionDataProvider
-      v-else
-      v-if="institutionUuidForProvider"
+      v-if="!isIndividualQuotation && institutionUuidForProvider"
       :institutionUuid="institutionUuidForProvider as any"
       v-slot="{ instituton }"
     >
@@ -429,6 +476,7 @@ onMounted(async () => {
                 :showIssuePremiumAdvice="true"
                 :onSubmit="onAcceptedFormSubmit"
                 :discountMap="discountMapFromServices"
+                :individualMode="isIndividualQuotation"
               />
             </QuotationCreationDataProvider>
             
@@ -525,5 +573,281 @@ onMounted(async () => {
         </div>
       </div>
     </SingleInstitutionDataProvider>
+
+    <!-- Individual Details (for individual quotations) -->
+    <div v-if="isIndividualQuotation" class="mx-auto space-y-6 w-full max-w-7xl">
+      <!-- Individual Details Card -->
+      <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
+        <div class="px-6 py-4 bg-gradient-to-r border-b from-slate-50 to-slate-100 border-slate-200">
+          <div class="flex justify-between items-center">
+            <div class="flex gap-3 items-center">
+              <div class="w-2 h-8 rounded bg-slate-600"></div>
+              <div>
+                <h2 class="text-xl font-semibold text-slate-800">Client Details</h2>
+                <p class="mt-1 text-sm text-slate-600">Individual information for this quotation</p>
+              </div>
+            </div>
+            <button 
+              @click.prevent="showIndividual = !showIndividual"
+              class="flex gap-2 items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+            >
+              <svg 
+                class="w-4 h-4 transition-transform duration-200" 
+                :class="{ 'rotate-180': showIndividual }" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+              {{ showIndividual ? 'Hide Details' : 'Show Details' }}
+            </button>
+          </div>
+        </div>
+        
+        <div v-show="showIndividual" class="p-6">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div class="space-y-4">
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Full Name</label>
+                <Input 
+                  name="fullName" 
+                  v-model="individualForm.fullName" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Email</label>
+                <Input 
+                  name="email" 
+                  v-model="individualForm.email" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">ID Number</label>
+                <Input 
+                  name="idNumber" 
+                  v-model="individualForm.idNumber" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Phone</label>
+                <Input 
+                  name="phone" 
+                  v-model="individualForm.phone" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+            </div>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Gender</label>
+                <Input 
+                  name="gender" 
+                  v-model="individualForm.gender" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Status</label>
+                <Input 
+                  name="status" 
+                  v-model="individualForm.status" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Address</label>
+                <Input 
+                  name="address" 
+                  v-model="individualForm.address" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div v-if="!showIndividual" class="px-6 py-4 border-t border-slate-200">
+            <div class="flex gap-4 items-center text-sm">
+              <div class="text-slate-600">
+                <span class="font-medium">{{ individualForm.fullName }}</span>
+              </div>
+              <div class="text-slate-500">•</div>
+              <div class="text-slate-600">
+                <span class="font-medium">{{ individualForm.phone }}</span>
+              </div>
+              <div class="text-slate-500">•</div>
+              <div class="text-slate-600">
+                <span class="font-medium">{{ individualForm.email }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quotation Details Card -->
+      <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
+        <div class="px-6 py-5 bg-gradient-to-r from-green-50 border-b to-green-100/50 border-slate-200">
+          <div class="flex justify-between items-center">
+            <div class="flex gap-3 items-center">
+              <div class="w-2 h-8 bg-green-600 rounded"></div>
+              <div>
+                <h2 class="text-xl font-semibold text-slate-800">Accepted Quotation</h2>
+                <div class="flex gap-2 items-center mt-1">
+                  <p class="text-sm text-slate-600">Ready for premium advice for:</p>
+                  <span class="text-sm font-semibold text-green-700">{{ individualForm.fullName }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="text-sm text-slate-600">
+              <div class="flex gap-2 items-center">
+                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span class="font-medium text-green-700">Accepted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-6">
+          <QuotationCreationDataProvider v-slot="{ packages, pending: pkgPending }">
+            <div v-if="pkgPending" class="flex justify-center items-center py-12">
+              <div class="w-12 h-12 rounded-full border-b-2 border-green-600 animate-spin"></div>
+            </div>
+            
+            <div v-else-if="!draft" class="py-12 text-center text-slate-500">
+              <p>No quotation data available</p>
+            </div>
+            
+            <QuotationForm
+              v-else
+              :pendingAction="pendingAction"
+              :packages="packages"
+              :prefill="buildPrefill(packages)"
+              :showHeaderControls="false"
+              :readOnlyRows="true"
+              :showIssuePremiumAdvice="true"
+              :onSubmit="onAcceptedFormSubmit"
+              :discountMap="discountMapFromServices"
+              :individualMode="true"
+            />
+          </QuotationCreationDataProvider>
+          
+          <!-- Discount Summary -->
+          <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-amber-50 border border-amber-200">
+            <div class="flex gap-3 items-start">
+              <svg class="w-5 h-5 mt-0.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
+              </svg>
+              <div class="flex-1">
+                <h4 class="font-semibold text-amber-800">Discounts Applied</h4>
+                <div class="mt-2 space-y-2">
+                  <div v-for="service in discountedServices" :key="service.serviceQuotedUuid" class="flex justify-between items-center p-2 rounded bg-white/60">
+                    <div>
+                      <span class="font-medium text-slate-700">{{ service.packageName }}</span>
+                      <span class="ml-2 text-sm text-slate-500">{{ service.planType?.replace(/_/g, ' ') }}</span>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-sm">
+                        <span class="text-slate-500 line-through">{{ formatCurrency(service.originalPremium) }}</span>
+                        <span class="ml-2 font-semibold text-green-700">{{ formatCurrency(service.premium) }}</span>
+                      </div>
+                      <div class="text-xs font-medium text-amber-700">
+                        {{ service.discount }}% discount
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Total Savings -->
+                <div class="flex justify-between items-center pt-3 mt-3 border-t border-amber-200">
+                  <div class="text-sm font-medium text-slate-700">
+                    <span>Total Savings</span>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm">
+                      <span class="font-bold text-green-700">{{ formatCurrency(totalDiscountAmount) }}</span>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                      {{ formatCurrency(totalOriginalPremium) }} → {{ formatCurrency(totalDiscountedPremium) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+              <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+                <div class="mb-1 text-sm font-medium text-green-700">Quotation ID</div>
+                <div class="font-mono text-sm text-green-900 truncate">{{ draft.quotationUuid }}</div>
+              </div>
+              <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+                <div class="mb-1 text-sm font-medium text-green-700">Status</div>
+                <div class="flex gap-2 items-center">
+                  <div class="w-2 h-2 bg-green-600 rounded-full"></div>
+                  <span class="font-medium text-green-800">Accepted</span>
+                </div>
+              </div>
+              <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+                <div class="mb-1 text-sm font-medium text-green-700">Total Services</div>
+                <div class="text-2xl font-bold text-green-800">{{ draft.quoatedServices?.length || 0 }}</div>
+              </div>
+              <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+                <div class="mb-1 text-sm font-medium text-green-700">Created Date</div>
+                <div class="font-medium text-green-800">
+                  {{ new Date(draft.createdDate || Date.now()).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  }) }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="p-4 mt-6 bg-blue-50 rounded-lg border border-blue-200">
+              <div class="flex gap-3 items-start">
+                <div class="p-2 mt-0.5 bg-blue-100 rounded-full">
+                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="mb-1 font-medium text-blue-800">Ready for Premium Advice</h4>
+                  <p class="text-sm text-blue-700">
+                    This quotation has been accepted. Click "Issue Premium Advice" to proceed with premium collection.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </DefaultPage>
 </template>

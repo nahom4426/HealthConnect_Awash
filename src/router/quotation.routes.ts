@@ -12,6 +12,8 @@ import PaidQuotations from "@/features/quotation/pages/PaidQuotations.vue";
 import InclusionCreate from "@/features/quotation/pages/InclusionCreate.vue";
 import Inclusion from "@/features/quotation/pages/Inclusion.vue";
 
+import CreateIndividualQuotation from "@/features/quotation/pages/CreateIndividualQuotation.vue";
+
 export default [
 	{
 		path: '/new_quotation',
@@ -29,6 +31,12 @@ export default [
 				path: 'generate/:institutionUuid',
 				name: 'Generate Quotaion',
 				component: CreateNewQuotaions,
+				//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+			},
+			{
+				path: 'individual/:insuredUuid',
+				name: 'Generate Individual Quotation',
+				component: CreateIndividualQuotation,
 				//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 			}
 		]

@@ -4,7 +4,7 @@
     <div class="qb-header">
       <div>
         <h3 class="qb-title">Benefit Configuration</h3>
-        <p class="qb-subtitle">Configure plan types, descriptions, and coverages for each benefit group.</p>
+        <p class="qb-subtitle">{{ individualMode ? 'Configure coverage packages and sum assured for the individual.' : 'Configure plan types, descriptions, and coverages for each benefit group.' }}</p>
       </div>
       <button v-if="!readOnlyRows && !inclusionMode" type="button" @click="addGroupRow" class="btn btn-primary">
         <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,8 +143,8 @@
                 </div>
               </div>
 
-              <!-- Number of Employees -->
-              <div class="qb-field">
+              <!-- Number of Employees — hidden in individual mode (always 1) -->
+              <div v-if="!individualMode" class="qb-field">
                 <label class="qb-label">Number of Employees</label>
                 <input
                   v-model="row.numberOfInsured"
@@ -991,6 +991,9 @@ export default {
     showIssuePremiumAdvice: { type: Boolean, default: false },
     showAmendButton:        { type: Boolean, default: false },
     inclusionMode:        { type: Boolean, default: false },
+    /** When true, this quotation is for a single individual (not an institution).
+     *  numberOfInsured is hidden and forced to 1 internally. */
+    individualMode:       { type: Boolean, default: false },
     beginDate:            { type: String, default: "" },
     endDate:              { type: String, default: "" },
     discountMap:          { type: Object, default: () => ({}) },
@@ -1045,8 +1048,9 @@ export default {
           continue;
         }
 
-        const insured = Number(this.normalizeValue(row.numberOfInsured));
-        if (!Number.isFinite(insured) || insured <= 0) {
+        // In individual mode numberOfInsured is always 1 — skip validation
+        const insured = this.individualMode ? 1 : Number(this.normalizeValue(row.numberOfInsured));
+        if (!this.individualMode && (!Number.isFinite(insured) || insured <= 0)) {
           errors.push(`Benefit group: Number of employees must be greater than 0.`);
         }
         
@@ -2004,7 +2008,8 @@ export default {
       if (!config) return;
       
       const planType = this.normalizeValue(config.planType);
-      const insured = Number(row.numberOfInsured) || 0;
+      // In individual mode always use 1 as the insured count
+      const insured = this.individualMode ? 1 : (Number(row.numberOfInsured) || 0);
       const description = this.normalizeValue(row.description);
       const pkgGender = this.getPackageGender(packageUuid);
       
@@ -2474,7 +2479,7 @@ export default {
       this.groupRows = [{ 
         id: genId.next().value, 
         benefitGroupCode: generateUUID(),
-        numberOfInsured: "", 
+        numberOfInsured: this.individualMode ? 1 : "", 
         employeesTouched: false,
         description: "",
         descriptionTouched: false,
@@ -2487,7 +2492,7 @@ export default {
       this.groupRows.push({ 
         id: genId.next().value, 
         benefitGroupCode: generateUUID(),
-        numberOfInsured: "", 
+        numberOfInsured: this.individualMode ? 1 : "", 
         employeesTouched: false,
         description: "",
         descriptionTouched: false,
@@ -2566,7 +2571,7 @@ export default {
           servicesList.push({
             packageUuid,
             benefitGroupCode: row.benefitGroupCode,
-            numberOfInsured: Number(row.numberOfInsured) || 0,
+            numberOfInsured: this.individualMode ? 1 : (Number(row.numberOfInsured) || 0),
             numberOfAdultFemale,
             numberOfAdultMale,
             description: localNormalizeDescription(description),

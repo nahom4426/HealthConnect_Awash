@@ -14,7 +14,8 @@ import Toogle from "@/components/Toogle.vue";
 import { useProcessClaimByInstitutionBatch } from "../../store/processClaimByInstitutionBatchStore";
 import VerifyClaimStatusRow from "../../components/VerifyClaimStatusRow.vue";
 import { useRouter } from "vue-router";
-const serviceType= ref("CREDIT");
+
+const serviceType = ref("CREDIT");
 const institutionUuid = ref(null);
 const contractUuid = ref(null);
 const active = ref(ServiceTypes.creditService);
@@ -23,16 +24,27 @@ const store = useProcessClaimByInstitutionBatch();
 const router = useRouter();
 
 const tableRowKeys = computed(() => {
-  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
-  return [nameKey, "totalAmount", "period", "claimStatus"];
+  if (active.value === ServiceTypes.cashService) {
+    // For Cash service: only show provider name, no institution
+    return ["institutionName","providerName", "totalAmount", "period", "claimStatus"];
+  } else {
+    // For Credit service: show both institution and provider
+    return ["institutionName", "providerName", "totalAmount", "period", "claimStatus"];
+  }
 });
 
 const tableHeaders = computed(() => {
-  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
-  return {
-    head: [nameHeader, "Total Amount", "Contract Period", "Status", "Actions"],
-    row: tableRowKeys.value,
-  };
+  if (active.value === ServiceTypes.cashService) {
+    return {
+      head: [ "Institution", "Provider Name", "Total Amount", "Contract Period", "Status", "Actions"],
+      row: ["institutionName","providerName", "totalAmount", "period", "claimStatus"],
+    };
+  } else {
+    return {
+      head: [ "Institution", "Provider Name", "Total Amount", "Contract Period", "Status", "Actions"],
+      row: ["institutionName", "providerName", "totalAmount", "period", "claimStatus"],
+    };
+  }
 });
 
 // Update serviceType based on active toggle
@@ -45,6 +57,7 @@ watch(active, (newActive) => {
     console.log('🔄 Switched to CASH service');
   }
 });
+
 function formatDate(date) {
   if (!date) return "-";
   return new Date(date).toLocaleDateString("en-GB", {
@@ -53,9 +66,11 @@ function formatDate(date) {
     day: "numeric",
   });
 }
+
 function navigateToCreateCashClaims() {
   router.push('/create_cash_claims');
 }
+
 function formatContractPeriod(row) {
   return row.beginDate || row.endDate
     ? `${formatDate(row.beginDate)} - ${formatDate(row.endDate)}`
@@ -75,6 +90,16 @@ function handleContractSelect(result) {
     contractUuid.value = result.contractUuid || result.providerUuid;
   } else {
     contractUuid.value = null;
+  }
+}
+function navigateToServicesPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/verify_claims/detail/${row.claimUuid}`,
+      state: { institutionName },
+      query: { institutionName } // Also pass as query param for fallback
+    });
   }
 }
 </script>
@@ -124,20 +149,26 @@ function handleContractSelect(result) {
 
       <Table
         :pending="dataPending"
+        :virtual="true"
+        :itemKey="'claimUuid'"
+        :virtualHeight="600"
+        :virtualItemSize="64"
         :headers="tableHeaders"
         :rows="claims"
         :rowCom="VerifyClaimStatusRow"
-         @row-click="navigateToServicesPage"
+        @row-click="navigateToServicesPage"
       >
-      <template #row>
+        <template #row>
           <VerifyClaimStatusRow
-            :rowData="filteredContracts"
+            :rowData="claims"
             :rowKeys="tableRowKeys"
+            :serviceType="active"
             :onView="navigateToServicesPage"
             :onRowClick="navigateToServicesPage"
+            :currentPage="1"
+            :perPage="25"
           />
         </template>
-
       </Table>
     </DefaultPage>
   </ClaimByBatchDataProvider>

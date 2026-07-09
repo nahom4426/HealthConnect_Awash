@@ -11,8 +11,10 @@ import { toasted } from "@/utils/utils";
 import Button from "@/components/Button.vue";
 import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationCreationDataProvider from "@/features/quotation/components/QuotationCreationDataProvider.vue";
+import { getInsuredPersonById } from "@/features/insured_persons/api/insuredPersonsApi";
 
 const showInstitution = ref(false)
+const showIndividual = ref(false)
 const showMore = ref(true)
 const institutionForm = ref({
   institutionName: "",
@@ -22,6 +24,16 @@ const institutionForm = ref({
   description: "",
   category: "",
   referralType: "",
+  address: "",
+})
+
+const individualForm = ref({
+  fullName: "",
+  email: "",
+  phone: "",
+  idNumber: "",
+  gender: "",
+  status: "",
   address: "",
 })
 
@@ -66,6 +78,9 @@ function onIssuedFormSubmit(e: any) {
 
 const prefilled = ref(false)
 const currentInstitution = ref<any>(null)
+const currentIndividual = ref<any>(null)
+const isIndividualQuotation = ref(false)
+
 function prefillOnce(v: any) {
   if (!prefilled.value && v) {
     institutionForm.value = {
@@ -80,6 +95,23 @@ function prefillOnce(v: any) {
     }
     prefilled.value = true
     currentInstitution.value = v
+  }
+  return true
+}
+
+function prefillIndividual(v: any) {
+  if (!prefilled.value && v) {
+    individualForm.value = {
+      fullName: `${v.firstName || ''} ${v.fatherName || ''} ${v.grandFatherName || ''}`.trim(),
+      email: v.email || "",
+      idNumber: v.idNumber || v.insuranceId || "",
+      phone: v.phone || "",
+      gender: v.gender || "",
+      status: v.status || "",
+      address: `${v.address1 || ''} ${v.address2 || ''} ${v.address3 || ''}, ${v.state || ''}`,
+    }
+    prefilled.value = true
+    currentIndividual.value = v
   }
   return true
 }
@@ -176,10 +208,10 @@ function cancelEditMode() {
   isEditing.value = false;
 }
 
+
 // Save changes and stay on the page so user can accept or amend again
 async function handleSaveChanges(e: any) {
   if (!e) return;
-  // Guard against double-execution (form fires both onSubmit prop + emit)
   if (isAmending.value) return;
   
   const data = e.data || {};
@@ -197,74 +229,95 @@ async function handleSaveChanges(e: any) {
 
   const ds = (data.quoatedServices || draft.value?.quoatedServices || []) as any[];
 
-  const payload = {
-    institutionUuid: draft.value.institutionUuid || '',
+  const payload: any = {
     description: draft.value.description || '',
     quotedServiceUpdateRequests: ds.map((s) => ({
       packageUuid: s.packageUuid,
       benefitGroupCode: s.benefitGroupCode || '',
       serviceQuotedUuid: s.serviceQuotedUuid || generateUuid(),
       numberOfInsured: Number(s.numberOfInsured) || 0,
+      numberOfAdultFemale: Number(s.numberOfAdultFemale) || 0,
+      numberOfAdultMale: Number(s.numberOfAdultMale) || 0,
       description: Number(s.description) || 0,
-      rate: Number(s.rate) || 0,
-      premium: Number(s.premium) || 0,
-      sumInsured: Number(s.sumInsured) || 0,
-      coverage: Number(s.coverage) || 0,
+      sumAssured: Number(s.sumAssured ?? s.sumInsured ?? 0),
       quotationUuid: quotationUuid,
       planType: s.planType || 'Individual_Plan',
       individualType: s.individualType || 'Member',
       spouse: Boolean(s.spouse) || false,
-      sumAssured: Number(s.sumAssured ?? s.sumInsured ?? 0),
       depSumAssured: Number(s.depSumAssured ?? 0),
       spouseSumAssured: Number(s.spouseSumAssured ?? 0),
-      employeeRate: Number(s.employeeRate) || 0,
-      dependentRate: Number(s.dependentRate) || 0,
-      spouseRate: Number(s.spouseRate) || 0,
       discount: Number(s.discount) || 0,
     })),
   };
+
+  // Handle institution vs individual
+  if (isIndividualQuotation.value) {
+    payload.insuredUuid = draft.value?.insuredUuid || null;
+  } else {
+    payload.institutionUuid = draft.value?.institutionUuid || null;
+  }
+
+  if (draft.value?.policyType) {
+    payload.policyType = draft.value.policyType;
+  }
+
+  // Clean up null/empty values
+  Object.keys(payload).forEach(key => {
+    if (payload[key] === null || payload[key] === undefined || payload[key] === '') {
+      delete payload[key];
+    }
+  });
 
   try {
     const response: any = await savedIssueQuotation(quotationUuid, payload);
     const body = response?.data ?? response;
 
-    // Check for error response structures
     if (body?.statusCode && body.statusCode >= 400) {
       toasted(false, body?.message || body?.detail || 'Failed to save changes');
-      return; // Stay in edit mode
+      return;
     }
     if (body?.type === 'INTERNAL_ERROR') {
       toasted(false, body?.detail || body?.message || 'Internal server error. Please try again.');
-      return; // Stay in edit mode
+      return;
     }
     if (response?.success === false || body?.success === false) {
       toasted(false, body?.error || body?.message || 'Failed to save changes');
-      return; // Stay in edit mode
+      return;
     }
 
     toasted(true, 'Changes saved successfully');
 
-    // Reload the quotation data from the server to reflect updated state
     try {
       const resp: any = await getQuotationById(quotationUuid);
       const q = resp?.data || {};
       draft.value = q;
-      institutionUuidForProvider.value = q.institutionUuid || q.institution?.institutionUuid || null;
-      prefilled.value = false; // allow institution details to re-prefill
+      
+      if (q.policyType === 'INDIVIDUAL' && q.insuredUuid) {
+        isIndividualQuotation.value = true;
+        try {
+          const indRes = await getInsuredPersonById(q.insuredUuid);
+          if (indRes?.data || indRes) {
+            prefillIndividual(indRes.data || indRes);
+          }
+        } catch (e) {
+          console.error('Failed to load individual details', e);
+        }
+      } else {
+        isIndividualQuotation.value = false;
+        institutionUuidForProvider.value = q.institutionUuid || q.institution?.institutionUuid || null;
+      }
+      prefilled.value = false;
     } catch {
       if (body?.quoatedServices) {
         draft.value = { ...draft.value, ...body };
       }
     }
 
-    // Only exit edit mode on full success — user can now Accept or Amend again
     isEditing.value = false;
   } catch (err: any) {
-    // API error (4xx/5xx) — stay in edit mode so user can fix and retry
     const apiError = err?.response?.data || err;
     const errorMessage = apiError?.detail || apiError?.message || err?.message || 'Failed to save changes';
     toasted(false, errorMessage);
-    // isEditing stays true — no change
   } finally {
     isAmending.value = false;
     pendingAction.value = '';
@@ -350,7 +403,22 @@ onMounted(async () => {
     const resp: any = await getQuotationById(quotationUuid)
     const q = resp?.data || {}
     draft.value = q
-    institutionUuidForProvider.value = q.institutionUuid || q.institution?.institutionUuid || null
+    
+    // Check if it's an individual quotation
+    if (q.policyType === 'INDIVIDUAL' && q.insuredUuid) {
+      isIndividualQuotation.value = true;
+      try {
+        const indRes = await getInsuredPersonById(q.insuredUuid);
+        if (indRes?.data || indRes) {
+          prefillIndividual(indRes.data || indRes);
+        }
+      } catch (e) {
+        console.error('Failed to load individual details', e);
+      }
+    } else {
+      isIndividualQuotation.value = false;
+      institutionUuidForProvider.value = q.institutionUuid || q.institution?.institutionUuid || null;
+    }
   } catch (e: any) {
     error.value = e?.message || 'Failed to load issued quotation'
   } finally {
@@ -394,16 +462,15 @@ onMounted(async () => {
       </div>
     </div>
     
-    <SingleInstitutionDataProvider
-      v-else
-      v-if="institutionUuidForProvider"
-      :institutionUuid="institutionUuidForProvider as any"
-      v-slot="{ instituton, pending }"
-    >
-      <template v-if="prefillOnce(instituton)"></template>
-      
-      <div class="mx-auto space-y-6 w-full max-w-7xl">
-        <!-- Institution Details Card -->
+    <div v-else class="mx-auto space-y-6 w-full max-w-7xl">
+      <!-- Institution Details Card (for institution quotations) -->
+      <SingleInstitutionDataProvider
+        v-if="!isIndividualQuotation && institutionUuidForProvider"
+        :institutionUuid="institutionUuidForProvider as any"
+        v-slot="{ instituton, pending }"
+      >
+        <template v-if="prefillOnce(instituton)"></template>
+        
         <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
           <div class="px-6 py-4 bg-gradient-to-r from-blue-50 border-b to-blue-100/50 border-slate-200">
             <div class="flex justify-between items-center">
@@ -521,205 +588,316 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+      </SingleInstitutionDataProvider>
 
-        <!-- Quotation Details Card -->
-        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
-          <div class="px-6 py-5 bg-gradient-to-r from-amber-50 border-b to-amber-100/50 border-slate-200">
-            <div class="flex justify-between items-center">
-              <div class="flex gap-3 items-center">
-                <div class="w-2 h-8 bg-amber-600 rounded"></div>
-                <div>
-                  <h2 class="text-xl font-semibold text-slate-800">
-                    {{ isEditing ? 'Edit Quotation Details' : 'Quotation Details' }}
-                  </h2>
-                  <div class="flex gap-2 items-center mt-1">
-                    <p class="text-sm text-slate-600">Issued for:</p>
-                    <span class="text-sm font-semibold text-green-600">{{ instituton?.institutionName }}</span>
-                    <span class="text-xs text-slate-500">• Quotation ID: {{ draft?.quotationUuid?.slice(-8) }}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="flex gap-3 items-center">
-                <div class="text-sm text-slate-600">
-                  <span class="font-medium">{{ draft?.quoatedServices?.length || 0 }}</span> services
-                </div>
-                
-                <!-- View Attachment Button (PAID status) -->
-                <button
-                  v-if="hasAttachment"
-                  @click="viewAttachment"
-                  :disabled="attachmentLoading"
-                  class="inline-flex gap-2 items-center px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg transition-colors hover:bg-amber-100 hover:border-amber-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                  :title="`${draft?.file} (${formatFileSize(draft?.fileSize || 0)})`"
-                >
-                  <svg v-if="!attachmentLoading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                  </svg>
-                  <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                  </svg>
-                  <span>View</span>
-                </button>
+      <!-- Individual Details Card (for individual quotations) -->
+      <div v-if="isIndividualQuotation" class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 border-b to-blue-100/50 border-slate-200">
+          <div class="flex justify-between items-center">
+            <div class="flex gap-3 items-center">
+              <div class="w-2 h-8 bg-blue-600 rounded"></div>
+              <div>
+                <h2 class="text-xl font-semibold text-slate-800">Individual Details</h2>
+                <p class="mt-1 text-sm text-slate-600">Quotation recipient information</p>
               </div>
             </div>
-          </div>
-          
-          <div class="p-6">
-            <QuotationCreationDataProvider v-slot="{ packages, pending: pkgPending }">
-              <div v-if="pkgPending" class="flex justify-center items-center py-12">
-                <div class="w-12 h-12 rounded-full border-b-2 border-amber-600 animate-spin"></div>
-              </div>
-              
-              <div v-else-if="!draft" class="py-12 text-center text-slate-500">
-                <p>No quotation data available</p>
-              </div>
-        <QuotationForm
-  v-else
-  ref="quotationFormRef"
-  :packages="packages"
-  :prefill="buildPrefill(packages)"
-  :showHeaderControls="false"
-  :readOnlyRows="!isEditing"
-  :hideFooterActions="true"
-  @submit="handleSaveChanges"
-  :discountMap="discountMapFromServices"
-  :showIssuePremiumAdvice="false"
-  :showAmendButton="false"
-/>
-            </QuotationCreationDataProvider>
-            
-            <!-- Discount Summary -->
-            <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-amber-50 border border-amber-200">
-              <div class="flex gap-3 items-start">
-                <svg class="w-5 h-5 mt-0.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
-                </svg>
-                <div class="flex-1">
-                  <h4 class="font-semibold text-amber-800">Discounts Applied</h4>
-                  <div class="mt-2 space-y-2">
-                    <div v-for="service in discountedServices" :key="service.serviceQuotedUuid" class="flex justify-between items-center p-2 rounded bg-white/60">
-                      <div>
-                        <span class="font-medium text-slate-700">{{ service.packageName }}</span>
-                        <span class="ml-2 text-sm text-slate-500">{{ service.planType?.replace(/_/g, ' ') }}</span>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-sm">
-                          <span class="text-slate-500 line-through">{{ formatCurrency(service.originalPremium) }}</span>
-                          <span class="ml-2 font-semibold text-green-700">{{ formatCurrency(service.premium) }}</span>
-                        </div>
-                        <div class="text-xs font-medium text-amber-700">
-                          {{ service.discount }}% discount
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Total Savings -->
-                  <div class="flex justify-between items-center pt-3 mt-3 border-t border-amber-200">
-                    <div class="text-sm font-medium text-slate-700">
-                      <span>Total Savings</span>
-                    </div>
-                    <div class="text-right">
-                      <div class="text-sm">
-                        <span class="font-bold text-green-700">{{ formatCurrency(totalDiscountAmount) }}</span>
-                      </div>
-                      <div class="text-xs text-slate-500">
-                        {{ formatCurrency(totalOriginalPremium) }} → {{ formatCurrency(totalDiscountedPremium) }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Additional Quotation Information -->
-            <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div class="p-4 rounded-lg bg-slate-50">
-                  <div class="mb-1 text-sm text-slate-500">Quotation ID</div>
-                  <div class="font-mono text-sm font-medium text-slate-800">{{ draft.quotationUuid }}</div>
-                </div>
-                <div class="p-4 rounded-lg bg-slate-50">
-                  <div class="mb-1 text-sm text-slate-500">Status</div>
-                  <div class="flex gap-2 items-center">
-                    <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
-                    <span class="font-medium text-amber-700">Issued</span>
-                  </div>
-                </div>
-                <div class="p-4 rounded-lg bg-slate-50">
-                  <div class="mb-1 text-sm text-slate-500">Created Date</div>
-                  <div class="font-medium text-slate-800">
-                    {{ new Date(draft.createdDate || Date.now()).toLocaleDateString() }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Issued quotation actions -->
-            <div
-              v-if="draft && !isViewOnly"
-              class="flex flex-wrap gap-3 justify-end pt-6 mt-8 border-t border-slate-200"
+            <button 
+              @click.prevent="showIndividual = !showIndividual"
+              class="px-3 py-1 text-sm font-medium text-blue-600 rounded-lg transition-colors hover:text-blue-800 hover:bg-blue-50"
             >
-              <!-- Edit Mode: Show Save Changes and Cancel buttons -->
-              <template v-if="isEditing">
-                <button
-                  type="button"
-                  @click="cancelEditMode"
-                  :disabled="isAmending"
-                  class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  @click="quotationFormRef?.submitAction('save')"
-                  :disabled="isAmending"
-                  class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <span v-if="isAmending" class="flex gap-2 items-center">
-                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving...
-                  </span>
-                  <span v-else>Save Changes</span>
-                </button>
-              </template>
-              
-              <!-- View Mode: Show Amend and Accept buttons -->
-              <template v-else>
-                <button
-                  type="button"
-                  @click="enterEditMode"
-                  class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm bg-amber-600 hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  Amend Quotation
-                </button>
-                
-                <button
-                  type="button"
-                  @click="acceptDirect"
-                  :disabled="pendingAction === 'accept'"
-                  class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <span v-if="pendingAction === 'accept'" class="flex gap-2 items-center">
-                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Accepting...
-                </span>
-                <span v-else>Accept Quotation</span>
-              </button>
-              </template>
+              {{ showIndividual ? 'Hide Details' : 'Show Details' }}
+            </button>
+          </div>
+        </div>
+        
+        <div v-show="showIndividual" class="p-6">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div class="space-y-4">
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Full Name</label>
+                <Input 
+                  name="fullName" 
+                  v-model="individualForm.fullName" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Email</label>
+                <Input 
+                  name="email" 
+                  v-model="individualForm.email" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">ID Number</label>
+                <Input 
+                  name="idNumber" 
+                  v-model="individualForm.idNumber" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Phone</label>
+                <Input 
+                  name="phone" 
+                  v-model="individualForm.phone" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+            </div>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Gender</label>
+                <Input 
+                  name="gender" 
+                  v-model="individualForm.gender" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Status</label>
+                <Input 
+                  name="status" 
+                  v-model="individualForm.status" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium text-slate-700">Address</label>
+                <Input 
+                  name="address" 
+                  v-model="individualForm.address" 
+                  :attributes="{
+                    class: 'w-full bg-slate-50',
+                    disabled: true
+                  }"
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </SingleInstitutionDataProvider>
+
+      <!-- Quotation Details Card -->
+      <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
+        <div class="px-6 py-5 bg-gradient-to-r from-amber-50 border-b to-amber-100/50 border-slate-200">
+          <div class="flex justify-between items-center">
+            <div class="flex gap-3 items-center">
+              <div class="w-2 h-8 bg-amber-600 rounded"></div>
+              <div>
+                <h2 class="text-xl font-semibold text-slate-800">
+                  {{ isEditing ? 'Edit Quotation Details' : 'Quotation Details' }}
+                </h2>
+                <div class="flex gap-2 items-center mt-1">
+                  <p class="text-sm text-slate-600">Issued for:</p>
+                  <span class="text-sm font-semibold text-green-600">
+                    {{ isIndividualQuotation ? individualForm.fullName : instituton?.institutionName }}
+                  </span>
+                  <span class="text-xs text-slate-500">• Quotation ID: {{ draft?.quotationUuid?.slice(-8) }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex gap-3 items-center">
+              <div class="text-sm text-slate-600">
+                <span class="font-medium">{{ draft?.quoatedServices?.length || 0 }}</span> services
+              </div>
+              
+              <!-- View Attachment Button (PAID status) -->
+              <button
+                v-if="hasAttachment"
+                @click="viewAttachment"
+                :disabled="attachmentLoading"
+                class="inline-flex gap-2 items-center px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg transition-colors hover:bg-amber-100 hover:border-amber-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                :title="`${draft?.file} (${formatFileSize(draft?.fileSize || 0)})`"
+              >
+                <svg v-if="!attachmentLoading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                </svg>
+                <span>View</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-6">
+          <QuotationCreationDataProvider v-slot="{ packages, pending: pkgPending }">
+            <div v-if="pkgPending" class="flex justify-center items-center py-12">
+              <div class="w-12 h-12 rounded-full border-b-2 border-amber-600 animate-spin"></div>
+            </div>
+            
+            <div v-else-if="!draft" class="py-12 text-center text-slate-500">
+              <p>No quotation data available</p>
+            </div>
+            <QuotationForm
+              v-else
+              ref="quotationFormRef"
+              :packages="packages"
+              :prefill="buildPrefill(packages)"
+              :showHeaderControls="false"
+              :readOnlyRows="!isEditing"
+              :hideFooterActions="true"
+              :individualMode="isIndividualQuotation"
+              @submit="handleSaveChanges"
+              :discountMap="discountMapFromServices"
+              :showIssuePremiumAdvice="false"
+              :showAmendButton="false"
+            />
+          </QuotationCreationDataProvider>
+          
+          <!-- Discount Summary -->
+          <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-amber-50 border border-amber-200">
+            <div class="flex gap-3 items-start">
+              <svg class="w-5 h-5 mt-0.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
+              </svg>
+              <div class="flex-1">
+                <h4 class="font-semibold text-amber-800">Discounts Applied</h4>
+                <div class="mt-2 space-y-2">
+                  <div v-for="service in discountedServices" :key="service.serviceQuotedUuid" class="flex justify-between items-center p-2 rounded bg-white/60">
+                    <div>
+                      <span class="font-medium text-slate-700">{{ service.packageName }}</span>
+                      <span class="ml-2 text-sm text-slate-500">{{ service.planType?.replace(/_/g, ' ') }}</span>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-sm">
+                        <span class="text-slate-500 line-through">{{ formatCurrency(service.originalPremium) }}</span>
+                        <span class="ml-2 font-semibold text-green-700">{{ formatCurrency(service.premium) }}</span>
+                      </div>
+                      <div class="text-xs font-medium text-amber-700">
+                        {{ service.discount }}% discount
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Total Savings -->
+                <div class="flex justify-between items-center pt-3 mt-3 border-t border-amber-200">
+                  <div class="text-sm font-medium text-slate-700">
+                    <span>Total Savings</span>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm">
+                      <span class="font-bold text-green-700">{{ formatCurrency(totalDiscountAmount) }}</span>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                      {{ formatCurrency(totalOriginalPremium) }} → {{ formatCurrency(totalDiscountedPremium) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Quotation Information -->
+          <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div class="p-4 rounded-lg bg-slate-50">
+                <div class="mb-1 text-sm text-slate-500">Quotation ID</div>
+                <div class="font-mono text-sm font-medium text-slate-800">{{ draft.quotationUuid }}</div>
+              </div>
+              <div class="p-4 rounded-lg bg-slate-50">
+                <div class="mb-1 text-sm text-slate-500">Status</div>
+                <div class="flex gap-2 items-center">
+                  <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
+                  <span class="font-medium text-amber-700">Issued</span>
+                </div>
+              </div>
+              <div class="p-4 rounded-lg bg-slate-50">
+                <div class="mb-1 text-sm text-slate-500">Created Date</div>
+                <div class="font-medium text-slate-800">
+                  {{ new Date(draft.createdDate || Date.now()).toLocaleDateString() }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Issued quotation actions -->
+          <div
+            v-if="draft && !isViewOnly"
+            class="flex flex-wrap gap-3 justify-end pt-6 mt-8 border-t border-slate-200"
+          >
+            <!-- Edit Mode: Show Save Changes and Cancel buttons -->
+            <template v-if="isEditing">
+              <button
+                type="button"
+                @click="cancelEditMode"
+                :disabled="isAmending"
+                class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="quotationFormRef?.submitAction('save')"
+                :disabled="isAmending"
+                class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span v-if="isAmending" class="flex gap-2 items-center">
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </span>
+                <span v-else>Save Changes</span>
+              </button>
+            </template>
+            
+            <!-- View Mode: Show Amend and Accept buttons -->
+            <template v-else>
+              <button
+                type="button"
+                @click="enterEditMode"
+                class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm bg-amber-600 hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                Amend Quotation
+              </button>
+              
+              <button
+                type="button"
+                @click="acceptDirect"
+                :disabled="pendingAction === 'accept'"
+                class="inline-flex gap-2 items-center px-6 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span v-if="pendingAction === 'accept'" class="flex gap-2 items-center">
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Accepting...
+              </span>
+              <span v-else>Accept Quotation</span>
+            </button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Image Modal -->
     <div v-if="showImageModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">

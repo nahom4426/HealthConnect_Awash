@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useToast } from '@/toast/store/toast';
 import DefaultPage from '@/components/DefaultPage.vue';
@@ -20,18 +20,7 @@ const dataProvider = ref();
 const institutionName = ref('');
 const loading = ref(false);
 const status = ref('ACTIVE');
-
-// const fetchInstitution = async () => {
-//   loading.value = true;
-//   try {
-//     const response = await getInstitution(route.params.id);
-//     institutionName.value = response.institutionName;
-//   } catch (error) {
-//     addToast(error.message, '', 'error');
-//   } finally {
-//     loading.value = false;
-//   }
-// };
+const reloadKey = ref(0);
 
 function refreshData() {
   console.log("Refreshing contract data");
@@ -53,16 +42,22 @@ function handleLimitChange(limit) {
 }
 
 const handleRefetch = () => {
-  refreshData();
+  reloadKey.value++;
 };
 
-// onMounted(() => {
-//   fetchInstitution();
-//   status.value = route.params.status === 'ACTIVE' ? 'ACTIVE' : 'PENDING';
-// });
+onMounted(() => {
+  window.addEventListener('editContractSuccess', handleRefetch);
+  window.addEventListener('renewContractSuccess', handleRefetch);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('editContractSuccess', handleRefetch);
+  window.removeEventListener('renewContractSuccess', handleRefetch);
+});
 </script>
 
 <template>
+   <div class="h-full">
   <DefaultPage :title="`${institutionName} Membership Category`" placeholder="Search contracts...">
     <!-- <template #filter>
       <button
@@ -87,6 +82,7 @@ const handleRefetch = () => {
   
 <IssuedContractsDataProvider
   ref="dataProvider"
+  :key="reloadKey"
   :institutionUuid="route.params.id"
   :status="status"
   :search="search"
@@ -99,26 +95,24 @@ const handleRefetch = () => {
           :pending="pending"
           :headers="{
             head: [ 
-         
               'Description',
-              // 'Benefit',
-              // 'Premium',
               'Effective Date',
               'Status',
               'Actions',
             ],
             row: [
               '',
-              
               'contractName',
-              // 'benefit',
-              // 'premium', 
               'dateRange',
               'status',
             ],
           }"
           :rows="contracts"
           :rowCom="amendStatusRow"
+          :rowComProps="{
+            institutionUuid: route.params.id,
+            onRefetch: handleRefetch,
+          }"
           :pagination="{
             currentPage,
             itemsPerPage,
@@ -126,35 +120,9 @@ const handleRefetch = () => {
             onPageChange: handlePageChange,
             onLimitChange: handleLimitChange,
           }"
-        >
-          <template #row>
-            <amendStatusRow
-              :rowData="contracts"
-              :rowKeys="[
-                'index',
-                'contractCode',
-                'contractName',
-                // 'benefit',
-                // 'premium',
-                'dateRange',
-                'status',
-              ]"
-              :headKeys="[
-                '#',
-                'Category Code',
-                'Description',
-                'Effective Date',
-                // 'Benefit',
-                // 'Premium',
-                'Status',
-                'Actions',
-              ]"
-              :institutionUuid="route.params.id"
-              :onRowClick="(row) => {}"
-            />
-          </template>
-        </Table>
+        />
       </IssuedContractsDataProvider>
     </template>
   </DefaultPage>
+  </div>
 </template>

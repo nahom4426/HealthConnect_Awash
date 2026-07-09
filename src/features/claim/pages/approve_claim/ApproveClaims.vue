@@ -1,3 +1,4 @@
+<!-- ApproveClaimsIndex.vue - Updated with institution name handling -->
 <script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import ClaimByBatchDataProvider from "../../components/ClaimByBatchDataProvider.vue";
@@ -14,8 +15,12 @@ import Toogle from "@/components/Toogle.vue";
 import { useApproveClaimByInstitutionBatch } from "../../store/approveClaimByInstitutionBatchStore";
 import ApproveClaimRow from "../../components/ApproveClaimRow.vue";
 import { watch } from "vue";
-const serviceType= ref("CREDIT");
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const serviceType = ref("CREDIT");
 const active = ref(ServiceTypes.creditService);
+
 watch(active, (newActive) => {
   if (newActive === ServiceTypes.creditService) {
     serviceType.value = "CREDIT";
@@ -25,23 +30,35 @@ watch(active, (newActive) => {
     console.log('🔄 Switched to CASH service');
   }
 });
+
 const institutionUuid = ref();
 const contractUuid = ref();
 const store = useApproveClaimByInstitutionBatch();
 const search = ref("");
 
 const tableRowKeys = computed(() => {
-  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
-  return [nameKey, "totalAmount", "claimFromDate", "claimLevel", "claimStatus"];
+  const nameKey = active.value === ServiceTypes.cashService ? "providerName" : "providerName";
+  return ["institutionName", "providerName", "totalAmount", "claimFromDate", "claimLevel", "claimStatus"];
 });
 
 const tableHeaders = computed(() => {
-  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
+  const nameHeader = active.value === ServiceTypes.cashService ? "Provider Name" : "Provider Name";
   return {
-    head: [nameHeader, "Total Amount", "Claim Date", "Level", "Status", "Actions"],
+    head: ["Institution", nameHeader, "Total Amount", "Claim Date", "Level", "Status", "Actions"],
     row: tableRowKeys.value,
   };
 });
+
+function navigateToDetailPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/approve_claims/detail/${row.claimUuid}`,
+      state: { institutionName },
+      query: { institutionName }
+    });
+  }
+}
 </script>
 
 <template>
@@ -49,7 +66,7 @@ const tableHeaders = computed(() => {
     :store="store"
     :creditService="active == ServiceTypes.creditService"
     :status="PaymentStatus.CONFIRMED"
-   :params="{
+    :params="{
       providerUuid: contractUuid,
       institutionUuid: institutionUuid,
       serviceType
@@ -93,7 +110,18 @@ const tableHeaders = computed(() => {
         :rows="claims"
         :rowCom="ApproveClaimRow"
         placeholder="No claims to approve"
-      />
+        @row-click="navigateToDetailPage"
+      >
+        <template #row>
+          <ApproveClaimRow
+            :rowData="claims"
+            :rowKeys="tableRowKeys"
+            :currentPage="1"
+            :perPage="25"
+            :onRowClick="navigateToDetailPage"
+          />
+        </template>
+      </Table>
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

@@ -1,3 +1,4 @@
+<!-- AuthorizeClaimDetail.vue - Updated with institution name handling -->
 <script setup>
 import DefaultPage from '@/components/DefaultPage.vue';
 import { usePagination } from "@/composables/usePagination";
@@ -14,9 +15,37 @@ import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
 import CheckProvidedItemsMdl from '../../modal/checkProvidedItems.mdl.vue';
 import ClaimDetailTableRow from '../../components/ClaimDetailTableRow.vue';
-const router = useRouter();
 
+const router = useRouter();
 const route = useRoute();
+
+// Get institution name from multiple sources with priority
+const institutionName = computed(() => {
+  // 1. Try to get from route state (passed via router.push or RouterLink)
+  if (route.state?.institutionName) {
+    return route.state.institutionName;
+  }
+  
+  // 2. Try to get from query params
+  if (route.query.institutionName) {
+    return route.query.institutionName;
+  }
+  
+  // 3. Try to get from the first claim in the store
+  const firstClaim = store.claims?.[0];
+  if (firstClaim?.institutionName) {
+    return firstClaim.institutionName;
+  }
+  
+  // 4. Try to get from route params (if institution name is in the URL)
+  if (route.params.institutionName) {
+    return route.params.institutionName;
+  }
+  
+  // 5. Fallback to N/A
+  return 'N/A';
+});
+
 const batchCode = route.params.batchCode;
 const claimUuid = route.params.claimUuid;
 
@@ -124,21 +153,58 @@ function openItemsModal(row) {
   showItemsModal.value = true;
 }
 
+function getInitials(name) {
+  if (!name || name === 'N/A') return 'I';
+  return name.charAt(0).toUpperCase();
+}
+
+// Log for debugging
+console.log('Authorize Claim Detail - Institution name:', institutionName.value);
+console.log('Authorize Claim Detail - Route state:', route.state);
+console.log('Authorize Claim Detail - Route query:', route.query);
 </script>
 
 <template>
   <DefaultPage>
+    <!-- Header with Institution Name -->
+    <template #header>
+      <div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-lg">
+              {{ getInitials(institutionName) }}
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">{{ institutionName }}</h1>
+              <p class="text-sm text-gray-500">Authorize Claim Details</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
+            <span class="text-xs font-medium text-gray-600">Batch:</span>
+            <span class="text-xs font-mono text-gray-800">{{ batchCode || 'N/A' }}</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
+            <span class="text-xs font-medium text-green-600">Status:</span>
+            <span class="text-xs font-semibold text-green-700">APPROVED</span>
+          </div>
+        </div>
+      </div>
+    </template>
+
     <template #more>
       <Button :pending="processedClaimReq.pending.value" class="ml-auto" @click="batchProcessed" type="primary" v-if="checked.length">
-        Check/Reject Selected
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        Check/Reject Selected ({{ checked.length }})
       </Button>
     </template>
 
     <Table
       :pending="pagination.pending.value"
       :headers="{
-        head: [ 'Institution','Insured Name','Items','Amount','Provided Date','Status','Actions'],
-        row: ['', 'institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']
+        head: [ 'Institution', 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions'],
+        row: [ 'institutionName', 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus']
       }"
       :rows="store.claims"
       :rowCom="ClaimDetailTableRow"
@@ -147,8 +213,9 @@ function openItemsModal(row) {
       <template #row>
         <ClaimDetailTableRow
           :rowData="store.claims"
-          :rowKeys="['institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']"
-          :headKeys="['#', 'Institution','Insured Name','Items','Amount','Provided Date','Status','Actions']"
+          :rowKeys="[ 'institutionName', 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus']"
+          :headKeys="[ 'Institution', 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions']"
+          :institutionName="institutionName"
           @viewItems="openItemsModal"
         />
       </template>

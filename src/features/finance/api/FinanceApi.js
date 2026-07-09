@@ -1,12 +1,12 @@
 import ApiService from "@/service/ApiService";
-    
+
 const api = new ApiService()
 const path = '/claimconnect/quotation'
 
 export function paypremium(quotationUuid, formData) {
     // Extract the JSON string from FormData and parse it
     const quotationPaymentRequest = JSON.parse(formData.get('quotationPaymentRequest'));
-    
+
     return api
         .addAuthenticationHeader()
         .put(

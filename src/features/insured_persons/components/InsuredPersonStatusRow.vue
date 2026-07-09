@@ -139,9 +139,9 @@
 
       <!-- Actions Column -->
       <td class="p-3 text-left">
-        <!-- Dropdown Button (only if NOT on amend page and showActionButtons is true) -->
+        <!-- Dropdown Button - Only show for institution policies (hasInstitution=true) -->
         <button 
-          v-if="showActionButtons && actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history'"
+          v-if="hasInstitution === 'true' && showActionButtons && actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history'"
           @click.stop="toggleDropdown($event, getRowId(row))"
           aria-label="Actions"
           class="inline-flex items-center p-2 text-sm font-medium rounded-lg transition-colors focus:outline-none"
@@ -154,7 +154,7 @@
         </button>
 
         <!-- Fixed Dropdown Portal (rendered at body level via teleport) -->
-        <Teleport to="body" v-if="actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history' && showActionButtons">
+        <Teleport to="body" v-if="hasInstitution === 'true' && actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history' && showActionButtons">
           <div 
             :id="`dropdown-${getRowId(row)}`"
             class="hidden fixed z-[9999] w-48 bg-white rounded-lg ring-1 ring-black ring-opacity-5 shadow-xl dropdown-menu focus:outline-none"
@@ -230,28 +230,26 @@
         <!-- AMEND PAGE: Status Toggle and Actions -->
         <div v-if="actionPage === 'amend'" class="flex flex-row gap-2 items-center">
           <!-- Status Toggle Switch (only for amend page) -->
-        
-            <!-- Toggle Switch -->
-            <button
-              v-if="canToggleStatus(row)"
-              @click.stop="toggleStatus(row)"
-              class="inline-flex relative items-center w-12 h-7 rounded-full shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2"
-              :class="getToggleClass(row)"
-              :title="getToggleTitle(row)"
+          <button
+            v-if="canToggleStatus(row)"
+            @click.stop="toggleStatus(row)"
+            class="inline-flex relative items-center w-12 h-7 rounded-full shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            :class="getToggleClass(row)"
+            :title="getToggleTitle(row)"
+          >
+            <span
+              class="inline-block flex absolute left-0.5 justify-center items-center w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out transform"
+              :class="getTogglePositionClass(row)"
             >
-              <span
-                class="inline-block flex absolute left-0.5 justify-center items-center w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out transform"
-                :class="getTogglePositionClass(row)"
-              >
-                <!-- Icon inside toggle -->
-                <svg v-if="isActive(row)" class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-                <svg v-else class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                </svg>
-              </span>
-            </button>
+              <!-- Icon inside toggle -->
+              <svg v-if="isActive(row)" class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              <svg v-else class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+            </span>
+          </button>
         
           <!-- Action Buttons for Amend Page -->
           <button
@@ -341,6 +339,7 @@ const props = defineProps({
   pageContext: { type: String, default: 'insured' },
   currentPage: { type: Number, default: 1 },
   perPage: { type: Number, default: 25 },
+  hasInstitution: { type: String, default: 'true' },
 });
 
 const route = useRoute();
@@ -455,24 +454,6 @@ function getImageBorderClass(row) {
   return 'border-gray-200';
 }
 
-// Avatar placeholder class
-function getAvatarPlaceholderClass(row) {
-  if (isInactive(row)) return 'bg-red-200';
-  if (isSuspended(row)) return 'bg-orange-200';
-  if (isPending(row)) return 'bg-yellow-200';
-  if (isActive(row)) return 'bg-green-200';
-  return 'bg-gray-200';
-}
-
-// Avatar text class
-function getAvatarTextClass(row) {
-  if (isInactive(row)) return 'text-red-700';
-  if (isSuspended(row)) return 'text-orange-700';
-  if (isPending(row)) return 'text-yellow-700';
-  if (isActive(row)) return 'text-green-700';
-  return 'text-gray-700';
-}
-
 // Dependents button class
 function getDependantsButtonClass(row, isExpanded) {
   if (isExpanded) {
@@ -520,17 +501,6 @@ function getDropdownMenuClass(row) {
   return '';
 }
 
-// Toggle container class
-function getToggleContainerClass(row) {
-  if (isInactive(row)) {
-    return 'bg-red-100/50 border border-red-200';
-  }
-  if (isSuspended(row)) {
-    return 'bg-orange-100/50 border border-orange-200';
-  }
-  return 'bg-white border border-gray-200 hover:border-gray-300';
-}
-
 // Toggle class
 function getToggleClass(row) {
   if (isActive(row)) {
@@ -552,14 +522,6 @@ function getToggleTitle(row) {
 // Check if status can be toggled
 function canToggleStatus(row) {
   return isActive(row) || isInactive(row) || isSuspended(row);
-}
-
-// Get display text for status
-function getStatusDisplayText(row) {
-  if (isActive(row)) return 'Active';
-  if (isInactive(row)) return 'Inactive';
-  if (isSuspended(row)) return 'Suspended';
-  return row?.status || 'Unknown';
 }
 
 // Secondary button class for amend page
@@ -598,13 +560,6 @@ function getExpandedHeaderTextClass(row) {
   return 'text-gray-900';
 }
 
-// Get initials for avatar
-function getInitials(row) {
-  const first = row?.firstName?.charAt(0) || '';
-  const last = row?.fatherName?.charAt(0) || '';
-  return (first + last).toUpperCase() || '?';
-}
-
 // Toggle status function
 async function toggleStatus(row) {
   const insuredId = getRowId(row);
@@ -616,7 +571,6 @@ async function toggleStatus(row) {
   }
 }
 
-// Your existing functions remain the same...
 function formatPhoneNumber(phone) {
   if (!phone) return '';
   const digits = phone.replace(/\D/g, '');
@@ -687,11 +641,10 @@ function toggleDropdown(event, rowId) {
 
   const btn = event.currentTarget;
   const rect = btn.getBoundingClientRect();
-  const dropdownHeight = 180; // approx height of menu
+  const dropdownHeight = 180;
   const spaceBelow = window.innerHeight - rect.bottom;
   const openUpward = spaceBelow < dropdownHeight + 8;
 
-  // Position horizontally: align right edge of dropdown to right edge of button
   const right = window.innerWidth - rect.right;
   dropdown.style.right = `${right}px`;
   dropdown.style.left = 'auto';
@@ -722,11 +675,6 @@ onUnmounted(() => {
 function handleEditWithClose(row) {
   closeAllDropdowns();
   handleEdit(row);
-}
-
-function handleViewWithClose(rowId) {
-  closeAllDropdowns();
-  props.onView(rowId);
 }
 
 async function handleActivateWithClose(insuredId) {
@@ -787,15 +735,15 @@ tr {
 
 /* Hover effects for status rows */
 tr.bg-red-100:hover {
-  background-color: #fee2e2 !important; /* red-200 */
+  background-color: #fee2e2 !important;
 }
 
 tr.bg-orange-100:hover {
-  background-color: #fed7aa !important; /* orange-200 */
+  background-color: #fed7aa !important;
 }
 
 tr.bg-yellow-50:hover {
-  background-color: #fef9c3 !important; /* yellow-100 */
+  background-color: #fef9c3 !important;
 }
 
 /* Dropdown menu styles */
@@ -828,7 +776,6 @@ tr.bg-yellow-50:hover {
   border: none;
 }
 
-/* Hover */
 .dropdown-menu button:hover {
   background-color: #eff6ff;
   color: #1d4ed8;

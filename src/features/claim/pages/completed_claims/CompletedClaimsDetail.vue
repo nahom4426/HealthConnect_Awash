@@ -2,7 +2,7 @@
 <script setup>
 import DefaultPage from '@/components/DefaultPage.vue';
 import { usePagination } from "@/composables/usePagination";
-import { approveClaimProcessedBy, claimProccessed, getRequestedClaimByBatchDetail, updateServiceProvidedClaimStatus } from '../../api/claimApi';
+import { approveClaimProcessedBy, claimProccessed, getRequestedClaimByBatchDetail, updateServiceProvidedClaimStatus, settleClaimPayment } from '../../api/claimApi';
 import Table from '@/components/Table.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PaymentStatus } from '@/types/interface';
@@ -304,6 +304,35 @@ function openProcessWholeClaim() {
   });
 }
 
+// open settle payment modal with selected services
+function openSettlePayment() {
+  if (!checked.value.length) {
+    toasted(false, 'Please select at least one service to settle');
+    return;
+  }
+
+  // Gather the full service objects for the selected UUIDs
+  const selectedServices = (store.claims || []).filter(c =>
+    checked.value.includes(c.serviceProvidedUuid)
+  );
+
+  // Get institution info from first claim
+  const firstClaim = store.claims?.[0];
+
+  openModal('SettlePayment', {
+    title: 'Settle Payment',
+    claimUuid: String(claimUuid),
+    selectedServices,
+    institutionUuid: firstClaim?.institutionUuid || '',
+    institutionName: firstClaim?.institutionName || institutionName.value || '',
+    onSuccess: () => {
+      toasted(true, 'Payment settled successfully');
+      pagination.send();
+      checked.value = [];
+    }
+  });
+}
+
 // modal state
 const showItemsModal = ref(false);
 const modalRow = ref(null);
@@ -437,6 +466,17 @@ console.log('Completed Claim Detail - Route query:', route.query);
           <div v-html="icons.checkCircle" class="w-4 h-4"></div>
           Process Selected ({{ checked.length }})
         </Button>
+
+        <Button
+          @click="openSettlePayment"
+          type="elevated"
+          size="sm"
+          v-if="checked.length"
+          class="flex gap-2 items-center text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 shadow-teal-200"
+        >
+          <div v-html="icons.currencyDollar" class="w-4 h-4"></div>
+          Settle Payment ({{ checked.length }})
+        </Button>
       </div>
     </template>
 
@@ -555,28 +595,19 @@ console.log('Completed Claim Detail - Route query:', route.query);
 
     <!-- Main Table Area -->
     <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
-      <Table
+      <TableWithCheckBox
         :pending="pagination.pending.value"
+        v-model="checked"
+        to-be-selected="serviceProvidedUuid"
         :headers="{
           head: ['Institution', 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions'],
           row: [ 'institutionName', 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus']
         }"
         :rows="store.claims"
-        :selectedRows="checked"
         :rowCom="ClaimDetailTableRow"
-        @selection-change="handleCheckboxChange"
+        :rowComProps="{ selectable: true }"
         placeholder="No claims found in this batch"
-      >
-        <template #row>
-          <ClaimDetailTableRow
-            :rowData="store.claims"
-            :rowKeys="[ 'institutionName','insuredName','itemsCount','amount','providedDate','serviceClaimStatus']"
-            :headKeys="['Institution','Insured Name','Items','Amount','Provided Date','Status','Actions']"
-            :institutionName="institutionName"
-            @viewItems="openItemsModal"
-          />
-        </template>
-      </Table>
+      />
       
       <!-- Empty State -->
       <div v-if="!store.claims?.length && !pagination.pending.value" class="p-12 text-center">

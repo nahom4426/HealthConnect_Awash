@@ -11,7 +11,12 @@ const props = defineProps({
   headKeys: { type: Array, default: () => [] },
   onViewItems: { type: Function, default: () => {} },
   currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 25 }
+  perPage: { type: Number, default: 25 },
+  // Checkbox props from TableWithCheckBox
+  selectable: { type: Boolean, default: false },
+  selectedItems: { type: Array, default: () => [] },
+  toBeSelected: { type: String, default: '' },
+  onToggleSelect: { type: Function, default: () => {} },
 });
 
 const emit = defineEmits(['viewItems']);
@@ -44,6 +49,11 @@ function openItemsModal(row) {
   modalItems.value = row?.providedItemResponses || [];
   modalTitle.value = `Provided Items — ${row?.insuredName || row?.institutionName || ''}`;
   showItemsModal.value = true;
+}
+
+function getNestedValue(obj, path) {
+  if (!path) return undefined;
+  return path.split(".").reduce((state, name) => state?.[name], obj);
 }
 </script>
 
@@ -141,6 +151,18 @@ function openItemsModal(row) {
           View Items
         </div>
       </Button>
+    </td>
+
+    <!-- Checkbox (added by TableWithCheckBox via rowComProps) -->
+    <td class="p-3 py-4" v-if="selectable">
+      <div class="flex items-center justify-center">
+        <input
+          :checked="(selectedItems || []).includes(getNestedValue(row, toBeSelected))"
+          @change="onToggleSelect(getNestedValue(row, toBeSelected))"
+          type="checkbox"
+          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+        />
+      </div>
     </td>
   </tr>
 

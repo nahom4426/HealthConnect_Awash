@@ -211,3 +211,11 @@ export function getClaimsDashboard(claimStatus?: string) {
 export function getEachMonthCreatedClaims() {
 	return api.addAuthenticationHeader().get(`${path}/claim/dashBoard/eachMonthCreatedClaims`)
 }
+
+export function settleClaimPayment(claimUuid: string, formData: FormData) {
+	return api
+		.addAuthenticationHeader()
+		.put(`${path}/claim/settle/payment/${claimUuid}` as any, formData, {
+			headers: { 'Content-Type': 'multipart/form-data' },
+		});
+}

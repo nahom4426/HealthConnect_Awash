@@ -289,6 +289,17 @@ export default [
         },
       },
       {
+        path: "/paid_claims",
+        name: "Paid Claims",
+        icon: `
+					<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m-1 14l-4-4l1.4-1.4l2.6 2.6l5.6-5.6L18 9z"/>
+</svg>	`,
+        meta: {
+          permissions: ["Paid Claims"],
+        },
+      },
+      {
         path: "/claim-level-limits",
         name: "Claim Level Limits",
         icon: `

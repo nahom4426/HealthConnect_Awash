@@ -37,6 +37,8 @@ function getStatusStyle(status) {
     case "AUTHORIZED": return `${base} bg-teal-100 text-teal-800`;
     case "REJECTED": return `${base} bg-red-100 text-red-800`;
     case "COMPLETED": return `${base} bg-gray-100 text-gray-800`;
+    case "PAYED":
+    case "PAID": return `${base} bg-green-100 text-green-800`;
     default: return `${base} bg-gray-100 text-gray-800`;
   }
 }
@@ -157,10 +159,11 @@ function getNestedValue(obj, path) {
     <td class="p-3 py-4" v-if="selectable">
       <div class="flex items-center justify-center">
         <input
+          :disabled="row.serviceClaimStatus === 'PAYED' || row.serviceClaimStatus === 'PAID'"
           :checked="(selectedItems || []).includes(getNestedValue(row, toBeSelected))"
           @change="onToggleSelect(getNestedValue(row, toBeSelected))"
           type="checkbox"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
     </td>

@@ -38,6 +38,7 @@ import verifyClaimDetail from "@/features/claim/pages/Verify Claim/VerifyClaimDe
 import verifyClaimIndividualDetail from "@/features/claim/pages/Verify Claim/VerifyClaimIndividualDetail.vue";
 import verifyClaim from "@/features/claim/pages/Verify Claim/VerifyClaim.vue";
 import FieldUpdateLogs from "@/features/claim/pages/FieldUpdateLogs.vue";
+import PaidClaims from "@/features/claim/pages/completed_claims/PaidClaims.vue";
 
 export default [
   {
@@ -119,7 +120,7 @@ export default [
       },
     ],
   },
-   {
+  {
     path: "/verify_claims",
     component: verifyClaimDetailIndex,
     meta: { requiresAuth: true, permissions: ["Read_claims"] },
@@ -163,7 +164,7 @@ export default [
       },
     ],
   },
-    {
+  {
     path: "/reject_claims",
     component: RejectClaimDetailIndex,
     meta: { requiresAuth: true, permissions: ["Read_claims"] },
@@ -289,6 +290,18 @@ export default [
           },
         ],
       },
+    ],
+  },
+  {
+    path: "/paid_claims",
+    component: RouterView,
+    meta: { requiresAuth: true, permissions: ["Paid Claims"] },
+    children: [
+      {
+        path: "",
+        name: "Paid Claims", // Moved name to child with empty path
+        component: PaidClaims,
+      }
     ],
   },
   {

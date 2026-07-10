@@ -22,7 +22,14 @@ const props = defineProps({
 const claimUuid = props.data?.claimUuid || '';
 const selectedServices = ref(props.data?.selectedServices || []);
 const totalAmount = computed(() => {
-  return selectedServices.value.reduce((sum, s) => sum + (s.amount || 0), 0);
+  return selectedServices.value.reduce((sum, s) => {
+    const serviceAmount = s.amount || 0;
+    const itemsExtraAmount = (s.providedItemResponses || []).reduce(
+      (itemSum, item) => itemSum + (item.extraAmount || 0),
+      0
+    );
+    return sum + (serviceAmount - itemsExtraAmount);
+  }, 0);
 });
 
 // Form fields
@@ -104,7 +111,7 @@ async function submit() {
 
   const formData = new FormData();
   formData.append(
-    'payClaimRequest',
+    'claimPaymentRequest',
     JSON.stringify(claimPaymentRequest)
   );
 
@@ -116,11 +123,11 @@ async function submit() {
     () => settleClaimPayment(claimUuid, formData),
     (res) => {
       if (res?.success === true || (res?.status >= 200 && res?.status < 300)) {
-        toasted(true, 'Payment settled successfully');
-        closeModal({ success: true });
         if (typeof props.data?.onSuccess === 'function') {
           props.data.onSuccess();
         }
+        toasted(true, 'Payment settled successfully');
+        closeModal({ success: true });
       } else {
         const errorMessage = res?.error ||
                             res?.data?.detail ||

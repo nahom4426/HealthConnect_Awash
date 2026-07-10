@@ -1,4 +1,4 @@
-export enum Plan  {
+export enum Plan {
   "Individual Plan" = "Individual_Plan",
   "Family Plan" = "Family_Plan",
   "Family Shared Plan" = "Family_Shared_Plan",
@@ -8,7 +8,7 @@ export enum Plan  {
 export const allMemberTYpes = [
   {
     label: 'Member Only',
-    value: 1, 
+    value: 1,
   },
   {
     label: 'Member + 1',
@@ -60,18 +60,18 @@ export const MaternityMemberTypes = [
 
 export function isFemaleOnlyPackage(packages: FamilyPackage[], coverage: string) {
   const FEMALE_ONLY_PACkAGES = packages.filter(el => el.gender == FamilyPackageGender.FEMALE)
-  if(FEMALE_ONLY_PACkAGES.find(el => el.packageName == coverage)) {
+  if (FEMALE_ONLY_PACkAGES.find(el => el.packageName == coverage)) {
     return true
   }
   return false
 }
 
-export function getFamilyTypes(packages: FamilyPackage[], coverage: string, plan: string)  {
-  if(isFemaleOnlyPackage(packages, coverage)) {
+export function getFamilyTypes(packages: FamilyPackage[], coverage: string, plan: string) {
+  if (isFemaleOnlyPackage(packages, coverage)) {
     return MaternityMemberTypes
   }
 
-  if(plan == Plan["Individual Plan"]) return SharedlMemberTYpes
+  if (plan == Plan["Individual Plan"]) return SharedlMemberTYpes
 
   return allMemberTYpes
 }
@@ -120,7 +120,7 @@ export enum ClaimStatus {
   PROCESSED = "Processed",
   CHECKED = 'Checked',
   APPROVED = 'Approved',
-  VERIFIED= 'VERIFIED',
+  VERIFIED = 'VERIFIED',
   REQUESTED = 'Requested',
   AUTHORIZED = 'Authorized'
 
@@ -142,12 +142,13 @@ export enum PaymentStatus {
   REJECTED = "REJECTED",
   VERIFIED = "VERIFIED",
   CONFIRMED = "CONFIRMED",
-  COMPLETED ="COMPLETED"
+  COMPLETED = "COMPLETED",
+  PAYED = "PAYED"
 }
 export enum ClaimLevel {
-LEVEL1="LEVEL1",
-LEVEL2="LEVEL2",
-LEVEL3="LEVEL3"
+  LEVEL1 = "LEVEL1",
+  LEVEL2 = "LEVEL2",
+  LEVEL3 = "LEVEL3"
 }
 
 export enum CStatus {

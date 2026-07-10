@@ -9,7 +9,7 @@ import { PaymentStatus } from '@/types/interface';
 import { formatCurrency, toasted, secondDateFormat } from '@/utils/utils';
 import Button from '@/components/Button.vue';
 import TableWithCheckBox from '@/components/TableWithCheckBox.vue';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
@@ -257,39 +257,6 @@ const canProcessWholeClaim = computed(() => {
   return rows.every((r) => (r?.serviceClaimStatus || '').toUpperCase() !== 'PROCESSED');
 });
 
-// process/reject multiple selected
-function batchProcessed() {
-  if (processedClaimReq.pending.value) return;
-
-  openModal('CompleteSelectedClaim', { title: 'Complete Selected Claims' }, (result) => {
-    const body = checked.value.slice();
-    if (!body.length) return;
-    
-    const action = result?.action || 'CHECKED';
-    const comment = result?.comment;
-
-    processedClaimReq.send(
-      () => updateServiceProvidedClaimStatus(claimUuid, action, body, comment),
-      (res) => {
-        if (res && res.status >= 200 && res.status < 300) {
-          const actionText = action === 'CHECKED' ? 'CHECKED' : 'REJECTED';
-          toasted(true, `Selected services marked ${actionText}`);
-          
-          const updatedClaims = (store.claims || []).map((claim) => {
-            if (body.includes(claim.serviceProvidedUuid)) {
-              return { ...claim, serviceClaimStatus: action };
-            }
-            return claim;
-          });
-          
-          store.set ? store.set(updatedClaims) : (store.claims = updatedClaims);
-          checked.value = [];
-        }
-      }
-    );
-  });
-}
-
 // open modal to process entire claim (approve processedBy/{claimUuid})
 function openProcessWholeClaim() {
   openModal('CompleteClaim', { 
@@ -327,7 +294,16 @@ function openSettlePayment() {
     institutionName: firstClaim?.institutionName || institutionName.value || '',
     onSuccess: () => {
       toasted(true, 'Payment settled successfully');
-      pagination.send();
+      
+      // Update local state immediately for fast feedback
+      const updatedClaims = (store.claims || []).map((claim) => {
+        if (checked.value.includes(claim.serviceProvidedUuid)) {
+          return { ...claim, serviceClaimStatus: 'PAYED' };
+        }
+        return claim;
+      });
+      store.set ? store.set(updatedClaims) : (store.claims = updatedClaims);
+      
       checked.value = [];
     }
   });
@@ -362,6 +338,18 @@ function getInitials(name) {
 function handleCheckboxChange(selected) {
   checked.value = selected.map(item => item.serviceProvidedUuid);
 }
+
+// Watcher to ensure 'PAYED' items are not selectable
+watch(checked, (newVal) => {
+  const payedUuids = (store.claims || [])
+    .filter(c => c.serviceClaimStatus === 'PAYED' || c.serviceClaimStatus === 'PAID')
+    .map(c => c.serviceProvidedUuid);
+  
+  const filtered = newVal.filter(id => !payedUuids.includes(id));
+  if (filtered.length !== newVal.length) {
+    checked.value = filtered;
+  }
+});
 
 // Calculate totals for display
 const totals = computed(() => {
@@ -453,18 +441,6 @@ console.log('Completed Claim Detail - Route query:', route.query);
         >
           <div v-html="icons.documentPdf" class="w-4 h-4"></div>
           Export PDF
-        </Button>
-
-        <Button 
-          :pending="processedClaimReq.pending.value" 
-          @click="batchProcessed" 
-          type="elevated" 
-          size="sm"
-          v-if="checked.length"
-          class="text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-blue-200"
-        >
-          <div v-html="icons.checkCircle" class="w-4 h-4"></div>
-          Process Selected ({{ checked.length }})
         </Button>
 
         <Button
@@ -577,7 +553,7 @@ console.log('Completed Claim Detail - Route query:', route.query);
               {{ checked.length }} claim{{ checked.length > 1 ? 's' : '' }} selected
             </p>
             <p class="text-sm text-blue-700">
-              Click "Process Selected" to mark as CHECKED or REJECTED
+              Click "Settle Payment" to settle the selected claims
             </p>
           </div>
         </div>

@@ -48,3 +48,15 @@ export function renewInstitutionContract(contractUuid, data) {
     .put(`/claimconnect/payer-institution-contract/${contractUuid}/renew`, data);
 }
 
+export function updateBenefitContributions(policyUuid, data) {
+  return api.addAuthenticationHeader().put(`/claimconnect/benefit-contributions/${policyUuid}`, data);
+}
+
+export function getBenefitContributions(policyUuid) {
+  return api.addAuthenticationHeader().get(`/claimconnect/benefit-contributions/policy/${policyUuid}`);
+}
+
+export function deleteBenefitContribution(uuid) {
+  return api.addAuthenticationHeader().delete(`/claimconnect/benefit-contributions/${uuid}`);
+}
+

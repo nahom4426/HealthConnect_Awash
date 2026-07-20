@@ -69,6 +69,13 @@ function openEditModal(row) {
   });
 }
 
+function openContributionModal(row) {
+  openModal('ManageBenefitContributions', {
+    payerInstitutionContractUuid: row.payerInstitutionContractUuid,
+    contract: row
+  });
+}
+
 function openDeleteModal(row) {
   openModal('DeleteInstitutionContract', {
     contractUuid: row.payerInstitutionContractUuid,
@@ -144,6 +151,18 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
             <span>Edit</span>
           </button>
 
+          <!-- Set Contribution -->
+          <button
+            @click.stop="openContributionModal(row)"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+            title="Set Benefit Contributions"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Contributions</span>
+          </button>
+
           <!-- Delete Policy -->
           <!-- <button
             @click.stop="openDeleteModal(row)"
@@ -214,6 +233,18 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
           <span>Edit</span>
+        </button>
+
+        <!-- Set Contribution -->
+        <button
+          @click.stop="openContributionModal(row)"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md border border-green-200 transition-all duration-200 hover:bg-green-100"
+          title="Set Benefit Contributions"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Contrib</span>
         </button>
 
         <!-- Delete Policy -->

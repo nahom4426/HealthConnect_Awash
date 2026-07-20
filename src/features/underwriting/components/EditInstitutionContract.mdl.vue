@@ -9,7 +9,8 @@ import { toasted } from '@/utils/utils';
 import ModalParent from '@/components/ModalParent.vue';
 import { closeModal } from "@customizer/modal-x";
 import { useInstitutionContract } from '../store/institutionContractsStore';
-import { updateInstitutionContract } from '../api/underwritingApi';
+import { updateInstitutionContract, updateBenefitContributions } from '../api/underwritingApi';
+import { getPackages } from '@/features/product_settings/api/coverageApi';
 
 const props = defineProps({
   data: {
@@ -41,6 +42,17 @@ function update({ values }) {
         institution.updateInstitution(res.data.payerInstitutionContractUuid, res.data);
         toasted(res.success, 'Institution updated successfully', res.error);
         window.dispatchEvent(new CustomEvent('editContractSuccess'));
+        
+        if (res.data?.payerInstitutionContractUuid) {
+          getPackages().then((pkgRes) => {
+            const pkgs = Array.isArray(pkgRes?.data) ? pkgRes.data : (Array.isArray(pkgRes) ? pkgRes : []);
+            const contributions = pkgs.map((pkg) => ({
+              benefitPackageUuid: pkg.packageUuid || pkg.uuid,
+              contributionPercentage: 100
+            }));
+            updateBenefitContributions(res.data.payerInstitutionContractUuid, contributions).catch(err => console.error(err));
+          });
+        }
         closeModal();
       }
     }

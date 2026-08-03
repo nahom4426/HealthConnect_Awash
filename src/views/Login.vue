@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import LoginForm from "./LoginForm.vue";
 import eicLogo from '../assets/img/logo.png';
-import eicIllustration from '../assets/img/eic-bgremoved.png';
+import nyalaLogo from '../assets/img/nyala_logo.png';
 import { useDarkModeStore } from '../stores/darkMode';
 
 const darkStore = useDarkModeStore();
@@ -42,16 +42,16 @@ const isDark = computed(() => darkStore.isDark);
     <div class="login-container">
       <!-- Left side branding -->
       <div class="login-left">
-        <div class="illustration-circle">
-          <img :src="eicIllustration" alt="EIC Illustration" class="eic-illustration" />
+        <div class="hero-logo-box">
+          <img :src="nyalaLogo" alt="Nyala Insurance" class="clean-nyala-logo" />
         </div>
-        <div class="brand-info">
-          <div class="brand-motto">Trusted Since 1976</div>
-          <h1 class="brand-name">Ethiopian Insurance<br/>Corporation</h1>
-          <div class="brand-name-amharic">የኢትዮጵያ መድን ድርጅት</div>
-          <p class="brand-desc">
-            One platform. Eight product lines. Real-time policies, instant claims,
-            and enterprise analytics — all secured and unified under EIC.
+        <div class="hero-brand-block">
+          <span class="hero-motto">YOUR GUARANTEE — አለኝታዎ!</span>
+          <h1 class="hero-title">Nyala Insurance S.C.</h1>
+          <div class="hero-subtitle">ንያላ ኢንሹራንስ አ.ማ.</div>
+          <p class="hero-desc">
+            One platform. Multiple insurance lines. Real-time policies, instant claims,
+            and enterprise analytics — backed by Nyala Insurance.
           </p>
         </div>
       </div>
@@ -60,7 +60,7 @@ const isDark = computed(() => darkStore.isDark);
       <div class="login-right">
         <div class="glass-card">
           <div class="card-logo-wrapper">
-            <img :src="eicLogo" alt="EIC Logo" class="card-logo" />
+            <img :src="nyalaLogo" alt="Nyala Logo" class="card-logo" />
           </div>
           
           <!-- The form from the existing component -->
@@ -72,7 +72,7 @@ const isDark = computed(() => darkStore.isDark);
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shield-icon">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
-          Protected by EIC Secure Login
+          Protected by Nyala Secure Login
         </div>
       </div>
     </div>
@@ -82,81 +82,81 @@ const isDark = computed(() => darkStore.isDark);
 <style scoped>
 /* ── CSS Variables for light/dark theming ── */
 .login-wrapper {
-  --bg-main: linear-gradient(180deg, #F8F9FB 0%, #eef2f9 100%);
-  --wave-1: rgba(27,42,94,0.05);
-  --wave-2: rgba(27,42,94,0.03);
-  --wave-3: rgba(27,42,94,0.02);
-  --wave-4: rgba(27,42,94,0.1);
+  --bg-main: linear-gradient(180deg, #FDF8F8 0%, #f7eded 100%);
+  --wave-1: rgba(122,28,33,0.05);
+  --wave-2: rgba(122,28,33,0.03);
+  --wave-3: rgba(122,28,33,0.02);
+  --wave-4: rgba(122,28,33,0.08);
   --circle-bg: #ffffff;
-  --circle-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-  --brand-color: #1B2A5E;
+  --circle-shadow: 0 15px 35px rgba(122, 28, 33, 0.15);
+  --brand-color: #7A1C21;
   --brand-motto: #D4AF37;
-  --brand-amharic: #4A90D9;
+  --brand-amharic: #9E2A30;
   --brand-desc: #475569;
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --card-border: rgba(27, 42, 94, 0.1);
-  --card-shadow: 0 15px 35px rgba(27, 42, 94, 0.1);
-  --footer-color: #1B2A5E;
+  --card-bg: rgba(255, 255, 255, 0.92);
+  --card-border: rgba(122, 28, 33, 0.12);
+  --card-shadow: 0 15px 35px rgba(122, 28, 33, 0.12);
+  --footer-color: #7A1C21;
   --shield-color: #D4AF37;
   --input-bg: #ffffff;
-  --input-border: rgba(27, 42, 94, 0.15);
-  --input-color: #1B2A5E;
-  --input-focus-border: #4A90D9;
-  --input-focus-shadow: 0 0 0 3px rgba(74, 144, 217, 0.25);
-  --label-color: #1B2A5E;
-  --subtitle-color: #475569;
+  --input-border: rgba(122, 28, 33, 0.18);
+  --input-color: #0F172A;
+  --input-focus-border: #7A1C21;
+  --input-focus-shadow: 0 0 0 3px rgba(122, 28, 33, 0.2);
+  --label-color: #7A1C21;
+  --subtitle-color: #64748B;
   --toggle-bg: rgba(255,255,255,0.85);
-  --toggle-border: rgba(27,42,94,0.15);
-  --toggle-color: #1B2A5E;
-  --forgot-color: #D4AF37;
-  --forgot-hover: #f1d471;
-  --btn-bg: #D4AF37;
-  --btn-color: #1B2A5E;
-  --btn-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-  --btn-hover-bg: #e2be4a;
-  --btn-hover-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+  --toggle-border: rgba(122,28,33,0.15);
+  --toggle-color: #7A1C21;
+  --forgot-color: #7A1C21;
+  --forgot-hover: #9E2A30;
+  --btn-bg: linear-gradient(135deg, #7A1C21, #9E2A30);
+  --btn-color: #ffffff;
+  --btn-shadow: 0 4px 15px rgba(122, 28, 33, 0.35);
+  --btn-hover-bg: linear-gradient(135deg, #9E2A30, #541216);
+  --btn-hover-shadow: 0 6px 20px rgba(122, 28, 33, 0.45);
   --remember-color: #475569;
-  --remember-hover: #1B2A5E;
-  --success-bg: rgba(27, 42, 94, 0.95);
+  --remember-hover: #7A1C21;
+  --success-bg: rgba(122, 28, 33, 0.95);
 }
 
 .login-wrapper.dark {
-  --bg-main: linear-gradient(180deg, #0a0e1a 0%, #111827 100%);
-  --wave-1: rgba(99,102,241,0.08);
-  --wave-2: rgba(99,102,241,0.05);
-  --wave-3: rgba(99,102,241,0.03);
-  --wave-4: rgba(99,102,241,0.12);
+  --bg-main: linear-gradient(180deg, #120506 0%, #1c0a0c 100%);
+  --wave-1: rgba(122,28,33,0.12);
+  --wave-2: rgba(122,28,33,0.08);
+  --wave-3: rgba(122,28,33,0.05);
+  --wave-4: rgba(122,28,33,0.18);
   --circle-bg: rgba(255,255,255,0.06);
   --circle-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
   --brand-color: #f1f5f9;
-  --brand-motto: #818cf8;
-  --brand-amharic: #60a5fa;
-  --brand-desc: rgba(255,255,255,0.6);
+  --brand-motto: #D4AF37;
+  --brand-amharic: #e57373;
+  --brand-desc: rgba(255,255,255,0.7);
   --card-bg: rgba(255, 255, 255, 0.06);
-  --card-border: rgba(255, 255, 255, 0.1);
-  --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 60px rgba(99,102,241,0.1);
-  --footer-color: rgba(255,255,255,0.6);
-  --shield-color: #818cf8;
+  --card-border: rgba(212, 175, 55, 0.2);
+  --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 60px rgba(122,28,33,0.2);
+  --footer-color: rgba(255,255,255,0.7);
+  --shield-color: #D4AF37;
   --input-bg: rgba(255,255,255,0.06);
   --input-border: rgba(255,255,255,0.12);
   --input-color: #f1f5f9;
-  --input-focus-border: #6366f1;
-  --input-focus-shadow: 0 0 0 3px rgba(99,102,241,0.25);
-  --label-color: rgba(255,255,255,0.7);
-  --subtitle-color: rgba(255,255,255,0.5);
+  --input-focus-border: #9E2A30;
+  --input-focus-shadow: 0 0 0 3px rgba(158,42,48,0.3);
+  --label-color: rgba(255,255,255,0.8);
+  --subtitle-color: rgba(255,255,255,0.55);
   --toggle-bg: rgba(255,255,255,0.08);
   --toggle-border: rgba(255,255,255,0.15);
   --toggle-color: rgba(255,255,255,0.7);
-  --forgot-color: #818cf8;
-  --forgot-hover: #a5b4fc;
-  --btn-bg: linear-gradient(135deg, #4f46e5, #6366f1);
+  --forgot-color: #D4AF37;
+  --forgot-hover: #f1d471;
+  --btn-bg: linear-gradient(135deg, #7A1C21, #9E2A30);
   --btn-color: #ffffff;
-  --btn-shadow: 0 4px 20px rgba(99,102,241,0.35);
-  --btn-hover-bg: linear-gradient(135deg, #6366f1, #818cf8);
-  --btn-hover-shadow: 0 6px 28px rgba(99,102,241,0.5);
-  --remember-color: rgba(255,255,255,0.45);
-  --remember-hover: rgba(255,255,255,0.85);
-  --success-bg: rgba(10, 14, 26, 0.95);
+  --btn-shadow: 0 4px 20px rgba(122,28,33,0.5);
+  --btn-hover-bg: linear-gradient(135deg, #9E2A30, #b83238);
+  --btn-hover-shadow: 0 6px 28px rgba(122,28,33,0.7);
+  --remember-color: rgba(255,255,255,0.55);
+  --remember-hover: rgba(255,255,255,0.9);
+  --success-bg: rgba(18, 5, 6, 0.95);
 }
 
 .login-wrapper {
@@ -274,70 +274,82 @@ const isDark = computed(() => darkStore.isDark);
 .login-left {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  align-items: flex-start;
+  gap: 1.25rem;
   animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.illustration-circle {
-  width: 100%;
-  max-width: 300px;
-  aspect-ratio: 1 / 1;
-  background-color: var(--circle-bg);
-  border-radius: 50%;
+.hero-logo-box {
   display: flex;
-  justify-content: center;
   align-items: center;
-  box-shadow: var(--circle-shadow);
-  padding: 2rem;
-  box-sizing: border-box;
-  transition: background-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-.eic-illustration {
+.clean-nyala-logo {
+  max-width: 220px;
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
+  filter: drop-shadow(0 10px 25px rgba(122, 28, 33, 0.15));
+  transition: transform 0.3s ease;
 }
 
-.brand-info {
-  color: var(--brand-color);
-  transition: color 0.4s ease;
+.clean-nyala-logo:hover {
+  transform: scale(1.02);
 }
 
-.brand-motto {
-  font-size: 0.8rem;
-  font-weight: 700;
+.hero-brand-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-motto {
+  font-size: 0.85rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--brand-motto);
+  letter-spacing: 0.16em;
+  color: #7A1C21;
   margin-bottom: 0.5rem;
   transition: color 0.4s ease;
 }
 
-.brand-name {
-  font-size: 2.2rem;
+.login-wrapper.dark .hero-motto {
+  color: #D4AF37;
+}
+
+.hero-title {
+  font-size: 2.5rem;
   font-weight: 800;
-  line-height: 1.2;
-  margin: 0 0 0.5rem 0;
-  color: var(--brand-color);
+  line-height: 1.15;
+  margin: 0 0 0.3rem 0;
+  color: #7A1C21;
+  letter-spacing: -0.02em;
   transition: color 0.4s ease;
 }
 
-.brand-name-amharic {
+.login-wrapper.dark .hero-title {
+  color: #ffffff;
+}
+
+.hero-subtitle {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--brand-amharic);
+  color: #D4AF37;
   margin-bottom: 1rem;
   transition: color 0.4s ease;
 }
 
-.brand-desc {
-  font-size: 1rem;
-  color: var(--brand-desc);
-  line-height: 1.6;
-  max-width: 90%;
+.hero-desc {
+  font-size: 0.95rem;
+  color: #475569;
+  line-height: 1.65;
+  max-width: 460px;
   margin: 0;
   transition: color 0.4s ease;
+}
+
+.login-wrapper.dark .hero-desc {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .login-right {
@@ -376,19 +388,18 @@ const isDark = computed(() => darkStore.isDark);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem 1.5rem 0;
+  padding: 2rem 1.5rem 0.25rem;
 }
 
 .card-logo {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
-  /* Add a soft glow behind the logo */
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
+  filter: drop-shadow(0 4px 12px rgba(122, 28, 33, 0.15));
 }
 
 .login-footer {
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -414,11 +425,11 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 :deep(.lf-body) {
-  padding: 1rem 2rem 2rem;
+  padding: 0.75rem 2rem 2.25rem;
 }
 
 :deep(.lf-header) {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 :deep(.lf-header-icon) {
@@ -491,30 +502,39 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 :deep(.lf-submit-btn) {
-  background: var(--btn-bg) !important;
-  color: var(--btn-color) !important;
+  background: linear-gradient(135deg, #7A1C21 0%, #9E2A30 100%) !important;
+  color: #ffffff !important;
   border-radius: 12px !important;
-  box-shadow: var(--btn-shadow) !important;
-  transition: background 0.4s ease, color 0.4s ease, box-shadow 0.3s ease, transform 0.15s ease;
+  height: 48px !important;
+  min-height: 48px !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  margin-top: 0.5rem !important;
+  box-shadow: 0 4px 18px rgba(122, 28, 33, 0.35) !important;
+  transition: background 0.4s ease, color 0.4s ease, box-shadow 0.3s ease, transform 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
 }
 
 :deep(.lf-submit-btn:hover) {
-  background: var(--btn-hover-bg) !important;
-  transform: translateY(-2px);
-  box-shadow: var(--btn-hover-shadow) !important;
+  background: linear-gradient(135deg, #9E2A30 0%, #541216 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 22px rgba(122, 28, 33, 0.45) !important;
 }
 
 :deep(.lf-btn-content) {
-  color: var(--btn-color) !important;
+  color: #ffffff !important;
   transition: color 0.4s ease;
 }
 
 :deep(.lf-trust) {
-  display: none; /* Hide internal trust strip, we have the footer */
+  display: none !important; /* Hide internal trust strip */
 }
 
 :deep(.lf-footer) {
-  display: none; /* Hide internal footer */
+  display: none !important; /* Hide internal footer */
 }
 
 /* Success overlay adjustments */

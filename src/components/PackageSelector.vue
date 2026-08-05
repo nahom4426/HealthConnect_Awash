@@ -188,11 +188,10 @@ function shouldShowDepSumAssuredOnly(pkg) {
 }
 
 function shouldUseDependentMainFields(pkg) {
-  // On dependent screen, only Dependent_Shared_Plan uses depSumAssured/depUsedBenefit as member-specific values.
-  // Family_Shared_Plan should display insured totals (sumAssured/used).
+  // On dependent screen, both Individual_Plan and Dependent_Shared_Plan use depSumAssured/depUsedBenefit.
   if (!props.dependantUuid) return false;
   const pt = normalizePlanType(pkg?.planType);
-  return pt === 'Dependent_Shared_Plan';
+  return pt === 'Dependent_Shared_Plan' || pt === 'Individual_Plan';
 }
 
 function displayedSumAssured(pkg) {
@@ -202,9 +201,10 @@ function displayedSumAssured(pkg) {
 }
 
 function displayedUsed(pkg) {
-  return shouldUseDependentMainFields(pkg)
-    ? Number(pkg?.depUsedBenefit) || 0
-    : Number(pkg?.used) || 0;
+  if (shouldUseDependentMainFields(pkg)) {
+    return Number(pkg?.depUsedBenefit) || Number(pkg?.used) || 0;
+  }
+  return Number(pkg?.used) || 0;
 }
 
 function isUsedDisabled(pkg) {
@@ -212,7 +212,7 @@ function isUsedDisabled(pkg) {
   if (isDependentRowReadOnly(pkg)) return true;
 
   const initial = shouldUseDependentMainFields(pkg)
-    ? Number(pkg?.initialDepUsedBenefit) || 0
+    ? (Number(pkg?.initialDepUsedBenefit) || Number(pkg?.initialUsed) || 0)
     : Number(pkg?.initialUsed) || 0;
 
   return initial !== 0;
@@ -240,6 +240,13 @@ function optionsForPackage(pkg) {
     return dependentExtraPlanTypeOptions.value.filter(o => o.value === 'Dual_Premium_dependent_Shared_Plan');
   }
   return insuredPlanTypeOptions.value.filter(o => o.value === 'Individual_Plan');
+}
+
+function getCupPackageOptions(pkg) {
+  if (!props.insuredPersonUuid) {
+    return (packagesWithSumAssured.value || []).filter(p => p.packageUuid !== pkg.packageUuid);
+  }
+  return allSelectedPackages.value.filter(p => p.packageUuid !== pkg.packageUuid);
 }
 
 // Debounced update function
@@ -303,25 +310,7 @@ function updatePackageSelection(pkg, isChecked, event) {
     newPackages[index] = {
       ...newPackages[index],
       isSelected: false,
-      selectedAt: null,
-      sumAssured: 0,
-      used: 0,
-      initialUsed: 0,
-      depSumAssured: 0,
-      depUsedBenefit: 0,
-      initialDepUsedBenefit: 0,
-      status: 'ACTIVE',
-      planType: 'Individual_Plan',
-      cupEnabled: false,
-      cupPackageUuid: null,
-      depCupEnabled: false,
-      depCupPackageUuid: null,
-      excessAllowed: false,
-      allowedAmount: 0,
-      excessPercentage: 0,
-      depExcessAllowed: false,
-      depAllowedAmount: 0,
-      depExcessPercentage: 0
+      selectedAt: null
     };
     // Remove from expanded when unselected
     expandedPackages.value.delete(pkg.packageUuid);
@@ -539,6 +528,7 @@ async function fetchData() {
     
     const preSelected = Array.isArray(dropdownPkgsResponse?.data) ? dropdownPkgsResponse.data : [];
     const insuredEligible = Array.isArray(insuredDropdownPkgsResponse?.data) ? insuredDropdownPkgsResponse.data : [];
+    insuredEligiblePackages.value = insuredEligible;
     
     // Start collapsed by default (even if pre-selected/active)
     expandedPackages.value = new Set();
@@ -875,7 +865,7 @@ onMounted(() => {
               >
                 <option value="">Select package</option>
                 <option
-                  v-for="opt in allSelectedPackages.filter(p => p.packageUuid !== pkg.packageUuid)"
+                  v-for="opt in getCupPackageOptions(pkg)"
                   :key="opt.packageUuid"
                   :value="opt.packageUuid"
                 >
@@ -1224,7 +1214,7 @@ onMounted(() => {
                 >
                   <option value="">Select package</option>
                   <option
-                    v-for="opt in allSelectedPackages.filter(p => p.packageUuid !== pkg.packageUuid)"
+                    v-for="opt in getCupPackageOptions(pkg)"
                     :key="opt.packageUuid"
                     :value="opt.packageUuid"
                   >

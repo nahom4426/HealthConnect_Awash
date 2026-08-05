@@ -26,7 +26,7 @@ function handleSubmit() {
     return;
   }
   const selected = selectedPackages.value
-    .filter((pkg) => pkg.isSelected && Number(pkg.sumAssured) > 0)
+    .filter((pkg) => pkg.isSelected && Number(pkg.depSumAssured) > 0)
     .filter((pkg) => (pkg.planType || 'Individual_Plan') === 'Individual_Plan');
 
   if (selected.length === 0) {
@@ -47,10 +47,10 @@ function handleSubmit() {
           serviceQuotedUuid: props.data.serviceQuotedUuid || null,
           packageUuid: pkg.packageUuid,
           quotationUuid: props.data.quotationUuid || pkg.quotationUuid || null,
-          sumAssured: Number(pkg.sumAssured) || 0,
-          depSumAssured: Number(pkg.depSumAssured) || 0,
-          depUsedBenefit: Number(pkg.depUsedBenefit) || 0,
-          usedBenefit: Number(pkg.usedBenefit ?? pkg.used) || 0,
+          sumAssured: 0,
+          depSumAssured: Number(pkg.depSumAssured) || Number(pkg.sumAssured) || 0,
+          depUsedBenefit: Number(pkg.depUsedBenefit) || Number(pkg.used) || 0,
+          usedBenefit: 0,
           excessUsedBenefit: Number(pkg.excessUsedBenefit) || 0,
           excessAllowed: !!pkg.excessAllowed,
           cupPackageUuid: pkg.cupEnabled ? (pkg.cupPackageUuid || null) : null,
@@ -135,7 +135,8 @@ function handleSubmit() {
             <Button
               type="primary"
               html-type="submit"
-               v-if="!isReadOnly"
+              v-if="!isReadOnly"
+              :pending="apiRequest.pending.value"
               class="p-2 pt-4 text-white bg-primary"
             >
               Save Packages

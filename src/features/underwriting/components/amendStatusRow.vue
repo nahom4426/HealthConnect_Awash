@@ -71,6 +71,13 @@ function openDeleteModal(row) {
   });
 }
 
+function openContributionModal(row) {
+  openModal('ManageBenefitContributions', {
+    payerInstitutionContractUuid: row.payerInstitutionContractUuid,
+    contract: row
+  });
+}
+
 function toggleDropdown(event, uuid) {
   event.stopPropagation();
   closeAllDropdowns();
@@ -145,6 +152,18 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
             d="M15.232 5.232l3.536 3.536M9 11l3 3L20.485 5.515a2.121 2.121 0 10-3-3L9 11zm0 0L4 16v4h4l5-5" />
     </svg>
     <span class="text-sm font-medium">Edit Policy</span>
+  </button>
+  <button
+    @click.stop="openContributionModal(row)"
+    class="flex p-2 text-green-600 bg-green-50 rounded-lg rounded-full transition-colors hover:bg-green-100 hover:text-green-700"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="w-5 h-5"
+         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span class="text-sm font-medium">Contributions</span>
   </button>
   <button
   @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}/${row?.institutionName}?pageContext=amend`)"

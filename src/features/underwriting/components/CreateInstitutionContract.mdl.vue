@@ -7,8 +7,7 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { useRoute } from 'vue-router';
-import { createInstitutionContract, updateBenefitContributions } from '../api/underwritingApi';
-import { getPackages } from '@/features/product_settings/api/coverageApi';
+import { createInstitutionContract } from '../api/underwritingApi';
 import ContractForm from "../form/ContractForm.vue";
 import { useInstitutionContract } from "../store/institutionContractsStore";
 
@@ -56,17 +55,6 @@ function createContract({ values }) {
       toasted('Institution contract created successfully', 'success');
       if (payload) {
         institutionStore.addInstitution(payload);
-      }
-
-      if (payload?.payerInstitutionContractUuid) {
-        getPackages().then((pkgRes) => {
-          const pkgs = Array.isArray(pkgRes?.data) ? pkgRes.data : (Array.isArray(pkgRes) ? pkgRes : []);
-          const contributions = pkgs.map((pkg) => ({
-            benefitPackageUuid: pkg.packageUuid || pkg.uuid,
-            contributionPercentage: 100
-          }));
-          updateBenefitContributions(payload.payerInstitutionContractUuid, contributions).catch(err => console.error(err));
-        });
       }
 
       console.log('[CreateInstitutionContract] calling onRefetch:', typeof props.data.onRefetch);

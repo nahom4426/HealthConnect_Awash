@@ -17,7 +17,7 @@ export function forgotPassword(email) {
 }
 
 export function checkResetCodeAndSetPassword(data) {
-  return api.post(`${path}/password/checkresetcode`, {
+  return api.put(`${path}/resetPassword`, {
     passwordResetCode: data.passwordResetCode,
     newPassword: data.newPassword,
     confirmPassword: data.confirmPassword,

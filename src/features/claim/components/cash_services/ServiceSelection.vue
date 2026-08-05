@@ -344,11 +344,43 @@ function getCartTotalForPackage(packageUuid: string, excludeIndex: number | null
 }
 
 function getRemainingForPackage(packageUuid: string, excludeIndex: number | null = null): number {
-  const p = ((packagesReq.data.value as any[]) || []).find((x: any) => x?.packageUuid === packageUuid);
+  const list = (packagesReq.data.value as any[]) || [];
+  const p = list.find((x: any) => x?.packageUuid === packageUuid);
+  if (!p) return 0;
+  
   const limit = getPackageLimit(p);
   const used = getPackageUsed(p);
   const cart = getCartTotalForPackage(packageUuid, excludeIndex);
-  return limit - used - cart;
+  const ownRemaining = limit - used - cart;
+
+  // Check cup relation
+  let cupUuid = p.cupPackageUuid || null;
+  if (!cupUuid) {
+    const isCupPackage = list.some((x: any) => x?.cupPackageUuid === p.packageUuid);
+    if (isCupPackage) {
+      cupUuid = p.packageUuid;
+    }
+  }
+
+  if (cupUuid) {
+    const cupPkg = list.find((x: any) => x?.packageUuid === cupUuid);
+    if (cupPkg) {
+      const cupLimit = getPackageLimit(cupPkg);
+      const cuppedPkgs = list.filter(
+        (x: any) => x?.cupPackageUuid === cupUuid || x?.packageUuid === cupUuid
+      );
+      
+      const totalUsedInCup = cuppedPkgs.reduce((sum, x) => sum + getPackageUsed(x), 0);
+      const totalCartInCup = cuppedPkgs.reduce(
+        (sum, x) => sum + getCartTotalForPackage(x.packageUuid, excludeIndex),
+        0
+      );
+      const cupRemaining = cupLimit - totalUsedInCup - totalCartInCup;
+      return Math.min(ownRemaining, cupRemaining);
+    }
+  }
+
+  return ownRemaining;
 }
 
 const selectedPackageBalance = computed(() => {
@@ -364,7 +396,7 @@ const selectedPackageBalance = computed(() => {
   const limit = getPackageLimit(p);
   const used = getPackageUsed(p);
   const cart = getCartTotalForPackage(p.packageUuid);
-  const remaining = limit - used - cart;
+  const remaining = getRemainingForPackage(p.packageUuid);
   return { limit, used, cart, remaining };
 });
 
@@ -705,18 +737,50 @@ const itemsWithCoverage = computed(() => {
   const list = items.value || [];
   const pkgs: any[] = (packagesReq.data.value as any[]) || [];
   const remainingMap = new Map<string, number>();
+  const cupRemainingMap = new Map<string, number>();
 
   return list.map((it) => {
     const key = it.packageUuid;
+    const p = pkgs.find((x: any) => x?.packageUuid === key);
+
     if (!remainingMap.has(key)) {
-      const p = pkgs.find((x: any) => x?.packageUuid === key);
       const start = getPackageLimit(p) - getPackageUsed(p);
       remainingMap.set(key, start);
     }
 
-    const before = remainingMap.get(key) || 0;
-    const after = before - Number(it.totalPrice || 0);
-    remainingMap.set(key, after);
+    let cupUuid: string | null = null;
+    if (p) {
+      cupUuid = p.cupPackageUuid || null;
+      if (!cupUuid) {
+        const isCupPackage = pkgs.some((x: any) => x?.cupPackageUuid === p.packageUuid);
+        if (isCupPackage) {
+          cupUuid = p.packageUuid;
+        }
+      }
+    }
+
+    if (cupUuid && !cupRemainingMap.has(cupUuid)) {
+      const cupPkg = pkgs.find((x: any) => x?.packageUuid === cupUuid);
+      const cupLimit = getPackageLimit(cupPkg);
+      const cuppedPkgs = pkgs.filter(
+        (x: any) => x?.cupPackageUuid === cupUuid || x?.packageUuid === cupUuid
+      );
+      const totalUsedInCup = cuppedPkgs.reduce((sum, x) => sum + getPackageUsed(x), 0);
+      cupRemainingMap.set(cupUuid, cupLimit - totalUsedInCup);
+    }
+
+    const beforeOwn = remainingMap.get(key) || 0;
+    const afterOwn = beforeOwn - Number(it.totalPrice || 0);
+    remainingMap.set(key, afterOwn);
+
+    let afterCup = afterOwn;
+    if (cupUuid) {
+      const beforeCup = cupRemainingMap.get(cupUuid) || 0;
+      afterCup = beforeCup - Number(it.totalPrice || 0);
+      cupRemainingMap.set(cupUuid, afterCup);
+    }
+
+    const after = cupUuid ? Math.min(afterOwn, afterCup) : afterOwn;
 
     return {
       ...it,

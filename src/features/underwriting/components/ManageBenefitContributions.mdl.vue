@@ -5,6 +5,8 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import { closeModal } from "@customizer/modal-x";
 import Form from "@/components/new_form_builder/Form.vue";
 import Button from "@/components/Button.vue";
+import Toggle from "@/components/new_form_elements/Toggle.vue";
+import Select from "@/components/new_form_elements/Select.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from '@/utils/utils';
 import { getPackages } from '@/features/product_settings/api/coverageApi';
@@ -58,7 +60,9 @@ async function fetchData() {
         packageCode: pkg.packageCode,
         isSelected: !!existing,
         contributionPercentage: existing ? existing.contributionPercentage : 100,
-        benefitContributionUuid: existing ? existing.benefitContributionUuid : null
+        benefitContributionUuid: existing ? existing.benefitContributionUuid : null,
+        benefitPooling: existing ? existing.benefitPooling : false,
+        benefitPoolingFrom: existing ? existing.benefitPoolingFrom : null
       };
     });
 
@@ -95,6 +99,12 @@ function applyBulkPercentage() {
   });
 }
 
+function getShareOptions(currentUuid) {
+  return packagesList.value
+    .filter(p => p.packageUuid !== currentUuid)
+    .map(p => ({ value: p.packageUuid, label: p.packageName }));
+}
+
 function sliderBackground(value) {
   const v = Math.min(100, Math.max(0, Number(value) || 0));
   return `linear-gradient(to right, #4f46e5 0%, #6366f1 ${v}%, #e5e7eb ${v}%, #e5e7eb 100%)`;
@@ -106,7 +116,9 @@ async function handleSubmit() {
 
   const payload = selected.map(pkg => ({
     benefitPackageUuid: pkg.packageUuid,
-    contributionPercentage: Number(pkg.contributionPercentage) || 0
+    contributionPercentage: Number(pkg.contributionPercentage) || 0,
+    benefitPooling: !!pkg.benefitPooling,
+    benefitPoolingFrom: pkg.benefitPooling ? (pkg.benefitPoolingFrom || null) : null
   }));
 
   try {
@@ -217,46 +229,72 @@ onMounted(() => {
               <div
                 v-for="pkg in packagesList"
                 :key="pkg.packageUuid"
-                class="flex items-center p-4 rounded-xl border transition-all duration-150"
+                class="flex flex-col p-4 rounded-xl border transition-all duration-150"
                 :class="pkg.isSelected
                   ? 'bg-white border-indigo-200 shadow-sm ring-1 ring-indigo-100'
                   : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'"
               >
-                <input
-                  :id="`pkg-${pkg.packageUuid}`"
-                  type="checkbox"
-                  v-model="pkg.isSelected"
-                  @change="updateSelectAllState"
-                  class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 shrink-0 cursor-pointer"
-                />
-
-                <label
-                  :for="`pkg-${pkg.packageUuid}`"
-                  class="flex-1 ml-3.5 min-w-0 cursor-pointer"
-                >
-                  <div class="text-sm font-semibold text-gray-900 truncate">{{ pkg.packageName }}</div>
-                  <div class="text-xs text-gray-400">{{ pkg.packageCode }}</div>
-                </label>
-
-                <div v-if="pkg.isSelected" class="flex items-center gap-3 ml-4 w-64 shrink-0">
+                <!-- Row for checkbox, name, slider -->
+                <div class="flex items-center w-full">
                   <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    v-model="pkg.contributionPercentage"
-                    class="modern-slider flex-1"
-                    :style="{ background: sliderBackground(pkg.contributionPercentage) }"
+                    :id="`pkg-${pkg.packageUuid}`"
+                    type="checkbox"
+                    v-model="pkg.isSelected"
+                    @change="updateSelectAllState"
+                    class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 shrink-0 cursor-pointer"
                   />
-                  <div class="relative w-20 shrink-0">
+
+                  <label
+                    :for="`pkg-${pkg.packageUuid}`"
+                    class="flex-1 ml-3.5 min-w-0 cursor-pointer"
+                  >
+                    <div class="text-sm font-semibold text-gray-900 truncate">{{ pkg.packageName }}</div>
+                    <div class="text-xs text-gray-400">{{ pkg.packageCode }}</div>
+                  </label>
+
+                  <div v-if="pkg.isSelected" class="flex items-center gap-3 ml-4 w-64 shrink-0">
                     <input
-                      type="number"
-                      v-model="pkg.contributionPercentage"
-                      class="py-1.5 pr-6 pl-2.5 w-full text-sm font-medium text-right text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
+                      type="range"
                       min="0"
                       max="100"
+                      step="1"
+                      v-model="pkg.contributionPercentage"
+                      class="modern-slider flex-1"
+                      :style="{ background: sliderBackground(pkg.contributionPercentage) }"
                     />
-                    <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">%</span>
+                    <div class="relative w-20 shrink-0">
+                      <input
+                        type="number"
+                        v-model="pkg.contributionPercentage"
+                        class="py-1.5 pr-6 pl-2.5 w-full text-sm font-medium text-right text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
+                        min="0"
+                        max="100"
+                      />
+                      <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Expanded area for benefit pooling -->
+                <div v-if="pkg.isSelected" class="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-4">
+                  <Toggle
+                    v-model="pkg.benefitPooling"
+                    :name="'benefitPooling_' + pkg.packageUuid"
+                    label="Benefit Pooling"
+                    description="Enable benefit pooling across packages - unused benefits from other packages can be utilized when this package's coverage limit is reached"
+                  />
+                  <div v-if="pkg.benefitPooling" class="pl-11">
+                    <Select
+                      v-model="pkg.benefitPoolingFrom"
+                      :name="'benefitPoolingFrom_' + pkg.packageUuid"
+                      :obj="true"
+                      :options="getShareOptions(pkg.packageUuid)"
+                      :validation="pkg.benefitPooling ? 'required' : ''"
+                      label="Select Source Package"
+                      :attributes="{
+                        placeholder: 'Choose a package to share benefits from',
+                      }"
+                    />
                   </div>
                 </div>
               </div>

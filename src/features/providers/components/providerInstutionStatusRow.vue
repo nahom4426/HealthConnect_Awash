@@ -43,36 +43,25 @@ const props = defineProps({
     type: Function,
     default: () => {}
   },
-  currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 25 },
-  // Checkbox selection props (from TableWithCheckBox)
-  selectedItems: {
-    type: Array,
-    default: null,
+  // Multi-select support
+  selectedUuids: {
+    type: Set,
+    default: () => new Set()
   },
-  toBeSelected: {
+  selectionKey: {
     type: String,
-    default: '',
+    default: 'payerProviderContractUuid'
   },
-  onToggleSelect: {
-    type: Function,
-    default: null,
-  },
-  showActions: {
-    type: Boolean,
-    default: true,
-  },
-  cells: {
-    type: Object,
-    default: () => ({}),
-  },
-  hideIndex: {
-    type: Boolean,
-    default: false,
-  },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 }
 });
 
-const emit = defineEmits(['row', 'remove']);
+const emit = defineEmits(['toggle-selection']);
+
+function toggleRow(row) {
+  const key = row[props.selectionKey] || row.providerUuid;
+  emit('toggle-selection', key);
+}
 
 const { addToast } = useToast();
 const route = useRoute();
@@ -123,7 +112,7 @@ function getBaseUrl() {
 }
 
 function handleImageError(event) {
-  event.target.src = '/assets/placeholder-logo.png ';
+  event.target.src = '/assets/placeholder-logo.png';
 }
 function handleEdit(row) {
   openModal('EditProvider', { 
@@ -172,21 +161,6 @@ function handleDocumentClick(event) {
   closeAllDropdowns();
 }
 
-// Checkbox helpers
-const hasCheckbox = computed(() => props.selectedItems !== null && props.onToggleSelect !== null);
-
-function isRowSelected(row) {
-  if (!hasCheckbox.value || !props.toBeSelected) return false;
-  const val = props.toBeSelected.split('.').reduce((s, k) => s?.[k], row);
-  return props.selectedItems.includes(val);
-}
-
-function handleToggleRow(row) {
-  if (!props.onToggleSelect || !props.toBeSelected) return;
-  const val = props.toBeSelected.split('.').reduce((s, k) => s?.[k], row);
-  props.onToggleSelect(val);
-}
-
 </script>
 
 <template>
@@ -194,8 +168,18 @@ function handleToggleRow(row) {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click.self="onRowClick(row)" 
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50" 
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+    :class="{ 'bg-blue-50': selectedUuids.has(row[selectionKey] || row.providerUuid) }"
   >  
+    <!-- Checkbox -->
+    <td class="px-4 py-3" @click.stop>
+      <input
+        type="checkbox"
+        :checked="selectedUuids.has(row[selectionKey] || row.providerUuid)"
+        @change="toggleRow(row)"
+        class="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer focus:ring-blue-500"
+      />
+    </td>
     <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
 
     <!-- Debug row for specific provider -->
@@ -260,8 +244,8 @@ function handleToggleRow(row) {
       </span>
     </td>  
 
-    <!-- Actions Column (only when showActions is true and no checkbox mode) -->
-    <td v-if="showActions && !hasCheckbox" class="p-3">  
+    <!-- Actions Column -->
+    <td class="p-3">  
       <div class="relative dropdown-container">
         <button 
           @click.stop="toggleDropdown($event, row.providerUuid || row.id)"
@@ -289,19 +273,6 @@ function handleToggleRow(row) {
             </button>
           </div>
         </div>
-      </div>
-    </td>
-
-    <!-- Checkbox Column (when in checkbox/selection mode) -->
-    <td v-if="hasCheckbox" class="p-3">
-      <div class="flex items-center justify-center">
-        <input
-          :checked="isRowSelected(row)"
-          @change="handleToggleRow(row)"
-          @click.stop
-          type="checkbox"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-        />
       </div>
     </td>
   </tr>

@@ -88,28 +88,21 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
       <!-- Index -->
       <td class="p-4 font-semibold text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
-      <!-- Institution Name -->
+      <!-- Institution Name & CIF -->
       <td class="p-4">
         <div class="flex flex-col">
           <span class="font-semibold text-gray-900">{{ row.institutionName }}</span>
-          <span class="mt-1 text-xs text-gray-500">{{ row.email }}</span>
+          <span class="mt-1 text-xs text-gray-500">CIF: {{ row.cifNumber || '—' }} <span v-if="row.email"> • {{ row.email }}</span></span>
         </div>
       </td>
 
-      <!-- TIN Number -->
-      
-      <td class="p-4 text-green-700">{{ row.cifNumber || '—' }}</td>
- <td class="p-4">
+      <!-- Branch Name & Phone -->
+      <td class="p-4">
         <div class="flex flex-col">
           <span class="font-semibold text-gray-900">{{ row.branchName }}</span>
-          <span class="mt-1 text-xs text-gray-500">{{ row.address1 }}</span>
+          <span class="mt-1 text-xs text-gray-500">{{ row.telephone || '—' }} <span v-if="row.address1"> • {{ row.address1 }}</span></span>
         </div>
       </td>
-      <!-- Insurance Number -->
-      <!-- <td class="p-4 text-gray-700">{{ row.institutionInsuranceNumber || '—' }}</td> -->
-
-      <!-- Phone -->
-      <td class="p-4 text-gray-700">{{ row.telephone || '—' }}</td>
 
       <!-- Status -->
       <td class="p-4">

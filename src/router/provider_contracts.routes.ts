@@ -8,6 +8,7 @@ import PendingContracts from "@/features/provider_contracts/pages/PendingContrac
 import ProviderContractIndex from "@/features/provider_contracts/pages/ProviderContractIndex.vue";
 import SuspendedContracts from "@/features/provider_contracts/pages/SuspendedContracts.vue";
 import service from "@/features/provider_contracts/service/pages/sevice.vue";
+import AddInstitutionsForContract from "@/features/provider_contracts/pages/AddInstitutionsForContract.vue";
 export default [
 	{
 		path: '/create_contract',
@@ -48,6 +49,12 @@ export default [
 				path: 'services/:id/:providerUuid/:providerName',
 				name: 'Provider Contract Services',
 				component: service,
+				props: true,
+			},
+			{
+				path: 'institutions/:payerProviderContractUuid/:contractName',
+				name: 'contractInstitutions',
+				component: AddInstitutionsForContract,
 				props: true,
 			}
 		]

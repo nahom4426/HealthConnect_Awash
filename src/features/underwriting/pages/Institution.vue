@@ -79,8 +79,8 @@ const openImportInstitutions = () => {
         <Table
           :pending="pending"
           :headers="{
-            head: ['Institution Name', 'CIF Number','Branch Name', 'Phone', 'Status', 'Actions'],
-            row: ['institutionName', 'cifNumber','branchName', 'telephone', 'status']
+            head: ['Institution Name', 'Branch Name', 'Status', 'Actions'],
+            row: ['institutionName', 'branchName', 'status']
           }"
           :rows="institutions"
           :rowCom="InstitutionStatusRow"

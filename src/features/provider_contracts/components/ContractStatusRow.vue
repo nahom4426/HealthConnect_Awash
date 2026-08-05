@@ -44,6 +44,10 @@ const props = defineProps({
     type: Function,
     default: () => {}
   },
+  onAddInstitutions: {
+    type: Function,
+    default: () => {}
+  },
   currentPage: { type: Number, default: 1 },
   perPage: { type: Number, default: 25 }
 });
@@ -297,6 +301,15 @@ onUnmounted(() => {
       >
         <i v-html="icons.details" class="text-indigo-500" />
         <span>Services</span>
+      </button>
+
+      <!-- 🏥 Add Institutions -->
+      <button
+        @click.stop="onAddInstitutions(row)"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+      >
+        <i v-html="icons.plus" class="text-green-500" />
+        <span>Add Institutions</span>
       </button>
 
       <!-- ⛔ Deactivate -->

@@ -22,9 +22,26 @@ const props = defineProps({
     type: Function,
     default: () => {}
   },
+  selectedUuids: {
+    type: Set,
+    default: () => new Set()
+  },
+  selectionKey: {
+    type: String,
+    default: 'mapContractUuid'
+  },
   currentPage: { type: Number, default: 1 },
   perPage: { type: Number, default: 25 }
 });
+
+const emit = defineEmits(['toggle-selection']);
+
+function toggleRow(row) {
+  const key = row[props.selectionKey];
+  if (key) {
+    emit('toggle-selection', key);
+  }
+}
 const router = useRouter();
 const route = useRoute();
 const { addToast } = useToast();
@@ -99,8 +116,19 @@ function handleDocumentClick(event) {
   <tr 
     v-for="(row, idx) in rowData" 
     :key="idx"
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50" 
+    @click="toggleRow(row)"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50 cursor-pointer"
+    :class="{ 'bg-red-50': selectedUuids.has(row[selectionKey]) }"
   >  
+    <!-- Checkbox -->
+    <td class="px-4 py-3" @click.stop>
+      <input
+        type="checkbox"
+        :checked="selectedUuids.has(row[selectionKey])"
+        @change="toggleRow(row)"
+        class="w-4 h-4 text-red-600 rounded border-gray-300 cursor-pointer focus:ring-red-500"
+      />
+    </td>
     <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
 
     <!-- Data Columns -->

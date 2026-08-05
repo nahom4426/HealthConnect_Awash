@@ -49,14 +49,14 @@ export function renewInstitutionContract(contractUuid, data) {
 }
 
 export function updateBenefitContributions(policyUuid, data) {
-  return api.addAuthenticationHeader().put(`/claimconnect/benefit-contributions/${policyUuid}`, data);
+  return api.addAuthenticationHeader().put(`/claimconnect/policy-benefit-agreement/${policyUuid}`, data);
 }
 
 export function getBenefitContributions(policyUuid) {
-  return api.addAuthenticationHeader().get(`/claimconnect/benefit-contributions/policy/${policyUuid}`);
+  return api.addAuthenticationHeader().get(`/claimconnect/policy-benefit-agreement/policy/${policyUuid}`);
 }
 
 export function deleteBenefitContribution(uuid) {
-  return api.addAuthenticationHeader().delete(`/claimconnect/benefit-contributions/${uuid}`);
+  return api.addAuthenticationHeader().delete(`/claimconnect/policy-benefit-agreement/${uuid}`);
 }
 

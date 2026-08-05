@@ -59,8 +59,7 @@ watch(
   () => {
     console.log('[MappedContractsDataProvider] refetch changed -> send', props.refetch);
     pagination.send();
-  },
-  { immediate: true }
+  }
 );
 
 const refresh = () => pagination.send();

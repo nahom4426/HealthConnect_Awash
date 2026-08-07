@@ -335,14 +335,18 @@ onMounted(() => { fetchChartData(); });
         <div
           v-for="(p, i) in rateProducts" :key="p.id"
           class="db-rc-card"
-          :style="`--rc:${p.color};animation-delay:${i * 50}ms`"
+          :style="`--rc:${p.color}; --rc-bg:${p.color}06; --rc-border:${p.color}25; --rc-icon-bg:${p.color}15; --rc-glow:${p.color}20; animation-delay:${i * 50}ms`"
           @click="router.push(`/rate-config/${p.id}`)"
         >
-          <div class="db-rc-card-icon" v-html="p.icon"></div>
-          <div class="db-rc-card-name">{{ p.name }}</div>
-          <div class="db-rc-card-meta">Updated {{ p.updated }}</div>
-          <div class="db-rc-card-arrow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          <div class="db-rc-card-top">
+            <div class="db-rc-card-icon-badge" v-html="p.icon"></div>
+            <div class="db-rc-card-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            </div>
+          </div>
+          <div class="db-rc-card-content">
+            <div class="db-rc-card-name">{{ p.name }}</div>
+            <div class="db-rc-card-meta">Updated {{ p.updated }}</div>
           </div>
         </div>
       </div>
@@ -644,42 +648,81 @@ onMounted(() => { fetchChartData(); });
 .db-rc-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 0.75rem;
+  gap: 0.875rem;
 }
+@media (max-width: 1280px) {
+  .db-rc-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  .db-rc-grid { grid-template-columns: repeat(1, 1fr); }
+}
+
 .db-rc-card {
-  border-radius: 12px;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
-  padding: 1rem 0.875rem 0.875rem;
+  border-radius: 16px;
+  border: 1.5px solid var(--rc-border, #e2e8f0);
+  background: #ffffff;
+  padding: 1.1rem 1rem;
   cursor: pointer;
-  display: flex; flex-direction: column; gap: 0.3rem;
-  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 0.875rem;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   animation: cardIn 0.45s cubic-bezier(0.22,1,0.36,1) both;
   position: relative; overflow: hidden;
+  box-sizing: border-box;
 }
-.db-rc-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: var(--rc);
-  border-radius: 12px 12px 0 0;
-}
+
 .db-rc-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+  background: #ffffff;
+  box-shadow: 0 12px 28px -4px var(--rc-glow, rgba(0,0,0,0.08));
   border-color: var(--rc);
 }
-.db-rc-card-icon {
-  display: flex; color: var(--rc); margin-bottom: 0.35rem;
+
+.db-rc-card-top {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
 }
-.db-rc-card-icon :deep(svg) { width: 22px; height: 22px; }
-.db-rc-card-name { font-size: 0.8125rem; font-weight: 800; color: #0f172a; }
-.db-rc-card-meta { font-size: 0.675rem; color: #94a3b8; }
+
+.db-rc-card-icon-badge {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--rc-icon-bg, #f1f5f9);
+  color: var(--rc);
+  border: 1px solid var(--rc-border, #e2e8f0);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.22s ease, background-color 0.22s ease;
+  flex-shrink: 0;
+}
+.db-rc-card-icon-badge :deep(svg) { width: 20px; height: 20px; }
+
+.db-rc-card:hover .db-rc-card-icon-badge {
+  transform: scale(1.06);
+}
+
+.db-rc-card-content {
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+
+.db-rc-card-name {
+  font-size: 0.875rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em;
+}
+
+.db-rc-card-meta {
+  font-size: 0.72rem; font-weight: 500; color: #64748b;
+}
+
 .db-rc-card-arrow {
-  margin-top: 0.5rem; color: var(--rc); opacity: 0;
-  display: flex; align-items: center;
-  transition: opacity 0.15s, transform 0.15s;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--rc-icon-bg, #f1f5f9);
+  color: var(--rc);
+  opacity: 0.6;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.22s ease;
 }
-.db-rc-card:hover .db-rc-card-arrow { opacity: 1; transform: translateX(3px); }
+
+.db-rc-card:hover .db-rc-card-arrow {
+  opacity: 1;
+  background: var(--rc);
+  color: #ffffff;
+  transform: translateX(2px);
+}
 
 /* ═══════════════════════════════════
    BOTTOM ROW
@@ -742,36 +785,59 @@ onMounted(() => { fetchChartData(); });
 .db-qa-header { margin-bottom: 1rem; }
 .db-qa-grid { display: flex; flex-direction: column; gap: 0.625rem; }
 .db-qa-btn {
-  display: flex; align-items: center; gap: 0.875rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 0.875rem;
   padding: 0.875rem 1rem;
   border-radius: 12px;
   border: 1.5px solid #e2e8f0;
   background: #fff;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.15s;
+  outline: none;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s, border-color 0.2s, background 0.2s;
   animation: cardIn 0.45s cubic-bezier(0.22,1,0.36,1) both;
 }
 .db-qa-btn:hover {
   transform: translateX(4px);
   border-color: var(--qa);
-  background: color-mix(in srgb, var(--qa) 5%, white);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  background: color-mix(in srgb, var(--qa) 6%, white);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.db-qa-btn:focus,
+.db-qa-btn:focus-visible,
+.db-qa-btn:active {
+  outline: none;
+  border-color: var(--qa);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
 }
 .db-qa-icon {
-  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   background: color-mix(in srgb, var(--qa) 12%, white);
   color: var(--qa);
+  transition: transform 0.25s ease;
 }
+.db-qa-btn:hover .db-qa-icon { transform: scale(1.06); }
 .db-qa-icon :deep(svg) { width: 18px; height: 18px; }
-.db-qa-label { font-size: 0.8375rem; font-weight: 700; color: #0f172a; }
-.db-qa-sub { font-size: 0.7rem; color: #94a3b8; margin-top: 0.1rem; }
-.db-qa-arrow {
-  margin-left: auto; color: var(--qa); opacity: 0; flex-shrink: 0;
-  transition: opacity 0.15s, transform 0.15s;
+.db-qa-label {
+  font-size: 0.85rem; font-weight: 700; color: #0f172a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.db-qa-btn:hover .db-qa-arrow { opacity: 1; transform: translateX(3px); }
+.db-qa-sub {
+  font-size: 0.72rem; color: #64748b; margin-top: 0.1rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.db-qa-arrow {
+  margin-left: auto; color: var(--qa); flex-shrink: 0;
+  width: 26px; height: 26px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--qa) 10%, transparent);
+  transition: all 0.2s ease;
+}
+.db-qa-btn:hover .db-qa-arrow {
+  background: var(--qa);
+  color: #fff;
+  transform: translateX(3px);
+}
 
 /* ═══════════════════════════════════
    RESPONSIVE

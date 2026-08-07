@@ -203,18 +203,19 @@ async function doDelete() {
     <div class="cc-header">
       <div class="cc-header-left">
         <div class="cc-header-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:20px;height:20px">
+          <!-- Contextual Vehicle Spec Icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM4 17H3v-4l3-5h10l3 5v4h-1M9 17h6"/>
           </svg>
         </div>
         <div>
-          <h1 class="cc-title">Car Configuration</h1>
-          <p class="cc-subtitle">Register and manage vehicle specifications</p>
+          <h1 class="cc-title">Vehicle Catalog & Specifications</h1>
+          <p class="cc-subtitle">Manage vehicle makes, models, and market valuation matrices</p>
         </div>
       </div>
-      <Button type="primary" size="sm" @click="showAdd = !showAdd">
+      <Button type="primary" size="sm" @click="showAdd = !showAdd" class="cc-btn-cobalt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:4px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-        {{ showAdd ? 'Close Form' : 'Register Car' }}
+        {{ showAdd ? 'Close Form' : 'Register Vehicle Spec' }}
       </Button>
     </div>
 
@@ -234,8 +235,8 @@ async function doDelete() {
     <Transition name="cc-slide">
       <div v-if="showAdd" class="cc-card cc-form-card">
         <div class="cc-card-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:#3b82f6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          <span>Register New Car</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:#2563eb"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <span>Register New Vehicle Specification</span>
         </div>
         <div class="cc-card-body">
 
@@ -264,10 +265,10 @@ async function doDelete() {
 
           <!-- Price Specifications -->
           <div class="cc-section-header">
-            <span class="cc-section-label">Price Specifications</span>
+            <span class="cc-section-label">Valuation Rules & Year Ranges</span>
             <button class="cc-add-row-btn" type="button" @click="addPriceRow">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-              Add Row
+              Add Year Range
             </button>
           </div>
 
@@ -275,8 +276,8 @@ async function doDelete() {
             <div class="cc-price-header">
               <span>From Make Year</span>
               <span>To Make Year</span>
-              <span>Min Market Value</span>
-              <span>Max Market Value</span>
+              <span>Min Market Value (ETB)</span>
+              <span>Max Market Value (ETB)</span>
               <span></span>
             </div>
             <div
@@ -304,7 +305,7 @@ async function doDelete() {
             <Button type="edge-primary" size="sm" @click="resetForm">Reset</Button>
             <Button type="primary" size="sm" :pending="saving" @click="submitSave">
               <svg v-if="!saving" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:4px"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              Register Car
+              Register Spec
             </Button>
           </div>
         </div>
@@ -315,30 +316,30 @@ async function doDelete() {
     <div class="cc-card">
       <div class="cc-card-header cc-card-header-list">
         <div class="cc-card-header-left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:#64748b"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-          <span>Registered Cars</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:#2563eb"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          <span>Catalog Index</span>
           <span v-if="cars.length" class="cc-count">{{ cars.length }}</span>
         </div>
         <div class="cc-search-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;color:#94a3b8"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
-          <input v-model="searchQ" class="cc-search-input" placeholder="Search cars…" />
+          <input v-model="searchQ" class="cc-search-input" placeholder="Filter vehicles…" />
         </div>
       </div>
 
       <div v-if="loading" class="cc-empty">
-        <svg class="cc-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;color:#94a3b8"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        <span>Loading…</span>
+        <svg class="cc-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;color:#2563eb"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>Loading vehicles…</span>
       </div>
 
       <div v-else-if="!cars.length" class="cc-empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:38px;height:38px;color:#cbd5e1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM4 17H3v-4l3-5h10l3 5v4h-1M9 17h6"/></svg>
-        <span>No car specifications found</span>
+        <span>No vehicle specifications found</span>
         <button class="cc-link" @click="showAdd = true">Register the first car</button>
       </div>
 
       <DataTable
         v-else
-        :headers="['#', 'Car Name', 'Type', 'Model', 'Engine', 'Price Specs', 'Actions']"
+        :headers="['#', 'Vehicle Name', 'Classification', 'Model', 'Engine Spec', 'Valuation Matrix', 'Actions']"
         :hide-index="true"
         class="cc-datatable"
       >
@@ -351,7 +352,7 @@ async function doDelete() {
           <td>
             <span v-if="(car.priceSpecificationResponses ?? car.priceSpecificationRequests)?.length" class="cc-spec-count">
               {{ (car.priceSpecificationResponses ?? car.priceSpecificationRequests).length }}
-              spec{{ (car.priceSpecificationResponses ?? car.priceSpecificationRequests).length > 1 ? 's' : '' }}
+              range{{ (car.priceSpecificationResponses ?? car.priceSpecificationRequests).length > 1 ? 's' : '' }}
             </span>
             <span v-else class="cc-muted">—</span>
           </td>
@@ -375,7 +376,7 @@ async function doDelete() {
         <div v-if="editTarget" class="cc-overlay" @click.self="editTarget = null">
           <div class="cc-modal cc-modal-lg">
             <div class="cc-modal-header">
-              <h3>Edit Car Specification</h3>
+              <h3>Edit Vehicle Specification</h3>
               <button class="cc-modal-close" @click="editTarget = null">×</button>
             </div>
             <div class="cc-modal-body">
@@ -399,7 +400,7 @@ async function doDelete() {
               </div>
 
               <div class="cc-section-header" style="margin-top:1rem">
-                <span class="cc-section-label">Price Specifications</span>
+                <span class="cc-section-label">Valuation Ranges</span>
                 <button class="cc-add-row-btn" type="button" @click="addEditPriceRow">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                   Add Row
@@ -449,7 +450,7 @@ async function doDelete() {
         <div v-if="deleteTarget" class="cc-overlay" @click.self="deleteTarget = null">
           <div class="cc-modal cc-modal-sm">
             <div class="cc-modal-header cc-modal-header-danger">
-              <h3>Delete Car Specification</h3>
+              <h3>Delete Vehicle Specification</h3>
               <button class="cc-modal-close" @click="deleteTarget = null">×</button>
             </div>
             <div class="cc-modal-body">
@@ -469,54 +470,55 @@ async function doDelete() {
 </template>
 
 <style scoped>
-.cc-root { padding: 1.5rem 2rem; min-height: 100%; background: #f8fafc; }
+.cc-root { padding: 1.75rem 2rem; min-height: 100%; background: #f8fafc; }
 
-/* Header */
-.cc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
-.cc-header-left { display: flex; align-items: center; gap: 0.75rem; }
-.cc-header-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #3b82f6, #6366f1); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
-.cc-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0; }
-.cc-subtitle { font-size: 0.75rem; color: #64748b; margin: 0; }
+/* Header - Contextual Cobalt Blue Theme */
+.cc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.cc-header-left { display: flex; align-items: center; gap: 0.85rem; }
+.cc-header-icon { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); }
+.cc-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
+.cc-subtitle { font-size: 0.78rem; color: #64748b; margin: 0; }
 
 /* Alerts */
-.cc-alert { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 500; margin-bottom: 0.75rem; }
+.cc-alert { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: 0.6rem; font-size: 0.78rem; font-weight: 500; margin-bottom: 1rem; }
 .cc-alert-error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 .cc-alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-.cc-alert-close { margin-left: auto; background: none; border: none; cursor: pointer; color: inherit; font-size: 1rem; line-height: 1; opacity: 0.7; }
+.cc-alert-close { margin-left: auto; background: none; border: none; cursor: pointer; color: inherit; font-size: 1.1rem; line-height: 1; opacity: 0.7; }
 .cc-alert-close:hover { opacity: 1; }
 
 /* Card */
-.cc-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; margin-bottom: 1.25rem; overflow: hidden; }
-.cc-card-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.82rem; font-weight: 600; color: #374151; }
+.cc-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.85rem; margin-bottom: 1.25rem; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
+.cc-card-header { display: flex; align-items: center; gap: 0.55rem; padding: 0.85rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; font-weight: 700; color: #1e293b; }
 .cc-card-header-list { justify-content: space-between; }
 .cc-card-header-left { display: flex; align-items: center; gap: 0.5rem; }
-.cc-count { background: #e0e7ff; color: #4f46e5; border-radius: 9999px; font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.45rem; }
+.cc-count { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 9999px; font-size: 0.68rem; font-weight: 800; padding: 0.12rem 0.5rem; }
 .cc-card-body { padding: 1.25rem; }
 
 /* Search */
-.cc-search-box { display: flex; align-items: center; gap: 0.4rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.3rem 0.65rem; }
-.cc-search-input { border: none; background: transparent; outline: none; font-size: 0.78rem; color: #334155; width: 160px; }
+.cc-search-box { display: flex; align-items: center; gap: 0.4rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 0.6rem; padding: 0.35rem 0.75rem; }
+.cc-search-box:focus-within { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.cc-search-input { border: none; background: transparent; outline: none; font-size: 0.78rem; color: #0f172a; width: 170px; }
 
 /* Section header */
-.cc-section-header { display: flex; align-items: center; justify-content: space-between; margin: 1rem 0 0.5rem; }
-.cc-section-label { font-size: 0.72rem; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; }
-.cc-add-row-btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.28rem 0.65rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 0.4rem; font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.cc-section-header { display: flex; align-items: center; justify-content: space-between; margin: 1.25rem 0 0.6rem; }
+.cc-section-label { font-size: 0.72rem; font-weight: 800; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; }
+.cc-add-row-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.7rem; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
 .cc-add-row-btn:hover { background: #dbeafe; }
 
 /* Price spec table */
-.cc-price-table { border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
-.cc-price-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 36px; gap: 0; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 0.45rem 0.75rem; }
-.cc-price-header span { font-size: 0.68rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+.cc-price-table { border: 1px solid #e2e8f0; border-radius: 0.6rem; overflow: hidden; }
+.cc-price-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 36px; gap: 0; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; }
+.cc-price-header span { font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
 .cc-price-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 36px; gap: 0.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; }
 .cc-price-row:last-child { border-bottom: none; }
 
 /* Fields */
 .cc-field { display: flex; flex-direction: column; gap: 0.3rem; }
-.cc-field label { font-size: 0.72rem; font-weight: 600; color: #374151; white-space: nowrap; }
+.cc-field label { font-size: 0.72rem; font-weight: 700; color: #374151; white-space: nowrap; }
 .cc-req { color: #ef4444; }
 .cc-field-err { font-size: 0.68rem; color: #ef4444; }
-.cc-input { padding: 0.45rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.82rem; color: #1e293b; background: #fff; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; box-sizing: border-box; }
-.cc-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.cc-input { padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.82rem; color: #0f172a; background: #fff; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; box-sizing: border-box; }
+.cc-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
 .cc-input-err { border-color: #ef4444 !important; }
 
 /* Grid */
@@ -528,31 +530,31 @@ async function doDelete() {
 
 /* Table */
 .cc-datatable :deep(.overflow-x-auto) { border: none; border-radius: 0; box-shadow: none; }
-.cc-row { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
-.cc-row:hover { background: #f8fafc; }
-.cc-row td { padding: 0.6rem 1rem; color: #334155; vertical-align: middle; font-size: 0.82rem; }
-.cc-idx { color: #94a3b8; font-size: 0.75rem; font-weight: 600; width: 36px; }
-.cc-type-badge { display: inline-block; padding: 0.15rem 0.55rem; background: #eff6ff; color: #2563eb; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; }
-.cc-model { font-weight: 600; color: #0f172a; }
-.cc-spec-count { display: inline-block; padding: 0.12rem 0.45rem; background: #f0fdf4; color: #15803d; border-radius: 9999px; font-size: 0.68rem; font-weight: 600; border: 1px solid #bbf7d0; }
+.cc-row { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+.cc-row:hover { background: #eff6ff; }
+.cc-row td { padding: 0.8rem 1rem; color: #334155; vertical-align: middle; font-size: 0.82rem; }
+.cc-idx { color: #94a3b8; font-size: 0.75rem; font-weight: 700; width: 36px; }
+.cc-type-badge { display: inline-block; padding: 0.2rem 0.65rem; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 9999px; font-size: 0.72rem; font-weight: 800; }
+.cc-model { font-weight: 700; color: #0f172a; }
+.cc-spec-count { display: inline-block; padding: 0.15rem 0.55rem; background: #f0fdf4; color: #15803d; border-radius: 9999px; font-size: 0.68rem; font-weight: 700; border: 1px solid #bbf7d0; }
 .cc-muted { color: #94a3b8; }
 
 /* Actions */
-.cc-actions { display: flex; align-items: center; justify-content: flex-start; gap: 0.3rem; }
-.cc-icon-btn { width: 28px; height: 28px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.cc-actions { display: flex; align-items: center; justify-content: flex-start; gap: 0.35rem; }
+.cc-icon-btn { width: 30px; height: 30px; border-radius: 7px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
 .cc-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.cc-btn-edit { background: #eff6ff; color: #2563eb; }
-.cc-btn-edit:hover { background: #dbeafe; }
-.cc-btn-del { background: #fef2f2; color: #dc2626; }
-.cc-btn-del:not(:disabled):hover { background: #fee2e2; }
+.cc-btn-edit { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.cc-btn-edit:hover { background: #2563eb; color: #fff; }
+.cc-btn-del { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.cc-btn-del:not(:disabled):hover { background: #dc2626; color: #fff; }
 
 /* Empty */
-.cc-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem; color: #94a3b8; font-size: 0.85rem; text-align: center; }
-.cc-link { color: #3b82f6; background: none; border: none; cursor: pointer; font-size: 0.82rem; text-decoration: underline; }
+.cc-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3.5rem; color: #94a3b8; font-size: 0.85rem; text-align: center; }
+.cc-link { color: #2563eb; background: none; border: none; cursor: pointer; font-size: 0.82rem; text-decoration: underline; font-weight: 700; }
 
 /* Modal */
-.cc-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 1rem; overflow-y: auto; }
-.cc-modal { background: #fff; border-radius: 0.875rem; box-shadow: 0 20px 60px rgba(0,0,0,0.18); width: 100%; max-width: 640px; overflow: hidden; margin: auto; }
+.cc-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 1rem; overflow-y: auto; }
+.cc-modal { background: #fff; border-radius: 0.875rem; box-shadow: 0 20px 60px rgba(0,0,0,0.22); width: 100%; max-width: 640px; overflow: hidden; margin: auto; }
 .cc-modal-lg { max-width: 820px; }
 .cc-modal-sm { max-width: 400px; }
 .cc-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; }

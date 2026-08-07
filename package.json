@@ -13,6 +13,7 @@
     "@headlessui/vue": "^1.7.23",
     "@iconify/vue": "^5.0.0",
     "@jamescoyle/vue-icon": "github:jamescoyle/vue-icon",
+    "@lucide/vue": "^1.28.0",
     "@mdi/js": "^7.4.47",
     "@vueuse/components": "^13.6.0",
     "autoprefixer": "^10.4.20",

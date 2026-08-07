@@ -57,24 +57,33 @@ function navigate(path) {
 
     <!-- Brand + collapse toggle -->
     <div class="sidebar-brand">
-      <div class="brand-mark" @click="navigate('/module-select')" title="Switch module">
-        <img src="/src/assets/img/logo.png" alt="EIC" class="brand-logo-img" />
-      </div>
-      <Transition name="fade-text">
-        <div v-if="!collapsed" class="brand-text" @click="navigate('/module-select')">
-          <span class="brand-name">Ethiopian Insurance Corporation</span>
-          <span class="brand-sub">InsureConnect</span>
+      <template v-if="!collapsed">
+        <div class="brand-mark" @click="navigate('/module-select')" title="Switch module">
+          <img src="/src/assets/img/nyala_logo.png" alt="Nyala Logo" class="brand-logo-img" />
         </div>
-      </Transition>
-      <button class="collapse-btn" @click="toggleCollapse" :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="collapse-icon" :class="{ 'collapse-icon-flipped': collapsed }">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-        </svg>
-      </button>
-    </div>
+        <div class="brand-text" @click="navigate('/module-select')">
+          <span class="brand-name">Nyala Insurance S.C.</span>
+          <span class="brand-sub">Your Guarantee</span>
+        </div>
+        <button class="collapse-btn" @click="toggleCollapse" title="Collapse sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="collapse-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+      </template>
 
-    <!-- Section label -->
-    <!-- <div v-if="!collapsed" class="sidebar-section-label">Navigation</div> -->
+      <!-- Clean Single Centered Logo/Toggle in Collapsed Mode -->
+      <template v-else>
+        <button class="brand-collapsed-mark" @click="toggleCollapse" title="Expand sidebar">
+          <img src="/src/assets/img/nyala_logo.png" alt="Nyala Logo" class="brand-logo-img" />
+          <div class="brand-expand-overlay" title="Expand sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="expand-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </button>
+      </template>
+    </div>
 
     <!-- Main nav items -->
     <nav class="sidebar-nav" aria-label="Main navigation">
@@ -160,13 +169,11 @@ function navigate(path) {
 </template>
 
 <style scoped>
-/* ══ SIDEBAR — hardcoded hex (wind.css overrides CSS vars with RGB tuples) ══ */
-
 .sidebar {
-  width: 280px;
+  width: 270px;
   flex-shrink: 0;
   height: 100vh;
-  background: #00224D;
+  background: #541216;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -176,22 +183,21 @@ function navigate(path) {
   top: 0;
   z-index: 200;
   box-shadow: 4px 0 24px rgba(0,0,0,0.3);
-  transition: width 0.25s cubic-bezier(0.4,0,0.2,1), background 0.4s ease, box-shadow 0.4s ease;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease;
 }
 
-/* Light mode sidebar */
 .sidebar-light {
-  background: #1e3a5f;
-  box-shadow: 4px 0 20px rgba(0,34,77,0.18);
+  background: #7A1C21;
+  box-shadow: 4px 0 20px rgba(84,18,22,0.25);
 }
-.sidebar-collapsed { width: 68px; }
+.sidebar-collapsed { width: 72px; }
 .sidebar::-webkit-scrollbar { display: none; }
 
 /* ── Top accent stripe ── */
 .sidebar-accent {
   height: 3px;
   flex-shrink: 0;
-  background: linear-gradient(90deg, #F39200 0%, #003E7E 50%, #1A5A9A 100%);
+  background: linear-gradient(90deg, #D4AF37 0%, #7A1C21 50%, #9E2A30 100%);
   background-size: 200% 100%;
   animation: accentShimmer 5s linear infinite;
 }
@@ -205,77 +211,120 @@ function navigate(path) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem 0.875rem;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(0,0,0,0.12) 0%, transparent 100%);
   flex-shrink: 0;
-  min-height: 64px;
+  min-height: 68px;
 }
 .sidebar-collapsed .sidebar-brand {
-  padding: 1rem 0;
+  padding: 0.85rem 0;
   justify-content: center;
   gap: 0;
 }
 
 .brand-mark {
-  width: 2.25rem; height: 2.25rem;
-  border-radius: 0.625rem;
-  background: rgba(243,146,0,0.2);
-  border: 1px solid rgba(243,146,0,0.45);
+  width: 2.5rem; height: 2.5rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid rgba(212, 175, 55, 0.6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   cursor: pointer;
-  transition: background 0.15s;
+  padding: 3px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
 }
-.brand-mark:hover { background: rgba(243,146,0,0.3); }
+.brand-mark:hover {
+  transform: scale(1.06);
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3), 0 0 16px rgba(212, 175, 55, 0.5);
+}
 .brand-logo-img {
-  width: 2.25rem; height: 2.25rem;
+  width: 100%; height: 100%;
   object-fit: contain;
 }
+
+/* Collapsed Single Centered Logo Mark */
+.brand-collapsed-mark {
+  position: relative;
+  width: 2.5rem; height: 2.5rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid rgba(212, 175, 55, 0.6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  display: flex; align-items: center; justify-content: center;
+  padding: 3px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.brand-collapsed-mark:hover {
+  transform: scale(1.08);
+  border-color: #D4AF37;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 18px rgba(212, 175, 55, 0.6);
+}
+.brand-expand-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  background: rgba(122, 28, 33, 0.92);
+  color: #D4AF37;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.brand-collapsed-mark:hover .brand-expand-overlay {
+  opacity: 1;
+}
+.expand-icon { width: 1.1rem; height: 1.1rem; }
 
 .brand-text {
   flex: 1;
   display: flex; flex-direction: column;
-  line-height: 1.2; min-width: 0;
+  justify-content: center;
+  line-height: 1.25; min-width: 0;
   cursor: pointer;
   overflow: hidden;
 }
 .brand-name {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1rem; font-weight: 800;
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.85rem; font-weight: 800;
   color: #ffffff;
   white-space: nowrap; letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 .brand-sub {
-  font-size: 0.625rem; font-weight: 700;
-  color: #F39200;
-  text-transform: uppercase; letter-spacing: 0.15em;
-  white-space: nowrap;
+  font-size: 0.625rem; font-weight: 800;
+  color: #D4AF37;
+  text-transform: uppercase; letter-spacing: 0.16em;
+  white-space: nowrap; margin-top: 0.1rem;
 }
 
 /* Collapse toggle button */
 .collapse-btn {
   display: flex; align-items: center; justify-content: center;
-  width: 1.75rem; height: 1.75rem;
-  border-radius: 0.4rem; border: none;
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.45);
+  width: 2rem; height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   margin-left: auto;
 }
-.sidebar-collapsed .collapse-btn { margin-left: 0; margin-top: 0.25rem; }
-.collapse-btn:hover { background: rgba(255,255,255,0.12); color: #ffffff; }
+.collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
 .collapse-icon {
-  width: 0.9rem; height: 0.9rem;
+  width: 0.95rem; height: 0.95rem;
   transition: transform 0.25s ease;
 }
-.collapse-icon-flipped { transform: rotate(180deg); }
-
-/* Fade-text transition */
-.fade-text-enter-active { transition: opacity 0.15s ease 0.1s, transform 0.15s ease 0.1s; }
-.fade-text-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
-.fade-text-enter-from, .fade-text-leave-to { opacity: 0; transform: translateX(-6px); }
 
 /* ── Section label ── */
 .sidebar-section-label {
@@ -283,7 +332,7 @@ function navigate(path) {
   font-size: 0.65rem; font-weight: 700;
   color: rgba(255,255,255,0.35);
   text-transform: uppercase; letter-spacing: 0.14em;
-  padding: 1.25rem 1.5rem 0.5rem;
+  padding: 1rem 1.25rem 0.4rem;
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -291,93 +340,120 @@ function navigate(path) {
 
 /* ── Nav ── */
 .sidebar-nav {
-  padding: 0.5rem 0 0;
+  padding: 0.75rem 0.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.35rem;
   flex-shrink: 0;
 }
-.nav-group { display: flex; flex-direction: column; }
+.sidebar-collapsed .sidebar-nav {
+  padding: 0.75rem 0;
+  align-items: center;
+}
+.nav-group { display: flex; flex-direction: column; width: 100%; }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
-  padding: 0.8rem 1.5rem;
-  border-radius: 0;
-  border: none;
-  border-left: 4px solid transparent;
+  gap: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
   background: transparent;
   color: rgba(255,255,255,0.85);
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: left;
   width: 100%;
   position: relative;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 .sidebar-collapsed .nav-item {
-  padding: 0.8rem 0;
+  width: 44px; height: 44px;
+  margin: 0 auto;
+  padding: 0;
   justify-content: center;
   gap: 0;
-  border-left: 4px solid transparent;
+  border-radius: 12px;
 }
-.nav-item:hover { background: rgba(255,255,255,0.1); color: #ffffff; }
+.nav-item:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+.sidebar-collapsed .nav-item:hover {
+  transform: translateY(-1px) scale(1.05);
+  background: rgba(255,255,255,0.12);
+}
 .nav-item-active {
-  background: rgba(255,255,255,0.1) !important;
+  background: rgba(255,255,255,0.14) !important;
   color: #ffffff !important;
-  border-left-color: #F39200 !important;
-  font-weight: 600;
+  border-color: rgba(212, 175, 55, 0.4) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15), 0 0 12px rgba(212, 175, 55, 0.2) !important;
+  font-weight: 700;
+}
+.sidebar-collapsed .nav-item-active {
+  background: rgba(255,255,255,0.18) !important;
+  border: 1.5px solid rgba(212, 175, 55, 0.7) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), 0 0 16px rgba(212, 175, 55, 0.4) !important;
+  transform: none;
 }
 .nav-item-open { background: rgba(255,255,255,0.07); color: #ffffff; }
 
 .nav-item-icon {
   display: flex; align-items: center; justify-content: center;
-  width: 1.25rem; height: 1.25rem;
+  width: 1.35rem; height: 1.35rem;
   flex-shrink: 0; color: inherit;
+  transition: transform 0.2s ease;
 }
-.nav-item-icon :deep(svg) { width: 1.25rem; height: 1.25rem; }
+.nav-item:hover .nav-item-icon { transform: scale(1.08); }
+.nav-item-icon :deep(svg) { width: 1.35rem; height: 1.35rem; }
 .nav-item-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 
 .nav-chevron {
   width: 1rem; height: 1rem;
   flex-shrink: 0;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.6);
   transition: transform 0.22s ease, color 0.15s;
   display: block !important;
 }
-.nav-chevron-open { transform: rotate(180deg); color: #F39200; }
+.nav-chevron-open { transform: rotate(180deg); color: #D4AF37; }
 
 /* ── Sub-items ── */
 .nav-sub {
   display: flex; flex-direction: column;
-  padding: 0.2rem 0;
+  padding: 0.25rem 0 0.25rem 0.75rem;
+  gap: 0.2rem;
   overflow: hidden;
-  background: rgba(0,0,0,0.12);
 }
 .nav-sub-item {
-  display: flex; align-items: center; gap: 0.625rem;
-  padding: 0.65rem 1.5rem 0.65rem 2.875rem;
-  border-radius: 0; border: none;
-  border-left: 4px solid transparent;
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
   background: transparent;
   color: rgba(255,255,255,0.75);
   font-family: 'Outfit', sans-serif;
-  font-size: 0.875rem; font-weight: 400;
+  font-size: 0.85rem; font-weight: 500;
   cursor: pointer;
-  transition: background 0.13s, color 0.13s;
+  transition: all 0.18s ease;
   text-align: left; width: 100%;
   white-space: nowrap;
 }
-.nav-sub-item:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
+.nav-sub-item:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ffffff;
+  transform: translateX(2px);
+}
 .nav-sub-item-active {
   color: #ffffff !important;
-  background: rgba(255,255,255,0.1) !important;
-  border-left-color: #F39200 !important;
-  font-weight: 600;
+  background: rgba(212, 175, 55, 0.18) !important;
+  border-color: rgba(212, 175, 55, 0.4) !important;
+  font-weight: 700;
 }
 .nav-sub-icon {
   display: flex; align-items: center; justify-content: center;
@@ -398,32 +474,39 @@ function navigate(path) {
 
 /* ── Profile card ── */
 .sidebar-profile {
-  padding: 0;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 0.6rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
   flex-shrink: 0;
 }
 .profile-card {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
   background: rgba(255,255,255,0.06);
-  border: none;
-  transition: background 0.15s;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.2s ease;
   cursor: default;
 }
 .profile-card-collapsed {
+  width: 44px; height: 44px;
+  margin: 0 auto;
+  padding: 0;
   justify-content: center;
-  padding: 0.875rem 0;
   gap: 0;
+  border-radius: 12px;
 }
-.profile-card:hover { background: rgba(255,255,255,0.1); }
+.profile-card:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.15);
+}
 
 .profile-avatar {
   position: relative;
   width: 2.25rem; height: 2.25rem;
   border-radius: 50%; overflow: hidden; flex-shrink: 0;
-  border: 2px solid rgba(243,146,0,0.6);
+  border: 2px solid rgba(212,175,55,0.6);
   cursor: pointer;
 }
 .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -431,20 +514,20 @@ function navigate(path) {
   position: absolute; bottom: 1px; right: 1px;
   width: 0.5rem; height: 0.5rem; border-radius: 50%;
   background: #10B981;
-  border: 2px solid #00224D;
+  border: 2px solid #541216;
 }
 
 .profile-details { flex: 1; min-width: 0; display: flex; flex-direction: column; cursor: pointer; }
 .profile-name {
   font-family: 'Outfit', sans-serif;
-  font-size: 0.875rem; font-weight: 700;
+  font-size: 0.85rem; font-weight: 700;
   color: #ffffff;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .profile-role {
   font-family: 'Outfit', sans-serif;
-  font-size: 0.68rem; font-weight: 600;
-  color: #F39200;
+  font-size: 0.65rem; font-weight: 600;
+  color: #D4AF37;
   text-transform: uppercase; letter-spacing: 0.07em;
   margin-top: 0.1rem;
 }
@@ -454,9 +537,9 @@ function navigate(path) {
   width: 1.75rem; height: 1.75rem;
   border-radius: 0.4rem; border: none;
   background: transparent;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.4);
   cursor: pointer; transition: all 0.15s ease; flex-shrink: 0;
 }
 .logout-btn svg { width: 1rem; height: 1rem; }
-.logout-btn:hover { background: rgba(239,68,68,0.18); color: #fca5a5; }
+.logout-btn:hover { background: rgba(239,68,68,0.2); color: #fca5a5; }
 </style>

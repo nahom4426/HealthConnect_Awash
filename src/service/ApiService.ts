@@ -6,7 +6,7 @@ import { useAuthStore } from "@/stores/auth";
 import { onUnmounted } from 'vue'
 import { useSignal } from "@/composables/useSignal";
 
-export const backendApi = import.meta.env?.v_API_URI
+export const backendApi = (import.meta as any).env?.VITE_API_URI || (import.meta as any).env?.v_API_URI || 'http://localhost:8196/api/payer';
 
 export default class ApiService {
 

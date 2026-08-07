@@ -243,13 +243,14 @@ function levelLabel(depth) {
     <div class="mr-header">
       <div class="mr-header-left">
         <div class="mr-header-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:20px;height:20px">
+          <!-- Contextual Matrix Slider Icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
           </svg>
         </div>
         <div>
-          <h2 class="mr-title">Motor Rate Configuration</h2>
-          <p class="mr-subtitle">Set premium rates and discounts for motor insurance categories</p>
+          <h2 class="mr-title">Rate Matrix & Premium Rules</h2>
+          <p class="mr-subtitle">Configure percentage rates, calculation multipliers and discounts</p>
         </div>
       </div>
     </div>
@@ -279,8 +280,8 @@ function levelLabel(depth) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
           <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M17 17h.01M6.343 17.657l-1.414-1.414M19.071 6.929l-1.414-1.414M6.343 6.343L4.929 4.929M19.071 17.071l-1.414 1.414M3 12h18"/>
         </svg>
-        Discounts
-        <span class="mr-tab-badge mr-badge-orange">{{ discounts.length }}</span>
+        Discounts & Penalties
+        <span class="mr-tab-badge mr-badge-indigo">{{ discounts.length }}</span>
       </button>
     </div>
 
@@ -290,10 +291,10 @@ function levelLabel(depth) {
       <!-- Add Rate Panel -->
       <div class="mr-panel">
         <div class="mr-panel-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:#3b82f6">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:#6366f1">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
           </svg>
-          <span>Add New Rate</span>
+          <span>Add Category Premium Rate</span>
         </div>
         <div class="mr-panel-body">
           <!-- Dynamic N-level cascaded selects -->
@@ -339,7 +340,7 @@ function levelLabel(depth) {
             <!-- Submit -->
             <div class="mr-field mr-field-action">
               <label>&nbsp;</label>
-              <Button type="primary" size="sm" :pending="saving" @click="submitRate">
+              <Button type="primary" size="sm" :pending="saving" @click="submitRate" class="mr-btn-indigo">
                 <svg v-if="!saving" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:4px"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 Save Rate
               </Button>
@@ -348,8 +349,8 @@ function levelLabel(depth) {
 
           <!-- Selected path breadcrumb -->
           <div v-if="selectedCategoryUuid" class="mr-selected-path">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;color:#3b82f6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-            <span>Selected: <strong>{{ selectedCategoryName }}</strong></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;color:#6366f1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <span>Selected Category: <strong>{{ selectedCategoryName }}</strong></span>
           </div>
         </div>
       </div>
@@ -357,7 +358,7 @@ function levelLabel(depth) {
       <!-- Rates Table -->
       <div class="mr-card">
         <div class="mr-card-header">
-          <span class="mr-card-title">Configured Rates</span>
+          <span class="mr-card-title">Configured Rate Matrix</span>
           <button class="mr-refresh-btn" @click="loadPremiums" :disabled="loading">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px" :class="{ 'mr-spin': loading }"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             Refresh
@@ -366,7 +367,7 @@ function levelLabel(depth) {
 
         <div v-if="loading" class="mr-loading">
           <div class="mr-spinner"></div>
-          <span>Loading rates…</span>
+          <span>Loading rate matrix…</span>
         </div>
 
         <DataTable
@@ -404,8 +405,8 @@ function levelLabel(depth) {
     <div v-if="activeTab === 'discounts'" class="mr-tab-content">
       <div class="mr-card">
         <div class="mr-card-header">
-          <span class="mr-card-title">Discount Options</span>
-          <span class="mr-static-badge">Static — Coming soon</span>
+          <span class="mr-card-title">Discount & Bonus Matrix</span>
+          <span class="mr-static-badge">Standard Rules</span>
         </div>
         <DataTable
           :headers="['Discount Name','Code','Type','Value','Description','Status']"
@@ -494,36 +495,36 @@ function levelLabel(depth) {
 </template>
 
 <style scoped>
-.mr-root { padding: 1.5rem 2rem; min-height: 100%; background: #f8fafc; }
+.mr-root { padding: 1.75rem 2rem; min-height: 100%; background: #f8fafc; }
 
-/* Header */
-.mr-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
-.mr-header-left { display: flex; align-items: center; gap: 0.75rem; }
-.mr-header-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #f59e0b, #ef4444); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
-.mr-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0; }
-.mr-subtitle { font-size: 0.75rem; color: #64748b; margin: 0; }
+/* Header - Contextual Indigo Theme */
+.mr-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.mr-header-left { display: flex; align-items: center; gap: 0.85rem; }
+.mr-header-icon { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25); }
+.mr-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
+.mr-subtitle { font-size: 0.78rem; color: #64748b; margin: 0; }
 
 /* Alerts */
-.mr-alert { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 500; margin-bottom: 0.75rem; }
+.mr-alert { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: 0.6rem; font-size: 0.78rem; font-weight: 500; margin-bottom: 1rem; }
 .mr-alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 .mr-alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
 .mr-alert-close { margin-left: auto; background: none; border: none; font-size: 1.1rem; cursor: pointer; color: inherit; opacity: 0.6; }
 .mr-alert-close:hover { opacity: 1; }
 
-/* Tabs */
-.mr-tabs { display: flex; gap: 0.25rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.625rem; padding: 0.25rem; margin-bottom: 1.25rem; width: fit-content; }
-.mr-tab { display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; border-radius: 0.4rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: none; background: transparent; color: #64748b; transition: all 0.15s; }
+/* Tabs - Indigo Theme */
+.mr-tabs { display: flex; gap: 0.3rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.3rem; margin-bottom: 1.5rem; width: fit-content; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+.mr-tab { display: flex; align-items: center; gap: 0.45rem; padding: 0.5rem 1.1rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; border: none; background: transparent; color: #64748b; transition: all 0.15s; }
 .mr-tab:hover { color: #334155; background: #f8fafc; }
-.mr-tab-active { background: #eff6ff; color: #1d4ed8; }
-.mr-tab-badge { font-size: 0.65rem; font-weight: 700; background: #e2e8f0; color: #475569; border-radius: 9999px; padding: 0.1rem 0.45rem; }
-.mr-tab-active .mr-tab-badge { background: #dbeafe; color: #1d4ed8; }
-.mr-badge-orange { background: #fff7ed; color: #c2410c; }
+.mr-tab-active { background: #f5f3ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+.mr-tab-badge { font-size: 0.65rem; font-weight: 800; background: #e2e8f0; color: #475569; border-radius: 9999px; padding: 0.12rem 0.5rem; }
+.mr-tab-active .mr-tab-badge { background: #e0e7ff; color: #4338ca; }
+.mr-badge-indigo { background: #e0e7ff; color: #4338ca; }
 
-.mr-tab-content { display: flex; flex-direction: column; gap: 1rem; }
+.mr-tab-content { display: flex; flex-direction: column; gap: 1.25rem; }
 
 /* Add Rate Panel */
-.mr-panel { background: #fff; border-radius: 0.75rem; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.mr-panel-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.82rem; font-weight: 700; color: #374151; }
+.mr-panel { background: #fff; border-radius: 0.85rem; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
+.mr-panel-header { display: flex; align-items: center; gap: 0.55rem; padding: 0.85rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; font-weight: 700; color: #1e293b; }
 .mr-panel-body { padding: 1.25rem; }
 
 .mr-cascade-row { display: flex; flex-wrap: wrap; gap: 0.875rem; align-items: flex-start; }
@@ -531,68 +532,56 @@ function levelLabel(depth) {
 .mr-cascade-row .mr-field-action { flex: 0 0 auto; min-width: 120px; }
 
 .mr-field { display: flex; flex-direction: column; gap: 0.3rem; }
-.mr-field label { font-size: 0.72rem; font-weight: 600; color: #374151; white-space: nowrap; }
+.mr-field label { font-size: 0.72rem; font-weight: 700; color: #374151; white-space: nowrap; }
 .mr-req { color: #ef4444; }
 .mr-field-action { justify-content: flex-end; }
-.mr-input { padding: 0.45rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.82rem; color: #1e293b; background: #fff; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; box-sizing: border-box; }
-.mr-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.mr-input { padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.82rem; color: #0f172a; background: #fff; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; box-sizing: border-box; }
+.mr-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
 .mr-input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
 .mr-input-err { border-color: #ef4444; }
 .mr-field-err { font-size: 0.7rem; color: #ef4444; }
-.mr-selected-path { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.75rem; font-size: 0.75rem; color: #64748b; }
-.mr-selected-path strong { color: #1d4ed8; }
-.mr-path-text { font-size: 0.72rem; color: #64748b; font-family: monospace; background: #f1f5f9; padding: 0.15rem 0.45rem; border-radius: 4px; white-space: nowrap; }
+.mr-selected-path { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.75rem; font-size: 0.78rem; color: #64748b; }
+.mr-selected-path strong { color: #4338ca; }
+.mr-path-text { font-size: 0.72rem; color: #4338ca; font-family: monospace; background: #f5f3ff; border: 1px solid #e0e7ff; padding: 0.15rem 0.5rem; border-radius: 4px; white-space: nowrap; }
 
 /* Card */
-.mr-card { background: #fff; border-radius: 0.75rem; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.mr-card-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
-.mr-card-title { font-size: 0.82rem; font-weight: 700; color: #374151; }
-.mr-refresh-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.28rem 0.65rem; border-radius: 0.4rem; font-size: 0.72rem; font-weight: 600; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; }
-.mr-refresh-btn:hover { background: #f1f5f9; color: #334155; }
-.mr-static-badge { font-size: 0.7rem; font-weight: 600; color: #d97706; background: #fffbeb; border: 1px solid #fde68a; border-radius: 9999px; padding: 0.15rem 0.6rem; }
+.mr-card { background: #fff; border-radius: 0.85rem; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
+.mr-card-header { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+.mr-card-title { font-size: 0.85rem; font-weight: 700; color: #1e293b; }
+.mr-refresh-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.74rem; font-weight: 600; border: 1px solid #e2e8f0; background: #fff; color: #475569; cursor: pointer; }
+.mr-refresh-btn:hover { background: #f1f5f9; color: #0f172a; }
+.mr-static-badge { font-size: 0.7rem; font-weight: 700; color: #4338ca; background: #e0e7ff; border: 1px solid #c7d2fe; border-radius: 9999px; padding: 0.15rem 0.6rem; }
 
 /* Loading */
 .mr-loading { display: flex; align-items: center; gap: 0.75rem; padding: 2.5rem; justify-content: center; color: #64748b; font-size: 0.85rem; }
-.mr-spinner { width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+.mr-spinner { width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* DataTable wrapper */
 .mr-datatable :deep(.overflow-x-auto) { border: none; border-radius: 0; box-shadow: none; }
-.mr-row { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
-.mr-row:hover { background: #f8fafc; }
-.mr-row td { padding: 0.65rem 1rem; color: #334155; vertical-align: middle; font-size: 0.82rem; }
-.mr-idx { color: #94a3b8; font-size: 0.75rem; font-weight: 600; width: 36px; }
-.mr-cat-name { font-weight: 600; color: #1e293b; }
+.mr-row { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+.mr-row:hover { background: #f5f3ff; }
+.mr-row td { padding: 0.8rem 1rem; color: #334155; vertical-align: middle; font-size: 0.82rem; }
+.mr-idx { color: #94a3b8; font-size: 0.75rem; font-weight: 700; width: 36px; }
+.mr-cat-name { font-weight: 700; color: #0f172a; }
 .mr-uuid { font-size: 0.68rem; color: #64748b; background: #f1f5f9; padding: 0.15rem 0.45rem; border-radius: 4px; font-family: monospace; }
-.mr-rate-badge { display: inline-block; padding: 0.2rem 0.6rem; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; }
+.mr-rate-badge { display: inline-block; padding: 0.2rem 0.65rem; background: #f5f3ff; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 9999px; font-size: 0.72rem; font-weight: 800; }
 .mr-rate-flat { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-.mr-code-badge { display: inline-block; padding: 0.15rem 0.5rem; background: #eff6ff; color: #1d4ed8; border-radius: 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; }
+.mr-code-badge { display: inline-block; padding: 0.18rem 0.55rem; background: #e0e7ff; color: #4338ca; border-radius: 6px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; }
 .mr-type-pill { display: inline-block; padding: 0.15rem 0.55rem; background: #f8fafc; color: #475569; border-radius: 9999px; font-size: 0.68rem; font-weight: 600; border: 1px solid #e2e8f0; }
 .mr-desc { color: #64748b; font-size: 0.78rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mr-status-badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 9999px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.mr-status-active { background: #f0fdf4; color: #15803d; }
-.mr-status-inactive { background: #f1f5f9; color: #94a3b8; }
+.mr-status-badge { display: inline-block; padding: 0.18rem 0.6rem; border-radius: 9999px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.mr-status-active { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.mr-status-inactive { background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
 
-.mr-actions { display: flex; align-items: center; justify-content: flex-start; gap: 0.3rem; }
-.mr-icon-btn { width: 28px; height: 28px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.mr-btn-edit { background: #eff6ff; color: #2563eb; }
-.mr-btn-edit:hover { background: #dbeafe; }
-.mr-btn-del { background: #fef2f2; color: #dc2626; }
-.mr-btn-del:hover { background: #fee2e2; }
+.mr-actions { display: flex; align-items: center; justify-content: flex-start; gap: 0.35rem; }
+.mr-icon-btn { width: 30px; height: 30px; border-radius: 7px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.mr-btn-edit { background: #f5f3ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+.mr-btn-edit:hover { background: #4f46e5; color: #fff; }
+.mr-btn-del { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.mr-btn-del:hover { background: #dc2626; color: #fff; }
 
-.mr-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem; color: #94a3b8; font-size: 0.85rem; text-align: center; }
-
-/* Buttons */
-.mr-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
-.mr-btn-primary { background: #3b82f6; color: #fff; }
-.mr-btn-primary:hover { background: #2563eb; }
-.mr-btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
-.mr-btn-ghost { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-.mr-btn-ghost:hover { background: #e2e8f0; }
-.mr-btn-danger { background: #ef4444; color: #fff; }
-.mr-btn-danger:hover { background: #dc2626; }
-.mr-btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
-.mr-btn-full { width: 100%; justify-content: center; }
+.mr-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3.5rem; color: #94a3b8; font-size: 0.85rem; text-align: center; }
 
 /* Modal */
 .mr-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 1rem; }

@@ -2,16 +2,15 @@
 import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
-import { onUnmounted } from 'vue';
-import { onMounted } from 'vue';
+import { onUnmounted, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { toasted } from '@/utils/utils';
 import { approveContractStatus } from '@/features/provider_contracts/api/contractApi';
-import { usecontracts } from '@/features/provider_contracts/store/cotractStore';
 import { useProcessClaimByInstitutionBatch } from '../store/processClaimByInstitutionBatchStore';
 
 const router = useRouter();
 const claims = useProcessClaimByInstitutionBatch();
+
 const props = defineProps({
   rowData: {
     type: Array,
@@ -39,10 +38,9 @@ const props = defineProps({
 
 const { addToast } = useToast();
 
-// Format date to "Mon DD YYYY" format
+// Format date to "Mon DD, YYYY"
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
-  
   try {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -51,184 +49,168 @@ function formatDate(dateString) {
       year: 'numeric'
     });
   } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Invalid Date';
+    return 'N/A';
   }
 }
 
-// Enhanced status styling with icons
-function getStatusStyle(status) {
-  const base = "inline-flex items-center gap-1.5 min-w-[100px] px-3 py-2 rounded-full text-xs font-semibold transition-all duration-200 shadow-sm";
+// Generate provider or institution initials for avatar
+function getInitials(name) {
+  if (!name) return 'NY';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+}
 
-  switch (status?.toUpperCase()) {
-    case "ACTIVE":
-      return `${base} bg-green-50 text-green-700 border border-green-200`;
-    case "PENDING":
-      return `${base} bg-yellow-50 text-yellow-700 border border-yellow-200`;
-    case "SUSPENDED":
-      return `${base} bg-red-50 text-red-700 border border-red-200`;
-    case "APPROVED":
-      return `${base} bg-blue-50 text-blue-700 border border-blue-200`;
-    case "REJECTED":
-      return `${base} bg-red-50 text-red-700 border border-red-200`;
-    case "COMPLETED":
-      return `${base} bg-purple-50 text-purple-700 border border-purple-200`;
+// Get initials background color deterministically
+function getAvatarBg(name) {
+  const colors = [
+    'from-[#800020] to-[#500014]', // Nyala Maroon
+    'from-slate-700 to-slate-900',
+    'from-indigo-700 to-indigo-900',
+    'from-teal-700 to-teal-900',
+    'from-amber-700 to-amber-900'
+  ];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+}
+
+// Status style styling
+function getStatusBadgeClass(status) {
+  const s = status?.toUpperCase();
+  switch (s) {
+    case 'ACTIVE':
+    case 'APPROVED':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200/80 ring-emerald-500/10';
+    case 'PENDING':
+      return 'bg-amber-50 text-amber-800 border-amber-300/80 ring-amber-500/20';
+    case 'REJECTED':
+    case 'SUSPENDED':
+      return 'bg-rose-50 text-rose-700 border-rose-200/80 ring-rose-500/10';
+    case 'COMPLETED':
+      return 'bg-purple-50 text-purple-700 border-purple-200/80 ring-purple-500/10';
     default:
-      return `${base} bg-gray-50 text-gray-600 border border-gray-200`;
+      return 'bg-slate-50 text-slate-700 border-slate-200 ring-slate-500/10';
   }
 }
 
-// Get status icon
-function getStatusIcon(status) {
-  switch (status?.toUpperCase()) {
-    case "ACTIVE":
-      return "✓";
-    case "PENDING":
-      return "⏳";
-    case "SUSPENDED":
-      return "⏸️";
-    case "APPROVED":
-      return "✅";
-    case "REJECTED":
-      return "❌";
-    case "COMPLETED":
-      return "🎯";
+function getStatusDotClass(status) {
+  const s = status?.toUpperCase();
+  switch (s) {
+    case 'ACTIVE':
+    case 'APPROVED':
+      return 'bg-emerald-500';
+    case 'PENDING':
+      return 'bg-amber-500 animate-pulse';
+    case 'REJECTED':
+    case 'SUSPENDED':
+      return 'bg-rose-500';
+    case 'COMPLETED':
+      return 'bg-purple-500';
     default:
-      return "●";
+      return 'bg-slate-400';
   }
 }
 
-// Dropdown functions
-function toggleDropdown(event, rowId) {
-  event.stopPropagation();
-  closeAllDropdowns();
-  const dropdown = document.getElementById(`dropdown-${rowId}`);
-  if (dropdown) dropdown.classList.toggle('hidden');
-}
-
-function closeAllDropdowns() {
-  document.querySelectorAll('.dropdown-menu').forEach(el => {
-    el.classList.add('hidden');
-  });
-}
-
-// Wrapper functions with dropdown close
-function handleViewWithClose(row) {
-  closeAllDropdowns();
-  props.onView(row);
-}
-
-function handleServicesWithClose(row) {
-  closeAllDropdowns();
-  router.push(`/active_contract/services/${row.payerProviderContractUuid}/${row.providerUuid}`);
-}
-
-onMounted(() => {
-  window.addEventListener('click', closeAllDropdowns);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('click', closeAllDropdowns);
-});
-
-function handleActivateWithClose(payerProviderContractUuid) {
-  closeAllDropdowns();
-
-  return approveContractStatus(payerProviderContractUuid)
-    .then((res) => {
-      if (res.success) {
-        claims.update(payerProviderContractUuid, { status: 'ACTIVE' });
-        toasted(res.success, 'Contract Activated Successfully', res.error);
-        return true;
-      }
-      return false;
-    })
-    .catch(() => false);
+function handleView(row) {
+  if (props.onView) {
+    props.onView(row);
+  } else {
+    const targetId = row.claimUuid || row.batchCode || '';
+    router.push(`/process_claims/detail/${targetId}`);
+  }
 }
 </script>
 
 <template>
   <tr 
     v-for="(row, idx) in rowData" 
-    :key="idx"
-    @click.self="onRowClick(row)" 
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+    :key="row.claimUuid || row.batchCode || idx"
+    @click="handleView(row)" 
+    class="bg-white border-b border-slate-100 transition-all duration-150 ease-in-out hover:bg-amber-50/30 cursor-pointer group"
   >
-    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
-    
+    <!-- Index -->
+    <td class="p-4 font-semibold text-slate-400 text-xs text-center w-12">
+      {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
+    </td>
+
+    <!-- Dynamic Columns -->
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
-      <div v-if="key === 'claimStatus'" class="truncate">
-        <span :class="getStatusStyle(row.claimStatus)" class="inline-flex gap-1.5 items-center px-3 py-1.5 text-xs font-medium rounded-full">
-          <span class="text-xs">{{ getStatusIcon(row.claimStatus) }}</span>
-          {{ row.claimStatus || 'Unknown' }}
+      <!-- Provider / Institution Name Column -->
+      <div v-if="key === 'providerName' || key === 'institutionName'" class="flex items-center gap-3">
+        <div 
+          :class="['w-9 h-9 rounded-xl bg-gradient-to-br text-white font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0', getAvatarBg(row.providerName || row.institutionName)]"
+        >
+          {{ getInitials(row.providerName || row.institutionName) }}
+        </div>
+        <div class="space-y-0.5">
+          <div class="font-bold text-slate-800 text-sm group-hover:text-[#800020] transition-colors">
+            {{ row.providerName || row.institutionName || 'Unspecified Provider' }}
+          </div>
+          <div class="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" /></svg>
+              Batch: <span class="font-mono text-slate-600 font-semibold">{{ row.batchCode || row.claimCode || 'CLM-BATCH' }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Amount Column -->
+      <div v-else-if="key === 'totalAmount'" class="flex flex-col">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/80 w-fit">
+          <span class="text-[10px] font-extrabold text-[#800020] tracking-wider uppercase">ETB</span>
+          <span class="font-black text-slate-900 text-sm">
+            {{ Number(row.totalAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Contract Period Column -->
+      <div v-else-if="key === 'period'" class="space-y-1 text-slate-600 text-xs">
+        <div class="flex items-center gap-1.5 text-slate-700 font-medium">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          <span>{{ formatDate(row.claimFromDate || row.beginDate) }}</span>
+          <span class="text-slate-300">→</span>
+          <span>{{ formatDate(row.claimToDate || row.endDate) }}</span>
+        </div>
+      </div>
+
+      <!-- Status Column -->
+      <div v-else-if="key === 'claimStatus'" class="flex items-center">
+        <span 
+          :class="[
+            'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border shadow-2xs transition-all ring-1',
+            getStatusBadgeClass(row.claimStatus)
+          ]"
+        >
+          <span :class="['w-2 h-2 rounded-full', getStatusDotClass(row.claimStatus)]"></span>
+          {{ row.claimStatus || 'PENDING' }}
         </span>
       </div>
-      
-      <div v-else-if="key === 'period'" class="space-y-1 text-gray-700">
-        <div class="flex gap-1 items-center text-sm">
-          <span class="text-xs text-gray-400">From:</span>
-          <span class="font-medium">{{ formatDate(row.claimFromDate) }}</span>
-        </div>
-        <div class="flex gap-1 items-center text-sm">
-          <span class="text-xs text-gray-400">To:</span>
-          <span class="font-medium">{{ formatDate(row.claimToDate) }}</span>
-        </div>
-      </div>
-      <div v-else-if="key.includes('Date')" class="text-gray-700">
-        {{ formatDate(row[key]) }}
-      </div>
-       <div v-else-if="key === 'providerName'" class="text-gray-700">
-         {{ row.providerName || row.institutionName }}
-      </div>
-       <div v-else-if="key === 'institutionName'" class="text-gray-700">
-         {{ row.providerName || row.institutionName }}
-      </div>
-      <div v-else-if="key === 'totalAmount'" class="font-semibold text-gray-700">
-        ${{ row.totalAmount?.toLocaleString() || '0.00' }}
-      </div>
-      <span v-else class="text-gray-700">
-        {{ row[key] || 'N/A' }}
+
+      <!-- General fallback -->
+      <span v-else class="text-xs text-slate-700 font-medium">
+        {{ row[key] || '-' }}
       </span>
     </td>
-    
+
     <!-- Actions Column -->
-    <td class="p-3">
-      <Button size="xs" type="elevated" class="p-2 text-white bg-blue-600 rounded hover:bg-blue-700">
-        <RouterLink :to="`/process_claims/detail/${row.claimUuid || ''}`">Detail</RouterLink>
-      </Button>
+    <td class="p-3 py-4 text-right">
+      <button 
+        type="button"
+        @click.stop="handleView(row)"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#800020] hover:bg-[#600018] shadow-xs hover:shadow-md transition-all active:scale-95"
+      >
+        <span>Review Batch</span>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+      </button>
     </td>
   </tr>
 </template>
-
-<style scoped>
-.dropdown-container {
-  min-width: 80px;
-}
-
-.dropdown-menu {
-  min-width: 150%;
-  transition: all 0.2s ease-out;
-  transform-origin: top right;
-}
-
-.dropdown-menu.hidden {
-  opacity: 0;
-  transform: scale(0.95);
-  pointer-events: none;
-}
-
-.dropdown-menu:not(.hidden) {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* Smooth hover effects for status badges */
-.status-badge {
-  transition: all 0.3s ease;
-}
-
-.status-badge:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-</style>

@@ -207,12 +207,17 @@ function viewImage(title, src) {
 
     <template v-if="q">
 
-      <!-- Page header -->
+      <!-- Page header (All in one horizontal row) -->
       <div class="qd-page-header">
-        <div class="qd-page-header-left">
+        <div class="qd-header-left">
           <div class="qd-avatar-lg">{{ (q.clientFirstName || '?')[0].toUpperCase() }}</div>
-          <div>
-            <h1 class="qd-client-name">{{ fullName(q) }}</h1>
+          <div class="qd-header-title-box">
+            <div class="qd-header-name-row">
+              <h1 class="qd-client-name">{{ fullName(q) }}</h1>
+              <span :class="['qd-status-badge', statusMeta(q.quotationStatus).cls]">
+                {{ statusMeta(q.quotationStatus).label }}
+              </span>
+            </div>
             <div class="qd-client-meta">
               <span>{{ q.clientEmail || '' }}</span>
               <span v-if="q.clientEmail && q.clientPhoneNumber">·</span>
@@ -220,20 +225,16 @@ function viewImage(title, src) {
             </div>
           </div>
         </div>
-        <div class="qd-page-header-right">
-          <span :class="['qd-status-badge', statusMeta(q.quotationStatus).cls]">
-            {{ statusMeta(q.quotationStatus).label }}
-          </span>
-          <div class="qd-action-btns">
-            <button v-if="isPending" class="qd-btn qd-btn-deposit" @click="openSaveDeposit">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Save Deposit
-            </button>
-            <button class="qd-btn qd-btn-status" @click="openUpdateStatus">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Update Status
-            </button>
-          </div>
+
+        <div class="qd-header-actions">
+          <button v-if="isPending" class="qd-btn qd-btn-deposit" @click="openSaveDeposit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Save Deposit
+          </button>
+          <button class="qd-btn qd-btn-status" @click="openUpdateStatus">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Update Status
+          </button>
         </div>
       </div>
 
@@ -255,54 +256,83 @@ function viewImage(title, src) {
         <!-- LEFT: Client + Vehicle -->
         <div class="qd-col qd-col-left">
 
-          <!-- Client Info -->
+          <!-- Client Info Card -->
           <div class="qd-card">
             <div class="qd-card-head">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#6366f1"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-              Client Information
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:#2563eb"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              <span>Client Information</span>
             </div>
             <div class="qd-card-body">
-              <div class="qd-info-grid">
-                <div class="qd-info-label">First Name</div>
-                <div class="qd-info-val">{{ q.clientFirstName || '—' }}</div>
-                <div class="qd-info-label">Father Name</div>
-                <div class="qd-info-val">{{ q.clientFatherName || '—' }}</div>
-                <div class="qd-info-label">Grand Father</div>
-                <div class="qd-info-val">{{ q.clientGrandFatherName || '—' }}</div>
-                <div class="qd-info-label">Phone</div>
-                <div class="qd-info-val">{{ q.clientPhoneNumber || '—' }}</div>
-                <div class="qd-info-label">Email</div>
-                <div class="qd-info-val qd-break">{{ q.clientEmail || '—' }}</div>
-                <div class="qd-info-label">Insurance</div>
-                <div class="qd-info-val">{{ q.insurance || '—' }}</div>
-                <div v-if="q.accountNumber" class="qd-info-label">Account No.</div>
-                <div v-if="q.accountNumber" class="qd-info-val">{{ q.accountNumber }}</div>
+              <div class="qd-spec-table">
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">First Name</span>
+                  <span class="qd-spec-val font-bold">{{ q.clientFirstName || '—' }}</span>
+                </div>
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Father Name</span>
+                  <span class="qd-spec-val font-bold">{{ q.clientFatherName || '—' }}</span>
+                </div>
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Grand Father</span>
+                  <span class="qd-spec-val">{{ q.clientGrandFatherName || '—' }}</span>
+                </div>
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Phone Number</span>
+                  <span class="qd-spec-val font-mono">{{ q.clientPhoneNumber || '—' }}</span>
+                </div>
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Email Address</span>
+                  <span class="qd-spec-val qd-break">{{ q.clientEmail || '—' }}</span>
+                </div>
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Insurance Policy</span>
+                  <span class="qd-spec-val">
+                    <span class="qd-plan-chip">{{ q.insurance || 'Nyala Motor Comprehensive Policy' }}</span>
+                  </span>
+                </div>
+                <div v-if="q.accountNumber" class="qd-spec-row">
+                  <span class="qd-spec-lbl">Account No.</span>
+                  <span class="qd-spec-val font-mono">{{ q.accountNumber }}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Vehicle Info -->
+          <!-- Vehicle Details Card -->
           <div class="qd-card">
             <div class="qd-card-head">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#3b82f6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM4 17H3v-4l3-5h10l3 5v4h-1M9 17h6"/></svg>
-              Vehicle Details
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:#0284c7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM4 17H3v-4l3-5h10l3 5v4h-1M9 17h6"/></svg>
+              <span>Vehicle Details</span>
             </div>
             <div class="qd-card-body">
-              <div class="qd-info-grid">
-                <div class="qd-info-label">Car Name</div>
-                <div class="qd-info-val qd-fw6">{{ q.carName || '—' }}</div>
-                <div class="qd-info-label">Type</div>
-                <div class="qd-info-val">{{ q.carType || '—' }}</div>
-                <div class="qd-info-label">Model</div>
-                <div class="qd-info-val">{{ q.carModel || '—' }}</div>
-                <div class="qd-info-label">Make Year</div>
-                <div class="qd-info-val">{{ q.makeYear || '—' }}</div>
-                <div class="qd-info-label">Engine No.</div>
-                <div class="qd-info-val">{{ q.engine_No || '—' }}</div>
+              <div class="qd-spec-table">
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Car Name</span>
+                  <span class="qd-spec-val font-bold text-blue">{{ q.carName || '—' }}</span>
+                </div>
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Body Type</span>
+                  <span class="qd-spec-val">
+                    <span class="qd-type-chip">{{ q.carType || '—' }}</span>
+                  </span>
+                </div>
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Model Spec</span>
+                  <span class="qd-spec-val">{{ q.carModel || '—' }}</span>
+                </div>
+                <div class="qd-spec-row">
+                  <span class="qd-spec-lbl">Make Year</span>
+                  <span class="qd-spec-val font-bold">{{ q.makeYear || '—' }}</span>
+                </div>
+                <div v-if="q.engine_No" class="qd-spec-row">
+                  <span class="qd-spec-lbl">Engine No.</span>
+                  <span class="qd-spec-val font-mono">{{ q.engine_No }}</span>
+                </div>
               </div>
+
               <div v-if="categoryPath(q)" class="qd-cat-strip">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
-                {{ categoryPath(q) }}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+                <span>{{ categoryPath(q) }}</span>
               </div>
             </div>
           </div>
@@ -525,17 +555,23 @@ function viewImage(title, src) {
 .qd-center { display: flex; justify-content: center; align-items: center; padding: 4rem; }
 .qd-err-text { color: #b91c1c; font-size: 0.88rem; }
 
-/* Page header */
-.qd-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; padding: 1.25rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.875rem; }
-.qd-page-header-left { display: flex; align-items: center; gap: 0.85rem; }
-.qd-avatar-lg { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 1rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.qd-client-name { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 0.2rem; }
+/* Page header (Single Flex Row) */
+.qd-page-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  margin-bottom: 1.25rem; padding: 0.9rem 1.25rem; background: #fff;
+  border: 1px solid #e2e8f0; border-radius: 0.875rem; flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.qd-header-left { display: flex; align-items: center; gap: 0.85rem; }
+.qd-avatar-lg { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #1e40af, #2563eb); color: #fff; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 3px 10px rgba(37,99,235,0.22); }
+.qd-header-title-box { display: flex; flex-direction: column; gap: 0.15rem; }
+.qd-header-name-row { display: flex; align-items: center; gap: 0.65rem; }
+.qd-client-name { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.2; }
 .qd-client-meta { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: #64748b; flex-wrap: wrap; }
-.qd-page-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem; }
-.qd-action-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.qd-header-actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-left: auto; }
 
 /* Status badge */
-.qd-status-badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; }
+.qd-status-badge { display: inline-flex; align-items: center; padding: 0.2rem 0.65rem; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; }
 .qd-status-sm    { display: inline-flex; align-items: center; padding: 0.15rem 0.5rem;  border-radius: 9999px; font-size: 0.68rem; font-weight: 700; }
 .qd-st-pending   { background: #fef9c3; color: #92400e; border: 1px solid #fde68a; }
 .qd-st-checked   { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
@@ -549,11 +585,11 @@ function viewImage(title, src) {
 .qd-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
 .qd-btn-deposit { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
 .qd-btn-deposit:hover { opacity: 0.9; }
-.qd-btn-status  { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+.qd-btn-status  { background: linear-gradient(135deg, #1e40af, #2563eb); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.22); }
 .qd-btn-status:hover { opacity: 0.9; }
 .qd-btn-cancel  { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
 .qd-btn-cancel:hover { background: #e2e8f0; }
-.qd-btn-confirm { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+.qd-btn-confirm { background: linear-gradient(135deg, #1e40af, #2563eb); color: #fff; }
 .qd-btn-confirm:hover:not(:disabled) { opacity: 0.9; }
 .qd-btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -565,14 +601,41 @@ function viewImage(title, src) {
 .qd-alert-close:hover { opacity: 1; }
 
 /* Main grid */
-.qd-grid { display: grid; grid-template-columns: 340px 1fr; gap: 1.25rem; }
+.qd-grid { display: grid; grid-template-columns: 360px 1fr; gap: 1.25rem; }
 @media (max-width: 900px) { .qd-grid { grid-template-columns: 1fr; } }
 .qd-col { display: flex; flex-direction: column; gap: 1.25rem; }
 
 /* Card */
-.qd-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.875rem; overflow: hidden; }
+.qd-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.875rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
 .qd-card-head { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.82rem; font-weight: 700; color: #374151; }
-.qd-card-body { padding: 1.25rem; }
+.qd-card-body { padding: 1.15rem 1.25rem; }
+
+/* Executive Specification Table */
+.qd-spec-table { display: flex; flex-direction: column; }
+.qd-spec-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.65rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.82rem;
+}
+.qd-spec-row:last-child { border-bottom: none; padding-bottom: 0; }
+.qd-spec-row:first-child { padding-top: 0; }
+.qd-spec-lbl { font-size: 0.76rem; font-weight: 600; color: #64748b; min-width: 100px; flex-shrink: 0; }
+.qd-spec-val { color: #0f172a; text-align: right; word-break: break-word; font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.8rem; letter-spacing: -0.01em; }
+.text-blue { color: #1d4ed8; }
+
+.qd-plan-chip {
+  display: inline-flex; align-items: center;
+  padding: 0.2rem 0.6rem; border-radius: 0.375rem;
+  background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+  font-size: 0.74rem; font-weight: 700;
+}
+.qd-type-chip {
+  display: inline-flex; align-items: center;
+  padding: 0.2rem 0.6rem; border-radius: 0.375rem;
+  background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0;
+  font-size: 0.74rem; font-weight: 700;
+}
 
 /* Info grid */
 .qd-info-grid { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1.25rem; align-items: start; }
@@ -584,7 +647,7 @@ function viewImage(title, src) {
 .qd-text-red { color: #dc2626; }
 
 /* Category strip */
-.qd-cat-strip { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.85rem; background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; border-radius: 0.4rem; padding: 0.3rem 0.65rem; font-size: 0.72rem; font-weight: 600; }
+.qd-cat-strip { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.85rem; background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; border-radius: 0.4rem; padding: 0.35rem 0.7rem; font-size: 0.72rem; font-weight: 600; width: 100%; box-sizing: border-box; }
 
 /* Quotation amount */
 .qd-amount-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; }

@@ -1,6 +1,7 @@
 <script setup>
 import NavBar from "@/components/NavBar.vue";
 import HomeScreen from "@/components/HomeScreen.vue";
+import NotificationCenter from "@/components/NotificationCenter.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useColorStore } from "@/stores/colorStore";
@@ -43,11 +44,18 @@ const profilePicture = computed(() => {
 function handleImgError(e) { e.target.src = imageSrc; }
 function logout() { authStore.logout(); }
 
+const isSuperAdmin = computed(() => {
+  const user = authStore.auth?.user ?? authStore.auth ?? {};
+  const roleName = user?.roleName;
+  const roleCode = user?.roleCode || user?.role;
+  return roleName === 'Super Admin' || roleCode === 'ROLE_SUPER_ADMIN';
+});
+
 // ── Current page title from breadcrumbs or route ──
 const pageTitle = computed(() => {
   if (breadcrumbs?.current?.value) return breadcrumbs.current.value;
   const seg = route.path.split("/").filter(Boolean).pop() || "Dashboard";
-  return seg.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  return seg.replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 });
 
 const MODULE_NAVS = {
@@ -67,79 +75,57 @@ const activeNavs = computed(() => {
   return MODULE_NAVS[id] || healthNavs;
 });
 
-// ── Privilege-filtered navs (health module goes through permission filter) ──
+// ── Role-filtered navigation items for all modules ──
 const filteredNavs = computed(() => {
-  const id = moduleStore.activeModuleId;
-
-  // Non-health modules use their own nav configs without privilege filtering
-  if (id && id !== 'health') {
-    return activeNavs.value;
+  const rawNavs = activeNavs.value || [];
+  const user = authStore.auth?.user ?? authStore.auth ?? {};
+  const roleName = user?.roleName || '';
+  const roleCode = user?.roleCode || user?.role || localStorage.getItem('nyala_active_testing_role') || '';
+  
+  // Super Admin sees ALL navigation items
+  if (roleName === 'Super Admin' || roleCode === 'ROLE_SUPER_ADMIN') {
+    return rawNavs;
   }
 
-  // Health module: filter by user privileges
-  const user = authStore.auth?.user ?? authStore.auth;
-  const roleName = user?.roleName;
-  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
-  const rolePrivileges = Array.isArray(user?.role?.privilegeList) ? user.role.privilegeList : [];
-  const authorities = Array.isArray(user?.authorities) ? user.authorities : [];
-  
-  const effectivePrivileges = [...privileges, ...rolePrivileges, ...authorities]
-    .filter(Boolean)
-    .map((p) => String(p).trim());
+  const isProductConfigName = (name) => ['Product Config', 'Proposal Form Builder', 'Rate Config'].some(k => name?.includes(k));
+  const isClaimsName = (name) => name?.includes('Claim');
+  const isQuotationName = (name) => name?.includes('Quotation');
+  const isProposalsName = (name) => name?.includes('Proposal') && !name?.includes('Builder');
+  const isDashboardName = (name) => name?.includes('Dashboard');
 
-  const hasPrivilege = (privilege) => {
-    if (roleName === "Super Admin" || effectivePrivileges.includes("All Privileges") || effectivePrivileges.includes("ROLE_All Privileges")) {
+  return rawNavs.filter(item => {
+    const itemName = item.name || '';
+
+    // Product Config & Form Builder: ONLY Product Manager and Super Admin
+    if (isProductConfigName(itemName)) {
+      return roleCode === 'ROLE_PRODUCT_MANAGER' || roleName === 'Product Manager';
+    }
+
+    // Claims: Adjustor, Claim Manager, Customer, Product Manager, Super Admin
+    if (isClaimsName(itemName)) {
+      return ['ROLE_ADJUSTOR', 'ROLE_CLAIM_MANAGER', 'ROLE_CUSTOMER', 'ROLE_SUPER_ADMIN', 'ROLE_PRODUCT_MANAGER'].includes(roleCode) || 
+             ['Adjustor', 'Claim Manager', 'Customer', 'Product Manager'].includes(roleName);
+    }
+
+    // Quotation: Underwriter, Product Manager, Customer, Super Admin
+    if (isQuotationName(itemName)) {
+      return ['ROLE_UNDERWRITER', 'ROLE_PRODUCT_MANAGER', 'ROLE_CUSTOMER', 'ROLE_SUPER_ADMIN'].includes(roleCode) ||
+             ['Underwriter', 'Product Manager', 'Customer'].includes(roleName);
+    }
+
+    // Proposals & Contracts: Underwriter, Adjustor, Product Manager, Customer, Super Admin
+    if (isProposalsName(itemName)) {
+      return ['ROLE_UNDERWRITER', 'ROLE_ADJUSTOR', 'ROLE_PRODUCT_MANAGER', 'ROLE_CUSTOMER', 'ROLE_SUPER_ADMIN'].includes(roleCode) ||
+             ['Underwriter', 'Adjustor', 'Product Manager', 'Customer'].includes(roleName);
+    }
+
+    // Dashboard: Visible to all authenticated users
+    if (isDashboardName(itemName)) {
       return true;
     }
-    return effectivePrivileges.includes(`ROLE_${privilege}`) || 
-           effectivePrivileges.includes(privilege);
-  };
 
-  const hasManagesQuotation = hasPrivilege("Manages_Quotation");
-
-  const getRequiredPrivileges = (navItem) => {
-    if (navItem?.meta?.permissions && Array.isArray(navItem.meta.permissions)) {
-      return navItem.meta.permissions;
-    }
-    if (Array.isArray(navItem?.privilege)) {
-      return navItem.privilege;
-    }
-    return [];
-  };
-
-  const hasAccess = (navItem) => {
-    const requiredPrivs = getRequiredPrivileges(navItem);
-    if (requiredPrivs.length === 0) return true;
-    if (roleName === "Super Admin" || effectivePrivileges.includes("All Privileges") || effectivePrivileges.includes("ROLE_All Privileges")) {
-      return true;
-    }
-    return requiredPrivs.some((p) => hasPrivilege(p));
-  };
-
-  return healthNavs
-    .map((item) => {
-      const isUnderwriting = item.name === "Underwriting";
-      const isQuotationRelated = item.name === "Quotation" || item.name === "Quotation Underwriting";
-
-      if (isUnderwriting) {
-        if (hasManagesQuotation) return null;
-      }
-      if (isQuotationRelated) {
-        if (!hasManagesQuotation) return null;
-      }
-
-      if (item.navs) {
-        const children = item.navs.filter((c) => {
-          if (item.name === "Quotation Underwriting") {
-            return true;
-          }
-          return hasAccess(c);
-        });
-        return children.length ? { ...item, navs: children } : null;
-      }
-      return hasAccess(item) ? item : null;
-    })
-    .filter(Boolean);
+    return true;
+  });
 });
 
 // Show HomeScreen launcher on /home
@@ -176,12 +162,13 @@ const isModuleSelect = computed(() => route.path === "/module-select");
           </div>
           <div class="topbar-right">
 
-            <!-- Notifications -->
-            <button class="tb-icon-btn" title="Notifications">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-              </svg>
-              <span class="tb-notif-dot"></span>
+            <!-- Real Functional Notification Center -->
+            <NotificationCenter />
+
+            <!-- User & Roles Access Settings (Super Admin Only) -->
+            <button v-if="isSuperAdmin" @click="router.push('/admin/user-roles')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer ml-1" title="Manage System Users & Privileges">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              <span>User & Roles</span>
             </button>
 
             <div class="tb-divider"></div>
@@ -299,7 +286,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   top: 0.35rem; right: 0.35rem;
   width: 0.45rem; height: 0.45rem;
   border-radius: 50%;
-  background: #F39200;
+  background: #D4AF37;
   border: 1.5px solid #ffffff;
 }
 
@@ -328,7 +315,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   width: 2rem; height: 2rem;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #F39200;
+  border: 2px solid #7A1C21;
   flex-shrink: 0;
 }
 .tb-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -342,7 +329,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
 .tb-user-role {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #F39200;
+  color: #7A1C21;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -373,13 +360,15 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   overflow-y: auto;
   overflow-x: hidden;
   background: #F8FAFC;
+  box-sizing: border-box;
 }
 
 .page-wrapper {
-  padding: 1.5rem 2rem;
-  max-width: 1600px;
+  padding: 1.25rem 1.5rem;
+  max-width: 100%;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* Full-width shell for module-select (no sidebar) */

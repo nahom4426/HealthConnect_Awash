@@ -1,9 +1,10 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useModuleStore, MODULES } from '@/stores/moduleStore';
 import { useRouter, useRoute } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';
 import { useLanguageStore } from '@/stores/languageStore';
+import { fetchClaimsByModule } from '@/features/digitalChannel/api/digitalChannelApi';
 
 const moduleStore = useModuleStore();
 const router = useRouter();
@@ -12,6 +13,7 @@ const darkStore = useDarkModeStore();
 const langStore = useLanguageStore();
 
 const isDark = computed(() => darkStore.isDark);
+const liveClaims = ref([]);
 
 // Auto-detect module from URL path (e.g. /motor/dashboard → motor)
 const mod = computed(() => {
@@ -24,6 +26,21 @@ const mod = computed(() => {
   }
   return null;
 });
+
+async function loadClaims() {
+  if (mod.value?.id) {
+    liveClaims.value = await fetchClaimsByModule(mod.value.id);
+  }
+}
+
+onMounted(() => {
+  loadClaims();
+});
+
+watch(() => mod.value?.id, () => {
+  loadClaims();
+});
+
 
 const kpiConfigs = {
   motor:       { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Vehicles Covered'],   values: ['ETB 1.82M', '3,412', '189', '5,640'], trends: [9.2, 6.1, -1.4, 4.8], subs: ['vs last month','across all classes','this month','on network'], colors: ['#2563eb','#059669','#f59e0b','#7c3aed'] },
@@ -62,7 +79,15 @@ const recentActivities = computed(() => {
   ];
 });
 
-const cfg = computed(() => kpiConfigs[mod.value?.id] || kpiConfigs.motor);
+const cfg = computed(() => {
+  const base = kpiConfigs[mod.value?.id] || kpiConfigs.motor;
+  if (liveClaims.value && liveClaims.value.length > 0) {
+    const updatedValues = [...base.values];
+    updatedValues[2] = String(liveClaims.value.length);
+    return { ...base, values: updatedValues };
+  }
+  return base;
+});
 
 const now = new Date();
 
@@ -92,15 +117,12 @@ function switchModule() {
     <!-- ══ TOP BAR ══ -->
     <div class="mdb-topbar">
       <div class="mdb-topbar-left">
-        <div class="mdb-module-badge" :style="`background:${mod.color.from}18;border-color:${mod.color.to}40`">
-          <span :style="`color:${mod.color.to}`" v-html="mod.icon" class="mdb-badge-icon"></span>
+        <div class="mdb-standalone-icon" :style="`color:${mod.color.to}`">
+          <span v-html="mod.icon" class="mdb-badge-icon"></span>
         </div>
-        <div>
-          <h1 class="mdb-title">
-            {{ langStore.t('modules.' + mod.id) }} 
-            <span class="mdb-title-dash">— {{ langStore.t('dashboard') }}</span>
-          </h1>
-          <p class="mdb-subtitle">{{ greeting }} · {{ langStore.t('realTimeAnalytics', { module: langStore.t('modules.' + mod.id) }) }}</p>
+        <div class="flex flex-col text-left justify-center items-start m-0 p-0">
+          <h1 class="mdb-title m-0 p-0 text-left">{{ langStore.t('modules.' + mod.id) }} Dashboard</h1>
+          <p class="mdb-subtitle p-0 text-left">{{ langStore.t('realTimeAnalytics', { module: langStore.t('modules.' + mod.id) }) }}</p>
         </div>
       </div>
       <div class="mdb-topbar-right">
@@ -252,35 +274,64 @@ function switchModule() {
           <div class="mdb-card-title">{{ langStore.t('quickActions') }}</div>
           <div class="mdb-card-sub">{{ langStore.t('commonTasks', { module: langStore.t('modules.' + mod.id) }) }}</div>
         </div>
+        <span class="mdb-chip mdb-chip-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          {{ langStore.isAmharic ? 'ቀጣይ እርምጃዎች' : 'Shortcuts' }}
+        </span>
       </div>
       <div class="mdb-qa-grid">
         <RouterLink :to="`/${mod.id}/claims/new`" class="mdb-qa-btn" :style="`--qc:${mod.color.to}`">
-          <div class="mdb-qa-icon" :style="`background:${mod.color.to}18;color:${mod.color.to}`">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <div class="mdb-qa-icon" :style="`background:${mod.color.to}15;color:${mod.color.to};border-color:${mod.color.to}30`">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
           </div>
-          <div><div class="mdb-qa-label">{{ langStore.t('actions.newClaim') }}</div><div class="mdb-qa-sub">{{ langStore.t('actions.submitClaim') }}</div></div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow" :style="`color:${mod.color.to}`"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          <div class="mdb-qa-text">
+            <div class="mdb-qa-label">{{ langStore.t('actions.newClaim') }}</div>
+            <div class="mdb-qa-sub">{{ langStore.t('actions.submitClaim') }}</div>
+          </div>
+          <div class="mdb-qa-arrow-wrap" :style="`color:${mod.color.to}`">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </div>
         </RouterLink>
+
         <RouterLink :to="`/${mod.id}/claims/process`" class="mdb-qa-btn" :style="`--qc:${mod.color.to}`">
-          <div class="mdb-qa-icon" :style="`background:${mod.color.to}18;color:${mod.color.to}`">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          <div class="mdb-qa-icon" :style="`background:${mod.color.to}15;color:${mod.color.to};border-color:${mod.color.to}30`">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
           </div>
-          <div><div class="mdb-qa-label">{{ langStore.t('actions.processClaims') }}</div><div class="mdb-qa-sub">{{ langStore.t('actions.reviewPending') }}</div></div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow" :style="`color:${mod.color.to}`"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          <div class="mdb-qa-text">
+            <div class="mdb-qa-label">{{ langStore.t('actions.processClaims') }}</div>
+            <div class="mdb-qa-sub">{{ langStore.t('actions.reviewPending') }}</div>
+          </div>
+          <div class="mdb-qa-arrow-wrap" :style="`color:${mod.color.to}`">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </div>
         </RouterLink>
+
         <RouterLink :to="`/rate-config/${mod.id}`" class="mdb-qa-btn" :style="`--qc:${mod.color.to}`">
-          <div class="mdb-qa-icon" :style="`background:${mod.color.to}18;color:${mod.color.to}`">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+          <div class="mdb-qa-icon" :style="`background:${mod.color.to}15;color:${mod.color.to};border-color:${mod.color.to}30`">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
           </div>
-          <div><div class="mdb-qa-label">{{ langStore.t('actions.rateConfiguration') }}</div><div class="mdb-qa-sub">{{ langStore.t('actions.configureRates') }}</div></div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow" :style="`color:${mod.color.to}`"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          <div class="mdb-qa-text">
+            <div class="mdb-qa-label">{{ langStore.t('actions.rateConfiguration') }}</div>
+            <div class="mdb-qa-sub">{{ langStore.t('actions.configureRates') }}</div>
+          </div>
+          <div class="mdb-qa-arrow-wrap" :style="`color:${mod.color.to}`">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </div>
         </RouterLink>
+
         <button class="mdb-qa-btn mdb-qa-switch" @click="switchModule">
           <div class="mdb-qa-icon mdb-qa-icon-switch">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
           </div>
-          <div><div class="mdb-qa-label">{{ langStore.t('actions.switchModuleLabel') }}</div><div class="mdb-qa-sub">{{ langStore.t('actions.goBackSelect') }}</div></div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow mdb-qa-arrow-switch"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          <div class="mdb-qa-text">
+            <div class="mdb-qa-label">{{ langStore.t('actions.switchModuleLabel') }}</div>
+            <div class="mdb-qa-sub">{{ langStore.t('actions.goBackSelect') }}</div>
+          </div>
+          <div class="mdb-qa-arrow-wrap mdb-qa-arrow-switch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </div>
         </button>
       </div>
     </div>
@@ -387,17 +438,13 @@ function switchModule() {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .mdb-topbar-left { display: flex; align-items: center; gap: 1rem; }
-.mdb-module-badge {
-  width: 48px; height: 48px; border-radius: 14px;
-  border: 1.5px solid; flex-shrink: 0;
+.mdb-standalone-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  transition: all 0.3s;
 }
-.mdb-badge-icon { display: flex; }
-.mdb-badge-icon :deep(svg) { width: 24px; height: 24px; }
-.mdb-title { font-size: 1.25rem; font-weight: 800; color: var(--mdb-title); letter-spacing: -0.025em; transition: color 0.4s; }
-.mdb-title-dash { font-weight: 400; color: var(--mdb-muted); }
-.mdb-subtitle { font-size: 0.8rem; color: var(--mdb-subtitle); margin-top: 0.15rem; transition: color 0.4s; }
+.mdb-badge-icon { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; }
+.mdb-title { margin: 0 !important; padding: 0 !important; text-indent: 0 !important; font-size: 1.35rem; font-weight: 800; color: var(--mdb-title); letter-spacing: normal; transition: color 0.4s; }
+.mdb-subtitle { margin-top: 0.15rem !important; margin-left: 0 !important; margin-right: 0 !important; margin-bottom: 0 !important; padding: 0 !important; text-indent: 0 !important; font-size: 0.85rem; font-weight: 500; color: var(--mdb-subtitle); letter-spacing: normal; transition: color 0.4s; }
 .mdb-topbar-right { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
 
 .mdb-date-chip {
@@ -578,36 +625,76 @@ function switchModule() {
 .mdb-act-time   { font-size: 0.7rem; font-weight: 600; color: var(--mdb-muted); white-space: nowrap; flex-shrink: 0; }
 
 /* Quick Actions */
-.mdb-qa-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem; }
+.mdb-qa-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 .mdb-qa-btn {
-  display: flex; align-items: center; gap: 0.85rem;
-  padding: 0.95rem 1.1rem; border-radius: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 0.85rem;
+  padding: 1.1rem 1.15rem; border-radius: 16px;
   border: 1.5px solid var(--mdb-qa-border);
   background: var(--mdb-qa-bg);
   text-decoration: none; cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s, background 0.4s, box-shadow 0.2s;
+  position: relative; overflow: hidden;
+  outline: none;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, background 0.2s, box-shadow 0.2s;
   animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .mdb-qa-btn:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: var(--qc, #94a3b8);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.05), 0 0 12px var(--theme-color-glow);
+  background: color-mix(in srgb, var(--qc, #94a3b8) 6%, var(--mdb-qa-bg));
+  box-shadow: 0 8px 20px -4px rgba(0,0,0,0.08);
+}
+.mdb-qa-btn:focus,
+.mdb-qa-btn:focus-visible,
+.mdb-qa-btn:active {
+  outline: none;
+  border-color: var(--qc, #94a3b8);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
 }
 .mdb-qa-icon {
-  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  transition: transform 0.3s;
+  border: 1px solid transparent;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.mdb-qa-btn:hover .mdb-qa-icon { transform: scale(1.06); }
-.mdb-qa-icon-switch { background: var(--mdb-qa-switch-icon-bg) !important; color: var(--mdb-qa-switch-icon-color) !important; }
-.mdb-qa-label { font-size: 0.85rem; font-weight: 800; color: var(--mdb-qa-label); transition: color 0.4s; }
-.mdb-qa-sub   { font-size: 0.72rem; color: var(--mdb-muted); margin-top: 0.15rem; }
-.mdb-qa-arrow {
-  margin-left: auto; flex-shrink: 0; opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
+.mdb-qa-btn:hover .mdb-qa-icon {
+  transform: scale(1.06);
 }
-.mdb-qa-arrow-switch { color: var(--mdb-qa-switch-arrow) !important; }
-.mdb-qa-btn:hover .mdb-qa-arrow { opacity: 1; transform: translateX(4px); }
+.mdb-qa-icon-switch {
+  background: var(--mdb-qa-switch-icon-bg) !important;
+  color: var(--mdb-qa-switch-icon-color) !important;
+  border-color: rgba(148, 163, 184, 0.2) !important;
+}
+.mdb-qa-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.mdb-qa-label {
+  font-size: 0.88rem; font-weight: 800; color: var(--mdb-qa-label);
+  line-height: 1.25; transition: color 0.4s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mdb-qa-sub {
+  font-size: 0.75rem; font-weight: 500; color: var(--mdb-subtitle);
+  line-height: 1.2; transition: color 0.4s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mdb-qa-arrow-wrap {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--qc, #94a3b8) 12%, transparent);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mdb-qa-arrow { width: 14px; height: 14px; transition: transform 0.2s ease; }
+.mdb-qa-arrow-switch {
+  color: var(--mdb-qa-switch-arrow) !important;
+  background: rgba(148, 163, 184, 0.12) !important;
+}
+.mdb-qa-btn:hover .mdb-qa-arrow-wrap {
+  background: var(--qc, #94a3b8);
+  color: #ffffff !important;
+  transform: translateX(2px);
+}
+.mdb-qa-btn:hover .mdb-qa-arrow-switch {
+  background: #64748b !important;
+  color: #ffffff !important;
+}
 .mdb-qa-switch { --qc: #94a3b8; }
 
 /* Fallback */

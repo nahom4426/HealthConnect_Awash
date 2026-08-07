@@ -1,13 +1,25 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import NotificationPanel from './NotificationPanel.vue';
 import icons from '@/utils/icons';
 import { useNotificationStore } from '@/stores/notificationStore';
 
 const showPanel = ref(false);
+let pollInterval: ReturnType<typeof setInterval> | null = null;
 
-// ✅ Call store after Pinia is installed
 const notificationStore = useNotificationStore();
+
+onMounted(() => {
+  notificationStore.fetchNotifications();
+  // Poll for new notifications every 15 seconds
+  pollInterval = setInterval(() => {
+    notificationStore.fetchNotifications();
+  }, 15000);
+});
+
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval);
+});
 
 const unreadCount = computed(() => notificationStore.unreadCount);
 const hasUnread = computed(() => unreadCount.value > 0);
@@ -15,7 +27,8 @@ const hasUnread = computed(() => unreadCount.value > 0);
 function togglePanel() {
   showPanel.value = !showPanel.value;
   if (showPanel.value) {
-    notificationStore.markAllAsRead();
+    // Re-fetch latest notifications when opening the panel
+    notificationStore.fetchNotifications();
   }
 }
 

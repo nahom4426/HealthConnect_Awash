@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { BarChart2 } from '@lucide/vue';
+import type { Component } from 'vue';
+
 defineProps({
   title: {
     type: String,
@@ -9,8 +12,12 @@ defineProps({
     default: "",
   },
   icon: {
+    type: Object as () => Component,
+    default: () => BarChart2,
+  },
+  iconColor: {
     type: String,
-    default: "📊",
+    default: 'text-blue-500',
   },
 });
 </script>
@@ -25,7 +32,11 @@ defineProps({
       <div class="flex items-start justify-between">
         <div>
           <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <span class="text-2xl">{{ icon }}</span>
+            <component
+              :is="icon"
+              :class="['w-5 h-5 flex-shrink-0', iconColor]"
+              :stroke-width="2"
+            />
             {{ title }}
           </h2>
           <p v-if="subtitle" class="text-sm text-gray-500 mt-1">{{ subtitle }}</p>

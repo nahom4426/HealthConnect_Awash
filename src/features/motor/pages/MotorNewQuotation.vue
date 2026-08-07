@@ -98,9 +98,7 @@ async function submitNewInsured() {
   modalError.value  = '';
   try {
     const created = await createInsured(newInsured.value);
-    // push to local list and auto-select
-    allInsureds.value = [created, ...allInsureds.value];
-    onInsuredSelect(created.insuredUuid);
+    pickInsured(created);
     closeAddModal();
   } catch (err) {
     modalError.value = err?.response?.data?.message || err.message || 'Failed to create insured';
@@ -160,6 +158,7 @@ async function loadCatTree() {
   try {
     const data = await fetchCategoryTree();
     catTree.value = Array.isArray(data) ? data : (data?.content ?? []);
+    seedDraftCat(draft.value);
   } catch (_) { catTree.value = []; }
   finally { catLoading.value = false; }
 }
@@ -173,7 +172,7 @@ function emptyDraft() {
     plateNumber: '', makeYear: '', buyingPrice: '',
     categoryUuid: '',
     catSelections: [''],
-    catLevels: [],
+    catLevels: catTree.value.length ? [catTree.value] : [],
     _specUuid: '',
   };
 }
@@ -192,6 +191,9 @@ function seedDraftCat(d) {
 // When a car is selected from the dropdown
 function onCarSelect(val) {
   draft.value.carUuid = val;
+  if (!draft.value.catLevels.length && catTree.value.length) {
+    seedDraftCat(draft.value);
+  }
   const found = allCars.value.find(c => c.carUuid === val);
   if (found) {
     draft.value.carName      = found.carName  || '';
@@ -212,19 +214,24 @@ function onCarSelect(val) {
     selectedSpecUuid.value   = first.priceSpecificationUUid;
     draft.value._specUuid    = first.priceSpecificationUUid;
     draft.value.makeYear     = first.fromMakeYear || '';
+    if (first.suggestedValue) {
+      draft.value.buyingPrice = first.suggestedValue;
+    }
   } else {
     selectedSpecUuid.value = '';
   }
 }
 
-// When a price-spec card is clicked → auto-set make year range, clear buyingPrice
+// When a price-spec card is clicked → auto-set make year range and suggested value
 function onSpecSelect(uuid) {
   selectedSpecUuid.value   = uuid;
   draft.value._specUuid    = uuid;
   const spec = selectedCarSpecs.value.find(s => s.priceSpecificationUUid === uuid);
   if (spec) {
     draft.value.makeYear    = spec.fromMakeYear || '';
-    draft.value.buyingPrice = '';
+    if (spec.suggestedValue) {
+      draft.value.buyingPrice = spec.suggestedValue;
+    }
   }
   draftErrors.value = { ...draftErrors.value, priceSpec: '', makeYear: '', buyingPrice: '' };
 }
@@ -872,10 +879,10 @@ async function submit() {
 
 /* ── Page header ──────────────────────────────────────────────────────────── */
 .nq-page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; padding: 1.1rem 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.875rem; }
-.nq-header-icon { width: 46px; height: 46px; border-radius: 11px; background: linear-gradient(135deg,#6366f1,#8b5cf6); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+.nq-header-icon { width: 46px; height: 46px; border-radius: 11px; background: linear-gradient(135deg,#1e40af,#2563eb); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; box-shadow: 0 4px 14px rgba(37,99,235,0.28); }
 .nq-page-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0 0 0.15rem; }
 .nq-page-sub   { font-size: 0.73rem; color: #64748b; margin: 0; }
-.nq-cart-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.85rem; background: linear-gradient(135deg,#f5f3ff,#ede9fe); color: #6d28d9; border: 1px solid #ddd6fe; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
+.nq-cart-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.85rem; background: linear-gradient(135deg,#eff6ff,#dbeafe); color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
 
 /* ── Alerts ───────────────────────────────────────────────────────────────── */
 .nq-alert { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 500; margin-bottom: 1rem; }
@@ -994,7 +1001,7 @@ async function submit() {
 .nq-cart-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 1rem; border-bottom: 1px solid #f8fafc; transition: background 0.1s; }
 .nq-cart-item:last-child { border-bottom: none; }
 .nq-cart-item:hover { background: #f8fafc; }
-.nq-cart-item-editing { background: #f5f3ff !important; border-left: 3px solid #6366f1; }
+.nq-cart-item-editing { background: #eff6ff !important; border-radius: 0.5rem; }
 .nq-cart-item-icon { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg,#ede9fe,#ddd6fe); color: #6d28d9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .nq-cart-item-info { flex: 1; min-width: 0; }
 .nq-cart-item-name { font-size: 0.8rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

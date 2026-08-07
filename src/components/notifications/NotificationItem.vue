@@ -35,20 +35,26 @@ const typeColors = {
   },
 };
 
-const colors = computed(() => typeColors[props.notification.type]);
+const colors = computed(() => typeColors[props.notification.type] || typeColors.info);
 
 const timeAgo = computed(() => {
-  const now = new Date();
-  const diff = now.getTime() - new Date(props.notification.timestamp).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
+  if (!props.notification.timestamp || props.notification.timestamp === 'Just now') return 'Just now';
+  try {
+    const now = new Date();
+    const diff = now.getTime() - new Date(props.notification.timestamp).getTime();
+    if (isNaN(diff)) return props.notification.timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return new Date(props.notification.timestamp).toLocaleDateString();
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return new Date(props.notification.timestamp).toLocaleDateString();
+  } catch (e) {
+    return props.notification.timestamp;
+  }
 });
 
 function handleRemove() {
@@ -56,7 +62,7 @@ function handleRemove() {
 }
 
 function handleMarkAsRead() {
-  if (!props.notification.read) {
+  if (!props.notification.isRead) {
     emit('mark-as-read', props.notification.id);
   }
 }
@@ -72,12 +78,12 @@ function handleAction() {
   <div
     :class="[
       'px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group',
-      !notification.read && 'bg-blue-50/50',
+      !notification.isRead && 'bg-blue-50/50',
     ]"
     @click="handleMarkAsRead"
   >
     <!-- Unread indicator -->
-    <div v-if="!notification.read" class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+    <div v-if="!notification.isRead" class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
 
     <div class="flex gap-3 pl-2">
       <!-- Icon -->

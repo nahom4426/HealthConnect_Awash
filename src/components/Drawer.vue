@@ -23,13 +23,13 @@ const profilePicture = computed(() => {
   <aside class="sidebar flex flex-col h-full select-none">
 
     <!-- ── Logo Header ── -->
-    <div class="sidebar-logo flex items-center gap-3 px-5 py-4 flex-shrink-0">
-      <div class="logo-icon flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 flex-shrink-0">
-        <img src="/src/assets/img/logo.png" alt="EIC" class="h-10 w-auto" />
+    <div class="sidebar-logo flex items-center gap-3 px-4 py-3.5 flex-shrink-0">
+      <div class="logo-icon flex items-center justify-center w-10 h-10 rounded-xl bg-white/95 border border-[#D4AF37]/60 shadow-md p-1 flex-shrink-0">
+        <img src="/src/assets/img/nyala_logo.png" alt="Nyala" class="h-full w-full object-contain" />
       </div>
       <div v-if="!collapsed" class="flex flex-col leading-tight overflow-hidden">
-        <span class="text-white font-bold text-sm tracking-wide truncate">Ethiopian Insurance Corporation</span>
-        <span class="text-white/40 text-[10px] font-medium uppercase tracking-widest">Portal</span>
+        <span class="text-white font-extrabold text-sm tracking-tight whitespace-nowrap">Nyala Insurance S.C.</span>
+        <span class="text-[#D4AF37] text-[10px] font-bold uppercase tracking-widest mt-1">Your Guarantee</span>
       </div>
     </div>
 

@@ -17,7 +17,7 @@ const TYPES = {
     sections: [
       {
         title: "Vehicle Classification",
-        icon: "🚗",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>`,
         questions: [
           { id: "vehicle_type", label: "Vehicle Type", type: "select", options: ["Private Car", "Commercial Vehicle", "Motorcycle", "Minibus", "Heavy Truck"], required: true, help: "Category determines the base rate schedule." },
           { id: "vehicle_use", label: "Primary Use", type: "select", options: ["Personal", "Business", "Hire/Reward", "Government"], required: true },
@@ -27,7 +27,7 @@ const TYPES = {
       },
       {
         title: "Cover & Premium Rates",
-        icon: "📊",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
         questions: [
           { id: "cover_type", label: "Cover Type", type: "select", options: ["Comprehensive", "Third Party Only", "Third Party Fire & Theft"], required: true },
           { id: "base_rate", label: "Base Premium Rate (%)", type: "rate", unit: "%", min: 0.5, max: 10, step: 0.01, required: true, help: "Percentage of vehicle sum insured." },
@@ -37,7 +37,7 @@ const TYPES = {
       },
       {
         title: "Loading & Discount Factors",
-        icon: "⚖️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>`,
         questions: [
           { id: "young_driver_loading", label: "Young Driver Loading (<25 yrs) (%)", type: "rate", unit: "%", min: 0, max: 50, step: 0.5, help: "Extra loading applied for drivers under 25." },
           { id: "ncb_1yr", label: "No-Claim Bonus – 1 Year (%)", type: "rate", unit: "%", min: 0, max: 20, step: 0.5 },
@@ -49,7 +49,7 @@ const TYPES = {
       },
       {
         title: "Excess & Deductibles",
-        icon: "🛡️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
         questions: [
           { id: "voluntary_excess", label: "Voluntary Excess (ETB)", type: "number", unit: "ETB", min: 0, help: "Amount policyholder agrees to bear per claim." },
           { id: "compulsory_excess", label: "Compulsory Excess (%)", type: "rate", unit: "%", min: 0, max: 20, step: 0.5 },
@@ -66,7 +66,7 @@ const TYPES = {
     sections: [
       {
         title: "Property Classification",
-        icon: "🏢",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>`,
         questions: [
           { id: "property_type", label: "Property Type", type: "select", options: ["Residential Building", "Commercial Building", "Industrial/Factory", "Warehouse", "Mixed Use"], required: true },
           { id: "construction", label: "Construction Type", type: "select", options: ["Fire-Resistant (Class A)", "Semi Fire-Resistant (Class B)", "Combustible (Class C)", "Non-Standard"], required: true, help: "Determines structural fire resistance rating." },
@@ -76,7 +76,7 @@ const TYPES = {
       },
       {
         title: "Premium Rates",
-        icon: "💰",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
         questions: [
           { id: "base_rate_building", label: "Building Rate (%‰)", type: "rate", unit: "‰", min: 0.1, max: 5, step: 0.01, required: true, help: "Rate per thousand of sum insured." },
           { id: "base_rate_contents", label: "Contents Rate (%‰)", type: "rate", unit: "‰", min: 0.1, max: 5, step: 0.01, required: true },
@@ -86,7 +86,7 @@ const TYPES = {
       },
       {
         title: "Loading Factors",
-        icon: "⚖️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>`,
         questions: [
           { id: "sprinkler_discount", label: "Sprinkler System Discount (%)", type: "rate", unit: "%", min: 0, max: 25, step: 0.5 },
           { id: "fire_alarm_discount", label: "Fire Alarm Discount (%)", type: "rate", unit: "%", min: 0, max: 15, step: 0.5 },
@@ -96,7 +96,7 @@ const TYPES = {
       },
       {
         title: "Allied Perils Extension",
-        icon: "🌪️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>`,
         questions: [
           { id: "riot_rate", label: "Riot & Strike Rate (%‰)", type: "rate", unit: "‰", min: 0, max: 2, step: 0.01 },
           { id: "storm_rate", label: "Storm & Tempest Rate (%‰)", type: "rate", unit: "‰", min: 0, max: 2, step: 0.01 },
@@ -114,7 +114,7 @@ const TYPES = {
     sections: [
       {
         title: "Plan & Cover Type",
-        icon: "🏥",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 6v12M6 12h12"/></svg>`,
         questions: [
           { id: "plan_type", label: "Plan Type", type: "select", options: ["Individual", "Family (2 adults)", "Family Plus (2+children)", "Group (SME)", "Group (Corporate)"], required: true },
           { id: "cover_level", label: "Cover Level", type: "select", options: ["Basic / Essential", "Standard", "Enhanced", "Premium / Executive"], required: true },
@@ -124,7 +124,7 @@ const TYPES = {
       },
       {
         title: "Age Band Premiums",
-        icon: "📅",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
         questions: [
           { id: "rate_0_17", label: "Age 0–17 Annual Premium (ETB)", type: "number", unit: "ETB", required: true },
           { id: "rate_18_35", label: "Age 18–35 Annual Premium (ETB)", type: "number", unit: "ETB", required: true },
@@ -135,7 +135,7 @@ const TYPES = {
       },
       {
         title: "Deductibles & Co-pay",
-        icon: "🧾",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>`,
         questions: [
           { id: "annual_deductible", label: "Annual Deductible (ETB)", type: "number", unit: "ETB" },
           { id: "copay_gp", label: "Co-pay – GP Visit (%)", type: "rate", unit: "%", min: 0, max: 30, step: 1 },
@@ -145,7 +145,7 @@ const TYPES = {
       },
       {
         title: "Loading & Discounts",
-        icon: "⚖️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>`,
         questions: [
           { id: "group_discount_10", label: "Group Discount 10–49 members (%)", type: "rate", unit: "%", min: 0, max: 20, step: 0.5 },
           { id: "group_discount_50", label: "Group Discount 50+ members (%)", type: "rate", unit: "%", min: 0, max: 35, step: 0.5 },
@@ -163,7 +163,7 @@ const TYPES = {
     sections: [
       {
         title: "Cargo Classification",
-        icon: "📦",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
         questions: [
           { id: "cargo_type", label: "Cargo Type", type: "select", options: ["General Merchandise", "Bulk Commodity", "Refrigerated/Perishable", "Hazardous Goods", "Machinery & Equipment"], required: true },
           { id: "voyage_type", label: "Voyage Type", type: "select", options: ["Import", "Export", "Inland Transit", "Coastal"], required: true },
@@ -172,7 +172,7 @@ const TYPES = {
       },
       {
         title: "Cover & Rates",
-        icon: "📋",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>`,
         questions: [
           { id: "cover_clause", label: "Institute Cargo Clause", type: "select", options: ["ICC (A) – All Risks", "ICC (B) – Named Perils", "ICC (C) – Limited"], required: true },
           { id: "base_rate", label: "Base Rate (%‰)", type: "rate", unit: "‰", min: 0.05, max: 5, step: 0.01, required: true },
@@ -182,7 +182,7 @@ const TYPES = {
       },
       {
         title: "Survey & Loading",
-        icon: "🔍",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
         questions: [
           { id: "survey_required_si", label: "Survey Required Above (ETB)", type: "number", unit: "ETB" },
           { id: "open_cover_discount", label: "Open Cover Discount (%)", type: "rate", unit: "%", min: 0, max: 20, step: 0.5 },
@@ -199,7 +199,7 @@ const TYPES = {
     sections: [
       {
         title: "Product & Term",
-        icon: "📜",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>`,
         questions: [
           { id: "product_type", label: "Product Type", type: "select", options: ["Term Life", "Whole Life", "Endowment", "Credit Life", "Group Life"], required: true },
           { id: "term_years", label: "Policy Term (Years)", type: "select", options: ["5", "10", "15", "20", "25", "30", "Whole of Life"], required: true },
@@ -208,7 +208,7 @@ const TYPES = {
       },
       {
         title: "Mortality Rates by Age Band",
-        icon: "📊",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
         questions: [
           { id: "mort_18_25", label: "Age 18–25 Mortality Rate (‰)", type: "rate", unit: "‰", min: 0, max: 5, step: 0.01, required: true, help: "Deaths per thousand per year." },
           { id: "mort_26_35", label: "Age 26–35 Mortality Rate (‰)", type: "rate", unit: "‰", min: 0, max: 8, step: 0.01, required: true },
@@ -219,7 +219,7 @@ const TYPES = {
       },
       {
         title: "Loading Factors",
-        icon: "⚖️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>`,
         questions: [
           { id: "smoker_loading", label: "Smoker Loading (%)", type: "rate", unit: "%", min: 0, max: 100, step: 1 },
           { id: "female_discount", label: "Female Longevity Discount (%)", type: "rate", unit: "%", min: 0, max: 20, step: 0.5 },
@@ -229,7 +229,7 @@ const TYPES = {
       },
       {
         title: "Benefit & Limits",
-        icon: "💼",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
         questions: [
           { id: "min_sa", label: "Minimum Sum Assured (ETB)", type: "number", unit: "ETB", min: 10000 },
           { id: "max_sa", label: "Maximum Sum Assured (ETB)", type: "number", unit: "ETB" },
@@ -246,7 +246,7 @@ const TYPES = {
     sections: [
       {
         title: "Policy Class",
-        icon: "🏗️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 22h20M8 22V11l4-5 4 5v11M12 6V2"/></svg>`,
         questions: [
           { id: "eng_class", label: "Engineering Class", type: "select", options: ["Contractors All Risk (CAR)", "Erection All Risk (EAR)", "Machinery Breakdown (MB)", "Electronic Equipment", "Contractors Plant & Machinery"], required: true },
           { id: "project_type", label: "Project / Risk Type", type: "select", options: ["Building Construction", "Civil Engineering", "Industrial Installation", "Power Plant", "Offshore"], required: true },
@@ -255,7 +255,7 @@ const TYPES = {
       },
       {
         title: "Premium Rates",
-        icon: "💰",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
         questions: [
           { id: "works_rate", label: "Works / Main Contract Rate (%‰)", type: "rate", unit: "‰", min: 0.1, max: 5, step: 0.01, required: true },
           { id: "plant_rate", label: "Contractor's Plant Rate (%‰)", type: "rate", unit: "‰", min: 0.5, max: 10, step: 0.01 },
@@ -265,7 +265,7 @@ const TYPES = {
       },
       {
         title: "Deductibles",
-        icon: "🛡️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
         questions: [
           { id: "material_excess", label: "Material Damage Deductible (ETB)", type: "number", unit: "ETB" },
           { id: "tpl_excess", label: "TPL Deductible (ETB)", type: "number", unit: "ETB" },
@@ -282,7 +282,7 @@ const TYPES = {
     sections: [
       {
         title: "Liability Class",
-        icon: "⚖️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>`,
         questions: [
           { id: "liab_class", label: "Liability Class", type: "select", options: ["Public Liability", "Employers Liability", "Professional Indemnity", "Product Liability", "Directors & Officers"], required: true },
           { id: "business_type", label: "Business / Trade", type: "select", options: ["Retail / Shop", "Office / Professional", "Manufacturing", "Construction", "Healthcare", "Financial Services"], required: true },
@@ -291,7 +291,7 @@ const TYPES = {
       },
       {
         title: "Limits & Rates",
-        icon: "📋",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>`,
         questions: [
           { id: "indemnity_limit", label: "Limit of Indemnity (ETB)", type: "number", unit: "ETB", required: true },
           { id: "base_rate", label: "Base Premium Rate (%‰ of Limit)", type: "rate", unit: "‰", min: 0.1, max: 10, step: 0.01, required: true },
@@ -301,7 +301,7 @@ const TYPES = {
       },
       {
         title: "Loadings",
-        icon: "📈",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
         questions: [
           { id: "claims_loading", label: "Adverse Claims Loading (%)", type: "rate", unit: "%", min: 0, max: 100, step: 1 },
           { id: "high_risk_loading", label: "High-Risk Trade Loading (%)", type: "rate", unit: "%", min: 0, max: 75, step: 1 },
@@ -318,7 +318,7 @@ const TYPES = {
     sections: [
       {
         title: "Risk Classification",
-        icon: "🔒",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
         questions: [
           { id: "premises_type", label: "Premises Type", type: "select", options: ["Residential", "Retail Shop", "Office", "Bank / Jeweller", "Warehouse"], required: true },
           { id: "security_grade", label: "Security Grading", type: "select", options: ["Grade A – CCTV + Guards + Alarm", "Grade B – Alarm + Guards", "Grade C – Alarm Only", "Grade D – Locks Only", "No Security"], required: true },
@@ -327,7 +327,7 @@ const TYPES = {
       },
       {
         title: "Premium Rates",
-        icon: "💰",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
         questions: [
           { id: "base_rate", label: "Base Rate (%‰ of Sum Insured)", type: "rate", unit: "‰", min: 0.1, max: 10, step: 0.01, required: true },
           { id: "cash_in_safe_rate", label: "Cash in Safe Rate (%‰)", type: "rate", unit: "‰", min: 0.5, max: 15, step: 0.01 },
@@ -337,7 +337,7 @@ const TYPES = {
       },
       {
         title: "Discounts & Loading",
-        icon: "⚖️",
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>`,
         questions: [
           { id: "cctv_discount", label: "CCTV Discount (%)", type: "rate", unit: "%", min: 0, max: 15, step: 0.5 },
           { id: "guard_discount", label: "Security Guard Discount (%)", type: "rate", unit: "%", min: 0, max: 20, step: 0.5 },
@@ -356,7 +356,35 @@ const typeDef  = computed(() => TYPES[typeId.value]);
 const form     = ref({});
 const saving   = ref(false);
 const saved    = ref(false);
+const publishing = ref(false);
+const published  = ref(false);
+const currentRateUuid = ref(null);
+const currentStatus = ref('DRAFT');
 const errors   = ref({});
+
+import { saveRateConfig, publishRateConfig, fetchRateConfigs } from '@/features/form_builder/api/formBuilderApi';
+import { onMounted } from 'vue';
+
+onMounted(async () => {
+  if (!typeId.value) return;
+  try {
+    const list = await fetchRateConfigs(typeId.value);
+    if (list && list.length) {
+      const active = list[0];
+      currentRateUuid.value = active.rateUuid;
+      currentStatus.value = active.status;
+      if (active.ratesJson) {
+        try {
+          form.value = typeof active.ratesJson === 'string' ? JSON.parse(active.ratesJson) : active.ratesJson;
+        } catch (e) {
+          console.error('Parse ratesJson error:', e);
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load rate config:', e);
+  }
+});
 
 function validate() {
   errors.value = {};
@@ -374,10 +402,43 @@ function validate() {
 async function save() {
   if (!validate()) return;
   saving.value = true;
-  await new Promise(r => setTimeout(r, 1200));
-  saving.value = false;
-  saved.value  = true;
-  setTimeout(() => (saved.value = false), 3000);
+  try {
+    const savedObj = await saveRateConfig({
+      rateUuid: currentRateUuid.value,
+      productId: typeId.value,
+      version: '1.0',
+      ratesJson: JSON.stringify(form.value, null, 2),
+    });
+    if (savedObj && savedObj.rateUuid) {
+      currentRateUuid.value = savedObj.rateUuid;
+    }
+    saving.value = false;
+    saved.value  = true;
+    setTimeout(() => (saved.value = false), 3000);
+  } catch (e) {
+    saving.value = false;
+    alert('Save failed: ' + e.message);
+  }
+}
+
+async function publish() {
+  if (!validate()) return;
+  publishing.value = true;
+  try {
+    if (!currentRateUuid.value) {
+      await save();
+    }
+    const pubObj = await publishRateConfig(currentRateUuid.value);
+    if (pubObj) {
+      currentStatus.value = pubObj.status;
+    }
+    publishing.value = false;
+    published.value = true;
+    setTimeout(() => (published.value = false), 3000);
+  } catch (e) {
+    publishing.value = false;
+    alert('Publish failed: ' + e.message);
+  }
 }
 
 function reset() {
@@ -385,22 +446,38 @@ function reset() {
   errors.value = {};
 }
 
+function goBack() {
+  if (window.history.state && window.history.state.back) {
+    router.back();
+  } else {
+    router.push(`/${typeId.value}/dashboard`);
+  }
+}
+
 const activeSection = ref(0);
 </script>
 
 <template>
-  <div class="rf-root" v-if="typeDef">
+  <div
+    class="rf-root"
+    v-if="typeDef"
+    :style="{
+      '--prod-from': typeDef.color.from,
+      '--prod-to': typeDef.color.to,
+      '--prod-accent': typeDef.color.accent,
+      '--prod-glow': typeDef.color.glow
+    }"
+  >
 
     <!-- ── Top bar ── -->
     <div class="rf-topbar">
-      <button class="rf-back" @click="router.push('/rate-config')">
+      <button class="rf-back" @click="goBack">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M15 18l-6-6 6-6"/></svg>
-        Rate Configuration
+        Back
       </button>
 
       <div class="rf-breadcrumb">
-        <span class="rf-bc-sep">/</span>
-        <span class="rf-bc-current">{{ typeDef.name }}</span>
+        <span class="rf-bc-current">{{ typeDef.name }} Rate Configuration</span>
       </div>
 
       <div class="rf-topbar-actions">
@@ -416,24 +493,28 @@ const activeSection = ref(0);
           </template>
           <template v-else>
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-            Save Rates
+            Save Draft
           </template>
+        </button>
+
+        <button class="rf-btn-publish" @click="publish" :disabled="publishing">
+          <template v-if="publishing">Publishing…</template>
+          <template v-else-if="published">Published!</template>
+          <template v-else>Publish Rates</template>
         </button>
       </div>
     </div>
 
-    <!-- ── Hero ── -->
-    <div class="rf-hero" :style="`background: linear-gradient(135deg, ${typeDef.color.from}, ${typeDef.color.to})`">
-      <div class="rf-hero-shine"></div>
-      <div class="rf-hero-dots"></div>
-      <div class="rf-hero-content">
-        <div class="rf-hero-icon" v-html="typeDef.icon"></div>
-        <div>
-          <h1 class="rf-hero-title">{{ typeDef.name }}</h1>
-          <p class="rf-hero-desc">{{ typeDef.description }}</p>
+    <!-- ── Header Banner Card ── -->
+    <div class="rf-header-card">
+      <div class="rf-header-main">
+        <div class="rf-header-icon" v-html="typeDef.icon"></div>
+        <div class="rf-header-text">
+          <h1 class="rf-header-title">{{ typeDef.name }}</h1>
+          <p class="rf-header-desc">{{ typeDef.description }}</p>
         </div>
       </div>
-      <div class="rf-hero-meta">
+      <div class="rf-header-meta">
         <div class="rf-meta-pill">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           {{ typeDef.sections.length }} sections
@@ -450,16 +531,15 @@ const activeSection = ref(0);
 
       <!-- Section nav sidebar -->
       <aside class="rf-sidebar">
-        <p class="rf-sidebar-label">Sections</p>
+        <p class="rf-sidebar-label">Navigation</p>
         <button
           v-for="(sec, i) in typeDef.sections"
           :key="i"
           class="rf-sec-btn"
           :class="{ 'rf-sec-active': activeSection === i }"
-          :style="activeSection === i ? `border-left-color: ${typeDef.color.accent}; color: ${typeDef.color.accent}` : ''"
           @click="activeSection = i"
         >
-          <span class="rf-sec-emoji">{{ sec.icon }}</span>
+          <span class="rf-sec-icon" v-html="sec.icon"></span>
           <span>{{ sec.title }}</span>
         </button>
 
@@ -467,11 +547,11 @@ const activeSection = ref(0);
         <div class="rf-progress-wrap">
           <div class="rf-progress-label">
             <span>Completion</span>
-            <span>{{ Math.round((Object.keys(form).filter(k => form[k] !== '' && form[k] !== undefined && form[k] !== null).length / typeDef.sections.reduce((a,s) => a+s.questions.filter(q=>q.required).length,0)) * 100) }}%</span>
+            <span>{{ Math.round((Object.keys(form).filter(k => form[k] !== '' && form[k] !== undefined && form[k] !== null).length / Math.max(1, typeDef.sections.reduce((a,s) => a+s.questions.filter(q=>q.required).length,0))) * 100) }}%</span>
           </div>
           <div class="rf-progress-bar">
             <div class="rf-progress-fill"
-              :style="`width: ${Math.min(100,Math.round((Object.keys(form).filter(k => form[k] !== '' && form[k] !== undefined && form[k] !== null).length / Math.max(1,typeDef.sections.reduce((a,s) => a+s.questions.filter(q=>q.required).length,0))) * 100))}%; background: ${typeDef.color.accent}`">
+              :style="`width: ${Math.min(100,Math.round((Object.keys(form).filter(k => form[k] !== '' && form[k] !== undefined && form[k] !== null).length / Math.max(1,typeDef.sections.reduce((a,s) => a+s.questions.filter(q=>q.required).length,0))) * 100))}%;`">
             </div>
           </div>
         </div>
@@ -486,10 +566,10 @@ const activeSection = ref(0);
           class="rf-section"
         >
           <div class="rf-section-header">
-            <span class="rf-section-emoji">{{ section.icon }}</span>
+            <span class="rf-section-icon-badge" v-html="section.icon"></span>
             <div>
               <h2 class="rf-section-title">{{ section.title }}</h2>
-              <p class="rf-section-count">{{ section.questions.length }} parameters</p>
+              <p class="rf-section-count">{{ section.questions.length }} parameters configured</p>
             </div>
           </div>
 
@@ -523,23 +603,27 @@ const activeSection = ref(0);
                       :max="q.max ?? 100"
                       :step="q.step ?? 0.01"
                       v-model.number="form[q.id]"
-                      :style="`--accent:${typeDef.color.accent}; --pct:${Math.round(((form[q.id]||q.min||0)-(q.min||0))/((q.max||100)-(q.min||0))*100)}%`"
+                      :style="`--pct:${Math.round(((form[q.id]||q.min||0)-(q.min||0))/((q.max||100)-(q.min||0))*100)}%`"
                     />
-                    <div class="rf-slider-val" :style="`border-color:${typeDef.color.accent}; color:${typeDef.color.accent}`">
+                    <div class="rf-slider-val">
                       {{ (form[q.id] ?? q.min ?? 0).toFixed(2) }}<span class="rf-val-unit">{{ q.unit }}</span>
                     </div>
                   </div>
                   <p v-if="q.help" class="rf-help">{{ q.help }}</p>
                   <!-- savings badge -->
                   <div v-if="(q.label.toLowerCase().includes('discount') || q.label.toLowerCase().includes('bonus')) && (form[q.id] ?? 0) > 0" class="rf-savings-badge">
-                    <span class="rf-savings-icon">🎉</span>
+                    <span class="rf-savings-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </span>
                     <div>
                       <span class="rf-savings-headline">Saves {{ (form[q.id] ?? 0).toFixed(1) }}% off premium</span>
                       <span class="rf-savings-example">e.g. ETB 10,000 base → customer pays ETB {{ (10000 - (form[q.id] ?? 0) * 100).toLocaleString() }}</span>
                     </div>
                   </div>
                   <div v-else-if="q.label.toLowerCase().includes('loading') && (form[q.id] ?? 0) > 0" class="rf-loading-badge">
-                    <span>⚠️</span>
+                    <span class="rf-loading-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </span>
                     <span>Adds {{ (form[q.id] ?? 0).toFixed(1) }}% → ETB {{ (10000 + (form[q.id] ?? 0) * 100).toLocaleString() }} on ETB 10k base</span>
                   </div>
                 </div>
@@ -565,13 +649,12 @@ const activeSection = ref(0);
             </template>
           </div>
 
-          <!-- Discount preview panel (shown if section has any discount/bonus fields with values) -->
+          <!-- Discount preview panel -->
           <div
             v-if="section.questions.some(q => (q.label.toLowerCase().includes('discount') || q.label.toLowerCase().includes('bonus')) && form[q.id] > 0)"
             class="rf-preview-panel"
-            :style="`border-color:${typeDef.color.accent}33; background: linear-gradient(135deg,${typeDef.color.from}08,${typeDef.color.to}12)`"
           >
-            <div class="rf-preview-header" :style="`color:${typeDef.color.to}`">
+            <div class="rf-preview-header">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               Customer Savings Preview
             </div>
@@ -583,18 +666,18 @@ const activeSection = ref(0);
               <template v-for="q in section.questions.filter(q2 => (q2.label.toLowerCase().includes('discount')||q2.label.toLowerCase().includes('bonus')) && form[q2.id] > 0)" :key="q.id">
                 <div class="rf-preview-row">
                   <span class="rf-preview-disc-label">{{ q.label.replace(/ \(%\)/,'').replace(/ \(%‰\)/,'') }}</span>
-                  <span class="rf-preview-disc-val" :style="`color:${typeDef.color.to}`">−{{ (form[q.id]).toFixed(1) }}% → −ETB {{ ((form[q.id]/100)*10000).toLocaleString() }}</span>
+                  <span class="rf-preview-disc-val">−{{ (form[q.id]).toFixed(1) }}% → −ETB {{ ((form[q.id]/100)*10000).toLocaleString() }}</span>
                 </div>
               </template>
-              <div class="rf-preview-total" :style="`border-color:${typeDef.color.accent}33`">
+              <div class="rf-preview-total">
                 <span>Total Discount</span>
-                <span class="rf-preview-total-val" :style="`color:${typeDef.color.to}`">
+                <span class="rf-preview-total-val">
                   −{{ section.questions.filter(q2 => (q2.label.toLowerCase().includes('discount')||q2.label.toLowerCase().includes('bonus')) && form[q2.id]>0).reduce((s,q2)=>s+(form[q2.id]||0),0).toFixed(1) }}%
                   &nbsp;→&nbsp;
                   ETB {{ (10000 - section.questions.filter(q2=>(q2.label.toLowerCase().includes('discount')||q2.label.toLowerCase().includes('bonus'))&&form[q2.id]>0).reduce((s,q2)=>s+(form[q2.id]||0)/100*10000,0)).toLocaleString() }}
                 </span>
               </div>
-              <p class="rf-preview-note">* Illustrative only — based on a ETB 10,000 sample premium</p>
+              <p class="rf-preview-note">* Illustrative only — based on an ETB 10,000 sample premium</p>
             </div>
           </div>
 
@@ -603,10 +686,10 @@ const activeSection = ref(0);
             <button v-if="si > 0" class="rf-btn-ghost" @click="activeSection = si - 1">
               ← Previous
             </button>
-            <button v-if="si < typeDef.sections.length - 1" class="rf-btn-next" :style="`background: ${typeDef.color.to}`" @click="activeSection = si + 1">
+            <button v-if="si < typeDef.sections.length - 1" class="rf-btn-next" @click="activeSection = si + 1">
               Next Section →
             </button>
-            <button v-else class="rf-btn-next" :style="`background: ${typeDef.color.to}`" @click="save" :disabled="saving">
+            <button v-else class="rf-btn-next" @click="save" :disabled="saving">
               {{ saving ? 'Saving…' : 'Save All Rates' }}
             </button>
           </div>
@@ -619,260 +702,330 @@ const activeSection = ref(0);
   <!-- Fallback for unknown type -->
   <div v-else class="rf-not-found">
     <p>Insurance type <strong>{{ typeId }}</strong> not found.</p>
-    <button class="rf-btn-ghost" @click="router.push('/rate-config')">← Back</button>
+    <button class="rf-btn-ghost" @click="goBack">← Back</button>
   </div>
 </template>
 
 <style scoped>
+.rf-root, .rf-root * {
+  box-sizing: border-box;
+}
+
 .rf-root {
-  min-height: 100%;
-  background: #f1f5f9;
+  min-height: 100vh;
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
 }
 
 /* ── Top bar ── */
 .rf-topbar {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.75rem;
-  background: #fff;
+  gap: 1rem;
+  padding: 0.85rem 1.75rem;
+  background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
-  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
 }
 .rf-back {
   display: flex; align-items: center; gap: 0.375rem;
-  font-size: 0.8125rem; font-weight: 600; color: #475569;
-  background: none; border: none; cursor: pointer;
-  padding: 0.375rem 0.625rem; border-radius: 0.5rem;
-  transition: background 0.15s, color 0.15s;
+  font-size: 0.85rem; font-weight: 700; color: #475569;
+  background: #f1f5f9; border: 1px solid #e2e8f0; cursor: pointer;
+  padding: 0.4rem 0.75rem; border-radius: 8px;
+  transition: all 0.18s ease;
 }
-.rf-back:hover { background: #f1f5f9; color: #0f172a; }
+.rf-back:hover { background: #e2e8f0; color: #0f172a; }
 .rf-breadcrumb { display: flex; align-items: center; gap: 0.375rem; }
-.rf-bc-sep { color: #cbd5e1; }
-.rf-bc-current { font-size: 0.8125rem; font-weight: 700; color: #0f172a; }
+.rf-bc-current { font-size: 0.9rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
 .rf-topbar-actions { display: flex; align-items: center; gap: 0.625rem; margin-left: auto; }
 
 /* ── Buttons ── */
 .rf-btn-ghost {
-  padding: 0.4rem 1rem; border-radius: 0.5rem;
-  border: 1px solid #e2e8f0; background: #fff;
-  font-size: 0.8125rem; font-weight: 600; color: #64748b;
-  cursor: pointer; transition: all 0.15s;
+  padding: 0.45rem 1rem; border-radius: 8px;
+  border: 1px solid #cbd5e1; background: #ffffff;
+  font-size: 0.82rem; font-weight: 600; color: #475569;
+  cursor: pointer; transition: all 0.18s ease;
 }
-.rf-btn-ghost:hover { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+.rf-btn-ghost:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
 
 .rf-btn-save {
-  display: flex; align-items: center; gap: 0.375rem;
-  padding: 0.45rem 1.25rem; border-radius: 0.5rem;
-  border: none; background: #2563eb;
-  font-size: 0.8125rem; font-weight: 700; color: #fff;
-  cursor: pointer; transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.45rem 1.2rem; border-radius: 8px;
+  border: 1px solid #cbd5e1; background: #ffffff;
+  font-size: 0.82rem; font-weight: 700; color: #0f172a;
+  cursor: pointer; transition: all 0.18s ease;
 }
-.rf-btn-save:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.4); }
+.rf-btn-save:hover { background: #f8fafc; border-color: #94a3b8; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
 .rf-btn-save:disabled { opacity: 0.7; cursor: not-allowed; }
-.rf-btn-saving { background: #475569 !important; box-shadow: none !important; }
-.rf-btn-saved  { background: #059669 !important; box-shadow: 0 2px 8px rgba(5,150,105,0.35) !important; }
+.rf-btn-saving { background: #94a3b8 !important; color: #fff !important; }
+.rf-btn-saved  { background: #10b981 !important; color: #fff !important; border-color: #10b981 !important; }
+
+.rf-btn-publish {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.45rem 1.25rem; border-radius: 8px;
+  border: 1px solid var(--prod-accent, #D4AF37);
+  background: linear-gradient(135deg, var(--prod-from, #541216), var(--prod-to, #7A1C21));
+  font-size: 0.82rem; font-weight: 700; color: #ffffff;
+  cursor: pointer; transition: all 0.2s ease;
+  box-shadow: 0 2px 10px var(--prod-glow, rgba(84,18,22,0.25));
+}
+.rf-btn-publish:hover { filter: brightness(1.1); box-shadow: 0 4px 16px var(--prod-glow, rgba(84,18,22,0.35)); transform: translateY(-1px); }
+.rf-btn-publish:disabled { opacity: 0.7; cursor: not-allowed; }
 
 .rf-spin { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Hero ── */
-.rf-hero {
-  position: relative;
-  overflow: hidden;
-  padding: 2rem 2rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  flex-shrink: 0;
+/* ── Clean Header Card ── */
+.rf-header-card {
+  margin: 1.25rem 1.75rem 0.5rem;
+  padding: 1.25rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
 }
-.rf-hero-shine {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 15% 50%, rgba(255,255,255,0.15) 0%, transparent 60%);
-  pointer-events: none;
+.rf-header-main { display: flex; align-items: center; gap: 1rem; }
+.rf-header-icon {
+  width: 3rem; height: 3rem; border-radius: 12px;
+  background: linear-gradient(135deg, var(--prod-from, #541216), var(--prod-to, #7A1C21));
+  border: 1.5px solid var(--prod-accent, #D4AF37);
+  color: #ffffff; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; box-shadow: 0 4px 14px var(--prod-glow, rgba(84,18,22,0.2));
 }
-.rf-hero-dots {
-  position: absolute; inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
-  background-size: 24px 24px;
-  pointer-events: none;
-}
-.rf-hero-content {
-  position: relative;
-  display: flex; align-items: center; gap: 1rem;
-}
-.rf-hero-icon {
-  width: 3.5rem; height: 3.5rem;
-  border-radius: 1rem;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.25);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; flex-shrink: 0;
-}
-.rf-hero-icon :deep(svg) { width: 1.75rem; height: 1.75rem; }
-.rf-hero-title {
-  font-size: 1.5rem; font-weight: 900; color: #fff;
-  line-height: 1.2; letter-spacing: -0.02em;
-}
-.rf-hero-desc {
-  font-size: 0.8125rem; color: rgba(255,255,255,0.65);
-  margin-top: 0.25rem; max-width: 480px;
-}
-.rf-hero-meta {
-  position: relative;
-  display: flex; align-items: center; gap: 0.625rem;
-}
+.rf-header-icon :deep(svg) { width: 1.5rem; height: 1.5rem; }
+.rf-header-text { display: flex; flex-direction: column; gap: 0.15rem; }
+.rf-header-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+.rf-header-desc { font-size: 0.82rem; color: #64748b; font-weight: 500; }
+
+.rf-header-meta { display: flex; align-items: center; gap: 0.6rem; }
 .rf-meta-pill {
-  display: flex; align-items: center; gap: 0.35rem;
-  padding: 0.35rem 0.875rem;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 9999px;
-  font-size: 0.75rem; font-weight: 600; color: #fff;
-  backdrop-filter: blur(4px);
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.35rem 0.85rem; border-radius: 99px;
+  background: #f1f5f9; border: 1px solid #e2e8f0;
+  font-size: 0.78rem; font-weight: 700; color: #475569;
 }
 
 /* ── Body layout ── */
 .rf-body {
   display: flex;
   flex: 1;
-  min-height: 0;
+  padding: 0.75rem 1.75rem 1.75rem;
+  gap: 1.25rem;
 }
 
-/* ── Sidebar ── */
+/* ── Sidebar Nav ── */
 .rf-sidebar {
-  width: 220px;
+  width: 250px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
-  padding: 1.5rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  height: fit-content;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .rf-sidebar-label {
-  font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 0.12em; color: #94a3b8; margin-bottom: 0.5rem;
+  font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.12em; color: #94a3b8; margin-bottom: 0.4rem;
   padding: 0 0.5rem;
 }
 .rf-sec-btn {
-  display: flex; align-items: center; gap: 0.6rem;
-  width: 100%; padding: 0.6rem 0.75rem;
-  border-radius: 0.5rem; border: none; border-left: 3px solid transparent;
+  display: flex; align-items: center; gap: 0.65rem;
+  width: 100%; padding: 0.65rem 0.75rem;
+  border-radius: 10px; border: 1px solid transparent;
   background: transparent; text-align: left;
-  font-size: 0.8rem; font-weight: 600; color: #64748b;
-  cursor: pointer; transition: all 0.14s;
+  font-size: 0.85rem; font-weight: 600; color: #475569;
+  cursor: pointer; transition: all 0.18s ease;
+  box-sizing: border-box;
+  overflow: hidden;
 }
-.rf-sec-btn:hover { background: #f8fafc; color: #0f172a; }
-.rf-sec-active { background: #f0f7ff !important; font-weight: 700; }
-.rf-sec-emoji { font-size: 1rem; flex-shrink: 0; }
+.rf-sec-btn span:last-child {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rf-sec-btn:hover { background: #f1f5f9; color: #0f172a; }
+.rf-sec-active {
+  background: linear-gradient(135deg, var(--prod-from, #541216), var(--prod-to, #7A1C21)) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  font-weight: 700;
+  box-shadow: 0 3px 10px var(--prod-glow, rgba(84, 18, 22, 0.2));
+}
+.rf-sec-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 1.25rem; height: 1.25rem; flex-shrink: 0;
+  color: inherit;
+}
+.rf-sec-active .rf-sec-icon { color: #ffffff; }
 
-.rf-progress-wrap { margin-top: auto; padding-top: 1rem; }
+.rf-progress-wrap { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
 .rf-progress-label {
   display: flex; justify-content: space-between;
-  font-size: 0.7rem; font-weight: 600; color: #64748b;
-  margin-bottom: 0.375rem;
+  font-size: 0.75rem; font-weight: 700; color: #64748b;
+  margin-bottom: 0.4rem;
 }
 .rf-progress-bar {
-  height: 4px; border-radius: 9999px; background: #e2e8f0; overflow: hidden;
+  height: 6px; border-radius: 99px; background: #e2e8f0; overflow: hidden;
 }
 .rf-progress-fill {
-  height: 100%; border-radius: 9999px;
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--prod-from, #541216), var(--prod-to, #7A1C21));
   transition: width 0.3s ease;
 }
 
 /* ── Form panel ── */
 .rf-form-panel {
   flex: 1;
-  overflow-y: auto;
-  padding: 1.75rem 2rem;
-  background: #f1f5f9;
+  min-width: 0;
 }
 
-/* each section renders inside a white card */
 .rf-section {
-  background: #fff;
-  border-radius: 1rem;
+  background: #ffffff;
+  border-radius: 16px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
   padding: 1.75rem;
-  margin-bottom: 1.5rem;
 }
 
 .rf-section-header {
-  display: flex; align-items: center; gap: 0.875rem;
-  margin-bottom: 1.75rem;
+  display: flex; align-items: center; gap: 0.85rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
 }
-.rf-section-emoji { font-size: 1.75rem; flex-shrink: 0; }
+.rf-section-icon-badge {
+  width: 2.25rem; height: 2.25rem; border-radius: 10px;
+  background: color-mix(in srgb, var(--prod-to, #541216) 12%, #ffffff);
+  color: var(--prod-to, #541216);
+  border: 1px solid color-mix(in srgb, var(--prod-to, #541216) 20%, transparent);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rf-section-icon-badge :deep(svg) { width: 1.25rem; height: 1.25rem; }
 .rf-section-title {
-  font-size: 1.0625rem; font-weight: 800; color: #0f172a;
+  font-size: 1.1rem; font-weight: 800; color: #0f172a;
   letter-spacing: -0.01em;
 }
 .rf-section-count {
-  font-size: 0.75rem; color: #94a3b8; margin-top: 0.15rem;
+  font-size: 0.78rem; color: #64748b; margin-top: 0.1rem; font-weight: 500;
 }
 
 /* ── Fields grid ── */
 .rf-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem 2rem;
+  gap: 1.25rem 1.75rem;
   align-items: start;
 }
 @media (max-width: 860px) { .rf-fields { grid-template-columns: 1fr; } }
 
-/* rate fields span both columns — slider needs full horizontal room */
 .rf-field { display: contents; }
 .rf-field.rf-field-rate { display: block; grid-column: 1 / -1; }
 
-/* unit prefix slot inside CustomInput left slot */
+/* ── High-Contrast Form Field Typography & Color System ── */
+:deep(label) {
+  font-size: 0.83rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.3 !important;
+  margin-bottom: 0.3rem !important;
+}
+
+:deep(select.custom-input),
+:deep(input.custom-input) {
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif !important;
+}
+
+:deep(select.custom-input option) {
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  color: #0f172a !important;
+  background: #ffffff !important;
+}
+
+:deep(select.custom-input option[disabled]) {
+  color: #94a3b8 !important;
+  font-weight: 400 !important;
+}
+
+:deep(input.custom-input::placeholder) {
+  color: #94a3b8 !important;
+  font-weight: 400 !important;
+}
+
+:deep(.relative.flex.items-center.max-w-full.rounded-lg.border),
+:deep(.relative.flex.items-center.rounded-lg.border) {
+  border-color: #cbd5e1 !important;
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+  transition: all 0.18s ease !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+}
+
+:deep(.relative.flex.items-center.max-w-full.rounded-lg.border:hover),
+:deep(.relative.flex.items-center.rounded-lg.border:hover) {
+  border-color: #94a3b8 !important;
+}
+
+:deep(.relative.flex.items-center.max-w-full.rounded-lg.border:focus-within),
+:deep(.relative.flex.items-center.rounded-lg.border:focus-within) {
+  border-color: var(--prod-to, #2563eb) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--prod-to, #2563eb) 18%, transparent) !important;
+}
+
 .rf-prefix {
   display: flex; align-items: center;
   padding: 0 0.625rem 0 0.875rem;
-  font-size: 0.75rem; font-weight: 700; color: #64748b;
+  font-size: 0.78rem; font-weight: 700; color: #475569;
   border-right: 1px solid #e2e8f0;
   height: 100%; white-space: nowrap;
   user-select: none;
 }
 
-.rf-required { color: #ef4444; }
+.rf-required { color: #ef4444 !important; font-weight: 700; }
 .rf-unit-badge {
-  font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
-  padding: 0.15rem 0.5rem; border-radius: 9999px;
-  background: #dbeafe; color: #1d4ed8; letter-spacing: 0.06em;
-  flex-shrink: 0; border: 1px solid #bfdbfe;
+  font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+  padding: 0.15rem 0.55rem; border-radius: 99px;
+  background: #f1f5f9; color: #475569; letter-spacing: 0.05em;
+  flex-shrink: 0; border: 1px solid #cbd5e1;
 }
 .rf-help {
-  font-size: 0.7rem; color: #94a3b8;
-  line-height: 1.45; margin-top: 0.25rem;
+  font-size: 0.73rem; color: #64748b; font-weight: 500;
+  line-height: 1.45; margin-top: 0.35rem;
 }
 
 /* ── Rate field wrapper ── */
 .rf-rate-field {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
-  padding: 1rem;
+  gap: 0.65rem;
+  padding: 1.1rem 1.25rem;
   background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 0.625rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
 }
 .rf-rate-label {
   display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
 }
 .rf-rate-label-text {
-  font-size: 0.8125rem; font-weight: 700; color: #334155;
+  font-size: 0.85rem; font-weight: 700; color: #0f172a;
 }
 
-/* slider row: track + value badge side by side */
 .rf-slider-row {
   display: flex;
   align-items: center;
@@ -880,133 +1033,103 @@ const activeSection = ref(0);
 }
 .rf-slider {
   flex: 1;
-  min-width: 0;          /* prevents overflow */
+  min-width: 0;
   -webkit-appearance: none; appearance: none;
-  height: 6px; border-radius: 9999px;
+  height: 6px; border-radius: 99px;
   background: linear-gradient(
     to right,
-    var(--accent, #2563eb) var(--pct, 0%),
-    #e2e8f0 var(--pct, 0%)
+    var(--prod-to, #541216) var(--pct, 0%),
+    #cbd5e1 var(--pct, 0%)
   );
   outline: none; cursor: pointer;
 }
 .rf-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 18px; height: 18px; border-radius: 50%;
-  background: var(--accent, #2563eb);
-  border: 2.5px solid #fff;
-  box-shadow: 0 0 0 2px var(--accent, #2563eb), 0 2px 6px rgba(0,0,0,0.15);
+  background: var(--prod-to, #541216);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px var(--prod-to, #541216), 0 2px 6px rgba(0,0,0,0.15);
   cursor: pointer;
-  transition: box-shadow 0.15s;
-}
-.rf-slider::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 0 4px var(--accent, #2563eb), 0 2px 8px rgba(0,0,0,0.2);
 }
 .rf-slider::-moz-range-thumb {
   width: 18px; height: 18px; border-radius: 50%;
-  background: var(--accent, #2563eb);
-  border: 2.5px solid #fff;
+  background: var(--prod-to, #541216);
+  border: 2px solid #ffffff;
   cursor: pointer;
 }
 
-/* value badge */
 .rf-slider-val {
   flex-shrink: 0;
   min-width: 5.5rem;
   text-align: center;
-  padding: 0.35rem 0.75rem;
-  border: 2px solid;
-  border-radius: 0.5rem;
-  background: #fff;
-  font-size: 1rem; font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid color-mix(in srgb, var(--prod-to, #541216) 35%, #cbd5e1);
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 0.95rem; font-weight: 800;
+  color: var(--prod-to, #0f172a);
   display: flex; align-items: baseline; justify-content: center; gap: 0.2rem;
 }
-.rf-val-unit {
-  font-size: 0.65rem; font-weight: 700;
-  opacity: 0.7; letter-spacing: 0;
-}
+.rf-val-unit { font-size: 0.65rem; font-weight: 700; opacity: 0.7; }
 
-/* inline savings badge (per field) */
+/* Badges */
 .rf-savings-badge {
   display: flex; align-items: flex-start; gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border: 1px solid #86efac;
-  border-radius: 0.5rem;
-  animation: fadeUp 0.25s ease;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
 }
-.rf-savings-icon { font-size: 1rem; flex-shrink: 0; line-height: 1.4; }
-.rf-savings-headline {
-  display: block;
-  font-size: 0.78rem; font-weight: 700; color: #15803d;
-}
-.rf-savings-example {
-  display: block;
-  font-size: 0.7rem; color: #16a34a; margin-top: 0.1rem;
-}
+.rf-savings-icon { font-size: 1rem; flex-shrink: 0; color: #16a34a; }
+.rf-savings-headline { display: block; font-size: 0.78rem; font-weight: 700; color: #15803d; }
+.rf-savings-example { display: block; font-size: 0.7rem; color: #16a34a; margin-top: 0.1rem; }
 
-/* inline loading badge (per field) */
 .rf-loading-badge {
   display: flex; align-items: center; gap: 0.5rem;
   padding: 0.45rem 0.75rem;
   background: #fff7ed;
   border: 1px solid #fed7aa;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   font-size: 0.75rem; font-weight: 600; color: #c2410c;
-  animation: fadeUp 0.25s ease;
-}
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
-
-/* ── Discount preview panel ── */
+/* Discount preview panel */
 .rf-preview-panel {
   margin-top: 1.5rem;
-  border: 1.5px solid;
-  border-radius: 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
   overflow: hidden;
-  animation: fadeUp 0.3s ease;
 }
 .rf-preview-header {
   display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.75rem 1.125rem;
-  font-size: 0.8125rem; font-weight: 800;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  background: rgba(255,255,255,0.6);
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem; font-weight: 800; color: var(--prod-to, #0f172a);
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
 }
 .rf-preview-body {
-  padding: 1rem 1.125rem;
+  padding: 1rem;
   display: flex; flex-direction: column; gap: 0.5rem;
 }
 .rf-preview-example {
   display: flex; justify-content: space-between; align-items: center;
   padding-bottom: 0.5rem;
-  border-bottom: 1px dashed rgba(0,0,0,0.1);
+  border-bottom: 1px dashed #cbd5e1;
 }
 .rf-preview-label { font-size: 0.75rem; font-weight: 600; color: #64748b; }
-.rf-preview-val   { font-size: 0.875rem; font-weight: 800; color: #0f172a; }
-.rf-preview-row {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 0.78rem;
-}
-.rf-preview-disc-label { color: #374151; font-weight: 500; }
-.rf-preview-disc-val   { font-weight: 700; }
+.rf-preview-val   { font-size: 0.85rem; font-weight: 800; color: #0f172a; }
+.rf-preview-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; }
+.rf-preview-disc-label { color: #475569; font-weight: 500; }
+.rf-preview-disc-val   { font-weight: 700; color: #16a34a; }
 .rf-preview-total {
   display: flex; justify-content: space-between; align-items: center;
   padding-top: 0.5rem;
-  border-top: 2px solid;
-  font-size: 0.8125rem; font-weight: 700; color: #0f172a;
-  margin-top: 0.25rem;
+  border-top: 2px solid #e2e8f0;
+  font-size: 0.82rem; font-weight: 700; color: #0f172a;
 }
-.rf-preview-total-val { font-weight: 800; font-size: 0.9rem; }
-.rf-preview-note {
-  font-size: 0.68rem; color: #94a3b8;
-  margin-top: 0.25rem; font-style: italic;
-}
+.rf-preview-total-val { font-weight: 800; font-size: 0.88rem; color: #16a34a; }
+.rf-preview-note { font-size: 0.68rem; color: #94a3b8; font-style: italic; }
 
 /* Section nav */
 .rf-section-nav {
@@ -1016,31 +1139,25 @@ const activeSection = ref(0);
 }
 .rf-btn-next {
   display: flex; align-items: center; gap: 0.375rem;
-  padding: 0.55rem 1.5rem; border-radius: 0.5rem;
-  border: none; color: #fff;
-  font-size: 0.8125rem; font-weight: 700;
-  cursor: pointer; transition: all 0.15s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  padding: 0.55rem 1.5rem; border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, var(--prod-from, #541216), var(--prod-to, #7A1C21));
+  color: #ffffff;
+  font-size: 0.82rem; font-weight: 700;
+  cursor: pointer; transition: all 0.18s ease;
+  box-shadow: 0 3px 12px var(--prod-glow, rgba(84, 18, 22, 0.2));
 }
-.rf-btn-next:hover { filter: brightness(1.1); }
+.rf-btn-next:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .rf-btn-next:disabled { opacity: 0.7; cursor: not-allowed; }
 
-/* Not found */
 .rf-not-found {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; gap: 1rem;
-  min-height: 60vh;
-  font-size: 1rem; color: #64748b;
+  min-height: 60vh; font-size: 1rem; color: #64748b;
 }
 
 @media (max-width: 768px) {
   .rf-body { flex-direction: column; }
-  .rf-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; flex-direction: row; flex-wrap: wrap; padding: 0.75rem; }
-  .rf-sidebar-label { display: none; }
-  .rf-progress-wrap { display: none; }
-  .rf-sec-btn { width: auto; border-left: none; border-bottom: 3px solid transparent; }
-  .rf-form-panel { padding: 1rem; }
-  .rf-section { padding: 1.25rem; border-radius: 0.75rem; }
-  .rf-fields { gap: 1rem 1.25rem; }
+  .rf-sidebar { width: 100%; }
 }
 </style>

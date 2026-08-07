@@ -33,29 +33,27 @@ const passwordMismatch = computed(() =>
 );
 
 function reRoute() {
-  if (route.query.redirect) router.replace(route.query.redirect);
-  else router.replace('/module-select');
+  const target = route.query.redirect || '/module-select';
+  router.push(target);
 }
 
 function loginUser({ values }) {
-  // Guard against double-submission
   if (req.pending.value) return;
-  const mockUserData = {
-    token: 'dev-test-token',
-    roleName: 'Super Admin',
-    privileges: ['All Privileges'],
-    email: values.email || 'admin@test.com',
-    firstName: 'Admin'
-  };
 
   req.send(
     () => login(values),
     (res) => {
-      const userObj = (res && res.success && res.data) ? res.data : mockUserData;
+      let userObj = res;
+      if (res && res.data) userObj = res.data;
+      if (userObj && userObj.data) userObj = userObj.data;
+
+      if (userObj?.roleCode) {
+        localStorage.setItem('nyala_active_testing_role', userObj.roleCode);
+      }
       showSuccess.value = true;
       auth.setAuth(userObj);
       localStorage.setItem('userDetail', JSON.stringify(userObj));
-      setTimeout(() => reRoute(), 1000);
+      setTimeout(() => reRoute(), 600);
     }
   );
 }
@@ -97,13 +95,23 @@ function handleResetPassword() {
     <Transition name="success">
       <div v-if="showSuccess" class="lf-success-overlay">
         <div class="lf-success-inner">
-          <div class="lf-success-ring">
-            <div class="lf-success-icon animate-bounce-in">
-              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+
+          <!-- Minimalist animated loader -->
+          <div class="lf-loader">
+            <!-- Breathing ring -->
+            <div class="lf-loader-ring"></div>
+            <!-- Center checkmark -->
+            <div class="lf-loader-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path class="lf-check-path" d="M5 13l4 4L19 7"/>
               </svg>
             </div>
+            <!-- Three orbit dots -->
+            <span class="lf-dot lf-dot-1"></span>
+            <span class="lf-dot lf-dot-2"></span>
+            <span class="lf-dot lf-dot-3"></span>
           </div>
+
           <h3 class="lf-success-title">Welcome Back!</h3>
           <p class="lf-success-sub">Redirecting to your dashboard...</p>
           <div class="lf-progress-track">
@@ -136,10 +144,10 @@ function handleResetPassword() {
 
             <Input
               :focus="true"
-              validation="required|email"
+              validation="required"
               name="email"
-              label="Email Address"
-              :attributes="{ placeholder: 'you@company.com', autocomplete: 'email', type: 'text' }"
+              label="Username or Email Address"
+              :attributes="{ placeholder: 'adjustor@nyalainsurance.com or adjustor', autocomplete: 'email', type: 'text' }"
             />
 
             <InputPassword
@@ -163,6 +171,7 @@ function handleResetPassword() {
             <!-- Sign In Button -->
             <Button
               type="button"
+              :fullWidth="true"
               :pending="req.pending.value"
               @click.prevent="submit(loginUser)"
               @keydown.enter.prevent="submit(loginUser)"
@@ -316,46 +325,111 @@ function handleResetPassword() {
 .lf-success-overlay {
   position: absolute; inset: 0; z-index: 50;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(10, 14, 26, 0.92);
-  backdrop-filter: blur(20px);
+  background: rgba(8, 4, 5, 0.88);
+  backdrop-filter: blur(18px);
   border-radius: inherit;
 }
 
-.lf-success-inner { text-align: center; padding: 2rem; }
-
-.lf-success-ring {
-  width: 90px; height: 90px; border-radius: 50%;
-  background: conic-gradient(from 180deg, #10b981, #34d399, #10b981);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 1.5rem;
-  padding: 3px;
-  animation: spinRing 2s linear infinite;
+.lf-success-inner {
+  text-align: center;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
 }
 
-@keyframes spinRing {
+/* ── Loader assembly ── */
+.lf-loader {
+  position: relative;
+  width: 80px; height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.75rem;
+}
+
+/* Breathing outer ring */
+.lf-loader-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212, 175, 55, 0.25);
+  animation: ringBreath 1.8s ease-in-out infinite;
+}
+.lf-loader-ring::after {
+  content: '';
+  position: absolute; inset: 6px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: #7A1C21;
+  border-right-color: #D4AF37;
+  animation: arcSpin 1.1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes ringBreath {
+  0%, 100% { transform: scale(1);     opacity: 0.4; }
+  50%       { transform: scale(1.08);  opacity: 0.9; }
+}
+@keyframes arcSpin {
   to { transform: rotate(360deg); }
 }
 
-.lf-success-icon {
-  width: 84px; height: 84px; border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #059669);
+/* Center checkmark */
+.lf-loader-check {
+  position: relative; z-index: 2;
+  width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 40px rgba(16,185,129,0.4);
+  color: #fff;
+}
+.lf-loader-check svg {
+  width: 22px; height: 22px;
+  overflow: visible;
+}
+.lf-check-path {
+  stroke: #D4AF37;
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: drawCheck 0.5s 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
 }
 
-.lf-success-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 0.4rem; }
-.lf-success-sub   { font-size: 0.875rem; color: rgba(255,255,255,0.55); margin: 0 0 1.5rem; }
+/* Three orbit dots around the ring */
+.lf-dot {
+  position: absolute;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #7A1C21;
+  animation: dotOrbit 1.8s ease-in-out infinite;
+  transform-origin: 40px 40px;
+}
+.lf-dot-1 { background: #7A1C21; animation-delay: 0s;    top: -2px; left: calc(50% - 2.5px); }
+.lf-dot-2 { background: #D4AF37; animation-delay: 0.6s;  top: -2px; left: calc(50% - 2.5px); }
+.lf-dot-3 { background: #9E2A30; animation-delay: 1.2s;  top: -2px; left: calc(50% - 2.5px); }
+
+@keyframes dotOrbit {
+  0%   { opacity: 0.2; transform: rotate(0deg)   translateY(-38px) scale(0.7); }
+  30%  { opacity: 1;   }
+  100% { opacity: 0.2; transform: rotate(360deg) translateY(-38px) scale(0.7); }
+}
+
+.lf-success-title {
+  font-size: 1.25rem; font-weight: 800; color: #fff;
+  margin: 0 0 0.3rem; letter-spacing: -0.01em;
+}
+.lf-success-sub {
+  font-size: 0.8rem; color: rgba(255,255,255,0.4);
+  margin: 0 0 1.4rem; font-weight: 500;
+}
 
 .lf-progress-track {
-  width: 180px; height: 4px; border-radius: 9999px;
-  background: rgba(255,255,255,0.1); margin: 0 auto; overflow: hidden;
+  width: 160px; height: 2px; border-radius: 9999px;
+  background: rgba(255,255,255,0.08); margin: 0 auto; overflow: hidden;
 }
-
 .lf-progress-bar {
   height: 100%; border-radius: 9999px;
-  background: linear-gradient(90deg, #3b82f6, #6366f1, #10b981);
+  background: linear-gradient(90deg, #7A1C21, #D4AF37, #9E2A30);
   background-size: 200% 100%;
-  animation: progress 1.2s ease-in-out forwards, shimmerBar 1.5s ease infinite;
+  animation: progress 1.1s ease-out forwards, shimmerBar 1.5s ease infinite;
 }
 
 @keyframes progress {
@@ -513,14 +587,15 @@ function handleResetPassword() {
 /* ── Submit button (wraps Button component) ────────────────────────────────── */
 .lf-submit-btn {
   position: relative; width: 100%; overflow: hidden;
-  background: linear-gradient(135deg, #4f46e5, #6366f1, #818cf8) !important;
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+  background: linear-gradient(135deg, #7A1C21, #9E2A30) !important;
   background-size: 200% 200% !important;
   border: none !important; border-radius: 0.875rem !important;
   padding: 0.875rem 1.5rem !important;
   cursor: pointer; font-size: 0.9rem;
   transition: background-position 0.4s ease, transform 0.15s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 24px rgba(99,102,241,0.35), 0 0 0 1px rgba(99,102,241,0.2) !important;
-  min-width: 100% !important;
+  box-shadow: 0 4px 24px rgba(122,28,33,0.35) !important;
   min-height: auto !important;
 }
 .lf-submit-btn:hover {

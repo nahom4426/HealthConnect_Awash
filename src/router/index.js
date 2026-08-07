@@ -10,6 +10,11 @@ import MotorCarConfig from "@/features/motor/pages/MotorCarConfig.vue";
 import MotorQuotation from "@/features/motor/pages/MotorQuotation.vue";
 import MotorQuotationDetail from "@/features/motor/pages/MotorQuotationDetail.vue";
 import MotorNewQuotation from "@/features/motor/pages/MotorNewQuotation.vue";
+import MotorProposals from "@/features/motor/pages/MotorProposals.vue";
+import MotorProposalDetail from "@/features/motor/pages/MotorProposalDetail.vue";
+import ClaimsProcess from "@/features/digitalChannel/pages/ClaimsProcess.vue";
+import ClaimNew from "@/features/digitalChannel/pages/ClaimNew.vue";
+import ClaimDetail from "@/features/digitalChannel/pages/ClaimDetail.vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
 import quotationRoutes from "./quotation.routes";
 import underwritingRoutes from "./underwriting.routes";
@@ -25,6 +30,7 @@ import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useAuthStore } from "@/stores/auth";
 import adminRoutes from "./admin.routes";
 import analyticsRoutes from "./analytics.routes";
+import { formBuilderRoutes } from "./form_builder.routes";
 import Profile from "@/features/profile/pages/profile.vue";
 
 function hasManagesQuotationPrivilege() {
@@ -198,6 +204,37 @@ const router = createRouter({
           component: ModuleDashboard,
           meta: { requiresAuth: true },
         },
+        // Claims process, new claim, detail, approved, and completed routes for all 8 modules
+        {
+          path: '/:module/claims/process',
+          name: 'module-claims-process',
+          component: ClaimsProcess,
+          meta: { requiresAuth: true },
+        },
+        {
+          path: '/:module/claims/approved',
+          name: 'module-claims-approved',
+          component: ClaimsProcess,
+          meta: { requiresAuth: true },
+        },
+        {
+          path: '/:module/claims/completed',
+          name: 'module-claims-completed',
+          component: ClaimsProcess,
+          meta: { requiresAuth: true },
+        },
+        {
+          path: '/:module/claims/new',
+          name: 'module-claims-new',
+          component: ClaimNew,
+          meta: { requiresAuth: true },
+        },
+        {
+          path: '/:module/claims/detail/:claimUuid',
+          name: 'module-claims-detail',
+          component: ClaimDetail,
+          meta: { requiresAuth: true },
+        },
         // Motor module pages
         {
           path: '/motor/rate-config/categories',
@@ -235,8 +272,21 @@ const router = createRouter({
           component: MotorQuotationDetail,
           meta: { requiresAuth: true },
         },
+        {
+          path: '/motor/proposals',
+          name: 'motor-proposals',
+          component: MotorProposals,
+          meta: { requiresAuth: true },
+        },
+        {
+          path: '/motor/proposals/:proposalUuid',
+          name: 'motor-proposal-detail',
+          component: MotorProposalDetail,
+          meta: { requiresAuth: true },
+        },
         ...adminRoutes,
         ...analyticsRoutes,
+        ...formBuilderRoutes,
         ...quotationRoutes,
         ...selectedUnderwritingRoutes,
         ...claimRoutes,
@@ -324,10 +374,22 @@ router.beforeEach((to, from, next) => {
   // Check if route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   
-  // Get user data from store (after initialization)
-  const user = authStore.auth?.user ?? authStore.auth;
-  const hasValidToken = !!user?.token; // Token is stored in user.token
-console.log('User data:', user);
+  // Get user data from store or localStorage fallback
+  let rawUser = authStore.auth?.user ?? authStore.auth;
+  if (!rawUser) {
+    try {
+      rawUser = JSON.parse(localStorage.getItem('auth_data') || localStorage.getItem('userDetail') || 'null');
+    } catch (e) {}
+  }
+  if (rawUser && rawUser.data) {
+    rawUser = rawUser.data;
+  }
+  if (rawUser) {
+    authStore.auth = rawUser;
+  }
+  const user = rawUser;
+  const hasValidToken = !!(user?.token || user?.roleCode || user?.email);
+  console.log('Router Auth User state:', user, 'hasValidToken:', hasValidToken);
   const hasRolePrivilege = (privilegeName) => {
     if (!user) return false;
     const privileges = Array.isArray(user?.privileges) ? user.privileges : [];

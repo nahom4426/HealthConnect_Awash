@@ -48,10 +48,9 @@ const isDark = computed(() => darkStore.isDark);
         <div class="hero-brand-block">
           <span class="hero-motto">YOUR GUARANTEE — አለኝታዎ!</span>
           <h1 class="hero-title">Nyala Insurance S.C.</h1>
-          <div class="hero-subtitle">ንያላ ኢንሹራንስ አ.ማ.</div>
+          <div class="hero-subtitle">ኒያላ ኢንሹራንስ አ.ማ.</div>
           <p class="hero-desc">
-            One platform. Multiple insurance lines. Real-time policies, instant claims,
-            and enterprise analytics — backed by Nyala Insurance.
+            One platform. Multiple insurance lines. Real-time policies, instant claims,  and enterprise analytics.
           </p>
         </div>
       </div>
@@ -301,15 +300,17 @@ const isDark = computed(() => darkStore.isDark);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .hero-motto {
-  font-size: 0.85rem;
+  font-size: 0.825rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   color: #7A1C21;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.3;
   transition: color 0.4s ease;
 }
 
@@ -318,12 +319,12 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 .hero-title {
-  font-size: 2.5rem;
+  font-size: 2.6rem;
   font-weight: 800;
   line-height: 1.15;
-  margin: 0 0 0.3rem 0;
+  margin: 0 0 0.75rem 0;
   color: #7A1C21;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   transition: color 0.4s ease;
 }
 
@@ -332,10 +333,12 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 .hero-subtitle {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #D4AF37;
-  margin-bottom: 1rem;
+  margin: 0 0 1.25rem 0;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
   transition: color 0.4s ease;
 }
 
@@ -343,8 +346,9 @@ const isDark = computed(() => darkStore.isDark);
   font-size: 0.95rem;
   color: #475569;
   line-height: 1.65;
-  max-width: 460px;
+  max-width: 440px;
   margin: 0;
+  font-weight: 450;
   transition: color 0.4s ease;
 }
 
@@ -502,6 +506,9 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 :deep(.lf-submit-btn) {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+  width: 100% !important;
   background: linear-gradient(135deg, #7A1C21 0%, #9E2A30 100%) !important;
   color: #ffffff !important;
   border-radius: 12px !important;
@@ -515,7 +522,6 @@ const isDark = computed(() => darkStore.isDark);
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 100% !important;
 }
 
 :deep(.lf-submit-btn:hover) {

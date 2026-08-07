@@ -182,16 +182,17 @@ function hasChildren(categoryUuid) {
     <div class="mc-header">
       <div class="mc-header-left">
         <div class="mc-header-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:20px;height:20px">
+          <!-- Contextual Hierarchy Tree Icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
           </svg>
         </div>
         <div>
-          <h2 class="mc-title">Vehicle Categories</h2>
-          <p class="mc-subtitle">Manage category hierarchy for motor rate configuration</p>
+          <h2 class="mc-title">Vehicle Classification Hierarchy</h2>
+          <p class="mc-subtitle">Organize multi-level category structures for motor risk rating</p>
         </div>
       </div>
-      <button class="mc-btn mc-btn-primary" @click="openCreate()">
+      <button class="mc-btn mc-btn-amber" @click="openCreate()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
         </svg>
@@ -219,12 +220,12 @@ function hasChildren(categoryUuid) {
     <div class="mc-card">
       <div v-if="loading" class="mc-loading">
         <div class="mc-spinner"></div>
-        <span>Loading categories…</span>
+        <span>Loading classification tree…</span>
       </div>
 
       <DataTable
         v-else-if="flatCategories.length"
-        :headers="['Name', 'Code', 'Description', 'Type', 'Actions']"
+        :headers="['Name', 'Code', 'Description', 'Classification Level', 'Actions']"
         :hide-index="true"
         :last-col="false"
         class="mc-datatable"
@@ -248,7 +249,7 @@ function hasChildren(categoryUuid) {
             <td class="mc-desc">{{ cat.description || '—' }}</td>
             <td>
               <span class="mc-type-badge" :class="cat._depth === 0 ? 'mc-type-root' : 'mc-type-sub'">
-                {{ cat._depth === 0 ? 'Root' : 'Sub-category' }}
+                {{ cat._depth === 0 ? 'Root Classification' : 'Sub-category (Level ' + (cat._depth + 1) + ')' }}
               </span>
             </td>
             <td>
@@ -275,11 +276,11 @@ function hasChildren(categoryUuid) {
       </DataTable>
 
       <div v-else class="mc-empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:#94a3b8">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:#d97706">
           <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
         </svg>
         <p>No categories yet. Create your first root category.</p>
-        <button class="mc-btn mc-btn-primary" @click="openCreate()">Create Category</button>
+        <button class="mc-btn mc-btn-amber" @click="openCreate()">Create Category</button>
       </div>
     </div>
 
@@ -319,7 +320,7 @@ function hasChildren(categoryUuid) {
             </div>
             <div class="mc-modal-footer">
               <button class="mc-btn mc-btn-ghost" @click="closeForm">Cancel</button>
-              <button class="mc-btn mc-btn-primary" :disabled="saving" @click="save">
+              <button class="mc-btn mc-btn-amber" :disabled="saving" @click="save">
                 <svg v-if="saving" class="mc-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
@@ -358,25 +359,25 @@ function hasChildren(categoryUuid) {
 </template>
 
 <style scoped>
-.mc-root { padding: 1.5rem 2rem; min-height: 100%; background: #f8fafc; }
+.mc-root { padding: 1.75rem 2rem; min-height: 100%; background: #f8fafc; }
 
-/* Header */
-.mc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
-.mc-header-left { display: flex; align-items: center; gap: 0.75rem; }
+/* Header - Contextual Warm Amber Theme */
+.mc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.mc-header-left { display: flex; align-items: center; gap: 0.85rem; }
 .mc-header-icon {
-  width: 40px; height: 40px; border-radius: 10px;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
   display: flex; align-items: center; justify-content: center; color: #fff;
-  flex-shrink: 0;
+  flex-shrink: 0; box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
 }
-.mc-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0; }
-.mc-subtitle { font-size: 0.75rem; color: #64748b; margin: 0; }
+.mc-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
+.mc-subtitle { font-size: 0.78rem; color: #64748b; margin: 0; }
 
 /* Buttons */
-.mc-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
-.mc-btn-primary { background: #3b82f6; color: #fff; }
-.mc-btn-primary:hover { background: #2563eb; }
-.mc-btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+.mc-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; }
+.mc-btn-amber { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2); }
+.mc-btn-amber:hover { background: linear-gradient(135deg, #b45309, #92400e); }
+.mc-btn-amber:disabled { opacity: 0.6; cursor: not-allowed; }
 .mc-btn-ghost { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 .mc-btn-ghost:hover { background: #e2e8f0; }
 .mc-btn-danger { background: #ef4444; color: #fff; }
@@ -384,57 +385,57 @@ function hasChildren(categoryUuid) {
 .mc-btn-danger:disabled { background: #fca5a5; cursor: not-allowed; }
 
 /* Alerts */
-.mc-alert { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 500; margin-bottom: 0.75rem; }
+.mc-alert { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: 0.6rem; font-size: 0.78rem; font-weight: 500; margin-bottom: 1rem; }
 .mc-alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 .mc-alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
 .mc-alert-close { margin-left: auto; background: none; border: none; font-size: 1.1rem; cursor: pointer; color: inherit; opacity: 0.6; }
 .mc-alert-close:hover { opacity: 1; }
 
 /* Card */
-.mc-card { background: #fff; border-radius: 0.75rem; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.mc-card { background: #fff; border-radius: 0.85rem; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
 
 /* Loading */
 .mc-loading { display: flex; align-items: center; gap: 0.75rem; padding: 2.5rem; justify-content: center; color: #64748b; font-size: 0.85rem; }
-.mc-spinner { width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+.mc-spinner { width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top-color: #d97706; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* DataTable wrapper — strip outer border/shadow since mc-card provides it */
+/* DataTable wrapper */
 .mc-datatable :deep(.overflow-x-auto) { border: none; border-radius: 0; box-shadow: none; }
-.mc-row { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
-.mc-row:hover { background: #f8fafc; }
-.mc-row td { padding: 0.65rem 1rem; color: #334155; vertical-align: middle; font-size: 0.82rem; }
+.mc-row { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+.mc-row:hover { background: #fffbeb; }
+.mc-row td { padding: 0.8rem 1rem; color: #334155; vertical-align: middle; font-size: 0.82rem; }
 .mc-row td:last-child { text-align: left; }
 
 /* Name cell */
-.mc-name-cell { display: flex; align-items: center; gap: 0.4rem; }
-.mc-expand-btn { width: 18px; height: 18px; border-radius: 4px; border: none; background: #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b; flex-shrink: 0; }
-.mc-expand-btn:hover { background: #e2e8f0; color: #334155; }
-.mc-expand-placeholder { width: 18px; flex-shrink: 0; }
-.mc-cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.mc-dot-root { background: #3b82f6; }
-.mc-dot-child { background: #94a3b8; }
-.mc-cat-name { font-weight: 600; color: #1e293b; }
+.mc-name-cell { display: flex; align-items: center; gap: 0.45rem; }
+.mc-expand-btn { width: 20px; height: 20px; border-radius: 4px; border: 1px solid #fde68a; background: #fffbeb; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #d97706; flex-shrink: 0; }
+.mc-expand-btn:hover { background: #fef3c7; color: #b45309; }
+.mc-expand-placeholder { width: 20px; flex-shrink: 0; }
+.mc-cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.mc-dot-root { background: #d97706; }
+.mc-dot-child { background: #cbd5e1; }
+.mc-cat-name { font-weight: 700; color: #0f172a; }
 
 /* Badges */
-.mc-code-badge { display: inline-block; padding: 0.15rem 0.5rem; background: #eff6ff; color: #1d4ed8; border-radius: 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; }
-.mc-type-badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 9999px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.mc-type-root { background: #eff6ff; color: #2563eb; }
-.mc-type-sub { background: #f1f5f9; color: #475569; }
+.mc-code-badge { display: inline-block; padding: 0.18rem 0.55rem; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; border-radius: 6px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; }
+.mc-type-badge { display: inline-block; padding: 0.18rem 0.6rem; border-radius: 9999px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.mc-type-root { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.mc-type-sub { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
 
 .mc-desc { color: #64748b; font-size: 0.78rem; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Action buttons */
-.mc-actions { display: flex; align-items: center; justify-content: flex-start; gap: 0.3rem; }
-.mc-icon-btn { width: 28px; height: 28px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.mc-btn-sub { background: #f0fdf4; color: #15803d; }
-.mc-btn-sub:hover { background: #dcfce7; }
-.mc-btn-edit { background: #eff6ff; color: #2563eb; }
-.mc-btn-edit:hover { background: #dbeafe; }
-.mc-btn-del { background: #fef2f2; color: #dc2626; }
-.mc-btn-del:hover { background: #fee2e2; }
+.mc-actions { display: flex; align-items: center; justify-content: flex-start; gap: 0.35rem; }
+.mc-icon-btn { width: 30px; height: 30px; border-radius: 7px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.mc-btn-sub { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.mc-btn-sub:hover { background: #d97706; color: #fff; }
+.mc-btn-edit { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.mc-btn-edit:hover { background: #2563eb; color: #fff; }
+.mc-btn-del { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.mc-btn-del:hover { background: #dc2626; color: #fff; }
 
 /* Empty */
-.mc-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem; color: #94a3b8; font-size: 0.85rem; text-align: center; }
+.mc-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3.5rem; color: #94a3b8; font-size: 0.85rem; text-align: center; }
 
 /* Modal */
 .mc-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
@@ -451,10 +452,10 @@ function hasChildren(categoryUuid) {
 
 /* Form fields */
 .mc-field { display: flex; flex-direction: column; gap: 0.3rem; }
-.mc-field label { font-size: 0.75rem; font-weight: 600; color: #374151; }
+.mc-field label { font-size: 0.75rem; font-weight: 700; color: #374151; }
 .mc-req { color: #ef4444; }
-.mc-input { padding: 0.45rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.82rem; color: #1e293b; background: #fff; transition: border-color 0.15s, box-shadow 0.15s; outline: none; width: 100%; box-sizing: border-box; }
-.mc-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.mc-input { padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.82rem; color: #0f172a; background: #fff; transition: border-color 0.15s, box-shadow 0.15s; outline: none; width: 100%; box-sizing: border-box; }
+.mc-input:focus { border-color: #d97706; box-shadow: 0 0 0 3px rgba(217,119,6,0.15); }
 .mc-input-err { border-color: #ef4444; }
 .mc-textarea { resize: vertical; min-height: 60px; }
 .mc-field-err { font-size: 0.7rem; color: #ef4444; }

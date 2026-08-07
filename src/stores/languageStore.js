@@ -11,8 +11,9 @@ const translations = {
     myProfile: 'My Profile',
     signOut: 'Sign out',
     poweredBy: 'Powered by',
-    eic: 'Ethiopian Insurance Corporation',
-    platformSubtitle: 'InsureConnect — Unified Insurance Platform',
+    eic: 'Nyala Insurance S.C.',
+    motto: 'Your Guarantee',
+    platformSubtitle: 'InsureConnect — Nyala Insurance Digital Channel',
     greetingName: '{greeting}, <strong>{name}</strong>',
     
     // Module Selector
@@ -155,8 +156,9 @@ const translations = {
     myProfile: 'የእኔ መገለጫ',
     signOut: 'ውጣ',
     poweredBy: 'የሚሰራው በ',
-    eic: 'የኢትዮጵያ መድን ድርጅት',
-    platformSubtitle: 'ኢንሹር-ኮኔክት — የተቀናጀ የመድን መድረክ',
+    eic: 'ኒያላ ኢንሹራንስ አ.ማ',
+    motto: 'አለኝታዎ!',
+    platformSubtitle: 'ኢንሹር-ኮኔክት — የኒያላ ኢንሹራንስ ዲጂታል መድረክ',
     greetingName: '{greeting}፣ <strong>{name}</strong>',
     
     // Module Selector

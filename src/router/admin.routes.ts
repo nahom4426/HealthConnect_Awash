@@ -115,5 +115,11 @@ export default [
     name: 'Privilege Detail',
     component: PrivilegeDetail,
     meta: { requiresAuth: true, permissions: ["read_user"] },
+  },
+  {
+    path: '/admin/user-roles',
+    name: 'Nyala User & Privilege Control',
+    component: () => import('@/features/admin/pages/UserRoleManagement.vue'),
+    meta: { requiresAuth: false }
   }
 ];

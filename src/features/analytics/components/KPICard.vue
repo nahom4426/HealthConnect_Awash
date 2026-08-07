@@ -1,11 +1,15 @@
 <script setup lang="ts">
-defineProps({
-  title: String,
-  value: String,
-  change: String,
-  trend: String, // 'up' or 'down'
-  icon: String,
-});
+import type { Component } from 'vue';
+
+defineProps<{
+  title?: string;
+  value?: string;
+  change?: string;
+  trend?: string; // 'up' or 'down'
+  icon?: Component;
+  iconBg?: string;  // tailwind bg class for the icon circle
+  iconColor?: string; // tailwind text class for the icon
+}>();
 </script>
 
 <template>
@@ -21,33 +25,36 @@ defineProps({
           <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{{ title }}</p>
           <h3 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">{{ value }}</h3>
         </div>
-        <div class="text-4xl opacity-80 group-hover:opacity-100 transition-opacity">{{ icon }}</div>
+
+        <!-- Lucide icon in a styled circle -->
+        <div
+          :class="[
+            'flex items-center justify-center w-14 h-14 rounded-2xl shadow-md group-hover:scale-110 transition-transform duration-300',
+            iconBg || 'bg-gradient-to-br from-blue-100 to-indigo-100'
+          ]"
+        >
+          <component
+            :is="icon"
+            :class="['w-7 h-7', iconColor || 'text-blue-600']"
+            :stroke-width="1.75"
+          />
+        </div>
       </div>
 
       <!-- Change indicator -->
       <div class="flex items-center gap-2 pt-2">
-        <span 
+        <span
           :class="[
             'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold transition-all',
-            trend === 'up' 
-              ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700' 
-              : 'bg-gradient-to-r from-rose-100 to-pink-100 text-rose-700'
+            trend === 'up'
+              ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700'
+              : 'bg-gradient-to-r from-red-100 to-red-200 text-red-700 border border-red-200'
           ]"
         >
-          <svg 
-            v-if="trend === 'up'"
-            class="w-3.5 h-3.5 mr-1" 
-            fill="currentColor" 
-            viewBox="0 0 20 20"
-          >
+          <svg v-if="trend === 'up'" class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414-1.414L13.586 7H12z" clip-rule="evenodd" />
           </svg>
-          <svg 
-            v-else
-            class="w-3.5 h-3.5 mr-1" 
-            fill="currentColor" 
-            viewBox="0 0 20 20"
-          >
+          <svg v-else class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M12 13a1 1 0 110 2H7a1 1 0 01-1-1V9a1 1 0 112 0v3.586l4.293-4.293a1 1 0 011.414 1.414L9.414 13H12z" clip-rule="evenodd" />
           </svg>
           {{ change }}

@@ -117,6 +117,41 @@ async function loadPremiums() {
   }
 }
 
+function getCategoryInfo(uuid) {
+  let name = '';
+  let path = '';
+  
+  function traverse(nodes, currentPath) {
+    if (!nodes) return false;
+    for (const node of nodes) {
+      const nodePath = currentPath ? `${currentPath} > ${node.name}` : node.name;
+      if (node.categoryUuid === uuid || node.uuid === uuid) {
+        name = node.name;
+        path = nodePath;
+        return true;
+      }
+      if (node.subCategories && node.subCategories.length > 0) {
+        if (traverse(node.subCategories, nodePath)) return true;
+      }
+    }
+    return false;
+  }
+  
+  traverse(tree.value, 'Motor');
+  return { name, path };
+}
+
+const enrichedPremiums = computed(() => {
+  return premiums.value.map(p => {
+    const info = getCategoryInfo(p.categoryUuid || p.vehicleCategoryUuid);
+    return {
+      ...p,
+      displayCategoryName: info.name || p.categoryName || 'Unknown',
+      displayCategoryPath: info.path || p.categoryPath || 'Unknown'
+    };
+  });
+});
+
 onMounted(() => {
   loadTree();
   loadPremiums();
@@ -250,7 +285,7 @@ function levelLabel(depth) {
         </div>
         <div>
           <h2 class="mr-title">Rate Matrix & Premium Rules</h2>
-          <p class="mr-subtitle">Configure percentage rates, calculation multipliers and discounts</p>
+          <p class="mr-subtitle">Configure vehicle category percentage rates and calculation multipliers</p>
         </div>
       </div>
     </div>
@@ -267,26 +302,8 @@ function levelLabel(depth) {
       <button @click="success=''" class="mr-alert-close">×</button>
     </div>
 
-    <!-- ── Tabs ── -->
-    <div class="mr-tabs">
-      <button class="mr-tab" :class="{ 'mr-tab-active': activeTab === 'rates' }" @click="activeTab = 'rates'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-        </svg>
-        Premium Rates
-        <span class="mr-tab-badge">{{ premiums.length }}</span>
-      </button>
-      <button class="mr-tab" :class="{ 'mr-tab-active': activeTab === 'discounts' }" @click="activeTab = 'discounts'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M17 17h.01M6.343 17.657l-1.414-1.414M19.071 6.929l-1.414-1.414M6.343 6.343L4.929 4.929M19.071 17.071l-1.414 1.414M3 12h18"/>
-        </svg>
-        Discounts & Penalties
-        <span class="mr-tab-badge mr-badge-indigo">{{ discounts.length }}</span>
-      </button>
-    </div>
-
-    <!-- ══════════════ RATES TAB ══════════════ -->
-    <div v-if="activeTab === 'rates'" class="mr-tab-content">
+    <!-- ══════════════ RATES CONTENT ══════════════ -->
+    <div class="mr-tab-content">
 
       <!-- Add Rate Panel -->
       <div class="mr-panel">
@@ -371,15 +388,15 @@ function levelLabel(depth) {
         </div>
 
         <DataTable
-          v-else-if="premiums.length"
+          v-else-if="enrichedPremiums.length"
           :headers="['Category', 'Category Path', 'Rate (%)','Actions']"
           :hide-index="false"
           class="mr-datatable"
         >
-          <tr v-for="(p, i) in premiums" :key="p.premiumUuid" class="mr-row">
+          <tr v-for="(p, i) in enrichedPremiums" :key="p.premiumUuid" class="mr-row">
             <td class="mr-idx">{{ i + 1 }}</td>
-            <td><span class="mr-cat-name">{{ p.categoryName || '—' }}</span></td>
-            <td><span class="mr-path-text">{{ p.categoryPath || '—' }}</span></td>
+            <td><span class="mr-cat-name">{{ p.displayCategoryName }}</span></td>
+            <td><span class="mr-path-text">{{ p.displayCategoryPath }}</span></td>
             <td><span class="mr-rate-badge">{{ p.premiumRate ?? '—' }} %</span></td>
             <td>
               <div class="mr-actions">
@@ -401,38 +418,7 @@ function levelLabel(depth) {
       </div>
     </div>
 
-    <!-- ══════════════ DISCOUNTS TAB ══════════════ -->
-    <div v-if="activeTab === 'discounts'" class="mr-tab-content">
-      <div class="mr-card">
-        <div class="mr-card-header">
-          <span class="mr-card-title">Discount & Bonus Matrix</span>
-          <span class="mr-static-badge">Standard Rules</span>
-        </div>
-        <DataTable
-          :headers="['Discount Name','Code','Type','Value','Description','Status']"
-          :hide-index="false"
-          class="mr-datatable"
-        >
-          <tr v-for="(d, i) in discounts" :key="d.id" class="mr-row">
-            <td class="mr-idx">{{ i + 1 }}</td>
-            <td><span class="mr-cat-name">{{ d.name }}</span></td>
-            <td><span class="mr-code-badge">{{ d.code }}</span></td>
-            <td><span class="mr-type-pill">{{ d.type }}</span></td>
-            <td>
-              <span class="mr-rate-badge" :class="d.type === 'Flat' ? 'mr-rate-flat' : ''">
-                {{ d.type === 'Flat' ? 'ETB ' + d.value : d.value + ' %' }}
-              </span>
-            </td>
-            <td class="mr-desc">{{ d.description }}</td>
-            <td>
-              <span class="mr-status-badge" :class="d.status === 'Active' ? 'mr-status-active' : 'mr-status-inactive'">
-                {{ d.status }}
-              </span>
-            </td>
-          </tr>
-        </DataTable>
-      </div>
-    </div>
+
 
     <!-- ── Edit Rate Modal ── -->
     <Teleport to="body">

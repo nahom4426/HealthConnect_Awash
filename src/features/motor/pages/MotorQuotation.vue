@@ -307,7 +307,7 @@ function openNewQuotation() {
 .mq-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 4rem; color: #94a3b8; font-size: 0.88rem; }
 
 /* Table styling */
-.mq-datatable :deep(th) { background: #f8fafc; color: #475569; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; }
+.mq-datatable :deep(th) { background: #f1f5f9; color: #0f172a; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.85rem 1rem; border-bottom: 2px solid #e2e8f0; }
 .mq-row { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; cursor: pointer; }
 .mq-row:hover { background: #f0f9ff; }
 .mq-row td { padding: 0.85rem 1rem; color: #334155; vertical-align: middle; font-size: 0.82rem; }

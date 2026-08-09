@@ -149,6 +149,19 @@ function fmtNum(n) {
   return Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
 
+function formatWithCommas(val) {
+  if (!val) return '';
+  const num = String(val).replace(/[^0-9]/g, '');
+  if (!num) return '';
+  return Number(num).toLocaleString('en-US');
+}
+
+function onBuyingPriceInput(e) {
+  const raw = e.target.value.replace(/[^0-9]/g, '');
+  draft.value.buyingPrice = raw;
+  e.target.value = formatWithCommas(raw);
+}
+
 // ── Category tree ─────────────────────────────────────────────────────────────
 const catTree    = ref([]);
 const catLoading = ref(false);
@@ -716,12 +729,11 @@ async function submit() {
                     <div class="nq-price-wrap" :class="{ 'nq-price-wrap-err': draftErrors.buyingPrice, 'nq-price-wrap-disabled': !activeSpec }">
                       <span class="nq-price-pfx">ETB</span>
                       <input
-                        v-model="draft.buyingPrice"
-                        type="number"
+                        :value="formatWithCommas(draft.buyingPrice)"
+                        @input="onBuyingPriceInput"
+                        type="text"
                         class="nq-price-input"
                         :placeholder="activeSpec ? `${fmtNum(activeSpec.minMarketValue)} – ${fmtNum(activeSpec.maxMarketValue)}` : 'Select spec first'"
-                        :min="activeSpec?.minMarketValue"
-                        :max="activeSpec?.maxMarketValue"
                         :disabled="!activeSpec"
                       />
                     </div>

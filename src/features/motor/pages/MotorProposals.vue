@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import DataTable from '@/components/DataTable.vue';
 import { fetchMotorProposals } from '@/features/digitalChannel/api/digitalChannelApi';
@@ -14,20 +14,41 @@ const error = ref('');
 const searchQ = ref('');
 const statusFilter = ref('');
 
-async function loadProposals() {
-  loading.value = true;
+let pollTimer = null;
+
+async function loadProposals(showSpinner = true) {
+  if (showSpinner) loading.value = true;
   error.value = '';
   try {
     const data = await fetchMotorProposals();
-    proposals.value = Array.isArray(data) ? data : (data?.content || []);
+    const rawList = Array.isArray(data) ? data : (data?.content || []);
+    const seen = new Set();
+    const freshList = rawList.filter(item => {
+      const key = item.proposalUuid || item.proposalNumber || item.id;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (JSON.stringify(freshList) !== JSON.stringify(proposals.value)) {
+      proposals.value = freshList;
+    }
   } catch (e) {
-    error.value = e?.response?.data?.message || e.message || 'Failed to load proposals';
+    if (proposals.value.length === 0) {
+      error.value = e?.response?.data?.message || e.message || 'Failed to load proposals';
+    }
   } finally {
-    loading.value = false;
+    if (showSpinner) loading.value = false;
   }
 }
 
-onMounted(loadProposals);
+onMounted(() => {
+  loadProposals(true);
+  pollTimer = setInterval(() => loadProposals(false), 8000);
+});
+
+onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer);
+});
 
 let searchTimer = null;
 watch(searchQ, () => {
@@ -51,6 +72,20 @@ const filtered = computed(() => {
     return matchSearch && matchStatus;
   });
 });
+
+const currentPage = ref(1);
+const pageSize = 10;
+
+watch([searchQ, statusFilter], () => {
+  currentPage.value = 1;
+});
+
+const paginated = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return filtered.value.slice(start, start + pageSize);
+});
+
+const totalPages = computed(() => Math.ceil(filtered.value.length / pageSize));
 
 const stats = computed(() => {
   const all = proposals.value;
@@ -84,13 +119,17 @@ function paymentCls(st) {
 }
 
 function coverageMeta(type) {
+  if (!type || type === 'PENDING_SELECTION' || type === 'PENDING' || type === 'null') {
+    return { cls: 'mp-cov-pending', label: 'Pending Selection' };
+  }
   if (type === 'COMPREHENSIVE') return { cls: 'mp-cov-comp', label: 'Comprehensive' };
   if (type === 'THIRD_PARTY') return { cls: 'mp-cov-tp', label: 'Third Party' };
-  return { cls: 'mp-cov-od', label: type || 'OD' };
+  if (type === 'OWN_DAMAGE') return { cls: 'mp-cov-od', label: 'Own Damage (OD)' };
+  return { cls: 'mp-cov-pending', label: 'Pending Selection' };
 }
 
 function formatMoney(val) {
-  if (val == null) return '—';
+  if (val == null || val === 0) return 'Pending Selection';
   return 'ETB ' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
@@ -209,8 +248,8 @@ function openDetail(uuid) {
           :hide-index="true"
           class="mp-datatable"
         >
-          <tr v-for="(p, i) in filtered" :key="p.proposalUuid || i" class="mp-row" @click="openDetail(p.proposalUuid)">
-            <td class="mp-idx">{{ i + 1 }}</td>
+          <tr v-for="(p, i) in paginated" :key="p.proposalUuid || i" class="mp-row" @click="openDetail(p.proposalUuid)">
+            <td class="mp-idx">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
             <td>
               <div class="mp-proposal-num">{{ p.proposalNumber || '—' }}</div>
               <div class="mp-proposal-date">{{ formatDate(p.createdAt) }}</div>
@@ -229,11 +268,11 @@ function openDetail(uuid) {
             </td>
             <td class="mp-amount">{{ formatMoney(p.totalPremiumAmount) }}</td>
             <td>
-              <div class="mp-pay-row">
+              <div v-if="p.coverageType === 'COMPREHENSIVE' || p.coverageType === 'THIRD_PARTY'" class="mp-pay-row">
                 <span class="mp-pay-label">TP:</span>
                 <span :class="['mp-pay-pill', paymentCls(p.tpPaymentStatus)]">{{ paymentLabel(p.tpPaymentStatus) }}</span>
               </div>
-              <div class="mp-pay-row">
+              <div v-if="p.coverageType === 'COMPREHENSIVE' || p.coverageType === 'OWN_DAMAGE'" class="mp-pay-row">
                 <span class="mp-pay-label">OD:</span>
                 <span :class="['mp-pay-pill', paymentCls(p.odPaymentStatus)]">{{ paymentLabel(p.odPaymentStatus) }}</span>
               </div>
@@ -249,6 +288,13 @@ function openDetail(uuid) {
             </td>
           </tr>
         </DataTable>
+
+        <!-- Pagination Controls -->
+        <div v-if="totalPages > 1" class="mp-pagination">
+          <button class="mp-page-btn" :disabled="currentPage === 1" @click="currentPage--">Previous</button>
+          <span class="mp-page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button class="mp-page-btn" :disabled="currentPage === totalPages" @click="currentPage++">Next</button>
+        </div>
       </div>
     </div>
 
@@ -319,7 +365,7 @@ function openDetail(uuid) {
 .mp-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 4rem; color: #94a3b8; font-size: 0.88rem; }
 
 /* Table */
-.mp-datatable :deep(th) { background: #f8fafc; color: #475569; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; }
+.mp-datatable :deep(th) { background: #f1f5f9; color: #0f172a; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.85rem 1rem; border-bottom: 2px solid #e2e8f0; }
 .mp-row { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; cursor: pointer; }
 .mp-row:hover { background: #f0f9ff; }
 .mp-row td { padding: 0.85rem 1rem; color: #334155; vertical-align: middle; font-size: 0.82rem; }
@@ -337,6 +383,7 @@ function openDetail(uuid) {
 
 /* Coverage badge */
 .mp-coverage-badge { display: inline-flex; align-items: center; padding: 0.2rem 0.55rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.mp-cov-pending { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
 .mp-cov-comp { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
 .mp-cov-tp   { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
 .mp-cov-od   { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
@@ -365,6 +412,13 @@ function openDetail(uuid) {
 /* Action button */
 .mp-open-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.8rem; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 0.5rem; font-size: 0.74rem; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
 .mp-open-btn:hover { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+
+/* Pagination */
+.mp-pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem 1rem; border-top: 1px solid #e2e8f0; background: #fff; }
+.mp-page-btn { padding: 0.45rem 1rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 600; color: #334155; cursor: pointer; transition: all 0.15s; }
+.mp-page-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
+.mp-page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mp-page-info { font-size: 0.82rem; font-weight: 600; color: #64748b; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .mp-spin { animation: spin 0.9s linear infinite; }

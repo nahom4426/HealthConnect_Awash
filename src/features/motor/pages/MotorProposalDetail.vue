@@ -1,6 +1,13 @@
 <template>
   <div class="mpd-root">
 
+    <!-- Custom Toast Notification -->
+    <div v-if="toastMsg" class="fixed top-6 right-6 z-[99999] bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform transition-all duration-300 print:hidden" style="animation: slideIn 0.3s ease-out forwards;">
+      <svg v-if="toastType === 'error'" class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <svg v-else class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="font-bold text-sm">{{ toastMsg }}</span>
+    </div>
+
     <!-- Top Nav & Back -->
     <div class="mpd-topnav">
       <router-link to="/motor/proposals" class="mpd-back-link">
@@ -40,7 +47,8 @@
 
         <div class="mpd-header-actions">
           <button 
-            v-if="proposal.status !== 'CONTRACT_ISSUED'"
+            type="button"
+            v-if="proposal.status !== 'CONTRACT_ISSUED' && proposal.status !== 'ACTIVE'"
             @click="handleIssueContract" 
             :disabled="isIssuing || !canIssueContract"
             :title="!canIssueContract ? 'Requires Underwriter Privilege' : ''"
@@ -104,6 +112,55 @@
             </div>
           </div>
 
+          <!-- Customer PDF Proposal Form Questionnaire Card -->
+          <div class="mpd-card">
+            <div class="mpd-card-header">
+              <svg class="mpd-header-icon-svg text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Customer Proposal Form Questionnaire Answers (Nyala PDF Standard)</span>
+            </div>
+
+            <div class="p-5 space-y-4 text-xs">
+              <!-- Proposer & Driving Profile -->
+              <div>
+                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">1. Proposer & Driving License Profile</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <div><span class="text-slate-500 block">Proposer Age:</span><strong class="text-slate-900">{{ proposal.proposerAge ? (proposal.proposerAge + ' years') : '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">Residential Address:</span><strong class="text-slate-900">{{ proposal.proposerAddress || '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">P.O. Box:</span><strong class="text-slate-900">{{ proposal.poBox || '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">Trade / Profession:</span><strong class="text-slate-900">{{ proposal.tradeProfession || '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">Driving License No:</span><strong class="text-slate-900 font-mono">{{ proposal.licenseNo || '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">License Issue Date:</span><strong class="text-slate-900">{{ proposal.licenseIssueDate || '—' }}</strong></div>
+                </div>
+              </div>
+
+              <!-- Vehicle Usage & Interest -->
+              <div>
+                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">2. Usage, Parking & Insurable Interest</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <div><span class="text-slate-500 block">Vehicle Category:</span><strong class="text-blue-700 font-semibold">{{ proposal.categoryName || '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">Body Type:</span><strong class="text-slate-900">{{ proposal.bodyType || '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">Overnight Parking:</span><strong class="text-slate-900">{{ proposal.overnightParking || '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">Sole Property:</span><strong class="text-slate-900">{{ proposal.isSoleProperty === true ? 'YES' : (proposal.isSoleProperty === false ? 'NO' : '—') }}</strong></div>
+                  <div><span class="text-slate-500 block">Hire Purchase / Financier:</span><strong class="text-slate-900">{{ proposal.isHirePurchase === true ? (proposal.financierNameAddress || 'YES') : (proposal.isHirePurchase === false ? 'NO' : '—') }}</strong></div>
+                  <div><span class="text-slate-500 block">Private Purpose Only:</span><strong class="text-slate-900">{{ proposal.privatePurposeOnly === true ? 'YES' : (proposal.privatePurposeOnly === false ? 'NO' : '—') }}</strong></div>
+                </div>
+              </div>
+
+              <!-- Driving & Physical Declarations -->
+              <div>
+                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">3. Driving Record & Safety Declarations</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <div><span class="text-slate-500 block">Self Driving Experience:</span><strong class="text-slate-900">{{ proposal.drivingYearsSelf ? (proposal.drivingYearsSelf + ' Years') : '—' }}</strong></div>
+                  <div><span class="text-slate-500 block">Physical Infirmity / Defective Vision:</span><strong class="text-slate-900">{{ proposal.hasPhysicalInfirmity === true ? (proposal.physicalInfirmityDetails || 'YES') : (proposal.hasPhysicalInfirmity === false ? 'NONE (Good Health)' : '—') }}</strong></div>
+                  <div><span class="text-slate-500 block">Driving Convictions:</span><strong class="text-slate-900">{{ proposal.hasDrivingConvictions === true ? (proposal.convictionDetails || 'YES') : (proposal.hasDrivingConvictions === false ? 'NONE' : '—') }}</strong></div>
+                  <div><span class="text-slate-500 block">Audio / Radio Accessories:</span><strong class="text-slate-900">{{ proposal.hasRadioAccessories === true ? (proposal.radioDetailsValue || 'YES') : (proposal.hasRadioAccessories === false ? 'NO' : '—') }}</strong></div>
+                  <div><span class="text-slate-500 block">Paid Driver & Assistant PA:</span><strong class="text-slate-900">{{ proposal.insurePaidDriverAssistant === true ? 'COVERED' : (proposal.insurePaidDriverAssistant === false ? 'NOT COVERED' : '—') }}</strong></div>
+                  <div><span class="text-slate-500 block">Passenger PA Cover:</span><strong class="text-slate-900">{{ proposal.insurePassengersPa === true ? 'COVERED' : (proposal.insurePassengersPa === false ? 'NOT COVERED' : '—') }}</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Adjustor Inspection Panel -->
           <div class="mpd-card">
             <div class="mpd-card-header">
@@ -125,7 +182,7 @@
                     <option value="ADJ-102">Almaz Wolde (Field Adjustor)</option>
                     <option value="ADJ-103">Yonas Hailu (Motor Adjustor)</option>
                   </select>
-                  <button @click="handleAssignAdjustor" class="mpd-sec-btn">
+                  <button type="button" @click="handleAssignAdjustor" class="mpd-sec-btn">
                     Save Adjustor Assignment
                   </button>
                 </div>
@@ -140,7 +197,7 @@
                     <option value="PASSED">PASSED — Vehicle Condition Verified Clean</option>
                     <option value="FAILED">FAILED — Pre-existing Damage Found</option>
                   </select>
-                  <button @click="handleSubmitInspection" class="mpd-suc-btn">
+                  <button type="button" @click="handleSubmitInspection" class="mpd-suc-btn">
                     Submit Inspection Finding
                   </button>
                 </div>
@@ -182,40 +239,32 @@
               <div class="mpd-gateway-box">
                 <div class="flex items-center justify-between text-xs">
                   <span class="font-bold text-slate-800">1. EthioTelecom (Govt TP)</span>
-                  <span :class="proposal.tpPaymentStatus === 'PAID' ? 'text-emerald-700 font-bold' : 'text-amber-600 font-bold'">
+                  <span :class="proposal.tpPaymentStatus === 'PAID' || proposal.tpPaymentStatus === 'PAID_ETHIOTELECOM' ? 'text-emerald-700 font-bold' : 'text-amber-600 font-bold'">
                     {{ proposal.tpPaymentStatus || 'PENDING' }}
                   </span>
                 </div>
                 <div v-if="proposal.tpPaymentRef" class="text-[11px] font-mono text-slate-500 mt-1">
                   Ref: {{ proposal.tpPaymentRef }}
                 </div>
-                <button 
-                  v-if="proposal.tpPaymentStatus !== 'PAID'"
-                  @click="handlePayTp"
-                  class="mpd-gw-btn"
-                >
-                  Simulate EthioTelecom Payment
-                </button>
+                <div v-if="proposal.tpPaymentStatus !== 'PAID' && proposal.tpPaymentStatus !== 'PAID_ETHIOTELECOM'" class="text-[11px] text-amber-600 mt-1 font-medium">
+                  Awaiting customer payment via Mobile App
+                </div>
               </div>
 
               <!-- EthiSwitch OD Gateway -->
               <div class="mpd-gateway-box">
                 <div class="flex items-center justify-between text-xs">
                   <span class="font-bold text-slate-800">2. EthiSwitch (Nyala OD)</span>
-                  <span :class="proposal.odPaymentStatus === 'PAID' ? 'text-emerald-700 font-bold' : 'text-amber-600 font-bold'">
+                  <span :class="proposal.odPaymentStatus === 'PAID' || proposal.odPaymentStatus === 'PAID_ETHISWITCH' ? 'text-emerald-700 font-bold' : 'text-amber-600 font-bold'">
                     {{ proposal.odPaymentStatus || 'PENDING' }}
                   </span>
                 </div>
                 <div v-if="proposal.odPaymentRef" class="text-[11px] font-mono text-slate-500 mt-1">
                   Ref: {{ proposal.odPaymentRef }}
                 </div>
-                <button 
-                  v-if="proposal.odPaymentStatus !== 'PAID' && proposal.coverageType !== 'THIRD_PARTY'"
-                  @click="handlePayOd"
-                  class="mpd-gw-btn-suc"
-                >
-                  Simulate EthiSwitch Gateway Payment
-                </button>
+                <div v-if="proposal.odPaymentStatus !== 'PAID' && proposal.odPaymentStatus !== 'PAID_ETHISWITCH' && proposal.coverageType !== 'THIRD_PARTY'" class="text-[11px] text-amber-600 mt-1 font-medium">
+                  Awaiting customer payment via Mobile App
+                </div>
               </div>
             </div>
           </div>
@@ -227,32 +276,32 @@
             </div>
 
             <div class="p-5">
-              <div v-if="proposal.status === 'CONTRACT_ISSUED'" class="space-y-3">
+              <div v-if="proposal.status === 'CONTRACT_ISSUED' || proposal.status === 'ACTIVE'" class="space-y-3">
                 <!-- Document 1: Official Certificate (Sticker) -->
-                <div class="mpd-doc-box">
+                <div v-if="proposal.coverageType === 'COMPREHENSIVE' || proposal.coverageType === 'THIRD_PARTY'" class="mpd-doc-box">
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <div>
-                      <div class="text-xs font-bold text-slate-900">Official Yellow Certificate (Reg 554/2024)</div>
+                      <div class="text-xs font-bold text-slate-900">Official Certificate (Reg 554/2024)</div>
                       <div class="text-[11px] text-slate-500">Compulsory Government TP Insurance Sticker</div>
                     </div>
                   </div>
-                  <button @click="showCertModal = true" class="mpd-view-doc-btn">
-                    View & Print Sticker
+                  <button type="button" @click="showCertModal = true" class="mpd-view-doc-btn whitespace-nowrap flex-shrink-0">
+                    View Sticker
                   </button>
                 </div>
 
-                <!-- Document 2: Official Comprehensive Policy Schedule -->
-                <div class="mpd-doc-box">
+                <!-- Document 2: Official Policy Schedule -->
+                <div v-if="proposal.coverageType === 'COMPREHENSIVE' || proposal.coverageType === 'OWN_DAMAGE'" class="mpd-doc-box">
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     <div>
-                      <div class="text-xs font-bold text-slate-900">Comprehensive Motor Policy Schedule</div>
+                      <div class="text-xs font-bold text-slate-900">{{ proposal.coverageType === 'OWN_DAMAGE' ? 'Standalone OD Policy Schedule' : 'Comprehensive Motor Policy Schedule' }}</div>
                       <div class="text-[11px] text-slate-500">Official Nyala Contract Terms, Rates & Excesses</div>
                     </div>
                   </div>
-                  <button @click="showScheduleModal = true" class="mpd-view-doc-btn">
-                    View & Print Schedule
+                  <button type="button" @click="showScheduleModal = true" class="mpd-view-doc-btn whitespace-nowrap flex-shrink-0">
+                    View Schedule
                   </button>
                 </div>
               </div>
@@ -266,9 +315,8 @@
       </div>
     </div>
 
-    <!-- ─── DOCUMENT 1: Official Yellow Certificate Sticker Modal (Reg 554/2024) ─── -->
-    <div v-if="showCertModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto flex items-start justify-center">
-      <div class="bg-[#FFFEE0] text-slate-900 border-4 border-amber-500/60 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative my-6 print:m-0 print:p-0 print:border-0 print:bg-white print:shadow-none">
+    <div v-if="showCertModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto flex items-start justify-center print:bg-transparent">
+      <div class="bg-[#FFFEE0] text-slate-900 border-4 border-amber-500/60 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative my-6 print:m-0 print:p-8 print:border-0 print:shadow-none print:bg-[#FFFEE0]">
         
         <!-- Action Buttons (Print / Close) -->
         <div class="flex items-center justify-between border-b border-amber-300 pb-3 mb-4 print:hidden">
@@ -278,11 +326,11 @@
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <button @click="printCertificate" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5 cursor-pointer">
+            <button type="button" @click="printCertificate" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5 cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               Print / Export Sticker
             </button>
-            <button @click="showCertModal = false" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer">
+            <button type="button" @click="showCertModal = false" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer">
               Close
             </button>
           </div>
@@ -427,7 +475,7 @@
             </div>
             <div>
               <span class="text-slate-700 block text-[11px]">የአረቦን መጠን / PREMIUM TARIF:</span>
-              <span class="font-bold font-mono text-sm text-emerald-950 underline">ETB {{ formatMoney(proposal.tpPremiumAmount || 1250) }}</span>
+              <span class="font-bold font-mono text-sm text-emerald-950 underline">ETB {{ formatMoney(proposal.tpPremiumAmount) }}</span>
             </div>
           </div>
 
@@ -443,14 +491,9 @@
             </div>
 
             <!-- Official Nyala Digital Stamp Seal -->
-            <div class="mt-4 flex flex-col items-center justify-center">
-              <div class="w-36 h-36 rounded-full border-4 border-blue-900 p-2 flex flex-col items-center justify-center text-center text-blue-950 font-black text-[10px] transform -rotate-6 opacity-90 shadow-sm bg-blue-100/50">
-                <img src="/nyala_logo.png" class="h-6 object-contain mb-0.5 opacity-80" />
-                <div class="border-b border-blue-900 pb-0.5 w-full text-[9px] uppercase font-extrabold">Nyala Insurance S.C.</div>
-                <div class="py-0.5 text-[8px] font-bold">OFFICIAL STAMP SEAL</div>
-                <div class="border-t border-blue-900 pt-0.5 w-full text-[8px]">ADDIS ABABA, ETHIOPIA</div>
-              </div>
-              <div class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL DIGITAL SEAL</div>
+            <div class="mt-4 flex flex-col items-center justify-center relative">
+              <img src="/nyala-sail.png" alt="Nyala Stamp Seal" class="w-36 h-36 object-contain transform -rotate-6 opacity-90 drop-shadow-md" />
+              <div class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL NYALA CORPORATE SEAL</div>
             </div>
           </div>
         </div>
@@ -458,9 +501,8 @@
     </div>
 
 
-    <!-- ─── DOCUMENT 2: Official Comprehensive Policy Schedule Modal ─── -->
-    <div v-if="showScheduleModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto flex items-start justify-center">
-      <div class="bg-white text-slate-900 border border-slate-300 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative my-6 print:m-0 print:p-0 print:border-0 print:shadow-none">
+    <div v-if="showScheduleModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto flex items-start justify-center print:bg-transparent">
+      <div class="bg-white text-slate-900 border border-slate-300 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative my-6 print:m-0 print:p-8 print:border-0 print:shadow-none">
         
         <!-- Action Buttons (Print / Close) -->
         <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5 print:hidden">
@@ -470,11 +512,11 @@
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <button @click="printCertificate" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5 cursor-pointer">
+            <button type="button" @click="printCertificate" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5 cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               Print / Export Schedule
             </button>
-            <button @click="showScheduleModal = false" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer">
+            <button type="button" @click="showScheduleModal = false" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer">
               Close
             </button>
           </div>
@@ -494,8 +536,8 @@
             </div>
             <div class="text-right">
               <div class="text-xs font-bold text-slate-600 uppercase tracking-widest">Policy Schedule</div>
-              <div class="text-sm font-black font-mono text-blue-950">NYA-MOT-POL-881923</div>
-              <div class="text-xs text-slate-500 font-medium">Issue Date: 03-Jan-2026</div>
+              <div class="text-sm font-black font-mono text-blue-950">{{ proposal.policyNumber || proposal.proposalNumber }}</div>
+              <div class="text-xs text-slate-500 font-medium">Issue Date: {{ new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }}</div>
               <div class="text-xs text-emerald-700 font-bold mt-1">Status: ACTIVE & FULLY PAID</div>
             </div>
           </div>
@@ -503,7 +545,7 @@
 
         <!-- Document Title Banner -->
         <div class="bg-blue-950 text-white text-center py-2.5 rounded-xl font-black text-sm uppercase tracking-wider mb-6">
-          COMPREHENSIVE MOTOR INSURANCE POLICY SCHEDULE
+          {{ proposal.coverageType === 'OWN_DAMAGE' ? 'STANDALONE OWN DAMAGE (OD) POLICY SCHEDULE' : 'COMPREHENSIVE MOTOR INSURANCE POLICY SCHEDULE' }}
         </div>
 
         <!-- Schedule Sections -->
@@ -517,15 +559,15 @@
             <div class="p-4 grid grid-cols-3 gap-4">
               <div>
                 <span class="text-slate-500 block text-[11px]">Insured Full Name:</span>
-                <span class="font-bold text-slate-950">{{ proposal.insuredName || 'Abraham Addisu' }}</span>
+                <span class="font-bold text-slate-950">{{ proposal.insuredName }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Phone Number:</span>
-                <span class="font-bold font-mono text-slate-950">{{ proposal.insuredPhone || '0963048258' }}</span>
+                <span class="font-bold font-mono text-slate-950">{{ proposal.insuredPhone }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Email Address:</span>
-                <span class="font-bold text-slate-950">{{ proposal.insuredEmail || 'abroid.et@gmail.com' }}</span>
+                <span class="font-bold text-slate-950">{{ proposal.insuredEmail }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Business / Occupation:</span>
@@ -550,27 +592,27 @@
             <div class="p-4 grid grid-cols-4 gap-4">
               <div>
                 <span class="text-slate-500 block text-[11px]">Make & Model:</span>
-                <span class="font-bold text-slate-950">{{ proposal.carName || 'Toyota' }} {{ proposal.carModel || 'Land Cruiser 300 V6' }}</span>
+                <span class="font-bold text-slate-950">{{ proposal.carName }} {{ proposal.carModel }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Plate Number:</span>
-                <span class="font-bold font-mono text-blue-950">{{ proposal.vehiclePlateNumber || '3-A98123' }}</span>
+                <span class="font-bold font-mono text-blue-950">{{ proposal.vehiclePlateNumber }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Chassis Number:</span>
-                <span class="font-bold font-mono text-slate-950">{{ proposal.chassisNumber || 'CHAS-881923091' }}</span>
+                <span class="font-bold font-mono text-slate-950">{{ proposal.chassisNumber }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Engine Number:</span>
-                <span class="font-bold font-mono text-slate-950">{{ proposal.engineNumber || 'ENG-WD615-9921' }}</span>
+                <span class="font-bold font-mono text-slate-950">{{ proposal.engineNumber }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Year of Manufacture:</span>
-                <span class="font-bold text-slate-950">{{ proposal.makeYear || '2023' }}</span>
+                <span class="font-bold text-slate-950">{{ proposal.makeYear }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Body / Vehicle Type:</span>
-                <span class="font-bold text-slate-950">{{ proposal.carType || 'SUV / Station Wagon' }}</span>
+                <span class="font-bold text-slate-950">{{ proposal.carType }}</span>
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Seating Capacity:</span>
@@ -578,7 +620,7 @@
               </div>
               <div>
                 <span class="text-slate-500 block text-[11px]">Vehicle Sum Insured:</span>
-                <span class="font-bold font-mono text-blue-950 text-sm">ETB {{ formatMoney(proposal.sumInsured || 18500000) }}</span>
+                <span class="font-bold font-mono text-blue-950 text-sm">ETB {{ formatMoney(proposal.sumInsured) }}</span>
               </div>
             </div>
           </div>
@@ -599,20 +641,20 @@
               </thead>
               <tbody class="divide-y divide-slate-200 font-medium">
                 <tr>
-                  <td class="py-2.5 px-4 font-bold text-slate-900">1. Basic Own Damage (OD) Premium</td>
+                  <td class="py-2.5 px-4 font-bold text-slate-900">1. Nyala Own Damage (OD) Premium</td>
                   <td class="py-2.5 px-4">EthiSwitch National Gateway</td>
                   <td class="py-2.5 px-4 text-emerald-700 font-bold">PAID</td>
-                  <td class="py-2.5 px-4 text-right font-mono font-bold">ETB {{ formatMoney(proposal.odPremiumAmount || 407000) }}</td>
+                  <td class="py-2.5 px-4 text-right font-mono font-bold">ETB {{ formatMoney(proposal.odPremiumAmount) }}</td>
                 </tr>
-                <tr>
-                  <td class="py-2.5 px-4 font-bold text-slate-900">2. Compulsory Third Party (TP) Government Fund</td>
-                  <td class="py-2.5 px-4">EthioTelecom Payment Rail</td>
+                <tr v-if="proposal.coverageType !== 'OWN_DAMAGE'">
+                  <td class="py-2.5 px-4 font-bold text-slate-900">2. Compulsory Third Party (TP) Fund</td>
+                  <td class="py-2.5 px-4">EthioTelecom Telebirr Rail</td>
                   <td class="py-2.5 px-4 text-emerald-700 font-bold">PAID</td>
-                  <td class="py-2.5 px-4 text-right font-mono font-bold">ETB {{ formatMoney(proposal.tpPremiumAmount || 1250) }}</td>
+                  <td class="py-2.5 px-4 text-right font-mono font-bold">ETB {{ formatMoney(proposal.tpPremiumAmount) }}</td>
                 </tr>
                 <tr class="bg-slate-50 font-bold">
                   <td colspan="3" class="py-2.5 px-4 text-right uppercase text-slate-700">Total Policy Premium Paid:</td>
-                  <td class="py-2.5 px-4 text-right font-mono text-sm text-blue-950 font-black">ETB {{ formatMoney(proposal.totalPremiumAmount || 408250) }}</td>
+                  <td class="py-2.5 px-4 text-right font-mono text-sm text-blue-950 font-black">ETB {{ formatMoney(proposal.totalPremiumAmount) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -620,12 +662,12 @@
 
           <!-- Section 4: Policy Conditions & Excess / Deductibles -->
           <div class="border border-slate-200 rounded-xl p-4 bg-slate-50 space-y-2">
-            <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wide">4. Policy Terms & Excess Conditions:</h4>
+            <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wide">4. POLICY TERMS & EXCESS CONDITIONS</h4>
             <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-700 leading-relaxed font-medium">
               <li><strong>Own Damage Excess:</strong> Insured pays 10% of total repair claim (Minimum ETB 5,000) per accident.</li>
               <li><strong>Compulsory TP Coverage:</strong> Complies strictly with FDRE Proclamation No. 799/2013 and Regulation No. 554/2024.</li>
-              <li><strong>Authorized Drivers:</strong> Any person driving with valid Ethiopian Driver License under permission of the Insured.</li>
-              <li><strong>Emergency Hotline:</strong> 24/7 Motor Claims Center Hotline: <strong>9222</strong> (Toll Free).</li>
+              <li><strong>Authorized Drivers:</strong> Any person driving with valid Ethiopian Driver License.</li>
+              <li><strong>24/7 Toll-Free Motor Claims Center Hotline:</strong> 9222</li>
             </ul>
           </div>
 
@@ -633,20 +675,15 @@
           <div class="pt-4 flex items-end justify-between border-t border-slate-300">
             <div>
               <p class="text-[11px] font-bold text-slate-800">Issued by Nyala Insurance Company S.C.</p>
-              <p class="text-[10px] text-slate-500">Underwriting Manager Signature & Date</p>
+              <p class="text-[10px] text-slate-500">Authorized Underwriter: Solomon Tadesse</p>
               <div class="mt-3 font-mono text-xs font-bold text-slate-950 border-b-2 border-slate-800 w-56 pb-1">
                 Solomon Tadesse (Underwriter)
               </div>
             </div>
 
-            <div class="flex flex-col items-center">
-              <div class="w-32 h-32 rounded-full border-4 border-blue-900 p-2 flex flex-col items-center justify-center text-center text-blue-950 font-black text-[9px] transform -rotate-6 opacity-90 shadow-sm bg-blue-50">
-                <img src="/nyala_logo.png" class="h-5 object-contain mb-0.5" />
-                <div class="border-b border-blue-900 pb-0.5 w-full text-[8px] uppercase font-bold">Nyala Insurance S.C.</div>
-                <div class="py-0.5 text-[7px] font-extrabold">OFFICIAL POLICY SEAL</div>
-                <div class="border-t border-blue-900 pt-0.5 w-full text-[7px]">ADDIS ABABA</div>
-              </div>
-              <span class="text-[10px] font-bold text-blue-950 mt-1">OFFICIAL DIGITAL STAMP</span>
+            <div class="flex flex-col items-center relative">
+              <img src="/nyala-sail.png" alt="Nyala Official Corporate Seal" class="w-32 h-32 object-contain transform -rotate-6 opacity-90 drop-shadow-md" />
+              <span class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL NYALA CORPORATE SEAL</span>
             </div>
           </div>
 
@@ -657,7 +694,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
 import { 
   fetchMotorProposalDetail, 
@@ -675,34 +712,69 @@ const { activeRole, setRole, ROLES } = useRoleContext();
 const proposal = ref({});
 const loading = ref(false);
 const error = ref('');
-const selectedAdjustor = ref('ADJ-101');
+const selectedAdjustor = ref('ADJ-100');
 const inspectionStatus = ref('PASSED');
+
+const toastMsg = ref('');
+const toastType = ref('success');
+function showToast(msg, type = 'success') {
+  toastMsg.value = msg;
+  toastType.value = type;
+  setTimeout(() => { toastMsg.value = ''; }, 4000);
+}
+
 const isIssuing = ref(false);
 const showCertModal = ref(false);
 const showScheduleModal = ref(false);
 
 // Role Permissions
-const normRole = computed(() => (activeRole.value || '').toUpperCase().replace('ROLE_', ''));
+const normRole = computed(() => {
+  const roleFromStorage = localStorage.getItem('nyala_active_testing_role') || localStorage.getItem('user_role') || activeRole.value || '';
+  return roleFromStorage.toUpperCase().replace('ROLE_', '');
+});
 const isUnderwriter = computed(() => normRole.value === 'UNDERWRITER' || normRole.value === 'SUPER_ADMIN');
-const isAdjustor = computed(() => normRole.value === 'ADJUSTOR' || normRole.value === 'SUPER_ADMIN');
+const isAdjustor = computed(() => normRole.value === 'ADJUSTOR');
+const isProductManager = computed(() => normRole.value === 'PRODUCT_MANAGER');
 const canAssignAdjustor = computed(() => isUnderwriter.value);
 const canSubmitInspection = computed(() => isAdjustor.value);
-const canIssueContract = computed(() => isUnderwriter.value);
+const canIssueContract = computed(() => isUnderwriter.value || normRole.value === 'SUPER_ADMIN');
 
 function formatMoney(num) {
   if (num === null || num === undefined) return '0.00';
   return Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// ── Auto-refresh: poll proposal status every 8s so mobile payment/inspection changes appear instantly ──
+let pollInterval = null;
+const isPollingPaused = ref(false);
+
+async function loadProposal() {
+  if (isPollingPaused.value) return;
+  try {
+    const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
+    if (isPollingPaused.value) return;
+    // Only update if data actually changed (avoids UI flicker)
+    if (JSON.stringify(fresh) !== JSON.stringify(proposal.value)) {
+      proposal.value = fresh;
+    }
+  } catch (e) {
+    if (!proposal.value?.proposalUuid) {
+      error.value = e?.response?.data?.message || e.message || 'Failed to load proposal details';
+    }
+  }
+}
+
 onMounted(async () => {
   loading.value = true;
-  try {
-    proposal.value = await fetchMotorProposalDetail(route.params.proposalUuid);
-  } catch (e) {
-    error.value = e?.response?.data?.message || e.message || 'Failed to load proposal details';
-  } finally {
-    loading.value = false;
-  }
+  await loadProposal();
+  loading.value = false;
+
+  // Start polling every 8 seconds for live status updates
+  pollInterval = setInterval(loadProposal, 8000);
+});
+
+onBeforeUnmount(() => {
+  if (pollInterval) clearInterval(pollInterval);
 });
 
 function printCertificate() {
@@ -739,6 +811,7 @@ function statusMeta(st) {
 }
 
 async function handleAssignAdjustor() {
+  isPollingPaused.value = true;
   const adjustorMap = {
     'ADJ-100': 'Solomon Tadesse (Vehicle Adjustor)',
     'ADJ-101': 'Dawit Tesfaye (Senior Adjustor)',
@@ -750,46 +823,55 @@ async function handleAssignAdjustor() {
     adjustorUuid: selectedAdjustor.value,
     adjustorName: name
   });
-  proposal.value.assignedAdjustorName = name;
-  proposal.value.status = 'ADJUSTOR_ASSIGNED';
-  alert('Adjustor assigned successfully!');
+  const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
+  proposal.value = fresh;
+  showToast('Adjustor assigned successfully!');
+  isPollingPaused.value = false;
 }
 
 async function handleSubmitInspection() {
+  isPollingPaused.value = true;
   await submitProposalInspection(proposal.value.proposalUuid, {
     status: inspectionStatus.value,
     notes: 'Vehicle physical pre-inspection completed cleanly.'
   });
-  proposal.value.inspectionStatus = inspectionStatus.value;
-  proposal.value.status = 'INSPECTION_DONE';
-  proposal.value.inspectionNotes = 'Vehicle physical pre-inspection completed cleanly.';
-  alert('Inspection finding recorded!');
+  const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
+  proposal.value = fresh;
+  showToast('Inspection finding recorded!');
+  isPollingPaused.value = false;
 }
 
 async function handlePayTp() {
+  isPollingPaused.value = true;
   const res = await payTpEthioTelecom(proposal.value.proposalUuid);
-  proposal.value.tpPaymentStatus = 'PAID';
-  proposal.value.tpPaymentRef = res.txnRef;
-  alert('EthioTelecom TP Payment simulated successfully!');
+  const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
+  proposal.value = fresh;
+  showToast('EthioTelecom TP Payment simulated successfully!');
+  isPollingPaused.value = false;
 }
 
 async function handlePayOd() {
+  isPollingPaused.value = true;
   const res = await payOdEthiSwitch(proposal.value.proposalUuid, { bankCode: 'CBE' });
-  proposal.value.odPaymentStatus = 'PAID';
-  proposal.value.odPaymentRef = res.txRef;
-  alert('EthiSwitch OD Payment simulated successfully!');
+  const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
+  proposal.value = fresh;
+  showToast('EthiSwitch OD Payment simulated successfully!');
+  isPollingPaused.value = false;
 }
 
 async function handleIssueContract() {
   isIssuing.value = true;
+  isPollingPaused.value = true;
   try {
     const res = await issueProposalContract(proposal.value.proposalUuid);
-    proposal.value.status = 'CONTRACT_ISSUED';
-    alert('Policy Contract & Digital Certificate Issued!');
+    const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
+    proposal.value = fresh;
+    showToast('Policy Contract & Digital Certificate Issued!');
   } catch (e) {
-    alert(e?.response?.data?.message || 'Failed to issue contract');
+    showToast(e?.response?.data?.message || 'Failed to issue contract', 'error');
   } finally {
     isIssuing.value = false;
+    isPollingPaused.value = false;
   }
 }
 </script>
@@ -858,5 +940,18 @@ async function handleIssueContract() {
 .mpd-skel-title { height: 32px; width: 220px; }
 .mpd-skel-card { height: 180px; width: 100%; }
 @keyframes mpd-shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 .mpd-alert { padding: 1rem; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 0.6rem; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+</style>
+
+<style>
+@media print {
+  @page {
+    margin: 0;
+  }
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
 </style>

@@ -3,17 +3,18 @@ import { ref, onMounted, watch } from 'vue';
 import DataTable from '@/components/DataTable.vue';
 import Button from '@/components/Button.vue';
 import {
-  fetchAllCarSpecs, saveCarSpec, updateCarSpec, deleteCarSpec,
+  fetchAllCarSpecs, saveCarSpec, updateCarSpec, deleteCarSpec, fetchCategoryTree,
 } from '../api/motorApi.js';
 
 // ── state ─────────────────────────────────────────────────────────────────────
-const cars      = ref([]);
-const loading   = ref(false);
-const saving    = ref(false);
-const error     = ref('');
-const success   = ref('');
-const searchQ   = ref('');
-const showAdd   = ref(false);
+const cars        = ref([]);
+const categories  = ref([]);
+const loading     = ref(false);
+const saving      = ref(false);
+const error       = ref('');
+const success     = ref('');
+const searchQ     = ref('');
+const showAdd     = ref(false);
 
 // ── form ──────────────────────────────────────────────────────────────────────
 function emptyPriceRow() {
@@ -22,6 +23,8 @@ function emptyPriceRow() {
 
 function freshForm() {
   return {
+    categoryUuid: '',
+    categoryName: '',
     carName:  '',
     carType:  '',
     carModel: '',
@@ -45,6 +48,25 @@ function removePriceRow(idx) {
 function resetForm() {
   form.value = freshForm();
   formErrors.value = {};
+}
+
+function formatWithCommas(val) {
+  if (!val) return '';
+  const num = String(val).replace(/[^0-9]/g, '');
+  if (!num) return '';
+  return Number(num).toLocaleString('en-US');
+}
+
+function onMinMarketValueInput(e, row) {
+  const raw = e.target.value.replace(/[^0-9]/g, '');
+  row.minMarketValue = raw;
+  e.target.value = formatWithCommas(raw);
+}
+
+function onMaxMarketValueInput(e, row) {
+  const raw = e.target.value.replace(/[^0-9]/g, '');
+  row.maxMarketValue = raw;
+  e.target.value = formatWithCommas(raw);
 }
 
 // ── edit / delete ─────────────────────────────────────────────────────────────
@@ -82,6 +104,39 @@ function removeEditPriceRow(idx) {
 }
 
 // ── load ──────────────────────────────────────────────────────────────────────
+async function loadCategories() {
+  try {
+    const tree = await fetchCategoryTree();
+    const flat = [];
+    function walk(nodes, depth = 0) {
+      for (const node of nodes) {
+        flat.push({
+          categoryUuid: node.categoryUuid || node.uuid,
+          name: node.name,
+          indent: '— '.repeat(depth) + node.name,
+        });
+        if (node.subCategories && node.subCategories.length) {
+          walk(node.subCategories, depth + 1);
+        }
+      }
+    }
+    walk(tree);
+    categories.value = flat;
+  } catch (e) {
+    console.warn('Failed to load categories', e);
+  }
+}
+
+function onCategoryChange() {
+  const selected = categories.value.find(c => c.categoryUuid === form.value.categoryUuid);
+  if (selected) {
+    form.value.categoryName = selected.name;
+    if (!form.value.carType) {
+      form.value.carType = selected.name;
+    }
+  }
+}
+
 async function loadCars() {
   loading.value = true;
   try {
@@ -94,7 +149,10 @@ async function loadCars() {
   }
 }
 
-onMounted(loadCars);
+onMounted(() => {
+  loadCars();
+  loadCategories();
+});
 
 let searchTimer = null;
 watch(searchQ, () => {
@@ -122,6 +180,8 @@ async function submitSave() {
   success.value = '';
   try {
     await saveCarSpec({
+      categoryUuid: form.value.categoryUuid || null,
+      categoryName: form.value.categoryName || null,
       carName:  form.value.carName,
       carType:  form.value.carType,
       carModel: form.value.carModel,
@@ -243,12 +303,21 @@ async function doDelete() {
           <!-- Basic fields -->
           <div class="cc-grid">
             <div class="cc-field">
+              <label>Vehicle Category <span class="cc-req">*</span></label>
+              <select v-model="form.categoryUuid" class="cc-input" @change="onCategoryChange">
+                <option value="">-- Select Category --</option>
+                <option v-for="cat in categories" :key="cat.categoryUuid" :value="cat.categoryUuid">
+                  {{ cat.indent }}
+                </option>
+              </select>
+            </div>
+            <div class="cc-field">
               <label>Car Name <span class="cc-req">*</span></label>
               <input v-model="form.carName" class="cc-input" :class="{ 'cc-input-err': formErrors.carName }" placeholder="e.g. Toyota Corolla 1.6" />
               <span v-if="formErrors.carName" class="cc-field-err">{{ formErrors.carName }}</span>
             </div>
             <div class="cc-field">
-              <label>Car Type <span class="cc-req">*</span></label>
+              <label>Car Type / Classification <span class="cc-req">*</span></label>
               <input v-model="form.carType" class="cc-input" :class="{ 'cc-input-err': formErrors.carType }" placeholder="e.g. Sedan, SUV, Truck" />
               <span v-if="formErrors.carType" class="cc-field-err">{{ formErrors.carType }}</span>
             </div>
@@ -287,8 +356,8 @@ async function doDelete() {
             >
               <input v-model="row.fromMakeYear" class="cc-input" placeholder="e.g. 2015" />
               <input v-model="row.toMakeYear"   class="cc-input" placeholder="e.g. 2020" />
-              <input v-model="row.minMarketValue" class="cc-input" type="number" min="0" placeholder="0" />
-              <input v-model="row.maxMarketValue" class="cc-input" type="number" min="0" placeholder="0" />
+              <input :value="formatWithCommas(row.minMarketValue)" @input="e => onMinMarketValueInput(e, row)" class="cc-input" type="text" placeholder="0" />
+              <input :value="formatWithCommas(row.maxMarketValue)" @input="e => onMaxMarketValueInput(e, row)" class="cc-input" type="text" placeholder="0" />
               <button
                 class="cc-icon-btn cc-btn-del"
                 type="button"
@@ -421,8 +490,8 @@ async function doDelete() {
                 >
                   <input v-model="row.fromMakeYear" class="cc-input" placeholder="e.g. 2015" />
                   <input v-model="row.toMakeYear"   class="cc-input" placeholder="e.g. 2020" />
-                  <input v-model="row.minMarketValue" class="cc-input" type="number" min="0" />
-                  <input v-model="row.maxMarketValue" class="cc-input" type="number" min="0" />
+                  <input :value="formatWithCommas(row.minMarketValue)" @input="e => onMinMarketValueInput(e, row)" class="cc-input" type="text" placeholder="0" />
+                  <input :value="formatWithCommas(row.maxMarketValue)" @input="e => onMaxMarketValueInput(e, row)" class="cc-input" type="text" placeholder="0" />
                   <button
                     class="cc-icon-btn cc-btn-del"
                     type="button"
@@ -529,6 +598,7 @@ async function doDelete() {
 .cc-form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
 
 /* Table */
+.cc-datatable :deep(th) { background: #f1f5f9; color: #0f172a; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.85rem 1rem; border-bottom: 2px solid #e2e8f0; }
 .cc-datatable :deep(.overflow-x-auto) { border: none; border-radius: 0; box-shadow: none; }
 .cc-row { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
 .cc-row:hover { background: #eff6ff; }

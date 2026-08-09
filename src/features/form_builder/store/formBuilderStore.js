@@ -73,32 +73,66 @@ export const useFormBuilderStore = defineStore('formBuilder', () => {
   }
 
   function initNewSchema(productId, name) {
+    const isMotor = productId === 'motor';
+
+    const motorSteps = [
+      {
+        stepId: 'step_1',
+        stepTitle: '1. Proposer & License Particulars',
+        fields: [
+          { id: 'proposerAge', type: 'number', label: 'Proposer Age', required: true, placeholder: 'e.g. 32' },
+          { id: 'proposerAddress', type: 'text', label: 'Residential Address / Kebele / House No.', required: true, placeholder: 'e.g. Bole Sub-city, Woreda 03, House #120' },
+          { id: 'poBox', type: 'text', label: 'P.O. Box Number', required: false, placeholder: 'e.g. P.O. Box 12753' },
+          { id: 'tradeProfession', type: 'text', label: 'Trade or Profession', required: true, placeholder: 'e.g. Business Executive' },
+          { id: 'licenseNo', type: 'text', label: 'Ethiopian Driving License Number', required: true, placeholder: 'e.g. ETH-DL-994821' },
+          { id: 'licenseIssueDate', type: 'date', label: 'License First Issue Date', required: true, placeholder: 'YYYY-MM-DD' },
+        ],
+      },
+      {
+        stepId: 'step_2',
+        stepTitle: '2. Vehicle Specifications & Usage',
+        fields: [
+          { id: 'categoryName', type: 'dropdown', label: 'Vehicle Category', required: true, options: [{ label: 'Private Automobiles', value: 'Private Automobiles' }, { label: 'Commercial Vehicles', value: 'Commercial Vehicles' }, { label: 'Motorcycles', value: 'Motorcycles' }] },
+          { id: 'bodyType', type: 'text', label: 'Body Type', required: true, placeholder: 'e.g. Saloon / Station Wagon / SUV' },
+          { id: 'overnightParking', type: 'dropdown', label: 'Overnight Parking Facility', required: true, options: [{ label: 'Private Locked Garage', value: 'GARAGE' }, { label: 'Fenced Private Compound', value: 'COMPOUND' }, { label: 'Public Street Parking', value: 'STREET' }] },
+          { id: 'isSoleProperty', type: 'dropdown', label: 'Is Vehicle your Sole Property?', required: true, options: [{ label: 'YES (Sole Owner)', value: 'true' }, { label: 'NO', value: 'false' }] },
+          { id: 'isHirePurchase', type: 'dropdown', label: 'Subject to Hire Purchase / Bank Mortgage?', required: true, options: [{ label: 'YES (Bank Mortgage)', value: 'true' }, { label: 'NO', value: 'false' }] },
+          { id: 'financierNameAddress', type: 'text', label: 'Financier / Bank Name & Address', required: false, placeholder: 'e.g. Awash Bank S.C. Main Branch' },
+          { id: 'privatePurposeOnly', type: 'dropdown', label: 'Used Solely for Private & Social Purposes?', required: true, options: [{ label: 'YES (Private / Social Only)', value: 'true' }, { label: 'NO', value: 'false' }] },
+        ],
+      },
+      {
+        stepId: 'step_3',
+        stepTitle: '3. Driving Record & PA Declarations',
+        fields: [
+          { id: 'drivingYearsSelf', type: 'number', label: 'Self Driving Experience (Years)', required: true, placeholder: 'e.g. 5' },
+          { id: 'hasPhysicalInfirmity', type: 'dropdown', label: 'Any Physical Infirmity / Vision Defect?', required: true, options: [{ label: 'NONE (Good Health)', value: 'false' }, { label: 'YES', value: 'true' }] },
+          { id: 'hasDrivingConvictions', type: 'dropdown', label: 'Past Traffic Convictions or Offenses?', required: true, options: [{ label: 'NONE (Clean Record)', value: 'false' }, { label: 'YES', value: 'true' }] },
+          { id: 'convictionDetails', type: 'text', label: 'Conviction / Offense Details', required: false, placeholder: 'Specify conviction dates and fines' },
+          { id: 'hasRadioAccessories', type: 'dropdown', label: 'Include Radio & Audio Accessories?', required: true, options: [{ label: 'YES (Touchscreen Audio)', value: 'true' }, { label: 'NO', value: 'false' }] },
+          { id: 'radioDetailsValue', type: 'text', label: 'Radio Accessories Details & Value ETB', required: false, placeholder: 'e.g. Sony Audio System (ETB 45,000)' },
+          { id: 'insurePaidDriverAssistant', type: 'dropdown', label: 'Personal Accident (PA) Cover for Paid Driver & Assistant?', required: true, options: [{ label: 'COVERED', value: 'true' }, { label: 'NOT COVERED', value: 'false' }] },
+          { id: 'insurePassengersPa', type: 'dropdown', label: 'Personal Accident (PA) Cover for Passengers?', required: true, options: [{ label: 'COVERED (5 Persons)', value: 'true' }, { label: 'NOT COVERED', value: 'false' }] },
+        ],
+      },
+    ];
+
+    const defaultSteps = [
+      {
+        stepId: 'step_1',
+        stepTitle: 'Particulars & Coverage',
+        fields: [
+          { id: 'full_name', type: 'text', label: 'Full Name / Company Name', required: true, placeholder: 'Enter applicant full name' },
+          { id: 'phone_number', type: 'text', label: 'Phone Number', required: true, placeholder: '+251 9...' },
+        ],
+      },
+    ];
+
     const defaultSchemaJson = JSON.stringify({
       formId: `${productId}_proposal`,
-      title: `${name || productId} Proposal Form`,
+      title: isMotor ? 'Nyala Official Motor Insurance Proposal Form (PDF Standard)' : `${name || productId} Proposal Form`,
       version: '1.0',
-      steps: [
-        {
-          stepId: 'step_1',
-          stepTitle: 'Particulars & Coverage',
-          fields: [
-            {
-              id: 'full_name',
-              type: 'text',
-              label: 'Full Name / Company Name',
-              required: true,
-              placeholder: 'Enter applicant full name',
-            },
-            {
-              id: 'phone_number',
-              type: 'text',
-              label: 'Phone Number',
-              required: true,
-              placeholder: '+251 9...',
-            },
-          ],
-        },
-      ],
+      steps: isMotor ? motorSteps : defaultSteps,
     }, null, 2);
 
     activeSchema.value = {
@@ -110,7 +144,7 @@ export const useFormBuilderStore = defineStore('formBuilder', () => {
       schemaJson: defaultSchemaJson,
     };
     selectedStepIndex.value = 0;
-    selectedFieldId.value = 'full_name';
+    selectedFieldId.value = isMotor ? 'proposerAge' : 'full_name';
   }
 
   function updateSchemaJson(newStepsObj) {

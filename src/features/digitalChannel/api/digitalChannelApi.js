@@ -149,18 +149,30 @@ export async function submitMotorProposal(payload) {
   }
 }
 
+function dedupeProposals(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    const key = item.proposalNumber || item.proposalUuid || (item.vehiclePlateNumber ? `${item.vehiclePlateNumber}-${item.status}` : item.id);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export async function fetchMotorProposals({ page = 0, limit = 20, status = '' } = {}) {
   try {
     const { data } = await getClient().get('/digital-channel/motor/proposals', {
       params: { page, limit, status }
     });
-    const list = Array.isArray(data) ? data : (data?.content ?? []);
-    if (list.length) return list;
+    const backendList = Array.isArray(data) ? data : (data?.content ?? []);
+    if (backendList.length > 0) {
+      return dedupeProposals(backendList);
+    }
   } catch (e) {
     console.warn('fetchMotorProposals error:', e.message);
   }
   const local = JSON.parse(localStorage.getItem('nyala_motor_proposals') || '[]');
-  return local.length ? local : SEEDED_MOTOR_PROPOSALS;
+  return local.length ? dedupeProposals(local) : dedupeProposals(SEEDED_MOTOR_PROPOSALS);
 }
 
 export async function fetchMotorProposalDetail(proposalUuid) {

@@ -16,11 +16,19 @@ function getClient(base = motorBase) {
   });
 }
 
+const coreMotorBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor`;
+function getCoreClient() {
+  return getClient(coreMotorBase);
+}
+
 // ─── Insureds (Party service) ─────────────────────────────────────────────────
 
 export async function searchInsureds({ search = '', page = 1, limit = 25 } = {}) {
   try {
-    const { data } = await getClient().get('/insuredperson/active/search', {
+    const auth = useAuthStore();
+    const token = auth.auth?.token || auth.auth?.user?.token;
+    const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_HOST}/api/payer/claimconnect/insuredperson/active/search`, {
+      headers: { Authorization: `Bearer ${token}` },
       params: { search, page, limit, hasInstitution: false },
     });
     if (Array.isArray(data)) return data;
@@ -51,8 +59,10 @@ export async function createInsured(payload) {
   const formData = new FormData();
   formData.append('insuredRequest', new Blob([JSON.stringify(req)], { type: 'application/json' }));
 
-  const { data } = await getClient().post('/insuredperson', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  const auth = useAuthStore();
+  const token = auth.auth?.token || auth.auth?.user?.token;
+  const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_HOST}/api/payer/claimconnect/insuredperson`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
   });
   return data;
 }
@@ -537,7 +547,7 @@ function normalizeQuotation(q) {
 export async function fetchAllQuotations({ page = 1, limit = 25, search = '' } = {}) {
   let remoteList = [];
   try {
-    const { data } = await getClient().get('/quotation', {
+    const { data } = await getCoreClient().get('/quotation/getAllQuotation', {
       params: { page, limit, search, status: 'PENDING' },
     });
     remoteList = data?.content ?? (Array.isArray(data) ? data : []);
@@ -556,7 +566,7 @@ export async function fetchQuotationById(quotationUuid) {
     if (found) return normalizeQuotation(found);
   }
   try {
-    const { data } = await getClient().get(`/quotation/getQuotation/${quotationUuid}`);
+    const { data } = await getCoreClient().get(`/quotation/getQuotation/${quotationUuid}`);
     return normalizeQuotation(data);
   } catch (e) {
     const localList = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
@@ -566,7 +576,7 @@ export async function fetchQuotationById(quotationUuid) {
 }
 
 export async function fetchLibreImages(fileName) {
-  const { data } = await getClient().get('/cars/getLibre', {
+  const { data } = await getCoreClient().get('/cars/getLibre', {
     params: { fileName },
     responseType: 'arraybuffer',
   });
@@ -585,7 +595,7 @@ export async function saveInitialDeposit(quotationUuid) {
     }
   }
   try {
-    const { data } = await getClient().put(`/quotation/saveInitialDeposit/${quotationUuid}`);
+    const { data } = await getCoreClient().put(`/quotation/saveInitialDeposit/${quotationUuid}`);
     return data;
   } catch (e) {
     return { success: true };
@@ -605,7 +615,7 @@ export async function updateInitialDepositStatus(quotationUuid, { initialDeposit
     }
   }
   try {
-    const { data } = await getClient().put(`/quotation/updateInitialDepositStatus/${quotationUuid}`, null, {
+    const { data } = await getCoreClient().put(`/quotation/updateInitialDepositStatus/${quotationUuid}`, null, {
       params: { initialDepositStatus, remark },
     });
     return data;
@@ -627,9 +637,8 @@ export async function setQuotationAmounts(quotationUuid, { quotation, deposit, p
     }
   }
   try {
-    const { data } = await getClient().post(`/quotation/setQuotation/${quotationUuid}`, null, {
-      params: { quotation, deposit, premium },
-    });
+    const reqBody = { quotationUuid, quotationAmount: quotation };
+    const { data } = await getCoreClient().post('/quotation/setQuotation', reqBody);
     return data;
   } catch (e) {
     return { success: true };
@@ -639,7 +648,7 @@ export async function setQuotationAmounts(quotationUuid, { quotation, deposit, p
 export async function registerClientsCar(payload) {
   let backendData = null;
   try {
-    const { data } = await getClient().post('/cars/registerClientsCar', payload);
+    const { data } = await getCoreClient().post('/cars/registerClientsCar', payload);
     backendData = data;
   } catch (e) {
     console.warn('registerClientsCar backend error:', e.message);

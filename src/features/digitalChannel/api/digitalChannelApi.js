@@ -121,6 +121,16 @@ export async function updateClaimStatus(claimUuid, status, approvedAmount = null
   return data;
 }
 
+export async function assignClaimAdjustor(claimUuid, adjustorUuid) {
+  const { data } = await getClient().put(`/claims/${claimUuid}/assign-adjustor`, { adjustorUuid });
+  return data;
+}
+
+export async function assignClaimGarage(claimUuid, garageUuid) {
+  const { data } = await getClient().put(`/claims/${claimUuid}/assign-garage`, { garageUuid });
+  return data;
+}
+
 // ─── MOTOR SPECIFIC WORKFLOW (SURVEY, BIDDING, SUBROGATION) ────────────────────
 
 export async function recordSpotSurvey(payload) {

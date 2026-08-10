@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchClaimByUuid, updateClaimStatus } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage } from '@/features/digitalChannel/api/digitalChannelApi';
 import { useAuthStore } from '@/stores/auth';
 import { useDarkModeStore } from '@/stores/darkMode';
 
@@ -15,6 +15,12 @@ const claimUuid = computed(() => route.params.claimUuid);
 const claim = ref(null);
 const loading = ref(true);
 const updating = ref(false);
+
+const selectedAdjustor = ref('ADJ-100');
+const selectedGarage = ref('GAR-200');
+
+const backendHost = import.meta.env.VITE_BACKEND_HOST || 'http://localhost:8888';
+const getImageUrl = (uuid) => `${backendHost}/api/payer/motor/digital-channel/claims/${uuid}/image`;
 
 const myRole = computed(() => authStore.auth?.user?.roleCode || 'ROLE_CLAIM_MANAGER');
 
@@ -55,6 +61,22 @@ async function advanceWorkflow() {
     await updateClaimStatus(claim.value.claimUuid, nextStatus);
     await loadDetail();
   }
+  updating.value = false;
+}
+
+async function handleAssignAdjustor() {
+  if (!claim.value) return;
+  updating.value = true;
+  await assignClaimAdjustor(claim.value.claimUuid, selectedAdjustor.value);
+  await loadDetail();
+  updating.value = false;
+}
+
+async function handleAssignGarage() {
+  if (!claim.value) return;
+  updating.value = true;
+  await assignClaimGarage(claim.value.claimUuid, selectedGarage.value);
+  await loadDetail();
   updating.value = false;
 }
 
@@ -146,6 +168,14 @@ onMounted(loadDetail);
             <span class="cd-label">Description of Incident</span>
             <p class="cd-desc-text">{{ claim.description || 'No detailed description logged.' }}</p>
           </div>
+
+          <!-- Accident Photo -->
+          <div class="mt-4" v-if="claim.accidentImagePath">
+            <span class="cd-label mb-2 block">Accident Photo</span>
+            <div class="cd-photo-container">
+              <img :src="getImageUrl(claim.claimUuid)" alt="Accident Photo" class="cd-accident-photo" />
+            </div>
+          </div>
         </div>
 
         <!-- Location Map & GPS -->
@@ -169,6 +199,38 @@ onMounted(loadDetail);
       </div>
 
       <div class="cd-grid">
+        <!-- Claim Management Actions (Only for Managers) -->
+        <div v-if="['ROLE_CLAIM_MANAGER', 'ROLE_UNDERWRITER'].includes(myRole)" class="cd-card">
+          <h2 class="cd-card-title text-indigo-700">Claim Management Actions</h2>
+          <div class="cd-actions-box">
+            
+            <div class="cd-action-group">
+              <span class="cd-label mb-1 block">Assign Field Adjustor</span>
+              <div class="flex gap-2">
+                <select v-model="selectedAdjustor" class="cd-select flex-1">
+                  <option value="ADJ-100">Solomon Tadesse (Vehicle Adjustor)</option>
+                  <option value="ADJ-101">Dawit Tesfaye (Senior Adjustor)</option>
+                  <option value="ADJ-102">Almaz Wolde (Field Adjustor)</option>
+                </select>
+                <button class="cd-action-btn" :disabled="updating" @click="handleAssignAdjustor">Assign</button>
+              </div>
+            </div>
+
+            <div class="cd-action-group mt-4">
+              <span class="cd-label mb-1 block">Assign Repair Garage</span>
+              <div class="flex gap-2">
+                <select v-model="selectedGarage" class="cd-select flex-1">
+                  <option value="GAR-200">AutoTrust Premium Garage</option>
+                  <option value="GAR-201">Ethio Motors Repair Center</option>
+                  <option value="GAR-202">Addis Auto Body Works</option>
+                </select>
+                <button class="cd-action-btn" :disabled="updating" @click="handleAssignGarage">Assign</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         <!-- Assignments Card -->
         <div class="cd-card">
           <h2 class="cd-card-title">Claim Assignments</h2>
@@ -255,4 +317,15 @@ onMounted(loadDetail);
 .cd-desc-text { font-size:.85rem; color:var(--cd-sub); line-height:1.5; background:var(--cd-bg); padding:.85rem; border-radius:10px; border:1px solid var(--cd-border); }
 .cd-empty-map { display:flex; align-items:center; justify-content:center; height:200px; background:rgba(0,0,0,0.03); border-radius:12px; color:var(--cd-muted); font-size:.85rem; font-style:italic; border:1px dashed var(--cd-border); }
 .cd-root.dark .cd-empty-map { background:rgba(255,255,255,0.02); }
+
+/* Additional Styling for Photo & Assignments */
+.cd-photo-container { border-radius:12px; overflow:hidden; border:1px solid var(--cd-border); max-height:250px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.02); }
+.cd-accident-photo { width:100%; height:100%; object-fit:cover; }
+.cd-actions-box { background:rgba(99,102,241,0.05); border:1px solid rgba(99,102,241,0.15); border-radius:12px; padding:1.25rem; }
+.cd-root.dark .cd-actions-box { background:rgba(99,102,241,0.02); }
+.cd-select { padding:.55rem .75rem; border-radius:8px; border:1px solid var(--cd-border); background:var(--cd-bg); color:var(--cd-title); font-size:.85rem; outline:none; }
+.cd-select:focus { border-color:#6366f1; }
+.cd-action-btn { background:#6366f1; color:#fff; border:none; padding:0 1rem; border-radius:8px; font-weight:700; font-size:.8rem; cursor:pointer; transition:all .2s; }
+.cd-action-btn:hover { background:#4f46e5; }
+.cd-action-btn:disabled { opacity:0.6; cursor:not-allowed; }
 </style>

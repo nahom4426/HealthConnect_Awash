@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
-const apiBase = import.meta.env.VITE_API_URI || import.meta.env.v_API_URI || 'http://localhost:8196/api/payer/claimconnect';
+const apiBase = import.meta.env.VITE_API_URI || import.meta.env.v_API_URI || 'http://localhost:8888/api/payer/motor/digital-channel';
 
 function getClient() {
   const auth = useAuthStore();
@@ -30,7 +30,7 @@ function setLocal(key, val) {
 
 export async function fetchFormSchemas(productId) {
   try {
-    const { data } = await getClient().get(`/digital-channel/forms/product/${productId}`);
+    const { data } = await getClient().get(`/forms/product/${productId}`);
     if (Array.isArray(data) && data.length) return data;
   } catch (e) {
     console.warn('Backend API unavailable, using local storage fallback for forms:', e.message);
@@ -41,7 +41,7 @@ export async function fetchFormSchemas(productId) {
 
 export async function fetchFormSchema(formUuid) {
   try {
-    const { data } = await getClient().get(`/digital-channel/forms/${formUuid}`);
+    const { data } = await getClient().get(`/forms/${formUuid}`);
     if (data) return data;
   } catch (e) {
     console.warn('Backend API unavailable, using local storage fallback:', e.message);
@@ -54,10 +54,10 @@ export async function saveFormSchema(payload) {
   // payload: { formUuid, formId, productId, version, schemaJson }
   try {
     if (payload.formUuid) {
-      const { data } = await getClient().put(`/digital-channel/forms/${payload.formUuid}`, payload);
+      const { data } = await getClient().put(`/forms/${payload.formUuid}`, payload);
       return data;
     } else {
-      const { data } = await getClient().post('/digital-channel/forms', payload);
+      const { data } = await getClient().post('/forms', payload);
       return data;
     }
   } catch (e) {
@@ -109,7 +109,7 @@ export async function publishFormSchema(formUuid) {
         }
       }
     }
-    const { data } = await getClient().put(`/digital-channel/forms/${formUuid}/publish`);
+    const { data } = await getClient().put(`/forms/${formUuid}/publish`);
     return data;
   } catch (e) {
     console.warn('Backend API error/offline, publishing locally:', e.message);
@@ -129,7 +129,7 @@ export async function publishFormSchema(formUuid) {
 
 export async function deleteFormSchema(formUuid) {
   try {
-    await getClient().delete(`/digital-channel/forms/${formUuid}`);
+    await getClient().delete(`/forms/${formUuid}`);
     return true;
   } catch (e) {
     console.warn('Backend API error/offline, deleting locally:', e.message);
@@ -144,7 +144,7 @@ export async function deleteFormSchema(formUuid) {
 
 export async function fetchRateConfigs(productId) {
   try {
-    const { data } = await getClient().get(`/digital-channel/rates/product/${productId}`);
+    const { data } = await getClient().get(`/rates/product/${productId}`);
     if (Array.isArray(data) && data.length) return data;
   } catch (e) {
     console.warn('Backend API unavailable, using local storage fallback for rates:', e.message);
@@ -156,10 +156,10 @@ export async function fetchRateConfigs(productId) {
 export async function saveRateConfig(payload) {
   try {
     if (payload.rateUuid) {
-      const { data } = await getClient().put(`/digital-channel/rates/${payload.rateUuid}`, payload);
+      const { data } = await getClient().put(`/rates/${payload.rateUuid}`, payload);
       return data;
     } else {
-      const { data } = await getClient().post('/digital-channel/rates', payload);
+      const { data } = await getClient().post('/rates', payload);
       return data;
     }
   } catch (e) {
@@ -194,7 +194,7 @@ export async function saveRateConfig(payload) {
 
 export async function publishRateConfig(rateUuid) {
   try {
-    const { data } = await getClient().put(`/digital-channel/rates/${rateUuid}/publish`);
+    const { data } = await getClient().put(`/rates/${rateUuid}/publish`);
     return data;
   } catch (e) {
     console.warn('Backend API error/offline, publishing rate locally:', e.message);

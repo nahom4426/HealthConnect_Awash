@@ -15,6 +15,8 @@ import MotorProposalDetail from "@/features/motor/pages/MotorProposalDetail.vue"
 import ClaimsProcess from "@/features/digitalChannel/pages/ClaimsProcess.vue";
 import ClaimNew from "@/features/digitalChannel/pages/ClaimNew.vue";
 import ClaimDetail from "@/features/digitalChannel/pages/ClaimDetail.vue";
+import ClaimManagerDashboard from "@/features/digitalChannel/pages/ClaimManagerDashboard.vue";
+import GarageDashboard from "@/features/digitalChannel/pages/GarageDashboard.vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
 import quotationRoutes from "./quotation.routes";
 import underwritingRoutes from "./underwriting.routes";
@@ -209,6 +211,18 @@ const router = createRouter({
           path: '/:module/claims/process',
           name: 'module-claims-process',
           component: ClaimsProcess,
+          meta: { requiresAuth: true },
+        },
+        {
+          path: '/:module/claims/manager',
+          name: 'module-claims-manager',
+          component: ClaimManagerDashboard,
+          meta: { requiresAuth: true },
+        },
+        {
+          path: '/:module/claims/garage',
+          name: 'module-claims-garage',
+          component: GarageDashboard,
           meta: { requiresAuth: true },
         },
         {

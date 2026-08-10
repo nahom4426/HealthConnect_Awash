@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
-const apiBase = import.meta.env.v_API_MOTOR_URI || 'http://localhost:8196/api/payer/claimconnect';
+const apiBase = import.meta.env.v_API_MOTOR_URI || 'http://localhost:8888/api/payer/motor/digital-channel';
 
 function getClient() {
   const auth = useAuthStore();
@@ -21,7 +21,7 @@ function getClient() {
 
 export async function fetchUserRoles() {
   try {
-    const { data } = await getClient().get('/digital-channel/admin/user-roles');
+    const { data } = await getClient().get('/admin/user-roles');
     return Array.isArray(data) ? data : [];
   } catch (e) {
     console.warn('fetchUserRoles error, returning local fallback:', e.message);
@@ -37,35 +37,35 @@ export async function fetchUserRoles() {
 }
 
 export async function createUserRole(payload) {
-  const { data } = await getClient().post('/digital-channel/admin/user-roles', payload);
+  const { data } = await getClient().post('/admin/user-roles', payload);
   return data;
 }
 
 export async function updateUserRole(id, payload) {
-  const { data } = await getClient().put(`/digital-channel/admin/user-roles/${id}`, payload);
+  const { data } = await getClient().put(`/admin/user-roles/${id}`, payload);
   return data;
 }
 
 export async function deleteUserRole(id) {
-  await getClient().delete(`/digital-channel/admin/user-roles/${id}`);
+  await getClient().delete(`/admin/user-roles/${id}`);
   return true;
 }
 
 // ─── CLAIMS API (ALL 8 MODULES) ────────────────────────────────────────────────
 
 export async function submitClaim(payload) {
-  const { data } = await getClient().post('/digital-channel/claims', payload);
+  const { data } = await getClient().post('/claims', payload);
   return data;
 }
 
 export async function fetchClaimByUuid(claimUuid) {
-  const { data } = await getClient().get(`/digital-channel/claims/${claimUuid}`);
+  const { data } = await getClient().get(`/claims/${claimUuid}`);
   return data;
 }
 
 export async function fetchClaimsByModule(productModule) {
   try {
-    const { data } = await getClient().get(`/digital-channel/claims/module/${productModule}`);
+    const { data } = await getClient().get(`/claims/module/${productModule}`);
     return Array.isArray(data) ? data : [];
   } catch (e) {
     console.warn(`fetchClaimsByModule (${productModule}) error:`, e.message);
@@ -75,7 +75,7 @@ export async function fetchClaimsByModule(productModule) {
 
 export async function fetchAllClaims() {
   try {
-    const { data } = await getClient().get('/digital-channel/claims');
+    const { data } = await getClient().get('/claims');
     return Array.isArray(data) ? data : [];
   } catch (e) {
     console.warn('fetchAllClaims error:', e.message);
@@ -86,25 +86,25 @@ export async function fetchAllClaims() {
 export async function updateClaimStatus(claimUuid, status, approvedAmount = null) {
   const params = { status };
   if (approvedAmount) params.approvedAmount = approvedAmount;
-  const { data } = await getClient().put(`/digital-channel/claims/${claimUuid}/status`, null, { params });
+  const { data } = await getClient().put(`/claims/${claimUuid}/status`, null, { params });
   return data;
 }
 
 // ─── MOTOR SPECIFIC WORKFLOW (SURVEY, BIDDING, SUBROGATION) ────────────────────
 
 export async function recordSpotSurvey(payload) {
-  const { data } = await getClient().post('/digital-channel/motor/spot-survey', payload);
+  const { data } = await getClient().post('/motor/spot-survey', payload);
   return data;
 }
 
 export async function submitGarageBid(payload) {
-  const { data } = await getClient().post('/digital-channel/motor/garage-bids', payload);
+  const { data } = await getClient().post('/motor/garage-bids', payload);
   return data;
 }
 
 export async function fetchGarageBids(claimUuid) {
   try {
-    const { data } = await getClient().get(`/digital-channel/motor/garage-bids/${claimUuid}`);
+    const { data } = await getClient().get(`/motor/garage-bids/${claimUuid}`);
     return Array.isArray(data) ? data : [];
   } catch (e) {
     console.warn('fetchGarageBids error:', e.message);
@@ -113,12 +113,12 @@ export async function fetchGarageBids(claimUuid) {
 }
 
 export async function selectWinningGarageBid(bidUuid) {
-  const { data } = await getClient().put(`/digital-channel/motor/garage-bids/${bidUuid}/select`);
+  const { data } = await getClient().put(`/motor/garage-bids/${bidUuid}/select`);
   return data;
 }
 
 export async function initiateSubrogation(payload) {
-  const { data } = await getClient().post('/digital-channel/motor/subrogation', payload);
+  const { data } = await getClient().post('/motor/subrogation', payload);
   return data;
 }
 
@@ -126,7 +126,7 @@ export async function initiateSubrogation(payload) {
 
 export async function submitMotorProposal(payload) {
   try {
-    const { data } = await getClient().post('/digital-channel/motor/proposals', payload);
+    const { data } = await getClient().post('/motor/proposals', payload);
     return data;
   } catch (e) {
     console.warn('submitMotorProposal error:', e.message);
@@ -161,7 +161,7 @@ function dedupeProposals(items) {
 
 export async function fetchMotorProposals({ page = 0, limit = 20, status = '' } = {}) {
   try {
-    const { data } = await getClient().get('/digital-channel/motor/proposals', {
+    const { data } = await getClient().get('/motor/proposals', {
       params: { page, limit, status }
     });
     const backendList = Array.isArray(data) ? data : (data?.content ?? []);
@@ -177,7 +177,7 @@ export async function fetchMotorProposals({ page = 0, limit = 20, status = '' } 
 
 export async function fetchMotorProposalDetail(proposalUuid) {
   try {
-    const { data } = await getClient().get(`/digital-channel/motor/proposals/${proposalUuid}`);
+    const { data } = await getClient().get(`/motor/proposals/${proposalUuid}`);
     if (data) return data;
   } catch (e) {
     console.warn('fetchMotorProposalDetail error:', e.message);
@@ -189,7 +189,7 @@ export async function fetchMotorProposalDetail(proposalUuid) {
 
 export async function assignProposalAdjustor(proposalUuid, { adjustorUuid, adjustorName }) {
   try {
-    const { data } = await getClient().put(`/digital-channel/motor/proposals/${proposalUuid}/assign-adjustor`, {
+    const { data } = await getClient().put(`/motor/proposals/${proposalUuid}/assign-adjustor`, {
       adjustorUuid, adjustorName
     });
     return data;
@@ -200,7 +200,7 @@ export async function assignProposalAdjustor(proposalUuid, { adjustorUuid, adjus
 
 export async function submitProposalInspection(proposalUuid, { status, notes }) {
   try {
-    const { data } = await getClient().post(`/digital-channel/motor/proposals/${proposalUuid}/inspection`, {
+    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/inspection`, {
       status, notes
     });
     return data;
@@ -211,7 +211,7 @@ export async function submitProposalInspection(proposalUuid, { status, notes }) 
 
 export async function payTpEthioTelecom(proposalUuid) {
   try {
-    const { data } = await getClient().post(`/digital-channel/motor/proposals/${proposalUuid}/pay-tp-ethiotelecom`);
+    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/pay-tp-ethiotelecom`);
     return data;
   } catch (e) {
     return { success: true, txnRef: 'ETHIO-TP-' + Date.now(), message: 'Compulsory TP payment processed' };
@@ -220,7 +220,7 @@ export async function payTpEthioTelecom(proposalUuid) {
 
 export async function payOdEthiSwitch(proposalUuid, { bankCode = 'CBE', paymentMethod = 'ACCOUNT_TRANSFER' } = {}) {
   try {
-    const { data } = await getClient().post(`/digital-channel/motor/proposals/${proposalUuid}/pay-od-ethiswitch`, {
+    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/pay-od-ethiswitch`, {
       bankCode, paymentMethod
     });
     return data;
@@ -231,7 +231,7 @@ export async function payOdEthiSwitch(proposalUuid, { bankCode = 'CBE', paymentM
 
 export async function issueProposalContract(proposalUuid) {
   try {
-    const { data } = await getClient().post(`/digital-channel/motor/proposals/${proposalUuid}/issue-contract`);
+    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/issue-contract`);
     return data;
   } catch (e) {
     return {
@@ -342,7 +342,7 @@ export const SEEDED_MOTOR_PROPOSALS = [
 
 export async function validatePolicyCoverage(policyNumber, productModule = 'motor', causeOfLoss = '') {
   try {
-    const { data } = await getClient().get('/digital-channel/policies/validate', {
+    const { data } = await getClient().get('/policies/validate', {
       params: { policyNumber, productModule, causeOfLoss },
     });
     return data;

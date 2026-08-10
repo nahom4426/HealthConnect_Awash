@@ -1,6 +1,6 @@
 import ApiService from "@/service/ApiService";
 
-const apiBaseUri = 'http://localhost:8196/api/payer/claimconnect/auth';
+const apiBaseUri = 'http://localhost:8888/api/payer/motor/auth';
 const api = new ApiService(apiBaseUri);
 const path = '/users';
 

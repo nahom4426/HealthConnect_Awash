@@ -89,6 +89,19 @@ export async function fetchClaimByUuid(claimUuid) {
   return local.find(c => c.claimUuid === claimUuid) || null;
 }
 
+export async function fetchClaimImage(claimUuid) {
+  try {
+    const { data } = await getClient().get(`/claims/${claimUuid}/image`, {
+      responseType: 'arraybuffer',
+    });
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(data)));
+    return `data:image/png;base64,${b64}`;
+  } catch (e) {
+    console.warn(`fetchClaimImage error for ${claimUuid}:`, e.message);
+    return null;
+  }
+}
+
 export async function fetchClaimsByModule(productModule) {
   let backendList = [];
   try {

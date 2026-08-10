@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage, fetchClaimImage } from '@/features/digitalChannel/api/digitalChannelApi';
 import { useAuthStore } from '@/stores/auth';
 import { useDarkModeStore } from '@/stores/darkMode';
 
@@ -13,6 +13,7 @@ const isDark = computed(() => darkStore.isDark);
 const claimUuid = computed(() => route.params.claimUuid);
 
 const claim = ref(null);
+const claimImageSrc = ref(null);
 const loading = ref(true);
 const updating = ref(false);
 
@@ -20,7 +21,6 @@ const selectedAdjustor = ref('ADJ-100');
 const selectedGarage = ref('GAR-200');
 
 const backendHost = import.meta.env.VITE_BACKEND_HOST || 'http://localhost:8888';
-const getImageUrl = (uuid) => `${backendHost}/api/payer/motor/digital-channel/claims/${uuid}/image`;
 
 const myRole = computed(() => authStore.auth?.user?.roleCode || 'ROLE_CLAIM_MANAGER');
 
@@ -49,6 +49,9 @@ const currentStepIndex = computed(() => {
 async function loadDetail() {
   loading.value = true;
   claim.value = await fetchClaimByUuid(claimUuid.value);
+  if (claim.value?.accidentImagePath) {
+    claimImageSrc.value = await fetchClaimImage(claim.value.claimUuid);
+  }
   loading.value = false;
 }
 
@@ -173,7 +176,8 @@ onMounted(loadDetail);
           <div class="mt-4" v-if="claim.accidentImagePath">
             <span class="cd-label mb-2 block">Accident Photo</span>
             <div class="cd-photo-container">
-              <img :src="getImageUrl(claim.claimUuid)" alt="Accident Photo" class="cd-accident-photo" />
+              <img v-if="claimImageSrc" :src="claimImageSrc" alt="Accident Photo" class="cd-accident-photo" />
+              <div v-else class="text-xs text-slate-500 italic p-4 text-center">Loading image securely...</div>
             </div>
           </div>
         </div>

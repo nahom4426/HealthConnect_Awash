@@ -7,7 +7,7 @@ import vueDevTools from "vite-plugin-vue-devtools";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue(), vueJsx(), vueDevTools()],
+  plugins: [vue(), vueJsx() /*, vueDevTools()*/],
   envPrefix: "v_",
   server: {
     host: "0.0.0.0",

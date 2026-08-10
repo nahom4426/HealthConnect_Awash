@@ -29,6 +29,7 @@ function freshForm() {
     carType:  '',
     carModel: '',
     engine:   '',
+    tpPremium: '',
     priceSpecificationRequests: [emptyPriceRow()],
   };
 }
@@ -82,6 +83,7 @@ function openEdit(car) {
     carType:  car.carType  || '',
     carModel: car.carModel || '',
     engine:   car.engine   || '',
+    tpPremium: car.tpPremium || '',
     priceSpecificationRequests:
       Array.isArray(specs) && specs.length
         ? specs.map(r => ({
@@ -186,6 +188,7 @@ async function submitSave() {
       carType:  form.value.carType,
       carModel: form.value.carModel,
       engine:   form.value.engine || null,
+      tpPremium: form.value.tpPremium !== '' ? Number(form.value.tpPremium) : null,
       priceSpecificationRequests: form.value.priceSpecificationRequests
         .filter(r => r.fromMakeYear || r.toMakeYear || r.minMarketValue || r.maxMarketValue)
         .map(r => ({
@@ -219,6 +222,7 @@ async function submitEdit() {
       carType:  editForm.value.carType,
       carModel: editForm.value.carModel,
       engine:   editForm.value.engine || null,
+      tpPremium: editForm.value.tpPremium !== '' ? Number(editForm.value.tpPremium) : null,
       priceSpecificationRequests: editForm.value.priceSpecificationRequests
         .filter(r => r.fromMakeYear || r.toMakeYear || r.minMarketValue || r.maxMarketValue)
         .map(r => ({
@@ -330,6 +334,10 @@ async function doDelete() {
               <label>Engine</label>
               <input v-model="form.engine" class="cc-input" placeholder="e.g. 1.6L 4-cylinder" />
             </div>
+            <div class="cc-field">
+              <label>TP Premium (Flat Rate)</label>
+              <input v-model="form.tpPremium" type="number" class="cc-input" placeholder="e.g. 1250" />
+            </div>
           </div>
 
           <!-- Price Specifications -->
@@ -408,7 +416,7 @@ async function doDelete() {
 
       <DataTable
         v-else
-        :headers="['#', 'Vehicle Name', 'Classification', 'Model', 'Engine Spec', 'Valuation Matrix', 'Actions']"
+        :headers="['#', 'Vehicle Name', 'Classification', 'Model', 'Engine Spec', 'TP Premium', 'Valuation Matrix', 'Actions']"
         :hide-index="true"
         class="cc-datatable"
       >
@@ -418,6 +426,7 @@ async function doDelete() {
           <td><span class="cc-type-badge">{{ car.carType || '—' }}</span></td>
           <td>{{ car.carModel || '—' }}</td>
           <td>{{ car.engine || '—' }}</td>
+          <td>{{ car.tpPremium ? formatWithCommas(car.tpPremium) : '—' }}</td>
           <td>
             <span v-if="(car.priceSpecificationResponses ?? car.priceSpecificationRequests)?.length" class="cc-spec-count">
               {{ (car.priceSpecificationResponses ?? car.priceSpecificationRequests).length }}
@@ -465,6 +474,10 @@ async function doDelete() {
                 <div class="cc-field">
                   <label>Engine</label>
                   <input v-model="editForm.engine" class="cc-input" placeholder="e.g. 1.6L 4-cylinder" />
+                </div>
+                <div class="cc-field">
+                  <label>TP Premium (Flat Rate)</label>
+                  <input v-model="editForm.tpPremium" type="number" class="cc-input" placeholder="e.g. 1250" />
                 </div>
               </div>
 

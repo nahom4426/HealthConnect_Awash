@@ -537,8 +537,8 @@ function normalizeQuotation(q) {
 export async function fetchAllQuotations({ page = 1, limit = 25, search = '' } = {}) {
   let remoteList = [];
   try {
-    const { data } = await getClient().get('/quotation/getAllQuotation', {
-      params: { page, limit, search },
+    const { data } = await getClient().get('/quotation', {
+      params: { page, limit, search, status: 'PENDING' },
     });
     remoteList = data?.content ?? (Array.isArray(data) ? data : []);
   } catch (e) {
@@ -637,52 +637,55 @@ export async function setQuotationAmounts(quotationUuid, { quotation, deposit, p
 }
 
 export async function registerClientsCar(payload) {
+  let backendData = null;
   try {
     const { data } = await getClient().post('/cars/registerClientsCar', payload);
-    return data;
+    backendData = data;
   } catch (e) {
-    console.warn('registerClientsCar backend fallback:', e.message);
-    const existing = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
-    const firstCar = payload.carRequests?.[0] || {};
-    const buyingPrice = Number(firstCar.buyingPrice || 0);
-    const computedQuotationAmount = buyingPrice ? Math.round(buyingPrice * 0.025) : 185000;
-    const computedDeposit = Math.round(computedQuotationAmount * 0.22);
-    const computedMonthly = Math.round((computedQuotationAmount - computedDeposit) / 11);
-
-    const newQuotation = normalizeQuotation({
-      quotationUuid: 'QUO-' + Date.now(),
-      quotationNumber: 'NYA-QT-' + Math.floor(100000 + Math.random() * 900000),
-      clientFirstName: payload.firstName || 'Abraham',
-      clientFatherName: payload.fatherName || 'Addisu',
-      clientGrandFatherName: payload.grandFatherName || '',
-      clientPhoneNumber: payload.mobilePhone || '0963048258',
-      clientEmail: payload.email || 'abroid.et@gmail.com',
-      insurance: 'Nyala Motor Comprehensive Policy',
-      accountNumber: payload.bankAccount || '',
-      carName: firstCar.carName || 'Sinotruk',
-      carModel: firstCar.carModel || 'Howo 371 Dump Truck 6x4',
-      carType: firstCar.carType || 'Heavy Commercial Truck',
-      plateNumber: firstCar.plateNumber || 'AA12345',
-      makeYear: firstCar.makeYear || 2017,
-      engine_No: firstCar.engine || 'WD615.47 Heavy Engine',
-      buyingPrice: buyingPrice || 7400000,
-      category1: firstCar.rateRequest?.categoryUuid || 'Special Construction Vehicles',
-      category2: 'Heavy Dump Truck / Tipper',
-      quotationAmount: computedQuotationAmount,
-      initialDeposit: computedDeposit,
-      monthlyPayment: computedMonthly,
-      quotationDate: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      quotationStatus: 'PENDING',
-      initialDepositStatus: 'PENDING',
-      checked: true,
-      clientAgreed: true,
-      libreSaved: false,
-      carRequests: payload.carRequests
-    });
-
-    existing.unshift(newQuotation);
-    localStorage.setItem('nyala_motor_quotations', JSON.stringify(existing));
-    return { success: true, quotationUuid: newQuotation.quotationUuid, quotation: newQuotation };
+    console.warn('registerClientsCar backend error:', e.message);
   }
+
+  // Always save to localStorage for the UI until backend motor quotation DB is fully wired
+  const existing = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
+  const firstCar = payload.carRequests?.[0] || {};
+  const buyingPrice = Number(firstCar.buyingPrice || 0);
+  const computedQuotationAmount = buyingPrice ? Math.round(buyingPrice * 0.025) : 185000;
+  const computedDeposit = Math.round(computedQuotationAmount * 0.22);
+  const computedMonthly = Math.round((computedQuotationAmount - computedDeposit) / 11);
+
+  const newQuotation = normalizeQuotation({
+    quotationUuid: backendData?.quotationUuid || 'QUO-' + Date.now(),
+    quotationNumber: 'NYA-QT-' + Math.floor(100000 + Math.random() * 900000),
+    clientFirstName: payload.firstName || 'Abraham',
+    clientFatherName: payload.fatherName || 'Addisu',
+    clientGrandFatherName: payload.grandFatherName || '',
+    clientPhoneNumber: payload.mobilePhone || '0963048258',
+    clientEmail: payload.email || 'abroid.et@gmail.com',
+    insurance: 'Nyala Motor Comprehensive Policy',
+    accountNumber: payload.bankAccount || '',
+    carName: firstCar.carName || 'Sinotruk',
+    carModel: firstCar.carModel || 'Howo 371 Dump Truck 6x4',
+    carType: firstCar.carType || 'Heavy Commercial Truck',
+    plateNumber: firstCar.plateNumber || 'AA12345',
+    makeYear: firstCar.makeYear || 2017,
+    engine_No: firstCar.engine || 'WD615.47 Heavy Engine',
+    buyingPrice: buyingPrice || 7400000,
+    category1: firstCar.rateRequest?.categoryUuid || 'Special Construction Vehicles',
+    category2: 'Heavy Dump Truck / Tipper',
+    quotationAmount: computedQuotationAmount,
+    initialDeposit: computedDeposit,
+    monthlyPayment: computedMonthly,
+    quotationDate: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    quotationStatus: 'PENDING',
+    initialDepositStatus: 'PENDING',
+    checked: true,
+    clientAgreed: true,
+    libreSaved: false,
+    carRequests: payload.carRequests
+  });
+
+  existing.unshift(newQuotation);
+  localStorage.setItem('nyala_motor_quotations', JSON.stringify(existing));
+  return { success: true, quotationUuid: newQuotation.quotationUuid, quotation: newQuotation, backendData };
 }

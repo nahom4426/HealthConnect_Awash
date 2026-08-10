@@ -9,6 +9,7 @@ import {
   updateInitialDepositStatus,
   setQuotationAmounts,
 } from '../api/motorApi.js';
+import { submitMotorProposal } from '@/features/digitalChannel/api/digitalChannelApi';
 
 const route  = useRoute();
 const router = useRouter();
@@ -173,6 +174,27 @@ async function confirmStatusAction() {
   }
 }
 
+async function convertToProposal() {
+  saving.value = true;
+  error.value = '';
+  success.value = '';
+  try {
+    const payload = {
+      insuredName: fullName(q.value),
+      vehiclePlateNumber: q.value.plateNumber,
+      coverageType: 'COMPREHENSIVE',
+      totalPremiumAmount: q.value.quotationAmount,
+    };
+    const res = await submitMotorProposal(payload);
+    success.value = 'Quotation converted to proposal successfully!';
+    setTimeout(() => router.push(`/motor/proposals/${res.proposalUuid}`), 1500);
+  } catch (e) {
+    error.value = e?.response?.data?.message || e.message || 'Failed to convert to proposal';
+  } finally {
+    saving.value = false;
+  }
+}
+
 // ── libre viewer ──────────────────────────────────────────────────────────────
 function viewImage(title, src) {
   libreModalTitle.value = title;
@@ -234,6 +256,10 @@ function viewImage(title, src) {
           <button class="qd-btn qd-btn-status" @click="openUpdateStatus">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Update Status
+          </button>
+          <button class="qd-btn qd-btn-confirm" @click="convertToProposal" :disabled="saving">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Convert to Proposal
           </button>
         </div>
       </div>

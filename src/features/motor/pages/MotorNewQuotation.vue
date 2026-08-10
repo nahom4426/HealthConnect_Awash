@@ -201,6 +201,38 @@ function seedDraftCat(d) {
   d.categoryUuid  = '';
 }
 
+function autoMapCategory(carType) {
+  if (!carType || !catTree.value.length) return;
+  const t = carType.toLowerCase();
+  let root = null;
+  let sub = null;
+
+  if (t.includes('suv') || t.includes('sedan') || t.includes('saloon')) {
+    root = catTree.value.find(c => c.name.toLowerCase().includes('private'));
+  } else if (t.includes('commercial') || t.includes('pickup') || t.includes('bus') || t.includes('taxi')) {
+    root = catTree.value.find(c => c.name.toLowerCase().includes('commercial'));
+  } else if (t.includes('dump') || t.includes('tractor') || t.includes('construction') || t.includes('heavy')) {
+    root = catTree.value.find(c => c.name.toLowerCase().includes('special'));
+  }
+  if (!root) root = catTree.value[0];
+
+  if (root && root.subCategories?.length) {
+    if (t.includes('freight')) sub = root.subCategories.find(c => c.name.toLowerCase().includes('freight'));
+    else if (t.includes('bus') || t.includes('passenger')) sub = root.subCategories.find(c => c.name.toLowerCase().includes('bus'));
+    else if (t.includes('taxi')) sub = root.subCategories.find(c => c.name.toLowerCase().includes('taxi'));
+    else if (t.includes('dump')) sub = root.subCategories.find(c => c.name.toLowerCase().includes('dump'));
+    else if (t.includes('tractor')) sub = root.subCategories.find(c => c.name.toLowerCase().includes('tractor'));
+    else sub = root.subCategories[0];
+  }
+
+  if (root) {
+    onCatSelect(0, root.categoryUuid);
+    if (sub) {
+      setTimeout(() => onCatSelect(1, sub.categoryUuid), 50);
+    }
+  }
+}
+
 // When a car is selected from the dropdown
 function onCarSelect(val) {
   draft.value.carUuid = val;
@@ -214,6 +246,7 @@ function onCarSelect(val) {
     draft.value.carType      = found.carType  || '';
     draft.value.engine       = found.engine   || '';
     selectedCarSpecs.value   = found.priceSpecificationResponses || [];
+    setTimeout(() => autoMapCategory(draft.value.carType), 100);
   } else {
     selectedCarSpecs.value = [];
   }

@@ -158,6 +158,24 @@
                   <div><span class="text-slate-500 block">Passenger PA Cover:</span><strong class="text-slate-900">{{ proposal.insurePassengersPa === true ? 'COVERED' : (proposal.insurePassengersPa === false ? 'NOT COVERED' : '—') }}</strong></div>
                 </div>
               </div>
+
+              <!-- Dynamic EAV Fields -->
+              <div v-if="Object.keys(filteredQuestionnaire).length > 0">
+                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">4. Additional Dynamic Form Responses (EAV)</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-amber-50/50 p-3.5 rounded-xl border border-amber-100">
+                  <div v-for="(val, key) in filteredQuestionnaire" :key="key">
+                    <span class="text-slate-500 block text-[11px] uppercase tracking-wide">{{ key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim() }}:</span>
+                    <strong class="text-slate-900" style="word-break: break-word;">
+                      <span v-if="val === true" class="text-emerald-700">YES</span>
+                      <span v-else-if="val === false" class="text-red-700">NO</span>
+                      <span v-else-if="val === 'true'">YES</span>
+                      <span v-else-if="val === 'false'">NO</span>
+                      <span v-else>{{ val || '—' }}</span>
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -625,6 +643,19 @@
             </div>
           </div>
 
+          <!-- Section 2B: Dynamic Questionnaire Fields -->
+          <div v-if="Object.keys(filteredQuestionnaire).length > 0" class="border border-slate-200 rounded-xl overflow-hidden mt-6">
+            <div class="bg-slate-100 px-4 py-2 font-bold text-slate-900 border-b border-slate-200">
+              INSURED VEHICLE QUESTIONNAIRE & CUSTOM DATA
+            </div>
+            <div class="p-4 grid grid-cols-3 gap-4">
+              <div v-for="(val, key) in filteredQuestionnaire" :key="key">
+                <span class="text-slate-500 block text-[11px] uppercase tracking-wide">{{ key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim() }}:</span>
+                <span class="font-bold text-slate-950" style="word-break: break-word;">{{ val || '—' }}</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Section 3: Premium Calculation Breakdown -->
           <div class="border border-slate-200 rounded-xl overflow-hidden">
             <div class="bg-slate-100 px-4 py-2 font-bold text-slate-900 border-b border-slate-200">
@@ -798,6 +829,32 @@ const parsedEndorsements = computed(() => {
   } catch (e) {
     return [];
   }
+});
+
+const parsedQuestionnaire = computed(() => {
+  try {
+    if (!proposal.value.questionnaireAnswersJson) return {};
+    return JSON.parse(proposal.value.questionnaireAnswersJson);
+  } catch (e) {
+    return {};
+  }
+});
+
+const filteredQuestionnaire = computed(() => {
+  const allAnswers = parsedQuestionnaire.value;
+  const excludeKeys = [
+    'proposerAge', 'proposerAddress', 'poBox', 'tradeProfession', 'licenseNo', 'licenseIssueDate',
+    'categoryName', 'bodyType', 'overnightParking', 'isSoleProperty', 'isHirePurchase', 'privatePurposeOnly',
+    'drivingYearsSelf', 'hasPhysicalInfirmity', 'hasDrivingConvictions', 'hasRadioAccessories',
+    'insurePaidDriverAssistant', 'insurePassengersPa', 'questionnaireAnswers'
+  ];
+  const filtered = {};
+  for (const key in allAnswers) {
+    if (!excludeKeys.includes(key)) {
+      filtered[key] = allAnswers[key];
+    }
+  }
+  return filtered;
 });
 
 function statusMeta(st) {

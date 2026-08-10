@@ -161,7 +161,7 @@
 
               <!-- Dynamic EAV Fields -->
               <div v-if="Object.keys(filteredQuestionnaire).length > 0">
-                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">4. Additional Dynamic Form Responses (EAV)</div>
+                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">4. Additional Form Responses</div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-amber-50/50 p-3.5 rounded-xl border border-amber-100">
                   <div v-for="(val, key) in filteredQuestionnaire" :key="key">
                     <span class="text-slate-500 block text-[11px] uppercase tracking-wide">{{ key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim() }}:</span>
@@ -333,8 +333,9 @@
       </div>
     </div>
 
-    <div v-if="showCertModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto flex items-start justify-center print:bg-transparent">
-      <div class="bg-[#FFFEE0] text-slate-900 border-4 border-amber-500/60 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative my-6 print:m-0 print:p-8 print:border-0 print:shadow-none print:bg-[#FFFEE0]">
+    <div v-if="showCertModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm overflow-y-auto print:bg-transparent">
+      <div class="min-h-full py-8 sm:py-12 px-4 sm:px-6 flex justify-center">
+        <div class="bg-[#FFFEE0] text-slate-900 border-4 border-amber-500/60 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative print:m-0 print:p-8 print:border-0 print:shadow-none print:bg-[#FFFEE0]">
         
         <!-- Action Buttons (Print / Close) -->
         <div class="flex items-center justify-between border-b border-amber-300 pb-3 mb-4 print:hidden">
@@ -517,11 +518,12 @@
         </div>
       </div>
     </div>
+  </div>
 
 
-    <div v-if="showScheduleModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto flex items-start justify-center print:bg-transparent">
-      <div class="bg-white text-slate-900 border border-slate-300 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative my-6 print:m-0 print:p-8 print:border-0 print:shadow-none">
-        
+    <div v-if="showScheduleModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm overflow-y-auto print:bg-transparent">
+      <div class="min-h-full py-8 sm:py-12 px-4 sm:px-6 flex justify-center">
+        <div class="bg-white text-slate-900 border border-slate-300 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-10 pb-12 sm:pb-16 font-sans relative print:m-0 print:px-8 print:py-4 print:border-0 print:shadow-none">
         <!-- Action Buttons (Print / Close) -->
         <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5 print:hidden">
           <div class="flex items-center gap-2">
@@ -541,7 +543,7 @@
         </div>
 
         <!-- Schedule Header (Nyala Logo, Motto & Corporate Head Office Info) -->
-        <div class="border-b-2 border-slate-900 pb-4 mb-6">
+        <div class="border-b-2 border-slate-900 pb-4 mb-6 print:mb-3 print:pb-2">
           <div class="flex items-start justify-between">
             <div class="flex items-center gap-3">
               <img src="/nyala_logo.png" alt="Nyala Insurance Logo" class="h-16 object-contain" />
@@ -562,12 +564,12 @@
         </div>
 
         <!-- Document Title Banner -->
-        <div class="bg-blue-950 text-white text-center py-2.5 rounded-xl font-black text-sm uppercase tracking-wider mb-6">
+        <div class="bg-blue-950 text-white text-center py-2.5 rounded-xl font-black text-sm uppercase tracking-wider mb-6 print:mb-3">
           {{ proposal.coverageType === 'OWN_DAMAGE' ? 'STANDALONE OWN DAMAGE (OD) POLICY SCHEDULE' : 'COMPREHENSIVE MOTOR INSURANCE POLICY SCHEDULE' }}
         </div>
 
         <!-- Schedule Sections -->
-        <div class="space-y-6 text-xs text-slate-800">
+        <div class="space-y-6 print:space-y-3 text-xs text-slate-800">
           
           <!-- Section 1: Policyholder Information -->
           <div class="border border-slate-200 rounded-xl overflow-hidden">
@@ -703,7 +705,7 @@
           </div>
 
           <!-- Section 5: Authorized Signatures & Seal -->
-          <div class="pt-4 flex items-end justify-between border-t border-slate-300">
+          <div class="pt-6 pb-4 print:pt-2 print:pb-0 flex items-end justify-between border-t border-slate-300">
             <div>
               <p class="text-[11px] font-bold text-slate-800">Issued by Nyala Insurance Company S.C.</p>
               <p class="text-[10px] text-slate-500">Authorized Underwriter: Solomon Tadesse</p>
@@ -713,7 +715,7 @@
             </div>
 
             <div class="flex flex-col items-center relative">
-              <img src="/nyala-sail.png" alt="Nyala Official Corporate Seal" class="w-32 h-32 object-contain transform -rotate-6 opacity-90 drop-shadow-md" />
+              <img src="/nyala-sail.png" alt="Nyala Official Corporate Seal" class="w-32 h-32 print:w-20 print:h-20 object-contain transform -rotate-6 opacity-90 drop-shadow-md" />
               <span class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL NYALA CORPORATE SEAL</span>
             </div>
           </div>
@@ -722,6 +724,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>

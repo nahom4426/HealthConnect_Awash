@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
-const apiBase = import.meta.env.VITE_API_URI || import.meta.env.v_API_URI || 'http://192.168.100.209:8888/api/payer/motor/digital-channel';
+const apiBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
 
 function getClient() {
   const auth = useAuthStore();

@@ -1,6 +1,6 @@
 import ApiService from "@/service/ApiService";
 
-const apiBaseUri = import.meta.env?.v_API_AUTH_URI || 'http://192.168.100.209:8888/api/payer/motor/auth';
+const apiBaseUri = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/auth`;
 const api = new ApiService(apiBaseUri);
 const path = '/users';
 

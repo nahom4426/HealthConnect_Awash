@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
-const motorBase  = import.meta.env.v_API_MOTOR_URI  || 'http://localhost:8888/api/payer/motor/digital-channel';
-const partyBase  = import.meta.env.v_API_PARTY_URI  || 'http://localhost:8888/api/payer/motor/digital-channel';
+const motorBase  = import.meta.env.v_API_MOTOR_URI  || 'http://192.168.100.209:8888/api/payer/motor/digital-channel';
+const partyBase  = import.meta.env.v_API_PARTY_URI  || 'http://192.168.100.209:8888/api/payer/motor/digital-channel';
 
 function getClient(base = motorBase) {
   const auth = useAuthStore();

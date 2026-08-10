@@ -148,12 +148,7 @@ function switchModule() {
           {{ langStore.t('switchModule') }}
         </button>
 
-        <RouterLink :to="`/rate-config/${mod.id}`" class="mdb-rc-btn" :style="`background:linear-gradient(135deg,${mod.color.from},${mod.color.to})`">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-          </svg>
-          {{ langStore.t('rateConfig') }}
-        </RouterLink>
+
       </div>
     </div>
 
@@ -308,18 +303,7 @@ function switchModule() {
           </div>
         </RouterLink>
 
-        <RouterLink :to="`/rate-config/${mod.id}`" class="mdb-qa-btn" :style="`--qc:${mod.color.to}`">
-          <div class="mdb-qa-icon" :style="`background:${mod.color.to}15;color:${mod.color.to};border-color:${mod.color.to}30`">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-          </div>
-          <div class="mdb-qa-text">
-            <div class="mdb-qa-label">{{ langStore.t('actions.rateConfiguration') }}</div>
-            <div class="mdb-qa-sub">{{ langStore.t('actions.configureRates') }}</div>
-          </div>
-          <div class="mdb-qa-arrow-wrap" :style="`color:${mod.color.to}`">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mdb-qa-arrow"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-          </div>
-        </RouterLink>
+
 
         <button class="mdb-qa-btn mdb-qa-switch" @click="switchModule">
           <div class="mdb-qa-icon mdb-qa-icon-switch">

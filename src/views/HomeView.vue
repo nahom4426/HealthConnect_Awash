@@ -169,12 +169,7 @@ onMounted(() => { fetchChartData(); });
           </svg>
           {{ now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) }}
         </div>
-        <RouterLink to="/rate-config" class="db-rc-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-          </svg>
-          Rate Config
-        </RouterLink>
+
       </div>
     </div>
 
@@ -312,45 +307,6 @@ onMounted(() => { fetchChartData(); });
       </div>
     </div>
 
-    <!-- ══ RATE CONFIG SECTION ══ -->
-    <div class="db-card db-rc-section">
-      <div class="db-card-header">
-        <div class="db-rc-header-left">
-          <div class="db-rc-header-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:#fff">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-            </svg>
-          </div>
-          <div>
-            <h3 class="db-card-title">Rate Configuration</h3>
-            <p class="db-card-sub">Configure premium rates per insurance product</p>
-          </div>
-        </div>
-        <RouterLink to="/rate-config" class="db-chip db-chip-blue" style="text-decoration:none;cursor:pointer">
-          View All
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-        </RouterLink>
-      </div>
-      <div class="db-rc-grid">
-        <div
-          v-for="(p, i) in rateProducts" :key="p.id"
-          class="db-rc-card"
-          :style="`--rc:${p.color}; --rc-bg:${p.color}06; --rc-border:${p.color}25; --rc-icon-bg:${p.color}15; --rc-glow:${p.color}20; animation-delay:${i * 50}ms`"
-          @click="router.push(`/rate-config/${p.id}`)"
-        >
-          <div class="db-rc-card-top">
-            <div class="db-rc-card-icon-badge" v-html="p.icon"></div>
-            <div class="db-rc-card-arrow">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-            </div>
-          </div>
-          <div class="db-rc-card-content">
-            <div class="db-rc-card-name">{{ p.name }}</div>
-            <div class="db-rc-card-meta">Updated {{ p.updated }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- ══ BOTTOM ROW: Providers + Quick Actions ══ -->
     <div class="db-bottom-row">

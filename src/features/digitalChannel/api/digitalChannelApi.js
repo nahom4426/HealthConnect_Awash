@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
-const apiBase = import.meta.env.v_API_MOTOR_URI || 'http://localhost:8888/api/payer/motor/digital-channel';
+const apiBase = import.meta.env.v_API_MOTOR_URI || 'http://192.168.100.209:8888/api/payer/motor/digital-channel';
 
 function getClient() {
   const auth = useAuthStore();

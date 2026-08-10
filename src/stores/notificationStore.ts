@@ -53,7 +53,7 @@ export const useNotificationStore = defineStore('notifications', () => {
     try {
       const role = localStorage.getItem('nyala_active_testing_role') || localStorage.getItem('user_role') || localStorage.getItem('role') || 'UNDERWRITER';
       const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_URI || 'http://localhost:8888/api/payer/motor/digital-channel';
+      const baseUrl = import.meta.env.VITE_API_URI || 'http://192.168.100.209:8888/api/payer/motor/digital-channel';
       const res = await axios.get(`${baseUrl}/digital-channel/notifications`, {
         params: { role },
         headers: token ? { Authorization: `Bearer ${token}` } : {}

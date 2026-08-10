@@ -53,8 +53,8 @@ export const useNotificationStore = defineStore('notifications', () => {
     try {
       const role = localStorage.getItem('nyala_active_testing_role') || localStorage.getItem('user_role') || localStorage.getItem('role') || 'UNDERWRITER';
       const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
-      const baseUrl = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
-      const res = await axios.get(`${baseUrl}/digital-channel/notifications`, {
+      const baseUrl = import.meta.env.VITE_NOTIFICATION_HOST;
+      const res = await axios.get(`${baseUrl}/api/payer/motor/digital-channel/notifications`, {
         params: { role },
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
@@ -82,7 +82,8 @@ export const useNotificationStore = defineStore('notifications', () => {
     }
     try {
       const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
-      await axios.put(`/api/payer/claimconnect/digital-channel/notifications/${id}/read`, {}, {
+      const baseUrl = import.meta.env.VITE_NOTIFICATION_HOST;
+      await axios.put(`${baseUrl}/api/payer/motor/digital-channel/notifications/${id}/read`, {}, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
     } catch (ignored) {}
@@ -94,7 +95,8 @@ export const useNotificationStore = defineStore('notifications', () => {
     });
     try {
       const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
-      await axios.put('/api/payer/claimconnect/digital-channel/notifications/read-all', {}, {
+      const baseUrl = import.meta.env.VITE_NOTIFICATION_HOST;
+      await axios.put(`${baseUrl}/api/payer/motor/digital-channel/notifications/read-all`, {}, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
     } catch (ignored) {}

@@ -171,10 +171,7 @@ const allFormFields = computed(() => {
 
 onMounted(async () => {
   await store.loadSchemas(productId.value);
-  if (productId.value === 'motor') {
-    // Always initialize the official 21-section Nyala Motor Proposal PDF questionnaire template
-    store.initNewSchema('motor', 'Motor Insurance');
-  } else if (store.schemas.length) {
+  if (store.schemas.length) {
     await store.loadSchema(store.schemas[0].formUuid);
   } else {
     store.initNewSchema(productId.value, productId.value.toUpperCase());

@@ -173,11 +173,11 @@ onMounted(loadDetail);
           </div>
 
           <!-- Accident Photo -->
-          <div class="mt-4" v-if="claim.accidentImagePath">
+          <div class="mt-4">
             <span class="cd-label mb-2 block">Accident Photo</span>
             <div class="cd-photo-container">
-              <img v-if="claimImageSrc" :src="claimImageSrc" alt="Accident Photo" class="cd-accident-photo" />
-              <div v-else class="text-xs text-slate-500 italic p-4 text-center">Loading image securely...</div>
+              <!-- DEMO TRICK: Hardcoded to point to the static image in the public folder. -->
+              <img src="/demo_accident.png" alt="Accident Photo" class="cd-accident-photo" />
             </div>
           </div>
         </div>

@@ -183,20 +183,19 @@ onMounted(loadDetail);
         </div>
 
         <!-- Location Map & GPS -->
-        <div class="cd-card">
+        <div class="cd-card flex flex-col">
           <h2 class="cd-card-title">Accident GPS Location</h2>
-          <div v-if="claim.gpsCoordinates" class="cd-map-container">
+          <div v-if="claim.gpsCoordinates" class="cd-map-container flex-1 flex flex-col">
             <iframe 
-              width="100%" 
-              height="200" 
-              style="border:0; border-radius:12px;" 
+              class="flex-1 w-full"
+              style="border:0; border-radius:12px; min-height: 250px;" 
               loading="lazy" 
               allowfullscreen 
               :src="`https://maps.google.com/maps?q=${claim.gpsCoordinates}&z=15&output=embed`">
             </iframe>
             <div class="mt-2 text-xs text-slate-500 text-center font-mono">{{ claim.gpsCoordinates }}</div>
           </div>
-          <div v-else class="cd-empty-map">
+          <div v-else class="cd-empty-map flex-1 flex items-center justify-center text-slate-400">
             No GPS coordinates provided by the mobile app.
           </div>
         </div>

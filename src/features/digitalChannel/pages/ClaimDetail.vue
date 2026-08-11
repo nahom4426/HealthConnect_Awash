@@ -176,8 +176,7 @@ onMounted(loadDetail);
           <div class="mt-4">
             <span class="cd-label mb-2 block">Accident Photo</span>
             <div class="cd-photo-container">
-              <!-- DEMO TRICK: Hardcoded to point to the static image in the public folder. -->
-              <img src="/demo_accident.png" alt="Accident Photo" class="cd-accident-photo" />
+              <img :src="claimImageSrc || '/demo_accident.png'" @error="$event.target.src = '/demo_accident.png'" alt="Accident Photo" class="cd-accident-photo" />
             </div>
           </div>
         </div>

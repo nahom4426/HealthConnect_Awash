@@ -797,6 +797,7 @@ onMounted(() => {
                   type="number"
                   :value="displayedUsed(pkg)"
                   @input="shouldUseDependentMainFields(pkg) ? updateDepUsedBenefit(pkg, $event.target.value) : updateUsed(pkg, $event.target.value)"
+                  :disabled="isUsedDisabled(pkg)"
                   class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   min="0"
                   placeholder="0"

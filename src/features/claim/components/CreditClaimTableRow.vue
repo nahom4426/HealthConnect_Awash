@@ -286,14 +286,14 @@ function getSourceIndicator(source) {
     <!-- Actions Column -->
     <td class="p-3" v-if="headKeys.find((head) => head.toLowerCase() === 'actions')">
       <div class="flex items-center space-x-3">
-        <!-- <Button
+        <Button
           v-if="props.cells?.onEdit && String(row?.source || '').toUpperCase() === 'MANUAL'"
           type="link"
           @click.stop="handleEdit(row)"
           class="!text-emerald-600 hover:!text-emerald-800 font-medium transition-colors"
         >
           Edit
-        </Button> -->
+        </Button>
         <Button 
           type="link" 
           @click.stop="handleViewDetails(row)" 

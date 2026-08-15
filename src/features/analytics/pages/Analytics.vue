@@ -353,6 +353,269 @@ const topInstitutionsTableData = ref([
   { rank: 5, institution: 'Addis Harar', insuredPersons: 520, percentage: 11.8 },
 ]);
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DYNAMIC REPORTS — New tab logic
+// ═══════════════════════════════════════════════════════════════════════════════
+import { getReportsList, executeReport } from '@/features/analytics/api/analyticsApi';
+import ReportParamForm from '../components/ReportParamForm.vue';
+import ReportResultTable from '../components/ReportResultTable.vue';
+
+interface ReportDefinition {
+  reportUuid: string;
+  name: string;
+  description: string;
+  category: string;
+  parameters: string; // JSON string
+}
+
+interface ParsedParam {
+  name: string;
+  label: string;
+  type: 'DATE' | 'TEXT' | 'SELECT';
+  required?: boolean;
+  options?: string[];
+}
+
+// Reports list state
+const reportsList = ref<ReportDefinition[]>([]);
+const reportsListLoading = ref(false);
+const reportsListError = ref('');
+
+// Selected report
+const selectedReport = ref<ReportDefinition | null>(null);
+const selectedReportParams = computed<ParsedParam[]>(() => {
+  if (!selectedReport.value?.parameters) return [];
+  try {
+    return JSON.parse(selectedReport.value.parameters) as ParsedParam[];
+  } catch {
+    return [];
+  }
+});
+
+// Execute state
+const dynLoading = ref(false);
+const dynColumns = ref<string[]>([]);
+const dynRows = ref<Record<string, any>[]>([]);
+const dynPage = ref(0);
+const dynPageSize = ref(20);
+const dynTotalElements = ref(0);
+const dynTotalPages = ref(0);
+const dynHasRun = ref(false);
+const dynLastParams = ref<Record<string, string>>({});
+
+// Category config
+const categoryConfig: Record<string, { color: string; bg: string; icon: string }> = {
+  POLICY: { color: '#4f46e5', bg: 'rgba(99,102,241,0.1)', icon: '📋' },
+  CLAIMS: { color: '#0891b2', bg: 'rgba(8,145,178,0.1)', icon: '🏥' },
+};
+
+function getCategoryStyle(category: string) {
+  return categoryConfig[category] || { color: '#6b7280', bg: 'rgba(107,114,128,0.1)', icon: '📄' };
+}
+
+// Computed KPIs from result
+const dynKpis = computed(() => {
+  if (!dynRows.value.length) return [];
+  const kpiList: { label: string; value: string; icon: string; color: string }[] = [];
+
+  // Total Premium
+  const premiumKey = dynColumns.value.find(c => c.toLowerCase().includes('premium'));
+  if (premiumKey) {
+    const total = dynRows.value.reduce((s, r) => s + (parseFloat(String(r[premiumKey]).replace(/,/g, '')) || 0), 0);
+    kpiList.push({ label: 'Total Premium', value: total.toLocaleString('en-US', { maximumFractionDigits: 0 }), icon: '💰', color: '#4f46e5' });
+  }
+
+  // Total Members
+  const membersKey = dynColumns.value.find(c => c.toLowerCase() === 'total members');
+  if (membersKey) {
+    const total = dynRows.value.reduce((s, r) => s + (parseFloat(String(r[membersKey]).replace(/,/g, '')) || 0), 0);
+    kpiList.push({ label: 'Total Members', value: total.toLocaleString(), icon: '👥', color: '#0891b2' });
+  }
+
+  // Total Claims
+  const claimsKey = dynColumns.value.find(c => c.toLowerCase() === 'total claims');
+  if (claimsKey) {
+    const total = dynRows.value.reduce((s, r) => s + (parseFloat(String(r[claimsKey]).replace(/,/g, '')) || 0), 0);
+    kpiList.push({ label: 'Total Claims', value: total.toLocaleString('en-US', { maximumFractionDigits: 0 }), icon: '📊', color: '#dc2626' });
+  }
+
+  // Avg Loss Ratio
+  const lrKey = dynColumns.value.find(c => c.toLowerCase().includes('loss ratio'));
+  if (lrKey) {
+    const vals = dynRows.value.map(r => parseFloat(String(r[lrKey]).replace('%', ''))).filter(v => !isNaN(v));
+    if (vals.length) {
+      const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
+      kpiList.push({ label: 'Avg Loss Ratio', value: `${avg.toFixed(1)}%`, icon: '📉', color: avg > 90 ? '#dc2626' : avg > 70 ? '#d97706' : '#059669' });
+    }
+  }
+
+  // Record count
+  kpiList.push({ label: 'Records Found', value: dynTotalElements.value.toLocaleString(), icon: '🗂️', color: '#7c3aed' });
+
+  return kpiList;
+});
+
+async function loadReportsList() {
+  reportsListLoading.value = true;
+  reportsListError.value = '';
+  try {
+    const res = await getReportsList();
+    reportsList.value = Array.isArray(res) ? res : res?.data || res?.content || [];
+  } catch (e: any) {
+    reportsListError.value = e?.message || 'Failed to load reports list';
+    reportsList.value = [];
+  } finally {
+    reportsListLoading.value = false;
+  }
+}
+
+function selectReport(report: ReportDefinition) {
+  if (selectedReport.value?.reportUuid === report.reportUuid) return;
+  selectedReport.value = report;
+  dynHasRun.value = false;
+  dynColumns.value = [];
+  dynRows.value = [];
+  dynPage.value = 0;
+  dynTotalElements.value = 0;
+  dynTotalPages.value = 0;
+  dynLastParams.value = {};
+  // Auto-run with empty params immediately on selection
+  runReport({}, 0);
+}
+
+async function runReport(params: Record<string, string>, page = 0) {
+  if (!selectedReport.value) return;
+  dynLoading.value = true;
+  dynLastParams.value = params;
+  try {
+    const res = await executeReport(selectedReport.value.reportUuid, params, page, dynPageSize.value);
+    dynColumns.value = res?.columns || [];
+    const data = res?.data || {};
+    dynRows.value = data?.content || [];
+    dynPage.value = data?.page != null ? data.page - 1 : page; // API returns 1-indexed page
+    dynTotalElements.value = data?.totalElements || 0;
+    dynTotalPages.value = data?.totalPages || 0;
+    dynHasRun.value = true;
+  } catch (e) {
+    console.error('Error executing report:', e);
+    dynRows.value = [];
+    dynHasRun.value = true;
+  } finally {
+    dynLoading.value = false;
+  }
+}
+
+function handlePageChange(newPage: number) {
+  runReport(dynLastParams.value, newPage);
+}
+
+// ─── Export all pages to Excel ───────────────────────────────────────────────
+const dynExporting = ref(false);
+
+async function exportDynReport() {
+  if (!selectedReport.value || dynExporting.value) return;
+  if (!dynColumns.value.length) return;
+
+  dynExporting.value = true;
+  try {
+    const res = await executeReport(
+      selectedReport.value.reportUuid,
+      dynLastParams.value,
+      0,
+      10000
+    );
+    const columns: string[] = res?.columns || dynColumns.value;
+    const allRows: Record<string, any>[] = res?.data?.content || dynRows.value;
+
+    if (!allRows.length) return;
+
+    const ExcelJS = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Report');
+
+    // Title Row
+    const colCount = columns.length;
+    sheet.mergeCells(1, 1, 1, colCount);
+    const titleCell = sheet.getCell('A1');
+    titleCell.value = selectedReport.value.name;
+    titleCell.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.getRow(1).height = 32;
+
+    // Header Row
+    const headerRow = sheet.addRow(columns);
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FF6366F1' } } };
+    });
+    sheet.getRow(2).height = 28;
+
+    // Data Rows
+    allRows.forEach((row, idx) => {
+      const values = columns.map(col => row[col] ?? '');
+      const dataRow = sheet.addRow(values);
+      const rowBg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC';
+      dataRow.eachCell({ includeEmpty: true }, (cell, colIdx) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
+        cell.border = { bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } } };
+        cell.alignment = { vertical: 'middle' };
+        
+        const colName = columns[colIdx - 1] || '';
+        const lower = colName.toLowerCase();
+        if (['premium','claim','amount','total','paid','outstanding','rejected','members','principals','dependents'].some(k => lower.includes(k))) {
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+        if (lower.includes('loss ratio') || lower.includes('utilization')) {
+          const num = parseFloat(String(cell.value).replace('%', ''));
+          if (!isNaN(num)) {
+            const argb = num < 70 ? 'FFD1FAE5' : num < 90 ? 'FFFEF3C7' : 'FFFEE2E2';
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb } };
+          }
+        }
+      });
+    });
+
+    sheet.columns = columns.map(() => ({ width: 22 }));
+    sheet.autoFilter = { from: { row: 2, column: 1 }, to: { row: 2, column: colCount } };
+    sheet.views = [{ state: 'frozen', ySplit: 2, activeCell: 'A3' }];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `${selectedReport.value.name.replace(/\s+/g, '_')}_${date}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 200);
+  } catch (e) {
+    console.error('Export failed:', e);
+  } finally {
+    dynExporting.value = false;
+  }
+}
+
+// Grouped reports by category
+const groupedReports = computed(() => {
+  const groups: Record<string, ReportDefinition[]> = {};
+  reportsList.value.forEach(r => {
+    if (!groups[r.category]) groups[r.category] = [];
+    groups[r.category].push(r);
+  });
+  return groups;
+});
+
+watch(activeTab, (tab) => {
+  if (tab === 'dynamic-reports' && reportsList.value.length === 0) {
+    loadReportsList();
+  }
+});
+
 onMounted(() => {
   // Fetch provider credit report immediately on mount
   fetchReport();
@@ -384,6 +647,20 @@ onMounted(() => {
         ]"
       >
         Provider Credit Reports
+      </button>
+      <button 
+        @click="activeTab = 'dynamic-reports'"
+        :class="[
+          'px-5 py-3 font-semibold text-sm transition-all relative border-b-2 -mb-px flex items-center gap-2',
+          activeTab === 'dynamic-reports' 
+            ? 'border-primary text-primary' 
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+        ]"
+      >
+        Dynamic Reports
+        <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700">
+          NEW
+        </span>
       </button>
     </div>
 
@@ -448,7 +725,7 @@ onMounted(() => {
     </div>
 
     <!-- Provider Credit Reports (LIVE Report API Integration) -->
-    <div v-else class="space-y-6">
+    <div v-else-if="activeTab === 'provider-report'" class="space-y-6">
       <!-- Live Filter Card -->
       <div class="p-6 space-y-4 bg-white rounded-xl border border-gray-200 shadow-sm">
         <div class="flex justify-between items-center">
@@ -723,8 +1000,177 @@ onMounted(() => {
                   @click="fetchProviderDetails(detailProvider, detailPage + 1)"
                   class="px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- ═══════════════════ DYNAMIC REPORTS TAB ═══════════════════ -->
+    <div v-else-if="activeTab === 'dynamic-reports'" class="dyn-reports-root">
+
+      <!-- Reports list loading -->
+      <div v-if="reportsListLoading" class="dyn-loading-splash">
+        <div class="dyn-spinner"></div>
+        <p>Loading available reports...</p>
+      </div>
+
+      <!-- Error state -->
+      <div v-else-if="reportsListError" class="dyn-error-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <p>{{ reportsListError }}</p>
+        <button @click="loadReportsList" class="dyn-retry-btn">Retry</button>
+      </div>
+
+      <div v-else class="dyn-shelf-container">
+        <!-- ── Top Shelf: Available Reports (Full Width) ── -->
+        <div class="dyn-shelf">
+          <div class="dyn-shelf-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span>Available Reports</span>
+            <span class="dyn-shelf-count">{{ reportsList.length }}</span>
+          </div>
+
+          <div class="dyn-shelf-grid">
+            <template v-for="(reports, category) in groupedReports" :key="category">
+              <button
+                v-for="report in reports"
+                :key="report.reportUuid"
+                class="dyn-report-card"
+                :class="{ 'dyn-report-card--active': selectedReport?.reportUuid === report.reportUuid }"
+                @click="selectReport(report)"
+              >
+                <div class="dyn-report-card-meta">
+                  <span class="dyn-report-card-cat" :style="{
+                    color: getCategoryStyle(category).color,
+                    background: getCategoryStyle(category).bg
+                  }">
+                    {{ getCategoryStyle(category).icon }} {{ category }}
+                  </span>
+                </div>
+                <div class="dyn-report-card-title">{{ report.name }}</div>
+                <div class="dyn-report-card-desc">{{ report.description }}</div>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- ── Main content area (Full Width below) ── -->
+        <div class="dyn-main-stacked">
+
+          <!-- No report selected -->
+          <div v-if="!selectedReport" class="dyn-no-selection">
+            <div class="dyn-no-selection-icon">
+              <svg viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="30" fill="#f0f4ff"/>
+                <rect x="18" y="14" width="28" height="36" rx="4" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                <path d="M24 24h16M24 30h16M24 36h10" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="48" cy="48" r="10" fill="#6366f1"/>
+                <path d="M45 48l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <p class="dyn-no-selection-title">Select a Report</p>
+            <p class="dyn-no-selection-sub">Choose one of the available reports from the top shelf to configure and run it.</p>
+          </div>
+
+          <!-- Report selected -->
+          <div v-else class="dyn-selected-container">
+
+            <!-- Report header -->
+            <div class="dyn-report-header">
+              <div class="dyn-report-header-top">
+                <div>
+                  <div class="dyn-report-badge" :style="{
+                    color: getCategoryStyle(selectedReport.category).color,
+                    background: getCategoryStyle(selectedReport.category).bg
+                  }">
+                    {{ getCategoryStyle(selectedReport.category).icon }} {{ selectedReport.category }}
+                  </div>
+                  <h2 class="dyn-report-title">{{ selectedReport.name }}</h2>
+                  <p class="dyn-report-desc">{{ selectedReport.description }}</p>
+                </div>
               </div>
             </div>
+
+            <!-- Parameters + Run form -->
+            <div class="dyn-params-card">
+              <div class="dyn-params-card-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+                Report Parameters
+              </div>
+              <ReportParamForm
+                :parameters="selectedReportParams"
+                :loading="dynLoading"
+                @submit="(params) => runReport(params, 0)"
+              ></ReportParamForm>
+            </div>
+
+            <!-- KPI cards after running -->
+            <div v-if="dynHasRun && dynKpis.length > 0" class="dyn-kpis">
+              <div
+                v-for="kpi in dynKpis"
+                :key="kpi.label"
+                class="dyn-kpi-card"
+              >
+                <div class="dyn-kpi-icon">{{ kpi.icon }}</div>
+                <div class="dyn-kpi-value" :style="{ color: kpi.color }">{{ kpi.value }}</div>
+                <div class="dyn-kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+
+            <!-- Result table -->
+            <div v-if="dynHasRun" class="dyn-result-card">
+              <div class="dyn-result-header">
+                <div class="dyn-result-header-left">
+                  <h3 class="dyn-result-title">Report Results</h3>
+                  <p class="dyn-result-sub" v-if="!dynLoading">
+                    <span class="dyn-result-count">{{ dynTotalElements.toLocaleString() }}</span>
+                    record{{ dynTotalElements !== 1 ? 's' : '' }} &middot; {{ dynColumns.length }} columns
+                  </p>
+                </div>
+                <div class="dyn-result-actions" v-if="dynRows.length > 0">
+                  <span class="dyn-result-badge" v-if="dynTotalPages > 1">
+                    Page {{ dynPage + 1 }} / {{ dynTotalPages }}
+                  </span>
+                  <button
+                    class="export-excel-btn"
+                    :class="{ 'export-excel-btn--loading': dynExporting }"
+                    :disabled="dynExporting || dynLoading"
+                    @click="exportDynReport"
+                  >
+                    <svg v-if="!dynExporting" class="export-excel-icon" viewBox="0 0 24 24" fill="none">
+                      <rect x="2" y="3" width="20" height="18" rx="2" fill="#16a34a" opacity="0.15"/>
+                      <path d="M14 3v4a1 1 0 001 1h4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/>
+                      <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round"/>
+                      <path d="M9 17l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <span>{{ dynExporting ? 'Exporting...' : 'Export Excel' }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <ReportResultTable
+                :columns="dynColumns"
+                :rows="dynRows"
+                :page="dynPage"
+                :page-size="dynPageSize"
+                :total-elements="dynTotalElements"
+                :total-pages="dynTotalPages"
+                :loading="dynLoading"
+                @page-change="handlePageChange"
+              ></ReportResultTable>
+            </div>
+
           </div>
         </div>
       </div>
@@ -733,4 +1179,472 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* ═══════════════════════════════════════════════
+   DYNAMIC REPORTS TAB
+   ═══════════════════════════════════════════════ */
+
+.dyn-reports-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 600px;
+}
+
+/* ── Loading splash ── */
+.dyn-loading-splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 24px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dyn-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e0e7ff;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Error state ── */
+.dyn-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 24px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.dyn-error-state svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.6;
+}
+
+.dyn-retry-btn {
+  margin-top: 4px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dyn-retry-btn:hover {
+  background: #4f46e5;
+}
+
+/* ── Top Shelf: Available Reports ── */
+.dyn-shelf {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.dyn-shelf-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 10px;
+}
+
+.dyn-shelf-header svg {
+  width: 16px;
+  height: 16px;
+  color: #6366f1;
+}
+
+.dyn-shelf-count {
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: 6px;
+}
+
+.dyn-shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.dyn-report-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dyn-report-card:hover {
+  background: #fff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+}
+
+.dyn-report-card--active {
+  background: #fff;
+  border-color: #6366f1;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+
+.dyn-report-card-meta {
+  margin-bottom: 8px;
+}
+
+.dyn-report-card-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dyn-report-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.dyn-report-card--active .dyn-report-card-title {
+  color: #4f46e5;
+}
+
+.dyn-report-card-desc {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Main Stacked content ── */
+.dyn-main-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* ── No selection state ── */
+.dyn-no-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  gap: 12px;
+}
+
+.dyn-no-selection-icon svg {
+  width: 96px;
+  height: 96px;
+}
+
+.dyn-no-selection-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dyn-no-selection-sub {
+  font-size: 13px;
+  color: #9ca3af;
+  text-align: center;
+  max-width: 320px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── Report header ── */
+.dyn-report-header {
+  padding: 20px 24px 0;
+}
+
+.dyn-report-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.dyn-report-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.dyn-report-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+  line-height: 1.2;
+}
+
+.dyn-report-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Params card ── */
+.dyn-params-card {
+  margin: 16px 24px;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.dyn-params-card-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+}
+
+.dyn-params-card-header svg {
+  width: 14px;
+  height: 14px;
+  color: #6366f1;
+}
+
+/* ── KPI row ── */
+.dyn-kpis {
+  display: flex;
+  gap: 12px;
+  padding: 0 24px;
+  flex-wrap: wrap;
+}
+
+.dyn-kpi-card {
+  flex: 1;
+  min-width: 130px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.dyn-kpi-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
+
+.dyn-kpi-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.dyn-kpi-value {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dyn-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Result card ── */
+.dyn-result-card {
+  margin: 16px 24px 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.dyn-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbff;
+}
+
+.dyn-result-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 2px;
+}
+
+.dyn-result-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.dyn-result-count {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dyn-result-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dyn-result-badge {
+  background: #f0f4ff;
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid #e0e7ff;
+}
+
+/* ── Excel Export button ── */
+.export-excel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.08);
+  white-space: nowrap;
+}
+
+.export-excel-btn:hover:not(:disabled) {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.15);
+  transform: translateY(-1px);
+}
+
+.export-excel-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(22, 163, 74, 0.1);
+}
+
+.export-excel-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.export-excel-btn--loading {
+  color: #6b7280 !important;
+  background: #f9fafb !important;
+  border-color: #e5e7eb !important;
+}
+
+.export-excel-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.export-excel-spin {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  animation: spin-export 0.8s linear infinite;
+  color: #9ca3af;
+}
+
+@keyframes spin-export {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .dyn-shelf-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dyn-kpis {
+    padding: 0 16px;
+  }
+
+  .dyn-params-card,
+  .dyn-result-card {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}
 </style>

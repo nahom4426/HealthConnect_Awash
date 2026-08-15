@@ -2,9 +2,10 @@
 import { watch } from 'vue';
 import { usePagination } from '@/composables/usePagination';
 import { removeUndefined } from '@/utils/utils';
-import { getPolicies } from '../api/contractApi';
+import { getInstitutionsForMappingContracts } from '../api/contractApi';
 
 const props = defineProps({
+  payerProviderContractUuid: { type: String, required: true },
   search: { type: String, default: '' },
   refetch: { type: Number, default: 0 },
   status: { type: String, default: 'ACTIVE' },
@@ -12,7 +13,8 @@ const props = defineProps({
 
 const pagination = usePagination({
   cb: (data) =>
-    getPolicies(
+    getInstitutionsForMappingContracts(
+      props.payerProviderContractUuid,
       removeUndefined({
         ...data,
         search: props.search.trim(),

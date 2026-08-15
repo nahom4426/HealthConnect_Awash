@@ -176,6 +176,7 @@ async function unmapSelected() {
       <DefaultPage placeholder="Search Institutions to Map">
         <template #default="{ search }">
           <PoliciesDataProvider
+            :payerProviderContractUuid="payerProviderContractUuid"
             :search="search"
             :refetch="refetchPolicies"
             v-slot="{ policies, pending }"
@@ -225,8 +226,8 @@ async function unmapSelected() {
                     </th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">#</th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Institution Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Contract Name</th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Contract Code</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Phone</th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Status</th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Action</th>
                   </tr>
@@ -271,8 +272,8 @@ async function unmapSelected() {
                     <td class="px-4 py-3">
                       <div class="text-sm font-medium text-gray-800">{{ policy.institutionName || policy.payerInstitutionName || '—' }}</div>
                     </td>
+                    <td class="px-4 py-3 text-sm text-gray-600">{{ policy.payerInstitutionContractName || policy.contractName || '—' }}</td>
                     <td class="px-4 py-3 text-sm text-gray-600">{{ policy.payerInstitutionContractCode || policy.contractCode || '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">{{ policy.institutionPhone || policy.phone || '—' }}</td>
                     <td class="px-4 py-3">
                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         {{ policy.status || 'ACTIVE' }}
@@ -355,8 +356,8 @@ async function unmapSelected() {
                     </th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">#</th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Institution Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Contract Name</th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Contract Code</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Phone</th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Status</th>
                     <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Action</th>
                   </tr>
@@ -398,8 +399,8 @@ async function unmapSelected() {
                     <td class="px-4 py-3">
                       <div class="text-sm font-medium text-gray-800">{{ inst.institutionName || '—' }}</div>
                     </td>
+                    <td class="px-4 py-3 text-sm text-gray-600">{{ inst.payerInstitutionContractName || inst.contractName || '—' }}</td>
                     <td class="px-4 py-3 text-sm text-gray-600">{{ inst.payerInstitutionContractCode || inst.contractCode || '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">{{ inst.institutionPhone || '—' }}</td>
                     <td class="px-4 py-3">
                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         {{ inst.status || 'ACTIVE' }}

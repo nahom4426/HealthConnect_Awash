@@ -133,6 +133,15 @@ export const getPolicies = (query = {}) => {
   });
 };
 
+export const getInstitutionsForMappingContracts = (payerProviderContractUuid, query = {}) => {
+  return api.addAuthenticationHeader().get('/claimconnect/map_contract/institutions-for-mapping-contracts', {
+    params: {
+      payerProviderContractUuid,
+      ...query
+    },
+  });
+};
+
 /**
  * Get institutions already mapped to a specific provider contract.
  * GET /claimconnect/map_contract/institutions-mapped-to-contracts/:payerProviderContractUuid

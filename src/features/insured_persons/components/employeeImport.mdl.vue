@@ -6,6 +6,7 @@
   import { useApiRequest } from "@/composables/useApiRequest";
   import { useAuthStore } from "@/stores/auth";
   import { closeModal } from "@customizer/modal-x";
+  import { useInsuredPersonsRefreshStore } from "../store/insuredPersonsRefreshStore";
   import { importInsuredPersons } from "../api/insuredPersonsApi";
   import { getPackages } from "@/features/product_settings/api/coverageApi";
   import * as XLSX from 'xlsx';
@@ -19,6 +20,7 @@
   const auth = useAuthStore().auth?.user?.payerUuid;
   
   const res = useApiRequest();
+  const refreshStore = useInsuredPersonsRefreshStore();
   
   const fileInput = ref(null);
   const selectedFile = ref(null);
@@ -398,10 +400,17 @@
         // Set wasSuccessful only if some records were imported
         wasSuccessful.value = cleanData.successCount > 0;
 
-        // Refresh the insured persons list if any were imported
+        // Refresh the insured persons list and close modal if fully successful
         if (cleanData.successCount > 0) {
-          // You might want to add a function here to refresh the insured persons list
-          // For example: insuredStore.refreshList();
+          refreshStore.triggerRefresh();
+
+          // If no errors, auto-close the modal after a brief delay so user sees the success message
+          if (cleanData.errorCount === 0) {
+            setTimeout(() => {
+              closeModal('employeeImport');
+              reset();
+            }, 1500);
+          }
         }
 
       } else {

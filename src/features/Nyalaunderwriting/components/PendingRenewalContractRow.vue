@@ -183,29 +183,16 @@ async function openViewQuotation(row: any) {
 function openModifyInsuredMembers(row: any) {
   const payerInstitutionContractUuid = row?.payerInstitutionContractUuid || '';
   const institutionUuid = row?.institutionUuid || '';
-  const quotationUuid = row?.quotationUuid || '';
   const institutionName = row?.institutionName || '';
+  const policyNumber = row?.policyNumber || '';
   
   if (!payerInstitutionContractUuid || !institutionUuid) {
     console.warn('Missing required UUIDs for modifying insured members');
     return;
   }
 
-  // Navigate to insured persons page with the required params
-  router.push({
-    name: 'Insured Persons',
-    params: {
-      payerInstitutionContractUuid: payerInstitutionContractUuid,
-      institutionUuid: institutionUuid,
-      quotationUuid: quotationUuid || undefined,
-      institutionName: institutionName || undefined,
-    },
-    query: {
-      hasInstitution: 'true',
-      pageContext: 'membership',
-      renewedFromPayerInstitutionContractUuid: row?.payerInstitutionContractUuid || '',
-    },
-  });
+  // Navigate to insured persons page with the required params like the issued policy part
+  router.push(`/insured_persons/${payerInstitutionContractUuid}/${institutionUuid}/${encodeURIComponent(institutionName)}?policyNumber=${encodeURIComponent(policyNumber)}&pageContext=membership&renewedFromPayerInstitutionContractUuid=${payerInstitutionContractUuid}`);
 }
 </script>
 
@@ -280,7 +267,7 @@ function openModifyInsuredMembers(row: any) {
       <!-- For RENEWAL_SCHEDULED: Show View and Modify buttons -->
       <template v-if="row?.status === 'RENEWAL_SCHEDULED'">
         <!-- View Quotation button -->
-        <button
+        <!-- <button
           @click.stop="openViewQuotation(row)"
           :disabled="loadingQuotation[row?.payerInstitutionContractUuid]"
           class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -295,7 +282,7 @@ function openModifyInsuredMembers(row: any) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
           <span>{{ loadingQuotation[row?.payerInstitutionContractUuid] ? 'Loading...' : 'View Quotation' }}</span>
-        </button>
+        </button> -->
 
         <!-- Modify Insured Members button -->
         <button

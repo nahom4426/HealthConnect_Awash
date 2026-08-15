@@ -161,12 +161,12 @@ function handleDocumentClick(event) {
 
     <!-- Actions Column -->
     <td class="gap-2 p-3">
-       <button
+  <button
     @click.stop="handleRemovecatagories(row)"
     class="inline-flex gap-2 items-center px-1 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100"
   >
     <i v-html="icons.trash" class="text-blue-600"></i>
-  Service Catagoties
+    Service Categories
   </button>
   <button
     @click.stop="handleRemove(row)"

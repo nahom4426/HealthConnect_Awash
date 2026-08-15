@@ -332,6 +332,7 @@ function viewDetails(id) {
                   'Contract Name',
                   'Contract Code',
                   'Status',
+                  'Actions',
                 ],
                 row: [
                   'providerName',

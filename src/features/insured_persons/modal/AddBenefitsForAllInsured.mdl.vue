@@ -44,7 +44,7 @@ function handleSubmit() {
     return;
   }
 
-  const payerInstitutionContractUuid = props.data?.payerInstitutionContractUuid;
+  const payerInstitutionContractUuid = props.data?.payerInstitutionContractUuid || route.params.payerInstitutionContractUuid || route.params.id;
   if (!payerInstitutionContractUuid) {
     toasted(false, "", "Missing contract association");
     return;

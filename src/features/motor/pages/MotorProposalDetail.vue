@@ -46,20 +46,43 @@
         </div>
 
         <div class="mpd-header-actions">
-          <button 
+          <!-- SUBMITTED: underwriter decides -->
+          <template v-if="uiStatus === 'SUBMITTED'">
+            <button type="button" v-if="isUnderwriter" class="mpd-issue-btn" :disabled="isActing" @click="handleApprove">
+              <svg class="mpd-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              {{ isActing ? 'Working…' : 'Approve Proposal' }}
+            </button>
+            <button type="button" v-if="isUnderwriter" class="mpd-reject-btn" :disabled="isActing" @click="handleReject">Reject</button>
+            <div v-else class="mpd-issued-pill mpd-pill-amber">Awaiting underwriter review</div>
+          </template>
+
+          <!-- APPROVED / PENDING_PAYMENT: customer pays on mobile -->
+          <div v-else-if="uiStatus === 'APPROVED' || uiStatus === 'PENDING_PAYMENT'" class="mpd-issued-pill mpd-pill-amber">
+            <svg class="mpd-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 6v6l4 2"/></svg>
+            {{ uiStatus === 'PENDING_PAYMENT' ? 'Customer is paying' : 'Approved — awaiting customer payment' }}
+            <span v-if="gatewayLabel" class="opacity-70">via {{ gatewayLabel }}</span>
+          </div>
+
+          <!-- PAID: issue the certificate -->
+          <button
+            v-else-if="uiStatus === 'PAID'"
             type="button"
-            v-if="proposal.status !== 'CONTRACT_ISSUED' && proposal.status !== 'ACTIVE'"
-            @click="handleIssueContract" 
+            class="mpd-issue-btn"
             :disabled="isIssuing || !canIssueContract"
             :title="!canIssueContract ? 'Requires Underwriter Privilege' : ''"
-            class="mpd-issue-btn"
+            @click="handleIssueContract"
           >
             <svg class="mpd-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            {{ canIssueContract ? 'Issue Official Contract & Certificate' : 'Issue Contract (Underwriter Only)' }}
+            {{ isIssuing ? 'Issuing…' : canIssueContract ? 'Issue Official Contract & Certificate' : 'Issue Contract (Underwriter Only)' }}
           </button>
-          <div v-else class="mpd-issued-pill">
+
+          <div v-else-if="uiStatus === 'ACTIVE'" class="mpd-issued-pill">
             <svg class="mpd-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
             Contract Issued & Certificate Ready
+          </div>
+
+          <div v-else-if="uiStatus === 'REJECTED'" class="mpd-issued-pill mpd-pill-red">
+            Rejected{{ proposal.rejectionReason ? ' — ' + proposal.rejectionReason : '' }}
           </div>
         </div>
       </div>
@@ -98,6 +121,27 @@
               <div class="mpd-spec-box">
                 <div class="mpd-spec-label">Sum Insured (OD)</div>
                 <div class="mpd-spec-value text-emerald-700 font-extrabold">ETB {{ formatMoney(proposal.sumInsured) }}</div>
+                <div v-if="proposal.vehicleValue && Number(proposal.vehicleValue) !== Number(proposal.sumInsured)" class="text-[10px] text-slate-500 mt-1">Customer declared: ETB {{ formatMoney(proposal.vehicleValue) }}</div>
+              </div>
+              <div class="mpd-spec-box">
+                <div class="mpd-spec-label">Engine CC / Power</div>
+                <div class="mpd-spec-value">{{ proposal.engineCc ? proposal.engineCc + ' cc' : '—' }}<span v-if="proposal.horsePower" class="text-slate-500 font-normal"> · {{ proposal.horsePower }} HP</span></div>
+              </div>
+              <div class="mpd-spec-box">
+                <div class="mpd-spec-label">Seats / Capacity</div>
+                <div class="mpd-spec-value">{{ proposal.numberOfSeats ? proposal.numberOfSeats + ' seats' : '—' }}<span v-if="proposal.carryingCapacityQuintals" class="text-slate-500 font-normal"> · {{ proposal.carryingCapacityQuintals }} q</span></div>
+              </div>
+              <div class="mpd-spec-box">
+                <div class="mpd-spec-label">Colour / Plate Code</div>
+                <div class="mpd-spec-value">{{ proposal.vehicleColor || '—' }}<span v-if="proposal.licensePlateCode" class="text-slate-500 font-normal"> · code {{ proposal.licensePlateCode }}</span></div>
+              </div>
+              <div class="mpd-spec-box">
+                <div class="mpd-spec-label">Usage</div>
+                <div class="mpd-spec-value">{{ proposal.usageType || '—' }}</div>
+              </div>
+              <div class="mpd-spec-box">
+                <div class="mpd-spec-label">Owner on Libre</div>
+                <div class="mpd-spec-value">{{ proposal.libreOwnerName || '—' }}</div>
               </div>
             </div>
 
@@ -109,6 +153,51 @@
                 </span>
                 <span v-if="parsedEndorsements.length === 0" class="text-xs text-slate-400 italic">Standard coverage only (No endorsements)</span>
               </div>
+            </div>
+          </div>
+
+          <!-- Vehicle Photos Panel -->
+          <div v-if="photoImages && photoImages.length > 0" class="mpd-card">
+            <div class="mpd-card-header">
+              <svg class="mpd-header-icon-svg text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span>Uploaded Vehicle Photos</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5">
+               <div v-for="img in photoImages" :key="img.imageUuid" class="flex flex-col items-center">
+                 <div v-if="!img.src" class="w-full h-24 rounded border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">Unavailable</div>
+                 <img v-else :src="img.src" class="w-full h-24 object-cover rounded shadow border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity" @click="openImage(img.src)" />
+                 <span class="text-xs font-bold text-slate-600 mt-2 uppercase">{{ img.imageName || img.imageType }}</span>
+               </div>
+            </div>
+          </div>
+
+          <!-- Libre Documents Panel -->
+          <div v-if="libreImages && libreImages.length > 0" class="mpd-card">
+            <div class="mpd-card-header">
+              <svg class="mpd-header-icon-svg text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Libre Documents</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5">
+               <div v-for="img in libreImages" :key="img.imageUuid" class="flex flex-col items-center">
+                 <div v-if="!img.src" class="w-full h-24 rounded border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">Unavailable</div>
+                 <img v-else :src="img.src" class="w-full h-24 object-cover rounded shadow border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity" @click="openImage(img.src)" />
+                 <span class="text-xs font-bold text-slate-600 mt-2 uppercase">{{ img.imageName || img.imageType }}</span>
+               </div>
+            </div>
+          </div>
+
+          <!-- Libre Data Panel (customer-confirmed OCR fields, persisted on the proposal) -->
+          <div v-if="libreDataEntries.length" class="mpd-card">
+            <div class="mpd-card-header">
+              <svg class="mpd-header-icon-svg text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Libre Data (as confirmed by customer)</span>
+              <span class="ml-auto text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" :class="ocrSourceBadge.cls">{{ ocrSourceBadge.label }}</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 p-5 text-xs">
+               <div v-for="[key, val] in libreDataEntries" :key="key">
+                 <span class="text-slate-500 block uppercase tracking-wide">{{ libreLabel(key) }}</span>
+                 <strong class="text-slate-900 font-mono break-all">{{ val }}</strong>
+               </div>
             </div>
           </div>
 
@@ -231,58 +320,58 @@
 
         <!-- Right Column: Gateways & Certificates -->
         <div class="space-y-6">
-          <!-- Premium & Gateways -->
+          <!-- Premium (persisted breakdown) & customer payment -->
           <div class="mpd-card">
             <div class="mpd-card-header">
-              <span>Premium Breakdown & Gateways</span>
+              <span>Premium & Payment</span>
+              <span v-if="proposal.coverageType" class="ml-auto text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{{ coverageLabel }}</span>
             </div>
 
             <div class="p-5 space-y-4">
-              <div class="space-y-2.5 text-xs">
-                <div class="flex justify-between items-center pb-2 border-b border-slate-200">
-                  <span class="text-slate-600 font-medium">Compulsory Third Party (TP)</span>
-                  <span class="font-mono font-bold text-slate-800">ETB {{ formatMoney(proposal.tpPremiumAmount) }}</span>
-                </div>
-                <div class="flex justify-between items-center pb-2 border-b border-slate-200">
-                  <span class="text-slate-600 font-medium">Own Damage Premium (OD)</span>
-                  <span class="font-mono font-bold text-slate-800">ETB {{ formatMoney(proposal.odPremiumAmount) }}</span>
-                </div>
+              <div v-if="!proposal.coverageType" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                The customer has not selected a coverage yet — the premium will appear here as soon as they do.
+              </div>
+
+              <div v-else class="space-y-2.5 text-xs">
+                <template v-if="premiumBreakdown?.tp">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wide text-slate-500 pt-1">Third Party (Reg. 554/2024)</div>
+                  <div class="flex justify-between"><span class="text-slate-600">Government tariff</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.tariff) }}</span></div>
+                  <div class="flex justify-between"><span class="text-slate-600">Passenger liability ({{ premiumBreakdown.tp.passengerSeats }} × {{ premiumBreakdown.tp.passengerRate }})</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.passengerLiability) }}</span></div>
+                  <div class="flex justify-between"><span class="text-slate-600">VAT 15% · DDR 1% · Levy 10% · Stamp</span><span class="font-mono">ETB {{ formatMoney(Number(premiumBreakdown.tp.vat) + Number(premiumBreakdown.tp.ddr) + Number(premiumBreakdown.tp.governmentLevy) + Number(premiumBreakdown.tp.stampDuty)) }}</span></div>
+                  <div class="flex justify-between font-bold border-b border-slate-200 pb-2"><span>TP total</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.total) }}</span></div>
+                </template>
+                <template v-if="premiumBreakdown?.od">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wide text-slate-500 pt-1">Own Damage (Rate Guide Feb 2024)</div>
+                  <div class="flex justify-between"><span class="text-slate-600">{{ premiumBreakdown.od.ratePercent }}% × ETB {{ formatMoney(premiumBreakdown.sumInsured) }} <span class="text-slate-400">({{ premiumBreakdown.od.rateRule }})</span></span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.basic) }}</span></div>
+                  <div v-if="Number(premiumBreakdown.od.dutyFreeLoading) > 0" class="flex justify-between"><span class="text-slate-600">Duty-free loading 30%</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.dutyFreeLoading) }}</span></div>
+                  <div class="flex justify-between"><span class="text-slate-600">DDR 1% · VAT 15% · Stamp</span><span class="font-mono">ETB {{ formatMoney(Number(premiumBreakdown.od.ddr) + Number(premiumBreakdown.od.vat) + Number(premiumBreakdown.od.stampDuty)) }}</span></div>
+                  <div class="flex justify-between font-bold border-b border-slate-200 pb-2"><span>OD total</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.total) }}</span></div>
+                  <div class="text-[11px] text-slate-500">Compulsory excess: {{ premiumBreakdown.od.excessType }}</div>
+                </template>
+                <template v-if="!premiumBreakdown">
+                  <div class="flex justify-between"><span class="text-slate-600">Third Party</span><span class="font-mono">ETB {{ formatMoney(proposal.tpPremiumAmount) }}</span></div>
+                  <div class="flex justify-between"><span class="text-slate-600">Own Damage</span><span class="font-mono">ETB {{ formatMoney(proposal.odPremiumAmount) }}</span></div>
+                </template>
                 <div class="flex justify-between items-center pt-1 font-extrabold text-sm">
                   <span class="text-slate-900">Total Payable</span>
                   <span class="font-mono text-emerald-700">ETB {{ formatMoney(proposal.totalPremiumAmount) }}</span>
                 </div>
               </div>
 
-              <!-- EthioTelecom TP Gateway -->
+              <!-- Payment status (customer pays on mobile at the gateway mandated by the coverage) -->
               <div class="mpd-gateway-box">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-slate-800">1. EthioTelecom (Govt TP)</span>
-                  <span :class="proposal.tpPaymentStatus === 'PAID' || proposal.tpPaymentStatus === 'PAID_ETHIOTELECOM' ? 'text-emerald-700 font-bold' : 'text-amber-600 font-bold'">
-                    {{ proposal.tpPaymentStatus || 'PENDING' }}
-                  </span>
+                  <span class="font-bold text-slate-800">Customer payment{{ gatewayLabel ? ' · ' + gatewayLabel : '' }}</span>
+                  <span :class="paymentMeta.cls" class="font-bold">{{ paymentMeta.label }}</span>
                 </div>
-                <div v-if="proposal.tpPaymentRef" class="text-[11px] font-mono text-slate-500 mt-1">
-                  Ref: {{ proposal.tpPaymentRef }}
+                <div v-if="payment" class="mt-2 space-y-1 text-[11px] text-slate-600">
+                  <div class="font-mono">Txn: {{ payment.txRef }}<span v-if="payment.bankCode && payment.gateway !== 'TELEBIRR'"> · {{ payment.bankCode }}</span></div>
+                  <div v-if="payment.receiptNumber">Receipt: <span class="font-mono">{{ payment.receiptNumber }}</span> · Ref <span class="font-mono">{{ payment.gatewayReference }}</span></div>
+                  <div v-if="payment.confirmedAt">Confirmed {{ formatDateTime(payment.confirmedAt) }} · ETB {{ formatMoney(payment.amount) }}</div>
+                  <div v-if="payment.failureReason" class="text-red-600">{{ payment.failureReason }}</div>
                 </div>
-                <div v-if="proposal.tpPaymentStatus !== 'PAID' && proposal.tpPaymentStatus !== 'PAID_ETHIOTELECOM'" class="text-[11px] text-amber-600 mt-1 font-medium">
-                  Awaiting customer payment via Mobile App
-                </div>
-              </div>
-
-              <!-- EthiSwitch OD Gateway -->
-              <div class="mpd-gateway-box">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-slate-800">2. EthiSwitch (Nyala OD)</span>
-                  <span :class="proposal.odPaymentStatus === 'PAID' || proposal.odPaymentStatus === 'PAID_ETHISWITCH' ? 'text-emerald-700 font-bold' : 'text-amber-600 font-bold'">
-                    {{ proposal.odPaymentStatus || 'PENDING' }}
-                  </span>
-                </div>
-                <div v-if="proposal.odPaymentRef" class="text-[11px] font-mono text-slate-500 mt-1">
-                  Ref: {{ proposal.odPaymentRef }}
-                </div>
-                <div v-if="proposal.odPaymentStatus !== 'PAID' && proposal.odPaymentStatus !== 'PAID_ETHISWITCH' && proposal.coverageType !== 'THIRD_PARTY'" class="text-[11px] text-amber-600 mt-1 font-medium">
-                  Awaiting customer payment via Mobile App
-                </div>
+                <div v-else-if="uiStatus === 'APPROVED'" class="text-[11px] text-amber-600 mt-1 font-medium">Awaiting customer payment via the mobile app</div>
+                <div v-else-if="uiStatus === 'SUBMITTED'" class="text-[11px] text-slate-500 mt-1">Payment opens for the customer after approval</div>
               </div>
             </div>
           </div>
@@ -294,7 +383,7 @@
             </div>
 
             <div class="p-5">
-              <div v-if="proposal.status === 'CONTRACT_ISSUED' || proposal.status === 'ACTIVE'" class="space-y-3">
+              <div v-if="uiStatus === 'ACTIVE'" class="space-y-3">
                 <!-- Document 1: Official Certificate (Sticker) -->
                 <div v-if="proposal.coverageType === 'COMPREHENSIVE' || proposal.coverageType === 'THIRD_PARTY'" class="mpd-doc-box">
                   <div class="flex items-center gap-3">
@@ -719,26 +808,40 @@
               <span class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL NYALA CORPORATE SEAL</span>
             </div>
           </div>
-
         </div>
       </div>
     </div>
+
+    </div>
   </div>
-</div>
+
+  <!-- Image Modal (Top level root node) -->
+  <div v-if="previewImageUrl" class="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4" @click="closeImage()" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;">
+    <div class="relative w-full max-w-5xl h-auto max-h-screen flex flex-col items-center justify-center" @click.stop>
+      <button @click.stop="closeImage()" class="absolute -top-14 right-0 m-2 p-3 bg-white/10 hover:bg-white/30 text-white rounded-full transition-all duration-200 z-50 shadow-lg">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <img :src="previewImageUrl" class="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" @click.stop />
+      <p class="text-white/60 text-xs mt-3">Click outside or press Esc to close</p>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
-import { 
-  fetchMotorProposalDetail, 
-  assignProposalAdjustor, 
-  submitProposalInspection, 
-  payTpEthioTelecom, 
-  payOdEthiSwitch, 
-  issueProposalContract 
+import {
+  fetchMotorProposalDetail,
+  assignProposalAdjustor,
+  submitProposalInspection,
+  approveProposal,
+  rejectProposal,
+  fetchProposalPayment,
+  issueProposalContract,
 } from '@/features/digitalChannel/api/digitalChannelApi';
 import { useRoleContext } from '../composables/useRoleContext';
+import { listCarImages, fetchCarImageByUuid } from '@/features/motor/api/motorApi';
+import { revokeObjectUrls } from '@/utils/imageBlob';
 
 const route = useRoute();
 const { activeRole, setRole, ROLES } = useRoleContext();
@@ -758,8 +861,81 @@ function showToast(msg, type = 'success') {
 }
 
 const isIssuing = ref(false);
+const isActing = ref(false);
+const payment = ref(null);
+
+// ── One state machine shared with mobile: SUBMITTED → APPROVED → PENDING_PAYMENT → PAID → ACTIVE (or REJECTED)
+const LEGACY_STATUS = {
+  REGISTERED: 'SUBMITTED', ADJUSTOR_ASSIGNED: 'SUBMITTED', INSPECTION_PENDING: 'SUBMITTED',
+  INSPECTION_DONE: 'APPROVED', COVERAGE_SELECTED: 'APPROVED', PASSED: 'APPROVED',
+  TP_PAID: 'PAID', OD_PAID: 'PAID', CONTRACT_ISSUED: 'ACTIVE', CANCELLED: 'REJECTED',
+};
+const uiStatus = computed(() => {
+  const s = String(proposal.value?.status || 'SUBMITTED').toUpperCase();
+  return LEGACY_STATUS[s] || s;
+});
+const coverageLabel = computed(() => ({ THIRD_PARTY: 'Third Party', OWN_DAMAGE: 'Own Damage', COMPREHENSIVE: 'Comprehensive' })[proposal.value?.coverageType] || proposal.value?.coverageType || '');
+const gatewayLabel = computed(() => {
+  const g = proposal.value?.paymentGateway || ({ THIRD_PARTY: 'TELEBIRR', OWN_DAMAGE: 'BANK', COMPREHENSIVE: 'ETSWITCH' })[proposal.value?.coverageType];
+  return ({ TELEBIRR: 'Telebirr', BANK: 'Bank transfer', ETSWITCH: 'ETSwitch' })[g] || '';
+});
+const premiumBreakdown = computed(() => {
+  const raw = proposal.value?.premiumBreakdownJson;
+  if (!raw) return null;
+  try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (_) { return null; }
+});
+const paymentMeta = computed(() => {
+  const st = payment.value?.status;
+  if (st === 'SUCCESS' || uiStatus.value === 'PAID' || uiStatus.value === 'ACTIVE') return { label: 'PAID', cls: 'text-emerald-700' };
+  if (st === 'INITIATED' || uiStatus.value === 'PENDING_PAYMENT') return { label: 'IN PROGRESS', cls: 'text-blue-700' };
+  if (st === 'FAILED' || st === 'EXPIRED') return { label: st, cls: 'text-red-600' };
+  return { label: 'PENDING', cls: 'text-amber-600' };
+});
+function formatDateTime(v) {
+  try { return new Date(v).toLocaleString(); } catch (_) { return v; }
+}
+async function loadPayment() {
+  if (!proposal.value?.proposalUuid || !proposal.value?.coverageType) { payment.value = null; return; }
+  const res = await fetchProposalPayment(proposal.value.proposalUuid);
+  payment.value = res?.payment || null;
+}
 const showCertModal = ref(false);
 const showScheduleModal = ref(false);
+const carImages = ref([]);
+const previewImageUrl = ref(null);
+
+const libreImages = computed(() => {
+  return carImages.value.filter(img => img.imageName && img.imageName.toLowerCase().includes('libre'));
+});
+
+const photoImages = computed(() => {
+  return carImages.value.filter(img => !img.imageName || !img.imageName.toLowerCase().includes('libre'));
+});
+
+// Libre data as [key, value] pairs, skipping empties and internal fields (raw OCR preview, source).
+const LIBRE_HIDDEN_KEYS = new Set(['rawTextPreview', 'ocrSource']);
+const LIBRE_LABELS = {
+  plateNumber: 'Plate Number', licensePlateCode: 'Plate Code', vehicleType: 'Vehicle Type', manufacturer: 'Make',
+  model: 'Model', yearOfManufacture: 'Year of Manufacture', chassisNumber: 'Chassis Number', engineNumber: 'Engine Number',
+  color: 'Colour', horsePower: 'Horse Power', weight: 'Weight (kg)', carryingCapacity: 'Carrying Capacity (q)',
+  numberOfCylinders: 'Cylinders', engineCC: 'Engine CC', numberOfSeats: 'Seats', ownerName: 'Owner Name',
+  location: 'Location', phone: 'Phone',
+};
+const libreDataEntries = computed(() => {
+  const data = proposal.value?.libreData;
+  if (!data || typeof data !== 'object') return [];
+  return Object.entries(data).filter(([k, v]) => !LIBRE_HIDDEN_KEYS.has(k) && v !== null && v !== undefined && String(v).trim() !== '' && v !== 0);
+});
+function libreLabel(key) {
+  return LIBRE_LABELS[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()).trim();
+}
+const ocrSourceBadge = computed(() => {
+  const src = (proposal.value?.ocrSource || proposal.value?.libreData?.ocrSource || '').toUpperCase();
+  if (src === 'ML_KIT') return { label: 'On-device OCR', cls: 'bg-emerald-100 text-emerald-700' };
+  if (src === 'TESSERACT') return { label: 'Nyala OCR', cls: 'bg-indigo-100 text-indigo-700' };
+  if (src === 'MANUAL') return { label: 'Typed by customer', cls: 'bg-amber-100 text-amber-700' };
+  return { label: 'Source unknown', cls: 'bg-slate-100 text-slate-600' };
+});
 
 // Role Permissions
 const normRole = computed(() => {
@@ -782,6 +958,36 @@ function formatMoney(num) {
 let pollInterval = null;
 const isPollingPaused = ref(false);
 
+function openImage(url) {
+  previewImageUrl.value = url;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImage() {
+  previewImageUrl.value = null;
+  document.body.style.overflow = '';
+}
+
+let imagesLoading = false;
+let imagesLoadedFor = null;
+
+// Images are fetched with the auth token and rendered from blob: URLs (see utils/imageBlob.js).
+async function loadImages(carUuid) {
+  if (!carUuid || imagesLoading || imagesLoadedFor === carUuid) return;
+  imagesLoading = true;
+  try {
+    const list = await listCarImages(carUuid);
+    const loaded = await Promise.all(list.map(async img => ({ ...img, src: await fetchCarImageByUuid(img.imageUuid) })));
+    revokeObjectUrls(carImages.value.map(i => i.src));
+    carImages.value = loaded;
+    imagesLoadedFor = carUuid;
+  } catch (err) {
+    console.error('Failed to load car images', err);
+  } finally {
+    imagesLoading = false;
+  }
+}
+
 async function loadProposal() {
   if (isPollingPaused.value) return;
   try {
@@ -803,13 +1009,35 @@ onMounted(async () => {
   await loadProposal();
   loading.value = false;
 
+  document.addEventListener('keydown', handleKeyDown);
+
+  // Load car images if carUuid is available on the proposal
+  if (proposal.value?.carUuid) {
+    loadImages(proposal.value.carUuid);
+  }
+
   // Start polling every 8 seconds for live status updates
-  pollInterval = setInterval(loadProposal, 8000);
+  await loadPayment();
+  pollInterval = setInterval(async () => {
+    await loadProposal();
+    if (['APPROVED', 'PENDING_PAYMENT', 'PAID'].includes(uiStatus.value)) await loadPayment();
+    // Also refresh images if carUuid is present but images haven't loaded yet
+    if (proposal.value?.carUuid && imagesLoadedFor !== proposal.value.carUuid) {
+      loadImages(proposal.value.carUuid);
+    }
+  }, 8000);
 });
 
 onBeforeUnmount(() => {
   if (pollInterval) clearInterval(pollInterval);
+  document.removeEventListener('keydown', handleKeyDown);
+  document.body.style.overflow = '';
+  revokeObjectUrls(carImages.value.map(i => i.src));
 });
+
+function handleKeyDown(e) {
+  if (e.key === 'Escape' && previewImageUrl.value) closeImage();
+}
 
 function printCertificate() {
   const originalTitle = document.title;
@@ -862,12 +1090,15 @@ const filteredQuestionnaire = computed(() => {
 
 function statusMeta(st) {
   const map = {
-    SUBMITTED: { cls: 'mpd-st-submitted', label: 'Submitted' },
-    ADJUSTOR_ASSIGNED: { cls: 'mpd-st-assigned', label: 'Adjustor Assigned' },
-    INSPECTION_DONE: { cls: 'mpd-st-inspected', label: 'Inspection Done' },
-    CONTRACT_ISSUED: { cls: 'mpd-st-issued', label: 'Contract Issued' },
+    SUBMITTED:       { cls: 'mpd-st-submitted', label: 'Submitted' },
+    APPROVED:        { cls: 'mpd-st-approved',  label: 'Approved · awaiting payment' },
+    PENDING_PAYMENT: { cls: 'mpd-st-approved',  label: 'Payment in progress' },
+    PAID:            { cls: 'mpd-st-paid',      label: 'Paid · issue certificate' },
+    ACTIVE:          { cls: 'mpd-st-active',    label: 'Active' },
+    REJECTED:        { cls: 'mpd-st-rejected',  label: 'Rejected' },
   };
-  return map[st] || { cls: 'mpd-st-default', label: st || 'Pending' };
+  const key = LEGACY_STATUS[String(st || '').toUpperCase()] || String(st || '').toUpperCase();
+  return map[key] || { cls: 'mpd-st-submitted', label: st || '—' };
 }
 
 async function handleAssignAdjustor() {
@@ -891,32 +1122,42 @@ async function handleAssignAdjustor() {
 
 async function handleSubmitInspection() {
   isPollingPaused.value = true;
-  await submitProposalInspection(proposal.value.proposalUuid, {
+  const res = await submitProposalInspection(proposal.value.proposalUuid, {
     status: inspectionStatus.value,
-    notes: 'Vehicle physical pre-inspection completed cleanly.'
+    notes: inspectionStatus.value === 'PASSED' ? 'Vehicle physical pre-inspection completed cleanly.' : 'Pre-existing damage found at inspection.'
   });
-  const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
-  proposal.value = fresh;
-  showToast('Inspection finding recorded!');
+  proposal.value = await fetchMotorProposalDetail(route.params.proposalUuid);
+  await loadPayment();
+  showToast(res.success ? (inspectionStatus.value === 'PASSED' ? 'Inspection passed — proposal approved.' : 'Inspection failed — proposal rejected.') : res.message, res.success ? 'success' : 'error');
   isPollingPaused.value = false;
 }
 
-async function handlePayTp() {
+async function handleApprove() {
+  isActing.value = true;
   isPollingPaused.value = true;
-  const res = await payTpEthioTelecom(proposal.value.proposalUuid);
-  const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
-  proposal.value = fresh;
-  showToast('EthioTelecom TP Payment simulated successfully!');
-  isPollingPaused.value = false;
+  try {
+    const res = await approveProposal(proposal.value.proposalUuid, 'Approved by underwriter');
+    proposal.value = await fetchMotorProposalDetail(route.params.proposalUuid);
+    showToast(res.success ? 'Proposal approved — the customer can now pay in the app.' : res.message, res.success ? 'success' : 'error');
+  } finally {
+    isActing.value = false;
+    isPollingPaused.value = false;
+  }
 }
 
-async function handlePayOd() {
+async function handleReject() {
+  const reason = window.prompt('Reason for rejecting this proposal (shown to the customer):', '');
+  if (reason === null) return;
+  isActing.value = true;
   isPollingPaused.value = true;
-  const res = await payOdEthiSwitch(proposal.value.proposalUuid, { bankCode: 'CBE' });
-  const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
-  proposal.value = fresh;
-  showToast('EthiSwitch OD Payment simulated successfully!');
-  isPollingPaused.value = false;
+  try {
+    const res = await rejectProposal(proposal.value.proposalUuid, reason || 'Declined by underwriter');
+    proposal.value = await fetchMotorProposalDetail(route.params.proposalUuid);
+    showToast(res.success ? 'Proposal rejected.' : res.message, res.success ? 'success' : 'error');
+  } finally {
+    isActing.value = false;
+    isPollingPaused.value = false;
+  }
 }
 
 async function handleIssueContract() {
@@ -924,9 +1165,8 @@ async function handleIssueContract() {
   isPollingPaused.value = true;
   try {
     const res = await issueProposalContract(proposal.value.proposalUuid);
-    const fresh = await fetchMotorProposalDetail(route.params.proposalUuid);
-    proposal.value = fresh;
-    showToast('Policy Contract & Digital Certificate Issued!');
+    proposal.value = await fetchMotorProposalDetail(route.params.proposalUuid);
+    showToast(res.success ? `Policy ${res.policyNumber} issued — certificate ready.` : res.message, res.success ? 'success' : 'error');
   } catch (e) {
     showToast(e?.response?.data?.message || 'Failed to issue contract', 'error');
   } finally {
@@ -960,6 +1200,15 @@ async function handleIssueContract() {
 .mpd-issue-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.2rem; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #fff; border: none; border-radius: 0.6rem; font-size: 0.8rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25); transition: transform 0.15s, opacity 0.15s; }
 .mpd-issue-btn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.95; }
 .mpd-issue-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mpd-reject-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.9rem; background: #fff; color: #b91c1c; border: 1px solid #fecaca; border-radius: 0.6rem; font-size: 0.78rem; font-weight: 800; cursor: pointer; }
+.mpd-reject-btn:hover { background: #fef2f2; }
+.mpd-pill-amber { background: #fffbeb !important; color: #b45309 !important; border-color: #fde68a !important; }
+.mpd-pill-red { background: #fef2f2 !important; color: #b91c1c !important; border-color: #fecaca !important; }
+.mpd-st-submitted { background:#eff6ff; color:#1d4ed8; }
+.mpd-st-approved { background:#fffbeb; color:#b45309; }
+.mpd-st-paid { background:#ecfdf5; color:#047857; }
+.mpd-st-active { background:#f0fdf4; color:#15803d; }
+.mpd-st-rejected { background:#fee2e2; color:#b91c1c; }
 .mpd-issued-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 0.6rem; font-size: 0.75rem; font-weight: 800; }
 
 /* Cards & Components */

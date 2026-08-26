@@ -14,7 +14,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://nyalahc.medcoanalytics.com",
+        target: "http://192.168.100.143:8989",
         changeOrigin: true,
         secure: false,
       },

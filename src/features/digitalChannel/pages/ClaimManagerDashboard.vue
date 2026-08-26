@@ -29,7 +29,7 @@ async function loadClaims() {
 }
 
 function openDetail(claim) {
-  router.push(`/digital-channel/claims/detail/${claim.claimUuid}`);
+  router.push(`/${claim.productModule || 'motor'}/claims/detail/${claim.claimUuid}`);
 }
 
 onMounted(() => {

@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage, fetchClaimImage } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage, fetchClaimImage, fetchClaimDocuments, fetchClaimDocumentUrl } from '@/features/digitalChannel/api/digitalChannelApi';
+import { revokeObjectUrls } from '@/utils/imageBlob';
 import { useAuthStore } from '@/stores/auth';
 import { useDarkModeStore } from '@/stores/darkMode';
 
@@ -13,7 +14,10 @@ const isDark = computed(() => darkStore.isDark);
 const claimUuid = computed(() => route.params.claimUuid);
 
 const claim = ref(null);
-const claimImageSrc = ref(null);
+// Accident photos: [{ documentUuid, documentType, originalFileName, src }] where src is a blob: URL
+const claimPhotos = ref([]);
+const photosLoading = ref(false);
+const selectedPhoto = ref(null);
 const loading = ref(true);
 const updating = ref(false);
 
@@ -21,6 +25,11 @@ const selectedAdjustor = ref('ADJ-100');
 const selectedGarage = ref('GAR-200');
 
 const backendHost = import.meta.env.VITE_BACKEND_HOST || 'http://localhost:8888';
+
+const formatText = (text) => {
+  if (!text) return '—';
+  return String(text).toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+};
 
 const myRole = computed(() => authStore.auth?.user?.roleCode || 'ROLE_CLAIM_MANAGER');
 
@@ -49,11 +58,41 @@ const currentStepIndex = computed(() => {
 async function loadDetail() {
   loading.value = true;
   claim.value = await fetchClaimByUuid(claimUuid.value);
-  if (claim.value?.accidentImagePath) {
-    claimImageSrc.value = await fetchClaimImage(claim.value.claimUuid);
-  }
   loading.value = false;
+  if (claim.value?.claimUuid) loadPhotos(claim.value.claimUuid);
 }
+
+async function loadPhotos(uuid) {
+  photosLoading.value = true;
+  revokeObjectUrls(claimPhotos.value.map(p => p.src));
+  claimPhotos.value = [];
+  try {
+    // Prefer the documents list (multiple photos, typed); fall back to the legacy single image.
+    const docs = (claim.value?.documents?.length ? claim.value.documents : await fetchClaimDocuments(uuid))
+      .filter(d => d.isImage || (d.contentType || '').startsWith('image/'));
+    const loaded = await Promise.all(docs.map(async d => ({ ...d, src: await fetchClaimDocumentUrl(uuid, d.documentUuid) })));
+    claimPhotos.value = loaded.filter(d => d.src);
+    if (!claimPhotos.value.length) {
+      const legacy = await fetchClaimImage(uuid);
+      if (legacy) claimPhotos.value = [{ documentUuid: 'legacy', documentType: 'ACCIDENT_PHOTO', originalFileName: 'Accident photo', src: legacy }];
+    }
+  } finally {
+    photosLoading.value = false;
+  }
+}
+
+function photoLabel(p) {
+  return String(p.documentType || 'PHOTO').toLowerCase().replace(/_/g, ' ');
+}
+
+function handleKeyDown(e) {
+  if (e.key === 'Escape' && selectedPhoto.value) selectedPhoto.value = null;
+}
+
+onBeforeUnmount(() => {
+  revokeObjectUrls(claimPhotos.value.map(p => p.src));
+  document.removeEventListener('keydown', handleKeyDown);
+});
 
 async function advanceWorkflow() {
   if (!claim.value) return;
@@ -87,7 +126,10 @@ function goBack() {
   router.back();
 }
 
-onMounted(loadDetail);
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown);
+  loadDetail();
+});
 </script>
 
 <template>
@@ -104,7 +146,7 @@ onMounted(loadDetail);
       </div>
       <div class="cd-header-actions" v-if="claim">
         <span class="cd-status-badge" :style="`background:${statusColors[claim.status] || '#94a3b8'}18;color:${statusColors[claim.status] || '#94a3b8'};border-color:${statusColors[claim.status] || '#94a3b8'}40`">
-          {{ claim.status }}
+          {{ formatText(claim.status) }}
         </span>
         <button v-if="claim.status !== 'HANDOVER_COMPLETED'" class="cd-advance-btn" :disabled="updating" @click="advanceWorkflow">
           {{ updating ? 'Updating...' : 'Advance Status →' }}
@@ -155,7 +197,7 @@ onMounted(loadDetail);
             </div>
             <div class="cd-info-row">
               <span class="cd-label">Cause of Loss</span>
-              <span class="cd-val">{{ claim.causeOfLoss?.replace(/_/g, ' ') || '—' }}</span>
+              <span class="cd-val">{{ formatText(claim.causeOfLoss) }}</span>
             </div>
             <div class="cd-info-row">
               <span class="cd-label">Incident Date</span>
@@ -172,12 +214,27 @@ onMounted(loadDetail);
             <p class="cd-desc-text">{{ claim.description || 'No detailed description logged.' }}</p>
           </div>
 
-          <!-- Accident Photo -->
+          <!-- Accident Photos (fetched with the auth token, rendered as blob: URLs) -->
           <div class="mt-4">
-            <span class="cd-label mb-2 block">Accident Photo</span>
-            <div class="cd-photo-container">
-              <img :src="claimImageSrc || '/demo_accident.png'" @error="$event.target.src = '/demo_accident.png'" alt="Accident Photo" class="cd-accident-photo" />
+            <span class="cd-label mb-2 block">
+              Accident Photos
+              <span v-if="claimPhotos.length" class="font-normal opacity-60">({{ claimPhotos.length }})</span>
+            </span>
+            <div v-if="photosLoading" class="cd-photo-container py-8 text-xs text-slate-400">Loading photos…</div>
+            <div v-else-if="claimPhotos.length" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <button
+                v-for="p in claimPhotos"
+                :key="p.documentUuid"
+                type="button"
+                class="cd-photo-container aspect-video w-full cursor-pointer hover:opacity-90 transition-opacity relative"
+                :title="p.originalFileName"
+                @click="selectedPhoto = p"
+              >
+                <img :src="p.src" :alt="photoLabel(p)" class="cd-accident-photo" />
+                <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-900/70 text-white">{{ photoLabel(p) }}</span>
+              </button>
             </div>
+            <div v-else class="cd-photo-container py-8 text-xs text-slate-400">No accident photos uploaded by the customer.</div>
           </div>
         </div>
 
@@ -270,7 +327,18 @@ onMounted(loadDetail);
         </div>
       </div>
     </div>
-  </div>
+  
+    <!-- Photo lightbox -->
+    <div v-if="selectedPhoto" class="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4" @click="selectedPhoto = null">
+      <div class="relative w-full max-w-5xl flex flex-col items-center" @click.stop>
+        <button type="button" class="absolute -top-12 right-0 p-2 rounded-full bg-white/10 hover:bg-white/30 text-white" @click.stop="selectedPhoto = null" aria-label="Close">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <img :src="selectedPhoto.src" :alt="photoLabel(selectedPhoto)" class="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+        <p class="text-white/60 text-xs mt-3">{{ photoLabel(selectedPhoto) }} · {{ selectedPhoto.originalFileName || '' }} · click outside or press Esc to close</p>
+      </div>
+    </div>
+</div>
 </template>
 
 <style scoped>

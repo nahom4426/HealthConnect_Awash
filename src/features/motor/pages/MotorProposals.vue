@@ -63,7 +63,7 @@ const filtered = computed(() => {
       p.proposalNumber?.toLowerCase().includes(q) ||
       p.insuredName?.toLowerCase().includes(q) ||
       p.vehiclePlateNumber?.toLowerCase().includes(q);
-    const matchStatus = !statusFilter.value || p.status === statusFilter.value;
+    const matchStatus = !statusFilter.value || normalizeStatus(p.status) === statusFilter.value;
     
     // Role Gating Filter (Adjustors only see assigned items when logged in as Adjustor)
     if (activeRole.value === 'ROLE_ADJUSTOR') {
@@ -91,22 +91,35 @@ const stats = computed(() => {
   const all = proposals.value;
   return {
     total: all.length,
-    submitted: all.filter(p => p.status === 'SUBMITTED').length,
-    inspected: all.filter(p => ['INSPECTION_DONE', 'ADJUSTOR_ASSIGNED'].includes(p.status)).length,
-    issued: all.filter(p => p.status === 'CONTRACT_ISSUED').length,
+    submitted: all.filter(p => normalizeStatus(p.status) === 'SUBMITTED').length,
+    inspected: all.filter(p => ['APPROVED', 'PENDING_PAYMENT'].includes(normalizeStatus(p.status))).length,
+    paid: all.filter(p => normalizeStatus(p.status) === 'PAID').length,
+    issued: all.filter(p => normalizeStatus(p.status) === 'ACTIVE').length,
   };
 });
 
+// One state machine shared with mobile: SUBMITTED → APPROVED → PENDING_PAYMENT → PAID → ACTIVE (or REJECTED).
+// Older rows may still carry legacy values; map them so the dashboard shows a single vocabulary.
+const LEGACY_STATUS = {
+  REGISTERED: 'SUBMITTED', ADJUSTOR_ASSIGNED: 'SUBMITTED', INSPECTION_PENDING: 'SUBMITTED',
+  INSPECTION_DONE: 'APPROVED', COVERAGE_SELECTED: 'APPROVED', PASSED: 'APPROVED',
+  TP_PAID: 'PAID', OD_PAID: 'PAID', CONTRACT_ISSUED: 'ACTIVE', CANCELLED: 'REJECTED',
+};
+function normalizeStatus(st) {
+  const s = String(st || 'SUBMITTED').toUpperCase();
+  return LEGACY_STATUS[s] || s;
+}
+
 function statusMeta(st) {
   const map = {
-    SUBMITTED:         { cls: 'mp-st-submitted',  label: 'Submitted' },
-    ADJUSTOR_ASSIGNED: { cls: 'mp-st-assigned',   label: 'Adjustor Assigned' },
-    TP_PAID:           { cls: 'mp-st-tp',         label: 'TP Paid' },
-    OD_PAID:           { cls: 'mp-st-od',         label: 'OD Paid' },
-    INSPECTION_DONE:   { cls: 'mp-st-inspected',  label: 'Inspection Done' },
-    CONTRACT_ISSUED:   { cls: 'mp-st-issued',     label: 'Contract Issued' },
+    SUBMITTED:       { cls: 'mp-st-submitted', label: 'Submitted' },
+    APPROVED:        { cls: 'mp-st-inspected', label: 'Approved · awaiting payment' },
+    PENDING_PAYMENT: { cls: 'mp-st-assigned',  label: 'Payment in progress' },
+    PAID:            { cls: 'mp-st-tp',        label: 'Paid · issue certificate' },
+    ACTIVE:          { cls: 'mp-st-issued',    label: 'Active' },
+    REJECTED:        { cls: 'mp-st-rejected',  label: 'Rejected' },
   };
-  return map[st] || { cls: 'mp-st-default', label: st || '—' };
+  return map[normalizeStatus(st)] || { cls: 'mp-st-default', label: st || '—' };
 }
 
 function paymentLabel(st) {
@@ -208,11 +221,11 @@ function openDetail(uuid) {
           <select v-model="statusFilter" class="mp-filter-select">
             <option value="">All Statuses</option>
             <option value="SUBMITTED">Submitted</option>
-            <option value="ADJUSTOR_ASSIGNED">Adjustor Assigned</option>
-            <option value="INSPECTION_DONE">Inspection Done</option>
-            <option value="TP_PAID">TP Paid</option>
-            <option value="OD_PAID">OD Paid</option>
-            <option value="CONTRACT_ISSUED">Contract Issued</option>
+            <option value="APPROVED">Approved (awaiting payment)</option>
+            <option value="PENDING_PAYMENT">Payment in progress</option>
+            <option value="PAID">Paid (issue certificate)</option>
+            <option value="ACTIVE">Active</option>
+            <option value="REJECTED">Rejected</option>
           </select>
           <div class="mp-search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;color:#94a3b8"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
@@ -400,6 +413,7 @@ function openDetail(uuid) {
 .mp-pay-pending { background: #fffbeb; color: #d97706; border: 1px solid #fef3c7; }
 
 /* Status badge */
+.mp-st-rejected { background:#fee2e2; color:#b91c1c; }
 .mp-status-badge { display: inline-flex; align-items: center; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.68rem; font-weight: 800; white-space: nowrap; }
 .mp-st-submitted  { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
 .mp-st-assigned   { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }

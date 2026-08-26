@@ -1,10 +1,13 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
+import { revokeObjectUrls } from '@/utils/imageBlob';
 import {
   fetchQuotationById,
   fetchLibreImages,
+  listCarImages,
+  fetchCarImageByUuid,
   saveInitialDeposit,
   updateInitialDepositStatus,
   setQuotationAmounts,
@@ -30,6 +33,10 @@ const showLibreModal = ref(false);
 const libreModalSrc  = ref('');
 const libreModalTitle = ref('');
 
+// ── car images ────────────────────────────────────────────────────────────────
+const carImages = ref([]);
+const carImagesLoading = ref(false);
+
 // ── quotation amount editing ───────────────────────────────────────────────────
 const editingAmount = ref(false);
 const editAmount    = ref('');
@@ -50,7 +57,10 @@ async function loadQuotation() {
     const data = await fetchQuotationById(uuid);
     q.value = data;
     editAmount.value = data?.quotationAmount ?? '';
-    if (data?.carUuid) loadLibre(data.carUuid);
+    if (data?.carUuid) {
+      loadLibre(data.carUuid);
+      loadCarImages(data.carUuid);
+    }
   } catch (e) {
     error.value = e?.response?.data?.message || e.message || 'Failed to load quotation';
   } finally {
@@ -74,7 +84,34 @@ async function loadLibre(carUuid) {
   }
 }
 
+async function loadCarImages(carUuid) {
+  carImagesLoading.value = true;
+  try {
+    const list = await listCarImages(carUuid);
+    const loadedImages = [];
+    for (const img of list) {
+      if (img.imageUuid) {
+        const src = await fetchCarImageByUuid(img.imageUuid);
+        if (src) {
+          loadedImages.push({
+            name: img.imageName || 'Car Image',
+            src: src
+          });
+        }
+      }
+    }
+    carImages.value = loadedImages;
+  } catch (e) {
+    console.warn('Failed to load car images');
+  } finally {
+    carImagesLoading.value = false;
+  }
+}
+
 onMounted(loadQuotation);
+onBeforeUnmount(() => {
+  revokeObjectUrls([libreFront.value, libreBack.value, ...carImages.value.map(i => i.src)]);
+});
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 function statusMeta(status) {
@@ -483,6 +520,35 @@ function viewImage(title, src) {
                     <span>No back page</span>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Car Images -->
+          <div class="qd-card">
+            <div class="qd-card-head">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#10b981"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Vehicle Pre-Inspection Photos
+            </div>
+            <div class="qd-card-body">
+              <div v-if="carImagesLoading" class="qd-libre-loading">
+                <svg class="qd-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#94a3b8"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Loading car images…
+              </div>
+              <div v-else-if="carImages.length > 0" class="qd-libre-grid">
+                <div v-for="img in carImages" :key="img.name" class="qd-libre-item">
+                  <div class="qd-libre-label">{{ img.name }}</div>
+                  <div class="qd-libre-img-wrap" @click="viewImage(img.name, img.src)">
+                    <img :src="img.src" class="qd-libre-img" :alt="img.name" />
+                    <div class="qd-libre-overlay">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:#fff"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="qd-libre-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:#cbd5e1"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>No car photos uploaded</span>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { fetchImageObjectUrl } from '@/utils/imageBlob';
 
 const motorBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
 const partyBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
@@ -575,13 +576,24 @@ export async function fetchQuotationById(quotationUuid) {
   }
 }
 
+/** Legacy libre lookup by file name. Resolves to a blob: URL or null. */
 export async function fetchLibreImages(fileName) {
-  const { data } = await getCoreClient().get('/cars/getLibre', {
-    params: { fileName },
-    responseType: 'arraybuffer',
-  });
-  const b64 = btoa(String.fromCharCode(...new Uint8Array(data)));
-  return `data:image/jpeg;base64,${b64}`;
+  return fetchImageObjectUrl(getCoreClient(), '/cars/getLibre', { params: { fileName } });
+}
+
+export async function listCarImages(carUuid) {
+  try {
+    const { data } = await getClient().get(`/cars/listCarImages/${carUuid}`);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    console.warn('listCarImages error:', e.message);
+    return [];
+  }
+}
+
+/** Authenticated car/libre image by imageUuid. Resolves to a blob: URL or null. */
+export async function fetchCarImageByUuid(imageUuid) {
+  return fetchImageObjectUrl(getClient(), `/cars/getCarImages/${imageUuid}`);
 }
 
 export async function saveInitialDeposit(quotationUuid) {
@@ -664,6 +676,7 @@ export async function registerClientsCar(payload) {
 
   const newQuotation = normalizeQuotation({
     quotationUuid: backendData?.quotationUuid || 'QUO-' + Date.now(),
+    carUuid: backendData?.carUuid || backendData?.data?.carUuid || ('CAR-' + Date.now()),
     quotationNumber: 'NYA-QT-' + Math.floor(100000 + Math.random() * 900000),
     clientFirstName: payload.firstName || 'Abraham',
     clientFatherName: payload.fatherName || 'Addisu',
@@ -697,4 +710,67 @@ export async function registerClientsCar(payload) {
   existing.unshift(newQuotation);
   localStorage.setItem('nyala_motor_quotations', JSON.stringify(existing));
   return { success: true, quotationUuid: newQuotation.quotationUuid, quotation: newQuotation, backendData };
+}
+
+// ─── Digital Channel Claims ─────────────────────────────────
+
+export async function fetchDigitalClaims({ page = 1, limit = 25, status = '' } = {}) {
+  try {
+    const { data } = await getClient().get('/claims', { params: { page, limit, status } });
+    return Array.isArray(data) ? data : (data?.content ?? []);
+  } catch (e) {
+    console.warn('fetchDigitalClaims error:', e.message);
+    return [];
+  }
+}
+
+export async function fetchClaimDetail(claimUuid) {
+  try {
+    const { data } = await getClient().get(`/claims/${claimUuid}`);
+    return data;
+  } catch (e) {
+    console.warn('fetchClaimDetail error:', e.message);
+    return null;
+  }
+}
+
+export async function updateClaimStatus(claimUuid, status, approvedAmount = '') {
+  try {
+    const { data } = await getClient().put(`/claims/${claimUuid}/status`, null, {
+      params: { status, approvedAmount },
+    });
+    return data;
+  } catch (e) {
+    console.warn('updateClaimStatus error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function assignSurveyor(claimUuid, adjustorUuid) {
+  try {
+    const { data } = await getClient().put(`/claims/${claimUuid}/assign-adjustor`, null, {
+      params: { adjustorUuid },
+    });
+    return data;
+  } catch (e) {
+    console.warn('assignSurveyor error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function assignGarage(claimUuid, garageUuid) {
+  try {
+    const { data } = await getClient().put(`/claims/${claimUuid}/assign-garage`, null, {
+      params: { garageUuid },
+    });
+    return data;
+  } catch (e) {
+    console.warn('assignGarage error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+/** Authenticated primary accident photo of a claim. Resolves to a blob: URL or null. */
+export async function fetchClaimImage(claimUuid) {
+  return fetchImageObjectUrl(getClient(), `/claims/${claimUuid}/image`);
 }

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { fetchImageObjectUrl } from '@/utils/imageBlob';
 
 const apiBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
 
@@ -89,18 +90,25 @@ export async function fetchClaimByUuid(claimUuid) {
   return local.find(c => c.claimUuid === claimUuid) || null;
 }
 
+/** Authenticated primary accident photo of a claim. Resolves to a blob: URL, or null when none exists. */
 export async function fetchClaimImage(claimUuid) {
+  return fetchImageObjectUrl(getClient(), `/claims/${claimUuid}/image`);
+}
+
+/** Metadata of every document attached to a claim (photos, police report, ...). */
+export async function fetchClaimDocuments(claimUuid) {
   try {
-    const { data } = await getClient().get(`/claims/${claimUuid}/image`, {
-      responseType: 'arraybuffer',
-    });
-    const b64 = btoa(String.fromCharCode(...new Uint8Array(data)));
-    return `data:image/png;base64,${b64}`;
+    const { data } = await getClient().get(`/claims/${claimUuid}/documents`);
+    return Array.isArray(data) ? data : [];
   } catch (e) {
-    console.warn(`fetchClaimImage error for ${claimUuid}:`, e.message);
-    // DEMO TRICK: If MinIO upload failed or the image is missing, silently return the static fallback
-    return '/demo_accident.png';
+    console.warn(`fetchClaimDocuments error for ${claimUuid}:`, e.message);
+    return [];
   }
+}
+
+/** Authenticated bytes of one claim document as a blob: URL (null if missing). */
+export async function fetchClaimDocumentUrl(claimUuid, documentUuid) {
+  return fetchImageObjectUrl(getClient(), `/claims/${claimUuid}/documents/${documentUuid}`);
 }
 
 export async function fetchClaimsByModule(productModule) {
@@ -253,47 +261,83 @@ export async function assignProposalAdjustor(proposalUuid, { adjustorUuid, adjus
   }
 }
 
+function errorResult(e, fallback) {
+  const body = e?.response?.data;
+  return {
+    success: false,
+    status: e?.response?.status,
+    errorCode: body?.errorCode,
+    message: body?.message || e?.message || fallback,
+  };
+}
+
+/** Adjustor/underwriter inspection finding: PASSED → APPROVED, FAILED → REJECTED. Errors are returned, not faked. */
 export async function submitProposalInspection(proposalUuid, { status, notes }) {
   try {
-    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/inspection`, {
-      status, notes
-    });
-    return data;
+    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/inspection`, { status, notes });
+    return { success: true, ...data };
   } catch (e) {
-    return { success: true, status: 'INSPECTION_DONE' };
+    return errorResult(e, 'Failed to record the inspection');
   }
 }
 
+/** Underwriter approval (SUBMITTED → APPROVED). */
+export async function approveProposal(proposalUuid, notes = '') {
+  try {
+    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/approve`, { notes });
+    return { success: true, ...data };
+  } catch (e) {
+    return errorResult(e, 'Failed to approve the proposal');
+  }
+}
+
+/** Underwriter rejection (→ REJECTED). */
+export async function rejectProposal(proposalUuid, reason = '') {
+  try {
+    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/reject`, { reason });
+    return { success: true, ...data };
+  } catch (e) {
+    return errorResult(e, 'Failed to reject the proposal');
+  }
+}
+
+/** Latest payment attempt + history for the proposal (read-only for the dashboard). */
+export async function fetchProposalPayment(proposalUuid) {
+  try {
+    const { data } = await getClient().get(`/motor/proposals/${proposalUuid}/payment`);
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+/** @deprecated the customer pays on mobile; kept for the legacy simulation buttons. */
 export async function payTpEthioTelecom(proposalUuid) {
   try {
     const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/pay-tp-ethiotelecom`);
-    return data;
+    return { success: true, ...data };
   } catch (e) {
-    return { success: true, txnRef: 'ETHIO-TP-' + Date.now(), message: 'Compulsory TP payment processed' };
+    return errorResult(e, 'TP payment failed');
   }
 }
 
+/** @deprecated the customer pays on mobile; kept for the legacy simulation buttons. */
 export async function payOdEthiSwitch(proposalUuid, { bankCode = 'CBE', paymentMethod = 'ACCOUNT_TRANSFER' } = {}) {
   try {
-    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/pay-od-ethiswitch`, {
-      bankCode, paymentMethod
-    });
-    return data;
+    const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/pay-od-ethiswitch`, { bankCode, paymentMethod });
+    return { success: true, ...data };
   } catch (e) {
-    return { success: true, txRef: 'ETHISWITCH-OD-' + Date.now(), message: 'Own Damage payment processed via EthiSwitch' };
+    return errorResult(e, 'OD payment failed');
   }
 }
 
+/** Issue the policy contract & certificate. Backend requires status PAID; the real error is returned. */
 export async function issueProposalContract(proposalUuid) {
   try {
     const { data } = await getClient().post(`/motor/proposals/${proposalUuid}/issue-contract`);
-    return data;
+    return { success: true, ...data };
   } catch (e) {
-    return {
-      success: true,
-      policyNumber: 'NYA-MOT-POL-' + Math.floor(100000 + Math.random() * 900000),
-      status: 'CONTRACT_ISSUED'
-    };
+    return errorResult(e, 'Failed to issue the contract');
   }
 }
 

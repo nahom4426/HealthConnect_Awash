@@ -29,10 +29,10 @@ const showUserMenu = ref(false);
 // Matching card theme colors with standalone larger icons (no inner box wrapper)
 const cardThemeMap = {
   motor: {
-    cardBg: 'bg-[#f0f7ff]',
-    border: 'border-blue-200/70 hover:border-blue-400',
+    cardBg: 'bg-[#eef4ff]',
+    border: 'border-blue-300/80 hover:border-blue-500 ring-1 ring-blue-100',
     iconColor: 'text-blue-600',
-    badge: 'bg-emerald-100 text-emerald-700',
+    badge: 'bg-blue-100 text-blue-700',
     actionText: 'text-blue-600 group-hover:text-blue-700',
   },
   fire: {
@@ -167,10 +167,10 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
     <!-- Main Content Container -->
     <main class="max-w-7xl w-full mx-auto px-8 py-8 flex-1">
       
-      <!-- Sleek Welcome Section (Clean, Very Bold Title, Increased Description Font, No Left Icon) -->
-      <div class="mb-8 space-y-1">
-        <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Welcome, {{ userName }}</h2>
-        <p class="text-sm sm:text-base font-medium text-slate-500 leading-relaxed">Select an insurance module to manage rate configurations, underwriting workflows, and claims processing.</p>
+      <!-- Welcome Section -->
+      <div class="mb-8 space-y-1.5">
+        <h2 class="text-2xl sm:text-[1.85rem] font-black text-slate-900 tracking-tight leading-tight">Welcome, {{ userName }}</h2>
+        <p class="text-sm sm:text-[0.92rem] font-medium text-slate-500 leading-relaxed">Select an insurance module to manage rate configurations, underwriting workflows, and claims processing.</p>
       </div>
 
       <!-- Module Cards Grid -->
@@ -209,27 +209,27 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
             </div>
 
             <!-- Title & Description -->
-            <h3 class="text-base font-bold text-slate-900 mb-2 tracking-tight">
+            <h3 class="text-[0.95rem] font-extrabold text-slate-900 mb-1.5 tracking-tight">
               {{ langStore.t('modules.' + mod.id) }}
             </h3>
 
-            <p class="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed line-clamp-3 mb-6">
+            <p class="text-xs sm:text-[0.82rem] text-slate-500 font-medium leading-relaxed line-clamp-3 mb-6">
               {{ langStore.t('modules.' + mod.id + 'Desc') }}
             </p>
           </div>
 
-          <!-- Bottom Action Row: Version + Configure Link -->
-          <div class="pt-4 border-t border-slate-200/60 flex items-center justify-between text-xs">
-            <span class="text-[11px] font-semibold text-slate-400">
+          <!-- Bottom Action Row -->
+          <div class="pt-3.5 border-t border-slate-200/60 flex items-center justify-between text-xs">
+            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
               Module v3.2
             </span>
             <span 
               :class="[
-                'font-bold inline-flex items-center gap-1 transition-transform group-hover:translate-x-0.5',
+                'font-extrabold text-[0.8rem] inline-flex items-center gap-1 transition-transform group-hover:translate-x-0.5',
                 cardThemeMap[mod.id]?.actionText || 'text-blue-600'
               ]"
             >
-              Configure →
+              Open →
             </span>
           </div>
         </div>

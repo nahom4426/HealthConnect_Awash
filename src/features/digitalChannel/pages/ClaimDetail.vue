@@ -342,8 +342,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-.cd-root { font-family:'Plus Jakarta Sans',system-ui,sans-serif; --cd-bg:#f8fafc; --cd-card:#fff; --cd-border:#e2e8f0; --cd-title:#0f172a; --cd-sub:#64748b; --cd-muted:#94a3b8; min-height:100%; background:var(--cd-bg); padding:1.5rem 1.75rem 3rem; }
+.cd-root { font-family:'Inter',system-ui,sans-serif; --cd-bg:#f8fafc; --cd-card:#fff; --cd-border:#e2e8f0; --cd-title:#0f172a; --cd-sub:#64748b; --cd-muted:#94a3b8; min-height:100%; background:var(--cd-bg); padding:1.5rem 1.75rem 3rem; }
 .cd-root.dark { --cd-bg:#090d16; --cd-card:rgba(30,41,59,0.65); --cd-border:rgba(255,255,255,0.06); --cd-title:#f1f5f9; --cd-sub:#94a3b8; --cd-muted:#64748b; }
 .cd-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
 .cd-header-left { display:flex; align-items:center; gap:.85rem; }

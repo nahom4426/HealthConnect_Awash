@@ -167,7 +167,7 @@ const isDark = computed(() => darkStore.isDark);
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   transition: background 0.4s ease;
 }
 
@@ -250,10 +250,10 @@ const isDark = computed(() => darkStore.isDark);
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1100px;
   display: grid;
-  grid-template-columns: 1fr 420px;
-  gap: 4rem;
+  grid-template-columns: 1fr 400px;
+  gap: 5rem;
   align-items: center;
   padding: 2rem;
   box-sizing: border-box;
@@ -262,7 +262,7 @@ const isDark = computed(() => darkStore.isDark);
 @media (max-width: 968px) {
   .login-container {
     grid-template-columns: 1fr;
-    max-width: 480px;
+    max-width: 420px;
     gap: 2rem;
   }
   .login-left {
@@ -274,21 +274,22 @@ const isDark = computed(() => darkStore.isDark);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1.25rem;
+  gap: 1rem;
   animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hero-logo-box {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .clean-nyala-logo {
-  max-width: 220px;
+  max-width: 200px;
   width: 100%;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 10px 25px rgba(122, 28, 33, 0.15));
+  filter: drop-shadow(0 8px 20px rgba(122, 28, 33, 0.12));
   transition: transform 0.3s ease;
 }
 
@@ -300,16 +301,17 @@ const isDark = computed(() => darkStore.isDark);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  padding-left: 0;
 }
 
 .hero-motto {
-  font-size: 0.825rem;
-  font-weight: 800;
+  font-size: 0.8rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.15em;
   color: #7A1C21;
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 0.6rem 0;
   line-height: 1.3;
   transition: color 0.4s ease;
 }
@@ -319,12 +321,12 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 .hero-title {
-  font-size: 2.6rem;
-  font-weight: 800;
-  line-height: 1.15;
-  margin: 0 0 0.75rem 0;
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0 0 0.5rem -2px;
   color: #7A1C21;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   transition: color 0.4s ease;
 }
 
@@ -333,20 +335,20 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 .hero-subtitle {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #D4AF37;
-  margin: 0 0 1.25rem 0;
+  margin: 0 0 1.1rem 0;
   line-height: 1.35;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   transition: color 0.4s ease;
 }
 
 .hero-desc {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #475569;
-  line-height: 1.65;
-  max-width: 440px;
+  line-height: 1.7;
+  max-width: 400px;
   margin: 0;
   font-weight: 450;
   transition: color 0.4s ease;
@@ -365,15 +367,15 @@ const isDark = computed(() => darkStore.isDark);
 
 .glass-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   background: var(--card-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow: var(--card-shadow);
   animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-  overflow: hidden; /* Contains LoginForm */
+  overflow: hidden;
   transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
@@ -392,14 +394,14 @@ const isDark = computed(() => darkStore.isDark);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem 1.5rem 0.25rem;
+  padding: 1.75rem 1.5rem 0;
 }
 
 .card-logo {
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 12px rgba(122, 28, 33, 0.15));
+  filter: drop-shadow(0 4px 10px rgba(122, 28, 33, 0.12));
 }
 
 .login-footer {
@@ -429,11 +431,11 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 :deep(.lf-body) {
-  padding: 0.75rem 2rem 2.25rem;
+  padding: 0.5rem 1.75rem 2rem;
 }
 
 :deep(.lf-header) {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 :deep(.lf-header-icon) {
@@ -442,7 +444,8 @@ const isDark = computed(() => darkStore.isDark);
 
 :deep(.lf-title) {
   color: var(--brand-color) !important;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
+  font-weight: 800 !important;
   transition: color 0.4s ease;
 }
 

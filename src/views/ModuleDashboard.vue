@@ -330,11 +330,10 @@ function switchModule() {
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Abyssinica+SIL&display=swap');
 
 /* ── CSS Variables ── */
 .mdb-root {
-  font-family: 'Plus Jakarta Sans', 'Abyssinica SIL', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   --mdb-root-bg: #f8fafc;
   --mdb-card-bg: rgba(255, 255, 255, 0.7);
   --mdb-card-border: rgba(226, 232, 240, 0.8);

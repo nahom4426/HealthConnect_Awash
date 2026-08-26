@@ -73,10 +73,21 @@ const filteredClaims = computed(() => {
   return scopedClaims.value.filter(c => c.status === filter.value);
 });
 
+const PAGE_SIZE = 10;
+const currentPage = ref(1);
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredClaims.value.length / PAGE_SIZE)));
+const paginatedClaims = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE;
+  return filteredClaims.value.slice(start, start + PAGE_SIZE);
+});
+
+function goToPage(p) { if (p >= 1 && p <= totalPages.value) currentPage.value = p; }
+
 async function loadClaims() {
   loading.value = true;
   if (mod.value?.id) claims.value = await fetchClaimsByModule(mod.value.id);
   loading.value = false;
+  currentPage.value = 1;
 }
 
 function openDetail(claim, event) {
@@ -103,6 +114,8 @@ const pageTitle = computed(() => {
   if (pageMode.value === 'approved') return `${name} — Approved Claims`;
   return `${name} — Claims Processing`;
 });
+
+watch(filter, () => { currentPage.value = 1; });
 
 onMounted(() => {
   filter.value = 'ALL';
@@ -135,7 +148,9 @@ watch(() => route.path, () => {
 
     <div class="cp-filters">
       <button v-for="f in filterTabs" :key="f"
-        class="cp-filter-btn" :class="{ active: filter === f }" @click="filter = f">
+        class="cp-filter-btn" :class="{ active: filter === f }"
+        :style="`--fc:${statusColors[f] || '#6366f1'}`"
+        @click="filter = f">
         {{ f === 'ALL' ? 'All' : (statusLabels[f] || f) }}
       </button>
     </div>
@@ -167,8 +182,8 @@ watch(() => route.path, () => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(claim, idx) in filteredClaims" :key="claim.claimUuid" class="cp-row" @click="openDetail(claim, $event)">
-            <td class="td-num">{{ idx + 1 }}</td>
+          <tr v-for="(claim, idx) in paginatedClaims" :key="claim.claimUuid" class="cp-row" @click="openDetail(claim, $event)">
+            <td class="td-num">{{ (currentPage - 1) * PAGE_SIZE + idx + 1 }}</td>
             <td class="td-claim-num">{{ claim.claimNumber }}</td>
             <td class="td-mono">{{ claim.policyNumber }}</td>
             <td><span class="cp-tag-pill">{{ claim.coverageType?.replace(/_/g, ' ') || '—' }}</span></td>
@@ -189,15 +204,23 @@ watch(() => route.path, () => {
           </tr>
         </tbody>
       </table>
+
+      <div v-if="totalPages > 1" class="cp-pagination">
+        <span class="cp-page-info">Showing {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(currentPage * PAGE_SIZE, filteredClaims.length) }} of {{ filteredClaims.length }}</span>
+        <div class="cp-page-btns">
+          <button class="cp-page-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">← Prev</button>
+          <button v-for="p in totalPages" :key="p" class="cp-page-btn" :class="{ active: p === currentPage }" @click="goToPage(p)">{{ p }}</button>
+          <button class="cp-page-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">Next →</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 .cp-root {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   --cp-bg: #f8fafc; --cp-card: #fff; --cp-border: #e2e8f0;
   --cp-title: #0f172a; --cp-sub: #64748b; --cp-muted: #94a3b8;
   --cp-accent: #6366f1;
@@ -218,9 +241,9 @@ watch(() => route.path, () => {
 .cp-new-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,.25); }
 
 .cp-filters { display: flex; gap: .4rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-.cp-filter-btn { font-size: .73rem; font-weight: 600; padding: .38rem .75rem; border-radius: 20px; border: 1px solid var(--cp-border); background: var(--cp-card); color: var(--cp-sub); cursor: pointer; transition: all .2s; }
-.cp-filter-btn:hover { border-color: var(--cp-accent); color: var(--cp-accent); }
-.cp-filter-btn.active { background: var(--cp-accent); color: #fff; border-color: var(--cp-accent); }
+.cp-filter-btn { font-size: .73rem; font-weight: 600; padding: .38rem .75rem; border-radius: 20px; border: 1px solid color-mix(in srgb, var(--fc) 20%, transparent); background: color-mix(in srgb, var(--fc) 6%, var(--cp-card)); color: var(--fc); cursor: pointer; transition: all .2s; }
+.cp-filter-btn:hover { background: color-mix(in srgb, var(--fc) 12%, var(--cp-card)); border-color: color-mix(in srgb, var(--fc) 35%, transparent); }
+.cp-filter-btn.active { background: var(--fc); color: #fff; border-color: var(--fc); font-weight: 700; box-shadow: 0 2px 8px color-mix(in srgb, var(--fc) 25%, transparent); }
 
 .cp-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; gap: .75rem; color: var(--cp-muted); }
 .cp-spinner { width: 28px; height: 28px; border: 3px solid var(--cp-border); border-top-color: var(--cp-accent); border-radius: 50%; animation: spin .8s linear infinite; }
@@ -233,14 +256,17 @@ watch(() => route.path, () => {
 
 .cp-table-wrapper { background: var(--cp-card); border: 1px solid var(--cp-border); border-radius: 14px; overflow-x: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }
 .cp-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .82rem; }
-.cp-table th { padding: .75rem 1rem; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--cp-sub); border-bottom: 1px solid var(--cp-border); background: rgba(248,250,252,0.8); white-space: nowrap; }
+.cp-table th { padding: .75rem 1rem; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--cp-title); border-bottom: 1.5px solid var(--cp-border); background: rgba(248,250,252,0.9); white-space: nowrap; }
 .cp-root.dark .cp-table th { background: rgba(15,23,42,0.6); }
 .th-num { width: 44px; text-align: center; }
 .th-actions { text-align: right; }
 
 .cp-row { cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--cp-border); }
+.cp-row:nth-child(even) { background: #f8fafc; }
+.cp-root.dark .cp-row:nth-child(even) { background: rgba(15,23,42,0.4); }
 .cp-row:last-child { border-bottom: none; }
-.cp-row:hover { background: rgba(99,102,241,0.03); }
+.cp-row:hover { background: #eef2ff; }
+.cp-root.dark .cp-row:hover { background: rgba(99,102,241,0.08); }
 
 .cp-table td { padding: .7rem 1rem; color: var(--cp-title); vertical-align: middle; white-space: nowrap; }
 .td-num { text-align: center; font-weight: 600; color: var(--cp-muted); width: 44px; }
@@ -258,4 +284,12 @@ watch(() => route.path, () => {
 .cp-detail-btn:hover { border-color: var(--cp-accent); color: var(--cp-accent); }
 .cp-advance-btn { font-size: .72rem; font-weight: 700; padding: .32rem .65rem; border-radius: 7px; border: 1px solid #a5b4fc; background: rgba(99,102,241,.06); color: var(--cp-accent); cursor: pointer; transition: all .2s; margin-left: .4rem; }
 .cp-advance-btn:hover { background: var(--cp-accent); color: #fff; border-color: var(--cp-accent); }
+
+.cp-pagination { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem; border-top: 1px solid var(--cp-border); flex-wrap: wrap; gap: .5rem; }
+.cp-page-info { font-size: .75rem; font-weight: 600; color: var(--cp-sub); }
+.cp-page-btns { display: flex; align-items: center; gap: .3rem; }
+.cp-page-btn { font-size: .72rem; font-weight: 700; padding: .3rem .6rem; border-radius: 6px; border: 1px solid var(--cp-border); background: var(--cp-card); color: var(--cp-sub); cursor: pointer; transition: all .15s; }
+.cp-page-btn:hover:not(:disabled) { border-color: var(--cp-accent); color: var(--cp-accent); }
+.cp-page-btn.active { background: var(--cp-accent); color: #fff; border-color: var(--cp-accent); }
+.cp-page-btn:disabled { opacity: .4; cursor: not-allowed; }
 </style>

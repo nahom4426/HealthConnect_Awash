@@ -3,15 +3,6 @@ import { ref, computed } from 'vue';
 
 export const MODULES = [
   {
-    id: 'health',
-    name: 'Health Insurance',
-    description: 'Define premium tables for individual, family and group medical cover.',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
-    color: { from: '#064e3b', to: '#059669', accent: '#34d399', glow: 'rgba(5,150,105,0.4)' },
-    badge: 'Active',
-    dashboardPath: '/dashboard',
-  },
-  {
     id: 'motor',
     name: 'Motor Insurance',
     description: 'Configure premium rates for private cars, commercial vehicles, motorcycles and fleet.',
@@ -19,6 +10,15 @@ export const MODULES = [
     color: { from: '#1e3a8a', to: '#2563eb', accent: '#60a5fa', glow: 'rgba(37,99,235,0.4)' },
     badge: 'Most Used',
     dashboardPath: '/motor/dashboard',
+  },
+  {
+    id: 'health',
+    name: 'Health Insurance',
+    description: 'Define premium tables for individual, family and group medical cover.',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+    color: { from: '#064e3b', to: '#059669', accent: '#34d399', glow: 'rgba(5,150,105,0.4)' },
+    badge: 'Active',
+    dashboardPath: '/dashboard',
   },
   {
     id: 'fire',

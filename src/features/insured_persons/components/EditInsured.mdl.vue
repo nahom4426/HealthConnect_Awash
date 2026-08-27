@@ -86,12 +86,14 @@ async function handleSubmit(formValues) {
       return;
     }
 
+    const targetInstitutionUuid = formValues.institutionUuid || route.params.institutionUuid || null;
+
     // Prepare the insured data according to backend expectations (same as add component)
     const insuredPayload = normalizePayload({
       email: formValues.email,
-      institutionUuid: formValues.institutionUuid || route.params.institutionUuid || null,
+      institutionUuid: targetInstitutionUuid,
       payerInstitutionContractUuid: formValues.payerUuid || route.params.id || null,
-      hasInstitution: false,
+      hasInstitution: Boolean(targetInstitutionUuid),
       group: false,
       premium: 0,
       title: "string",

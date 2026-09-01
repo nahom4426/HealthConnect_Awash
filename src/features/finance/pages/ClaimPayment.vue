@@ -9,7 +9,6 @@ import { useClaimByInstitutionBatch } from "@/features/claim/store/claimByInstit
 import ClaimByBatchDataProvider from '@/features/claim/components/ClaimByBatchDataProvider.vue';
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
-import { ModalName } from "@customizer/modal-x";
 
 
 

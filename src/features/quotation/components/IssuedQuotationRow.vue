@@ -89,7 +89,6 @@ function getPolicyTypeStyle(policyType: any) {
     case "INDIVIDUAL":
       return `${base} bg-purple-50 text-purple-700 border border-purple-200`;
     case "GENERAL":
-    case "GENERAL":
       return `${base} bg-indigo-50 text-indigo-700 border border-indigo-200`;
     case "GROUP":
       return `${base} bg-teal-50 text-teal-700 border border-teal-200`;

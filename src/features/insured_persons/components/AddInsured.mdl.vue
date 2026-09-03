@@ -63,7 +63,8 @@ async function handleSubmit(formValues) {
       institutionUuid: targetInstitutionUuid, // Add if required
       payerInstitutionContractUuid: payerInstitutionContractUuid || null, // Assuming this is the correct mapping
       hasInstitution: Boolean(targetInstitutionUuid),
-      group: false,
+      hasGroup: Boolean(targetInstitutionUuid),
+      group: Boolean(targetInstitutionUuid),
       premium: 0, // Default value as per backend
       title: "string", // Default or from formValues if available
       firstName: formValues.firstName,

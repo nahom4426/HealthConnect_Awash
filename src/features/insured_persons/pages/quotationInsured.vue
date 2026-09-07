@@ -171,20 +171,20 @@ onMounted(() => {
           />
           <input
             v-model="search"
-            :placeholder="active === 0 ? 'Search employees' : 'Search group'"
+            :placeholder="active === 0 ? (hasInstitution === 'true' ? 'Search employees' : 'Search insureds') : 'Search group'"
             class="flex-1 py-2 h-full bg-transparent outline-none px-"
           />
         </div>
 
-        <!-- Employee buttons - Only show for institution policies (hasInstitution=true) -->
-        <div v-if="active === 0 && hasInstitution === 'true'" class="flex gap-3 items-center">
+        <!-- Employee / Insured buttons - Shown for both institution and individual policies -->
+        <div v-if="active === 0" class="flex gap-3 items-center">
           <button
             v-if="actionPage !== 'amend' && actionPage !== 'history'"
             class="flex gap-2 items-center px-6 py-4 font-medium text-white whitespace-nowrap rounded-md shadow-sm transition-all bg-primary hover:bg-primary/90"
             @click="openModal('quotationInsured')"
           >
             <i v-html="icons.plus_circle"></i>
-            Import Employees
+            {{ hasInstitution === 'true' ? 'Import Employees' : 'Import Insureds' }}
           </button>
 
           <!-- Import from previous contract — only shown on renewed policies -->

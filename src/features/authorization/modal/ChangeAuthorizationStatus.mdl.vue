@@ -24,6 +24,9 @@ const status = ref(props.data?.currentStatus || "REQUESTED");
 const activeDays = ref(
   [undefined, null].includes(props.data?.activeDays) ? "" : String(props.data?.activeDays)
 );
+const amount = ref(
+  [undefined, null].includes(props.data?.authorizedAmount) ? "" : String(props.data?.authorizedAmount)
+);
 
 function toDateOnly(v) {
   if (!v) return "";
@@ -54,10 +57,13 @@ async function submit() {
   if (!status.value) return;
   if (!endDateRaw.value) return;
 
+  const parsedAmount = amount.value !== "" && amount.value !== null && amount.value !== undefined ? Number(amount.value) : (props.data?.authorizedAmount ?? 0);
+
   const payload = {
     status: status.value,
     endDate: toDdMmYyyy(endDateRaw.value),
     activeDays: activeDays.value ? Number(activeDays.value) : undefined,
+    amount: parsedAmount,
   };
 
   api.send(
@@ -71,6 +77,7 @@ async function submit() {
           status: payload.status,
           endDate: payload.endDate,
           activeDays: payload.activeDays,
+          authorizedAmount: payload.amount,
         });
       } else {
         toasted(false, "Failed to update authorization", res?.error);
@@ -124,6 +131,18 @@ async function submit() {
                 'REJECTED',
                 'CANCELLED'
               ]"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700">Authorized Amount</label>
+            <input
+              v-model="amount"
+              type="number"
+              step="any"
+              min="0"
+              placeholder="e.g. 1000.00"
+              class="h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
             />
           </div>
 

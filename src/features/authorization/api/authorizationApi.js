@@ -17,13 +17,13 @@ export function getAuthorizations(query = {}) {
 
 export function changeAuthorizationStatus(
   authorizationUuid,
-  { status, endDate, activeDays } = {}
+  { status, endDate, activeDays, amount } = {}
 ) {
   return api.addAuthenticationHeader().put(
     `${basePath}/changeStatus/${authorizationUuid}`,
     {},
     {
-      params: { status, endDate, activeDays },
+      params: { status, endDate, activeDays, amount },
     }
   );
 }

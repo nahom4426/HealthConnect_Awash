@@ -54,17 +54,70 @@ const wasSuccessful = ref(false);
 
 const normalizeProviderName = (name) => {
   return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/gi, ' ')
     .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
+    .trim();
 };
 
 const extractProviderNameFromFilename = (name) => {
-  const file = String(name || '');
-  // Expected export filename: services_{provider}_{YYYY-MM-DD}.xlsx
-  const m = file.match(/services_([\w\-]+)_\d{4}-\d{2}-\d{2}\.(xlsx|xls|csv)$/i);
-  if (!m) return '';
-  return String(m[1] || '').replace(/_/g, ' ').trim();
+  let file = String(name || '').trim();
+  if (!file) return '';
+  // Remove file extension
+  file = file.replace(/\.(xlsx|xls|csv)$/i, '');
+  // Remove copy suffixes like (1), _1, etc.
+  file = file.replace(/\s*\(\d+\)$/, '');
+  // Remove prefix services_, contract_, provider_ if present
+  file = file.replace(/^(services|contract|provider|eligible_services)_/i, '');
+  // Remove trailing date pattern like _2026-08-18 or _20260818
+  file = file.replace(/_\d{4}-\d{2}-\d{2}$/, '');
+  file = file.replace(/_\d{8}$/, '');
+
+  return file.replace(/_/g, ' ').trim();
+};
+
+const calculateProviderSimilarity = (name1, name2) => {
+  const norm1 = normalizeProviderName(name1);
+  const norm2 = normalizeProviderName(name2);
+
+  if (!norm1 || !norm2) return 0;
+  if (norm1 === norm2) return 1.0;
+
+  const len1 = norm1.length;
+  const len2 = norm2.length;
+  const maxLen = Math.max(len1, len2);
+  if (maxLen === 0) return 1.0;
+
+  // 1. Levenshtein Distance
+  const track = Array(len2 + 1)
+    .fill(null)
+    .map(() => Array(len1 + 1).fill(null));
+
+  for (let i = 0; i <= len1; i++) track[0][i] = i;
+  for (let j = 0; j <= len2; j++) track[j][0] = j;
+
+  for (let j = 1; j <= len2; j++) {
+    for (let i = 1; i <= len1; i++) {
+      const indicator = norm1[i - 1] === norm2[j - 1] ? 0 : 1;
+      track[j][i] = Math.min(
+        track[j][i - 1] + 1, // deletion
+        track[j - 1][i] + 1, // insertion
+        track[j - 1][i - 1] + indicator // substitution
+      );
+    }
+  }
+
+  const distance = track[len2][len1];
+  const charSimilarity = 1 - distance / maxLen;
+
+  // 2. Token Jaccard similarity (for extra words or word order differences)
+  const tokens1 = new Set(norm1.split(' ').filter(Boolean));
+  const tokens2 = new Set(norm2.split(' ').filter(Boolean));
+  const intersection = new Set([...tokens1].filter((x) => tokens2.has(x)));
+  const union = new Set([...tokens1, ...tokens2]);
+  const tokenSimilarity = union.size > 0 ? intersection.size / union.size : 0;
+
+  return Math.max(charSimilarity, tokenSimilarity);
 };
 
 const extractProviderNameFromSheet = (sheetRows) => {
@@ -125,12 +178,15 @@ const validateProviderName = async (file) => {
 
     if (!providerToCompare) return true;
 
-    if (normalizeProviderName(providerToCompare) !== normalizeProviderName(currentProviderName)) {
+    const similarity = calculateProviderSimilarity(currentProviderName, providerToCompare);
+
+    if (similarity < 0.8) {
+      const matchPct = Math.round(similarity * 100);
       message.value = {
         type: 'error',
-        text: `Provider names don't match. Current: ${currentProviderName}. File: ${providerToCompare}. Please use the correct exported Excel.`
+        text: `Provider names don't match (${matchPct}% match, at least 80% required). Current: "${currentProviderName}". File: "${providerToCompare}". Please use the correct exported Excel.`
       };
-      toasted(false, '', "Provider names don't match. Please use the correct exported Excel.");
+      toasted(false, '', `Provider names don't match (${matchPct}% match). Please use the correct exported Excel.`);
       clearSelectedFile();
       return false;
     }
@@ -424,38 +480,16 @@ const handleFile = (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  // Check file extension instead of MIME type
-  const name = file.name.toLowerCase();
-  const validExtensions = ['.csv', '.xls', '.xlsx'];
-  
-  // Get the file extension properly
-  const lastDotIndex = name.lastIndexOf('.');
-  if (lastDotIndex === -1) {
-    message.value = { type: "error", text: "Please upload Excel (.xls, .xlsx) or CSV file" };
-    return;
-  }
-  
-  const fileExtension = name.substring(lastDotIndex);
-  
-  console.log('File name:', name);
-  console.log('File extension:', fileExtension);
-  console.log('Valid extensions:', validExtensions);
-  console.log('Is valid:', validExtensions.includes(fileExtension));
-  
-  if (!validExtensions.includes(fileExtension)) {
-    message.value = { type: "error", text: "Please upload Excel (.xls, .xlsx) or CSV file" };
-    return;
-  }
+  const validTypes = [
+    "text/csv",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ];
 
-  // Remove or comment out the MIME type check for now, or make it more permissive
-  // if (file.type && file.type !== "" && 
-  //     file.type !== "application/octet-stream" &&
-  //     file.type !== "text/csv" &&
-  //     file.type !== "application/vnd.ms-excel" &&
-  //     file.type !== "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-  //   message.value = { type: "error", text: "Please upload Excel/CSV file" };
-  //   return;
-  // }
+  if (!validTypes.includes(file.type)) {
+    message.value = { type: "error", text: "Please upload Excel/CSV file" };
+    return;
+  }
 
   if (file.size > 5 * 1024 * 1024) {
     message.value = { type: "error", text: "File size exceeds 5MB limit" };
@@ -463,9 +497,8 @@ const handleFile = (e) => {
   }
 
   selectedFile.value = file;
-  fileName.value = file.name; // Use the ref, not local variable
+  fileName.value = file.name;
   message.value = { type: null, text: null };
-  
   if (importType.value === "institution") {
     parseFileForPreview(file);
     return;

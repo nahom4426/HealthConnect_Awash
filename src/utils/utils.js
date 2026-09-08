@@ -36,9 +36,9 @@ export function generateUUID() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  
+
   // Fallback for older browsers
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -182,6 +182,16 @@ export function formatCurrency(currencyValue) {
     currency: "ETB",
   }).format(parseInt(currencyValue));
   return currencyFormat;
+}
+
+export function formatMoney(val) {
+  if (val === null || val === undefined || val === "") return "-";
+  const num = Number(val);
+  if (isNaN(num)) return "-";
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 export function getColumnValue(key, row) {
   return key.split(".").reduce((all, el) => {

@@ -31,7 +31,10 @@ const components = [
 // Get provider ID from route
 const providerId = computed(() =>  route.params.providerUuid);
 const payerProviderContractUuid = computed(() =>  route.params.id);
-const providerName = computed(() => route.params.providerName || 'Provider Services');
+const providerName = computed(() => {
+  const raw = route.params.providerName;
+  return raw ? decodeURIComponent(raw) : 'Provider Services';
+});
 const exportModal = ref(false);
 const categories = ref([]);
 const selectedCategories = ref([]);
@@ -221,11 +224,11 @@ const exportServices = async () => {
             aria-label="Export Services From Providers"
             class="flex overflow-hidden justify-center items-center px-0 w-12 h-12 text-white whitespace-nowrap bg-indigo-600 rounded-xl shadow-sm transition-all duration-200 group hover:w-auto hover:px-4 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span class="order-1 mr-2 text-sm font-semibold">E</span>
+            <span class="order-1 text-sm font-bold group-hover:mr-2">E</span>
             <span class="order-2 max-w-0 opacity-0 group-hover:opacity-100 group-hover:max-w-[220px] transition-all duration-200 overflow-hidden mr-0 group-hover:mr-3 text-sm font-semibold">
               Export Services
             </span>
-            <span v-html="icons.export || icons.download" class="order-3 w-5 h-5"></span>
+            <span v-html="icons.export || icons.download" class="order-3 w-5 h-5 flex-shrink-0"></span>
           </button>
 
           <button
@@ -235,11 +238,11 @@ const exportServices = async () => {
             aria-label="Assign to Packages"
             class="flex overflow-hidden justify-center items-center px-0 w-12 h-12 text-white whitespace-nowrap bg-emerald-600 rounded-xl shadow-sm transition-all duration-200 group hover:w-auto hover:px-4 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span class="order-1 mr-2 text-sm font-semibold">A</span>
+            <span class="order-1 text-sm font-bold group-hover:mr-2">A</span>
             <span class="order-2 max-w-0 opacity-0 group-hover:opacity-100 group-hover:max-w-[220px] transition-all duration-200 overflow-hidden mr-0 group-hover:mr-3 text-sm font-semibold">
               Assign to Packages
             </span>
-            <span v-html="icons.coverage || icons.briefcase" class="order-3 w-5 h-5"></span>
+            <span v-html="icons.coverage || icons.briefcase" class="order-3 w-5 h-5 flex-shrink-0"></span>
           </button>
 
           <button
@@ -248,11 +251,11 @@ const exportServices = async () => {
             aria-label="Import Service"
             class="flex overflow-hidden justify-center items-center px-0 w-12 h-12 text-white whitespace-nowrap bg-amber-500 rounded-xl shadow-sm transition-all duration-200 group hover:w-auto hover:px-4 hover:bg-amber-600"
           >
-            <span class="order-1 mr-2 text-sm font-semibold">I</span>
+            <span class="order-1 text-sm font-bold group-hover:mr-2">I</span>
             <span class="order-2 max-w-0 opacity-0 group-hover:opacity-100 group-hover:max-w-[220px] transition-all duration-200 overflow-hidden mr-0 group-hover:mr-3 text-sm font-semibold">
               Import Service
             </span>
-            <span v-html="icons.import" class="order-3 w-5 h-5"></span>
+            <span v-html="icons.import" class="order-3 w-5 h-5 flex-shrink-0"></span>
           </button>
 
           <button
@@ -261,11 +264,11 @@ const exportServices = async () => {
             aria-label="Add Service"
             class="flex overflow-hidden justify-center items-center px-0 w-12 h-12 text-white whitespace-nowrap bg-blue-600 rounded-xl shadow-sm transition-all duration-200 group hover:w-auto hover:px-4 hover:bg-blue-700"
           >
-            <span class="order-1 mr-2 text-sm font-semibold">N</span>
+            <span class="order-1 text-sm font-bold group-hover:mr-2">A</span>
             <span class="order-2 max-w-0 opacity-0 group-hover:opacity-100 group-hover:max-w-[220px] transition-all duration-200 overflow-hidden mr-0 group-hover:mr-3 text-sm font-semibold">
               Add Service
             </span>
-            <span v-html="icons.plus_circle" class="order-3 w-5 h-5"></span>
+            <span v-html="icons.plus_circle" class="order-3 w-5 h-5 flex-shrink-0"></span>
           </button>
         </div>
         <div v-else class="flex gap-2">

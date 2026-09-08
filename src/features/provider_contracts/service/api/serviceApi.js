@@ -24,14 +24,14 @@ export const getServiceCategories = async (providerUuid) => {
     throw error;
   }
 };
-export const getAllService = async (providerUuid) => {
+export const getAllService = async (providerUuid, params = {}) => {
   try {
     const response = await api1
       .addAuthenticationHeader()
-      .get(`/healthConnectProvider/service/search/${providerUuid}`);
+      .get(`/healthConnectProvider/service/search/${providerUuid}`, { params });
     return response.data;
   } catch (error) {
-    console.error('Error fetching service categories:', error);
+    console.error('Error fetching services:', error);
     throw error;
   }
 };

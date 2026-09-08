@@ -7,7 +7,7 @@ import { closeModal } from "@customizer/modal-x";
 import { ref, computed } from "vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { changeAuthorizationStatus } from "../api/authorizationApi";
-import { toasted } from "@/utils/utils";
+import { toasted, formatMoney } from "@/utils/utils";
 
 const props = defineProps({
   data: {
@@ -89,6 +89,29 @@ async function submit() {
       size="sm"
     >
       <div class="flex flex-col gap-4 py-2">
+        <div
+          v-if="props.data?.authorizedAmount !== undefined && props.data?.authorizedAmount !== null"
+          class="p-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl space-y-2"
+        >
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-semibold text-emerald-800">Authorized Amount</span>
+            <span class="inline-flex gap-1.5 items-center text-sm font-bold font-mono text-emerald-950">
+              <span class="text-[10px] bg-emerald-200/90 text-emerald-800 px-1.5 py-0.5 rounded font-extrabold">ETB</span>
+              {{ formatMoney(props.data?.authorizedAmount) }}
+            </span>
+          </div>
+          <div
+            v-if="props.data?.usedAmount !== undefined && props.data?.usedAmount !== null"
+            class="flex justify-between items-center pt-1.5 border-t border-emerald-200/60"
+          >
+            <span class="text-xs font-medium text-gray-600">Used Amount</span>
+            <span class="inline-flex gap-1 items-center text-xs font-semibold font-mono text-gray-800">
+              <span class="text-[10px] bg-gray-200/90 text-gray-700 px-1 py-0.5 rounded font-bold">ETB</span>
+              {{ formatMoney(props.data?.usedAmount) }}
+            </span>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 gap-4">
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium text-gray-700">Status</label>

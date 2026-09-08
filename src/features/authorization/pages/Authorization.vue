@@ -50,7 +50,7 @@ watch(
 function clearFilters() {
   selected.contractUuid = null;
   selected.policyUuid = null;
-  selected.institutionUuid = null;
+   selected.institutionUuid = null;
   selected.insuredUuid = null;
   selected.dependantUuid = null;
 }
@@ -97,7 +97,7 @@ function clearFilters() {
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm text-gray-600">Insured</label>
+            <label class="text-sm text-gray-600">Member</label>
             <template v-if="selected.institutionUuid">
               <SearchSelect
                 placeholder="Search insured person"
@@ -254,27 +254,31 @@ function clearFilters() {
             head: [
               'Provider Name',
               'Institution Name',
-              'Member',
               'Status',
-              'End Date',
-              'Active Days',
               'Authorized Amount',
-              'Used Amount',
+              'End Date',
               'Actions'
             ],
             row: [
               'providerName',
               'institutionName',
-              'member',
               'status',
-              'endDate',
-              'activeDays',
               'authorizedAmount',
-              'usedAmount'
+              'endDate'
             ]
           }"
         >
-          <!-- Optional placeholder for empty state -->
+          <!-- <template #placeholder>
+            <div class="py-12 text-center">
+              <div class="flex flex-col justify-center items-center">
+                <i v-html="icons.document"></i>
+                <p class="text-gray-500">No authorizations found</p>
+                <p v-if="search" class="mt-1 text-sm text-gray-400">
+                  No results match your search criteria
+                </p>
+              </div>
+            </div>
+          </template> -->
         </Table>
       </AuthorizationDataProvider>
     </template>

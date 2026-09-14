@@ -9,9 +9,10 @@ export function usePagination(options = {}) {
     cb: (f) => f,
     store: null,
     auto: true,
-    perPage: 25,
+    perPage: 100,
     totalElements: 0,
     cache: false,
+    watch: [],
     ...(options || {}),
   });
 

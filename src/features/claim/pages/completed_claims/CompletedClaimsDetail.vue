@@ -58,8 +58,9 @@ const pagination = usePagination({
   store,
   auto: true,
   reset: true,
+  perPage: 1000,
   cb: (data) => {
-    const query = { ...data };
+    const query = { ...data, limit: 1000 };
     if (query.search === "" || query.search == null) delete query.search;
     return getRequestedClaimByBatchDetail(query, claimUuid);
   },
@@ -355,12 +356,8 @@ watch(checked, (newVal) => {
 const totals = computed(() => {
   const rows = store.claims || [];
   
-  // Only include PROCESSED and CHECKED claims for amount calculation
-  const approvedClaims = rows.filter(r => 
-    r.serviceClaimStatus === 'PROCESSED' || r.serviceClaimStatus === 'CHECKED' || r.serviceClaimStatus === 'COMPLETED'
-  );
-  
-  const totalAmount = approvedClaims.reduce((sum, row) => sum + (row.amount || 0), 0);
+  // Sum ALL claims in the batch for totalAmount
+  const totalAmount = rows.reduce((sum, row) => sum + (row.amount || 0), 0);
   
   const totalItems = rows.reduce((sum, row) => {
     const items = row.providedItemResponses || [];
@@ -486,7 +483,7 @@ console.log('Completed Claim Detail - Route query:', route.query);
               <p class="text-2xl font-bold text-gray-900">ETB {{ formatCurrency(totals.totalAmount) }}</p>
             </div>
             <p class="mt-1 text-xs text-gray-500">
-              {{ totals.processedCount + totals.checkedCount + totals.completedCount }} completed claims
+              Across all {{ totals.totalCount }} claims
             </p>
           </div>
         </div>
@@ -573,6 +570,7 @@ console.log('Completed Claim Detail - Route query:', route.query);
     <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
       <TableWithCheckBox
         :pending="pagination.pending.value"
+        :show-pagination="false"
         v-model="checked"
         to-be-selected="serviceProvidedUuid"
         :headers="{

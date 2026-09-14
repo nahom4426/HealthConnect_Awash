@@ -55,8 +55,9 @@ const pagination = usePagination({
   store,
   auto: true,
   reset: true,
+  perPage: 1000,
   cb: (data) => {
-    const query = { ...data };
+    const query = { ...data, limit: 1000 };
     if (query.search === "" || query.search == null) delete query.search;
     return getRequestedClaimByBatchDetail(query, claimUuid);
   },
@@ -202,6 +203,7 @@ console.log('Approve Claim Detail - Route query:', route.query);
 
     <Table
       :pending="pagination.pending.value"
+      :show-pagination="false"
       :headers="{
         head: [ 'Institution', 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions'],
         row: ['institutionName', 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus']

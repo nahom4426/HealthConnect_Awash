@@ -36,6 +36,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  showPagination: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 // Emit event for model update
@@ -43,14 +47,25 @@ const emit = defineEmits(['update:modelValue']);
 
 // Helper to get value from row using dot-notation path
 function getNestedValue(obj, path) {
+  if (!path || !obj) return undefined;
   return path.split(".").reduce((state, name) => state?.[name], obj);
 }
+
+// Claims that are already paid can't be selected again (ported from Awash "Pagination")
+const selectableRows = computed(() =>
+  (props.rows || []).filter((r) => {
+    const status = String(r?.serviceClaimStatus || "").toUpperCase();
+    return status !== "PAYED" && status !== "PAID";
+  })
+);
 
 // Function to toggle selection of all rows
 function toggleSelectAll(ev) {
   const target = ev.target;
   if (target.checked) {
-    const allVals = props.rows.map((el) => getNestedValue(el, props.toBeSelected));
+    const allVals = selectableRows.value
+      .map((el) => getNestedValue(el, props.toBeSelected))
+      .filter(Boolean);
     emit('update:modelValue', allVals);
   } else {
     emit('update:modelValue', []);
@@ -59,6 +74,7 @@ function toggleSelectAll(ev) {
 
 // Function to toggle individual data selection
 function toggleData(data) {
+  if (!data) return;
   const current = props.modelValue ? [...props.modelValue] : [];
   const idx = current.findIndex((el) => el === data);
   if (idx === -1) {
@@ -78,13 +94,13 @@ function isSelected(row) {
 // Computed property to check if all rows are selected
 const allSelected = computed(() => {
   const modelVal = props.modelValue || [];
-  return props.rows.length > 0 && modelVal.length === props.rows.length;
+  return selectableRows.value.length > 0 && modelVal.length >= selectableRows.value.length;
 });
 
 // Computed: some but not all selected (for indeterminate state)
 const someSelected = computed(() => {
   const modelVal = props.modelValue || [];
-  return modelVal.length > 0 && modelVal.length < props.rows.length;
+  return modelVal.length > 0 && modelVal.length < selectableRows.value.length;
 });
 
 // When rows change (e.g. after refetch), clean up stale selections
@@ -106,6 +122,7 @@ defineExpose({ selected, toggleSelectAll, toggleData, isSelected, allSelected })
     :cells="cells"
     :rows="rows"
     :pending="pending"
+    :show-pagination="showPagination"
     :rowCom="rowCom"
     :rowComProps="{
       ...rowComProps,

@@ -53,8 +53,9 @@ const pagination = usePagination({
   store,
   auto: true,
   reset: true,
+  perPage: 1000,
   cb: (data) => {
-    const query = { ...data };
+    const query = { ...data, limit: 1000 };
     if (query.search === "" || query.search == null) delete query.search;
     return getRequestedClaimByBatchDetail(query, claimUuid);
   },
@@ -218,6 +219,7 @@ console.log('Route query:', route.query);
       v-model="checked"
       toBeSelected="serviceProvidedUuid"
       :pending="pagination.pending.value"
+      :show-pagination="false"
       :headers="{
         head: [ 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions'],
         row: [ 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus', 'actions']

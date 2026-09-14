@@ -595,58 +595,7 @@ console.log('Completed Claim Detail - Route query:', route.query);
       </div>
     </div>
 
-    <!-- Export Info Card -->
-    <div v-if="store.claims?.length" class="p-5 mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm">
-      <div class="flex items-start">
-        <div class="p-3 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl border border-blue-300">
-          <div v-html="icons.documentDownload" class="w-6 h-6 text-blue-700"></div>
-        </div>
-        <div class="flex-1 ml-4">
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-sm font-bold text-blue-900">Export Options Available</p>
-              <p class="mt-1 text-sm text-blue-800">
-                Download this completed claim data for reporting, auditing, or analysis purposes.
-              </p>
-            </div>
-            <div class="flex gap-2">
-              <button 
-                @click="exportExcel"
-                class="inline-flex gap-2 items-center px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg border border-emerald-200 transition-colors hover:bg-emerald-100"
-              >
-                <div v-html="icons.documentArrowDown" class="w-3 h-3"></div>
-                Excel
-              </button>
-              <button 
-                @click="exportPdf"
-                class="inline-flex gap-2 items-center px-3 py-1.5 text-xs font-medium text-rose-700 bg-rose-50 rounded-lg border border-rose-200 transition-colors hover:bg-rose-100"
-              >
-                <div v-html="icons.documentPdf" class="w-3 h-3"></div>
-                PDF
-              </button>
-            </div>
-          </div>
-          
-          <!-- Feature List -->
-          <div class="grid grid-cols-1 gap-3 mt-4 md:grid-cols-2">
-            <div class="flex items-start">
-              <div v-html="icons.checkCircle" class="mt-0.5 mr-2 w-4 h-4 text-emerald-500"></div>
-              <div>
-                <p class="text-xs font-medium text-blue-900">Excel Features</p>
-                <p class="text-xs text-blue-700">Formatted calculations, summary sheets, itemized details</p>
-              </div>
-            </div>
-            <div class="flex items-start">
-              <div v-html="icons.checkCircle" class="mt-0.5 mr-2 w-4 h-4 text-emerald-500"></div>
-              <div>
-                <p class="text-xs font-medium text-blue-900">PDF Features</p>
-                <p class="text-xs text-blue-700">Professional header, pagination, audit-ready format</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+
 
     <CheckProvidedItemsMdl
       v-if="showItemsModal"

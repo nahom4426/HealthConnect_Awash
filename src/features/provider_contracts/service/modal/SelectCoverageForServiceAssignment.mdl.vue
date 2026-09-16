@@ -83,6 +83,7 @@ function selectPackage(pkg) {
               'gender',
               'allServices',
               'status',
+              'actions',
             ],
           }"
           :rows="packages"

@@ -26,9 +26,10 @@ watch(search, () => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 p-3 h-full bg-white rounded-2xl sm:p-4 lg:p-6 sm:gap-4 lg:gap-6">
+  <div class="flex flex-col gap-3 p-3 bg-white rounded-2xl sm:p-4 lg:p-5 sm:gap-3 lg:gap-4 max-w-full">
     <div
-      class="flex flex-col gap-3 justify-between items-start md:flex-row md:items-center sm:gap-4 lg:gap-8"
+      v-if="(!props.hideSearch && props.first) || $slots.first || $slots.header || $slots.filter || $slots['add-action'] || $slots.more"
+      class="flex flex-col gap-3 justify-between items-start md:flex-row md:items-center sm:gap-4 lg:gap-8 flex-shrink-0"
     >
       <!-- Search Bar -->
       <div

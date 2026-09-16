@@ -82,157 +82,204 @@ function toOptions(opts: string[] | undefined) {
 <template>
   <div class="rpf-root">
     <!-- No params notice -->
-    <p v-if="parameters.length === 0" class="rpf-no-params">
-      No parameters required — click <strong>Run Report</strong> to execute.
-    </p>
-
-    <!-- Parameter fields grid -->
-    <div
-      v-else
-      class="rpf-grid"
-      :style="{ gridTemplateColumns: `repeat(${Math.min(parameters.length, 3)}, 1fr)` }"
-    >
-      <div v-for="param in parameters" :key="param.name" class="rpf-field">
-        <label class="rpf-label">
-          {{ param.label }}
-          <span v-if="param.required" class="rpf-required">*</span>
-        </label>
-
-        <!-- Institution → SearchSelect (same as CashClaim.vue) -->
-        <SearchSelect
-          v-if="isInstitutionParam(param)"
-          :key="`inst-${param.name}-${resetKey}`"
-          :placeholder="`Filter by ${param.label}`"
-          :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
-          :selectCb="(res) => handleInstitutionSelect(param.name, res)"
-          :option="{ label: 'institutionName', value: 'institutionUuid' }"
-        />
-
-        <!-- DATE → datePicker component -->
-        <DatePicker
-          v-else-if="param.type === 'DATE'"
-          :key="`date-${param.name}-${resetKey}`"
-          :id="`param-${param.name}`"
-          v-model="values[param.name]"
-          @update:modelValue="notifyChange"
-        />
-
-        <!-- SELECT → CustomSelect component -->
-        <CustomSelect
-          v-else-if="param.type === 'SELECT'"
-          :key="`sel-${param.name}-${resetKey}`"
-          :id="`param-${param.name}`"
-          v-model="values[param.name]"
-          :options="toOptions(param.options)"
-          placeholder="All"
-          @update:modelValue="notifyChange"
-          class="w-full"
-        />
-
-        <!-- TEXT → plain input styled to match project -->
-        <div v-else class="rpf-text-wrap">
-          <input
-            :id="`param-${param.name}`"
-            type="text"
-            v-model="values[param.name]"
-            @input="notifyChange"
-            class="rpf-text-input"
-            :placeholder="'Enter ' + param.label"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Action buttons — use project Button component with primary/secondary -->
-    <div class="rpf-actions">
-      <Button
-        type="secondary"
-        :disabled="loading"
-        @click="clearAll"
-      >
-        Clear
-      </Button>
-
-      <Button
-        type="primary"
-        :pending="loading"
-        @click="handleSubmit"
-      >
+    <div v-if="parameters.length === 0" class="rpf-no-params-row">
+      <span class="rpf-no-params-text">No parameters required for this report.</span>
+      <Button type="primary" :pending="loading" @click="handleSubmit" class="rpf-btn-primary">
         Run Report
       </Button>
+    </div>
+
+    <!-- Parameter fields layout -->
+    <div v-else class="rpf-form-body">
+      <div class="rpf-fields-container">
+        <div v-for="param in parameters" :key="param.name" class="rpf-field">
+          <label class="rpf-label">
+            {{ param.label }}
+            <span v-if="param.required" class="rpf-required">*</span>
+          </label>
+
+          <!-- Institution → SearchSelect -->
+          <SearchSelect
+            v-if="isInstitutionParam(param)"
+            :key="`inst-${param.name}-${resetKey}`"
+            :placeholder="`Filter ${param.label}`"
+            :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
+            :selectCb="(res) => handleInstitutionSelect(param.name, res)"
+            :option="{ label: 'institutionName', value: 'institutionUuid' }"
+            class="rpf-input-ctrl"
+          />
+
+          <!-- DATE → datePicker component -->
+          <DatePicker
+            v-else-if="param.type === 'DATE'"
+            :key="`date-${param.name}-${resetKey}`"
+            :id="`param-${param.name}`"
+            v-model="values[param.name]"
+            @update:modelValue="notifyChange"
+            class="rpf-input-ctrl"
+          />
+
+          <!-- SELECT → CustomSelect component -->
+          <CustomSelect
+            v-else-if="param.type === 'SELECT'"
+            :key="`sel-${param.name}-${resetKey}`"
+            :id="`param-${param.name}`"
+            v-model="values[param.name]"
+            :options="toOptions(param.options)"
+            placeholder="All"
+            @update:modelValue="notifyChange"
+            class="w-full rpf-input-ctrl"
+          />
+
+          <!-- TEXT → plain input -->
+          <div v-else class="rpf-text-wrap">
+            <input
+              :id="`param-${param.name}`"
+              type="text"
+              v-model="values[param.name]"
+              @input="notifyChange"
+              class="rpf-text-input"
+              :placeholder="'Enter ' + param.label"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="rpf-actions-wrap">
+        <Button type="secondary" :disabled="loading" @click="clearAll" class="rpf-btn-secondary">
+          Clear
+        </Button>
+        <Button type="primary" :pending="loading" @click="handleSubmit" class="rpf-btn-primary">
+          Run Report
+        </Button>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .rpf-root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.rpf-no-params-row {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.rpf-no-params {
-  font-size: 13px;
-  color: #6b7280;
-  padding: 6px 0;
-}
-
-/* Grid of param fields — responsive */
-.rpf-grid {
-  display: grid;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  padding: 4px 0;
 }
 
-@media (max-width: 768px) {
-  .rpf-grid {
-    grid-template-columns: 1fr !important;
+.rpf-no-params-text {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Flexible Form Body */
+.rpf-form-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .rpf-form-body {
+    flex-direction: column;
+    align-items: stretch;
   }
+}
+
+.rpf-fields-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Individual field wrapper */
 .rpf-field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
 }
 
 /* Label */
 .rpf-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #6b7280;
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   display: flex;
   align-items: center;
   gap: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .rpf-required {
   color: #ef4444;
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1;
 }
 
-/* Make CustomSelect fill full width */
+/* Component overrides for modern styling */
+:deep(.inline-flex.relative),
+:deep(.search-select-root),
+:deep(.dp__main) {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 36px !important;
+}
+
 :deep(.inline-flex.relative) {
-  width: 100%;
-  min-width: unset;
+  height: 36px !important;
+  min-height: 36px !important;
+  border-radius: 8px !important;
+  border-color: #cbd5e1 !important;
+}
+
+:deep(.dp__input) {
+  height: 36px !important;
+  font-size: 12.5px !important;
+  border-radius: 8px !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:deep(.search-select-input) {
+  height: 36px !important;
+  border-radius: 8px !important;
+  border-color: #cbd5e1 !important;
+  font-size: 12.5px !important;
 }
 
 /* Plain TEXT input */
 .rpf-text-wrap {
   width: 100%;
+  min-width: 0;
 }
 
 .rpf-text-input {
   width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #1f2937;
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: #0f172a;
   background: #fff;
   outline: none;
   box-sizing: border-box;
@@ -242,18 +289,43 @@ function toOptions(opts: string[] | undefined) {
 
 .rpf-text-input:focus {
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .rpf-text-input::placeholder {
-  color: #d1d5db;
+  color: #94a3b8;
 }
 
-/* Actions row */
-.rpf-actions {
+/* Action Buttons Wrapper */
+.rpf-actions-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-top: 2px;
+  flex-shrink: 0;
+  height: 36px;
+}
+
+.rpf-btn-secondary {
+  height: 36px !important;
+  padding: 0 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  white-space: nowrap;
+}
+
+.rpf-btn-primary {
+  height: 36px !important;
+  padding: 0 18px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
+  white-space: nowrap;
+}
+.rpf-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35) !important;
 }
 </style>

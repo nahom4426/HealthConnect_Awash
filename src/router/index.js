@@ -16,6 +16,7 @@ import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useAuthStore } from "@/stores/auth";
 import adminRoutes from "./admin.routes";
 import analyticsRoutes from "./analytics.routes";
+import reportsRoutes from "./reports.routes";
 import Profile from "@/features/profile/pages/profile.vue";
 import Settings from "@/features/settings/pages/Settings.vue";
 
@@ -132,6 +133,7 @@ const router = createRouter({
       children: [
         ...adminRoutes,
         ...analyticsRoutes,
+        ...reportsRoutes,
         ...quotationRoutes,
         ...selectedUnderwritingRoutes,
         ...claimRoutes,

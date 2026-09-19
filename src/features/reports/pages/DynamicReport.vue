@@ -46,6 +46,12 @@ const dynHasRun = ref(false);
 const dynLastParams = ref<Record<string, string>>({});
 const dynExporting = ref(false);
 
+const showFilters = ref(false);
+
+const activeFilterCount = computed(() => {
+  return Object.values(dynLastParams.value).filter(v => v !== '' && v !== null && v !== undefined).length;
+});
+
 const categoryConfig: Record<string, { color: string; bg: string; icon: string; accent: string }> = {
   POLICY:  { color: '#4f46e5', bg: 'rgba(99,102,241,0.1)', icon: '📋', accent: '#4f46e5' },
   CLAIMS:  { color: '#0891b2', bg: 'rgba(8,145,178,0.1)',  icon: '🏥', accent: '#0891b2' },
@@ -328,20 +334,42 @@ onMounted(() => { loadReportsList(); });
           </div>
         </div>
 
-        <!-- Active Report Info Banner -->
+        <!-- Active Report Info Banner with Small KPI Cards -->
         <div v-if="selectedReport" class="dr-banner-strip">
           <div class="dr-banner-title-row">
-            <span
-              class="dr-banner-badge"
-              :style="{ color: getCategoryStyle(selectedReport.category).color, background: getCategoryStyle(selectedReport.category).bg }"
+            <div class="dr-banner-title-left">
+              <span
+                class="dr-banner-badge"
+                :style="{ color: getCategoryStyle(selectedReport.category).color, background: getCategoryStyle(selectedReport.category).bg }"
+              >
+                {{ getCategoryStyle(selectedReport.category).icon }} {{ selectedReport.category }}
+              </span>
+              <h2 class="dr-banner-name">{{ selectedReport.name }}</h2>
+            </div>
+            <button
+              class="dr-filter-toggle-btn"
+              :class="{ 'dr-filter-toggle-btn--active': showFilters }"
+              @click="showFilters = !showFilters"
             >
-              {{ getCategoryStyle(selectedReport.category).icon }} {{ selectedReport.category }}
-            </span>
-            <h2 class="dr-banner-name">{{ selectedReport.name }}</h2>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 5.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+              <span>{{ showFilters ? 'Hide Filters' : 'Show Filters' }}</span>
+              <span v-if="activeFilterCount > 0" class="dr-active-badge">{{ activeFilterCount }}</span>
+            </button>
           </div>
           <p v-if="selectedReport.description" class="dr-banner-desc">
             {{ selectedReport.description }}
           </p>
+
+          <!-- Small KPI Cards integrated directly with top header -->
+          <div v-if="dynHasRun && dynKpis.length > 0" class="dr-kpi-grid">
+            <div v-for="kpi in dynKpis" :key="kpi.label" class="dr-kpi-card">
+              <div class="dr-kpi-icon-wrap" :style="{ color: kpi.color }">{{ kpi.icon }}</div>
+              <div class="dr-kpi-info">
+                <div class="dr-kpi-val" :style="{ color: kpi.color }">{{ kpi.value }}</div>
+                <div class="dr-kpi-lbl">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -364,27 +392,29 @@ onMounted(() => { loadReportsList(); });
       <div v-else class="dr-report-panel">
 
         <!-- Params + run form -->
-        <div class="dr-params-card">
-          <div class="dr-params-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-            Filters & Parameters
-          </div>
-          <ReportParamForm
-            :parameters="selectedReportParams"
-            :loading="dynLoading"
-            @submit="(params) => runReport(params, 0)"
-          />
-        </div>
-
-        <!-- KPI results strip -->
-        <div v-if="dynHasRun && dynKpis.length > 0" class="dr-kpi-grid">
-          <div v-for="kpi in dynKpis" :key="kpi.label" class="dr-kpi-card">
-            <div class="dr-kpi-icon-wrap" :style="{ color: kpi.color }">{{ kpi.icon }}</div>
-            <div class="dr-kpi-info">
-              <div class="dr-kpi-val" :style="{ color: kpi.color }">{{ kpi.value }}</div>
-              <div class="dr-kpi-lbl">{{ kpi.label }}</div>
+        <div class="dr-params-card" :class="{ 'dr-params-card--collapsed': !showFilters }">
+          <div class="dr-params-header" @click="showFilters = !showFilters">
+            <div class="dr-params-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+              <span>Filters & Parameters</span>
+              <span v-if="activeFilterCount > 0" class="dr-active-badge">{{ activeFilterCount }} active</span>
+            </div>
+            <div class="dr-params-toggle-action">
+              <span class="dr-params-toggle-text">{{ showFilters ? 'Hide Filters' : 'Show Filters' }}</span>
+              <svg class="dr-params-chevron" :class="{ 'dr-params-chevron--open': showFilters }" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
             </div>
           </div>
+          <Transition name="dr-slide">
+            <div v-show="showFilters" class="dr-params-body">
+              <ReportParamForm
+                :parameters="selectedReportParams"
+                :loading="dynLoading"
+                @submit="(params) => runReport(params, 0)"
+              />
+            </div>
+          </Transition>
         </div>
 
         <!-- Results table -->
@@ -607,7 +637,7 @@ onMounted(() => { loadReportsList(); });
 .dr-banner-strip {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   padding: 8px 12px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border: 1px solid #e2e8f0;
@@ -617,8 +647,55 @@ onMounted(() => { loadReportsList(); });
 .dr-banner-title-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.dr-banner-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dr-filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  background: #fff;
+  border: 1.5px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.dr-filter-toggle-btn:hover {
+  background: #f8fafc;
+  border-color: #6366f1;
+  color: #4f46e5;
+}
+.dr-filter-toggle-btn--active {
+  background: #e0e7ff;
+  border-color: #6366f1;
+  color: #4338ca;
+}
+.dr-filter-toggle-btn svg { width: 14px; height: 14px; }
+
+.dr-active-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  border-radius: 9999px;
+  line-height: 1.2;
 }
 
 .dr-banner-badge {
@@ -675,26 +752,123 @@ onMounted(() => { loadReportsList(); });
 .dr-params-card {
   flex-shrink: 0;
   background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
-  padding: 10px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  padding: 8px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
   width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.dr-params-card:hover {
+  border-color: #cbd5e1;
+}
+.dr-params-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 0;
 }
 .dr-params-label {
   display: flex; align-items: center; gap: 6px;
-  font-size: 10px; font-weight: 700; color: #475569;
+  font-size: 11px; font-weight: 700; color: #475569;
   text-transform: uppercase; letter-spacing: 0.05em;
-  margin-bottom: 8px; padding-bottom: 5px;
-  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 0; padding-bottom: 0;
+  border-bottom: none;
 }
-.dr-params-label svg { width: 13px; height: 13px; color: #6366f1; }
+.dr-params-label svg { width: 14px; height: 14px; color: #6366f1; }
 
-/* KPI Grid */
-.dr-kpi-grid {
+.dr-params-toggle-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #6366f1;
+}
+.dr-params-toggle-text {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.dr-params-chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.25s ease;
+  color: #6366f1;
+}
+.dr-params-chevron--open {
+  transform: rotate(180deg);
+}
+
+.dr-params-body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Slide Transition for Filters */
+.dr-slide-enter-active,
+.dr-slide-leave-active {
+  transition: all 0.25s ease-out;
+  overflow: hidden;
+}
+.dr-slide-enter-from,
+.dr-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* KPI Row & Filter Button Alongside */
+.dr-kpi-row {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dr-kpi-grid {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  width: 100%; box-sizing: border-box;
+  min-width: 0;
+  margin-top: 6px;
 }
+
+.dr-kpi-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4f46e5;
+  background: #fff;
+  border: 1.5px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  flex-shrink: 0;
+}
+.dr-kpi-filter-btn:hover {
+  background: #f8fafc;
+  border-color: #6366f1;
+  color: #4338ca;
+  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
+}
+.dr-kpi-filter-btn--active {
+  background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+  color: #fff !important;
+  border-color: #4338ca !important;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25) !important;
+}
+.dr-kpi-filter-btn svg { width: 16px; height: 16px; }
+
 .dr-kpi-card {
   display: flex; align-items: center; gap: 10px;
   background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;

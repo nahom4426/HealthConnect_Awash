@@ -7,7 +7,10 @@ const apiBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-ch
 function getClient() {
   const auth = useAuthStore();
   const token = auth.auth?.token || auth.auth?.user?.token;
-  const activeRole = localStorage.getItem('nyala_active_testing_role') || 'ROLE_UNDERWRITER';
+  const activeRole =
+    localStorage.getItem('nyala_active_testing_role') ||
+    localStorage.getItem('awash_active_testing_role') ||
+    'ROLE_UNDERWRITER';
   return axios.create({
     baseURL: apiBase,
     headers: {
@@ -16,6 +19,11 @@ function getClient() {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
+}
+
+function isGatewayDown(e) {
+  const status = e?.response?.status;
+  return status === 502 || status === 503 || status === 504 || !e?.response;
 }
 
 // ─── USER & ROLE MANAGEMENT API (SUPER ADMIN) ─────────────────────────────────
@@ -59,23 +67,13 @@ export async function submitClaim(payload) {
     const { data } = await getClient().post('/claims', payload);
     return data;
   } catch (e) {
-    console.warn('submitClaim error, returning fallback:', e.message);
-    const mock = {
-      claimUuid: 'MOCK-CLM-' + Date.now(),
-      claimNumber: 'NYA-CLM-' + Math.floor(100000 + Math.random() * 900000),
-      policyNumber: payload.policyNumber || 'NYA-POL-12345',
-      productModule: payload.productModule || 'motor',
-      coverageType: payload.coverageType || 'COMPREHENSIVE',
-      causeOfLoss: payload.causeOfLoss || 'COLLISION',
-      status: 'SUBMITTED',
-      createdAt: new Date().toISOString(),
-      description: payload.description || 'Fallback Mock Claim',
-      estimatedAmount: payload.estimatedAmount || 0,
-    };
-    const local = JSON.parse(localStorage.getItem('nyala_claims') || '[]');
-    local.unshift(mock);
-    localStorage.setItem('nyala_claims', JSON.stringify(local));
-    return mock;
+    if (isGatewayDown(e)) {
+      throw new Error(
+        'Motor service unavailable (502). Claims cannot be submitted until motor digital-channel is healthy.'
+      );
+    }
+    console.warn('submitClaim error:', e.message);
+    throw e;
   }
 }
 
@@ -192,23 +190,14 @@ export async function submitMotorProposal(payload) {
     const { data } = await getClient().post('/motor/proposals', payload);
     return data;
   } catch (e) {
+    // Do not fake success on train 502 — that hides a broken motor service.
+    if (isGatewayDown(e)) {
+      throw new Error(
+        'Motor service unavailable (502). Proposals cannot be saved until Abrsh redeploys motor digital-channel.'
+      );
+    }
     console.warn('submitMotorProposal error:', e.message);
-    const mock = {
-      proposalUuid: 'PROP-' + Date.now(),
-      proposalNumber: 'NYA-PROP-' + Math.floor(100000 + Math.random() * 900000),
-      insuredName: payload.insuredName || 'Abraham Addisu',
-      vehiclePlateNumber: payload.vehiclePlateNumber || '3-A98123',
-      coverageType: payload.coverageType || 'COMPREHENSIVE',
-      totalPremiumAmount: payload.totalPremiumAmount || 18875.00,
-      tpPremiumAmount: 1250.00,
-      odPremiumAmount: 17625.00,
-      status: 'SUBMITTED',
-      createdAt: new Date().toISOString()
-    };
-    const local = JSON.parse(localStorage.getItem('nyala_motor_proposals') || '[]');
-    local.unshift(mock);
-    localStorage.setItem('nyala_motor_proposals', JSON.stringify(local));
-    return mock;
+    throw e;
   }
 }
 

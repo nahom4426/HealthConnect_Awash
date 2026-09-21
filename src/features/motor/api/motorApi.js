@@ -4,6 +4,7 @@ import { fetchImageObjectUrl } from '@/utils/imageBlob';
 
 const motorBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
 const partyBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
+const coreMotorBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor`;
 
 function getClient(base = motorBase) {
   const auth = useAuthStore();
@@ -17,9 +18,27 @@ function getClient(base = motorBase) {
   });
 }
 
-const coreMotorBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor`;
 function getCoreClient() {
   return getClient(coreMotorBase);
+}
+
+/** Prefer core motor (/api/payer/motor), fall back to digital-channel if 502/404. */
+async function motorRequest(method, path, { params, data, preferCore = true } = {}) {
+  const order = preferCore
+    ? [getCoreClient(), getClient()]
+    : [getClient(), getCoreClient()];
+  let lastError;
+  for (const client of order) {
+    try {
+      const res = await client.request({ method, url: path, params, data });
+      return res.data;
+    } catch (e) {
+      lastError = e;
+      const status = e?.response?.status;
+      if (status && status !== 502 && status !== 404 && status !== 503) throw e;
+    }
+  }
+  throw lastError;
 }
 
 // ─── Insureds (Party service) ─────────────────────────────────────────────────
@@ -68,11 +87,11 @@ export async function createInsured(payload) {
   return data;
 }
 
-// ─── Vehicle Categories ───────────────────────────────────────────────────────
+// ─── Vehicle Categories (core motor first, then digital-channel) ───────────────
 
 export async function fetchCategoryRoots() {
   try {
-    const { data } = await getClient().get('/vehicle-categories/roots');
+    const data = await motorRequest('get', '/vehicle-categories/roots');
     return Array.isArray(data) ? data : [];
   } catch (e) {
     console.warn('fetchCategoryRoots error:', e.message);
@@ -82,7 +101,7 @@ export async function fetchCategoryRoots() {
 
 export async function fetchCategoryTree() {
   try {
-    const { data } = await getClient().get('/vehicle-categories/tree');
+    const data = await motorRequest('get', '/vehicle-categories/tree');
     const list = Array.isArray(data) ? data : (data?.content ?? []);
     return list.length ? list : SEEDED_VEHICLE_CATEGORIES;
   } catch (e) {
@@ -92,7 +111,7 @@ export async function fetchCategoryTree() {
 
 export async function fetchSubCategories(uuid) {
   try {
-    const { data } = await getClient().get(`/vehicle-categories/${uuid}/sub-categories`);
+    const data = await motorRequest('get', `/vehicle-categories/${uuid}/sub-categories`);
     return Array.isArray(data) ? data : [];
   } catch (e) {
     console.warn('fetchSubCategories error:', e.message);
@@ -101,31 +120,30 @@ export async function fetchSubCategories(uuid) {
 }
 
 export async function fetchCategory(uuid) {
-  const { data } = await getClient().get(`/vehicle-categories/${uuid}`);
-  return data;
+  return motorRequest('get', `/vehicle-categories/${uuid}`);
 }
 
 export async function createCategory(payload) {
-  const { data } = await getClient().post('/vehicle-categories', payload);
-  return data;
+  return motorRequest('post', '/vehicle-categories', { data: payload });
 }
 
 export async function updateCategory(uuid, payload) {
-  const { data } = await getClient().put(`/vehicle-categories/${uuid}`, payload);
-  return data;
+  return motorRequest('put', `/vehicle-categories/${uuid}`, { data: payload });
 }
 
 export async function deleteCategory(uuid) {
-  const { data } = await getClient().delete(`/vehicle-categories/${uuid}`);
-  return data;
+  return motorRequest('delete', `/vehicle-categories/${uuid}`);
 }
 
-// ─── Premiums ─────────────────────────────────────────────────────────────────
+// ─── Premiums (core motor /savePremium first — avoids digital-channel 502) ────
 
 export async function fetchAllPremiums() {
   try {
-    const { data } = await getClient().get('/allPremium');
-    return Array.isArray(data) ? data : (data?.content ?? []);
+    const data = await motorRequest('get', '/allPremium', { params: { page: 1, limit: 500 } });
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.content)) return data.content;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
   } catch (e) {
     console.warn('fetchAllPremiums error:', e.message);
     return [];
@@ -133,22 +151,26 @@ export async function fetchAllPremiums() {
 }
 
 export async function savePremium(categoryUuid, rate) {
-  const { data } = await getClient().post('/savePremium', null, {
-    params: { categoryUuid, rate },
-  });
-  return data;
+  return motorRequest('post', '/savePremium', { params: { categoryUuid, rate } });
 }
 
 export async function updatePremium(uuid, categoryUuid, rate) {
-  const { data } = await getClient().put(`/updatePremium/${uuid}`, null, {
-    params: { categoryUuid, rate },
-  });
-  return data;
+  // Core PremiumController expects JSON body; digital-channel also accepts query params.
+  try {
+    return await motorRequest('put', `/updatePremium/${uuid}`, {
+      preferCore: true,
+      data: { categoryUuid, premiumRate: rate, rate },
+    });
+  } catch (e) {
+    return motorRequest('put', `/updatePremium/${uuid}`, {
+      preferCore: false,
+      params: { categoryUuid, rate },
+    });
+  }
 }
 
 export async function deletePremium(uuid) {
-  const { data } = await getClient().delete(`/deletePremium/${uuid}`);
-  return data;
+  return motorRequest('delete', `/deletePremium/${uuid}`);
 }
 
 // ─── Car Specifications ───────────────────────────────────────────────────────
@@ -446,7 +468,8 @@ export const SEEDED_VEHICLE_CATEGORIES = [
 
 export async function fetchAllCarSpecs({ search = '', page = 0, limit = 25 } = {}) {
   try {
-    const { data } = await getClient().get('/carSpecification/all', {
+    const data = await motorRequest('get', '/carSpecification/all', {
+      preferCore: true,
       params: { search, page, limit },
     });
     const list = Array.isArray(data) ? data : (data?.content ?? []);
@@ -458,7 +481,8 @@ export async function fetchAllCarSpecs({ search = '', page = 0, limit = 25 } = {
 
 export async function searchCarSpecs({ search = '', carType = '', carModel = '' } = {}) {
   try {
-    const { data } = await getClient().get('/carSpecification/getCarSpecification', {
+    const data = await motorRequest('get', '/carSpecification/getCarSpecification', {
+      preferCore: true,
       params: { search, carType, carModel },
     });
     const list = Array.isArray(data) ? data : (data?.content ?? data ?? []);
@@ -469,18 +493,15 @@ export async function searchCarSpecs({ search = '', carType = '', carModel = '' 
 }
 
 export async function saveCarSpec(payload) {
-  const { data } = await getClient().post('/carSpecification/saveCArSpecification', payload);
-  return data;
+  return motorRequest('post', '/carSpecification/saveCArSpecification', { data: payload, preferCore: false });
 }
 
 export async function updateCarSpec(uuid, payload) {
-  const { data } = await getClient().put(`/carSpecification/update/${uuid}`, payload);
-  return data;
+  return motorRequest('put', `/carSpecification/update/${uuid}`, { data: payload, preferCore: false });
 }
 
 export async function deleteCarSpec(uuid) {
-  const { data } = await getClient().delete(`/carSpecification/delete/${uuid}`);
-  return data;
+  return motorRequest('delete', `/carSpecification/delete/${uuid}`, { preferCore: false });
 }
 
 // ─── Quotations ───────────────────────────────────────────────────────────────

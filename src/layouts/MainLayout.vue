@@ -44,11 +44,22 @@ const profilePicture = computed(() => {
 function handleImgError(e) { e.target.src = imageSrc; }
 function logout() { authStore.logout(); }
 
+/** AuthService "admin" role (and Super Admin) should see full motor/admin nav. */
+function hasFullSystemAccess(user = {}) {
+  const roleName = String(user?.roleName || '').trim().toLowerCase();
+  const roleCode = String(user?.roleCode || user?.role || '').trim().toUpperCase();
+  return (
+    roleName === 'super admin' ||
+    roleName === 'admin' ||
+    roleCode === 'ROLE_SUPER_ADMIN' ||
+    roleCode === 'ROLE_ADMIN' ||
+    roleCode === 'ADMIN'
+  );
+}
+
 const isSuperAdmin = computed(() => {
   const user = authStore.auth?.user ?? authStore.auth ?? {};
-  const roleName = user?.roleName;
-  const roleCode = user?.roleCode || user?.role;
-  return roleName === 'Super Admin' || roleCode === 'ROLE_SUPER_ADMIN';
+  return hasFullSystemAccess(user);
 });
 
 // ── Current page title from breadcrumbs or route ──
@@ -82,8 +93,8 @@ const filteredNavs = computed(() => {
   const roleName = user?.roleName || '';
   const roleCode = user?.roleCode || user?.role || localStorage.getItem('nyala_active_testing_role') || '';
   
-  // Super Admin sees ALL navigation items
-  if (roleName === 'Super Admin' || roleCode === 'ROLE_SUPER_ADMIN') {
+  // Auth admin / Super Admin see ALL navigation items (incl. motor Claims/Quotation/Proposals)
+  if (hasFullSystemAccess(user) || hasFullSystemAccess({ roleName, roleCode })) {
     return rawNavs;
   }
 

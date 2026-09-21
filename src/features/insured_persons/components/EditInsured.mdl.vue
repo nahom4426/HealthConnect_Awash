@@ -86,13 +86,22 @@ async function handleSubmit(formValues) {
       return;
     }
 
-    const targetInstitutionUuid = formValues.institutionUuid || route.params.institutionUuid || null;
+    const targetInstitutionUuid = formValues.institutionUuid || insuredData.value?.institutionUuid || route.params.institutionUuid || null;
+    const targetPayerContractUuid = 
+      insuredData.value?.payerInstitutionContractUuid || 
+      insuredData.value?.payerInstitutionContractUUID || 
+      insuredData.value?.payerUuid || 
+      formValues.payerInstitutionContractUuid || 
+      formValues.payerUuid || 
+      route.params.payerInstitutionContractUuid || 
+      route.params.id || 
+      null;
 
     // Prepare the insured data according to backend expectations (same as add component)
     const insuredPayload = normalizePayload({
       email: formValues.email,
       institutionUuid: targetInstitutionUuid,
-      payerInstitutionContractUuid: formValues.payerUuid || route.params.id || null,
+      payerInstitutionContractUuid: targetPayerContractUuid,
       hasInstitution: Boolean(targetInstitutionUuid),
       hasGroup: Boolean(targetInstitutionUuid),
       group: Boolean(targetInstitutionUuid),
@@ -198,7 +207,7 @@ async function handleSubmit(formValues) {
           v-else
           :initial-data="insuredData"
           :is-edit="true"
-          :institutionId="insuredData.payerUuid"
+          :institutionId="insuredData.payerInstitutionContractUuid || insuredData.payerInstitutionContractUUID || insuredData.payerUuid || ''"
           :pending="pending"
           :onSubmit="handleSubmit"
           :onCancel="() => closeModal()"

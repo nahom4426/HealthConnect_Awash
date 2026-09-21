@@ -84,7 +84,7 @@ watch(city, (newCity) => {
 
 onMounted(() => {
   if (props.initialData && Object.keys(props.initialData).length > 0) {
-    payerId.value = props.initialData.payerUuid || "";
+    payerId.value = props.initialData.payerInstitutionContractUuid || props.initialData.payerInstitutionContractUUID || props.initialData.payerUuid || props.institutionId || "";
     allowedUuid.value = props.initialData.allowedUuid || ""; // 💡 NEW
     firstName.value = props.initialData.firstName || "";
     fatherName.value = props.initialData.fatherName || "";
@@ -164,9 +164,12 @@ function normalizePayload(payload) {
 }
 
 function handleSubmit() {
+  const currentPayerContractUuid = props.initialData?.payerInstitutionContractUuid || props.initialData?.payerInstitutionContractUUID || props.initialData?.payerUuid || payerId.value || props.institutionId || institutionId.value || "";
+
   const formData = {
     firstName: firstName.value,
-    payerUuid: institutionId.value || payerId.value,
+    payerUuid: currentPayerContractUuid,
+    payerInstitutionContractUuid: currentPayerContractUuid,
     allowedUuid: allowedUuid.value, // 💡 Include selected group
     fatherName: fatherName.value,
     grandFatherName: grandFatherName.value,

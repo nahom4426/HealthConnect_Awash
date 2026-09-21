@@ -82,7 +82,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 p-6 bg-white rounded-lg">
+  <div class="flex flex-col gap-6 p-6 bg-white rounded-lg min-h-[calc(100vh-6.5rem)] flex-1">
     <div class="flex justify-between items-center">
       <!-- Tabs -->
     <div

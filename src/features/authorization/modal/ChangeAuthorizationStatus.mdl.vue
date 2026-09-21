@@ -97,8 +97,6 @@ async function submit() {
 
   const parsedAmount = amount.value !== "" && amount.value !== null && amount.value !== undefined ? Number(amount.value) : (props.data?.authorizedAmount ?? 0);
 
-  const parsedAmount = amount.value !== "" && amount.value !== null && amount.value !== undefined ? Number(amount.value) : (props.data?.authorizedAmount ?? 0);
-
   const payload = {
     status: status.value,
     endDate: toDdMmYyyy(endDateRaw.value),

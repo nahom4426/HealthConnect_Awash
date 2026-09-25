@@ -16,9 +16,10 @@ export function getProviderCreditServicesReport(query = {}) {
 
 /**
  * Get all available dynamic reports list
+ * @param {Object} params - Query parameters (e.g. { standaloneOnly: true })
  */
-export function getReportsList() {
-  return api.addAuthenticationHeader().get('/claimconnect/reports').then(response => {
+export function getReportsList(params = {}) {
+  return api.addAuthenticationHeader().get('/claimconnect/reports', { params }).then(response => {
     return response.data || response;
   });
 }

@@ -5,7 +5,7 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import Form from "@/components/new_form_builder/Form.vue";
 import Button from "@/components/Button.vue";
 import { closeModal } from "@customizer/modal-x";
-import { toasted } from '@/utils/utils';
+import { toasted, formatMoney } from '@/utils/utils';
 import { useApiRequest } from "@/composables/useApiRequest";
 import { getPackageDropdown } from '@/features/product_settings/api/coverageApi';
 import { createCreditServiceProvided, updateManualCreditServiceProvided } from '@/features/claim/api/claimApi';
@@ -44,12 +44,55 @@ const itemDefaults = ref({
 
 const attachments = ref([]);
 
-const insuredUuid = computed(() => props.data?.insuredUuid || '');
+const insuredUuid = computed(() => props.data?.insuredUuid || props.data?.insuredPersonUuid || '');
 const dependentUuid = computed(() => props.data?.dependantUuid || props.data?.dependentUuid || null);
 
 const contractUuidFromContext = computed(
   () => props.data?.payerInstitutionContractUuid || props.data?.contractUuid || ''
 );
+
+function isDependentPkg(pkg) {
+  return !!dependentUuid.value;
+}
+
+function getPackageLimit(pkg) {
+  if (!pkg) return 0;
+  if (isDependentPkg(pkg)) {
+    const depSum = Number(pkg.depSumAssured ?? pkg.dependentSumAssured);
+    if (Number.isFinite(depSum) && depSum > 0) return depSum;
+  }
+  const sum = Number(pkg.sumAssured);
+  return Number.isFinite(sum) ? sum : 0;
+}
+
+function getPackageUsed(pkg) {
+  if (!pkg) return 0;
+  if (isDependentPkg(pkg)) {
+    const depUsed = Number(pkg.depUsedBenefit ?? pkg.dependentUsed);
+    if (Number.isFinite(depUsed) && depUsed > 0) return depUsed;
+  }
+  const used = Number(pkg.used);
+  return Number.isFinite(used) ? used : 0;
+}
+
+function getPackageRemaining(pkg) {
+  const limit = getPackageLimit(pkg);
+  const used = getPackageUsed(pkg);
+  return limit - used;
+}
+
+function sortPackagesWithBasicCoverFirst(list) {
+  if (!Array.isArray(list)) return [];
+  return [...list].sort((a, b) => {
+    const aName = (a?.packageName || '').trim().toUpperCase();
+    const bName = (b?.packageName || '').trim().toUpperCase();
+    const aIsBasic = aName.includes('BASIC COVER');
+    const bIsBasic = bName.includes('BASIC COVER');
+    if (aIsBasic && !bIsBasic) return -1;
+    if (!aIsBasic && bIsBasic) return 1;
+    return 0;
+  });
+}
 
 async function loadPackages() {
   if (!insuredUuid.value) return;
@@ -57,11 +100,11 @@ async function loadPackages() {
     loading.value = true;
     const res = await getPackageDropdown(insuredUuid.value, dependentUuid.value);
     const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-    packages.value = list;
+    packages.value = sortPackagesWithBasicCoverFirst(list);
 
     const existing = packagePrices.value || {};
     const next = {};
-    list.forEach((p) => {
+    packages.value.forEach((p) => {
       const key = p?.packageUuid;
       if (!key) return;
       next[key] = existing[key] ?? 0;
@@ -202,171 +245,99 @@ function handleSubmit() {
     <NewFormParent
       size="xmd"
       class="flex flex-col max-h-[90vh] overflow-hidden"
-      title="Utilization"
-      subtitle="Select a package and enter total price"
+      title="Package Utilization Overview"
+      subtitle="Member package limits, used benefits, and remaining balances"
     >
-      <div class="overflow-y-auto overflow-x-hidden form-scrollbar">
-        <Form class="p-6 space-y-6" id="utilizationForm" @submit.prevent="handleSubmit">
-          <div class="flex justify-end">
-            <button
-              type="button"
-              class="text-sm font-medium text-blue-700 hover:text-blue-800"
-              @click="showDetails = !showDetails"
-            >
-              {{ showDetails ? 'Hide details' : 'Add details' }}
-            </button>
-          </div>
+      <div class="p-6 overflow-y-auto overflow-x-hidden form-scrollbar space-y-4">
+        <div v-if="loading" class="flex justify-center items-center py-8 text-sm text-gray-500">
+          <div class="w-6 h-6 rounded-full border-2 border-blue-200 animate-spin border-t-blue-600 mr-2"></div>
+          Loading packages...
+        </div>
 
-          <div v-if="showDetails" class="p-4 space-y-4 rounded-lg border border-gray-200">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Contract UUID</label>
-                <input
-                  type="text"
-                  v-model="contractUuid"
-                  class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="contractUuid"
-                
-                />
-              </div>
-
-              <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Provider Name</label>
-                <input
-                  type="text"
-                  v-model="providerName"
-                  class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="providerName"
-                />
-              </div>
-
-              <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Provided Date</label>
-                <input
-                  type="date"
-                  v-model="providedDate"
-                  class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <!-- <div class="flex gap-2 items-center pt-6">
-                <input type="checkbox" v-model="deleted" class="w-4 h-4" />
-                <span class="text-sm text-gray-700">Deleted</span>
-              </div> -->
-            </div>
-
-            <div class="pt-2">
-              <div class="text-xs font-semibold text-gray-700">Item details (applied to all selected packages)</div>
-              <div class="grid grid-cols-1 gap-4 mt-3 sm:grid-cols-2">
-                <div class="space-y-1">
-                  <label class="block text-xs font-medium text-gray-600">Service ID</label>
-                  <input type="text" v-model="itemDefaults.serviceId" class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-<!-- 
-                <div class="space-y-1">
-                  <label class="block text-xs font-medium text-gray-600">Item UUID</label>
-                  <input type="text" v-model="itemDefaults.itemUuid" class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div> -->
-
-                <div class="space-y-1">
-                  <label class="block text-xs font-medium text-gray-600">Service Name</label>
-                  <input type="text" v-model="itemDefaults.serviceName" class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-
-                <div class="space-y-1">
-                  <label class="block text-xs font-medium text-gray-600">Service Code</label>
-                  <input type="text" v-model="itemDefaults.serviceCode" class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-
-                <div class="space-y-1">
-                  <label class="block text-xs font-medium text-gray-600">Qty</label>
-                  <input type="number" min="1" v-model="itemDefaults.qty" class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-
-                <div class="space-y-1">
-                  <label class="block text-xs font-medium text-gray-600">Record Number</label>
-                  <input type="text" v-model="itemDefaults.recordNumber" class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-
-                <div class="space-y-1">
-                  <label class="block text-xs font-medium text-gray-600">Item Type</label>
-                  <input type="text" v-model="itemDefaults.itemType" class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="SERVICE" />
-                </div>
-
-                <!-- <div class="flex gap-2 items-center pt-6">
-                  <input type="checkbox" v-model="itemDefaults.c_section" class="w-4 h-4" />
-                  <span class="text-sm text-gray-700">C Section</span>
-                </div> -->
-
-                <div class="flex gap-2 items-center">
-                  <input type="checkbox" v-model="itemDefaults.deleted" class="w-4 h-4" />
-                  <span class="text-sm text-gray-700">Item Deleted</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="pt-2 space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Attachments</label>
-              <input type="file" multiple @change="handleFilesChange" />
-              <div v-if="attachments.length" class="text-xs text-gray-500">
-                {{ attachments.length }} file(s) selected
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <div v-if="loading" class="py-4 text-sm text-gray-500">Loading packages...</div>
-
-            <div v-else class="space-y-3">
-              <div
-                v-for="pkg in packages"
-                :key="pkg.packageUuid"
-                class="flex gap-3 items-center p-3 rounded-lg border border-gray-200"
-              >
-                <input
-                  type="checkbox"
-                  :value="pkg.packageUuid"
-                  v-model="selectedPackageUuids"
-                  class="w-4 h-4"
-                />
-
-                <div class="flex-1 min-w-0">
-                  <div class="text-sm font-semibold text-gray-800 truncate">
+        <div v-else class="space-y-3">
+          <div
+            v-for="pkg in packages"
+            :key="pkg.packageUuid"
+            :class="[
+              'p-3.5 rounded-xl border transition-all duration-200 shadow-2xs',
+              pkg.packageName?.toUpperCase()?.includes('BASIC COVER')
+                ? 'bg-blue-50/60 border-blue-200 ring-1 ring-blue-300/50'
+                : 'bg-white border-gray-200 hover:border-gray-300'
+            ]"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-sm font-bold text-gray-900 truncate">
                     {{ pkg.packageName }}
-                    <span class="text-gray-500">({{ pkg.packageCode }})</span>
-                  </div>
-                  <div class="text-xs text-gray-500">
-                    Limit: {{ Number(pkg.sumAssured || 0).toLocaleString() }} | Used: {{ Number(pkg.used || 0).toLocaleString() }}
-                  </div>
+                  </span>
+                  <span
+                    v-if="pkg.packageName?.toUpperCase()?.includes('BASIC COVER')"
+                    class="inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-blue-600 text-white shadow-2xs shrink-0"
+                  >
+                    ★ Main Cover
+                  </span>
+                  <span class="text-xs text-gray-400 font-mono truncate">
+                    ({{ pkg.packageCode || pkg.packageUuid?.slice(0, 8) }})
+                  </span>
                 </div>
 
-                <div class="w-40">
-                  <input
-                    v-if="selectedPackageUuids.includes(pkg.packageUuid)"
-                    type="number"
-                    v-model="packagePrices[pkg.packageUuid]"
-                    class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    min="0"
-                    placeholder="Total price"
-                  />
-                </div>
+                <span
+                  v-if="dependentUuid"
+                  class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200 shrink-0"
+                >
+                  Dependant
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-sky-100 text-sky-700 border border-sky-200 shrink-0"
+                >
+                  Insured
+                </span>
               </div>
 
-              <div v-if="!packages.length" class="py-4 text-sm text-gray-500">
-                No packages found.
+              <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-gray-100 text-xs">
+                <div class="flex flex-col">
+                  <span class="text-[11px] font-medium text-gray-500">Limit</span>
+                  <span class="font-bold text-gray-900 font-mono">
+                    ETB {{ formatMoney(getPackageLimit(pkg)) }}
+                  </span>
+                </div>
+
+                <div class="flex flex-col">
+                  <span class="text-[11px] font-medium text-gray-500">Used</span>
+                  <span class="font-bold text-gray-700 font-mono">
+                    ETB {{ formatMoney(getPackageUsed(pkg)) }}
+                  </span>
+                </div>
+
+                <div class="flex flex-col items-end">
+                  <span class="text-[11px] font-medium text-gray-500">Remaining</span>
+                  <span
+                    :class="[
+                      'font-extrabold font-mono px-2 py-0.5 rounded text-xs',
+                      getPackageRemaining(pkg) <= 0
+                        ? 'bg-red-100 text-red-700 border border-red-200'
+                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    ]"
+                  >
+                    ETB {{ formatMoney(getPackageRemaining(pkg)) }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="flex gap-3 justify-end pt-4 border-t">
-            <Button type="button" @click="closeModal" class="p-2 bg-white border border-primary">
-              Cancel
-            </Button>
-            <Button type="primary" html-type="submit" class="p-2 pt-4 text-white bg-primary" :pending="req.pending.value">
-              Submit
-            </Button>
+          <div v-if="!packages.length" class="py-8 text-center text-sm text-gray-500">
+            No active package benefits found for this member.
           </div>
-        </Form>
+        </div>
+
+        <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
+          <Button type="primary" @click="closeModal" class="px-5 py-2 text-white bg-primary">
+            Close
+          </Button>
+        </div>
       </div>
     </NewFormParent>
   </ModalParent>

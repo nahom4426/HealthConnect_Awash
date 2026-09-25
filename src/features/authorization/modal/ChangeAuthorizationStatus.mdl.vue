@@ -7,6 +7,7 @@ import { closeModal } from "@customizer/modal-x";
 import { ref, computed } from "vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { changeAuthorizationStatus } from "../api/authorizationApi";
+import { getPackageDropdown } from "@/features/product_settings/api/coverageApi";
 import { toasted, formatMoney } from "@/utils/utils";
 
 const props = defineProps({
@@ -19,6 +20,64 @@ const props = defineProps({
 const api = useApiRequest();
 
 const authorizationUuid = computed(() => props.data?.authorizationUuid);
+const insuredUuid = computed(() => props.data?.insuredUuid || props.data?.insuredPersonUuid || "");
+const dependantUuid = computed(() => props.data?.dependantUuid || props.data?.dependentUuid || null);
+
+const packages = ref([]);
+const loadingPackages = ref(false);
+const showPackages = ref(false);
+
+function sortPackagesWithBasicCoverFirst(list) {
+  if (!Array.isArray(list)) return [];
+  return [...list].sort((a, b) => {
+    const aName = (a?.packageName || '').trim().toUpperCase();
+    const bName = (b?.packageName || '').trim().toUpperCase();
+    const aIsBasic = aName.includes('BASIC COVER');
+    const bIsBasic = bName.includes('BASIC COVER');
+    if (aIsBasic && !bIsBasic) return -1;
+    if (!aIsBasic && bIsBasic) return 1;
+    return 0;
+  });
+}
+
+async function fetchPackageBenefits() {
+  if (!insuredUuid.value) return;
+  try {
+    loadingPackages.value = true;
+    const res = await getPackageDropdown(insuredUuid.value, dependantUuid.value);
+    const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    packages.value = sortPackagesWithBasicCoverFirst(list);
+  } catch (err) {
+    console.error("Failed to load package benefits", err);
+    packages.value = [];
+  } finally {
+    loadingPackages.value = false;
+  }
+}
+
+function getPkgLimit(pkg) {
+  if (!pkg) return 0;
+  if (dependantUuid.value) {
+    const depSum = Number(pkg.depSumAssured ?? pkg.dependentSumAssured);
+    if (Number.isFinite(depSum) && depSum > 0) return depSum;
+  }
+  const sum = Number(pkg.sumAssured);
+  return Number.isFinite(sum) ? sum : 0;
+}
+
+function getPkgUsed(pkg) {
+  if (!pkg) return 0;
+  if (dependantUuid.value) {
+    const depUsed = Number(pkg.depUsedBenefit ?? pkg.dependentUsed);
+    if (Number.isFinite(depUsed) && depUsed > 0) return depUsed;
+  }
+  const used = Number(pkg.used);
+  return Number.isFinite(used) ? used : 0;
+}
+
+function getPkgRemaining(pkg) {
+  return getPkgLimit(pkg) - getPkgUsed(pkg);
+}
 
 const status = ref(props.data?.currentStatus || "REQUESTED");
 const activeDays = ref(
@@ -154,6 +213,64 @@ async function submit() {
               <span class="text-[10px] bg-gray-200/90 text-gray-700 px-1 py-0.5 rounded font-bold">ETB</span>
               {{ formatMoney(props.data?.usedAmount) }}
             </span>
+          </div>
+        </div>
+
+        <div v-if="insuredUuid" class="p-3 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-blue-900">Member Package Benefits</span>
+              <span
+                v-if="dependantUuid"
+                class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-purple-100 text-purple-700 border border-purple-200"
+              >
+                Dependant
+              </span>
+              <span
+                v-else
+                class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-sky-100 text-sky-700 border border-sky-200"
+              >
+                Insured
+              </span>
+            </div>
+            <button
+              type="button"
+              @click="() => { showPackages = !showPackages; if (showPackages && !packages.length) fetchPackageBenefits(); }"
+              class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              {{ showPackages ? "Hide Packages" : "Check Package Usage" }}
+            </button>
+          </div>
+
+          <div v-if="showPackages" class="space-y-2 pt-2 border-t border-blue-200/60 max-h-52 overflow-y-auto">
+            <div v-if="loadingPackages" class="py-2 text-xs text-blue-700">Loading package limits...</div>
+            <div v-else-if="!packages.length" class="py-2 text-xs text-gray-500">No active packages found.</div>
+            <div
+              v-else
+              v-for="pkg in packages"
+              :key="pkg.packageUuid"
+              class="p-2 bg-white rounded-lg border border-blue-100 shadow-2xs space-y-1 text-xs"
+            >
+              <div class="flex justify-between items-center font-semibold text-gray-800">
+                <span>{{ pkg.packageName }}</span>
+                <span
+                  :class="[
+                    'px-1.5 py-0.5 rounded text-[10px] font-bold',
+                    getPkgRemaining(pkg) <= 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                  ]"
+                >
+                  Remaining: ETB {{ formatMoney(getPkgRemaining(pkg)) }}
+                </span>
+              </div>
+              <div class="flex justify-between text-[11px] text-gray-500">
+                <span>Limit: ETB {{ formatMoney(getPkgLimit(pkg)) }}</span>
+                <span>Used: ETB {{ formatMoney(getPkgUsed(pkg)) }}</span>
+              </div>
+            </div>
           </div>
         </div>
 

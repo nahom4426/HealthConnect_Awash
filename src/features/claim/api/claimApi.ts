@@ -123,7 +123,7 @@ export function rejectClaim(claimUuid: string, data: { comment: string; batchCod
 }
 export function verifyClaim(claimUuid: string, data: { comment: string; batchCode: string }) {
 	return api.addAuthenticationHeader().put(`${path}/claim/approve/changeStatus/${claimUuid}`, data, {
-		params: { 'claimStatus': 'PROCESSED' }
+		params: { 'claimStatus': 'COMPLETED' }
 	})
 }
 

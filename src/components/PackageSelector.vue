@@ -537,13 +537,26 @@ async function fetchData() {
       preSelected.map(p => [p.packageUuid, p])
     );
 
+    function sortPackagesWithBasicCoverFirst(list) {
+      if (!Array.isArray(list)) return [];
+      return [...list].sort((a, b) => {
+        const aName = (a?.packageName || '').trim().toUpperCase();
+        const bName = (b?.packageName || '').trim().toUpperCase();
+        const aIsBasic = aName.includes('BASIC COVER');
+        const bIsBasic = bName.includes('BASIC COVER');
+        if (aIsBasic && !bIsBasic) return -1;
+        if (!aIsBasic && bIsBasic) return 1;
+        return 0;
+      });
+    }
+
     const allPkgs = Array.isArray(allPkgsResponse?.data) ? allPkgsResponse.data : [];
     const combined = allPkgs.map(pkg => {
       const selectedPkg = preSelected.find(p => p.packageUuid === pkg.packageUuid);
       return buildPackageObject(pkg, selectedPkg);
     });
 
-    packagesWithSumAssured.value = combined;
+    packagesWithSumAssured.value = sortPackagesWithBasicCoverFirst(combined);
     
     await nextTick();
     emit('update:modelValue', packagesWithSumAssured.value);
@@ -701,11 +714,17 @@ onMounted(() => {
           <div class="grid grid-cols-1 gap-3 mb-4 md:grid-cols-4">
             <div v-if="showSumAssured" class="text-sm">
               <span class="text-gray-600">Sum Assured:</span>
-              <span class="ml-2 font-semibold">ETB {{ Number(pkg.sumAssured).toLocaleString() }}</span>
+              <span class="ml-2 font-semibold">ETB {{ Number(displayedSumAssured(pkg)).toLocaleString() }}</span>
             </div>
             <div v-if="showUsed" class="text-sm">
               <span class="text-gray-600">Used:</span>
-              <span class="ml-2 font-semibold">ETB {{ Number(pkg.used).toLocaleString() }}</span>
+              <span class="ml-2 font-semibold">ETB {{ Number(displayedUsed(pkg)).toLocaleString() }}</span>
+            </div>
+            <div class="text-sm">
+              <span class="text-gray-600">Remaining:</span>
+              <span class="ml-2 font-bold" :class="(displayedSumAssured(pkg) - displayedUsed(pkg)) <= 0 ? 'text-red-600' : 'text-emerald-600'">
+                ETB {{ (displayedSumAssured(pkg) - displayedUsed(pkg)).toLocaleString() }}
+              </span>
             </div>
             <div v-if="showPlanType" class="text-sm">
               <span class="text-gray-600">Plan Type:</span>

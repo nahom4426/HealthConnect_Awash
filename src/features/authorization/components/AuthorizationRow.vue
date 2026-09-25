@@ -115,6 +115,8 @@ function openChangeStatusModal(row) {
     "ChangeAuthorizationStatus",
     {
       authorizationUuid: row?.authorizationUuid,
+      insuredUuid: row?.insuredUuid,
+      dependantUuid: row?.dependantUuid,
       currentStatus: row?.status,
       endDate: row?.endDate,
       beginDate: row?.beginDate,
@@ -123,7 +125,6 @@ function openChangeStatusModal(row) {
       usedAmount: row?.usedAmount,
       insuredName: row?.insuredName,
       dependantName: row?.dependantName,
-      dependantUuid: row?.dependantUuid,
       providerName: row?.providerName,
       institutionName: row?.institutionName,
     },
@@ -268,12 +269,29 @@ function openChangeStatusModal(row) {
     </td>
 
     <td v-if="headKeys.find((h) => String(h).toLowerCase() === 'actions')" class="p-3">
-      <button
-        @click.stop="openChangeStatusModal(row)"
-        class="inline-flex gap-2 items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100"
-      >
-        Change Status
-      </button>
+      <div class="flex gap-2 items-center">
+        <button
+          @click.stop="openChangeStatusModal(row)"
+          class="inline-flex gap-2 items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100"
+        >
+          Change Status
+        </button>
+        <button
+          v-if="row?.insuredUuid"
+          @click.stop="openModal('UtilizeUsage', {
+            insuredUuid: row?.insuredUuid,
+            dependantUuid: row?.dependantUuid || null,
+            payerInstitutionContractUuid: row?.contractUuid || null,
+          })"
+          class="inline-flex gap-1.5 items-center px-2.5 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors"
+          title="Check package utilization and remaining balance"
+        >
+          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          Check Usage
+        </button>
+      </div>
     </td>
   </tr>
 </template>

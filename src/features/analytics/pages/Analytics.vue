@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CATEGORICAL, STATUS, seriesColors, withAlpha } from '@/config/chartPalette';
 import { ref, onMounted, reactive } from 'vue';
 import DefaultPage from '@/components/DefaultPage.vue';
 import ChartCard from '@/components/charts/ChartCard.vue';
@@ -49,8 +50,7 @@ const periodicPaidClaimsData = ref<any>({
     {
       label: 'Paid Claims',
       data: [],
-      backgroundColor: '#93C5FD',
-      borderRadius: 6,
+      backgroundColor: CATEGORICAL[0],
     }
   ]
 });
@@ -97,7 +97,7 @@ function parsePeriodicPaidClaims(columns: string[], rows: any[]) {
   if (!rows || rows.length === 0) {
     periodicPaidClaimsData.value = {
       labels: [],
-      datasets: [{ label: 'Paid Claims', data: [], backgroundColor: '#93C5FD', borderRadius: 6 }]
+      datasets: [{ label: 'Paid Claims', data: [], backgroundColor: CATEGORICAL[0] }]
     };
     return;
   }
@@ -113,8 +113,7 @@ function parsePeriodicPaidClaims(columns: string[], rows: any[]) {
       {
         label: 'Paid Claims',
         data,
-        backgroundColor: '#93C5FD',
-        borderRadius: 6,
+        backgroundColor: CATEGORICAL[0],
       }
     ]
   };
@@ -136,8 +135,8 @@ function parseLossVsGain(columns: string[], rows: any[]) {
   lossRatioData.value = {
     labels,
     datasets: [
-      { label: 'Total Loss', data: lossData, backgroundColor: '#FECACA', borderRadius: 6 },
-      { label: 'Total Gain', data: gainData, backgroundColor: '#A7F3D0', borderRadius: 6 }
+      { label: 'Total Loss', data: lossData, backgroundColor: STATUS.critical },
+      { label: 'Total Gain', data: gainData, backgroundColor: STATUS.good }
     ]
   };
 }
@@ -151,12 +150,12 @@ function parsePaidClaimsByProviders(columns: string[], rows: any[]) {
   const serviceCols = columns.filter(c => c !== providerCol);
 
   const labels = rows.map(r => String(r[providerCol] ?? ''));
-  const colorPalette = ['#FECACA', '#FED7AA', '#BEF264', '#A5F3FC', '#D8B4FE', '#93C5FD', '#A7F3D0'];
+  const colorPalette = seriesColors(serviceCols.length);
 
   const datasets = serviceCols.map((col, idx) => ({
     label: col,
     data: rows.map(r => parseFloat(String(r[col] ?? 0).replace(/,/g, '')) || 0),
-    backgroundColor: colorPalette[idx % colorPalette.length],
+    backgroundColor: colorPalette[idx],
   }));
 
   paidClaimsByProvidersData.value = { labels, datasets };
@@ -172,16 +171,13 @@ function parseClaimsCreated(columns: string[], rows: any[]) {
 
   const labels = rows.map(r => String(r[labelCol] ?? ''));
   const data = rows.map(r => parseFloat(String(r[valCol] ?? 0).replace(/,/g, '')) || 0);
-  const colors = ['#93C5FD', '#FECACA', '#FED7AA', '#A7F3D0', '#D8B4FE', '#FDE047', '#C084FC'];
 
   claimsCreatedData.value = {
     labels,
     datasets: [
       {
         data,
-        backgroundColor: colors.slice(0, labels.length),
-        borderColor: '#fff',
-        borderWidth: 2,
+        backgroundColor: seriesColors(labels.length),
       }
     ]
   };
@@ -203,24 +199,21 @@ function parseClaimsStatus(columns: string[], rows: any[]) {
     datasets.push({
       label: 'Submitted',
       data: rows.map(r => parseFloat(String(r[subCol] ?? 0).replace(/,/g, '')) || 0),
-      backgroundColor: '#93C5FD',
-      borderRadius: 6,
+      backgroundColor: CATEGORICAL[0],
     });
   }
   if (paidCol) {
     datasets.push({
       label: 'Paid',
       data: rows.map(r => parseFloat(String(r[paidCol] ?? 0).replace(/,/g, '')) || 0),
-      backgroundColor: '#A7F3D0',
-      borderRadius: 6,
+      backgroundColor: STATUS.good,
     });
   }
   if (rejCol) {
     datasets.push({
       label: 'Rejected',
       data: rows.map(r => parseFloat(String(r[rejCol] ?? 0).replace(/,/g, '')) || 0),
-      backgroundColor: '#FECACA',
-      borderRadius: 6,
+      backgroundColor: STATUS.critical,
     });
   }
 
@@ -234,15 +227,15 @@ function parseTopInstitutionsTrend(columns: string[], rows: any[]) {
   }
   const timeCol = columns.find(c => /time|date|hour|month|period/i.test(c)) || columns[0];
   const instCols = columns.filter(c => c !== timeCol).slice(0, 5);
-  const colors = ['#93C5FD', '#FED7AA', '#A7F3D0', '#D8B4FE', '#FECACA'];
+  const colors = seriesColors(instCols.length);
 
   if (instCols.length > 0 && timeCol) {
     const labels = rows.map(r => String(r[timeCol] ?? ''));
     const datasets = instCols.map((col, idx) => ({
       label: col,
       data: rows.map(r => parseFloat(String(r[col] ?? 0).replace(/,/g, '')) || 0),
-      borderColor: colors[idx % colors.length],
-      backgroundColor: colors[idx % colors.length] + '33',
+      borderColor: colors[idx],
+      backgroundColor: withAlpha(colors[idx], 0.12),
       fill: true,
       tension: 0.4,
     }));
@@ -258,8 +251,8 @@ function parseTopInstitutionsTrend(columns: string[], rows: any[]) {
       datasets: [{
         label: 'Insured Persons',
         data,
-        borderColor: '#93C5FD',
-        backgroundColor: 'rgba(147, 197, 253, 0.2)',
+        borderColor: CATEGORICAL[0],
+        backgroundColor: withAlpha(CATEGORICAL[0], 0.12),
         fill: true,
         tension: 0.4,
       }]
@@ -277,16 +270,13 @@ function parsePremiumCollected(columns: string[], rows: any[]) {
 
   const labels = rows.map(r => String(r[labelCol] ?? ''));
   const data = rows.map(r => parseFloat(String(r[valCol] ?? 0).replace(/,/g, '')) || 0);
-  const colors = ['#93C5FD', '#A7F3D0', '#FED7AA', '#FECACA', '#D8B4FE', '#C084FC'];
 
   premiumCollectedData.value = {
     labels,
     datasets: [
       {
         data,
-        backgroundColor: colors.slice(0, labels.length),
-        borderColor: '#fff',
-        borderWidth: 3,
+        backgroundColor: seriesColors(labels.length),
       }
     ]
   };

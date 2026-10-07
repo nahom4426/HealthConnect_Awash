@@ -1,8 +1,10 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { Chart, registerables } from "chart.js";
+import { applyChartDefaults, CARTESIAN_INTERACTION } from "@/config/chartPalette";
 
 Chart.register(...registerables);
+applyChartDefaults();
 
 // Props
 const props = defineProps({
@@ -23,6 +25,12 @@ onMounted(() => {
   createChart();
 });
 
+// Release the chart.js instance (and its listeners/animation frames) on unmount
+onBeforeUnmount(() => {
+  chart?.destroy();
+  chart = null;
+});
+
 watch(
   () => props.chartData,
   (newData) => {
@@ -40,6 +48,7 @@ function createChart() {
   const defaultOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: CARTESIAN_INTERACTION,
   };
 
   // Apply bar thickness options if provided

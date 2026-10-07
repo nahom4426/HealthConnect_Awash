@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import ChartCard from "@/components/charts/ChartCard.vue";
+import { CATEGORICAL, GRID, STATUS } from "@/config/chartPalette";
 import BarChart from "@/components/charts/BarChart.vue";
 import DoughnutChart from "@/components/charts/DoughnutChart.vue";
 import Table from "@/components/Table.vue";
@@ -20,14 +21,16 @@ const MONTHS = [
 ];
 const MONTH_LABELS = MONTHS.map((m) => m.slice(0, 3));
 
+// Claim workflow states. Each segment differs from its ring neighbours
+// (validated in this order, wrap-around included); the legend labels every one.
 const STATUS_COLORS = {
-  Submitted: "#F59E0B",
-  "In Process": "#F59E0B",
-  Verified: "#0EA5E9",
-  Approved: "#10B981",
-  Completed: "#059669",
+  Submitted: STATUS.warning,
+  "In Process": CATEGORICAL[1],
+  Verified: CATEGORICAL[6],
+  Approved: STATUS.good,
+  Completed: CATEGORICAL[0],
 };
-const getStatusColor = (status) => STATUS_COLORS[status] || "#94A3B8";
+const getStatusColor = (status) => STATUS_COLORS[status] || STATUS.neutral;
 
 function percentChange(today, yesterday) {
   if (yesterday === 0) return today > 0 ? 100 : 0;
@@ -110,14 +113,12 @@ function monthlySeries(source, label, color) {
         label,
         data: MONTHS.map((m) => source[m] || 0),
         backgroundColor: color,
-        borderRadius: 4,
-        borderSkipped: false,
       },
     ],
   };
 }
-const policiesChartData = computed(() => monthlySeries(monthlyPolicies.value, "Active policies", "#2B3F87"));
-const claimsChartData = computed(() => monthlySeries(monthlyClaims.value, "Created claims", "#00AED9"));
+const policiesChartData = computed(() => monthlySeries(monthlyPolicies.value, "Active policies", CATEGORICAL[0]));
+const claimsChartData = computed(() => monthlySeries(monthlyClaims.value, "Created claims", CATEGORICAL[1]));
 
 const claimStatusChartData = computed(() => {
   const items = activeClaimStatuses.value;
@@ -128,8 +129,6 @@ const claimStatusChartData = computed(() => {
       {
         data: items.map((s) => s.count),
         backgroundColor: items.map((s) => getStatusColor(s.status)),
-        borderColor: "#ffffff",
-        borderWidth: 2,
         hoverOffset: 4,
       },
     ],
@@ -154,7 +153,7 @@ const claimStatusChartOptions = {
 
 const barChartOptions = {
   scales: {
-    y: { beginAtZero: true, grid: { color: "#EEF0F4" }, border: { display: false }, ticks: { precision: 0 } },
+    y: { beginAtZero: true, grid: { color: GRID }, border: { display: false }, ticks: { precision: 0 } },
     x: { grid: { display: false }, border: { display: false } },
   },
   plugins: { legend: { display: false } },

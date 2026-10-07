@@ -35,12 +35,21 @@ const isLoading = ref(false);
 const fetchError = ref('');
 const reportsList = ref<ReportMeta[]>([]);
 
-// Reactive KPI Data (Defaulting to 0)
+// KPI icons (24×24 stroke paths)
+const KPI_ICONS = {
+  paid: 'M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z',
+  submitted: 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
+  approved: 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+  loss: 'M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.51-5.511-3.181',
+};
+
+// Reactive KPI Data (Defaulting to 0).
+// No period-over-period data is fetched, so no change figures are shown.
 const kpis = ref([
-  { title: 'Total Paid Claims', value: 'ETB 0', change: '0%', trend: 'up', icon: '📊' },
-  { title: 'Total Claims Submitted', value: '0', change: '0%', trend: 'up', icon: '📝' },
-  { title: 'Claims Approved Rate', value: '0.0%', change: '0%', trend: 'up', icon: '✅' },
-  { title: 'Avg Loss Ratio', value: '0.0%', change: '0%', trend: 'down', icon: '📉' },
+  { title: 'Total Paid Claims', value: 'ETB 0', icon: KPI_ICONS.paid },
+  { title: 'Total Claims Submitted', value: '0', icon: KPI_ICONS.submitted },
+  { title: 'Claims Approved Rate', value: '0.0%', icon: KPI_ICONS.approved },
+  { title: 'Avg Loss Ratio', value: '0.0%', icon: KPI_ICONS.loss },
 ]);
 
 // Reactive Chart Datasets (Defaulting to empty)
@@ -351,30 +360,22 @@ function updateKPIs() {
     {
       title: 'Total Paid Claims',
       value: `ETB ${totalPaid.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-      change: '0%',
-      trend: 'up',
-      icon: '📊',
+      icon: KPI_ICONS.paid,
     },
     {
       title: 'Total Claims Submitted',
       value: totalSubmitted.toLocaleString(),
-      change: '0%',
-      trend: 'up',
-      icon: '📝',
+      icon: KPI_ICONS.submitted,
     },
     {
       title: 'Claims Approved Rate',
       value: `${approvedRate.toFixed(1)}%`,
-      change: '0%',
-      trend: 'up',
-      icon: '✅',
+      icon: KPI_ICONS.approved,
     },
     {
       title: 'Avg Loss Ratio',
       value: `${avgLossRatioVal.toFixed(1)}%`,
-      change: avgLossRatioVal > 60 ? '+4.1%' : '0%',
-      trend: avgLossRatioVal > 60 ? 'up' : 'down',
-      icon: '📉',
+      icon: KPI_ICONS.loss,
     },
   ];
 }
@@ -485,34 +486,36 @@ onMounted(() => {
   <DefaultPage :hideSearch="true" title="Analytics" subtitle="Comprehensive claims, policy, and provider overview">
 
     <!-- Top Dashboard Controls (Filters & Refresh) -->
-    <div class="mb-6 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
+    <div class="p-4 mb-6 card">
       <div class="flex items-center justify-between gap-4 flex-wrap">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
-            📈
+          <div class="grid place-items-center w-10 h-10 rounded-lg bg-primary/[0.07] text-primary" aria-hidden="true">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 15l4-4 3 3 5-6" /></svg>
           </div>
           <div>
-            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <h2 class="flex gap-2 items-center !px-0 text-base font-semibold text-ink">
               Dashboard Reports & Analytics
-              <span v-if="reportsList.length > 0" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+              <span v-if="reportsList.length > 0" class="badge badge-success">
                 {{ reportsList.length }} Reports Connected
               </span>
             </h2>
-            <p class="text-xs text-slate-500">Live data integrated with backend ClaimConnect dynamic reports endpoint</p>
+            <p class="text-xs text-ink-subtle">Live data integrated with backend ClaimConnect dynamic reports endpoint</p>
           </div>
         </div>
 
         <div class="flex items-center gap-3">
           <button
+            type="button"
             @click="isFilterOpen = !isFilterOpen"
+            :aria-expanded="isFilterOpen"
             :class="[
-              'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer',
-              isFilterOpen 
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
-                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+              'inline-flex items-center gap-2 px-3.5 h-9 rounded-lg text-sm font-medium transition-colors border',
+              isFilterOpen
+                ? 'bg-primary/5 border-primary/40 text-primary'
+                : 'bg-surface border-line-strong text-ink hover:bg-surface-muted'
             ]"
           >
-            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 5.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
             </svg>
             <span>{{ isFilterOpen ? 'Hide Filters' : 'Filter Dashboard' }}</span>
@@ -521,9 +524,10 @@ onMounted(() => {
           <button
             @click="fetchAnalyticsDashboard"
             :disabled="isLoading"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+            type="button"
+            class="inline-flex items-center gap-2 px-3.5 h-9 rounded-lg text-sm font-medium bg-primary hover:bg-primary-hover text-white shadow-sm transition-colors disabled:opacity-50"
           >
-            <svg v-if="!isLoading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg v-if="!isLoading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
             <span v-else class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
@@ -534,51 +538,51 @@ onMounted(() => {
 
       <!-- Expandable Filter Bar -->
       <transition enter-active-class="transition duration-200 ease-out" enter-from-class="transform -translate-y-2 opacity-0" enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="transform translate-y-0 opacity-100" leave-to-class="transform -translate-y-2 opacity-0">
-        <div v-show="isFilterOpen" class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+        <div v-show="isFilterOpen" class="mt-4 pt-4 border-t border-line grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
           <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Year</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-ink-muted mb-1">Year</label>
             <input 
               v-model="filters.year" 
               type="number" 
               placeholder="e.g. 2026" 
-              class="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition" 
+              class="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-line-strong focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition" 
             />
           </div>
           <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">From Date</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-ink-muted mb-1">From Date</label>
             <input 
               v-model="filters.fromDate" 
               type="date" 
-              class="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition" 
+              class="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-line-strong focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition" 
             />
           </div>
           <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">To Date</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-ink-muted mb-1">To Date</label>
             <input 
               v-model="filters.toDate" 
               type="date" 
-              class="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition" 
+              class="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-line-strong focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition" 
             />
           </div>
           <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Institution</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-ink-muted mb-1">Institution</label>
             <input 
               v-model="filters.institutionFilter" 
               type="text" 
               placeholder="Filter institution" 
-              class="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition" 
+              class="w-full h-9 px-3 text-xs font-semibold rounded-lg border border-line-strong focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition" 
             />
           </div>
           <div class="flex items-end gap-2">
             <button
               @click="handleApplyFilters"
-              class="flex-1 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer"
+              class="flex-1 h-9 px-3 rounded-lg bg-primary hover:bg-primary-hover text-white font-bold text-xs shadow-sm transition cursor-pointer"
             >
               Apply
             </button>
             <button
               @click="handleResetFilters"
-              class="h-9 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+              class="h-9 px-3 rounded-lg bg-line hover:bg-line text-ink-muted font-bold text-xs transition cursor-pointer"
             >
               Reset
             </button>
@@ -588,25 +592,25 @@ onMounted(() => {
     </div>
 
     <!-- Error Banner if API fails -->
-    <div v-if="fetchError" class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between text-rose-700 text-xs font-medium">
+    <div v-if="fetchError" class="mb-6 p-4 rounded-xl bg-error-soft border border-error/30 flex items-center justify-between text-error-strong text-xs font-medium">
       <div class="flex items-center gap-2">
-        <svg class="w-5 h-5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-error flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span>{{ fetchError }}</span>
       </div>
-      <button @click="fetchAnalyticsDashboard" class="px-3 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition">
+      <button @click="fetchAnalyticsDashboard" class="px-3 py-1 bg-error text-white rounded-lg font-bold hover:bg-error-strong transition">
         Retry
       </button>
     </div>
 
     <!-- Overview Dashboard Content -->
-    <div class="px-6 py-8 -mx-6 -my-6 space-y-8 bg-gradient-to-br via-blue-50 to-indigo-50 rounded-2xl from-slate-50 relative">
+    <div class="relative space-y-6">
       <!-- Loading overlay backdrop during refresh -->
       <div v-if="isLoading" class="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-2xl pointer-events-none transition-all">
-        <div class="bg-white/90 shadow-xl border border-slate-200 px-5 py-3 rounded-2xl flex items-center gap-3">
-          <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs font-bold text-slate-700">Updating dashboard reports...</span>
+        <div class="flex gap-3 items-center px-4 py-2.5 rounded-xl border shadow-pop bg-surface border-line" role="status">
+          <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-sm font-medium text-ink-muted">Updating dashboard reports…</span>
         </div>
       </div>
 
@@ -617,8 +621,6 @@ onMounted(() => {
           :key="idx"
           :title="kpi.title"
           :value="kpi.value"
-          :change="kpi.change"
-          :trend="kpi.trend"
           :icon="kpi.icon"
         />
       </div>

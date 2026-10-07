@@ -14,7 +14,7 @@
               <Input
                 v-model="searchTerm"
                 placeholder="Search master services by name, code, or category..."
-                :attributes="{ class: 'pl-10 w-full bg-white border-gray-200 focus:border-[#02676B] focus:ring-1 focus:ring-[#02676B] rounded-lg text-sm' }"
+                :attributes="{ class: 'pl-10 w-full bg-white border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary rounded-lg text-sm' }"
               />
               <div class="absolute top-2.5 left-3 text-gray-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,7 +29,7 @@
                 type="button"
                 @click="filterMode = 'all'"
                 class="px-3 py-1.5 rounded-md transition-colors"
-                :class="filterMode === 'all' ? 'bg-[#02676B] text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                :class="filterMode === 'all' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
               >
                 All ({{ totalMasterCount }})
               </button>
@@ -37,7 +37,7 @@
                 type="button"
                 @click="filterMode = 'available'"
                 class="px-3 py-1.5 rounded-md transition-colors"
-                :class="filterMode === 'available' ? 'bg-[#02676B] text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                :class="filterMode === 'available' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
               >
                 Available ({{ totalAvailableCount }})
               </button>
@@ -45,7 +45,7 @@
                 type="button"
                 @click="filterMode = 'mapped'"
                 class="px-3 py-1.5 rounded-md transition-colors"
-                :class="filterMode === 'mapped' ? 'bg-[#02676B] text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                :class="filterMode === 'mapped' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
               >
                 Already Mapped ({{ totalMappedCount }})
               </button>
@@ -63,7 +63,7 @@
                   v-model.number="discountPercent"
                   @input="onDiscountChanged"
                   placeholder="0"
-                  class="w-16 px-2 py-1 text-sm font-semibold text-right rounded border border-gray-300 focus:border-[#02676B] focus:outline-none"
+                  class="w-16 px-2 py-1 text-sm font-semibold text-right rounded border border-gray-300 focus:border-primary focus:outline-none"
                 />
                 <span class="ml-1 text-xs text-gray-500">%</span>
               </div>
@@ -78,7 +78,7 @@
                   type="checkbox"
                   :checked="isCurrentPageAvailableSelected"
                   @change="toggleSelectAvailableCurrentPage"
-                  class="h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded cursor-pointer"
+                  class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
                 />
                 <span>Select all available on this page ({{ currentPageAvailableCount }})</span>
               </label>
@@ -147,7 +147,7 @@
                     type="checkbox"
                     :checked="isSelected(svc)"
                     @change="toggleOne(svc)"
-                    class="h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded cursor-pointer"
+                    class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
                   />
                 </td>
 
@@ -210,7 +210,7 @@
                       min="0"
                       step="0.01"
                       @input="onEditPrice(svc, $event.target.value)"
-                      class="px-2 py-1 w-28 text-right font-mono text-sm rounded border border-gray-300 focus:border-[#02676B] focus:ring-1 focus:ring-[#02676B] focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 transition-colors"
+                      class="px-2 py-1 w-28 text-right font-mono text-sm rounded border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 transition-colors"
                     />
                   </div>
                 </td>
@@ -258,7 +258,7 @@
             </button>
 
             <select
-              class="px-2 py-1.5 text-xs font-medium rounded-lg border border-gray-300 bg-white text-gray-700 focus:border-[#02676B] focus:outline-none"
+              class="px-2 py-1.5 text-xs font-medium rounded-lg border border-gray-300 bg-white text-gray-700 focus:border-primary focus:outline-none"
               :value="limit"
               @change="changeLimit($event.target.value)"
               :disabled="loading"
@@ -273,7 +273,7 @@
         <!-- Footer Actions -->
         <div class="flex justify-between items-center pt-4 border-t border-gray-200">
           <div class="text-sm font-medium text-gray-700 flex items-center gap-3">
-            <span>Selected: <span class="px-2 py-0.5 rounded-full bg-teal-100 text-[#02676B] font-bold text-xs">{{ selectedMap.size }}</span></span>
+            <span>Selected: <span class="px-2 py-0.5 rounded-full bg-teal-100 text-primary font-bold text-xs">{{ selectedMap.size }}</span></span>
             <span v-if="newServicesCount > 0" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold">+{{ newServicesCount }} New</span>
             <span v-if="updateServicesCount > 0" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">{{ updateServicesCount }} Update</span>
           </div>
@@ -283,7 +283,7 @@
             <Button
               :pending="api.pending.value || isSubmitting"
               :disabled="selectedMap.size === 0 || isSubmitting"
-              class="bg-[#02676B] hover:bg-[#01585B] text-white transition-colors"
+              class="bg-primary hover:bg-primary-hover text-white transition-colors"
               @click="submit"
             >
               Save {{ selectedMap.size }} Service(s)

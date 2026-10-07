@@ -78,7 +78,7 @@
                         <img :src="newDependentPhotoPreview" class="object-cover w-full h-full" />
                       </template>
                       <template v-else>
-                        <span class="text-2xl text-[#02676B] font-bold">+</span>
+                        <span class="text-2xl text-primary font-bold">+</span>
                       </template>
                     </label>
 
@@ -214,7 +214,7 @@
                           />
                         </template>
                         <template v-else>
-                          <span class="text-2xl text-[#02676B] font-bold">+</span>
+                          <span class="text-2xl text-primary font-bold">+</span>
                         </template>
                       </label>
 

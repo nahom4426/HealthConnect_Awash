@@ -479,7 +479,7 @@ function handleSubmit() {
        <ModalFormSubmitButton
         :pending="pending"
         :btn-text="isEdit ? 'Add Provider' : 'Add Provider'"
-        class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
+        class="bg-primary hover:bg-primary-hover text-white px-6 py-3 border-primary hover:border-primary-hover"
       />
     </div>
   </form>

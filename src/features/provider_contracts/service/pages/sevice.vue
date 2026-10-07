@@ -303,7 +303,7 @@ const exportServices = async () => {
         <!-- Loading Spinner -->
         <div v-if="loadingCategories" class="py-4 text-center">
           <div class="flex justify-center items-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#02676B]"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             <span class="ml-2">Loading categories...</span>
           </div>
         </div>
@@ -315,7 +315,7 @@ const exportServices = async () => {
               type="checkbox"
               :checked="selectedCategories.length === categories.length"
               @change="toggleAllCategories"
-              class="mr-2 h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded"
+              class="mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
             />
             <label class="font-medium">Select All Categories</label>
           </div>
@@ -330,7 +330,7 @@ const exportServices = async () => {
                 type="checkbox"
                 :value="category.id"
                 v-model="selectedCategories"
-                class="mr-3 h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded"
+                class="mr-3 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
               />
               <label class="text-sm">{{ category.name }}</label>
             </div>
@@ -353,7 +353,7 @@ const exportServices = async () => {
             Cancel
           </button>
           <button
-            class="px-4 py-2 bg-[#02676B] text-white rounded hover:bg-[#02494D] transition-colors flex items-center gap-2"
+            class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors flex items-center gap-2"
             @click="exportServices"
             :disabled="loadingCategories || selectedCategories.length === 0"
           >

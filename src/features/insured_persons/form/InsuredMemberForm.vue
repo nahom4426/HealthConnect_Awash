@@ -532,7 +532,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       <label
         class="inline-flex items-center p-3 rounded-md transition-all cursor-pointer"
         :class="{ 
-          'text-[#02676B] bg-[#DFF1F1] border-2 border-[#02676B]': status === 'ACTIVE',
+          'text-primary bg-[#DFF1F1] border-2 border-primary': status === 'ACTIVE',
           'border border-gray-200 hover:bg-gray-50': status !== 'ACTIVE'
         }"
       >
@@ -540,7 +540,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           type="radio"
           v-model="status"
           value="ACTIVE"
-          class="form-radio h-5 w-5 text-[#02676B] focus:ring-[#DFF1F1]"
+          class="form-radio h-5 w-5 text-primary focus:ring-[#DFF1F1]"
         />
         <span class="ml-2 font-medium">Active</span>
       </label>
@@ -579,7 +579,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
         <label 
           class="inline-flex items-center p-2 px-3 rounded-md cursor-pointer"
           :class="{
-            'bg-[#DFF1F1] border border-[#02676B]': hasInactiveDate === 'yes',
+            'bg-[#DFF1F1] border border-primary': hasInactiveDate === 'yes',
             'border border-gray-200 hover:bg-gray-50': hasInactiveDate !== 'yes'
           }"
         >
@@ -587,7 +587,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
             type="radio"
             v-model="hasInactiveDate"
             value="yes"
-            class="form-radio h-4 w-4 text-[#02676B]"
+            class="form-radio h-4 w-4 text-primary"
           />
           <span class="ml-2">Yes</span>
         </label>
@@ -623,7 +623,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
         name="inactiveDate"
         type="date"
         :attributes="{
-          class: 'w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#02676B]',
+          class: 'w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary',
           min: new Date().toISOString().split('T')[0]
         }"
         @input="validateFutureDate(inactiveDate)"
@@ -657,7 +657,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       <ModalFormSubmitButton
         :pending="pending"
         :btn-text="isEdit ? 'Update Employee' : 'Add Employee'"
-        class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
+        class="bg-primary hover:bg-primary-hover text-white px-6 py-3 border-primary hover:border-primary-hover"
       />
     </div>
   </Form>

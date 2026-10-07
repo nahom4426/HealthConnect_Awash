@@ -1,14 +1,14 @@
 
-import ActiveContracts from "@/features/provider_contracts/pages/ActiveContracts.vue";
-import ActiveProviderContractIndex from "@/features/provider_contracts/pages/ActiveProviderContractIndex.vue";
-import CreateContract from "@/features/provider_contracts/pages/CreateContract.vue";
-import EditContract from "@/features/provider_contracts/pages/EditContract.vue";
-import ExpiredContract from "@/features/provider_contracts/pages/ExpiredContracts.vue";
-import PendingContracts from "@/features/provider_contracts/pages/PendingContracts.vue";
-import ProviderContractIndex from "@/features/provider_contracts/pages/ProviderContractIndex.vue";
-import SuspendedContracts from "@/features/provider_contracts/pages/SuspendedContracts.vue";
-import service from "@/features/provider_contracts/service/pages/sevice.vue";
-import AddInstitutionsForContract from "@/features/provider_contracts/pages/AddInstitutionsForContract.vue";
+const ActiveContracts = () => import("@/features/provider_contracts/pages/ActiveContracts.vue");
+const ActiveProviderContractIndex = () => import("@/features/provider_contracts/pages/ActiveProviderContractIndex.vue");
+const CreateContract = () => import("@/features/provider_contracts/pages/CreateContract.vue");
+const EditContract = () => import("@/features/provider_contracts/pages/EditContract.vue");
+const ExpiredContract = () => import("@/features/provider_contracts/pages/ExpiredContracts.vue");
+const PendingContracts = () => import("@/features/provider_contracts/pages/PendingContracts.vue");
+const ProviderContractIndex = () => import("@/features/provider_contracts/pages/ProviderContractIndex.vue");
+const SuspendedContracts = () => import("@/features/provider_contracts/pages/SuspendedContracts.vue");
+const service = () => import("@/features/provider_contracts/service/pages/sevice.vue");
+const AddInstitutionsForContract = () => import("@/features/provider_contracts/pages/AddInstitutionsForContract.vue");
 export default [
 	{
 		path: '/create_contract',

@@ -1,8 +1,8 @@
-import ClaimPayment from "@/features/finance/pages/ClaimPayment.vue";
-import OtherPayments from "@/features/finance/pages/OtherPayments.vue";
-import PaidClaims from "@/features/finance/pages/PaidClaims.vue";
-import PremiumReceipt from "@/features/finance/pages/PremiumReceipt.vue";
-import ExcelDailyReport from "@/features/finance/pages/ExcelDailyReport.vue";
+const ClaimPayment = () => import("@/features/finance/pages/ClaimPayment.vue");
+const OtherPayments = () => import("@/features/finance/pages/OtherPayments.vue");
+const PaidClaims = () => import("@/features/finance/pages/PaidClaims.vue");
+const PremiumReceipt = () => import("@/features/finance/pages/PremiumReceipt.vue");
+const ExcelDailyReport = () => import("@/features/finance/pages/ExcelDailyReport.vue");
 
 export default [
 	{

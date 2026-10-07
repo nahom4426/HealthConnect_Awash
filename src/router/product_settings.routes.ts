@@ -1,5 +1,5 @@
-import Coverages from "@/features/product_settings/pages/Coverages.vue";
-import ShowRates from "@/features/product_settings/pages/ShowRates.vue";
+const Coverages = () => import("@/features/product_settings/pages/Coverages.vue");
+const ShowRates = () => import("@/features/product_settings/pages/ShowRates.vue");
 
 export default [
 	{

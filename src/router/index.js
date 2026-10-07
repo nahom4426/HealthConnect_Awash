@@ -1,5 +1,5 @@
 import MainLayout from "@/layouts/MainLayout.vue";
-import HomeView from "@/views/HomeView.vue";
+const HomeView = () => import("@/views/HomeView.vue");
 import { createRouter, createWebHistory, RouterView } from "vue-router";
 import quotationRoutes from "./quotation.routes";
 import underwritingRoutes from "./underwriting.routes";
@@ -11,14 +11,14 @@ import providersRoutes from "./providers.routes";
 import product_settingsRoutes from "./product_settings.routes";
 import brokerManagementRoutes from "./broker.routes";
 import authorizationRoutes from "./authorization.routes";
-import Login from "@/views/Login.vue";
+const Login = () => import("@/views/Login.vue");
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useAuthStore } from "@/stores/auth";
 import adminRoutes from "./admin.routes";
 import analyticsRoutes from "./analytics.routes";
 import reportsRoutes from "./reports.routes";
-import Profile from "@/features/profile/pages/profile.vue";
-import Settings from "@/features/settings/pages/Settings.vue";
+const Profile = () => import("@/features/profile/pages/profile.vue");
+const Settings = () => import("@/features/settings/pages/Settings.vue");
 
 function hasManagesQuotationPrivilege() {
   try {
@@ -280,7 +280,11 @@ router.beforeEach((to, from, next) => {
       const privileges = Array.isArray(user.privileges) ? user.privileges : [];
 
       // Super Admin or All Privileges bypass
-      if (user.roleName === 'Super Admin' || privileges.includes('All Privileges')) {
+      if (
+        user.roleName === 'Super Admin' ||
+        privileges.includes('All Privileges') ||
+        privileges.includes('ROLE_All Privileges')
+      ) {
         next();
         return;
       }

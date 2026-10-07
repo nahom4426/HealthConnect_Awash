@@ -1,4 +1,4 @@
-import Analytics from '@/features/analytics/pages/Analytics.vue';
+const Analytics = () => import('@/features/analytics/pages/Analytics.vue');
 
 const analyticsRoutes = [
   {

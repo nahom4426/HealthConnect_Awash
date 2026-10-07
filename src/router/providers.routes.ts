@@ -1,7 +1,7 @@
-import ActiveProviders from "@/features/providers/pages/ActiveProviders.vue";
-import AddProvider from "@/features/providers/pages/AddProvider.vue";
-import InactiveProviders from "@/features/providers/pages/InactiveProviders.vue";
-import ViewIssuedPolicyQuotation from "@/features/quotation/pages/ViewIssuedPolicyQuotation.vue";
+const ActiveProviders = () => import("@/features/providers/pages/ActiveProviders.vue");
+const AddProvider = () => import("@/features/providers/pages/AddProvider.vue");
+const InactiveProviders = () => import("@/features/providers/pages/InactiveProviders.vue");
+const ViewIssuedPolicyQuotation = () => import("@/features/quotation/pages/ViewIssuedPolicyQuotation.vue");
 export default [
 	{
 		path: '/add_provider',

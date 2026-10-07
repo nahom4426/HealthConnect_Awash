@@ -1,25 +1,25 @@
 import type { RouteLocationNormalized } from 'vue-router';
-import Institution from "@/features/underwriting/pages/Institution.vue";
-import AddNewPolicy from "@/features/underwriting/pages/AddNewPolicy.vue";
-import AmendPolicy from "@/features/underwriting/pages/AmendPolicy.vue";
-import Utilization from "@/features/underwriting/pages/Utilization.vue";
-import ExpiredContracts from "@/features/underwriting/pages/ExpiredContracts.vue";
-import ImportPolicy from "@/features/underwriting/pages/importPolicy.vue";
-import InstitutionContractDetail from "@/features/underwriting/pages/InstitutionContractDetail.vue";
-import InstitutionContractIndex from "@/features/underwriting/pages/InstitutionContractIndex.vue";
-import InstitutionCoverage from "@/features/underwriting/pages/InstitutionCoverage.vue";
-import InstitutionsInsuredPersons from "@/features/underwriting/pages/InstitutionsInsuredPersons.vue";
-import IssuedPolicy from "@/features/underwriting/pages/IssuedPolicy.vue";
-import UnderwritingIndex from "@/features/underwriting/pages/UnderwritingIndex.vue";
-import InstitutionContracts from "@/features/underwriting/pages/InstitutionContracts.vue";
-import Insured from "@/features/insured_persons/pages/Insured.vue";
-import InsuredDetails from "@/features/insured_persons/pages/insuredDetails.vue";
-import Coverages from "@/features/product_settings/pages/Coverages.vue";
-import InstitutionContractswithIssued from "@/features/underwriting/pages/InstitutionContractswithIssued.vue";
-import AddProviderForInstitution from "@/features/providers/pages/AddProviderForInstitution.vue";
-import RemoveCatgorieServices from '@/features/providers/pages/removeCatgorieServices.vue';
-import AddInstitution from "@/features/institutions/pages/AddInstitution.vue";
-import PendingRenewalContracts from '@/features/Nyalaunderwriting/pages/PendingRenewalContracts.vue';
+const Institution = () => import("@/features/underwriting/pages/Institution.vue");
+const AddNewPolicy = () => import("@/features/underwriting/pages/AddNewPolicy.vue");
+const AmendPolicy = () => import("@/features/underwriting/pages/AmendPolicy.vue");
+const Utilization = () => import("@/features/underwriting/pages/Utilization.vue");
+const ExpiredContracts = () => import("@/features/underwriting/pages/ExpiredContracts.vue");
+const ImportPolicy = () => import("@/features/underwriting/pages/importPolicy.vue");
+const InstitutionContractDetail = () => import("@/features/underwriting/pages/InstitutionContractDetail.vue");
+const InstitutionContractIndex = () => import("@/features/underwriting/pages/InstitutionContractIndex.vue");
+const InstitutionCoverage = () => import("@/features/underwriting/pages/InstitutionCoverage.vue");
+const InstitutionsInsuredPersons = () => import("@/features/underwriting/pages/InstitutionsInsuredPersons.vue");
+const IssuedPolicy = () => import("@/features/underwriting/pages/IssuedPolicy.vue");
+const UnderwritingIndex = () => import("@/features/underwriting/pages/UnderwritingIndex.vue");
+const InstitutionContracts = () => import("@/features/underwriting/pages/InstitutionContracts.vue");
+const Insured = () => import("@/features/insured_persons/pages/Insured.vue");
+const InsuredDetails = () => import("@/features/insured_persons/pages/insuredDetails.vue");
+const Coverages = () => import("@/features/product_settings/pages/Coverages.vue");
+const InstitutionContractswithIssued = () => import("@/features/underwriting/pages/InstitutionContractswithIssued.vue");
+const AddProviderForInstitution = () => import("@/features/providers/pages/AddProviderForInstitution.vue");
+const RemoveCatgorieServices = () => import('@/features/providers/pages/removeCatgorieServices.vue');
+const AddInstitution = () => import("@/features/institutions/pages/AddInstitution.vue");
+const PendingRenewalContracts = () => import('@/features/Nyalaunderwriting/pages/PendingRenewalContracts.vue');
 export default [
   {
     path: '/add_new_policy',

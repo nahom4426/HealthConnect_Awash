@@ -1,16 +1,16 @@
 import { RouterView } from "vue-router";
-import Privileges from "@/features/admin/privilege/pages/Privileges.vue";
-import AddPrivilege from "@/features/admin/privilege/pages/AddPrivilege.vue";
-import EditPrivilege from "@/features/admin/privilege/pages/EditPrivilege.vue";
-import Role from "@/features/admin/role/pages/Role.vue";
-import AddRole from "@/features/admin/role/pages/AddRole.vue";
-import EditRole from "@/features/admin/role/pages/EditRole.vue";
-import RoleDetail from "@/features/admin/role/pages/RoleDetail.vue";
-import Users from "@/features/admin/user/pages/Users.vue";
-import AddUser from "@/features/admin/user/pages/AddUser.mdl.vue";
-import EditUser from "@/features/admin/user/pages/EditUser.vue";
-import UserDetail from "@/features/admin/user/pages/UserDetail.vue";
-import PrivilegeDetail from "@/features/admin/privilege/pages/PrivilegeDetail.vue";
+const Privileges = () => import("@/features/admin/privilege/pages/Privileges.vue");
+const AddPrivilege = () => import("@/features/admin/privilege/pages/AddPrivilege.vue");
+const EditPrivilege = () => import("@/features/admin/privilege/pages/EditPrivilege.vue");
+const Role = () => import("@/features/admin/role/pages/Role.vue");
+const AddRole = () => import("@/features/admin/role/pages/AddRole.vue");
+const EditRole = () => import("@/features/admin/role/pages/EditRole.vue");
+const RoleDetail = () => import("@/features/admin/role/pages/RoleDetail.vue");
+const Users = () => import("@/features/admin/user/pages/Users.vue");
+const AddUser = () => import("@/features/admin/user/pages/AddUser.mdl.vue");
+const EditUser = () => import("@/features/admin/user/pages/EditUser.vue");
+const UserDetail = () => import("@/features/admin/user/pages/UserDetail.vue");
+const PrivilegeDetail = () => import("@/features/admin/privilege/pages/PrivilegeDetail.vue");
 
 export default [
   // Privileges routes

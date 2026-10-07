@@ -1,18 +1,18 @@
-import AcceptedQuotations from "@/features/quotation/pages/AcceptedQuotations.vue";
-import CreateNewQuotaions from "@/features/quotation/pages/CreateNewQuotaions.vue";
-import IssuedQuotaions from "@/features/quotation/pages/IssuedQuotaions.vue";
-import NewQuotation from "@/features/quotation/pages/NewQuotation.vue";
-import QuotationIndex from "@/features/quotation/pages/QuotationIndex.vue";
-import SavedQuotations from "@/features/quotation/pages/SavedQuotations.vue";
-import EditQuotation from "@/features/quotation/pages/EditQuotation.vue";
-import ViewIssuedQuotation from "@/features/quotation/pages/ViewIssuedQuotation.vue";
-import ViewAcceptedQuotation from "@/features/quotation/pages/ViewAcceptedQuotation.vue";
-import ViewSavedQuotation from "@/features/quotation/pages/ViewSavedQuotation.vue";
-import PaidQuotations from "@/features/quotation/pages/PaidQuotations.vue";
-import InclusionCreate from "@/features/quotation/pages/InclusionCreate.vue";
-import Inclusion from "@/features/quotation/pages/Inclusion.vue";
+const AcceptedQuotations = () => import("@/features/quotation/pages/AcceptedQuotations.vue");
+const CreateNewQuotaions = () => import("@/features/quotation/pages/CreateNewQuotaions.vue");
+const IssuedQuotaions = () => import("@/features/quotation/pages/IssuedQuotaions.vue");
+const NewQuotation = () => import("@/features/quotation/pages/NewQuotation.vue");
+const QuotationIndex = () => import("@/features/quotation/pages/QuotationIndex.vue");
+const SavedQuotations = () => import("@/features/quotation/pages/SavedQuotations.vue");
+const EditQuotation = () => import("@/features/quotation/pages/EditQuotation.vue");
+const ViewIssuedQuotation = () => import("@/features/quotation/pages/ViewIssuedQuotation.vue");
+const ViewAcceptedQuotation = () => import("@/features/quotation/pages/ViewAcceptedQuotation.vue");
+const ViewSavedQuotation = () => import("@/features/quotation/pages/ViewSavedQuotation.vue");
+const PaidQuotations = () => import("@/features/quotation/pages/PaidQuotations.vue");
+const InclusionCreate = () => import("@/features/quotation/pages/InclusionCreate.vue");
+const Inclusion = () => import("@/features/quotation/pages/Inclusion.vue");
 
-import CreateIndividualQuotation from "@/features/quotation/pages/CreateIndividualQuotation.vue";
+const CreateIndividualQuotation = () => import("@/features/quotation/pages/CreateIndividualQuotation.vue");
 
 export default [
 	{

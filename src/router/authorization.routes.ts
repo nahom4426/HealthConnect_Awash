@@ -1,4 +1,4 @@
-import Authorization from "@/features/authorization/pages/Authorization.vue";
+const Authorization = () => import("@/features/authorization/pages/Authorization.vue");
 
 export default [
   {

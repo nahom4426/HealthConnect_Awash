@@ -1,31 +1,37 @@
 import type { RouteLocationNormalized } from 'vue-router';
-import Institution from "@/features/Nyalaunderwriting/pages/Institution.vue";
-import AddNewPolicy from "@/features/Nyalaunderwriting/pages/AddNewPolicy.vue";
-import AmendPolicy from "@/features/Nyalaunderwriting/pages/AmendPolicy.vue";
-import ImportPolicy from "@/features/Nyalaunderwriting/pages/importPolicy.vue";
-import InstitutionContractDetail from "@/features/Nyalaunderwriting/pages/InstitutionContractDetail.vue";
-import InstitutionContractIndex from "@/features/Nyalaunderwriting/pages/InstitutionContractIndex.vue";
-import InstitutionCoverage from "@/features/Nyalaunderwriting/pages/InstitutionCoverage.vue";
-import InstitutionsInsuredPersons from "@/features/Nyalaunderwriting/pages/InstitutionsInsuredPersons.vue";
-import IssuedPolicy from "@/features/Nyalaunderwriting/pages/IssuedPolicy.vue";
-import UnderwritingIndex from "@/features/Nyalaunderwriting/pages/UnderwritingIndex.vue";
-import InstitutionContracts from "@/features/Nyalaunderwriting/pages/InstitutionContracts.vue";
-import Insured from "@/features/insured_persons/pages/Insured.vue";
-import InsuredDetails from "@/features/insured_persons/pages/insuredDetails.vue";
-import Coverages from "@/features/product_settings/pages/Coverages.vue";
-import InstitutionContractswithIssued from "@/features/Nyalaunderwriting/pages/InstitutionContractswithIssued.vue";
-import AddProviderForInstitution from "@/features/providers/pages/AddProviderForInstitution.vue";
-import RemoveCatgorieServices from '@/features/providers/pages/removeCatgorieServices.vue';
-import AddInstitution from "@/features/institutions/pages/AddInstitution.vue";
-import QuotationInsured from '@/features/insured_persons/pages/quotationInsured.vue';
-import ImportInsuredsPage from '@/features/insured_persons/pages/ImportInsuredsPage.vue';
-import StageExclusion from '@/features/quotation/pages/StageExclusion.vue';
-import ExpiredContracts from '@/features/Nyalaunderwriting/pages/ExpiredContracts.vue';
-import PendingRenewalContracts from '@/features/Nyalaunderwriting/pages/PendingRenewalContracts.vue';
-import EditPendingRenewalQuotation from '@/features/Nyalaunderwriting/pages/EditPendingRenewalQuotation.vue';
+const Institution = () => import("@/features/Nyalaunderwriting/pages/Institution.vue");
+const AddNewPolicy = () => import("@/features/Nyalaunderwriting/pages/AddNewPolicy.vue");
+const AmendPolicy = () => import("@/features/Nyalaunderwriting/pages/AmendPolicy.vue");
+const ImportPolicy = () => import("@/features/Nyalaunderwriting/pages/importPolicy.vue");
+const InstitutionContractDetail = () => import("@/features/Nyalaunderwriting/pages/InstitutionContractDetail.vue");
+const InstitutionContractIndex = () => import("@/features/Nyalaunderwriting/pages/InstitutionContractIndex.vue");
+const InstitutionCoverage = () => import("@/features/Nyalaunderwriting/pages/InstitutionCoverage.vue");
+const InstitutionsInsuredPersons = () => import("@/features/Nyalaunderwriting/pages/InstitutionsInsuredPersons.vue");
+const IssuedPolicy = () => import("@/features/Nyalaunderwriting/pages/IssuedPolicy.vue");
+const UnderwritingIndex = () => import("@/features/Nyalaunderwriting/pages/UnderwritingIndex.vue");
+const InstitutionContracts = () => import("@/features/Nyalaunderwriting/pages/InstitutionContracts.vue");
+const Insured = () => import("@/features/insured_persons/pages/Insured.vue");
+const InsuredDetails = () => import("@/features/insured_persons/pages/insuredDetails.vue");
+const Coverages = () => import("@/features/product_settings/pages/Coverages.vue");
+const InstitutionContractswithIssued = () => import("@/features/Nyalaunderwriting/pages/InstitutionContractswithIssued.vue");
+const AddProviderForInstitution = () => import("@/features/providers/pages/AddProviderForInstitution.vue");
+const RemoveCatgorieServices = () => import('@/features/providers/pages/removeCatgorieServices.vue');
+const AddInstitution = () => import("@/features/institutions/pages/AddInstitution.vue");
+const QuotationInsured = () => import('@/features/insured_persons/pages/quotationInsured.vue');
+const ImportInsuredsPage = () => import('@/features/insured_persons/pages/ImportInsuredsPage.vue');
+const StageExclusion = () => import('@/features/quotation/pages/StageExclusion.vue');
+const ExpiredContracts = () => import('@/features/Nyalaunderwriting/pages/ExpiredContracts.vue');
+const PendingRenewalContracts = () => import('@/features/Nyalaunderwriting/pages/PendingRenewalContracts.vue');
+const Utilization = () => import('@/features/underwriting/pages/Utilization.vue');
+const EditPendingRenewalQuotation = () => import('@/features/Nyalaunderwriting/pages/EditPendingRenewalQuotation.vue');
 
 
 export default [
+  {
+    path: '/utilization',
+    name: 'Utilization',
+    component: Utilization,
+  },
   {
     path: '/add_new_policy',
     name: 'QuotationUnderwritingMain',

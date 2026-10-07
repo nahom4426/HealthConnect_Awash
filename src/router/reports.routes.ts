@@ -1,5 +1,5 @@
-import ProviderReport from '@/features/reports/pages/ProviderReport.vue';
-import DynamicReport from '@/features/reports/pages/DynamicReport.vue';
+const ProviderReport = () => import('@/features/reports/pages/ProviderReport.vue');
+const DynamicReport = () => import('@/features/reports/pages/DynamicReport.vue');
 
 const reportsRoutes = [
   {

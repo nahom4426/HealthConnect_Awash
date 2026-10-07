@@ -15,6 +15,11 @@ export const useToast = defineStore('toast', () => {
   const toasts = ref([])
 
   function addToast(toast) {
+    // Several failing requests often report the same message — show it once
+    const duplicate = toasts.value.some(
+      (t) => t.toast?.message === toast?.message && t.toast?.type === toast?.type
+    )
+    if (duplicate) return
     toasts.value.push({ id: id.next().value, toast })
   }
 

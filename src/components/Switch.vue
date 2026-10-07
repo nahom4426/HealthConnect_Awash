@@ -1,32 +1,4 @@
 <!-- Switch.vue -->
-<template>
-  <div class="flex items-center justify-between">
-    <div class="flex flex-col">
-      <label :for="name" class="text-sm font-medium text-gray-900">
-        {{ label }}
-      </label>
-      <span v-if="description" class="text-sm text-gray-500">
-        {{ description }}
-      </span>
-    </div>
-
-    <!-- Switch Button -->
-    <button
-      type="button"
-      :id="name"
-      :aria-pressed="modelValue"
-      @click="$emit('update:modelValue', !modelValue)"
-      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-      :class="modelValue ? 'bg-indigo-600' : 'bg-gray-200'"
-    >
-      <span
-        class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-        :class="modelValue ? 'translate-x-6' : 'translate-x-1'"
-      />
-    </button>
-  </div>
-</template>
-
 <script setup>
 defineProps({
   name: String,
@@ -36,7 +8,34 @@ defineProps({
     type: Boolean,
     default: false,
   },
-})
+});
 
-defineEmits(['update:modelValue'])
+defineEmits(["update:modelValue"]);
 </script>
+
+<template>
+  <div class="flex gap-4 justify-between items-center">
+    <div class="flex flex-col">
+      <label :for="name" class="text-sm font-medium text-ink">{{ label }}</label>
+      <span v-if="description" :id="name ? `${name}-description` : undefined" class="text-sm text-ink-muted">
+        {{ description }}
+      </span>
+    </div>
+
+    <button
+      :id="name"
+      type="button"
+      role="switch"
+      :aria-checked="modelValue"
+      :aria-describedby="description && name ? `${name}-description` : undefined"
+      class="inline-flex relative items-center w-11 h-6 rounded-full transition-colors shrink-0"
+      :class="modelValue ? 'bg-primary' : 'bg-gray-300'"
+      @click="$emit('update:modelValue', !modelValue)"
+    >
+      <span
+        class="inline-block w-5 h-5 bg-white rounded-full shadow transition-transform"
+        :class="modelValue ? 'translate-x-[22px]' : 'translate-x-0.5'"
+      />
+    </button>
+  </div>
+</template>

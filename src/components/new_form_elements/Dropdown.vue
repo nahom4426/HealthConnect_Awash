@@ -42,6 +42,17 @@ function toggleDropdown() {
   openDropdown.value = !openDropdown.value;
 }
 
+function close() {
+  openDropdown.value = false;
+}
+
+function onKeydown(e) {
+  if (e.key === "Escape" && openDropdown.value) {
+    close();
+    e.stopPropagation();
+  }
+}
+
 function setValue() {
   if (!openDropdown.value) dropdown.value.style.display = "none";
   else dropdown.value.style.removeProperty("display");
@@ -73,12 +84,14 @@ onMounted(setStyle);
   <OnClickOutside
     :class="[!dropdown ? 'loading-dropdown' : 'dropdown']"
     class="inline-flex relative"
-    @trigger="openDropdown = false"
+    @trigger="close"
+    @keydown="onKeydown"
   >
     <slot
       :setRef="setRef"
       :toggleDropdown="toggleDropdown"
       :open="openDropdown"
+      :close="close"
     ></slot>
   </OnClickOutside>
 </template>

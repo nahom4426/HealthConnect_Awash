@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { watch } from 'vue'
 import { useToast } from "./store/toast";
 import Toast from "./Toast.vue";
 
-const {toasts} = useToast()
-
+const { toasts } = useToast();
 </script>
+
 <template>
-  <Suspense>
-    <div v-if="toasts.length" class="z-[502] max-w-[50%] fixed bottom-4 left-4 flex flex-col gap-4">
-      <Toast v-for="({id, toast}, idx) in toasts" :key="id" :id="id" :toast="toast" />
-    </div>
-  </Suspense>
+  <div
+    aria-live="polite"
+    class="flex fixed inset-x-3 bottom-3 z-[10000] flex-col gap-2 pointer-events-none sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-96"
+  >
+    <Toast
+      v-for="{ id, toast } in toasts"
+      :key="id"
+      :id="id"
+      :toast="toast"
+      class="pointer-events-auto"
+    />
+  </div>
 </template>

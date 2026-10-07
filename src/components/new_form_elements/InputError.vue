@@ -1,8 +1,18 @@
 <script setup>
-	const props = defineProps(['error'])
+defineProps(["error", "id"]);
 </script>
+
 <template>
-	<p v-if='error' :title='error' class="capitalize px-1 text-xs text-red-700">
-		{{error}}
-	</p>
+  <p
+    v-if="error"
+    :id="id"
+    :title="error"
+    role="alert"
+    class="flex gap-1 items-start text-xs text-error"
+  >
+    <svg class="mt-px w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+    </svg>
+    <span class="inline-block first-letter:uppercase">{{ error }}</span>
+  </p>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, useAttrs, useSlots } from 'vue';
+import { computed, nextTick, ref, useAttrs, useId, useSlots } from 'vue';
 import InputParent from "../new_form_builder/InputParent.vue";
 import InputLayout from "./NewInputLayout.vue";
 
@@ -14,6 +14,8 @@ const attrs = useAttrs();
 const slots = useSlots();
 
 const isDate = computed(() => attrs?.attributes?.type === 'date');
+const inputId = computed(() => attrs?.attributes?.id || generatedId);
+const generatedId = useId();
 const hasRightSlot = computed(() => !!slots.right);
 
 const nativeDateEl = ref(null);
@@ -206,46 +208,65 @@ function setNativeDateInputRef(el, setRef) {
 </script>
 <template>
   <InputParent v-slot="{ setRef, error, value, changeValue }">
-    <InputLayout :error="error" :label="$attrs?.label" :validation="$attrs?.validation">
-      <div class="flex w-full" :class="{ relative: isDate }">
-        <slot class="" name="left" />
+    <InputLayout
+      :error="error"
+      :label="$attrs?.label"
+      :validation="$attrs?.validation"
+      :hint="$attrs?.hint"
+      :input-id="inputId"
+      v-slot="{ errorId, hintId }"
+    >
+      <div class="flex items-center w-full" :class="{ relative: isDate }">
+        <slot name="left" />
 
         <template v-if="isDate">
-          <div class="relative flex-1">
-            <div class="flex absolute inset-0 items-center px-3 py-2 text-sm pointer-events-none select-none">
-              <span class="text-gray-800">{{ ghostFrom(displayValue || formatToDisplay(value) || '').typed }}</span>
-              <span class="text-gray-400">{{ ghostFrom(displayValue || formatToDisplay(value) || '').full.slice(ghostFrom(displayValue || formatToDisplay(value) || '').typed.length) }}</span>
+          <div class="relative flex-1 min-w-0">
+            <div
+              class="flex absolute inset-0 items-center px-3 text-base whitespace-pre pointer-events-none select-none sm:text-sm"
+              aria-hidden="true"
+            >
+              <template v-for="ghost in [ghostFrom(displayValue || formatToDisplay(value))]" :key="0">
+                <span class="text-ink">{{ ghost.typed }}</span>
+                <span class="text-ink-subtle/70">{{ ghost.full.slice(ghost.typed.length) }}</span>
+              </template>
             </div>
             <input
-              v-focus='focus'
+              :id="inputId"
+              v-focus="focus"
               class="skip_custom-input"
               inputmode="numeric"
               autocomplete="off"
               ref="displayInputEl"
               :value="displayValue || formatToDisplay(value)"
+              :aria-invalid="!!error || undefined"
+              :aria-describedby="error ? errorId : hintId"
               @focus="onDisplayFocus(value)"
               @input="(e) => onDisplayInput(e, changeValue)"
               @blur="() => onDisplayBlur(value)"
               @click="openPicker"
-              style="color: transparent; caret-color: #111827;"
+              style="color: transparent; caret-color: rgb(var(--ink));"
             />
           </div>
 
           <input
             :ref="(el) => setNativeDateInputRef(el, setRef)"
             tabindex="-1"
+            aria-hidden="true"
             style="position: absolute; right: 0; top: 0; width: 2.5rem; height: 100%; opacity: 0; cursor: pointer;"
           />
 
           <button
             v-if="!hasRightSlot"
             type="button"
-            class="flex-shrink-0 flex items-center justify-center w-9 h-9 text-gray-400 hover:text-gray-600 transition-colors duration-150"
-            @click="openPicker"
+            class="grid place-items-center w-10 h-full transition-colors shrink-0 text-ink-subtle hover:text-primary"
             aria-label="Open date picker"
+            @click="openPicker"
           >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
           </button>
           <slot v-else name="right" />
@@ -253,8 +274,11 @@ function setNativeDateInputRef(el, setRef) {
 
         <input
           v-else
-          v-focus='focus'
+          :id="inputId"
+          v-focus="focus"
           :ref="setRef"
+          :aria-invalid="!!error || undefined"
+          :aria-describedby="error ? errorId : hintId"
         />
         <slot v-if="!isDate" name="right" />
       </div>

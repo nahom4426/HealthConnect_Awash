@@ -1,14 +1,38 @@
 @import url("./fonts/geist/geist.css");
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=REM:ital,wght@0,100..900;1,100..900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   Design tokens
+   Colours are RGB triplets so Tailwind opacity modifiers work (bg-primary/10).
+   ========================================================================== */
 :root {
-  --primary: 76 63 63;
-  --secondary: 107 42 0;
+  /* Brand */
+  --primary: 76 63 63; /* Nyala brown */
+  --primary-hover: 58 47 47;
+  --brand-accent: 184 128 84; /* Nyala bronze (logo antelope) */
+  --secondary: 107 42 0; /* Nyala rust */
+
+  /* Neutrals */
+  --canvas: 246 247 250; /* app background */
+  --surface: 255 255 255; /* cards, inputs, popovers */
+  --surface-muted: 249 250 251; /* table headers, subtle fills */
+  --line: 228 231 236; /* default borders */
+  --line-strong: 208 213 221; /* input borders, hover borders */
+  --ink: 17 24 39; /* primary text */
+  --ink-muted: 75 85 99; /* secondary text */
+  --ink-subtle: 107 114 128; /* placeholder, captions */
+
+  /* Feedback */
+  --success: 21 128 61;
+  --warning: 180 83 9;
+  --error: 220 38 38;
+  --info: 37 99 235;
+
+  /* Legacy names kept for existing pages */
   --dark: 32 34 36;
-  --text-clr: var(--dark);
+  --text-clr: var(--ink);
   --base-clr: 103 103 105;
   --base-clr2: 247 248 251;
   --base-clr3: 30 30 30;
@@ -16,24 +40,39 @@
   --accent: 239 239 239;
   --orange: 255 137 0;
 
-  --drawer-width: 18rem;
-  --navbar-height: 3rem;
+  /* Layout */
+  --drawer-width: 16.5rem;
+  --drawer-collapsed-width: 4.5rem;
+  --navbar-height: 4rem;
+
+  /* Controls */
+  --control-h: 2.5rem;
+  --control-h-sm: 2rem;
+  --focus-ring: 0 0 0 3px rgb(var(--primary) / 0.18);
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.04);
+  --shadow-pop: 0 10px 28px -6px rgb(16 24 40 / 0.16), 0 2px 6px -1px rgb(16 24 40 / 0.06);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+
+  color-scheme: light;
 }
 
-body {
-  font-family: "Geist", ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Ubuntu",
-    "Segoe UI Symbol", "Noto Color Emoji";
-  font-optical-sizing: auto;
-  font-weight: 400;
-  text-rendering: optimizeLegibility;
-  font-synthesis-weight: none;
-  font-variation-settings: "wdth" 100, "YTLC" 500;
-  font-style: normal;
-  @apply text-text-clr text-sm;
+/* Bigger touch targets on touch devices */
+@media (pointer: coarse) {
+  :root {
+    --control-h: 2.75rem;
+    --control-h-sm: 2.25rem;
+  }
 }
 
+/* ==========================================================================
+   Base
+   ========================================================================== */
 html,
 body,
 #app {
@@ -41,23 +80,250 @@ body,
   overflow: hidden;
 }
 
-* {
-  scrollbar-width: none;
+body {
+  font-family: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: rgb(var(--canvas));
+  @apply text-sm text-text-clr;
+}
+
+/*
+ * @customizer/modal-x ships a global `* { box-sizing: content-box }` that
+ * overrides Tailwind's reset. `html *` is just specific enough to win while
+ * still letting the `box-content` utility opt out.
+ */
+html *,
+html *::before,
+html *::after {
   box-sizing: border-box;
 }
 
-@layer components {
-  .input-style {
-    @apply h-10 rounded-md border px-3;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line-strong)) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--line-strong));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--ink-subtle) / 0.6);
+}
+
+/* Keyboard focus only — mouse clicks don't draw rings */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid rgb(var(--primary) / 0.7);
+  outline-offset: 2px;
+}
+
+i,
+svg {
+  pointer-events: none;
+}
+
+@layer base {
+  .h1 {
+    @apply px-2 text-base font-semibold;
+  }
+  h1 {
+    @apply px-2 text-base font-semibold;
   }
 }
 
+/* ==========================================================================
+   Reusable component classes
+   ========================================================================== */
+@layer components {
+  /* Surface card */
+  .card {
+    @apply rounded-xl border border-line bg-surface shadow-card;
+  }
+
+  /* Status badge — combine with .badge-{tone} */
+  .badge {
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset;
+  }
+  .badge-neutral {
+    @apply bg-gray-50 text-gray-700 ring-gray-200;
+  }
+  .badge-primary {
+    @apply bg-primary/5 text-primary ring-primary/20;
+  }
+  .badge-success {
+    @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20;
+  }
+  .badge-warning {
+    @apply bg-amber-50 text-amber-700 ring-amber-600/20;
+  }
+  .badge-danger {
+    @apply bg-red-50 text-red-700 ring-red-600/20;
+  }
+
+  /* Legacy helper */
+  .input-style {
+    @apply h-control rounded-lg border border-line-strong bg-surface px-3;
+  }
+
+  .table_action {
+    @apply font-medium text-primary underline-offset-2 hover:underline;
+  }
+
+  /* ---------------------------------------------------------------------
+     Button (components/Button.vue). Hover/disabled guards use :where() so
+     a caller's utilities (hover:bg-*, etc.) keep winning.
+     --------------------------------------------------------------------- */
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    text-transform: capitalize;
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease,
+      color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .btn--xs { padding: 0; }
+  .btn--sm { min-width: 3.5rem; min-height: 2.25rem; padding: 0 0.875rem; }
+  .btn--md { min-width: 6rem; min-height: var(--control-h); }
+  .btn--lg { min-width: 6.5rem; min-height: 2.75rem; padding: 0 1.25rem; font-size: 0.9375rem; }
+
+  .btn--primary {
+    background-color: rgb(var(--primary));
+    color: #fff;
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.08);
+  }
+  .btn--primary:hover:where(:not(:disabled)) { background-color: rgb(var(--primary-hover)); }
+
+  .btn--secondary,
+  .btn--elevated {
+    background-color: rgb(var(--surface));
+    border-color: rgb(var(--line-strong));
+    color: rgb(var(--ink));
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  }
+  .btn--secondary:hover:where(:not(:disabled)),
+  .btn--elevated:hover:where(:not(:disabled)) {
+    background-color: rgb(var(--surface-muted));
+    border-color: rgb(var(--ink-subtle) / 0.5);
+  }
+
+  .btn--ghost { color: rgb(var(--ink-muted)); }
+  .btn--ghost:hover:where(:not(:disabled)) {
+    background-color: rgb(var(--ink) / 0.05);
+    color: rgb(var(--ink));
+  }
+
+  .btn--danger {
+    background-color: rgb(var(--error));
+    color: #fff;
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.08);
+  }
+  .btn--danger:hover:where(:not(:disabled)) { background-color: rgb(185 28 28); }
+  .btn--danger:focus-visible { box-shadow: 0 0 0 3px rgb(var(--error) / 0.2); }
+
+  .btn--edge-primary {
+    background-color: rgb(var(--surface));
+    border-color: rgb(var(--primary) / 0.5);
+    color: rgb(var(--primary));
+  }
+  .btn--edge-primary:hover:where(:not(:disabled)) {
+    background-color: rgb(var(--primary) / 0.05);
+    border-color: rgb(var(--primary));
+  }
+
+  .btn--link {
+    min-width: auto;
+    min-height: auto;
+    padding: 0;
+    border-radius: 0.25rem;
+    color: rgb(var(--primary));
+    text-underline-offset: 3px;
+  }
+  .btn--link:hover:where(:not(:disabled)) { text-decoration: underline; }
+
+  /* Pending state keeps the button width stable */
+  .btn__label--hidden { visibility: hidden; }
+  .btn__spinner {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  /* Pagination buttons (TablePagination.vue and a few pages) */
+  .pagination-btn {
+    @apply flex justify-center items-center px-2 min-w-[2.25rem] h-9 text-sm font-medium rounded-lg border transition-colors border-line bg-surface text-ink-muted;
+  }
+  .pagination-btn:hover:where(:not(:disabled)) {
+    @apply bg-surface-muted text-ink border-line-strong;
+  }
+  .pagination-btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  .pagination-btn-active,
+  .pagination-btn-active:hover:where(:not(:disabled)) {
+    @apply bg-primary border-primary text-white;
+  }
+
+  .Table-header {
+    @apply text-left text-sm;
+  }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-gray-200/80;
+  }
+}
+
+@layer utilities {
+  .sys-focus {
+    box-shadow: var(--focus-ring);
+  }
+}
+
+/* ==========================================================================
+   Legacy utilities (still used by feature pages)
+   ========================================================================== */
 .bar {
   --bar-height: 100%;
   --bar-width: 2px;
   position: relative;
 }
-
 .bar::after {
   content: "";
   position: absolute;
@@ -69,21 +335,18 @@ body,
   width: var(--bar-width);
   background-color: #0001;
 }
-
 .bar-right {
   --bar-right: 0;
   --bar-left: 115%;
   --bar-top: 0;
   --bar-bottom: 0;
 }
-
 .bar-left {
   --bar-right: 11%;
   --bar-left: 0;
   --bar-top: 0;
   --bar-bottom: 0;
 }
-
 .bar-top {
   --bar-right: 0;
   --bar-left: 0;
@@ -92,7 +355,6 @@ body,
   --bar-height: 2px;
   --bar-width: 100%;
 }
-
 .bar-bottom {
   --bar-right: 0;
   --bar-left: 0;
@@ -102,56 +364,28 @@ body,
   --bar-width: 100%;
 }
 
-@layer utilities {
-  .sys-focus {
-    box-shadow: 0 0 0 2px rgb(var(--primary));
-  }
-}
-
-::-webkit-scrollbar {
-  display: none;
-}
-
-.show-scrollbar {
+.show-scrollbar,
+.custom-scrollbar {
   overflow: auto;
-  padding: 0 0.15rem;
 }
 
-.show-scrollbar::-webkit-scrollbar-thumb {
-  border-radius: 5px;
-  background-color: theme("colors.text-clr");
-  visibility: hidden;
+/* Modal bodies scroll internally */
+.modal-x__modal,
+.modal-x__content,
+.modal-x__body,
+.modal-x-modal,
+.modal-x-content,
+.modal-x-body,
+[data-modal-x] [data-modal-x-content],
+[data-modal-x] [data-modal-x-body],
+.modal-parent,
+.modal-parent .modal-content,
+.form-scrollbar {
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.show-scrollbar:hover::-webkit-scrollbar-thumb {
-  visibility: visible;
-}
-
-.show-scrollbar::-webkit-scrollbar {
-  width: 4px !important;
-  height: 4px !important;
-}
-
-*:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgb(var(--primary));
-}
-
-button:focus {
-  box-shadow: 0px 0px 0px 2px theme("colors.primary");
-}
-
-i,
-svg {
-  pointer-events: none;
-}
-
-.table_action {
-  @apply hover:text-primary font-medium underline italic;
-}
-
-/* RIpple aEffect */
-
+/* Ripple effect (v-ripple) */
 .__ripple {
   position: relative;
   overflow: hidden;
@@ -162,19 +396,17 @@ svg {
   position: absolute;
   width: 0px;
   height: 0px;
-  background-color: #ddd;
-  filter: contrast(0.4);
+  background-color: currentColor;
+  opacity: 0.15;
   border-radius: 99999px;
   transform: translate3d(-50%, -50%, 0);
   pointer-events: none;
 }
-
 .__ripple_animation {
   top: var(--y);
   left: var(--x);
-  animation: ripple 0.4s ease-out;
+  animation: ripple 0.45s ease-out;
 }
-
 @keyframes ripple {
   100% {
     width: var(--btnWidth);
@@ -186,17 +418,36 @@ svg {
 .tooltip {
   position: relative;
 }
-
 .tooltip::after {
   content: "";
   position: absolute;
 }
 
-@layer base {
-  .h1 {
-    @apply font-semibold text-base px-2;
+/* Shared enter animations */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
   }
-  h1 {
-    @apply font-semibold text-base px-2;
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-pop-in {
+  animation: pop-in var(--duration-base) var(--ease-out);
+}
+
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -1,122 +1,101 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useToast } from "./store/toast.js";
-import icons from '@/utils/icons.js';
-//import { mdiClose } from '@mdi/js'
-const { removeToast } = useToast()
+
+const DURATION_MS = 6000;
+
+const { removeToast } = useToast();
 const props = defineProps({
   toast: {
-    type: Object
+    type: Object,
   },
-  id: String
-})
+  id: String,
+});
 
-const t = ref()
+const leaving = ref(false);
+let timeout: ReturnType<typeof setTimeout> | undefined;
 
-let timeout: any
+const tone = computed(() => (props.toast?.type === "success" ? "success" : props.toast?.type === "info" ? "info" : "error"));
 
-function removeT() {
-  clearTimeout(timeout)
-  if(t.value) {
-    t.value.classList.remove('enter')
-    t.value.classList.add('leave')
-    t.value.onanimationend = (() => {
-      props?.id && removeToast(props?.id)
-    })
-  } else {
-    props?.id && removeToast(props?.id)
-  }
+function dismiss() {
+  clearTimeout(timeout);
+  if (leaving.value) return;
+  leaving.value = true;
+  setTimeout(() => props.id && removeToast(props.id), 160);
 }
 
-onMounted(() => {
-  timeout = setTimeout(() => props.id && removeT(), 6000)
-})
-
-onMounted(() => {
-  if(t.value) {
-    t.value.style.setProperty("--height", t.value.offsetHeight + 'px')
-    t.value.classList.add('enter')
-  }
-})
-
-function stay() {
-  clearTimeout(timeout)
+function pause() {
+  clearTimeout(timeout);
 }
 
-function out() {
-  timeout = setTimeout(() => props.id && removeT(), 6000)
+function resume() {
+  clearTimeout(timeout);
+  timeout = setTimeout(dismiss, DURATION_MS);
 }
+
+onMounted(resume);
+onBeforeUnmount(() => clearTimeout(timeout));
 </script>
 
 <template>
-  <div @mouseout="out" @mouseover="stay" ref="t" @click="removeT" :class="[$style[toast?.type || 'error']]"
-    class="relative p-2 border rounded-md toast-grid gap-3 text-base shadow-md min-w-72">
-    <div>
-      <p class="text-xs text-wrap">{{ toast?.message }}</p>
-    </div>
-    <button class="min-w-5 min-h-5 flex-shrink-0 bg-dark/20 shadow-md rounded-full text-base-clr2 right-0 top-0 w-5 h-5 flex items-center justify-center self-start">
-      <span class="*:size-2" v-html="icons.close" />
+  <div
+    :role="tone === 'error' ? 'alert' : 'status'"
+    class="toast flex gap-3 items-start p-3.5 pr-2.5 w-full rounded-xl border shadow-pop bg-surface border-line"
+    :class="{ 'toast--leave': leaving }"
+    @mouseenter="pause"
+    @mouseleave="resume"
+    @focusin="pause"
+    @focusout="resume"
+  >
+    <span
+      class="grid place-items-center mt-px w-5 h-5 rounded-full shrink-0"
+      :class="{
+        'bg-emerald-100 text-emerald-700': tone === 'success',
+        'bg-red-100 text-red-700': tone === 'error',
+        'bg-blue-100 text-blue-700': tone === 'info',
+      }"
+      aria-hidden="true"
+    >
+      <svg v-if="tone === 'success'" class="w-3 h-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m4.5 10.5 3.5 3.5 7.5-8" />
+      </svg>
+      <svg v-else class="w-3 h-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <path d="M10 5v6M10 15h.01" />
+      </svg>
+    </span>
+
+    <p class="flex-1 pt-px text-sm break-words text-ink">{{ toast?.message }}</p>
+
+    <button
+      type="button"
+      class="grid place-items-center -my-1 w-7 h-7 rounded-md transition-colors shrink-0 text-ink-subtle hover:bg-surface-muted hover:text-ink"
+      aria-label="Dismiss notification"
+      @click="dismiss"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="m5 5 10 10M15 5 5 15" />
+      </svg>
     </button>
   </div>
 </template>
 
-<style module>
-/* .toast-item {
-  --color: 
-} */
-.error {
-  @apply bg-orange-300 border-l-4 border-dark/20;
-}
-
-.success {
-  @apply bg-green-500 text-white;
-}
-</style>
-
 <style>
-
-.leave {
-  animation: leave .2s linear;
-  animation: "leave" .2s linear;
+.toast {
+  animation: toast-in 200ms var(--ease-out) both;
 }
-
-.enter {
-  animation: enter .2s linear;
-  animation: "enter" .2s linear normal;
+.toast--leave {
+  animation: toast-out 160ms ease-in both;
 }
-
-@keyframes enter {
-  0% {
+@keyframes toast-in {
+  from {
     opacity: 0;
-    height: 0;
-    transform: translateX(-15rem);
-    overflow: hidden;
-  }
-
-  100% {
-    opacity: 1;
-    height: var(--height);
-    transform: translateX(0rem);
+    transform: translateY(8px);
   }
 }
-
-@keyframes leave {
-  0% {
-    opacity: 1;
-    height: var(--height);
-    transform: translateX(0rem);
-  }
-
-  100% {
+@keyframes toast-out {
+  to {
     opacity: 0;
-    height: 0;
-    transform: translateX(-13rem);
-    overflow: hidden;
+    transform: translateY(4px);
   }
-}
-
-.toast-grid {
-  display: grid;
-  grid-template-columns: 1fr 2rem;
 }
 </style>

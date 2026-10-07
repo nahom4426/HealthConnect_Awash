@@ -1,193 +1,68 @@
-<template>
-  <div
-    :class="colorStore.color"
-    class="flex overflow-hidden w-screen h-screen bg-gray-50"
-  >
-    <!-- Mobile Drawer Toggle -->
-    <button
-      @click="toggleDrawer"
-      class="inline-flex fixed top-3 left-3 z-30 justify-center items-center w-10 h-10 text-white rounded-lg transition-all duration-200 outline-none bg-primary shadow-medium lg:hidden hover:bg-primary/90 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
-      :aria-label="drawerOpen ? 'Close menu' : 'Open menu'"
-      :aria-expanded="drawerOpen"
-    >
-      <i
-        v-html="drawerOpen ? icons.close : icons.menu"
-        class="text-base transition-transform duration-200"
-        :class="{ 'rotate-90': drawerOpen }"
-      ></i>
-    </button>
-
-    <!-- Mobile Overlay -->
-    <Transition name="overlay">
-      <div
-        v-if="drawerOpen && !isDesktop"
-        @click="toggleDrawer"
-        class="fixed inset-0 z-10 backdrop-blur-sm bg-gray-900/30 lg:hidden"
-        aria-hidden="true"
-      ></div>
-    </Transition>
-
-    <!-- Sidebar -->
-    <aside
-      class="fixed top-0 z-20 h-full transition-all duration-300 ease-smooth lg:sticky lg:flex-shrink-0"
-      :class="[
-        drawerOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-        isCollapsed ? 'lg:w-[72px]' : 'lg:w-[240px]',
-        'w-[260px]'
-      ]"
-    >
-      <Drawer
-        :is-collapsed="isCollapsed"
-        :toggle-sidebar="toggleCollapse"
-        :navs="filteredNavs"
-        :expanded-menus="expandedMenus"
-        :toggle-menu="toggleMenu"
-      />
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="flex overflow-hidden relative z-0 flex-col flex-1 min-w-0 h-full">
-      <!-- Navbar -->
-      <header class="flex-shrink-0">
-        <NavBar :breadcrumbs="breadcrumbs" />
-      </header>
-
-      <!-- Page Content -->
-      <div class="overflow-auto flex-1 min-h-0 custom-scrollbar">
-        <div class="p-4 sm:p-5 lg:p-6">
-          <div class="w-full max-w-[1440px] mx-auto">
-            <RouterView v-slot="{ Component }">
-              <Transition name="page" mode="out-in">
-                <component :is="Component" :key="route.fullPath" />
-              </Transition>
-            </RouterView>
-          </div>
-        </div>
-      </div>
-
-      <!-- Scroll to Top -->
-      <Transition name="fade">
-        <button
-          v-if="showScrollTop"
-          @click="scrollToTop"
-          class="inline-flex fixed right-5 bottom-5 z-40 justify-center items-center w-9 h-9 text-gray-600 bg-white rounded-lg border border-gray-200 transition-all duration-200 outline-none shadow-medium hover:shadow-elevated hover:text-gray-800 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/40"
-          aria-label="Scroll to top"
-        >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-          </svg>
-        </button>
-      </Transition>
-    </main>
-  </div>
-</template>
-
 <script setup>
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import Drawer from "@/components/Drawer.vue";
 import NavBar from "@/components/NavBar.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
-import { useColorStore } from "@/stores/colorStore";
-import icons from "@/utils/icons";
 import navs from "@/config/navs";
-
-import { ref, onMounted, onUnmounted, computed, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const breadcrumbs = useBreadcrumb();
-const colorStore = useColorStore();
 const route = useRoute();
-const router = useRouter();
 
-const drawerOpen = ref(false);
-const isDesktop = ref(false);
-const isCollapsed = ref(false);
-const expandedMenus = ref([]);
-const showScrollTop = ref(false);
-const contentContainer = ref(null);
+/* ---------- Responsive sidebar ---------- */
+const COLLAPSE_KEY = "sidebar_collapsed";
+const desktopQuery = window.matchMedia("(min-width: 1024px)");
 
-// Responsive drawer logic
-function checkScreenSize() {
-  const width = window.innerWidth;
-  isDesktop.value = width >= 1024;
-  
-  if (isDesktop.value) {
-    drawerOpen.value = true;
-    // Auto-collapse on medium screens
-    isCollapsed.value = width < 1280;
-  } else {
-    drawerOpen.value = false;
-    isCollapsed.value = false;
+const isDesktop = ref(desktopQuery.matches);
+const mobileOpen = ref(false);
+const collapsed = ref(readCollapsed());
+
+function readCollapsed() {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === "1";
+  } catch {
+    return false;
   }
 }
 
-// Handle scroll events
-function handleScroll(event) {
-  const target = event.target;
-  showScrollTop.value = target.scrollTop > 300;
-}
-
-function scrollToTop() {
-  const container = document.querySelector('.custom-scrollbar');
-  if (container) {
-    container.scrollTo({ top: 0, behavior: 'smooth' });
+function toggleCollapsed() {
+  collapsed.value = !collapsed.value;
+  try {
+    localStorage.setItem(COLLAPSE_KEY, collapsed.value ? "1" : "0");
+  } catch {
+    /* storage unavailable — keep in memory only */
   }
 }
 
-function toggleCollapse() {
-  if (isDesktop.value) {
-    isCollapsed.value = !isCollapsed.value;
-  }
+function onMediaChange(e) {
+  isDesktop.value = e.matches;
+  if (e.matches) mobileOpen.value = false;
+}
+
+function onKeydown(e) {
+  if (e.key === "Escape" && mobileOpen.value) mobileOpen.value = false;
 }
 
 onMounted(() => {
-  checkScreenSize();
-  window.addEventListener("resize", checkScreenSize);
-  
-  // Add scroll listener to content container
-  const container = document.querySelector('.custom-scrollbar');
-  if (container) {
-    container.addEventListener('scroll', handleScroll);
-  }
-
-  // expand active menu on load
-  filteredNavs.value.forEach((item) => {
-    if (item.navs?.some((child) => child.path === route.path)) {
-      expandedMenus.value.push(item.name);
-    }
-  });
+  desktopQuery.addEventListener("change", onMediaChange);
+  document.addEventListener("keydown", onKeydown);
 });
-
 onUnmounted(() => {
-  window.removeEventListener("resize", checkScreenSize);
-  const container = document.querySelector('.custom-scrollbar');
-  if (container) {
-    container.removeEventListener('scroll', handleScroll);
-  }
+  desktopQuery.removeEventListener("change", onMediaChange);
+  document.removeEventListener("keydown", onKeydown);
 });
 
-// Watch for route changes
-watch(() => route.path, () => {
-  if (!isDesktop.value) {
-    drawerOpen.value = false;
+// Close the mobile drawer after navigating
+watch(
+  () => route.fullPath,
+  () => {
+    mobileOpen.value = false;
   }
-});
+);
 
-function toggleDrawer() {
-  drawerOpen.value = !drawerOpen.value;
-}
-
-function toggleMenu(name) {
-  if (expandedMenus.value.includes(name)) {
-    expandedMenus.value = expandedMenus.value.filter((n) => n !== name);
-  } else {
-    expandedMenus.value.push(name);
-  }
-}
-
-// Filter navs based on privileges
-
+/* ---------- Navigation filtered by privileges ---------- */
 const filteredNavs = computed(() => {
   const user = authStore.auth?.user;
   const roleName = user?.roleName;
@@ -320,94 +195,84 @@ return null;
     })
     .filter(Boolean);
 });
-
-// Initialize expanded menus when filtered navs change
-watch(filteredNavs, (newNavs) => {
-  // Keep only expanded menus that still exist
-  expandedMenus.value = expandedMenus.value.filter(menuName => 
-    newNavs.some(item => item.name === menuName)
-  );
-}, { deep: true });
 </script>
 
+<template>
+  <div class="flex w-full h-full bg-canvas">
+    <!-- Desktop sidebar -->
+    <div
+      v-if="isDesktop"
+      class="h-full transition-[width] duration-200 ease-out shrink-0"
+      :class="collapsed ? 'w-drawer-collapsed' : 'w-drawer-width'"
+    >
+      <Drawer :navs="filteredNavs" :collapsed="collapsed" @toggle-collapse="toggleCollapsed" />
+    </div>
+
+    <!-- Mobile / tablet drawer -->
+    <template v-else>
+      <Transition name="fade">
+        <div
+          v-if="mobileOpen"
+          class="fixed inset-0 z-[200] bg-slate-900/40"
+          aria-hidden="true"
+          @click="mobileOpen = false"
+        />
+      </Transition>
+      <Transition name="slide">
+        <div
+          v-if="mobileOpen"
+          class="fixed inset-y-0 left-0 z-[201] w-[min(18rem,85vw)] shadow-pop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation"
+        >
+          <Drawer
+            :navs="filteredNavs"
+            mobile
+            @navigate="mobileOpen = false"
+            @close="mobileOpen = false"
+          />
+        </div>
+      </Transition>
+    </template>
+
+    <!-- Main column -->
+    <div class="flex flex-col flex-1 min-w-0 h-full">
+      <NavBar
+        :breadcrumbs="breadcrumbs"
+        :show-menu-button="!isDesktop"
+        @open-menu="mobileOpen = true"
+      />
+
+      <main id="main-content" class="overflow-auto relative flex-1 min-w-0 app-scroll">
+        <div class="p-3 mx-auto w-full max-w-[1600px] sm:p-4 lg:p-6">
+          <RouterView />
+        </div>
+      </main>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-/* Scrollbar */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #e2e8f0 transparent;
+.app-scroll {
+  scrollbar-gutter: stable;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
-}
-
-/* Page Transition */
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
-/* Fade */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 180ms ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
 
-/* Overlay */
-.overlay-enter-active,
-.overlay-leave-active {
-  transition: opacity 0.2s ease;
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 220ms var(--ease-out);
 }
-
-.overlay-enter-from,
-.overlay-leave-to {
-  opacity: 0;
-}
-
-/* Prevent body scroll */
-:global(body) {
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-}
-
-/* Print */
-@media print {
-  aside, header, .fixed {
-    display: none !important;
-  }
-  main {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(-100%);
 }
 </style>

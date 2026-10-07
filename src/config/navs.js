@@ -23,7 +23,9 @@ export default [
     <line x1="7" y1="11" x2="7" y2="5"/>
     <line x1="11" y1="11" x2="11" y2="3"/>
     <!-- Baseline -->
-    <line x1="1.5" y1="11" x2="12
+    <line x1="1.5" y1="11" x2="12.5" y2="11"/>
+  </g>
+</svg>
 		`,
     meta: {
       permissions: ["Analytics"],

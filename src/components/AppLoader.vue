@@ -1,5 +1,5 @@
 <script setup>
-import mark from "@/assets/img/awash-mark.png";
+import mark from "@/assets/img/nyala-mark.png";
 
 defineProps({
   isLoading: { type: Boolean, default: true },
@@ -18,7 +18,7 @@ defineProps({
       <div class="overflow-hidden w-32 h-1 rounded-full bg-line">
         <div class="app-loader-bar h-full rounded-full bg-primary" />
       </div>
-      <span class="sr-only">Loading Awash Insurance Health Connect…</span>
+      <span class="sr-only">Loading Nyala Insurance Health Connect…</span>
     </div>
   </Transition>
 </template>

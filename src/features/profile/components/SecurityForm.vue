@@ -26,25 +26,21 @@ function handleChangePassword({ values }) {
 </script>
 
 <template>
-  <div class="flex justify-center w-full">
+  <div class="w-full max-w-lg">
     <Form
     v-slot="{submit}"
-      class="flex flex-col w-[33rem] box-border rounded-md border px-5 py-8 border-base-clr/20 gap-6"
+      class="flex flex-col gap-5"
       id="SecurityForm"
     >
-      <div class="flex flex-col gap-4 w-full text-center">
-        <span class="text-lg font-semibold text-base-clr"
-          >Change Login Password</span
-        >
-        <span class="text-base-clr">
-          Enter your new password in the provided field. After creating a strong
-          password, confirm it by entering it again. Keep your password
-          confidential and avoid using easily guessable information.</span
-        >
+      <div>
+        <p class="text-sm font-semibold text-ink">Change password</p>
+        <p class="mt-1 text-sm text-ink-muted">
+          Use a strong password you don't use elsewhere, then confirm it. Keep it confidential.
+        </p>
       </div>
       <InputPassword
         name="oldPassword"
-        label="Password"
+        label="Current password"
         validation="required"
         :attributes="{
           placeholder: 'Enter your current password',
@@ -52,10 +48,11 @@ function handleChangePassword({ values }) {
       />
       <InputPassword
         name="newPassword"
-        label="New Password"
+        label="New password"
         validation="required"
         :attributes="{
           placeholder: 'Enter new password',
+          autocomplete: 'new-password',
         }"
       />
         <!-- validation="required|equalTo-newPassword" -->
@@ -63,15 +60,16 @@ function handleChangePassword({ values }) {
       <InputPassword
       validation="required|equalTo-newPassword"
         name="confirmPassword"
-        label="Confirm Password"
+        label="Confirm new password"
         :attributes="{
-          placeholder: 'Reenter your new password',
+          placeholder: 'Re-enter your new password',
+          autocomplete: 'new-password',
         }"
       />
       <ModalFormSubmitButton
-        class="box-border w-full h-14"
+        class="self-start mt-1"
         @click.prevent="submit(handleChangePassword)"
-        btn-text="Change Password"
+        btn-text="Update password"
       />
 
     </Form>

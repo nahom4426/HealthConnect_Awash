@@ -99,8 +99,8 @@ function submitResetPassword() {
     <!-- Sign in -->
     <template v-if="view === 'login'">
       <header class="mb-7 text-center">
-        <h1 id="login-title" class="!px-0 text-xl font-semibold tracking-tight sm:text-2xl text-ink">Sign in to Health Connect</h1>
-        <p class="mt-1.5 text-sm text-ink-muted">Welcome back. Enter your work email and password.</p>
+        <h1 id="login-title" class="!px-0 text-2xl font-bold tracking-tight sm:text-[1.75rem] text-ink">Health Connect</h1>
+        <p class="mt-1 text-sm text-ink-muted">Sign in to continue</p>
       </header>
 
       <!--
@@ -265,8 +265,12 @@ function submitResetPassword() {
       </form>
     </template>
 
-    <p class="pt-5 mt-7 text-xs text-center border-t text-ink-subtle border-line">
-      Need access or help signing in? Contact your system administrator.
+    <p class="flex gap-2 justify-center items-center px-4 py-3 mt-6 text-xs text-center rounded-xl bg-primary/5 text-ink-muted">
+      <svg class="w-4 h-4 shrink-0 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" />
+      </svg>
+      <span>Need help signing in? Contact your system administrator.</span>
     </p>
   </div>
 </template>

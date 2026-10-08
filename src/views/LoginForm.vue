@@ -103,7 +103,12 @@ function submitResetPassword() {
         <p class="mt-1.5 text-sm text-ink-muted">Welcome back. Enter your work email and password.</p>
       </header>
 
-      <Form v-slot="{ submit }" id="login-form" @submit="submit(loginUser)">
+      <!--
+        `submit` is a slot prop, so it's only usable inside the slot - the button
+        calls it directly. Enter in a field still works: implicit submission
+        clicks the form's submit button.
+      -->
+      <Form v-slot="{ submit }" id="login-form">
         <div class="space-y-5">
           <Input
             :focus="true"
@@ -139,6 +144,7 @@ function submitResetPassword() {
             html-type="submit"
             class="w-full"
             :pending="req.pending.value || signedIn"
+            @click.prevent="submit(loginUser)"
           >
             Sign in
           </Button>

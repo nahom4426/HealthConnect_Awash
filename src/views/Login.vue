@@ -1,70 +1,91 @@
 <script setup>
 import LoginForm from "./LoginForm.vue";
 import logo from "@/assets/img/logo.png";
-import mark from "@/assets/img/awash-mark.png";
 
 const year = new Date().getFullYear();
-
-const highlights = [
-  { title: "Policy management", text: "Issue, amend and renew institutional policies in one place." },
-  { title: "Claims processing", text: "Verify, approve and settle claims with a clear audit trail." },
-  { title: "Provider network", text: "Manage contracts, services and limits across providers." },
-];
 </script>
 
 <template>
-  <div class="overflow-y-auto h-full bg-surface">
-    <div class="grid min-h-full lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] xl:grid-cols-2">
-      <!-- Brand panel (desktop) -->
-      <aside class="hidden overflow-hidden relative flex-col justify-between p-10 text-white lg:flex xl:p-14 bg-primary">
-        <div class="absolute inset-0 opacity-[0.07] pointer-events-none brand-grid" aria-hidden="true" />
-        <div class="absolute -right-40 -bottom-40 w-[28rem] h-[28rem] rounded-full blur-3xl bg-brand-accent/20 pointer-events-none" aria-hidden="true" />
+  <div class="overflow-y-auto relative h-full login-backdrop">
+    <!-- Brand backdrop: curves echo the sweep of the Awash "A"; cyan glow from the logo's accent -->
+    <svg
+      class="absolute inset-0 w-full h-full pointer-events-none"
+      viewBox="0 0 1440 900"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id="login-glow-cyan" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1240 820) scale(620)">
+          <stop offset="0" stop-color="#00AED9" stop-opacity="0.35" />
+          <stop offset="1" stop-color="#00AED9" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="login-glow-top" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(160 40) scale(560)">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.10" />
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+        </radialGradient>
+      </defs>
 
-        <div class="flex relative gap-3 items-center">
-          <span class="grid place-items-center w-10 h-10 bg-white rounded-xl">
-            <img :src="mark" alt="" class="w-7 h-7" />
-          </span>
-          <span class="text-lg font-semibold tracking-tight">Awash Insurance</span>
+      <rect width="1440" height="900" fill="url(#login-glow-cyan)" />
+      <rect width="1440" height="900" fill="url(#login-glow-top)" />
+
+      <!-- Broad soft sweeps -->
+      <path d="M-120 760 C 220 760 360 420 640 300 S 1180 160 1560 220 L 1560 900 L -120 900 Z" fill="#ffffff" fill-opacity="0.035" />
+      <path d="M-120 860 C 300 860 520 600 820 520 S 1300 470 1560 520 L 1560 900 L -120 900 Z" fill="#ffffff" fill-opacity="0.04" />
+
+      <!-- Fine contour lines -->
+      <g fill="none" stroke="#ffffff" stroke-linecap="round">
+        <path d="M-80 640 C 260 640 380 300 680 200 S 1200 90 1540 150" stroke-opacity="0.10" stroke-width="1.5" />
+        <path d="M-80 690 C 280 690 410 350 710 250 S 1220 140 1540 200" stroke-opacity="0.07" stroke-width="1.2" />
+        <path d="M-80 740 C 300 740 440 400 740 300 S 1240 190 1540 250" stroke-opacity="0.05" stroke-width="1" />
+      </g>
+
+    </svg>
+
+    <div class="flex relative flex-col justify-center items-center px-4 py-10 min-h-full sm:py-16">
+      <main
+        class="w-full max-w-[460px] login-card"
+        aria-labelledby="login-title"
+      >
+        <div class="flex justify-center mb-8">
+          <img :src="logo" alt="Awash Insurance" class="w-auto h-12 sm:h-14" />
         </div>
-
-        <div class="relative max-w-md">
-          <p class="text-sm font-medium tracking-wide uppercase text-brand-accent">Health Connect</p>
-          <h2 class="!px-0 mt-3 text-3xl font-semibold tracking-tight leading-tight xl:text-4xl">
-            Health insurance operations, in one workspace.
-          </h2>
-          <ul class="mt-10 space-y-5">
-            <li v-for="item in highlights" :key="item.title" class="flex gap-3">
-              <span class="grid place-items-center mt-0.5 w-5 h-5 rounded-full bg-white/15 shrink-0" aria-hidden="true">
-                <svg class="w-3 h-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 10.5 3 3 7-7" /></svg>
-              </span>
-              <div>
-                <p class="font-medium">{{ item.title }}</p>
-                <p class="text-sm text-white/70">{{ item.text }}</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <p class="relative text-sm text-white/60">© {{ year }} Awash Insurance Company S.C.</p>
-      </aside>
-
-      <!-- Form -->
-      <main class="flex flex-col justify-center px-4 py-10 sm:px-8">
-        <div class="mx-auto w-full max-w-[400px]">
-          <img :src="logo" alt="Awash Insurance" class="mb-10 w-auto h-11 lg:hidden" />
-          <LoginForm />
-          <p class="mt-10 text-xs text-center lg:hidden text-ink-subtle">© {{ year }} Awash Insurance Company S.C.</p>
-        </div>
+        <LoginForm />
       </main>
+
+      <footer class="mt-8 text-center">
+        <p class="text-xs text-white/65">© {{ year }} Awash Insurance Company S.C. · Health Connect</p>
+      </footer>
     </div>
   </div>
 </template>
 
 <style scoped>
-.brand-grid {
-  background-image: linear-gradient(to right, #fff 1px, transparent 1px),
-    linear-gradient(to bottom, #fff 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at 30% 40%, #000 20%, transparent 75%);
+.login-backdrop {
+  background:
+    linear-gradient(160deg, rgb(var(--primary)) 0%, rgb(var(--primary-hover)) 55%, rgb(20 30 72) 100%);
+}
+
+.login-card {
+  /* Roomier fields than the in-app default */
+  --control-h: 2.875rem;
+  padding: 2.5rem;
+  border-radius: 1.25rem;
+  background: rgb(var(--surface));
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.08),
+    0 24px 60px -12px rgb(8 15 45 / 0.55);
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.75rem 1.25rem;
+    border-radius: 1rem;
+  }
+}
+
+@media (pointer: coarse) {
+  .login-card {
+    --control-h: 3rem;
+  }
 }
 </style>

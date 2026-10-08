@@ -98,9 +98,9 @@ function submitResetPassword() {
   <div>
     <!-- Sign in -->
     <template v-if="view === 'login'">
-      <header class="mb-8">
-        <h1 class="!px-0 text-2xl font-semibold tracking-tight text-ink">Sign in</h1>
-        <p class="mt-1.5 text-sm text-ink-muted">Welcome back. Enter your credentials to access Health Connect.</p>
+      <header class="mb-7 text-center">
+        <h1 id="login-title" class="!px-0 text-xl font-semibold tracking-tight sm:text-2xl text-ink">Sign in to Health Connect</h1>
+        <p class="mt-1.5 text-sm text-ink-muted">Welcome back. Enter your work email and password.</p>
       </header>
 
       <Form v-slot="{ submit }" id="login-form" @submit="submit(loginUser)">
@@ -148,12 +148,12 @@ function submitResetPassword() {
 
     <!-- Forgot password: request code -->
     <template v-else-if="view === 'request'">
-      <header class="mb-8">
+      <header class="mb-7">
         <button type="button" class="inline-flex gap-1.5 items-center mb-6 text-sm font-medium text-ink-muted hover:text-ink" @click="view = 'login'">
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10H4m0 0 5-5m-5 5 5 5" /></svg>
           Back to sign in
         </button>
-        <h1 class="!px-0 text-2xl font-semibold tracking-tight text-ink">Reset your password</h1>
+        <h1 id="login-title" class="!px-0 text-xl font-semibold tracking-tight sm:text-2xl text-ink">Reset your password</h1>
         <p class="mt-1.5 text-sm text-ink-muted">Enter your account email and we'll send you a reset code.</p>
       </header>
 
@@ -181,12 +181,12 @@ function submitResetPassword() {
 
     <!-- Forgot password: set new password -->
     <template v-else>
-      <header class="mb-8">
+      <header class="mb-7">
         <button type="button" class="inline-flex gap-1.5 items-center mb-6 text-sm font-medium text-ink-muted hover:text-ink" @click="view = 'request'">
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10H4m0 0 5-5m-5 5 5 5" /></svg>
           Back
         </button>
-        <h1 class="!px-0 text-2xl font-semibold tracking-tight text-ink">Set a new password</h1>
+        <h1 id="login-title" class="!px-0 text-xl font-semibold tracking-tight sm:text-2xl text-ink">Set a new password</h1>
         <p class="mt-1.5 text-sm text-ink-muted">
           Enter the code sent to <span class="font-medium text-ink">{{ forgotEmail }}</span> and choose a new password.
         </p>
@@ -259,7 +259,7 @@ function submitResetPassword() {
       </form>
     </template>
 
-    <p class="mt-8 text-sm text-center text-ink-subtle">
+    <p class="pt-5 mt-7 text-xs text-center border-t text-ink-subtle border-line">
       Need access or help signing in? Contact your system administrator.
     </p>
   </div>

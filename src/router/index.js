@@ -13,6 +13,7 @@ import authorizationRoutes from "./authorization.routes";
 const Login = () => import("@/views/Login.vue");
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useAuthStore } from "@/stores/auth";
+import { installRouteLoading } from "./loading";
 import adminRoutes from "./admin.routes";
 import analyticsRoutes from "./analytics.routes";
 import reportsRoutes from "./reports.routes";
@@ -162,6 +163,9 @@ const router = createRouter({
     },
   ]),
 });
+
+// Navigation loading indicator (registered first so it starts before the auth guard)
+installRouteLoading(router);
 
 // Helper function to check if user has a specific privilege
 function hasPrivilege(user, privilegeName) {

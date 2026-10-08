@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CATEGORICAL, STATUS, seriesColors, withAlpha } from '@/config/chartPalette';
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import DefaultPage from '@/components/DefaultPage.vue';
 import ChartCard from '@/components/charts/ChartCard.vue';
 import BarChart from '@/components/charts/BarChart.vue';
@@ -8,6 +8,7 @@ import LineChart from '@/components/charts/LineChart.vue';
 import DoughnutChart from '@/components/charts/DoughnutChart.vue';
 import KPICard from '../components/KPICard.vue';
 import AnalyticsTable from '../components/AnalyticsTable.vue';
+import ChartState from '../components/ChartState.vue';
 import { getReportsList, executeReport } from '@/features/analytics/api/analyticsApi';
 
 interface ReportMeta {
@@ -42,6 +43,30 @@ const KPI_ICONS = {
   approved: 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
   loss: 'M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.51-5.511-3.181',
 };
+
+// Per-chart report status: pending | missing | empty | error | ok
+type ReportState = { state: 'pending' | 'missing' | 'empty' | 'error' | 'ok'; expected: string; error?: string };
+const DASHBOARD_REPORTS: Record<string, string> = {
+  periodic: 'Periodic Total Paid Claims',
+  lossGain: 'Loss vs Gain',
+  paidByProvider: 'Paid Claims by Providers',
+  claimsCreated: 'Claims Created by Provider',
+  claimsStatus: 'Claims Status by Policyholder',
+  topTrend: 'Top 5 Institutions by Insured Persons',
+  premium: 'Total Premium Collected',
+  topTable: 'Top 5 Institutions',
+};
+const reportStatus = reactive<Record<string, ReportState>>(
+  Object.fromEntries(Object.entries(DASHBOARD_REPORTS).map(([k, label]) => [k, { state: 'pending', expected: label }]))
+);
+const reportsLoaded = ref(false);
+// KPIs are derived from the dashboard reports; with none run, show "—" not fake zeros
+const kpisAvailable = computed(() =>
+  Object.values(reportStatus).some((s) => s.state === 'ok' || s.state === 'empty')
+);
+const missingReports = computed(() =>
+  Object.values(reportStatus).filter((s) => s.state === 'missing').map((s) => s.expected)
+);
 
 // Reactive KPI Data (Defaulting to 0).
 // No period-over-period data is fetched, so no change figures are shown.
@@ -384,10 +409,12 @@ function updateKPIs() {
 async function fetchAnalyticsDashboard() {
   isLoading.value = true;
   fetchError.value = '';
+  Object.values(reportStatus).forEach((s) => { s.state = 'pending'; s.error = undefined; });
 
   try {
     const res = await getReportsList({ standaloneOnly: true });
     reportsList.value = Array.isArray(res) ? res : res?.data || res?.content || [];
+    reportsLoaded.value = true;
 
     const queryParams: Record<string, string> = {};
     if (filters.year) queryParams.year = filters.year;
@@ -399,41 +426,49 @@ async function fetchAnalyticsDashboard() {
     // Report mapping configurations
     const reportConfigs = [
       {
+        key: 'periodic',
         uuid: '7887fe31-6e8f-43fe-8bb3-4bddd93a00ca',
         pattern: /Periodic Total Paid Claims/i,
         parser: parsePeriodicPaidClaims,
       },
       {
+        key: 'lossGain',
         uuid: '2636cad5-312b-4158-9f9d-4bec4581010e',
         pattern: /Loss vs Gain/i,
         parser: parseLossVsGain,
       },
       {
+        key: 'paidByProvider',
         uuid: 'cc7363e8-fcbf-43ae-b19f-4b4832c4bdd3',
         pattern: /Paid Claims by Providers/i,
         parser: parsePaidClaimsByProviders,
       },
       {
+        key: 'claimsCreated',
         uuid: '0b62b3d9-2a76-4788-aa7b-2a69bfabe77d',
         pattern: /Claims Created by Provider/i,
         parser: parseClaimsCreated,
       },
       {
+        key: 'claimsStatus',
         uuid: '430d4cee-0703-453a-a2b0-75ae2af55d1a',
         pattern: /Claims Status by Policyholder/i,
         parser: parseClaimsStatus,
       },
       {
+        key: 'topTrend',
         uuid: '7002df1e-4e29-4bc2-bcf2-26a10ad3ddee',
         pattern: /Top 5 Institutions by Insured Persons/i,
         parser: parseTopInstitutionsTrend,
       },
       {
+        key: 'premium',
         uuid: '3be532ed-5bed-423b-89c7-4de973523c10',
         pattern: /Total Premium Collected/i,
         parser: parsePremiumCollected,
       },
       {
+        key: 'topTable',
         uuid: 'cf5731c3-68c3-4b36-bdd9-819c7ce83c55',
         pattern: /Top 5 Institutions$/i,
         parser: parseTopInstitutionsTable,
@@ -441,15 +476,28 @@ async function fetchAnalyticsDashboard() {
     ];
 
     const executePromises = reportConfigs.map(async (cfg) => {
+      const status = reportStatus[cfg.key];
       const rep = findReport(cfg.uuid, cfg.pattern);
-      if (!rep) return;
+      if (!rep) {
+        status.state = 'missing';
+        return;
+      }
 
       try {
         const execRes = await executeReport(rep.reportUuid, queryParams, 0, 100);
+        // The API layer resolves failures as { success: false, error }
+        if (execRes?.success === false) {
+          status.state = 'error';
+          status.error = execRes.error;
+          return;
+        }
         const columns: string[] = execRes?.columns || [];
         const rows: any[] = execRes?.data?.content || [];
         cfg.parser(columns, rows);
-      } catch (err) {
+        status.state = rows.length ? 'ok' : 'empty';
+      } catch (err: any) {
+        status.state = 'error';
+        status.error = err?.message;
         console.warn(`Failed to execute report ${rep.name}:`, err);
       }
     });
@@ -459,6 +507,12 @@ async function fetchAnalyticsDashboard() {
   } catch (err: any) {
     console.error('Failed to load analytics dashboard reports:', err);
     fetchError.value = err?.message || 'Failed to fetch dynamic reports list';
+    Object.values(reportStatus).forEach((s) => {
+      if (s.state === 'pending') {
+        s.state = 'error';
+        s.error = fetchError.value;
+      }
+    });
   } finally {
     isLoading.value = false;
   }
@@ -614,13 +668,42 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Dashboard reports that aren't configured on the report server -->
+      <div
+        v-if="reportsLoaded && missingReports.length"
+        class="flex flex-col gap-3 p-4 rounded-xl border sm:flex-row sm:items-start border-warning/30 bg-warning-soft"
+        role="status"
+      >
+        <svg class="mt-0.5 w-5 h-5 shrink-0 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+        </svg>
+        <div class="flex-1 text-sm">
+          <p class="font-medium text-warning-strong">
+            {{ missingReports.length }} of {{ Object.keys(reportStatus).length }} dashboard reports aren't configured on the report server
+          </p>
+          <p class="mt-1 text-warning-strong">
+            Missing: {{ missingReports.join(', ') }}.
+            <template v-if="reportsList.length">
+              The {{ reportsList.length }} reports that are available can be run from Report Center.
+            </template>
+          </p>
+        </div>
+        <RouterLink
+          to="/reports/dynamic-report"
+          class="inline-flex gap-1.5 items-center self-start px-3 h-9 text-sm font-medium rounded-lg border shrink-0 border-warning/30 bg-surface text-ink hover:bg-surface-muted"
+        >
+          Open Report Center
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m8 5 5 5-5 5" /></svg>
+        </RouterLink>
+      </div>
+
       <!-- KPI Cards -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICard 
           v-for="(kpi, idx) in kpis" 
           :key="idx"
           :title="kpi.title"
-          :value="kpi.value"
+          :value="kpisAvailable ? kpi.value : '—'"
           :icon="kpi.icon"
         />
       </div>
@@ -628,44 +711,60 @@ onMounted(() => {
       <!-- Row 1: Periodic Paid Claims & Loss Ratio -->
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartCard title="Periodic Total Paid Claims" subtitle="Monthly paid claims trend">
-          <BarChart :chart-data="periodicPaidClaimsData" height="300px" />
+          <ChartState :status="reportStatus.periodic">
+            <BarChart :chart-data="periodicPaidClaimsData" height="300px" />
+          </ChartState>
         </ChartCard>
 
         <ChartCard title="Total Loss Ratio by Policyholder and Cover Types" subtitle="Loss vs Gain analysis">
-          <BarChart :chart-data="lossRatioData" height="300px" />
+          <ChartState :status="reportStatus.lossGain">
+            <BarChart :chart-data="lossRatioData" height="300px" />
+          </ChartState>
         </ChartCard>
       </div>
 
       <!-- Row 2: Paid Claims by Providers & Claims Created -->
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartCard title="Paid Claims by Providers and Service Types" subtitle="Breakdown by provider and service">
-          <BarChart :chart-data="paidClaimsByProvidersData" height="300px" />
+          <ChartState :status="reportStatus.paidByProvider">
+            <BarChart :chart-data="paidClaimsByProvidersData" height="300px" />
+          </ChartState>
         </ChartCard>
 
         <ChartCard title="Total Claims Created by Insurer/Provider/Claimants" subtitle="Distribution of claim origins">
-          <DoughnutChart :data="claimsCreatedData" height="300px" />
+          <ChartState :status="reportStatus.claimsCreated">
+            <DoughnutChart :data="claimsCreatedData" height="300px" />
+          </ChartState>
         </ChartCard>
       </div>
 
       <!-- Row 3: Claims Status & Top Institutions -->
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartCard title="Total Number of Claims Submitted, Paid, and Rejected by Policyholder" subtitle="Claims status breakdown">
-          <BarChart :chart-data="claimsStatusData" height="300px" />
+          <ChartState :status="reportStatus.claimsStatus">
+            <BarChart :chart-data="claimsStatusData" height="300px" />
+          </ChartState>
         </ChartCard>
 
         <ChartCard title="Top 5 Institutions with the highest number of insured persons" subtitle="Insured persons trend">
-          <LineChart :chartData="topInstitutionsData" height="300px" />
+          <ChartState :status="reportStatus.topTrend">
+            <LineChart :chartData="topInstitutionsData" height="300px" />
+          </ChartState>
         </ChartCard>
       </div>
 
       <!-- Row 4: Premium Collected & Table -->
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartCard title="Total Premium Collected by Policyholders" subtitle="Premium distribution">
-          <DoughnutChart :data="premiumCollectedData" height="300px" />
+          <ChartState :status="reportStatus.premium">
+            <DoughnutChart :data="premiumCollectedData" height="300px" />
+          </ChartState>
         </ChartCard>
 
         <ChartCard title="Top 5 Institutions" subtitle="Insured persons count">
-          <AnalyticsTable :data="topInstitutionsTableData" />
+          <ChartState :status="reportStatus.topTable">
+            <AnalyticsTable :data="topInstitutionsTableData" />
+          </ChartState>
         </ChartCard>
       </div>
     </div>

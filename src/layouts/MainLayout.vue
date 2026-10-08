@@ -6,6 +6,7 @@ import NavBar from "@/components/NavBar.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import navs from "@/config/navs";
+import { routeLoading } from "@/router/loading";
 
 const authStore = useAuthStore();
 const breadcrumbs = useBreadcrumb();
@@ -244,10 +245,32 @@ return null;
         @open-menu="mobileOpen = true"
       />
 
-      <main id="main-content" class="overflow-auto relative flex-1 min-w-0 app-scroll">
-        <div class="p-3 mx-auto w-full max-w-[1600px] sm:p-4 lg:p-6">
+      <main
+        id="main-content"
+        class="overflow-auto relative flex-1 min-w-0 app-scroll"
+        :aria-busy="routeLoading || undefined"
+      >
+        <div
+          class="p-3 mx-auto w-full max-w-[1600px] transition-opacity duration-200 sm:p-4 lg:p-6"
+          :class="{ 'opacity-60 pointer-events-none': routeLoading }"
+        >
           <RouterView />
         </div>
+
+        <!-- Shown while the next page loads -->
+        <Transition name="fade">
+          <div
+            v-if="routeLoading"
+            class="flex fixed bottom-6 left-1/2 z-50 gap-2 items-center px-3.5 py-2 text-sm font-medium rounded-full border -translate-x-1/2 shadow-pop bg-surface border-line text-ink-muted lg:left-[calc(50%+var(--drawer-width)/2)]"
+            role="status"
+          >
+            <svg class="w-4 h-4 animate-spin text-primary" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
+              <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+            </svg>
+            Loading…
+          </div>
+        </Transition>
       </main>
     </div>
   </div>

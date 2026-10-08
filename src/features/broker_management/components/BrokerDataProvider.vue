@@ -2,6 +2,7 @@
 <script setup>
 import { usePagination } from '@/composables/usePagination';
 import { getBrokers } from '../api/brokerApi';
+import { toList } from '../api/utils';
 import { watch, ref } from 'vue';
 import { removeUndefined } from '@/utils/utils';
 import { useBrokerStore } from '../stores/brokerStore';
@@ -43,12 +44,7 @@ const pagination = usePagination({
           ...(props.search.trim() ? { search: props.search.trim() } : {}),
         })
       );
-      const paginated = res?.data || res;
-      if (paginated?.content) {
-        brokerStore.brokers = paginated.content;
-      } else {
-        brokerStore.brokers = paginated;
-      }
+      brokerStore.brokers = toList(res);
       return res;
     } finally {
       isFetching.value = false;

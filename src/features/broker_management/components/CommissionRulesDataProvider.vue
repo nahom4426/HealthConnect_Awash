@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { getRules } from '../api/rulesApi';
+import { toList } from '../api/utils';
 import { usePagination } from '@/composables/usePagination';
 import { ref, watch, onMounted, computed } from 'vue';
 import { removeUndefined } from '@/utils/utils';
@@ -61,7 +62,7 @@ const pagination = usePagination({
         totalPages.value = paginated.totalPages ?? 1;
         totalItems.value = paginated.totalElements ?? paginated.content.length;
       } else {
-        rulesStore.rules = paginated;
+        rulesStore.rules = toList(response);
       }
 
       return paginated;

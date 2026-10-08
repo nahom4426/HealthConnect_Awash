@@ -9,7 +9,6 @@ import financeRoutes from "./finance.routes";
 import provider_contractsRoutes from "./provider_contracts.routes";
 import providersRoutes from "./providers.routes";
 import product_settingsRoutes from "./product_settings.routes";
-import brokerManagementRoutes from "./broker.routes";
 import authorizationRoutes from "./authorization.routes";
 const Login = () => import("@/views/Login.vue");
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
@@ -17,6 +16,7 @@ import { useAuthStore } from "@/stores/auth";
 import adminRoutes from "./admin.routes";
 import analyticsRoutes from "./analytics.routes";
 import reportsRoutes from "./reports.routes";
+import brokerRoutes from "./broker.routes";
 const Profile = () => import("@/features/profile/pages/profile.vue");
 const Settings = () => import("@/features/settings/pages/Settings.vue");
 
@@ -130,6 +130,7 @@ const router = createRouter({
         ...adminRoutes,
         ...analyticsRoutes,
         ...reportsRoutes,
+        ...brokerRoutes,
         ...quotationRoutes,
         ...selectedUnderwritingRoutes,
         ...claimRoutes,
@@ -137,7 +138,6 @@ const router = createRouter({
         ...provider_contractsRoutes,
         ...providersRoutes,
         ...product_settingsRoutes,
-        ...brokerManagementRoutes,
         ...authorizationRoutes,
         {
           path: '/profile',

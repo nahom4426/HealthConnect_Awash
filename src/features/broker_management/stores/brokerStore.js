@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { toList } from '../api/utils';
 import { createBroker as apiCreateBroker, getBroker as apiGetBroker, getBrokers as apiGetBrokers, updateBroker as apiUpdateBroker, updateBrokerStatus as apiUpdateBrokerStatus, deleteBroker as apiDeleteBroker } from '../api/brokerApi';
 
 export const useBrokerStore = defineStore('brokerStore', () => {
@@ -48,8 +49,9 @@ export const useBrokerStore = defineStore('brokerStore', () => {
     try {
       const response = await apiGetBrokers(params);
       // Assuming paginated response shape: { content: [], page: { number, size, totalElements, totalPages } }
-      brokers.value = response.data.content || response.data;
-      if (response.data.page) {
+      brokers.value = toList(response);
+      if (response?.success === false) error.value = response.error || 'Failed to fetch brokers';
+      if (response?.data?.page) {
         pagination.value = { ...pagination.value, ...response.data.page };
       }
     } catch (err) {
@@ -80,7 +82,12 @@ export const useBrokerStore = defineStore('brokerStore', () => {
     error.value = null;
     try {
       const response = await apiCreateBroker(data);
-      brokers.value.unshift(response.data); // Optimistically add to top
+      // Failed calls resolve as { success: false } - don't insert an empty row
+      if (response?.success !== false && response?.data) {
+        brokers.value.unshift(response.data);
+      } else {
+        error.value = response?.error || 'Failed to create broker';
+      }
       return response.data;
     } catch (err) {
       error.value = err?.response?.data?.message || err.message || 'Failed to create broker';
@@ -95,12 +102,17 @@ export const useBrokerStore = defineStore('brokerStore', () => {
     error.value = null;
     try {
       const response = await apiUpdateBroker(id, data);
-      const index = brokers.value.findIndex(b => b.stakeholderUuid === id);
-      if (index !== -1) {
-        brokers.value[index] = response.data;
-      }
-      if (currentBroker.value?.stakeholderUuid === id) {
-        currentBroker.value = response.data;
+      // Keep the existing row if the update failed
+      if (response?.success !== false && response?.data) {
+        const index = brokers.value.findIndex(b => b.stakeholderUuid === id);
+        if (index !== -1) {
+          brokers.value[index] = response.data;
+        }
+        if (currentBroker.value?.stakeholderUuid === id) {
+          currentBroker.value = response.data;
+        }
+      } else {
+        error.value = response?.error || 'Failed to update broker';
       }
       return response.data;
     } catch (err) {

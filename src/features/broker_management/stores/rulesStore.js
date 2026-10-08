@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { toList } from '../api/utils';
 import { activateRule, deactivateRule, getRules, createRule as createRuleApi, updateRule as updateRuleApi } from '../api/rulesApi';
 
 export const useRulesStore = defineStore('rulesStore', () => {
@@ -23,10 +24,9 @@ export const useRulesStore = defineStore('rulesStore', () => {
     error.value = null;
     try {
       const response = await getRules(params);
-      const data = response.data.content || response.data || [];
-      rules.value = data;
+      rules.value = toList(response);
 
-      if (response.data.totalElements !== undefined) {
+      if (response?.data?.totalElements !== undefined) {
         totalItems.value = response.data.totalElements;
       }
     } catch (err) {

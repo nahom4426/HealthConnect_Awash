@@ -202,12 +202,23 @@ export function getColumnValue(key, row) {
 export function secondDateFormat(d) {
   if (!d) return " ";
   try {
-    const date = new Date(d);
+    let dateObj;
+    if (typeof d === "string") {
+      const ddmmyyyy = d.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (ddmmyyyy) {
+        dateObj = new Date(`${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`);
+      } else {
+        dateObj = new Date(d);
+      }
+    } else {
+      dateObj = new Date(d);
+    }
+    if (isNaN(dateObj.getTime())) return String(d);
     const dateFormat = new Intl.DateTimeFormat("en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
-    }).format(date);
+    }).format(dateObj);
     return dateFormat;
   } catch (err) {
     return "";
@@ -217,14 +228,25 @@ export function secondDateFormat(d) {
 export function secondDateFormatWithTime(d) {
   if (!d) return " ";
   try {
-    const date = new Date(d);
+    let dateObj;
+    if (typeof d === "string") {
+      const ddmmyyyy = d.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (ddmmyyyy) {
+        dateObj = new Date(`${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`);
+      } else {
+        dateObj = new Date(d);
+      }
+    } else {
+      dateObj = new Date(d);
+    }
+    if (isNaN(dateObj.getTime())) return String(d);
     const dateFormat = new Intl.DateTimeFormat("en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
       hour: "numeric",
       minute: "numeric",
-    }).format(date);
+    }).format(dateObj);
     return dateFormat;
   } catch (err) {
     return "";

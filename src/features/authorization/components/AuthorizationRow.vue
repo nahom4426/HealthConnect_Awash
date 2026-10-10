@@ -41,11 +41,56 @@ function initials(name) {
     .join("");
 }
 
+function parseDateString(dateValue) {
+  if (!dateValue) return null;
+  const str = String(dateValue).trim();
+  if (!str) return null;
+
+  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return {
+      year: isoMatch[1],
+      month: isoMatch[2],
+      day: isoMatch[3],
+      yyyyMmDd: `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`,
+      ddMmYyyy: `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`,
+    };
+  }
+
+  const ddmmyyyyMatch = str.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (ddmmyyyyMatch) {
+    return {
+      year: ddmmyyyyMatch[3],
+      month: ddmmyyyyMatch[2],
+      day: ddmmyyyyMatch[1],
+      yyyyMmDd: `${ddmmyyyyMatch[3]}-${ddmmyyyyMatch[2]}-${ddmmyyyyMatch[1]}`,
+      ddMmYyyy: `${ddmmyyyyMatch[1]}/${ddmmyyyyMatch[2]}/${ddmmyyyyMatch[3]}`,
+    };
+  }
+
+  try {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const yyyy = String(d.getFullYear());
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return {
+        year: yyyy,
+        month: mm,
+        day: dd,
+        yyyyMmDd: `${yyyy}-${mm}-${dd}`,
+        ddMmYyyy: `${dd}/${mm}/${yyyy}`,
+      };
+    }
+  } catch (_) {}
+
+  return null;
+}
+
 function formatDate(dateValue) {
-  if (!dateValue) return "-";
-  const str = String(dateValue);
-  const match = str.match(/^(\d{4}-\d{2}-\d{2})/);
-  return match ? match[1] : str;
+  const parsed = parseDateString(dateValue);
+  if (!parsed) return "-";
+  return parsed.yyyyMmDd;
 }
 
 function getStatusStyle(status) {
@@ -72,6 +117,7 @@ function openChangeStatusModal(row) {
       authorizationUuid: row?.authorizationUuid,
       currentStatus: row?.status,
       endDate: row?.endDate,
+      beginDate: row?.beginDate,
       activeDays: row?.activeDays,
       authorizedAmount: row?.authorizedAmount,
       usedAmount: row?.usedAmount,
@@ -91,7 +137,9 @@ function openChangeStatusModal(row) {
         ...row,
         status: result.status ?? row?.status,
         endDate: result.endDate ?? row?.endDate,
+        beginDate: result.beginDate ?? row?.beginDate,
         activeDays: result.activeDays ?? row?.activeDays,
+        authorizedAmount: result.authorizedAmount ?? row?.authorizedAmount,
       });
     }
   );

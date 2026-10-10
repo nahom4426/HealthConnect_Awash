@@ -28,34 +28,72 @@ const amount = ref(
   [undefined, null].includes(props.data?.authorizedAmount) ? "" : String(props.data?.authorizedAmount)
 );
 
-function toDateOnly(v) {
-  if (!v) return "";
-  if (typeof v === "string") {
-    const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
-    if (m) return m[1];
+function parseDateString(dateValue) {
+  if (!dateValue) return null;
+  const str = String(dateValue).trim();
+  if (!str) return null;
+
+  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return {
+      year: isoMatch[1],
+      month: isoMatch[2],
+      day: isoMatch[3],
+      yyyyMmDd: `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`,
+      ddMmYyyy: `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`,
+    };
   }
+
+  const ddmmyyyyMatch = str.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (ddmmyyyyMatch) {
+    return {
+      year: ddmmyyyyMatch[3],
+      month: ddmmyyyyMatch[2],
+      day: ddmmyyyyMatch[1],
+      yyyyMmDd: `${ddmmyyyyMatch[3]}-${ddmmyyyyMatch[2]}-${ddmmyyyyMatch[1]}`,
+      ddMmYyyy: `${ddmmyyyyMatch[1]}/${ddmmyyyyMatch[2]}/${ddmmyyyyMatch[3]}`,
+    };
+  }
+
   try {
-    const d = new Date(v);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toISOString().slice(0, 10);
-  } catch (_) {
-    return "";
-  }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const yyyy = String(d.getFullYear());
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return {
+        year: yyyy,
+        month: mm,
+        day: dd,
+        yyyyMmDd: `${yyyy}-${mm}-${dd}`,
+        ddMmYyyy: `${dd}/${mm}/${yyyy}`,
+      };
+    }
+  } catch (_) {}
+
+  return null;
+}
+
+function toDateOnly(v) {
+  const parsed = parseDateString(v);
+  return parsed ? parsed.yyyyMmDd : "";
 }
 
 const endDateRaw = ref(toDateOnly(props.data?.endDate));
 
-function toDdMmYyyy(yyyyMmDd) {
-  if (!yyyyMmDd) return "";
-  const m = String(yyyyMmDd).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return "";
-  return `${m[3]}/${m[2]}/${m[1]}`;
+function toDdMmYyyy(v) {
+  const parsed = parseDateString(v);
+  return parsed ? parsed.ddMmYyyy : "";
 }
 
 async function submit() {
   if (!authorizationUuid.value) return;
   if (!status.value) return;
-  if (!endDateRaw.value) return;
+
+  if (!endDateRaw.value) {
+    toasted(false, "Please select an end date", "");
+    return;
+  }
 
   const parsedAmount = amount.value !== "" && amount.value !== null && amount.value !== undefined ? Number(amount.value) : (props.data?.authorizedAmount ?? 0);
 
@@ -75,7 +113,7 @@ async function submit() {
           success: true,
           authorizationUuid: authorizationUuid.value,
           status: payload.status,
-          endDate: payload.endDate,
+          endDate: endDateRaw.value ? `${endDateRaw.value}T00:00:00.000+00:00` : payload.endDate,
           activeDays: payload.activeDays,
           authorizedAmount: payload.amount,
         });

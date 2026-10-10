@@ -26,7 +26,6 @@ const claimLevelData = computed(() => {
     sourceData = sourceData.data;
   }
   
-  console.log('ClaimLevelForm sourceData:', sourceData);
   
   return {
     claimLevel: sourceData?.claimLevel || '',

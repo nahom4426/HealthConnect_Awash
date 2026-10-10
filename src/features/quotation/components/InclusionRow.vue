@@ -32,13 +32,10 @@ const props = defineProps({
 });
 
 function goToInclusion(row: any) {
-  console.log('Full row data:', row);
-  console.log('All row keys:', Object.keys(row));
   
   const quotationUuid = row?.quotationUuid;
   const payerInstitutionContractUuid = row?.payerInstitutionContractUuid;
   
-  console.log('UUIDs:', { quotationUuid, payerInstitutionContractUuid });
   
   if (!quotationUuid || !payerInstitutionContractUuid) {
     console.error('Missing UUIDs. Available keys:', Object.keys(row));
@@ -47,7 +44,6 @@ function goToInclusion(row: any) {
   
   // Use path-based navigation instead of named route
   const path = `/inclusion/create/${quotationUuid}/${payerInstitutionContractUuid}`;
-  console.log('Navigating to:', path);
   
   router.push(path).catch(err => {
     console.error('Navigation failed:', err);

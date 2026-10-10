@@ -12,7 +12,6 @@ const handleAmendPolicy = (id) => {
 };
 
 const viewDetails = (id) => {
-  console.log("View policy details:", id);
 };
 </script>
 

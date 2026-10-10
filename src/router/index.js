@@ -78,10 +78,6 @@ function applyUnderwritingVariant(router, variant) {
 
   nextRoutes.forEach((r) => router.addRoute("app", r));
   appliedUnderwritingVariant = variant;
-  console.info(
-    "[router] underwriting route set:",
-    variant === "quotation" ? "quotationunderwriting.routes" : "underwriting.routes"
-  );
 }
 
 function addMetaToRoutes(routes) {

@@ -369,7 +369,6 @@ async function submitCashCredits() {
       packageUuids: selectedPackages.value,
     };
 
-    console.log("Submitting cash credits:", payload);
 
     // TODO: Call API to create cash credits
     // const response = await createCashCredits(payload);

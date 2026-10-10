@@ -28,7 +28,6 @@ const props = defineProps({
   currentPage: { type: Number, default: 1 },
   perPage: { type: Number, default: 25 }
 });
-console.log(props);
 
 // Format date to "Mon DD, YYYY" format
 function formatDate(dateString) {

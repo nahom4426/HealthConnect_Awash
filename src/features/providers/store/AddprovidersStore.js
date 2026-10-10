@@ -12,40 +12,33 @@ export const useAddProviders = defineStore("AddproviderStore", () => {
   }
 
   function set(data) {
-    console.log("Setting providers in store:", data);
     const ids = new Set(excludedIds.value);
     providers.value = (data || []).filter((p) => !ids.has(p.providerUuid));
   }
 
   // Alias for set
   function setProviders(data) {
-    console.log("Setting providers with setProviders:", data);
     set(data);
   }
 
   // Alias for set
   function setAll(data) {
-    console.log("Setting providers with setAll:", data);
     set(data);
   }
 
   function add(data) {
-    console.log("Adding provider to store:", data);
     providers.value.unshift(data);
   }
 
   function update(id, data) {
-    console.log(`Updating provider with UUID: ${id}`, data);
     
     // Debug: log all provider UUIDs to check for matches
-    console.log("Available provider UUIDs:", providers.value.map(p => p.providerUuid));
     
     const idx = providers.value.findIndex((el) => el.providerUuid === id);
     if (idx === -1) {
       console.warn(`[Provider Store] No provider found with UUID: ${id}`);
       // If not found by UUID, try to add it instead
       if (data.providerUuid) {
-        console.log("Provider not found for update, adding instead:", data);
         add(data);
       }
       return;
@@ -56,7 +49,6 @@ export const useAddProviders = defineStore("AddproviderStore", () => {
       ...providers.value[idx],
       ...data,
     });
-    console.log("Provider updated successfully");
   }
 
   function remove(id) {
@@ -73,7 +65,6 @@ export const useAddProviders = defineStore("AddproviderStore", () => {
 
   // Update provider status
   function updateStatus(id, status) {
-    console.log(`Updating status for provider with UUID: ${id} to ${status}`);
     update(id, { status });
   }
 

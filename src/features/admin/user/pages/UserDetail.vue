@@ -13,12 +13,10 @@ const user = ref({});
 const req = useApiRequest();
 
 onMounted(() => {
-  console.log('UserDetail mounted with userUuid:', userUuid);
   if (userUuid) {
     req.send(
       () => getUserById(userUuid),
       (res) => {
-        console.log('getUserById response:', res);
         if (res.success) {
           user.value = res.data;
         } else {

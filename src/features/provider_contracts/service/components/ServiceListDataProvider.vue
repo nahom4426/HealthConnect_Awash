@@ -39,7 +39,6 @@ const pagination = usePagination({
   auto: props.auto,
   cb: (data) => {
     const params = removeUndefined({ search: props.search , ...data });
-    console.log("Sending to backend:", { params, search: props.search  });
     return getAllServices(
       route.params.id || props.id || authStore.auth?.user?.providerUuid,
       params
@@ -51,7 +50,6 @@ const pagination = usePagination({
 watch(
   () => props.search,
   (newSearch) => {
-    console.log("Search changed to:", newSearch);
     pagination.search.value = newSearch;
     if (route.params.id || props.id || authStore.auth?.user?.providerUuid) {
       // Reset to first page when searching
@@ -79,7 +77,6 @@ watch(
 watch(
   () => pagination.totalElements.value,
   (v) => {
-    console.log('[ServiceListDataProvider] totalElements=', v);
   }
 );
 

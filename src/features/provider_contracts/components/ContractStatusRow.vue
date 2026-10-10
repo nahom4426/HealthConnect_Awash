@@ -204,7 +204,6 @@ async function handleReActivateForSuspendedWithClose(row) {
   openModal('ReactivateContract', { data: { ...row } }, (result) => {
     // Modal closed with success - data is already updated in store
     if (result?.success) {
-      console.log('Contract reactivated and store updated:', result.updatedContract);
     }
   });
 }

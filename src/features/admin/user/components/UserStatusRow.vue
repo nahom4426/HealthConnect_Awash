@@ -128,14 +128,10 @@ function closeAllDropdowns() {
 }
 
 function handleViewWithClose(row) {
-  console.log('Detail button clicked!');
-  console.log('Row data:', row);
-  console.log('UserUuid:', row.userUuid);
   
   closeAllDropdowns();
   
   if (row.userUuid) {
-    console.log('Navigating to:', `/user_detail/${row.userUuid}`);
     router.push(`/user_detail/${row.userUuid}`);
   } else {
     console.error('No userUuid found in row:', row);
@@ -310,7 +306,7 @@ onUnmounted(() => {
             </button>
             
             <button 
-              @click.stop="() => { console.log('Button clicked directly'); handleViewWithClose(row); }"
+              @click.stop="handleViewWithClose(row)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               <div class="flex items-center justify-start pl-4 gap-4">

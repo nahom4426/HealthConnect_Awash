@@ -29,7 +29,6 @@ import { toasted } from "@/utils/utils";
     }
   });
 
-  console.log('EditPackage props:', props);
 
   // Extract values from nested data prop
   const packageData = computed(() => props.data?.data || props.data);
@@ -40,9 +39,6 @@ import { toasted } from "@/utils/utils";
   const coverageStore = useCoverage();
 const pending = ref(false);
 function handleUpdate({ values }) {
-    console.log('Form values received:', values);
-  console.log('allServices value:', values.allServices);
-  console.log('allServices type:', typeof values.allServices);
   if (!packageUuid.value) {
     toasted(false, '', 'Package UUID is missing');
     return;

@@ -27,7 +27,6 @@
   
   function getStatusText(row) {
     const status = isNotEligible(row) ? 'Not Eligible' : 'Eligible';
-    console.log(`[CategoryRow] Status for ${row.categoryName}:`, status);
     return status;
   }
   
@@ -53,7 +52,6 @@
   }
   
   async function handleDeactivate(row) {
-    console.log('[CategoryRow] handleDeactivation called with row:', row);
     try {
       const res = await addNotEligibleCategory({
         contractUuid: props.contractUuid,

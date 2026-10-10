@@ -165,9 +165,6 @@ function getStatusBadge(status) {
 }
 
 // Log for debugging
-console.log('Process Claim Detail - Institution name:', institutionName.value);
-console.log('Process Claim Detail - Route state:', route.state);
-console.log('Process Claim Detail - Route query:', route.query);
 </script>
 
 <template>

@@ -260,12 +260,9 @@ const refetchServicesList = async () => {
   try {
     const payerProviderContractUuid = route.params.id;
     if (!payerProviderContractUuid) {
-      console.log("[Import] refetchServicesList skipped: missing route.params.id");
       return;
     }
-    console.log("[Import] refetchServicesList: fetching services for contract", payerProviderContractUuid);
     const existingRes = await getAllServices(payerProviderContractUuid, { page: 0, limit: 25, search: "" });
-    console.log("[Import] refetchServicesList: response=", existingRes);
 
     // ApiService returns AsyncResponse via responseHandler: { success, data, error }
     const payload = Object.prototype.hasOwnProperty.call(existingRes || {}, "data") ? existingRes.data : existingRes;
@@ -277,7 +274,6 @@ const refetchServicesList = async () => {
           : (Array.isArray(payload) ? payload : []));
 
     serviceListStore.set(existingData || []);
-    console.log("[Import] refetchServicesList: store updated. items=", Array.isArray(existingData) ? existingData.length : 0);
   } catch (e) {
     console.error("Failed to refetch services after import", e);
   }
@@ -352,7 +348,6 @@ const importFile = async () => {
       showResults.value = true;
 
       if (importType.value === "service") {
-        console.log("[Import] success -> refetchServicesList (no rowResults)");
         await refetchServicesList();
         window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
         triggerRefetch();
@@ -401,7 +396,6 @@ const importFile = async () => {
 
       // Only refetch and close if at least one row actually imported.
       if (hasSuccess && importType.value === "service") {
-        console.log("[Import] success -> refetchServicesList (rowResults present)");
         await refetchServicesList();
         window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
         triggerRefetch();
@@ -434,7 +428,6 @@ const importFile = async () => {
       showResults.value = true;
 
       if (hasSuccess && importType.value === "service") {
-        console.log("[Import] success -> refetchServicesList (rowResults empty, totalRows > 0)");
         await refetchServicesList();
         window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
         triggerRefetch();

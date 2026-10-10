@@ -26,7 +26,6 @@ export const usePrivilege = defineStore("Privilegestore", () => {
   }
 
   function add(data) {
-    console.log(data);
     privilege.value.push(data);
   }
 

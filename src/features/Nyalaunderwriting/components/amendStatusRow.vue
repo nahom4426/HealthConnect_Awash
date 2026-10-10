@@ -43,8 +43,6 @@ function formatDate(date) {
 
 // Debug function to see what data is available
 function navigateToAmendInsuredPersons(row) {
-  console.log("Row data:", row);
-  console.log("Props:", props);
   
   // Try to get the correct values from the row
   const routeParams = {
@@ -54,12 +52,10 @@ function navigateToAmendInsuredPersons(row) {
     institutionName: row.institutionName || 'IFDC'
   };
   
-  console.log("Route params:", routeParams);
   
   // Use path-based navigation instead of name-based
   const path = `/insured_persons/${routeParams.id}/${routeParams.institutionUuid}/${routeParams.quotationUuid}/${encodeURIComponent(routeParams.institutionName)}?pageContext=amend`;
   
-  console.log("Navigating to:", path);
   
   router.push(path);
 }

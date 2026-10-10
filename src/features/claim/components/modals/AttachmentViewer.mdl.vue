@@ -147,10 +147,6 @@ const props = defineProps({
 });
 
 // Debug logging
-console.log('Props data:', props.data);
-console.log('Data attachments:', props.data?.attachments);
-console.log('First attachment data:', props.data?.attachments?.[0]);
-console.log('First attachment base64 preview:', props.data?.attachments?.[0]?.attachment?.substring(0, 100) + '...');
 
 // Get modal title
 const modalTitle = computed(() => {
@@ -237,13 +233,10 @@ const getFileName = (attachment) => {
 const getImageSource = (attachment) => {
   if (!attachment) return '';
   
-  console.log('Processing attachment:', attachment);
   
   // Always use the base64 data from attachment property
   if (attachment.attachment && typeof attachment.attachment === 'string') {
     const base64Str = attachment.attachment.trim();
-    console.log('Base64 string length:', base64Str.length);
-    console.log('Base64 preview (first 100 chars):', base64Str.substring(0, 100));
     
     if (!base64Str || base64Str === 'undefined' || base64Str === 'null') {
       console.error('Empty or invalid base64 string');
@@ -252,7 +245,6 @@ const getImageSource = (attachment) => {
     
     // If it already has data: prefix, return as is
     if (base64Str.startsWith('data:')) {
-      console.log('Already a data URL');
       return base64Str;
     }
     
@@ -262,22 +254,16 @@ const getImageSource = (attachment) => {
     // Check base64 signatures
     if (base64Str.startsWith('iVBOR')) {
       mimeType = 'image/png';
-      console.log('Detected PNG from base64 signature');
     } else if (base64Str.startsWith('/9j/')) {
       mimeType = 'image/jpeg';
-      console.log('Detected JPEG from base64 signature');
     } else if (base64Str.startsWith('R0lGOD') || base64Str.startsWith('GIF8')) {
       mimeType = 'image/gif';
-      console.log('Detected GIF from base64 signature');
     } else if (base64Str.startsWith('JVBER') || base64Str.startsWith('%PDF')) {
       mimeType = 'application/pdf';
-      console.log('Detected PDF from base64 signature');
     } else if (base64Str.startsWith('UEs')) {
       mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      console.log('Detected DOCX from base64 signature');
     } else if (base64Str.startsWith('0M8R')) {
       mimeType = 'application/vnd.ms-excel';
-      console.log('Detected XLS from base64 signature');
     } else {
       // Fallback: check file extension
       if (attachment.attachmentName) {
@@ -285,35 +271,27 @@ const getImageSource = (attachment) => {
         switch (ext) {
           case 'png':
             mimeType = 'image/png';
-            console.log('Detected PNG from file extension');
             break;
           case 'jpg':
           case 'jpeg':
             mimeType = 'image/jpeg';
-            console.log('Detected JPEG from file extension');
             break;
           case 'gif':
             mimeType = 'image/gif';
-            console.log('Detected GIF from file extension');
             break;
           case 'pdf':
             mimeType = 'application/pdf';
-            console.log('Detected PDF from file extension');
             break;
           case 'webp':
             mimeType = 'image/webp';
-            console.log('Detected WebP from file extension');
             break;
           case 'bmp':
             mimeType = 'image/bmp';
-            console.log('Detected BMP from file extension');
             break;
           case 'svg':
             mimeType = 'image/svg+xml';
-            console.log('Detected SVG from file extension');
             break;
           default:
-            console.log('Unknown file extension:', ext, 'using octet-stream');
         }
       }
     }
@@ -321,8 +299,6 @@ const getImageSource = (attachment) => {
     // Create data URL
     try {
       const dataUrl = `data:${mimeType};base64,${base64Str}`;
-      console.log('Created data URL with mime type:', mimeType);
-      console.log('Data URL preview (first 150 chars):', dataUrl.substring(0, 150) + '...');
       return dataUrl;
     } catch (err) {
       console.error('Error creating data URL:', err);
@@ -380,7 +356,6 @@ const nextAttachment = () => {
 };
 
 const handleImageLoad = () => {
-  console.log('Image loaded successfully');
   isLoading.value = false;
   error.value = null;
 };
@@ -421,23 +396,11 @@ const loadCurrentAttachment = () => {
     return;
   }
   
-  console.log('=== Loading Attachment ===');
-  console.log('Attachment object:', currentAttachment.value);
-  console.log('Attachment name:', currentAttachment.value.attachmentName);
-  console.log('Has attachment property:', !!currentAttachment.value.attachment);
-  console.log('Attachment property type:', typeof currentAttachment.value.attachment);
   
   if (currentAttachment.value.attachment) {
     const base64Str = currentAttachment.value.attachment.trim();
-    console.log('Base64 string length:', base64Str.length);
-    console.log('Base64 first 50 chars:', base64Str.substring(0, 50));
-    console.log('Base64 last 50 chars:', base64Str.substring(base64Str.length - 50));
-    console.log('Base64 validation:', validateBase64(base64Str));
   }
   
-  console.log('Can preview as image?', canPreviewImage(currentAttachment.value));
-  console.log('Is PDF?', isPdf(currentAttachment.value));
-  console.log('Image source:', getImageSource(currentAttachment.value));
   
   isLoading.value = true;
   error.value = null;
@@ -445,7 +408,6 @@ const loadCurrentAttachment = () => {
   // Give it a moment to load
   setTimeout(() => {
     if (isLoading.value) {
-      console.log('Loading timeout reached');
       const source = getImageSource(currentAttachment.value);
       if (!source) {
         error.value = 'No valid source found for attachment';
@@ -456,9 +418,6 @@ const loadCurrentAttachment = () => {
 };
 
 onMounted(() => {
-  console.log('=== Component Mounted ===');
-  console.log('Attachments count:', attachments.value.length);
-  console.log('All attachments:', attachments.value);
   
   if (attachments.value.length === 0) {
     error.value = 'No attachments provided';

@@ -1,7 +1,6 @@
 import { useAuthStore } from "@/stores/auth";
 
 function checkPrivilage(el, { value, modifiers }) {
-  console.log(value);
   if (!value && !modifiers) return;
 
   const authStore = useAuthStore();

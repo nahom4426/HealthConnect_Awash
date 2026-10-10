@@ -37,7 +37,6 @@ export const insuredMembers = defineStore("insuredStore", () => {
   }
 
   function set(data) {
-    console.log("Setting insured members in store:", data);
 
     // Check if data is valid array
     if (!Array.isArray(data)) {
@@ -97,13 +96,11 @@ export const insuredMembers = defineStore("insuredStore", () => {
 
   // Alias for set
   function setInsuredMembers(data) {
-    console.log("Setting insured members with setInsuredMembers:", data);
     set(data);
   }
 
   // Alias for set
   function setAll(data) {
-    console.log("Setting insured members with setAll:", data);
 
     // Handle both direct array and paginated response
     const dataArray = Array.isArray(data) ? data : data?.content || [];
@@ -159,27 +156,22 @@ export const insuredMembers = defineStore("insuredStore", () => {
       };
     });
 
-    console.log("Mapped insured members data:", mappedData);
     insuredMembers.value = mappedData;
   }
 
   function add(data) {
-    console.log("Adding insured member to store:", data);
     insuredMembers.value.unshift(data);
   }
 
   function update(id, data) {
-    console.log(`Updating insured member with UUID: ${id}`, data);
 
     // Debug: log all insured UUIDs to check for matches
-    console.log("Available insured UUIDs:", insuredMembers.value.map(i => i.insuredUuid));
 
     const idx = insuredMembers.value.findIndex(el => el.insuredUuid === id);
     if (idx === -1) {
       console.warn(`[Insured Store] No insured member found with UUID: ${id}`);
       // If not found by UUID, try to add it instead
       if (data.insuredUuid) {
-        console.log("Insured member not found for update, adding instead:", data);
         add(data);
       }
       return;
@@ -190,7 +182,6 @@ export const insuredMembers = defineStore("insuredStore", () => {
       ...insuredMembers.value[idx],
       ...data,
     });
-    console.log("Insured member updated successfully");
   }
 
   function remove(id) {
@@ -205,7 +196,6 @@ export const insuredMembers = defineStore("insuredStore", () => {
 
   // Update insured status
   function updateStatus(id, status) {
-    console.log(`Updating status for insured member with UUID: ${id} to ${status}`);
     update(id, { status });
   }
 

@@ -27,7 +27,6 @@ req.send(
       claimLogs: getClaimLogs({ claimUuid }),
     }),
   (res) => {
-    console.log(res.data);
   }
 );
 

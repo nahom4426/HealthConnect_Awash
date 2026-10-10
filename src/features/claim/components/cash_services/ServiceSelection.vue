@@ -883,7 +883,6 @@ async function submit(action: "add" | "generate" = "add") {
 
     files.value.forEach((f) => form.append("attachment", f));
 
-    console.log('📤 Submitting service provided request...');
     const res = isEditMode.value
       ? await updateServiceProvided(props.editServiceProvided?.serviceProvidedUuid || props.editServiceProvided?.id || '', (() => {
           const updateForm = new FormData();
@@ -898,7 +897,6 @@ async function submit(action: "add" | "generate" = "add") {
           form.append("serviceProvidedRequest ", JSON.stringify(body));
           return form;
         })());
-    console.log('✅ Response:', res);
     if (res?.success) {
       toasted(true,"Cash service submitted");
       items.value = [];

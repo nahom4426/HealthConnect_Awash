@@ -21,7 +21,6 @@ const downloadReq = useApiRequest();
 const fileInputRef = ref(null);
 
 async function register(payload) {
-  console.log("Registration payload received:", payload);
 
   // Normalize to FormData with 'insured' JSON part
   let formData;
@@ -77,9 +76,7 @@ async function register(payload) {
     }
 
     // Debug: log all FormData entries
-    console.log('FormData before submit (key -> value type):');
     for (let [key, value] of formData.entries()) {
-      console.log(`  - ${key}:`, value instanceof File || value instanceof Blob ? `${value.constructor.name} (${value.type || 'n/a'})` : value);
     }
 
     // All good: send the prepared FormData directly
@@ -90,14 +87,12 @@ async function register(payload) {
   }
 }
 function sendRegistrationRequest(payload) {
-  console.log("Sending registration request (raw FormData):", payload);
 
   return new Promise((resolve, reject) => {
     registerReq.send(
       () => createInsured(payload),
       (response) => {
         if (response.success) {
-          console.log("Registration successful:", response.data);
           resolve(response);
         } else {
           console.error("Registration failed:", response.error);

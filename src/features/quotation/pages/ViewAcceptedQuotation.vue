@@ -102,13 +102,11 @@ function onAcceptedFormSubmit(e: any) {
   // Timestamp-based debounce
   const now = Date.now();
   if (now - lastCallTime < DEBOUNCE_TIME) {
-    console.log(`Debounced: Only ${now - lastCallTime}ms since last call`);
     return;
   }
   
   // Flag-based prevention
   if (isSubmitting.value) {
-    console.log('Submission already in progress, skipping...');
     return;
   }
   
@@ -118,7 +116,6 @@ function onAcceptedFormSubmit(e: any) {
   pendingAction.value = 'issuePremiumAdvice'
   isSubmitting.value = true;
   
-  console.log('Making API call to issuePremiumAdvice for:', qid);
   
   issuePremiumAdvice(qid, { quotationUuid: qid })
     .then((res: any) => {

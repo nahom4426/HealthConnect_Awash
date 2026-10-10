@@ -12,11 +12,9 @@ const deleteLoading = ref(false);
 const institutionToDelete = ref("");
 
 const handleDeleteInstitution = async (id) => {
-  console.log("Delete institution:", id);
 };
 
 const viewDetails = (id) => {
-  console.log("View institution details:", id);
 };
 </script>
 

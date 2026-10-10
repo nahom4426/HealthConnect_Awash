@@ -103,7 +103,6 @@ function handleFileUpload(event: Event) {
   
   if (!file) return
 
-  console.log('📁 Import file:', file.name, 'size:', file.size)
 
   const reader = new FileReader()
   
@@ -112,16 +111,13 @@ function handleFileUpload(event: Event) {
       const data = new Uint8Array(e.target?.result as ArrayBuffer)
       const workbook = read(data, { type: 'array' })
       
-      console.log('📊 Workbook sheets:', workbook.SheetNames)
       
       const firstSheetName = workbook.SheetNames[0]
       const worksheet = workbook.Sheets[firstSheetName]
       
-      console.log('📋 Worksheet ref:', worksheet['!ref'])
       
       // Find the header row (skip title rows)
       const headerRowIndex = findHeaderRow(worksheet)
-      console.log(`🔍 Found header row at index: ${headerRowIndex}`)
       
       // Get all data as 2D array starting from header row
       const allData = utils.sheet_to_json(worksheet, {
@@ -130,7 +126,6 @@ function handleFileUpload(event: Event) {
         raw: false
       })
       
-      console.log('📄 Total rows parsed:', allData.length)
       
       if (allData.length === 0) {
         emit('error', 'Excel file is empty')
@@ -143,15 +138,11 @@ function handleFileUpload(event: Event) {
         return cleaned
       }) || []
       
-      console.log('🏷️ Detected headers:', headers)
-      console.log('🏷️ Expected mappings:', props.mappings)
       
       // Check which expected headers were found
       const expectedHeaders = props.mappings ? Object.keys(props.mappings) : []
       const foundHeaders = expectedHeaders.filter(eh => headers.includes(eh))
       const missingHeaders = expectedHeaders.filter(eh => !headers.includes(eh))
-      console.log('✅ Found headers:', foundHeaders)
-      console.log('❌ Missing headers:', missingHeaders)
       
       if (missingHeaders.length > 0) {
         console.warn('⚠️ Missing expected headers:', missingHeaders)
@@ -167,13 +158,11 @@ function handleFileUpload(event: Event) {
         })
         
         if (!hasData) {
-          console.log(`  Row ${headerRowIndex + index + 2}: Empty - skipping`)
         }
         
         return hasData
       })
       
-      console.log(`📊 Found ${rows.length} non-empty data rows`)
       
       if (rows.length === 0) {
         emit('error', 'No data rows found in Excel file')
@@ -188,33 +177,27 @@ function handleFileUpload(event: Event) {
         const actualRow = headerRowIndex + rowIndex + 2 // +2 for 1-based indexing
         const obj: any = {}
         
-        console.log(`\n--- Row ${actualRow} ---`)
         
         headers.forEach((header: string, colIndex: number) => {
           let value = row[colIndex]
           
           // Skip empty cells
           if (isEmpty(value)) {
-            console.log(`  Col ${colIndex} [${header}]: Empty, skipping`)
             return
           }
           
-          console.log(`  Col ${colIndex} [${header}]: raw="${value}" (${typeof value})`)
           
           // Convert numeric strings to numbers
           if (isNumericString(value)) {
             const numVal = Number(value)
-            console.log(`    → Converting to number: ${numVal}`)
             value = numVal
           }
           
           // Apply mapping - if header exists in mappings, use mapped key, otherwise use header
           const key = props.mappings?.[header] || header
           obj[key] = value
-          console.log(`    → Mapping "${header}" → "${key}" = ${value}`)
         })
         
-        console.log(`  📦 Result object:`, obj)
         
         // Check required fields
         const fieldsToCheck = props.requiredFields || ['planTypeDisplay', 'minBalance', 'maxBalance', 'rate']
@@ -229,21 +212,12 @@ function handleFileUpload(event: Event) {
         })
         
         if (missing.length > 0) {
-          console.log(`  ❌ Row ${actualRow} SKIPPED - missing: ${missing.join(', ')}`)
-          console.log(`  Expected fields:`, fieldsToCheck)
-          console.log(`  Got:`, Object.keys(obj))
           skippedRows.push(actualRow)
         } else {
-          console.log(`  ✅ Row ${actualRow} VALID`)
           importedRows.push(obj)
         }
       })
       
-      console.log('\n📊 Import summary:')
-      console.log(`  Total rows: ${rows.length}`)
-      console.log(`  Imported: ${importedRows.length}`)
-      console.log(`  Skipped: ${skippedRows.length}`)
-      console.log('  Imported data:', importedRows)
       
       if (importedRows.length === 0) {
         let msg = 'No valid data rows found. '

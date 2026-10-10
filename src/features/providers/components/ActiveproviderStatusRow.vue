@@ -74,11 +74,6 @@ function hasAdminUser(row) {
   }
 
   const hasAdmin = userArray.length > 0 && userArray.some(user => user?.userUuid);
-  console.log(`Admin check for ${row.providerName}:`, {
-    hasUsers: userArray.length > 0,
-    hasValidUser: userArray.some(user => user?.userUuid),
-    result: hasAdmin
-  });
   
   return hasAdmin;
 }

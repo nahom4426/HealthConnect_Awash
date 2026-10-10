@@ -298,7 +298,6 @@ export function addYear(date, year) {
   const modifiedDate = new Date(givenDate);
   modifiedDate.setFullYear(modifiedDate.getFullYear() + year);
 
-  console.log(modifiedDate);
   return modifiedDate;
 }
 

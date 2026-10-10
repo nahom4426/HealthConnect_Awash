@@ -23,7 +23,6 @@ const status = ref('ACTIVE');
 const reloadKey = ref(0);
 
 function refreshData() {
-  console.log("Refreshing contract data");
   if (dataProvider.value) {
     dataProvider.value.refresh();
   }
@@ -88,8 +87,6 @@ onUnmounted(() => {
   :search="search"
   v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages }"
 >
-  {{ console.log('Pending state:', pending) }}
-  {{ console.log('Contracts data:', contracts) }}
   <!-- rest of your template -->
         <Table
           :pending="pending"

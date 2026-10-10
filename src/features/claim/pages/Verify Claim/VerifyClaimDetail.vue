@@ -178,9 +178,6 @@ function getStatusBadge(status) {
 }
 
 // Log for debugging
-console.log('Institution name:', institutionName.value);
-console.log('Route state:', route.state);
-console.log('Route query:', route.query);
 </script>
 
 <template>

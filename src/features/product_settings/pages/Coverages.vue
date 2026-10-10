@@ -12,7 +12,6 @@ const dataProvider = ref();
 const coverageStore = useCoverage();
 
 function refreshData() {
-  console.log("Refreshing coverage data");
   if (dataProvider.value) {
     dataProvider.value.refresh();
   }
@@ -32,7 +31,6 @@ function handleLimitChange(limit) {
 
 function viewDetails(packageUuid) {
   // Navigate to package details if needed
-  console.log("View package details:", packageUuid);
 }
 </script>
 

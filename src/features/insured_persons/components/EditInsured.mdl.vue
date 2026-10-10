@@ -46,20 +46,16 @@ function normalizePayload(payload) {
 }
 
 onMounted(() => {
-  console.log('EditInsured modal mounted with data prop:', props.data);
   
   if (props.data) {
     insuredUuid.value = props.data.insuredUuid || '';
     insuredData.value = props.data.insured || {};
     
-    console.log('Extracted insured UUID:', insuredUuid.value);
-    console.log('Extracted insured data:', insuredData.value);
   }
 });
 
 watch(() => props.data, (newData) => {
   if (newData) {
-    console.log('Data prop updated:', newData);
     insuredUuid.value = newData.insuredUuid || '';
     insuredData.value = newData.insured || {};
   }
@@ -133,14 +129,9 @@ async function handleSubmit(formValues) {
     }
 
     // Debug: log what we are sending
-    console.log('EditInsured submit -> insuredUuid:', insuredUuid.value);
-    console.log('EditInsured submit -> insuredPayload:', insuredPayload);
-    console.log('EditInsured submit -> FormData entries:');
     for (const [k, v] of formData.entries()) {
       if (v instanceof File || v instanceof Blob) {
-        console.log(`  - ${k}:`, `${v.constructor.name} type=${v.type || 'n/a'} size=${v.size}`);
       } else {
-        console.log(`  - ${k}:`, v);
       }
     }
 

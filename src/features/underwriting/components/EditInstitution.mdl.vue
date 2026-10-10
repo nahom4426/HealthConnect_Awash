@@ -18,7 +18,6 @@ const props = defineProps({
     required: true
   }
 });
-console.log(props.data);
 const showLocationSection = ref(false);
 const showAdditionalSection = ref(false);
 // Extract the institution data from the Proxy object

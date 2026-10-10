@@ -691,7 +691,6 @@ async function updateDependent({ values }) {
 
   isUpdating.value = true;
   try {
-    console.log('🔹 Updating dependent:', values.dependantUuid, dependantRequest);
     const response = await updatedependant(values.dependantUuid, formData);
     if (response.success) {
       toasted(true, 'Dependent updated successfully', '');

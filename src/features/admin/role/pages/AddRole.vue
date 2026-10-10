@@ -24,7 +24,6 @@ function create({ values }) {
         router.push("/roles");
         toasted(res.success, "Role Created", res.error);
       }
-      console.log('jjjj');
       
       //  
     }

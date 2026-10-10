@@ -72,12 +72,10 @@ async function loadEditServiceProvided() {
 
 function handleEligibilityComplete(payload) {
   selection.value = { ...selection.value, ...payload };
-  console.log('[cash_services] eligibility complete -> selection:', selection.value);
   active.value = 1;
 }
 
 function handleCashServiceSubmitted(action = 'add') {
-  console.log('[cash_services] service submitted action:', action, 'current selection:', selection.value);
   editServiceProvided.value = null;
   if (route.query?.editServiceProvidedUuid) {
     router.replace({ path: '/cash_services' });

@@ -55,16 +55,13 @@ async function checkAllStatuses() {
     hasAnyContracts.value = false;
     checkStatusesError.value = false;
 
-    console.log('🔍 Checking all statuses:', ALL_STATUSES);
 
     for (const stat of ALL_STATUSES) {
       try {
         const response = await getInstitutionContracts(route.params.id, { status: stat });
-        console.log(`📊 Status [${stat}] Response:`, response);
         
         // Handle array response
         if (Array.isArray(response) && response.length > 0) {
-          console.log(`✅ Found ${response.length} contracts for status: ${stat}`);
           hasAnyContracts.value = true;
           status.value = stat; // Switch to this status - watcher will fetch data
           break;
@@ -72,20 +69,17 @@ async function checkAllStatuses() {
         
         // Handle object response with data property
         if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-          console.log(`✅ Found ${response.data.length} contracts for status: ${stat}`);
           hasAnyContracts.value = true;
           status.value = stat; // Switch to this status - watcher will fetch data
           break;
         }
         
-        console.log(`❌ No contracts found for status: ${stat}`);
       } catch (err) {
-        console.log(`⚠️ Error checking status [${stat}]:`, err.message);
+        console.warn(`⚠️ Error checking status [${stat}]:`, err.message);
         checkStatusesError.value = true; // Mark that an error occurred
       }
     }
     
-    console.log('✨ All statuses checked. hasAnyContracts:', hasAnyContracts.value, 'Current status:', status.value);
   } catch (err) {
     console.error('Error checking all statuses:', err);
     checkStatusesError.value = true;
@@ -103,7 +97,6 @@ async function retryCheckStatuses() {
 }
 
 function refreshData() {
-  console.log("Refreshing contract data");
   if (dataProvider.value) {
     dataProvider.value.refresh();
   }
@@ -128,7 +121,6 @@ const handleRefetch = () => {
 onMounted(async () => {
   // Reset store data when page mounts to ensure fresh data
   underwritingStore.reset();
-  console.log('🔄 Store reset on page mount');
   
   // Fetch institution name
   try {

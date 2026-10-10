@@ -159,9 +159,6 @@ function getInitials(name) {
 }
 
 // Log for debugging
-console.log('Approve Level 1 Detail - Institution name:', institutionName.value);
-console.log('Approve Level 1 Detail - Route state:', route.state);
-console.log('Approve Level 1 Detail - Route query:', route.query);
 </script>
 
 <template>

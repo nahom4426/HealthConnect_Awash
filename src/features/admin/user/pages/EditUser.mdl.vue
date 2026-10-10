@@ -18,7 +18,6 @@ const props = defineProps({
     default: () => ({})
   }
 });
-console.log("users receive:", props.data);
 
 const { addToast } = useToast();
 const userStore = useUsers();
@@ -51,7 +50,6 @@ const roleName = computed(() => {
 });
 
 onMounted(async () => {
-  console.log('EditUser modal mounted with data:', props.data);
   
   if (props.data?.userUuid) {
     userUuid.value = props.data.userUuid;
@@ -65,7 +63,6 @@ onMounted(async () => {
 });
 
 watch(() => props.data, (newData) => {
-  console.log('EditUser modal props updated:', newData);
   if (newData) {
     userUuid.value = newData.userUuid || '';
     userData.value = newData.user || {};
@@ -82,7 +79,6 @@ async function fetchUserData() {
       (res) => {
         if (res.success) {
           userData.value = res.data;
-          console.log('Fetched user data:', userData.value);
         } else {
           error.value = res.error || 'Failed to fetch user data';
           addToast({
@@ -109,7 +105,6 @@ async function handleSubmit(formValues) {
   try {
     pending.value = true;
     error.value = '';
-    console.log('Updating user with values:', formValues);
 
     const payload = {
       email: formValues?.email,

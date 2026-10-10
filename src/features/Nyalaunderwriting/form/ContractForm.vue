@@ -15,7 +15,6 @@ const props = defineProps({
     default: false
   }
 });
-console.log(props.data);
 const emit = defineEmits(["submit"]);
 
 const route = useRoute();
@@ -30,7 +29,6 @@ const formData = ref({
   endDate: props.data?.endDate || '',
   status: props.data?.status || 'ACTIVE'
 });
-console.log(formData.value);
 
 function getInstitutionCode(name) {
   const cleaned = String(name || '').trim();
@@ -77,7 +75,6 @@ const validateForm = () => {
 };
 
 const submit = () => {
-  console.log('🔹 ContractForm submit triggered with data:', formData.value);
   if (validateForm()) {
     emit('submit', formData.value);
   } else {
@@ -85,7 +82,6 @@ const submit = () => {
   }
 };
 
-console.log();
 
 </script>
 

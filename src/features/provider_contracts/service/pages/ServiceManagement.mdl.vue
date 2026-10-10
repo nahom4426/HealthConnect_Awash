@@ -16,7 +16,6 @@ import { closeModal } from "@customizer/modal-x";
 const props = defineProps({
   data: Object,
 });
-console.log(props.data)
 
 const route = useRoute();
 const { submit } = useForm("serviceForm");

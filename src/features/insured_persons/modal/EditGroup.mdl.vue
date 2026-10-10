@@ -22,9 +22,6 @@ const packageUuids = ref([]);
 const planType = ref('Individual_Plan');
 const route = useRoute();
 
-console.log("Received packages data:", props.data);
-console.log("Received packages data:", props.data.packages);
-console.log("Converted packageUuids:", packageUuids.value);
 
 // Initialize form with existing data
 onMounted(() => {
@@ -75,7 +72,6 @@ function handleUpdateCoverage() {
     },
   ];
   
-  console.log("Submitting values:", payload);
 
   coverageApi.send(
     () => updateServiceQuotedBenefit(serviceQuotedUuid, payerInstitutionContractUuid, payload),

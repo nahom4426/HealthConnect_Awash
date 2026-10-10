@@ -49,7 +49,6 @@ const pagination = usePagination({
 watch(
   () => props.search,
   () => {
-    console.log('[MappedContractsDataProvider] search changed -> send', props.search);
     pagination.send();
   }
 );
@@ -57,7 +56,6 @@ watch(
 watch(
   () => props.refetch,
   () => {
-    console.log('[MappedContractsDataProvider] refetch changed -> send', props.refetch);
     pagination.send();
   }
 );

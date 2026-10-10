@@ -115,7 +115,6 @@ async function fetchInsuredData() {
 
   try {
     const response = await getInsuredById(insuredPersonUuid);
-    console.log('API Response:', response);
 
     if (response) {
       insuredData.value = response;

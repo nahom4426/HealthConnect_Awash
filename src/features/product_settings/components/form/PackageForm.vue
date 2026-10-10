@@ -18,7 +18,6 @@ const props = defineProps({
   }
 });
 
-console.log('PackageForm props:', props);
 
 // Create a reactive copy of the data
 const formData = ref({

@@ -39,7 +39,6 @@ watch(
   () => props.search,
   
   () => {
-    console.log("hhhh");
     pagination.send();
   }
 );

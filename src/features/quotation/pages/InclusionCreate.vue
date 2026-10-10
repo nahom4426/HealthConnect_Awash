@@ -93,8 +93,6 @@ function handleFormSubmit(e: any) {
   const action = e.action; // 'save' or 'issue'
   const data = e.data || {};
   
-  console.log('=== FORM SUBMISSION STARTED ===');
-  console.log('Action:', action);
   
   // Validate required fields
   if (!payerInstitutionContractUuid.value) {
@@ -139,19 +137,13 @@ function handleFormSubmit(e: any) {
     })),
   };
 
-  console.log('📤 Full Payload:', JSON.stringify(payload, null, 2));
 
   createInclusionExclusionQuotation(payload)
     .then((response: any) => {
-      console.log('📥 FULL RESPONSE OBJECT:', response);
-      console.log('📥 response.data:', response?.data);
-      console.log('📥 response.status:', response?.status);
-      console.log('📥 response.statusText:', response?.statusText);
       
       // The API might wrap the response differently
       // Check all possible response structures
       const responseData = response?.data || response;
-      console.log('📥 Parsed responseData:', responseData);
       
       // Check for success indicators
       const isSuccess = 
@@ -167,8 +159,6 @@ function handleFormSubmit(e: any) {
         responseData?.success === false ||
         responseData?.error;
       
-      console.log('📥 isSuccess:', isSuccess);
-      console.log('📥 isError:', isError);
       
       if (isError) {
         // Handle error response
@@ -187,7 +177,6 @@ function handleFormSubmit(e: any) {
       
       if (isSuccess) {
         // Handle success
-        console.log('✅ Success!');
         toasted(true, "Inclusion created successfully");
         
         // Reset form state
@@ -196,7 +185,6 @@ function handleFormSubmit(e: any) {
         
         // Navigate after short delay
         setTimeout(() => {
-          console.log('🚀 Redirecting to /inclusion');
           router.push("/inclusion");
         }, 1500);
       } else {
@@ -275,13 +263,6 @@ onMounted(async () => {
       description.value = quotationData.description;
     }
     
-    console.log('Quotation loaded successfully:', {
-      quotationUuid: quotationUuid.value,
-      payerInstitutionContractUuid: payerInstitutionContractUuid.value,
-      willBeSentAsPolicyUuid: payerInstitutionContractUuid.value,
-      institutionUuid: institutionUuidForProvider.value,
-      servicesCount: quotationData.quoatedServices?.length || 0
-    });
     
   } catch (e: any) {
     console.error("Failed to load quotation:", e);

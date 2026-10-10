@@ -77,7 +77,6 @@ const receiptDate = ref(getTodayDate());
 // Event handler for payment success
 const paymentSuccessHandler = () => {
   // Handle any cleanup or additional logic
-  console.log('Payment successful');
 };
 
 // Lifecycle
@@ -320,7 +319,6 @@ async function processPayment() {
     }
     
     // Success path
-    console.log('Payment processed successfully');
   } catch (error) {
     // Error already handled in pay function
     console.error('Payment processing failed:', error);

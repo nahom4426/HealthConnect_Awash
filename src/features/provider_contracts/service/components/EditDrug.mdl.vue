@@ -20,8 +20,6 @@ const drugStore = useDrugStore();
 
 const drug = ref(drugStore.drugs.find((el) => el.drugUuid == props.data) || {});
 const req = useApiRequest();
-console.log(drug.value);
-console.log(Object.keys(drug.value));
 
 if (!Object.keys(drug.value).length) {
   req.send(
@@ -35,7 +33,6 @@ if (!Object.keys(drug.value).length) {
 }
 
 function update({ values }) {
-  console.log(props.data);
 
   values.status = "ACTIVE";
   req.send(
@@ -43,7 +40,6 @@ function update({ values }) {
     (res) => {
       toasted(res.success, "Successfully Updated", res.error);
       if (res.success) {
-        console.log(drug);
 
         drugStore.update(props.data, { ...drug.value, ...values });
         closeModal();

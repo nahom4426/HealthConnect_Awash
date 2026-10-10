@@ -110,7 +110,6 @@ const checked = ref([]);
 const search = ref("");
 
 watch(checked, () => {
-  console.log('checked', checked.value);
 });
 </script>
 <template>

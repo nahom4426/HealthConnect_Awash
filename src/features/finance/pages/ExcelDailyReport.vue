@@ -14,10 +14,6 @@ const isLoading = ref(false);
 const generateReport = () => {
   isLoading.value = true;
   // TODO: Implement report generation logic
-  console.log('Generating report with:', {
-    dateRange: dateRange.value,
-    reportType: reportType.value
-  });
   
   // Simulate API call
   setTimeout(() => {

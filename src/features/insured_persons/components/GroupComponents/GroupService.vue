@@ -28,7 +28,6 @@ const isSelected = computed(() => {
 });
 
 function handleSelectAll(checked, data) {
-  console.log(data);
 
   useSelectedServices.SelectAll(checked, data);
 }

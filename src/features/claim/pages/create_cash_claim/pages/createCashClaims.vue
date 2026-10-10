@@ -88,25 +88,19 @@ const generateClaimsFromProvider = async () => {
 };
 
 const generateClaims = async (send) => {
-  console.log('🚀 generateClaims called');
   if (!isReadyToGenerate.value) return;
   isGenerating.value = true;
   try {
     // Call send to fetch data from API (it updates the store)
     await send();
-    console.log('✅ API call completed');
     // wait for data provider watcher to map pagination.data -> store
     await nextTick();
     
     // Get claims from the store (where send() puts them)
     const claimsData = claimStore.requestedClaims || [];
-    console.log('📋 Extracted claims from store:', claimsData.length);
-    console.log('📋 claimStore.requestedClaims:', claimStore.requestedClaims);
     
     if (claimsData.length > 0) {
       selectedClaims.value = [...claimsData];
-      console.log('✅ Loaded', selectedClaims.value.length, 'claims into selectedClaims');
-      console.log('✅ selectedClaims.value:', selectedClaims.value);
     } else {
       console.warn('⚠️ No claims found in store');
     }
@@ -120,19 +114,12 @@ const generateClaims = async (send) => {
 };
 
 const submitClaims = async () => {
-  console.log('🔥 SUBMIT BUTTON CLICKED');
-  console.log('📊 selectedClaims.value at submit START:', selectedClaims.value);
-  console.log('📊 selectedClaims.value.length:', selectedClaims.value.length);
-  console.log('📊 claimStore.requestedClaims:', claimStore.requestedClaims);
   
   if (!isReadyToSubmit.value || isSubmitting.value) {
-    console.log('❌ Not ready to submit. isReadyToSubmit:', isReadyToSubmit.value, 'isSubmitting:', isSubmitting.value);
     return;
   }
   isSubmitting.value = true;
   try {
-    console.log('📊 selectedClaims.value at submit (after guard):', selectedClaims.value);
-    console.log('📊 selectedClaims.value.length:', selectedClaims.value.length);
     
     // Calculate total amount
     const totalExtraAmount = selectedClaims.value.reduce((sum, claim) => {
@@ -179,8 +166,6 @@ const submitClaims = async () => {
       if (payload[k] === undefined) delete payload[k];
     });
 
-    console.log('📤 Submitting payload:', payload);
-    console.log('🔍 serviceProvidedUuid array:', payload.serviceProvidedUuid);
 
     await requestClaimReq.send(
       () => requestCashClaim(payload),
@@ -210,43 +195,29 @@ const submitClaims = async () => {
 
 /* remove claim */
 const removeClaim = (claimUuid) => {
-  console.log('🗑️ removeClaim called with UUID:', claimUuid);
-  console.log('📋 Current selectedClaims before removal:', selectedClaims.value);
-  console.log('📊 Total claims before:', selectedClaims.value.length);
   
   const beforeLength = selectedClaims.value.length;
   
   // Log each claim's serviceProvidedUuid to debug
-  console.log('🔍 Checking each claim:');
   selectedClaims.value.forEach((c, idx) => {
-    console.log(`  [${idx}] serviceProvidedUuid: ${c.serviceProvidedUuid}, matches: ${c.serviceProvidedUuid === claimUuid}`);
   });
   
   // Filter out the claim
   selectedClaims.value = selectedClaims.value.filter(c => {
     const keep = c.serviceProvidedUuid !== claimUuid;
-    console.log(`  Keeping ${c.serviceProvidedUuid}? ${keep}`);
     return keep;
   });
   
   const afterLength = selectedClaims.value.length;
-  console.log('✂️ After filter - Before:', beforeLength, 'After:', afterLength);
-  console.log('📋 selectedClaims after removal:', selectedClaims.value);
   
   // Force Vue to detect the change
   selectedClaims.value = [...selectedClaims.value];
-  console.log('✅ Vue reactivity triggered. Final count:', selectedClaims.value.length);
-  console.log('🔄 filteredAndSortedClaims will now recompute:', filteredAndSortedClaims.value.length);
 };
 
 /* filtered and sorted claims */
 const filteredAndSortedClaims = computed(() => {
-  console.log('🔄 Computing filteredAndSortedClaims');
-  console.log('📊 selectedClaims.value.length:', selectedClaims.value.length);
-  console.log('🔍 searchTerm.value:', searchTerm.value);
   
   if (!selectedClaims.value || selectedClaims.value.length === 0) {
-    console.log('ℹ️ No claims to filter');
     return [];
   }
   
@@ -255,7 +226,6 @@ const filteredAndSortedClaims = computed(() => {
   // Apply search filter
   if (searchTerm.value && searchTerm.value.trim()) {
     const search = searchTerm.value.toLowerCase().trim();
-    console.log('🔎 Searching for:', search);
     
     filtered = filtered.filter(claim => {
       const insuredMatch = claim.insuredName?.toLowerCase().includes(search);
@@ -266,11 +236,9 @@ const filteredAndSortedClaims = computed(() => {
       const matches = insuredMatch || dependantMatch || providerMatch || institutionMatch;
       
       if (matches) {
-        console.log('  ✅ Match found:', claim.insuredName || claim.dependantName);
       }
       return matches;
     });
-    console.log('📊 After search filter:', filtered.length, 'of', selectedClaims.value.length);
   }
   
   // Apply sorting
@@ -289,7 +257,6 @@ const filteredAndSortedClaims = computed(() => {
       : aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
   });
   
-  console.log('✅ Final sorted claims:', sorted.length);
   return sorted;
 });
 
@@ -319,8 +286,6 @@ onMounted(() => {
 
 /* watch selectedClaims for debugging */
 watch(selectedClaims, (newVal) => {
-  console.log('🔄 selectedClaims changed to:', newVal.length, 'items');
-  console.log('🔄 selectedClaims.value:', newVal);
 }, { deep: true });
 </script>
 
@@ -461,7 +426,6 @@ watch(selectedClaims, (newVal) => {
               @sort="handleSort"
               :cells="{
                 onView: (row) => {
-                  console.log('👁️ View Details clicked for:', row.insuredName);
                   // Just log for now - all claims are auto-selected
                 }
               }"

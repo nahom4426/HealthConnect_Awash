@@ -118,25 +118,19 @@ async function unmapSelected() {
 }
 
 function refetchToBeMapped() {
-  console.log('[AddProviderForInstitution] refetchToBeMapped before=', refetchToBeMappedCounter.value);
   refetchToBeMappedCounter.value += 1;
-  console.log('[AddProviderForInstitution] refetchToBeMapped after=', refetchToBeMappedCounter.value);
 }
 
 function refetchMappedContracts() {
-  console.log('[AddProviderForInstitution] refetchMappedContracts before=', refetchMappedCounter.value);
   refetchMappedCounter.value += 1;
-  console.log('[AddProviderForInstitution] refetchMappedContracts after=', refetchMappedCounter.value);
 }
 
 function refetchBothTabs() {
-  console.log('[AddProviderForInstitution] refetchBothTabs');
   refetchToBeMapped();
   refetchMappedContracts();
 }
 
 function handleMappingChanged(e) {
-  console.log('[AddProviderForInstitution] provider-mapping-changed', e?.detail);
   refetchBothTabs();
 }
 
@@ -164,7 +158,6 @@ const setActive = (item) => {
 };
 
 function refreshData() {
-  console.log("Refreshing provider data");
   if (dataProvider.value) {
     dataProvider.value.refresh();
   }

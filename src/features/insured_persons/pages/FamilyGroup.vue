@@ -17,7 +17,6 @@ const route = useRoute();
 const institutionId = ref(route.params.id || route.params.payerInstitutionContractUuid || auth.auth?.user?.payerUuid || "");
 
 function remove(allowedUuid) {
-  console.log("Removing package:", allowedUuid);
 }
 
 const loadMore = () => {

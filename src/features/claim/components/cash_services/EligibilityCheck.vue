@@ -168,12 +168,6 @@ async function loadEmployees() {
     const res = await searchActiveInsuredByContract(selectedContract.value.payerInstitutionContractUuid, {
       search: employeeSearchTerm.value,
     });
-    console.log('=== API Response ===');
-    console.log('Full response:', res);
-    console.log('res?.content:', res?.content);
-    console.log('res?.data:', res?.data);
-    console.log('res type:', typeof res);
-    console.log('res is array:', Array.isArray(res));
     
     const raw = res?.content || res?.data || res || [];
     const list = Array.isArray(raw) ? raw : [];
@@ -198,8 +192,6 @@ async function loadEmployees() {
       };
     });
     
-    console.log('Employees assigned:', employees.value);
-    console.log('Employees length:', employees.value.length);
     
     // If no employees found, set error (without retry action)
     if (!employees.value || employees.value.length === 0) {

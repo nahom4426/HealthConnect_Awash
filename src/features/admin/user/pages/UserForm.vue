@@ -98,7 +98,6 @@ const roleOptions = computed(() => {
 
 // Fetch roles function
 async function fetchRoles() {
-  console.log('Fetching roles, looking for:', props.roleName);
   fetchRolesPending.value = true;
   
   try {
@@ -106,10 +105,8 @@ async function fetchRoles() {
     
     if (response.success) {
       roles.value = response.data || [];
-      console.log('Fetched roles:', roles.value);
       
       if (props.roleName) {
-        console.log('Looking for role with identifier:', props.roleName);
         const rolesArray = roles.value.content || roles.value;
         
         if (!Array.isArray(rolesArray)) {
@@ -127,11 +124,8 @@ async function fetchRoles() {
         }
         
         if (matchingRole) {
-          console.log('Found matching role:', matchingRole);
           roleUuid.value = matchingRole.roleUuid;
         } else {
-          console.log('No matching role found for:', props.roleName);
-          console.log('Available roles:', rolesArray.map(r => `${r.roleName} (${r.roleUuid})`).join(', '));
         }
       }
     } else {
@@ -162,11 +156,6 @@ const userStatusOptions = ['ACTIVE', 'SUSPENDED','PENDING'];
 
 // Initialize form data
 onMounted(async () => {
-  console.log('UserForm props:', {
-    initialData: props.initialData,
-    isEdit: props.isEdit,
-    roleName: props.roleName
-  });
 
   await fetchRoles();
 
@@ -194,7 +183,6 @@ onMounted(async () => {
         
         if (matchingRole) {
           roleUuid.value = matchingRole.roleUuid;
-          console.log('Found matching role by name:', matchingRole);
         }
       }
     }

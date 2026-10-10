@@ -22,7 +22,6 @@ export const useMappedContractsStore = defineStore("mappedContractsStore", () =>
   // SET DATA (MAIN METHOD)
   // ----------------------------
   function set(data) {
-    console.log("Setting mapped contracts:", data);
 
     const ids = new Set(excludedIds.value);
 
@@ -47,12 +46,10 @@ export const useMappedContractsStore = defineStore("mappedContractsStore", () =>
 
   // Aliases
   function setMappedContracts(data) {
-    console.log("setMappedContracts called");
     set(data);
   }
 
   function setAll(data) {
-    console.log("setAll called");
     set(data);
   }
 
@@ -60,7 +57,6 @@ export const useMappedContractsStore = defineStore("mappedContractsStore", () =>
   // ADD
   // ----------------------------
   function add(data) {
-    console.log("Adding mapped contract:", data);
     mappedContracts.value.unshift(data);
   }
 
@@ -68,7 +64,6 @@ export const useMappedContractsStore = defineStore("mappedContractsStore", () =>
   // UPDATE
   // ----------------------------
   function update(id, data) {
-    console.log(`Updating mapped contract UUID: ${id}`, data);
 
     // Find by mapContractUuid
     const idx = mappedContracts.value.findIndex(

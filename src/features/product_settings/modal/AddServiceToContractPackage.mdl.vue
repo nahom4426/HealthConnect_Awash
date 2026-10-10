@@ -113,8 +113,6 @@ async function fetchServices() {
       .map((s) => s?.eligibleServiceUuid)
       .filter(Boolean);
 
-    console.log('--- Initial Data Loaded ---');
-    console.log('Received existing services from getEligiblePackage:', existingUuids.length);
 
     existingEligibleServiceUuids.value = existingUuids;
     removedExistingEligibleServiceUuids.value = [];
@@ -235,10 +233,6 @@ async function toggleSelectAll() {
       currentPage += 1;
     }
 
-    console.log('--- Select All Triggered ---');
-    console.log('Search Term:', searchTerm.value);
-    console.log('Using Categories Filter:', useCats, selectedCategoryFilter.value);
-    console.log('Total uuids pushed into selectAll array:', uuids.length);
 
     selectAllEligibleServiceUuids.value = uuids;
     selectedEligibleServiceUuids.value = [];
@@ -481,12 +475,6 @@ async function submitServices() {
 
     const allSelectedUuidsArray = Array.from(allSelectedUuids);
 
-    console.log('--- Submit Triggered ---');
-    console.log('Existing services length:', existingEligibleServiceUuids.value.length);
-    console.log('Removed existing services length:', removedExistingEligibleServiceUuids.value.length);
-    console.log('Manually selected new services length:', selectedEligibleServiceUuids.value.length);
-    console.log('Select All new services length:', selectAllEligibleServiceUuids.value.length);
-    console.log('Final unique total to be sent:', allSelectedUuidsArray.length);
 
     if (allSelectedUuidsArray.length === 0) {
       addToast({
@@ -502,7 +490,6 @@ async function submitServices() {
       eligibleServiceUuids: allSelectedUuidsArray
     };
 
-    console.log('Submitting payload with', allSelectedUuidsArray.length, 'total services (existing + new):', payload);
 
     // Use a Promise to handle the api.send callback
     await new Promise((resolve, reject) => {

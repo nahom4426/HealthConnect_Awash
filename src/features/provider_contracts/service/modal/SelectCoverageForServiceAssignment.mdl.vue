@@ -14,7 +14,6 @@ const props = defineProps({
     default: () => ({}),
   },
 });
-console.log("aaap",props.data)
 const dataProvider = ref();
 const search = ref("");
 

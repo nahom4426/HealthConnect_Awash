@@ -6,7 +6,6 @@ const props = defineProps({
 });
 
 function handleAdd(medication) {
-  console.log("Adding medication:", medication);
 }
 
 const medications = ref([

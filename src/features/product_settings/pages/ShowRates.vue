@@ -262,7 +262,6 @@ function parseStatus(raw: any): string | null {
 }
 
 function handleImport(data: any[]) {
-  console.log('📥 Processing import data:', data)
   
   const skippedRows: { row: number; reason: string }[] = []
   const importedRows: RateRow[] = []
@@ -423,7 +422,6 @@ function handleImport(data: any[]) {
   
   if (skippedRows.length > 0) {
     message += ` ⚠️ ${skippedRows.length} row(s) skipped due to invalid data.`
-    console.log('Skipped rows:', skippedRows)
   }
 
   toasted(true, message)
@@ -633,7 +631,6 @@ function saveManage() {
     return payload
   })
 
-  console.log('📤 Saving rates payload:', allRates)
 
   api.send(
     async () => {

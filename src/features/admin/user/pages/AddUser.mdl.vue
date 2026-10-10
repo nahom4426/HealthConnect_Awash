@@ -23,14 +23,12 @@ const userStore = useUsers();
 const { addToast } = useToast();
 
 onMounted(() => {
-  console.log('AddUser modal received data:', modalData.value);
 });
 
 // Handle form submission
 async function handleSubmit(formValues) {
   try {
     formPending.value = true;
-    console.log('Form submitted with values:', formValues);
     
     // Make sure payerUuid is included
     const userData = {
@@ -38,12 +36,10 @@ async function handleSubmit(formValues) {
       payerUuid: modalData.value.payerUuid || formValues.payerUuid
     };
     
-    console.log('Submitting user data:', userData);
     
     const result = await CreateUser(userData);
     
     if (result.success) {
-      console.log('User created successfully:', result.data);
       
       // Add the new user to the store
       userStore.add(result.data);

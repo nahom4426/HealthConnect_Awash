@@ -104,7 +104,6 @@ function handleSubmit() {
     payload.insuredPersonUuid = props.insuredPerson.insuredPersonUuid
   }
 
-  console.log("Submitting insured person data:", payload)
   emit("submit", payload)
 }
 

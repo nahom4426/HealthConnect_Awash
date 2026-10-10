@@ -154,7 +154,6 @@ async function uploadAllPrivileges() {
 
       if (res.success) {
         privilegeStore.add(res.data || res.data?.content);
-        console.log("✅ Created:", item.privilegeName);
       } else {
         console.warn("⚠️ Failed:", item.privilegeName, res.error);
       }
@@ -172,7 +171,6 @@ function create({ values, reset }) {
     },
     (res) => {
       if (res.success) {
-        console.log(res.data);
         
         privilegeStore.add(res.data || res.data?.content);
         if (reset) reset();

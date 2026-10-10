@@ -54,7 +54,6 @@ function toggleDropdown(event, rowId) {
 }
 const id = route.params.id;
 const institutionUuid = route.params.institutionUuid;
-console.log(route.params);
 
 
 function closeAllDropdowns() {

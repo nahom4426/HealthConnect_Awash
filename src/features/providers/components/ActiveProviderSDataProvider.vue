@@ -37,7 +37,6 @@ const pagination = usePagination({
 watch(
   () => props.search,
   () => {
-    console.log("hhhh");
 
     pagination.send();
   }

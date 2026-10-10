@@ -383,9 +383,6 @@ const totals = computed(() => {
 });
 
 // Log for debugging
-console.log('Completed Claim Detail - Institution name:', institutionName.value);
-console.log('Completed Claim Detail - Route state:', route.state);
-console.log('Completed Claim Detail - Route query:', route.query);
 </script>
 
 <template>

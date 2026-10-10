@@ -43,9 +43,6 @@ function createContract({ values }) {
       const payload = res?.data || res;
       const isSuccess = !!(payload?.payerInstitutionContractUuid || res?.success);
 
-      console.log('[CreateInstitutionContract] response:', res);
-      console.log('[CreateInstitutionContract] payload:', payload);
-      console.log('[CreateInstitutionContract] isSuccess:', isSuccess);
 
       if (!isSuccess) {
         toasted(false, "", res?.error || "Failed to create institution contract");
@@ -57,7 +54,6 @@ function createContract({ values }) {
         institutionStore.addInstitution(payload);
       }
 
-      console.log('[CreateInstitutionContract] calling onRefetch:', typeof props.data.onRefetch);
       props.data.onRefetch?.();
 
       try {

@@ -82,7 +82,6 @@ onMounted(() => {
       fetchLogoFromUrl(props.initialData.logoUrl);
     }
     
-    console.log('Initial data loaded with logo:', !!previewImage.value);
   }
 });
 
@@ -123,7 +122,6 @@ async function fetchLogoFromUrl(url) {
     const response = await fetch(url);
     const blob = await response.blob();
     providerLogo.value = new File([blob], 'logo.png ', { type: blob.type });
-    console.log('Logo fetched from URL and converted to file');
   } catch (error) {
     console.error('Error fetching logo from URL:', error);
   }
@@ -136,7 +134,6 @@ const categoryOptions = [
 ];
 
 function handleSubmit() {
-  console.log('=== FORM SUBMISSION START ===');
   
   // Create the providerRequest object as expected by the backend
   const providerRequest = {
@@ -169,7 +166,6 @@ function handleSubmit() {
     providerRequest.providerUuid = providerUuid.value;
   }
 
-  console.log('Provider Request:', providerRequest);
 
   // Prepare the final payload structure
   const formData = new FormData();
@@ -179,19 +175,14 @@ function handleSubmit() {
   
   // ALWAYS append logo if it exists - don't check for changes
   if (providerLogo.value) {
-    console.log('Adding file to FormData with parameter name "file":', providerLogo.value);
     formData.append('logo', providerLogo.value);
   } else {
-    console.log('WARNING: No logo file available for submission');
   }
 
   // Debug: Log FormData contents
-  console.log('FormData contents:');
   for (let [key, value] of formData.entries()) {
-    console.log(`- ${key}:`, value);
   }
 
-  console.log('=== FORM SUBMISSION END ===');
 
   props.onSubmit(formData);
 }

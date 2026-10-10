@@ -10,7 +10,6 @@ const props = defineProps({
 const serviceStore = useService();
 
 function handleAdd(service) {
-  console.log("Adding service:", service);
 }
 </script>
 

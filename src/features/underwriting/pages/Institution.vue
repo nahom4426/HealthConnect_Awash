@@ -24,11 +24,9 @@ if (typeof window !== 'undefined') {
 }
 
 const handleDeleteInstitution = async (id) => {
-  console.log("Delete institution:", id);
 };
 
 const viewDetails = (id) => {
-  console.log("View institution details:", id);
 };
 
 const openImportInstitutions = () => {

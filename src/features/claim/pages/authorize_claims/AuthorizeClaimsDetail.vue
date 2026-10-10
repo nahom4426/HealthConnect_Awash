@@ -160,9 +160,6 @@ function getInitials(name) {
 }
 
 // Log for debugging
-console.log('Authorize Claim Detail - Institution name:', institutionName.value);
-console.log('Authorize Claim Detail - Route state:', route.state);
-console.log('Authorize Claim Detail - Route query:', route.query);
 </script>
 
 <template>

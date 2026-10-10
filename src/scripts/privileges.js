@@ -9,7 +9,6 @@ function getAccessToken() {
 const getPrivileges = async () => {
   const token = getAccessToken();
   const decodedToken = jwt.decode(token);
-  console.log(decodedToken);
   const privileges = decodedToken.privileges;
 
   return decodedToken;

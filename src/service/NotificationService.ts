@@ -47,28 +47,18 @@ export class NotificationService {
       this.userRole = userRole;
 
       try {
-        console.log('🔌 Attempting to connect to WebSocket...');
-        console.log('URL:', this.url);
         
         // Dynamic import of SockJS and STOMP
         this.loadStompLibraries().then(() => {
-          console.log('📚 STOMP libraries loaded successfully');
           const SockJS = (window as any).SockJS;
           const Stomp = (window as any).Stomp;
 
-          console.log('🔗 Creating SockJS connection...');
           const socket = new SockJS(this.url);
           this.stompClient = Stomp.over(socket);
-          console.log('✅ STOMP client created');
 
           this.stompClient.connect(
             {},
             (frame: any) => {
-              console.log('✅ STOMP Connected successfully!');
-              console.log('Connection frame:', frame);
-              console.log('User UUID:', this.userUuid);
-              console.log('User Role:', this.userRole);
-              console.log('WebSocket URL:', this.url);
               this.isConnecting = false;
               this.reconnectAttempts = 0;
 
@@ -130,24 +120,17 @@ export class NotificationService {
       return;
     }
 
-    console.log('📡 Subscribing to notification topics...');
 
     // Subscribe to general notifications
     const notifySubscription = this.stompClient.subscribe('/topic/notify', (message: any) => {
-      console.log('📬 Received notification from /topic/notify');
       this.handleNotificationMessage(message);
     });
-    console.log('✅ Subscribed to /topic/notify');
 
     // Subscribe to seen notifications
     const seenSubscription = this.stompClient.subscribe('/topic/seen', (message: any) => {
-      console.log('✅ Received seen update from /topic/seen');
-      console.log('Seen message:', message.body);
     });
-    console.log('✅ Subscribed to /topic/seen');
 
     // Send initial notification request
-    console.log('📤 Sending initial notification request...');
     this.requestNotifications();
   }
 
@@ -157,10 +140,6 @@ export class NotificationService {
   public requestNotifications(page: number = 1, size: number = 25): void {
     if (!this.stompClient || !this.stompClient.connected) {
       console.warn('⚠️ STOMP client not connected');
-      console.log('Connection status:', {
-        stompClient: !!this.stompClient,
-        connected: this.stompClient?.connected || false,
-      });
       return;
     }
 
@@ -171,10 +150,7 @@ export class NotificationService {
       page,
     };
 
-    console.log('📤 Sending notification request to /app/notification');
-    console.log('Payload:', payload);
     this.stompClient.send('/app/notification', {}, JSON.stringify(payload));
-    console.log('✅ Notification request sent successfully');
   }
 
   /**
@@ -186,10 +162,7 @@ export class NotificationService {
       return;
     }
 
-    console.log('📤 Sending mark as seen request to /app/seen');
-    console.log('Notification UUIDs:', notificationUuids);
     this.stompClient.send('/app/seen', {}, JSON.stringify(notificationUuids));
-    console.log('✅ Mark as seen sent successfully');
   }
 
   /**
@@ -198,7 +171,6 @@ export class NotificationService {
   public disconnect(): void {
     if (this.stompClient && this.stompClient.connected) {
       this.stompClient.disconnect(() => {
-        console.log('⚠️ STOMP Disconnected');
       });
     }
   }
@@ -227,7 +199,6 @@ export class NotificationService {
         });
       });
 
-      console.log('📬 Notifications received:', notifications);
     } catch (error) {
       console.error('Error handling notification message:', error);
     }
@@ -239,7 +210,6 @@ export class NotificationService {
   private attemptReconnect(): void {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`🔄 Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
       setTimeout(() => {
         this.connect(this.userUuid, this.userRole).catch(error => {
           console.error('Reconnection failed:', error);

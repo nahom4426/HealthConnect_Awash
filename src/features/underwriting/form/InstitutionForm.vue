@@ -69,7 +69,6 @@ watch(() => formData.value.address3, () => {
 
 // Handle map location change
 const openMapPicker = () => {
-  console.log("Open map picker");
 };
 </script>
 

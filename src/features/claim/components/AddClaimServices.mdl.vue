@@ -23,7 +23,6 @@ const servicesReq = useApiRequest();
 servicesReq.send(
   () => getPackageByInsuredId(props.data.insuredPersonUuid),
   res => {
-    console.log(servicesReq.response.value);
   }
 );
 

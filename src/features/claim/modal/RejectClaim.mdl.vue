@@ -47,7 +47,6 @@ async function submit() {
       
       // success callback - check actual success flag
       (res) => {
-        console.log('Reject Claim API Response:', res);
         
         if (res?.success === true) {
           // REAL SUCCESS

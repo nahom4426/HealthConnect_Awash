@@ -178,9 +178,6 @@ function getStatusBadge(status) {
 }
 
 // Log for debugging
-console.log('Reject Claim Detail - Institution name:', institutionName.value);
-console.log('Reject Claim Detail - Route state:', route.state);
-console.log('Reject Claim Detail - Route query:', route.query);
 </script>
 
 <template>

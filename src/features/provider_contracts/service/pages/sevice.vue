@@ -137,8 +137,6 @@ const exportServices = async () => {
       providerId.value,
       selectedCategories.value,
       providerName.value,
-      console.log('aa',
-      providerName.value)
     );
     
     if (success) {

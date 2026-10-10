@@ -18,17 +18,14 @@ export const useContractStore = defineStore("contractStore", () => {
   }
 
   function update(id, data) {
-    console.log(`Updating contract with UUID: ${id}`, data);
     
     // Debug: log all contract UUIDs to check for matches
-    console.log("Available contract UUIDs:", contracts.value.map(p => p.payerProviderContractUuid));
     
     const idx = contracts.value.findIndex((el) => el.payerProviderContractUuid === id);
     if (idx === -1) {
       console.warn(`[Contract Store] No contract found with UUID: ${id}`);
       // If not found by UUID, try to add it instead
       if (data.payerProviderContractUuid) {
-        console.log("Provider not found for update, adding instead:", data);
         add(data);
       }
       return;
@@ -39,7 +36,6 @@ export const useContractStore = defineStore("contractStore", () => {
       ...contracts.value[idx],
       ...data,
     });
-    console.log("Provider updated successfully");
   }
 
 

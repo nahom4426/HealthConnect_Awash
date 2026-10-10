@@ -38,7 +38,6 @@ function confirmAdd() {
         window.dispatchEvent(new CustomEvent('provider-mapping-changed', { detail: { action: 'add' } }));
         props.data?.onConfirm?.(res);
         toasted(res.success,"mapped successfully",res.error)
-        console.log(res.success,"mapped successfully",res.error)
         closeModal({ success: true });
       } else {
         // Handle failure if needed

@@ -93,13 +93,9 @@ async function handleSubmit(formValues) {
     }
 
     // Debug: log what we are sending
-    console.log('AddInsured submit -> insuredPayload:', insuredPayload);
-    console.log('AddInsured submit -> FormData entries:');
     for (const [k, v] of formData.entries()) {
       if (v instanceof File || v instanceof Blob) {
-        console.log(`  - ${k}:`, `${v.constructor.name} type=${v.type || 'n/a'} size=${v.size}`);
       } else {
-        console.log(`  - ${k}:`, v);
       }
     }
 

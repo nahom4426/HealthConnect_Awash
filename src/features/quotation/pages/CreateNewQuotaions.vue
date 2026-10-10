@@ -240,13 +240,11 @@ function onFormSubmit(e) {
   // Timestamp-based debounce
   const now = Date.now();
   if (now - lastCallTime < DEBOUNCE_TIME) {
-    console.log(`Debounced: Only ${now - lastCallTime}ms since last call`);
     return;
   }
 
   // Flag-based prevention
   if (isSubmitting.value) {
-    console.log('Submission already in progress, skipping...');
     return;
   }
 
@@ -279,9 +277,6 @@ function onFormSubmit(e) {
     endDate: new Date(endDate.value).toISOString(),
   };
 
-  console.log(`Making ${action} API call with ${quotedServices.length} services`);
-  console.log('Date range:', beginDate.value, 'to', endDate.value);
-  console.log('Duration:', calculateDuration(beginDate.value, endDate.value));
 
   const req = action === 'save' ? saveReq : issueReq;
   const requestFn = () => (action === 'save' ? saveQuotationDraft(payload) : issueQuotation(payload));

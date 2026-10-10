@@ -23,10 +23,8 @@ const active = ref(ServiceTypes.creditService);
 watch(active, (newActive) => {
   if (newActive === ServiceTypes.creditService) {
     serviceType.value = "CREDIT";
-    console.log('🔄 Switched to CREDIT service');
   } else if (newActive === ServiceTypes.cashService) {
     serviceType.value = "CASH";
-    console.log('🔄 Switched to CASH service');
   }
 });
 

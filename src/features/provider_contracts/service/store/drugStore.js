@@ -6,7 +6,6 @@ export const useDrugStore = defineStore("drugStore", () => {
 
   function set(data) {
     drugs.value = data;
-    console.log(data);
   }
 
   function getAll() {

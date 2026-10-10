@@ -42,7 +42,6 @@ const pagination = usePagination({
 watch(
   () => props.search,
   () => {
-    console.log("hhhh");
 
     pagination.send();
   }
@@ -51,7 +50,6 @@ watch(
 watch(
   () => props.refetch,
   () => {
-    console.log('[ActiveProviderDataProvider] refetch changed -> send', props.refetch);
     pagination.send();
   }
 );

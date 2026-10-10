@@ -35,7 +35,6 @@ const fetchError = ref(null);
 // Fetch providers with retry option
 const fetchProviders = async () => {
   try {
-    console.log('Fetching providers...');
     isFetchingProviders.value = true;
     fetchError.value = null;
     const response = await getActiveProvidersForContract({
@@ -46,7 +45,6 @@ const fetchProviders = async () => {
     });
     
     if (response && response.data) {
-      console.log('Providers fetched successfully:', response.data);
       providers.value = response.data;
     } else {
       throw new Error('Invalid response format from server');
@@ -60,11 +58,9 @@ const fetchProviders = async () => {
     } else {
       fetchError.value = "Failed to load providers. Please try again.";
     }
-    console.log('fetchError set to:', fetchError.value);
     toast.error(fetchError.value);
   } finally {
     isFetchingProviders.value = false;
-    console.log('isFetchingProviders set to false');
   }
 };
 
@@ -85,7 +81,6 @@ onMounted(async () => {
 
 // Retry function
 const retryFetchProviders = async () => {
-  console.log('Retrying provider fetch...');
   await fetchProviders();
 };
 

@@ -23,7 +23,6 @@ export function searchInsuredByInstitution(id, query = {}, config = {}) {
     params: query,
     ...config
   }).then(response => {
-    console.log("API raw response:", response);
     return response.data;
   }).catch(error => {
     console.error("API error:", error);
@@ -60,7 +59,6 @@ export function getInsuredById(id, query = {}, config = {}) {
     params: query,
     ...config
   }).then(response => {
-    console.log("API raw response:", response);
     return response.data;
   }).catch(error => {
     console.error("API error:", error);

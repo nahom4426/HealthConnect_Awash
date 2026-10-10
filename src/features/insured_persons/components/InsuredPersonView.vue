@@ -78,7 +78,6 @@ async function saveChanges() {
     const response = await updateInsuredPerson(editedPerson.value.insuredPersonUuid, editedPerson.value);
     person.value = { ...person.value, ...editedPerson.value };
     isEditing.value = false;
-    console.log('Insured person updated successfully');
   } catch (err) {
     console.error('Failed to update insured person:', err);
   } finally {

@@ -18,7 +18,6 @@ const statusReq = useApiRequest();
 const deleteReq = useApiRequest();
 
 function refreshData() {
-  console.log("Refreshing provider data");
   if (dataProvider.value) {
     dataProvider.value.refresh();
   }

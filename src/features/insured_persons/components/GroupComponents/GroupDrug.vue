@@ -45,7 +45,6 @@ function handleAddDrugsToGroup() {
     toasted(false, "", "Please Select Drugs");
     return;
   }
-  console.log(useSelectedDrug.selectedValues);
 
   api.send(
     () => addServiceToGroup(props.groupId, useSelectedDrug.selectedValues),

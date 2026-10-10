@@ -108,7 +108,7 @@ const generateContractCode = (providerName) => {
 const generateContractName = (providerName) => {
   const providerPrefix = providerName.substring(0, 5).toUpperCase();
   const randomNumber = Math.floor(10 + Math.random() * 90);
-  return `${providerPrefix}-Awash-${randomNumber}`;
+  return `${providerPrefix}-Nyala-${randomNumber}`;
 };
 
 // Watch for provider selection changes

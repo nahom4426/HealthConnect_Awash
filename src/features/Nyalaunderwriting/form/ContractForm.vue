@@ -49,7 +49,7 @@ function applyAutoDefaults() {
   const instCode = getInstitutionCode(institutionName);
 
   if (!formData.value.contractName) {
-    formData.value.contractName = `${institutionName || 'Institution'} Awash ${suffix}`;
+    formData.value.contractName = `${institutionName || 'Institution'} Nyala ${suffix}`;
   }
   if (!formData.value.contractCode) {
     formData.value.contractCode = `${instCode}-AWS-${suffix}`;
@@ -108,7 +108,7 @@ const submit = () => {
           validation="required"
           v-model="formData.contractName"
           :attributes="{ 
-            placeholder: 'e.g., MedcoTech Awash 12345',
+            placeholder: 'e.g., MedcoTech Nyala 12345',
           }"
         />
         <Input

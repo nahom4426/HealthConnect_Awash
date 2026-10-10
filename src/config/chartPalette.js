@@ -3,9 +3,9 @@
  * them in sync with the design tokens in assets/wind.css).
  *
  * CATEGORICAL is validated as a set (light mode, white surface):
- *   lightness band, chroma floor, adjacent-pair CVD separation (worst ΔE 9.1)
- *   and normal-vision separation (worst ΔE 16.6) all pass.
- *   Slots 4–6 sit below 3:1 contrast on white, so charts using them must keep
+ *   adjacent-pair CVD separation (worst ΔE2000 8.2, tritan) and normal-vision
+ *   separation (worst ΔE2000 20.3) both pass.
+ *   Slots 3–5 and 7 sit below 3:1 contrast on white, so charts using them must keep
  *   a visible legend or direct labels (all charts here show a legend).
  *
  * Rules:
@@ -17,13 +17,13 @@
 import { Chart } from "chart.js";
 
 export const CATEGORICAL = [
-  "#3a56b0", // 1 navy (brand primary, lifted for chart legibility)
-  "#0093c4", // 2 cyan (brand accent, deepened for contrast)
-  "#eb6834", // 3 orange
-  "#1baf7a", // 4 aqua
-  "#eda100", // 5 amber
-  "#e87ba4", // 6 pink
-  "#7a5cc7", // 7 violet
+  "#8f4a26", // 1 rust (Nyala brand secondary, lifted for chart legibility)
+  "#2f6fbd", // 2 blue
+  "#1baf7a", // 3 aqua
+  "#eda100", // 4 amber
+  "#e87ba4", // 5 pink
+  "#a64c9e", // 6 plum
+  "#0aa3c2", // 7 cyan
   "#e34948", // 8 red
 ];
 

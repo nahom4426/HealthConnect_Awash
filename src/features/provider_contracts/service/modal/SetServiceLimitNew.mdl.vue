@@ -120,8 +120,8 @@ const decrementLimit = () => {
     >
       <template #header>
         <div class="px-6 pt-6">
-          <h2 class="text-2xl font-bold text-gray-800">Service Usage Limits</h2>
-          <p class="mt-1 text-sm text-gray-500">
+          <h2 class="text-2xl font-bold text-ink">Service Usage Limits</h2>
+          <p class="mt-1 text-sm text-ink-subtle">
             Set annual usage restrictions for {{ serviceInfo.name }}
           </p>
         </div>
@@ -129,32 +129,32 @@ const decrementLimit = () => {
 
       <!-- Service Info Card -->
       <div class="px-6 py-4">
-        <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+        <div class="p-4 bg-gradient-to-r from-primary/5 to-primary/5 rounded-lg border border-primary/20">
           <div class="flex gap-4 items-start">
-            <div class="flex justify-center items-center w-12 h-12 bg-blue-100 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex justify-center items-center w-12 h-12 bg-primary/10 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class="font-semibold text-gray-900">{{ serviceInfo.name }}</h3>
+              <h3 class="font-semibold text-ink">{{ serviceInfo.name }}</h3>
               <div class="grid grid-cols-2 gap-4 mt-2 text-sm">
                 <div>
-                  <span class="text-gray-500">Code:</span>
-                  <span class="ml-2 font-medium text-gray-900">{{ serviceInfo.code }}</span>
+                  <span class="text-ink-subtle">Code:</span>
+                  <span class="ml-2 font-medium text-ink">{{ serviceInfo.code }}</span>
                 </div>
                 <div>
-                  <span class="text-gray-500">Category:</span>
-                  <span class="ml-2 font-medium text-gray-900">{{ serviceInfo.category }}</span>
+                  <span class="text-ink-subtle">Category:</span>
+                  <span class="ml-2 font-medium text-ink">{{ serviceInfo.category }}</span>
                 </div>
                 <div>
-                  <span class="text-gray-500">Price:</span>
-                  <span class="ml-2 font-medium text-gray-900">ETB {{ serviceInfo.price.toLocaleString() }}</span>
+                  <span class="text-ink-subtle">Price:</span>
+                  <span class="ml-2 font-medium text-ink">ETB {{ serviceInfo.price.toLocaleString() }}</span>
                 </div>
                 <div>
-                  <span class="text-gray-500">Status:</span>
+                  <span class="text-ink-subtle">Status:</span>
                   <span class="px-2 py-1 ml-2 text-xs font-semibold rounded-full"
-                    :class="serviceInfo.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    :class="serviceInfo.status === 'ACTIVE' ? 'bg-success-soft text-success-strong' : 'bg-error-soft text-error-strong'">
                     {{ serviceInfo.status }}
                   </span>
                 </div>
@@ -168,15 +168,15 @@ const decrementLimit = () => {
       <div class="px-6 py-4 space-y-6">
         <form id="serviceLimitForm">
           <!-- Enable/Disable Limit -->
-          <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+          <div class="flex justify-between items-center p-4 bg-surface-muted rounded-lg">
             <div class="flex-1">
-              <label class="flex gap-2 items-center text-sm font-medium text-gray-700">
+              <label class="flex gap-2 items-center text-sm font-medium text-ink-muted">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 Enable Annual Usage Limit
               </label>
-              <p class="mt-1 text-xs text-gray-500">Restrict how many times this service can be used per patient per year</p>
+              <p class="mt-1 text-xs text-ink-subtle">Restrict how many times this service can be used per patient per year</p>
             </div>
             <label class="inline-flex relative items-center cursor-pointer">
               <input
@@ -184,13 +184,13 @@ const decrementLimit = () => {
                 v-model="limitedPerYear"
                 class="sr-only peer"
               />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div class="w-11 h-6 bg-line peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-line-strong after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
             </label>
           </div>
 
           <!-- Limit Number -->
-          <div v-if="limitedPerYear" class="p-4 bg-amber-50 rounded-lg border border-amber-200">
-            <label class="block mb-3 text-sm font-medium text-gray-700">
+          <div v-if="limitedPerYear" class="p-4 bg-warning-soft rounded-lg border border-warning/20">
+            <label class="block mb-3 text-sm font-medium text-ink-muted">
               Maximum Usage Per Year
             </label>
             <div class="flex gap-3 items-center">
@@ -198,7 +198,7 @@ const decrementLimit = () => {
                 type="button"
                 @click="decrementLimit"
                 :disabled="limitedNumber <= 1"
-                class="p-2 text-amber-600 bg-amber-100 rounded-lg transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="p-2 text-warning bg-warning-soft rounded-lg transition-colors hover:bg-warning/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
@@ -210,15 +210,15 @@ const decrementLimit = () => {
                 type="number"
                 min="1"
                 max="999"
-                class="flex-1 px-4 py-3 text-lg font-semibold text-center rounded-lg border border-amber-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                :class="{ 'border-red-300 ring-2 ring-red-200': !isValid }"
+                class="flex-1 px-4 py-3 text-lg font-semibold text-center rounded-lg border border-warning/40 focus:ring-2 focus:ring-warning focus:border-warning"
+                :class="{ 'border-error/40 ring-2 ring-error/20': !isValid }"
               />
               
               <button
                 type="button"
                 @click="incrementLimit"
                 :disabled="limitedNumber >= 999"
-                class="p-2 text-amber-600 bg-amber-100 rounded-lg transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="p-2 text-warning bg-warning-soft rounded-lg transition-colors hover:bg-warning/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -226,23 +226,23 @@ const decrementLimit = () => {
               </button>
             </div>
             
-            <p v-if="!isValid" class="mt-3 text-sm font-medium text-red-600">
+            <p v-if="!isValid" class="mt-3 text-sm font-medium text-error">
               Please enter a valid number between 1 and 999
             </p>
-            <p v-else class="mt-3 text-sm text-amber-700">
+            <p v-else class="mt-3 text-sm text-warning-strong">
               <strong>{{ limitedNumber }}</strong> usage(s) allowed per patient per year
             </p>
           </div>
 
           <!-- Info Box -->
-          <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div class="p-4 bg-primary/5 rounded-lg border border-primary/20">
             <div class="flex gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0 mt-0.5 w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0 mt-0.5 w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <div class="text-sm text-blue-800">
+              <div class="text-sm text-primary-hover">
                 <p class="mb-2 font-medium">How usage limits work:</p>
-                <ul class="space-y-1 text-xs text-blue-700">
+                <ul class="space-y-1 text-xs text-primary-hover">
                   <li>• When enabled, patients can use this service up to <strong>{{ limitedNumber }}</strong> time(s) per year</li>
                   <li>• The limit automatically resets at the beginning of each calendar year</li>
                   <li>• Patients will receive notifications when approaching their limit</li>
@@ -255,10 +255,10 @@ const decrementLimit = () => {
       </div>
 
       <template #bottom>
-        <div class="flex gap-4 justify-end p-6 bg-gray-50 rounded-b-xl">
+        <div class="flex gap-4 justify-end p-6 bg-surface-muted rounded-b-xl">
           <Button
             type="secondary"
-            class="px-6 py-2 rounded-lg border border-gray-300"
+            class="px-6 py-2 rounded-lg border border-line-strong"
             @click="closeModal"
             :disabled="req.pending.value"
           >
@@ -266,7 +266,7 @@ const decrementLimit = () => {
           </Button>
           
           <Button
-            class="px-6 py-2 text-white bg-blue-600 rounded-lg transition-colors hover:bg-blue-700"
+            class="px-6 py-2 text-white bg-primary rounded-lg transition-colors hover:bg-primary-hover"
             :pending="req.pending.value"
             @click.prevent="updateServiceLimit"
             :disabled="!isValid"

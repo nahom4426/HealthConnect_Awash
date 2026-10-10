@@ -267,17 +267,17 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
           <div
             v-for="(row, idx) in rows"
             :key="idx"
-            class="p-3.5 bg-white rounded-lg border border-gray-200/80 transition-all duration-150 hover:shadow-soft active:scale-[0.99] cursor-pointer"
+            class="p-3.5 bg-white rounded-lg border border-line/80 transition-all duration-150 hover:shadow-soft active:scale-[0.99] cursor-pointer"
             @click="emit('row', row)"
           >
             <div class="space-y-1.5">
               <div v-for="(key, keyIdx) in spec.row" :key="keyIdx" class="flex justify-between items-start gap-3">
-                <span class="text-[11px] font-medium text-gray-400 uppercase tracking-wide flex-shrink-0">{{ spec.head[keyIdx] }}</span>
-                <span class="text-sm text-right text-gray-800 font-medium">{{ row[key] || '-' }}</span>
+                <span class="text-[11px] font-medium text-ink-subtle uppercase tracking-wide flex-shrink-0">{{ spec.head[keyIdx] }}</span>
+                <span class="text-sm text-right text-ink font-medium">{{ row[key] || '-' }}</span>
               </div>
 
               <!-- Mobile Actions -->
-              <div v-if="$slots.actions" class="flex gap-2 pt-2 mt-1.5 border-t border-gray-100">
+              <div v-if="$slots.actions" class="flex gap-2 pt-2 mt-1.5 border-t border-line">
                 <slot name="actions" :row="row" />
               </div>
             </div>
@@ -289,7 +289,7 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
     <!-- Pagination -->
     <div
       v-if="!pending && showPagination && hasData"
-      class="flex-shrink-0 px-4 py-3 bg-white border-t border-gray-100"
+      class="flex-shrink-0 px-4 py-3 bg-white border-t border-line"
     >
       <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <!-- Left: Info + Per Page -->
@@ -297,7 +297,7 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
           <div class="flex gap-1.5 items-center">
             <select
               @change="handlePerPageChange"
-              class="h-8 px-2 pr-7 text-xs font-medium text-gray-600 bg-gray-50 rounded-md border border-gray-200 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+              class="h-8 px-2 pr-7 text-xs font-medium text-ink-muted bg-surface-muted rounded-md border border-line appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
               :value="currentPerPage"
             >
               <option :value="25">25</option>
@@ -305,10 +305,10 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
               <option :value="75">75</option>
               <option :value="100">100</option>
             </select>
-            <span class="text-xs text-gray-400">per page</span>
+            <span class="text-xs text-ink-subtle">per page</span>
           </div>
-          <div class="hidden sm:block h-4 w-px bg-gray-200"></div>
-          <span class="hidden sm:inline text-xs text-gray-500">
+          <div class="hidden sm:block h-4 w-px bg-line"></div>
+          <span class="hidden sm:inline text-xs text-ink-subtle">
             {{ startIndex }}-{{ endIndex }} of {{ currentTotalElements }}
           </span>
         </div>
@@ -317,7 +317,7 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
         <div class="flex items-center gap-1">
           <button
             @click="previousPage"
-            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-500 transition-all duration-150 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-line text-ink-subtle transition-all duration-150 hover:bg-surface-muted hover:text-ink-muted disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             :disabled="currentPage === 1"
             aria-label="Previous page"
           >
@@ -329,7 +329,7 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
           <template v-for="pageNum in pageNumbers" :key="pageNum">
             <span
               v-if="pageNum === '...'"
-              class="inline-flex items-center justify-center w-8 h-8 text-xs text-gray-400"
+              class="inline-flex items-center justify-center w-8 h-8 text-xs text-ink-subtle"
             >
               ...
             </span>
@@ -340,7 +340,7 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
               :class="[
                 currentPage === pageNum
                   ? 'bg-primary text-white shadow-xs'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  : 'text-ink-muted hover:bg-surface-muted'
               ]"
             >
               {{ pageNum }}
@@ -349,7 +349,7 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
 
           <button
             @click="nextPage"
-            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-500 transition-all duration-150 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-line text-ink-subtle transition-all duration-150 hover:bg-surface-muted hover:text-ink-muted disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             :disabled="currentPage === currentTotalPages"
             aria-label="Next page"
           >

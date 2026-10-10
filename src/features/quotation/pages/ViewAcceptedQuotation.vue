@@ -246,31 +246,31 @@ onMounted(async () => {
   <DefaultPage :first="false">
     <template #header>
       <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-slate-800">Accepted Quotation</h1>
-        <div class="text-sm text-slate-500">
-          <span class="px-3 py-1 font-medium text-green-800 bg-green-100 rounded-full">Accepted</span>
+        <h1 class="text-2xl font-bold text-ink">Accepted Quotation</h1>
+        <div class="text-sm text-ink-subtle">
+          <span class="px-3 py-1 font-medium text-success-strong bg-success-soft rounded-full">Accepted</span>
         </div>
       </div>
     </template>
     
     <div v-if="loading" class="p-8">
       <div class="flex flex-col justify-center items-center py-12">
-        <div class="mb-4 w-12 h-12 rounded-full border-b-2 border-green-600 animate-spin"></div>
-        <p class="text-slate-600">Loading accepted quotation...</p>
+        <div class="mb-4 w-12 h-12 rounded-full border-b-2 border-success animate-spin"></div>
+        <p class="text-ink-muted">Loading accepted quotation...</p>
       </div>
     </div>
     
     <div v-else-if="error" class="p-8">
-      <div class="p-6 bg-red-50 rounded-xl border border-red-200">
+      <div class="p-6 bg-error-soft rounded-xl border border-error/20">
         <div class="flex gap-3 items-center">
-          <div class="p-2 bg-red-100 rounded-full">
-            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-2 bg-error-soft rounded-full">
+            <svg class="w-6 h-6 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
           <div>
-            <h3 class="font-semibold text-red-800">Failed to load quotation</h3>
-            <p class="mt-1 text-red-600">{{ error }}</p>
+            <h3 class="font-semibold text-error-strong">Failed to load quotation</h3>
+            <p class="mt-1 text-error">{{ error }}</p>
           </div>
         </div>
       </div>
@@ -286,19 +286,19 @@ onMounted(async () => {
       
       <div class="mx-auto space-y-6 w-full max-w-7xl">
         <!-- Institution Details Card -->
-        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
-          <div class="px-6 py-4 bg-gradient-to-r border-b from-slate-50 to-slate-100 border-slate-200">
+        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-line">
+          <div class="px-6 py-4 bg-gradient-to-r border-b from-surface-muted to-surface-muted border-line">
             <div class="flex justify-between items-center">
               <div class="flex gap-3 items-center">
-                <div class="w-2 h-8 rounded bg-slate-600"></div>
+                <div class="w-2 h-8 rounded bg-ink-muted"></div>
                 <div>
-                  <h2 class="text-xl font-semibold text-slate-800">Client Details</h2>
-                  <p class="mt-1 text-sm text-slate-600">Institution information for this quotation</p>
+                  <h2 class="text-xl font-semibold text-ink">Client Details</h2>
+                  <p class="mt-1 text-sm text-ink-muted">Institution information for this quotation</p>
                 </div>
               </div>
               <button 
                 @click.prevent="showInstitution = !showInstitution"
-                class="flex gap-2 items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                class="flex gap-2 items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors text-ink-muted hover:text-ink hover:bg-surface-muted"
               >
                 <svg 
                   class="w-4 h-4 transition-transform duration-200" 
@@ -318,45 +318,45 @@ onMounted(async () => {
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div class="space-y-4">
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Institution Name</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Institution Name</label>
                   <Input 
                     name="institutionName" 
                     v-model="institutionForm.institutionName" 
                     :attributes="{
-                      class: 'w-full bg-slate-50',
+                      class: 'w-full bg-surface-muted',
                       disabled: true
                     }"
                   />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Email</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Email</label>
                   <Input 
                     name="email" 
                     v-model="institutionForm.email" 
                     :attributes="{
-                      class: 'w-full bg-slate-50',
+                      class: 'w-full bg-surface-muted',
                       disabled: true
                     }"
                   />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">TIN Number</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">TIN Number</label>
                   <Input 
                     name="tinNumber" 
                     v-model="institutionForm.tinNumber" 
                     :attributes="{
-                      class: 'w-full bg-slate-50',
+                      class: 'w-full bg-surface-muted',
                       disabled: true
                     }"
                   />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Telephone</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Telephone</label>
                   <Input 
                     name="telephone" 
                     v-model="institutionForm.telephone" 
                     :attributes="{
-                      class: 'w-full bg-slate-50',
+                      class: 'w-full bg-surface-muted',
                       disabled: true
                     }"
                   />
@@ -365,45 +365,45 @@ onMounted(async () => {
               
               <div class="space-y-4">
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Description</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Description</label>
                   <Input 
                     name="description" 
                     v-model="institutionForm.description" 
                     :attributes="{
-                      class: 'w-full bg-slate-50',
+                      class: 'w-full bg-surface-muted',
                       disabled: true
                     }"
                   />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Category</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Category</label>
                   <Input 
                     name="category" 
                     v-model="institutionForm.category" 
                     :attributes="{
-                      class: 'w-full bg-slate-50',
+                      class: 'w-full bg-surface-muted',
                       disabled: true
                     }"
                   />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Source of Business</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Source of Business</label>
                   <Input 
                     name="referralType" 
                     v-model="institutionForm.referralType" 
                     :attributes="{
-                      class: 'w-full bg-slate-50',
+                      class: 'w-full bg-surface-muted',
                       disabled: true
                     }"
                   />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Address</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Address</label>
                   <Input 
                     name="address" 
                     v-model="institutionForm.address" 
                     :attributes="{
-                      class: 'w-full bg-slate-50',
+                      class: 'w-full bg-surface-muted',
                       disabled: true
                     }"
                   />
@@ -411,17 +411,17 @@ onMounted(async () => {
               </div>
             </div>
             
-            <div v-if="!showInstitution" class="px-6 py-4 border-t border-slate-200">
+            <div v-if="!showInstitution" class="px-6 py-4 border-t border-line">
               <div class="flex gap-4 items-center text-sm">
-                <div class="text-slate-600">
+                <div class="text-ink-muted">
                   <span class="font-medium">{{ instituton?.institutionName }}</span>
                 </div>
-                <div class="text-slate-500">•</div>
-                <div class="text-slate-600">
+                <div class="text-ink-subtle">•</div>
+                <div class="text-ink-muted">
                   <span class="font-medium">{{ institutionForm.telephone }}</span>
                 </div>
-                <div class="text-slate-500">•</div>
-                <div class="text-slate-600">
+                <div class="text-ink-subtle">•</div>
+                <div class="text-ink-muted">
                   <span class="font-medium">{{ institutionForm.email }}</span>
                 </div>
               </div>
@@ -430,24 +430,24 @@ onMounted(async () => {
         </div>
 
         <!-- Quotation Details Card -->
-        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
-          <div class="px-6 py-5 bg-gradient-to-r from-green-50 border-b to-green-100/50 border-slate-200">
+        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-line">
+          <div class="px-6 py-5 bg-gradient-to-r from-success-soft border-b to-success-soft/50 border-line">
             <div class="flex justify-between items-center">
               <div class="flex gap-3 items-center">
-                <div class="w-2 h-8 bg-green-600 rounded"></div>
+                <div class="w-2 h-8 bg-success rounded"></div>
                 <div>
-                  <h2 class="text-xl font-semibold text-slate-800">Accepted Quotation</h2>
+                  <h2 class="text-xl font-semibold text-ink">Accepted Quotation</h2>
                   <div class="flex gap-2 items-center mt-1">
-                    <p class="text-sm text-slate-600">Ready for premium advice for:</p>
-                    <span class="text-sm font-semibold text-green-700">{{ instituton?.institutionName }}</span>
+                    <p class="text-sm text-ink-muted">Ready for premium advice for:</p>
+                    <span class="text-sm font-semibold text-success-strong">{{ instituton?.institutionName }}</span>
                   </div>
                 </div>
               </div>
               
-              <div class="text-sm text-slate-600">
+              <div class="text-sm text-ink-muted">
                 <div class="flex gap-2 items-center">
-                  <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span class="font-medium text-green-700">Accepted</span>
+                  <div class="w-2 h-2 bg-success rounded-full"></div>
+                  <span class="font-medium text-success-strong">Accepted</span>
                 </div>
               </div>
             </div>
@@ -456,10 +456,10 @@ onMounted(async () => {
           <div class="p-6">
             <QuotationCreationDataProvider v-slot="{ packages, pending: pkgPending }">
               <div v-if="pkgPending" class="flex justify-center items-center py-12">
-                <div class="w-12 h-12 rounded-full border-b-2 border-green-600 animate-spin"></div>
+                <div class="w-12 h-12 rounded-full border-b-2 border-success animate-spin"></div>
               </div>
               
-              <div v-else-if="!draft" class="py-12 text-center text-slate-500">
+              <div v-else-if="!draft" class="py-12 text-center text-ink-subtle">
                 <p>No quotation data available</p>
               </div>
               
@@ -478,25 +478,25 @@ onMounted(async () => {
             </QuotationCreationDataProvider>
             
             <!-- Discount Summary -->
-            <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-amber-50 border border-amber-200">
+            <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-warning-soft border border-warning/20">
               <div class="flex gap-3 items-start">
-                <svg class="w-5 h-5 mt-0.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 mt-0.5 text-warning flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
                 </svg>
                 <div class="flex-1">
-                  <h4 class="font-semibold text-amber-800">Discounts Applied</h4>
+                  <h4 class="font-semibold text-warning-strong">Discounts Applied</h4>
                   <div class="mt-2 space-y-2">
                     <div v-for="service in discountedServices" :key="service.serviceQuotedUuid" class="flex justify-between items-center p-2 rounded bg-white/60">
                       <div>
-                        <span class="font-medium text-slate-700">{{ service.packageName }}</span>
-                        <span class="ml-2 text-sm text-slate-500">{{ service.planType?.replace(/_/g, ' ') }}</span>
+                        <span class="font-medium text-ink-muted">{{ service.packageName }}</span>
+                        <span class="ml-2 text-sm text-ink-subtle">{{ service.planType?.replace(/_/g, ' ') }}</span>
                       </div>
                       <div class="text-right">
                         <div class="text-sm">
-                          <span class="text-slate-500 line-through">{{ formatCurrency(service.originalPremium) }}</span>
-                          <span class="ml-2 font-semibold text-green-700">{{ formatCurrency(service.premium) }}</span>
+                          <span class="text-ink-subtle line-through">{{ formatCurrency(service.originalPremium) }}</span>
+                          <span class="ml-2 font-semibold text-success-strong">{{ formatCurrency(service.premium) }}</span>
                         </div>
-                        <div class="text-xs font-medium text-amber-700">
+                        <div class="text-xs font-medium text-warning-strong">
                           {{ service.discount }}% discount
                         </div>
                       </div>
@@ -504,15 +504,15 @@ onMounted(async () => {
                   </div>
                   
                   <!-- Total Savings -->
-                  <div class="flex justify-between items-center pt-3 mt-3 border-t border-amber-200">
-                    <div class="text-sm font-medium text-slate-700">
+                  <div class="flex justify-between items-center pt-3 mt-3 border-t border-warning/20">
+                    <div class="text-sm font-medium text-ink-muted">
                       <span>Total Savings</span>
                     </div>
                     <div class="text-right">
                       <div class="text-sm">
-                        <span class="font-bold text-green-700">{{ formatCurrency(totalDiscountAmount) }}</span>
+                        <span class="font-bold text-success-strong">{{ formatCurrency(totalDiscountAmount) }}</span>
                       </div>
-                      <div class="text-xs text-slate-500">
+                      <div class="text-xs text-ink-subtle">
                         {{ formatCurrency(totalOriginalPremium) }} → {{ formatCurrency(totalDiscountedPremium) }}
                       </div>
                     </div>
@@ -521,26 +521,26 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
+            <div v-if="draft" class="pt-6 mt-8 border-t border-line">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                  <div class="mb-1 text-sm font-medium text-green-700">Quotation ID</div>
-                  <div class="font-mono text-sm text-green-900 truncate">{{ draft.quotationUuid }}</div>
+                <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
+                  <div class="mb-1 text-sm font-medium text-success-strong">Quotation ID</div>
+                  <div class="font-mono text-sm text-success-strong truncate">{{ draft.quotationUuid }}</div>
                 </div>
-                <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                  <div class="mb-1 text-sm font-medium text-green-700">Status</div>
+                <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
+                  <div class="mb-1 text-sm font-medium text-success-strong">Status</div>
                   <div class="flex gap-2 items-center">
-                    <div class="w-2 h-2 bg-green-600 rounded-full"></div>
-                    <span class="font-medium text-green-800">Accepted</span>
+                    <div class="w-2 h-2 bg-success rounded-full"></div>
+                    <span class="font-medium text-success-strong">Accepted</span>
                   </div>
                 </div>
-                <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                  <div class="mb-1 text-sm font-medium text-green-700">Total Services</div>
-                  <div class="text-2xl font-bold text-green-800">{{ draft.quoatedServices?.length || 0 }}</div>
+                <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
+                  <div class="mb-1 text-sm font-medium text-success-strong">Total Services</div>
+                  <div class="text-2xl font-bold text-success-strong">{{ draft.quoatedServices?.length || 0 }}</div>
                 </div>
-                <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                  <div class="mb-1 text-sm font-medium text-green-700">Created Date</div>
-                  <div class="font-medium text-green-800">
+                <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
+                  <div class="mb-1 text-sm font-medium text-success-strong">Created Date</div>
+                  <div class="font-medium text-success-strong">
                     {{ new Date(draft.createdDate || Date.now()).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
@@ -550,16 +550,16 @@ onMounted(async () => {
                 </div>
               </div>
               
-              <div class="p-4 mt-6 bg-blue-50 rounded-lg border border-blue-200">
+              <div class="p-4 mt-6 bg-primary/5 rounded-lg border border-primary/20">
                 <div class="flex gap-3 items-start">
-                  <div class="p-2 mt-0.5 bg-blue-100 rounded-full">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="p-2 mt-0.5 bg-primary/10 rounded-full">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                   </div>
                   <div>
-                    <h4 class="mb-1 font-medium text-blue-800">Ready for Premium Advice</h4>
-                    <p class="text-sm text-blue-700">
+                    <h4 class="mb-1 font-medium text-primary-hover">Ready for Premium Advice</h4>
+                    <p class="text-sm text-primary-hover">
                       This quotation has been accepted. Click "Issue Premium Advice" to proceed with premium collection.
                     </p>
                   </div>
@@ -574,19 +574,19 @@ onMounted(async () => {
     <!-- Individual Details (for individual quotations) -->
     <div v-if="isIndividualQuotation" class="mx-auto space-y-6 w-full max-w-7xl">
       <!-- Individual Details Card -->
-      <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
-        <div class="px-6 py-4 bg-gradient-to-r border-b from-slate-50 to-slate-100 border-slate-200">
+      <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-line">
+        <div class="px-6 py-4 bg-gradient-to-r border-b from-surface-muted to-surface-muted border-line">
           <div class="flex justify-between items-center">
             <div class="flex gap-3 items-center">
-              <div class="w-2 h-8 rounded bg-slate-600"></div>
+              <div class="w-2 h-8 rounded bg-ink-muted"></div>
               <div>
-                <h2 class="text-xl font-semibold text-slate-800">Client Details</h2>
-                <p class="mt-1 text-sm text-slate-600">Individual information for this quotation</p>
+                <h2 class="text-xl font-semibold text-ink">Client Details</h2>
+                <p class="mt-1 text-sm text-ink-muted">Individual information for this quotation</p>
               </div>
             </div>
             <button 
               @click.prevent="showIndividual = !showIndividual"
-              class="flex gap-2 items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+              class="flex gap-2 items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors text-ink-muted hover:text-ink hover:bg-surface-muted"
             >
               <svg 
                 class="w-4 h-4 transition-transform duration-200" 
@@ -606,45 +606,45 @@ onMounted(async () => {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div class="space-y-4">
               <div>
-                <label class="block mb-1 text-sm font-medium text-slate-700">Full Name</label>
+                <label class="block mb-1 text-sm font-medium text-ink-muted">Full Name</label>
                 <Input 
                   name="fullName" 
                   v-model="individualForm.fullName" 
                   :attributes="{
-                    class: 'w-full bg-slate-50',
+                    class: 'w-full bg-surface-muted',
                     disabled: true
                   }"
                 />
               </div>
               <div>
-                <label class="block mb-1 text-sm font-medium text-slate-700">Email</label>
+                <label class="block mb-1 text-sm font-medium text-ink-muted">Email</label>
                 <Input 
                   name="email" 
                   v-model="individualForm.email" 
                   :attributes="{
-                    class: 'w-full bg-slate-50',
+                    class: 'w-full bg-surface-muted',
                     disabled: true
                   }"
                 />
               </div>
               <div>
-                <label class="block mb-1 text-sm font-medium text-slate-700">ID Number</label>
+                <label class="block mb-1 text-sm font-medium text-ink-muted">ID Number</label>
                 <Input 
                   name="idNumber" 
                   v-model="individualForm.idNumber" 
                   :attributes="{
-                    class: 'w-full bg-slate-50',
+                    class: 'w-full bg-surface-muted',
                     disabled: true
                   }"
                 />
               </div>
               <div>
-                <label class="block mb-1 text-sm font-medium text-slate-700">Phone</label>
+                <label class="block mb-1 text-sm font-medium text-ink-muted">Phone</label>
                 <Input 
                   name="phone" 
                   v-model="individualForm.phone" 
                   :attributes="{
-                    class: 'w-full bg-slate-50',
+                    class: 'w-full bg-surface-muted',
                     disabled: true
                   }"
                 />
@@ -653,34 +653,34 @@ onMounted(async () => {
             
             <div class="space-y-4">
               <div>
-                <label class="block mb-1 text-sm font-medium text-slate-700">Gender</label>
+                <label class="block mb-1 text-sm font-medium text-ink-muted">Gender</label>
                 <Input 
                   name="gender" 
                   v-model="individualForm.gender" 
                   :attributes="{
-                    class: 'w-full bg-slate-50',
+                    class: 'w-full bg-surface-muted',
                     disabled: true
                   }"
                 />
               </div>
               <div>
-                <label class="block mb-1 text-sm font-medium text-slate-700">Status</label>
+                <label class="block mb-1 text-sm font-medium text-ink-muted">Status</label>
                 <Input 
                   name="status" 
                   v-model="individualForm.status" 
                   :attributes="{
-                    class: 'w-full bg-slate-50',
+                    class: 'w-full bg-surface-muted',
                     disabled: true
                   }"
                 />
               </div>
               <div>
-                <label class="block mb-1 text-sm font-medium text-slate-700">Address</label>
+                <label class="block mb-1 text-sm font-medium text-ink-muted">Address</label>
                 <Input 
                   name="address" 
                   v-model="individualForm.address" 
                   :attributes="{
-                    class: 'w-full bg-slate-50',
+                    class: 'w-full bg-surface-muted',
                     disabled: true
                   }"
                 />
@@ -688,17 +688,17 @@ onMounted(async () => {
             </div>
           </div>
           
-          <div v-if="!showIndividual" class="px-6 py-4 border-t border-slate-200">
+          <div v-if="!showIndividual" class="px-6 py-4 border-t border-line">
             <div class="flex gap-4 items-center text-sm">
-              <div class="text-slate-600">
+              <div class="text-ink-muted">
                 <span class="font-medium">{{ individualForm.fullName }}</span>
               </div>
-              <div class="text-slate-500">•</div>
-              <div class="text-slate-600">
+              <div class="text-ink-subtle">•</div>
+              <div class="text-ink-muted">
                 <span class="font-medium">{{ individualForm.phone }}</span>
               </div>
-              <div class="text-slate-500">•</div>
-              <div class="text-slate-600">
+              <div class="text-ink-subtle">•</div>
+              <div class="text-ink-muted">
                 <span class="font-medium">{{ individualForm.email }}</span>
               </div>
             </div>
@@ -707,24 +707,24 @@ onMounted(async () => {
       </div>
 
       <!-- Quotation Details Card -->
-      <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
-        <div class="px-6 py-5 bg-gradient-to-r from-green-50 border-b to-green-100/50 border-slate-200">
+      <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-line">
+        <div class="px-6 py-5 bg-gradient-to-r from-success-soft border-b to-success-soft/50 border-line">
           <div class="flex justify-between items-center">
             <div class="flex gap-3 items-center">
-              <div class="w-2 h-8 bg-green-600 rounded"></div>
+              <div class="w-2 h-8 bg-success rounded"></div>
               <div>
-                <h2 class="text-xl font-semibold text-slate-800">Accepted Quotation</h2>
+                <h2 class="text-xl font-semibold text-ink">Accepted Quotation</h2>
                 <div class="flex gap-2 items-center mt-1">
-                  <p class="text-sm text-slate-600">Ready for premium advice for:</p>
-                  <span class="text-sm font-semibold text-green-700">{{ individualForm.fullName }}</span>
+                  <p class="text-sm text-ink-muted">Ready for premium advice for:</p>
+                  <span class="text-sm font-semibold text-success-strong">{{ individualForm.fullName }}</span>
                 </div>
               </div>
             </div>
             
-            <div class="text-sm text-slate-600">
+            <div class="text-sm text-ink-muted">
               <div class="flex gap-2 items-center">
-                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span class="font-medium text-green-700">Accepted</span>
+                <div class="w-2 h-2 bg-success rounded-full"></div>
+                <span class="font-medium text-success-strong">Accepted</span>
               </div>
             </div>
           </div>
@@ -733,10 +733,10 @@ onMounted(async () => {
         <div class="p-6">
           <QuotationCreationDataProvider v-slot="{ packages, pending: pkgPending }">
             <div v-if="pkgPending" class="flex justify-center items-center py-12">
-              <div class="w-12 h-12 rounded-full border-b-2 border-green-600 animate-spin"></div>
+              <div class="w-12 h-12 rounded-full border-b-2 border-success animate-spin"></div>
             </div>
             
-            <div v-else-if="!draft" class="py-12 text-center text-slate-500">
+            <div v-else-if="!draft" class="py-12 text-center text-ink-subtle">
               <p>No quotation data available</p>
             </div>
             
@@ -755,25 +755,25 @@ onMounted(async () => {
           </QuotationCreationDataProvider>
           
           <!-- Discount Summary -->
-          <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-amber-50 border border-amber-200">
+          <div v-if="draft && hasDiscounts" class="p-4 mt-6 rounded-lg bg-warning-soft border border-warning/20">
             <div class="flex gap-3 items-start">
-              <svg class="w-5 h-5 mt-0.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 mt-0.5 text-warning flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
               </svg>
               <div class="flex-1">
-                <h4 class="font-semibold text-amber-800">Discounts Applied</h4>
+                <h4 class="font-semibold text-warning-strong">Discounts Applied</h4>
                 <div class="mt-2 space-y-2">
                   <div v-for="service in discountedServices" :key="service.serviceQuotedUuid" class="flex justify-between items-center p-2 rounded bg-white/60">
                     <div>
-                      <span class="font-medium text-slate-700">{{ service.packageName }}</span>
-                      <span class="ml-2 text-sm text-slate-500">{{ service.planType?.replace(/_/g, ' ') }}</span>
+                      <span class="font-medium text-ink-muted">{{ service.packageName }}</span>
+                      <span class="ml-2 text-sm text-ink-subtle">{{ service.planType?.replace(/_/g, ' ') }}</span>
                     </div>
                     <div class="text-right">
                       <div class="text-sm">
-                        <span class="text-slate-500 line-through">{{ formatCurrency(service.originalPremium) }}</span>
-                        <span class="ml-2 font-semibold text-green-700">{{ formatCurrency(service.premium) }}</span>
+                        <span class="text-ink-subtle line-through">{{ formatCurrency(service.originalPremium) }}</span>
+                        <span class="ml-2 font-semibold text-success-strong">{{ formatCurrency(service.premium) }}</span>
                       </div>
-                      <div class="text-xs font-medium text-amber-700">
+                      <div class="text-xs font-medium text-warning-strong">
                         {{ service.discount }}% discount
                       </div>
                     </div>
@@ -781,15 +781,15 @@ onMounted(async () => {
                 </div>
                 
                 <!-- Total Savings -->
-                <div class="flex justify-between items-center pt-3 mt-3 border-t border-amber-200">
-                  <div class="text-sm font-medium text-slate-700">
+                <div class="flex justify-between items-center pt-3 mt-3 border-t border-warning/20">
+                  <div class="text-sm font-medium text-ink-muted">
                     <span>Total Savings</span>
                   </div>
                   <div class="text-right">
                     <div class="text-sm">
-                      <span class="font-bold text-green-700">{{ formatCurrency(totalDiscountAmount) }}</span>
+                      <span class="font-bold text-success-strong">{{ formatCurrency(totalDiscountAmount) }}</span>
                     </div>
-                    <div class="text-xs text-slate-500">
+                    <div class="text-xs text-ink-subtle">
                       {{ formatCurrency(totalOriginalPremium) }} → {{ formatCurrency(totalDiscountedPremium) }}
                     </div>
                   </div>
@@ -798,26 +798,26 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div v-if="draft" class="pt-6 mt-8 border-t border-slate-200">
+          <div v-if="draft" class="pt-6 mt-8 border-t border-line">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-              <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                <div class="mb-1 text-sm font-medium text-green-700">Quotation ID</div>
-                <div class="font-mono text-sm text-green-900 truncate">{{ draft.quotationUuid }}</div>
+              <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
+                <div class="mb-1 text-sm font-medium text-success-strong">Quotation ID</div>
+                <div class="font-mono text-sm text-success-strong truncate">{{ draft.quotationUuid }}</div>
               </div>
-              <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                <div class="mb-1 text-sm font-medium text-green-700">Status</div>
+              <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
+                <div class="mb-1 text-sm font-medium text-success-strong">Status</div>
                 <div class="flex gap-2 items-center">
-                  <div class="w-2 h-2 bg-green-600 rounded-full"></div>
-                  <span class="font-medium text-green-800">Accepted</span>
+                  <div class="w-2 h-2 bg-success rounded-full"></div>
+                  <span class="font-medium text-success-strong">Accepted</span>
                 </div>
               </div>
-              <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                <div class="mb-1 text-sm font-medium text-green-700">Total Services</div>
-                <div class="text-2xl font-bold text-green-800">{{ draft.quoatedServices?.length || 0 }}</div>
+              <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
+                <div class="mb-1 text-sm font-medium text-success-strong">Total Services</div>
+                <div class="text-2xl font-bold text-success-strong">{{ draft.quoatedServices?.length || 0 }}</div>
               </div>
-              <div class="p-4 bg-green-50 rounded-lg border border-green-100">
-                <div class="mb-1 text-sm font-medium text-green-700">Created Date</div>
-                <div class="font-medium text-green-800">
+              <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
+                <div class="mb-1 text-sm font-medium text-success-strong">Created Date</div>
+                <div class="font-medium text-success-strong">
                   {{ new Date(draft.createdDate || Date.now()).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -827,16 +827,16 @@ onMounted(async () => {
               </div>
             </div>
             
-            <div class="p-4 mt-6 bg-blue-50 rounded-lg border border-blue-200">
+            <div class="p-4 mt-6 bg-primary/5 rounded-lg border border-primary/20">
               <div class="flex gap-3 items-start">
-                <div class="p-2 mt-0.5 bg-blue-100 rounded-full">
-                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-2 mt-0.5 bg-primary/10 rounded-full">
+                  <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                 </div>
                 <div>
-                  <h4 class="mb-1 font-medium text-blue-800">Ready for Premium Advice</h4>
-                  <p class="text-sm text-blue-700">
+                  <h4 class="mb-1 font-medium text-primary-hover">Ready for Premium Advice</h4>
+                  <p class="text-sm text-primary-hover">
                     This quotation has been accepted. Click "Issue Premium Advice" to proceed with premium collection.
                   </p>
                 </div>

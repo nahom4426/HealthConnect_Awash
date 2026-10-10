@@ -165,23 +165,23 @@ function handleManualClose() {
         <div class="flex flex-col gap-4 py-2">
 
           <!-- Error Banner -->
-          <div v-if="error" class="p-3 text-sm text-red-700 bg-red-100 rounded-lg border border-red-200">
+          <div v-if="error" class="p-3 text-sm text-error-strong bg-error-soft rounded-lg border border-error/20">
             <div class="font-medium">Error:</div>
             <div>{{ error }}</div>
           </div>
 
           <!-- Selected Services Summary -->
-          <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div class="p-3 bg-primary/5 rounded-lg border border-primary/20">
             <div class="flex justify-between items-center">
               <div>
-                <p class="text-sm font-semibold text-blue-800">
+                <p class="text-sm font-semibold text-primary-hover">
                   {{ selectedServices.length }} service{{ selectedServices.length > 1 ? 's' : '' }} selected
                 </p>
-                <p class="text-xs text-blue-600 mt-0.5">
+                <p class="text-xs text-primary mt-0.5">
                   Total claim amount: <span class="font-bold">ETB {{ formatCurrency(totalAmount) }}</span>
                 </p>
               </div>
-              <div class="px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-100 rounded-full border border-blue-200">
+              <div class="px-3 py-1.5 text-xs font-bold text-primary-hover bg-primary/10 rounded-full border border-primary/20">
                 {{ selectedServices.length }} items
               </div>
             </div>
@@ -191,23 +191,23 @@ function handleManualClose() {
           <div class="grid grid-cols-2 gap-4">
             <!-- Amount -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Amount (ETB) <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Amount (ETB) <span class="text-error">*</span></label>
               <input
                 v-model.number="amount"
                 type="number"
                 step="0.01"
                 min="0"
-                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 placeholder="0.00"
               />
             </div>
 
             <!-- Payment Type -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Payment Type <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Payment Type <span class="text-error">*</span></label>
               <select
                 v-model="paymentType"
-                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
+                class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
               >
                 <option v-for="pt in paymentTypes" :key="pt.value" :value="pt.value">{{ pt.label }}</option>
               </select>
@@ -215,73 +215,73 @@ function handleManualClose() {
 
             <!-- Check Number (shown only for CHECK type) -->
             <div v-if="paymentType === 'CHECK'">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Check Number</label>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Check Number</label>
               <input
                 v-model="checkNumber"
                 type="text"
-                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 placeholder="e.g. CHK-12345"
               />
             </div>
 
             <!-- Receipt Number -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Receipt Number <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Receipt Number <span class="text-error">*</span></label>
               <input
                 v-model="receiptNumber"
                 type="text"
-                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 placeholder="e.g. REC-56789"
               />
             </div>
 
             <!-- Receipt Date -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Receipt Date <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Receipt Date <span class="text-error">*</span></label>
               <input
                 v-model="receiptDate"
                 type="date"
-                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
             <!-- Withholding Tax -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Withholding Tax</label>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Withholding Tax</label>
               <input
                 v-model.number="withHoldingTax"
                 type="number"
                 step="0.01"
                 min="0"
-                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 placeholder="0.00"
               />
             </div>
 
             <!-- Revenue Stamp -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Revenue Stamp</label>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Revenue Stamp</label>
               <input
                 v-model.number="revenueStamp"
                 type="number"
                 step="0.01"
                 min="0"
-                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 placeholder="0.00"
               />
             </div>
           </div>
 
           <!-- Recipient Section -->
-          <div class="pt-3 border-t border-gray-200">
-            <p class="text-sm font-semibold text-gray-800 mb-3">Recipient Information</p>
+          <div class="pt-3 border-t border-line">
+            <p class="text-sm font-semibold text-ink mb-3">Recipient Information</p>
             <div class="grid grid-cols-2 gap-4">
               <!-- Recipient Type -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Recipient Type</label>
+                <label class="block text-sm font-medium text-ink-muted mb-1">Recipient Type</label>
                 <select
                   v-model="recipientType"
-                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
+                  class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
                 >
                   <option v-for="rt in recipientTypes" :key="rt.value" :value="rt.value">{{ rt.label }}</option>
                 </select>
@@ -289,11 +289,11 @@ function handleManualClose() {
 
               <!-- Recipient Name -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Recipient Name</label>
+                <label class="block text-sm font-medium text-ink-muted mb-1">Recipient Name</label>
                 <input
                   v-model="recipientName"
                   type="text"
-                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  class="w-full px-3 py-2.5 border border-line-strong rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   placeholder="Recipient name"
                 />
               </div>
@@ -301,32 +301,32 @@ function handleManualClose() {
           </div>
 
           <!-- Attachment -->
-          <div class="pt-3 border-t border-gray-200">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Attachment (optional)</label>
+          <div class="pt-3 border-t border-line">
+            <label class="block text-sm font-medium text-ink-muted mb-2">Attachment (optional)</label>
             <div v-if="!attachment" class="relative">
               <input
                 id="settle-attachment-input"
                 type="file"
                 accept="image/*,.pdf,.doc,.docx"
                 @change="onFileChange"
-                class="w-full px-3 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm cursor-pointer
+                class="w-full px-3 py-2.5 border border-dashed border-line-strong rounded-lg text-sm cursor-pointer
                        file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0
-                       file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700
-                       hover:border-blue-400 transition-all"
+                       file:text-sm file:font-medium file:bg-primary/5 file:text-primary-hover
+                       hover:border-primary/70 transition-all"
               />
             </div>
-            <div v-else class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+            <div v-else class="flex items-center justify-between p-3 bg-success-soft rounded-lg border border-success/20">
               <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span class="text-sm text-green-800 font-medium">{{ attachment.name }}</span>
-                <span class="text-xs text-green-600">({{ (attachment.size / 1024).toFixed(1) }} KB)</span>
+                <span class="text-sm text-success-strong font-medium">{{ attachment.name }}</span>
+                <span class="text-xs text-success">({{ (attachment.size / 1024).toFixed(1) }} KB)</span>
               </div>
               <button
                 type="button"
                 @click="removeFile"
-                class="text-red-500 hover:text-red-700 text-sm font-medium transition-colors"
+                class="text-error hover:text-error-strong text-sm font-medium transition-colors"
               >
                 Remove
               </button>
@@ -349,7 +349,7 @@ function handleManualClose() {
               :disabled="apiRequest.pending.value"
               as="button"
               html-type="submit"
-              class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+              class="bg-gradient-to-r from-success to-success hover:from-success hover:to-success-strong"
             >
               Settle Payment
             </Button>

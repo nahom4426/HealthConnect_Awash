@@ -27,7 +27,7 @@ onUnmounted(() => {
 <template>
   <DefaultPage>
     <template #header>
-      <h1 class="text-2xl font-bold text-gray-900">Premium Receipt</h1>
+      <h1 class="text-2xl font-bold text-ink">Premium Receipt</h1>
     </template>
     <div class="mt-2">
       <PremiumReceiptDataProvider v-slot="{ quotations, pending }" :status="'UNPAID'" :key="reloadKey">

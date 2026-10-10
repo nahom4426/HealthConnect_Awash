@@ -67,10 +67,10 @@ const pagination = usePagination({
 		>
 			<template #actions="{ row }">
 				<div class="flex items-center gap-2">
-					<div v-ripple class="size-8 bg-gray-200 rounded-full shadow-lg grid place-items-center">
+					<div v-ripple class="size-8 bg-line rounded-full shadow-lg grid place-items-center">
 						<i v-html="icons.edit"/>
 					</div>
-					<div v-ripple class="size-8 bg-gray-200 rounded-full shadow-lg grid place-items-center">
+					<div v-ripple class="size-8 bg-line rounded-full shadow-lg grid place-items-center">
 						<i v-html="icons.group"/>
 					</div>
 				</div>

@@ -30,16 +30,16 @@ const modalTitle = ref('Provided Items');
 function getStatusStyle(status) {
   const base = "px-3 py-1 rounded-full text-xs font-semibold";
   switch (status?.toUpperCase()) {
-    case "PENDING": return `${base} bg-yellow-100 text-yellow-800`;
-    case "PROCESSED": return `${base} bg-blue-100 text-blue-800`;
+    case "PENDING": return `${base} bg-warning-soft text-warning-strong`;
+    case "PROCESSED": return `${base} bg-primary/10 text-primary-hover`;
     case "CHECKED": return `${base} bg-purple-100 text-purple-800`;
-    case "APPROVED": return `${base} bg-green-100 text-green-800`;
+    case "APPROVED": return `${base} bg-success-soft text-success-strong`;
     case "AUTHORIZED": return `${base} bg-teal-100 text-teal-800`;
-    case "REJECTED": return `${base} bg-red-100 text-red-800`;
-    case "COMPLETED": return `${base} bg-gray-100 text-gray-800`;
+    case "REJECTED": return `${base} bg-error-soft text-error-strong`;
+    case "COMPLETED": return `${base} bg-surface-muted text-ink`;
     case "PAYED":
-    case "PAID": return `${base} bg-green-100 text-green-800`;
-    default: return `${base} bg-gray-100 text-gray-800`;
+    case "PAID": return `${base} bg-success-soft text-success-strong`;
+    default: return `${base} bg-surface-muted text-ink`;
   }
 }
 
@@ -63,32 +63,32 @@ function getNestedValue(obj, path) {
   <tr
     v-for="(row, idx) in rowData"
     :key="row.serviceProvidedUuid"
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted"
   >
     <!-- Index -->
-    <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+    <td class="px-4 py-3 text-sm font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
     <!-- Institution Name -->
     <td class="p-3 py-4">
       <div class="flex gap-2 items-center">
-        <div class="flex justify-center items-center w-8 h-8 bg-blue-100 rounded-lg">
-          <i v-html="icons.briefcase" class="w-4 h-4 text-blue-600"></i>
+        <div class="flex justify-center items-center w-8 h-8 bg-primary/10 rounded-lg">
+          <i v-html="icons.briefcase" class="w-4 h-4 text-primary"></i>
         </div>
-        <span class="text-sm font-medium text-gray-900">{{ row.institutionName }}</span>
+        <span class="text-sm font-medium text-ink">{{ row.institutionName }}</span>
       </div>
     </td>
 
     <!-- Insured Name -->
     <td class="p-3 py-4">
       <div class="flex gap-2 items-center">
-        <div class="flex justify-center items-center w-8 h-8 bg-green-100 rounded-lg">
-          <i v-html="icons.user" class="w-4 h-4 text-green-600"></i>
+        <div class="flex justify-center items-center w-8 h-8 bg-success-soft rounded-lg">
+          <i v-html="icons.user" class="w-4 h-4 text-success"></i>
         </div>
         <div>
-          <p class="text-sm font-medium text-gray-900">
+          <p class="text-sm font-medium text-ink">
             {{ row.insuredName || row.dependantName || 'N/A' }}
           </p>
-          <p v-if="row.dependantName" class="text-xs text-gray-500">
+          <p v-if="row.dependantName" class="text-xs text-ink-subtle">
             (Dependant)
           </p>
         </div>
@@ -101,7 +101,7 @@ function getNestedValue(obj, path) {
         <div class="flex justify-center items-center w-8 h-8 bg-purple-100 rounded-lg">
           <i v-html="icons.list" class="w-4 h-4 text-purple-600"></i>
         </div>
-        <span class="text-sm font-semibold text-gray-900">
+        <span class="text-sm font-semibold text-ink">
           {{ getItemsCount(row) }} {{ getItemsCount(row) === 1 ? 'item' : 'items' }}
         </span>
       </div>
@@ -110,12 +110,12 @@ function getNestedValue(obj, path) {
     <!-- Amount -->
     <td class="p-3 py-4">
       <div class="flex gap-2 items-center">
-        <div class="flex justify-center items-center w-8 h-8 bg-emerald-100 rounded-lg">
-          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex justify-center items-center w-8 h-8 bg-success-soft rounded-lg">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
-        <span class="text-sm font-bold text-gray-900">
+        <span class="text-sm font-bold text-ink">
           ETB {{ formatCurrency(row.amount) }}
         </span>
       </div>
@@ -129,7 +129,7 @@ function getNestedValue(obj, path) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
         </div>
-        <span class="text-sm text-gray-700">
+        <span class="text-sm text-ink-muted">
           {{ secondDateFormat(row.providedDate) }}
         </span>
       </div>
@@ -163,7 +163,7 @@ function getNestedValue(obj, path) {
           :checked="(selectedItems || []).includes(getNestedValue(row, toBeSelected))"
           @change="onToggleSelect(getNestedValue(row, toBeSelected))"
           type="checkbox"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-4 h-4 rounded border-line-strong text-primary focus:ring-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
     </td>

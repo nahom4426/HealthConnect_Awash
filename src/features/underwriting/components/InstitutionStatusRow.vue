@@ -29,14 +29,14 @@ function getStatusStyle(status) {
   const base = "inline-flex justify-center items-center px-3 py-1 rounded-full text-xs font-semibold";
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
     case "INACTIVE":
-      return `${base} bg-red-100 text-red-800`;
+      return `${base} bg-error-soft text-error-strong`;
     case "PENDING":
     case "SUSPENDED":
-      return `${base} bg-yellow-100 text-yellow-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
     default:
-      return `${base} bg-gray-100 text-gray-800`;
+      return `${base} bg-surface-muted text-ink`;
   }
 }
 
@@ -83,24 +83,24 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     <tr
       v-for="(row, idx) in rowData.filter(r => r !== null)"
       :key="row.institutionUuid || idx"
-      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted"
     >
       <!-- Index -->
-      <td class="p-4 font-semibold text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+      <td class="p-4 font-semibold text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
       <!-- Institution Name & CIF -->
       <td class="p-4">
         <div class="flex flex-col">
-          <span class="font-semibold text-gray-900">{{ row.institutionName }}</span>
-          <span class="mt-1 text-xs text-gray-500">CIF: {{ row.cifNumber || '—' }} <span v-if="row.email"> • {{ row.email }}</span></span>
+          <span class="font-semibold text-ink">{{ row.institutionName }}</span>
+          <span class="mt-1 text-xs text-ink-subtle">CIF: {{ row.cifNumber || '—' }} <span v-if="row.email"> • {{ row.email }}</span></span>
         </div>
       </td>
 
       <!-- Branch Name & Phone -->
       <td class="p-4">
         <div class="flex flex-col">
-          <span class="font-semibold text-gray-900">{{ row.branchName }}</span>
-          <span class="mt-1 text-xs text-gray-500">{{ row.telephone || '—' }} <span v-if="row.address1"> • {{ row.address1 }}</span></span>
+          <span class="font-semibold text-ink">{{ row.branchName }}</span>
+          <span class="mt-1 text-xs text-ink-subtle">{{ row.telephone || '—' }} <span v-if="row.address1"> • {{ row.address1 }}</span></span>
         </div>
       </td>
 
@@ -117,25 +117,25 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           <!-- View Policy -->
           <button
              @click.stop="navigateTo(`/institution_contracts/${row?.institutionUuid}/${row?.institutionName}`)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm"
           >
-            <i v-html="icons.eye" class="text-blue-500" />
+            <i v-html="icons.eye" class="text-primary" />
             <span>View</span>
           </button>
 
           <!-- Edit -->
           <button
             @click.stop="handleEdit(row)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-xl border border-indigo-200 transition-all duration-200 hover:bg-indigo-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm"
           >
-            <i v-html="icons.edit" class="text-indigo-500" />
+            <i v-html="icons.edit" class="text-primary" />
             <span>Edit</span>
           </button>
 
           <!-- Status Toggle -->
           <!-- <button
             @click.stop="handleStatusChange(row)"
-            :class="row.status === 'ACTIVE' ? 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' : 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100'"
+            :class="row.status === 'ACTIVE' ? 'text-error bg-error-soft border-error/20 hover:bg-error-soft' : 'text-success bg-success-soft border-success/20 hover:bg-success-soft'"
             class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold rounded-xl border transition-all duration-200 hover:shadow-sm"
           >
             <svg v-if="row.status === 'ACTIVE'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,15 +156,15 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     <div
       v-for="(row, idx) in rowData.filter(r => r !== null)"
       :key="row.institutionUuid || idx"
-      class="p-2 mx-0.5 mb-2 bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 cursor-pointer sm:p-3 hover:shadow-md sm:mb-3 sm:mx-2"
+      class="p-2 mx-0.5 mb-2 bg-white rounded-lg border border-line shadow-sm transition-all duration-200 cursor-pointer sm:p-3 hover:shadow-md sm:mb-3 sm:mx-2"
     >
       <!-- Header with name and status -->
       <div class="flex flex-col mb-2 space-y-1 sm:flex-row sm:justify-between sm:items-start sm:space-y-0 sm:mb-3">
         <div class="flex-1 min-w-0">
-          <h3 class="text-xs font-semibold text-gray-900 truncate sm:text-sm">
+          <h3 class="text-xs font-semibold text-ink truncate sm:text-sm">
             {{ row.institutionName }}
           </h3>
-          <p class="text-xs text-gray-500 truncate">{{ row.email }}</p>
+          <p class="text-xs text-ink-subtle truncate">{{ row.email }}</p>
         </div>
         <div class="flex-shrink-0 mt-1 sm:mt-0">
           <span :class="getStatusStyle(row.status)">
@@ -174,51 +174,51 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
       </div>
 
       <!-- Institution Details -->
-      <div class="py-2 mb-2 space-y-1 border-t border-gray-100 sm:py-2 sm:mb-2">
+      <div class="py-2 mb-2 space-y-1 border-t border-line sm:py-2 sm:mb-2">
         <div class="flex justify-between items-start py-0.5">
-          <span class="flex-shrink-0 text-xs font-medium text-gray-500">TIN:</span>
-          <span class="ml-2 font-mono text-xs text-right text-gray-900 truncate">
+          <span class="flex-shrink-0 text-xs font-medium text-ink-subtle">TIN:</span>
+          <span class="ml-2 font-mono text-xs text-right text-ink truncate">
             {{ row.tinNumber || '—' }}
           </span>
         </div>
         <div class="flex justify-between items-start py-0.5">
-          <span class="flex-shrink-0 text-xs font-medium text-gray-500">Phone:</span>
-          <span class="ml-2 text-xs text-right text-gray-900 truncate">
+          <span class="flex-shrink-0 text-xs font-medium text-ink-subtle">Phone:</span>
+          <span class="ml-2 text-xs text-right text-ink truncate">
             {{ row.telephone || '—' }}
           </span>
         </div>
         <div class="flex justify-between items-start py-0.5">
-          <span class="flex-shrink-0 text-xs font-medium text-gray-500">Category:</span>
-          <span class="ml-2 text-xs text-right text-gray-900 truncate">
+          <span class="flex-shrink-0 text-xs font-medium text-ink-subtle">Category:</span>
+          <span class="ml-2 text-xs text-right text-ink truncate">
             {{ row.category || '—' }}
           </span>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex flex-col gap-1.5 pt-2 border-t border-gray-100 sm:flex-row sm:gap-2 sm:pt-2">
+      <div class="flex flex-col gap-1.5 pt-2 border-t border-line sm:flex-row sm:gap-2 sm:pt-2">
         <!-- View Policy -->
         <button
           @click.stop="$router.push('/institution_contracts/' + row.institutionUuid)"
-          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md border border-blue-200 transition-all duration-200 hover:bg-blue-100"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-primary bg-primary/5 rounded-md border border-primary/20 transition-all duration-200 hover:bg-primary/10"
         >
-          <i v-html="icons.eye" class="w-3 h-3 text-blue-500" />
+          <i v-html="icons.eye" class="w-3 h-3 text-primary" />
           <span>View</span>
         </button>
 
         <!-- Edit -->
         <button
           @click.stop="handleEdit(row)"
-          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md border border-indigo-200 transition-all duration-200 hover:bg-indigo-100"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-primary bg-primary/5 rounded-md border border-primary/20 transition-all duration-200 hover:bg-primary/10"
         >
-          <i v-html="icons.edit" class="w-3 h-3 text-indigo-500" />
+          <i v-html="icons.edit" class="w-3 h-3 text-primary" />
           <span>Edit</span>
         </button>
 
         <!-- Status Toggle -->
         <!-- <button
           @click.stop="handleStatusChange(row)"
-          :class="row.status === 'ACTIVE' ? 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' : 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100'"
+          :class="row.status === 'ACTIVE' ? 'text-error bg-error-soft border-error/20 hover:bg-error-soft' : 'text-success bg-success-soft border-success/20 hover:bg-success-soft'"
           class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium rounded-md border transition-all duration-200"
         >
           <svg v-if="row.status === 'ACTIVE'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,7 +268,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   color: rgb(var(--primary-hover));
 }
 
-.dropdown-menu button.text-red-600:hover {
+.dropdown-menu button.text-error:hover {
   background-color: rgb(var(--error-soft));
   color: rgb(var(--error));
 }

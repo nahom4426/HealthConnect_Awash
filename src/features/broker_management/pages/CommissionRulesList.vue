@@ -166,7 +166,7 @@ function handleSearch(searchTerm) {
             <div class="flex flex-wrap items-center gap-2">
               <select
                 v-model="statusFilter"
-                class="h-9 px-3 pr-8 text-sm font-medium text-gray-600 bg-white rounded-lg border border-gray-200 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all hover:border-gray-300"
+                class="h-9 px-3 pr-8 text-sm font-medium text-ink-muted bg-white rounded-lg border border-line appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all hover:border-line-strong"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="ACTIVE">Active</option>
@@ -175,7 +175,7 @@ function handleSearch(searchTerm) {
               </select>
               <select
                 v-model="stakeholderTypeFilter"
-                class="h-9 px-3 pr-8 text-sm font-medium text-gray-600 bg-white rounded-lg border border-gray-200 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all hover:border-gray-300"
+                class="h-9 px-3 pr-8 text-sm font-medium text-ink-muted bg-white rounded-lg border border-line appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all hover:border-line-strong"
               >
                 <option value="">All Types</option>
                 <option value="BROKER">Broker</option>
@@ -183,7 +183,7 @@ function handleSearch(searchTerm) {
               </select>
               <select
                 v-model="policyTypeFilter"
-                class="h-9 px-3 pr-8 text-sm font-medium text-gray-600 bg-white rounded-lg border border-gray-200 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all hover:border-gray-300"
+                class="h-9 px-3 pr-8 text-sm font-medium text-ink-muted bg-white rounded-lg border border-line appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all hover:border-line-strong"
               >
                 <option value="">All Policies</option>
                 <option value="GENERAL">General</option>
@@ -194,7 +194,7 @@ function handleSearch(searchTerm) {
               
               <button
                 @click="refresh"
-                class="h-9 px-3 text-sm font-medium text-gray-600 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                class="h-9 px-3 text-sm font-medium text-ink-muted bg-white rounded-lg border border-line hover:bg-surface-muted hover:border-line-strong transition-all"
                 title="Refresh"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
@@ -206,7 +206,7 @@ function handleSearch(searchTerm) {
 
           <!-- Main Content -->
           <template #default>
-            <div v-if="error" class="px-4 py-3 mb-4 text-sm text-red-700 bg-red-50 rounded-xl border border-red-200 flex items-start gap-2">
+            <div v-if="error" class="px-4 py-3 mb-4 text-sm text-error-strong bg-error-soft rounded-xl border border-error/20 flex items-start gap-2">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 flex-shrink-0 mt-0.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>

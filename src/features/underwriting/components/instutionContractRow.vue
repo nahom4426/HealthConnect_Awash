@@ -34,15 +34,15 @@ function getStatusStyle(status) {
   const base = "inline-flex justify-center items-center px-3 py-1 rounded-full text-xs font-semibold";
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
     case "PENDING":
-      return `${base} bg-amber-100 text-amber-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
     case "RENEWED":
-      return `${base} bg-blue-100 text-blue-800`;
+      return `${base} bg-primary/10 text-primary-hover`;
     case "EXPIRED":
-      return `${base} bg-red-100 text-red-800`;
+      return `${base} bg-error-soft text-error-strong`;
     default:
-      return `${base} bg-gray-100 text-gray-800`;
+      return `${base} bg-surface-muted text-ink`;
   }
 }
 
@@ -105,30 +105,30 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     <tr
       v-for="(row, idx) in rowData.filter(r => r !== null)"
       :key="row.payerInstitutionContractUuid || idx"
-      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted"
     >
       <!-- Index -->
-      <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+      <td class="p-4 font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
       <!-- Contract Name -->
       <td class="p-4">
         <div class="flex flex-col">
-          <span class="font-semibold text-gray-900">{{ row.contractName }}</span>
-          <span class="mt-1 text-xs text-gray-500">{{ row.contractCode }}</span>
+          <span class="font-semibold text-ink">{{ row.contractName }}</span>
+          <span class="mt-1 text-xs text-ink-subtle">{{ row.contractCode }}</span>
         </div>
       </td>
 
       <!-- Code -->
-      <td class="p-4 font-mono text-sm text-gray-700">{{ row.contractCode || '—' }}</td>
+      <td class="p-4 font-mono text-sm text-ink-muted">{{ row.contractCode || '—' }}</td>
 
       <!-- Benefit -->
-      <td class="p-4 font-semibold text-green-700">{{ row.policyNumber }}</td>
+      <td class="p-4 font-semibold text-success-strong">{{ row.policyNumber }}</td>
 
       <!-- Premium -->
-      <!-- <td class="p-4 font-semibold text-blue-700">{{ formatCurrency(row.premium) }}</td> -->
+      <!-- <td class="p-4 font-semibold text-primary-hover">{{ formatCurrency(row.premium) }}</td> -->
 
       <!-- Date Range -->
-      <td class="p-4 text-sm text-gray-700">{{ getDateRange(row) }}</td>
+      <td class="p-4 text-sm text-ink-muted">{{ getDateRange(row) }}</td>
 
       <!-- Status -->
       <td class="p-4">
@@ -143,7 +143,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           <!-- Edit Policy -->
           <button
             @click.stop="openEditModal(row)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -154,7 +154,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           <!-- Set Contribution -->
           <button
             @click.stop="openContributionModal(row)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-success bg-success-soft rounded-xl border border-success/20 transition-all duration-200 hover:bg-success-soft hover:shadow-sm"
             title="Set Benefit Contributions"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           <!-- Delete Policy -->
           <!-- <button
             @click.stop="openDeleteModal(row)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 rounded-xl border border-red-200 transition-all duration-200 hover:bg-red-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-error bg-error-soft rounded-xl border border-error/20 transition-all duration-200 hover:bg-error-soft hover:shadow-sm"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -183,15 +183,15 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     <div
       v-for="(row, idx) in rowData.filter(r => r !== null)"
       :key="row.payerInstitutionContractUuid || idx"
-      class="p-2 mx-0.5 mb-2 bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 cursor-pointer sm:p-3 hover:shadow-md sm:mb-3 sm:mx-2"
+      class="p-2 mx-0.5 mb-2 bg-white rounded-lg border border-line shadow-sm transition-all duration-200 cursor-pointer sm:p-3 hover:shadow-md sm:mb-3 sm:mx-2"
     >
       <!-- Header with name and status -->
       <div class="flex flex-col mb-2 space-y-1 sm:flex-row sm:justify-between sm:items-start sm:space-y-0 sm:mb-3">
         <div class="flex-1 min-w-0">
-          <h3 class="text-xs font-semibold text-gray-900 truncate sm:text-sm">
+          <h3 class="text-xs font-semibold text-ink truncate sm:text-sm">
             {{ row.contractName }}
           </h3>
-          <p class="text-xs text-gray-500 truncate">Code: {{ row.contractCode }}</p>
+          <p class="text-xs text-ink-subtle truncate">Code: {{ row.contractCode }}</p>
         </div>
         <div class="flex-shrink-0 mt-1 sm:mt-0">
           <span :class="getStatusStyle(row.status)">
@@ -201,33 +201,33 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
       </div>
 
       <!-- Contract Details -->
-      <div class="py-2 mb-2 space-y-1 border-t border-gray-100 sm:py-2 sm:mb-2">
+      <div class="py-2 mb-2 space-y-1 border-t border-line sm:py-2 sm:mb-2">
         <div class="flex justify-between items-start py-0.5">
-          <span class="flex-shrink-0 text-xs font-medium text-gray-500">Benefit:</span>
-          <span class="ml-2 text-xs font-semibold text-right text-green-700">
+          <span class="flex-shrink-0 text-xs font-medium text-ink-subtle">Benefit:</span>
+          <span class="ml-2 text-xs font-semibold text-right text-success-strong">
             {{ formatCurrency(row.benefit) }}
           </span>
         </div>
         <div class="flex justify-between items-start py-0.5">
-          <span class="flex-shrink-0 text-xs font-medium text-gray-500">Premium:</span>
-          <span class="ml-2 text-xs font-semibold text-right text-blue-700">
+          <span class="flex-shrink-0 text-xs font-medium text-ink-subtle">Premium:</span>
+          <span class="ml-2 text-xs font-semibold text-right text-primary-hover">
             {{ formatCurrency(row.premium) }}
           </span>
         </div>
         <div class="flex justify-between items-start py-0.5">
-          <span class="flex-shrink-0 text-xs font-medium text-gray-500">Dates:</span>
-          <span class="ml-2 text-xs text-right text-gray-900">
+          <span class="flex-shrink-0 text-xs font-medium text-ink-subtle">Dates:</span>
+          <span class="ml-2 text-xs text-right text-ink">
             {{ getDateRange(row) }}
           </span>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex flex-col gap-1.5 pt-2 border-t border-gray-100 sm:flex-row sm:gap-2 sm:pt-2">
+      <div class="flex flex-col gap-1.5 pt-2 border-t border-line sm:flex-row sm:gap-2 sm:pt-2">
         <!-- Edit Policy -->
         <button
           @click.stop="openEditModal(row)"
-          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md border border-blue-200 transition-all duration-200 hover:bg-blue-100"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-primary bg-primary/5 rounded-md border border-primary/20 transition-all duration-200 hover:bg-primary/10"
         >
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -238,7 +238,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
         <!-- Set Contribution -->
         <button
           @click.stop="openContributionModal(row)"
-          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md border border-green-200 transition-all duration-200 hover:bg-green-100"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-success bg-success-soft rounded-md border border-success/20 transition-all duration-200 hover:bg-success-soft"
           title="Set Benefit Contributions"
         >
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +250,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
         <!-- Delete Policy -->
         <button
           @click.stop="openDeleteModal(row)"
-          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md border border-red-200 transition-all duration-200 hover:bg-red-100"
+          class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-error bg-error-soft rounded-md border border-error/20 transition-all duration-200 hover:bg-error-soft"
         >
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -272,10 +272,10 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   display: inline-block;
   text-transform: capitalize;
 }
-.bg-green-100 { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
-.bg-yellow-100 { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
-.bg-red-100 { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
-.bg-gray-100 { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
+.bg-success-soft { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
+.bg-warning-soft { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
+.bg-error-soft { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
+.bg-surface-muted { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
 
 /* Dropdown Animation */
 .dropdown-menu {
@@ -303,7 +303,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   background-color: rgb(var(--primary) / 0.05);
   color: rgb(var(--primary-hover));
 }
-.dropdown-item.text-red-600:hover {
+.dropdown-item.text-error:hover {
   background-color: rgb(var(--error-soft));
   color: rgb(var(--error));
 }

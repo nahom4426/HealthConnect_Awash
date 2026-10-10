@@ -111,11 +111,11 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <label v-if="label" class="block text-sm font-semibold text-gray-800">
+    <label v-if="label" class="block text-sm font-semibold text-ink">
       {{ label }}
     </label>
 
-    <div v-if="loading" class="text-sm text-gray-500 animate-pulse">
+    <div v-if="loading" class="text-sm text-ink-subtle animate-pulse">
       Loading packages...
     </div>
 
@@ -127,7 +127,7 @@ onMounted(() => {
       <div
         v-for="pkg in packagesWithSumAssured"
         :key="pkg.packageUuid"
-        class="transition-all bg-white/80 backdrop-blur-md border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:scale-[1.01]"
+        class="transition-all bg-white/80 backdrop-blur-md border border-line rounded-xl p-4 shadow-sm hover:shadow-md hover:scale-[1.01]"
       >
         <div class="flex justify-between items-center">
           <div class="flex items-center">
@@ -137,11 +137,11 @@ onMounted(() => {
               name="group-package-selector"
               :checked="pkg.isSelected"
               @change="selectOnly(pkg)"
-              class="w-5 h-5 text-blue-600 border-gray-300 transition-all focus:ring-blue-500"
+              class="w-5 h-5 text-primary border-line-strong transition-all focus:ring-primary"
             />
-            <label :for="`package-${pkg.packageUuid}`" class="ml-3 text-sm font-medium text-gray-800">
+            <label :for="`package-${pkg.packageUuid}`" class="ml-3 text-sm font-medium text-ink">
               {{ pkg.packageName }}
-              <span class="text-gray-500">({{ pkg.packageCode }})</span>
+              <span class="text-ink-subtle">({{ pkg.packageCode }})</span>
             </label>
           </div>
         </div>
@@ -149,16 +149,16 @@ onMounted(() => {
         <div v-if="pkg.isSelected" class="pl-8 mt-4">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Sum Assured</label>
+              <label class="block text-xs font-medium text-ink-muted">Sum Assured</label>
               <div class="relative">
                 <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                  <span class="text-gray-500 sm:text-sm">ETB</span>
+                  <span class="text-ink-subtle sm:text-sm">ETB</span>
                 </div>
                 <input
                   type="number"
                   :value="pkg.sumAssured"
                   @input="updateSumAssured(pkg, $event.target.value)"
-                  class="py-2 pr-3 pl-10 w-full rounded-lg border border-gray-300 shadow-sm transition-all focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  class="py-2 pr-3 pl-10 w-full rounded-lg border border-line-strong shadow-sm transition-all focus:ring-primary focus:border-primary sm:text-sm"
                   min="0"
                   placeholder="0"
                 />
@@ -166,10 +166,10 @@ onMounted(() => {
             </div>
 
             <div class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Plan Type</label>
+              <label class="block text-xs font-medium text-ink-muted">Plan Type</label>
               <select
                 v-model="pkg.planType"
-                class="px-3 py-2 w-full rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="px-3 py-2 w-full rounded-lg border border-line-strong shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
               >
                 <option value="Individual_Plan">Individual Plan</option>
                 <option value="Family_Plan">Family Plan</option>
@@ -182,7 +182,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <p v-if="packagesWithSumAssured.length === 0" class="text-sm text-gray-500">
+      <p v-if="packagesWithSumAssured.length === 0" class="text-sm text-ink-subtle">
         No packages available
       </p>
     </div>

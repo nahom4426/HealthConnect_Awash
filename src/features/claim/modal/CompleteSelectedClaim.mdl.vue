@@ -25,11 +25,11 @@ function handleAction(action: 'CHECKED' | 'REJECTED') {
 		<NewFormParent class="w-[25rem]" :title="data?.title || 'Check Claim'" size="sm" >
 			<div class="flex flex-col gap-4">
 				<div>
-					<label class="block text-sm text-gray-600 mb-2">Remark (optional)</label>
+					<label class="block text-sm text-ink-muted mb-2">Remark (optional)</label>
 					<textarea 
 						v-model="remark" 
 						rows="3" 
-						class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent" 
+						class="w-full p-3 border border-line-strong rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent" 
 						placeholder="Add a remark (optional)"
 					></textarea>
 				</div>

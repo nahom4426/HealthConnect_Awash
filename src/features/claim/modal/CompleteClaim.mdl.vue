@@ -133,7 +133,7 @@ function handleManualClose() {
       <Form id="check-claim-form" :inner="true" class="p-0 bg-white" @submit.prevent="submit">
         <div class="flex flex-col gap-4 py-2">
 
-          <div v-if="error" class="p-3 text-sm text-red-700 bg-red-100 rounded">
+          <div v-if="error" class="p-3 text-sm text-error-strong bg-error-soft rounded">
             <div class="font-medium">Error:</div>
             <div>{{ error }}</div>
           </div>

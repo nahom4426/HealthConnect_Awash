@@ -323,12 +323,12 @@ onMounted(() => {
       <template #header>
         <div class="flex items-center justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-slate-800">Edit Pending Renewal Quotation</h1>
-            <p class="mt-1 text-sm text-slate-600">
+            <h1 class="text-2xl font-bold text-ink">Edit Pending Renewal Quotation</h1>
+            <p class="mt-1 text-sm text-ink-muted">
               {{ institutionName || policyNumber || 'Renewal quotation' }}
             </p>
           </div>
-          <span class="px-3 py-1 text-sm font-medium text-amber-700 bg-amber-100 rounded-full">Pending Renewal</span>
+          <span class="px-3 py-1 text-sm font-medium text-warning-strong bg-warning-soft rounded-full">Pending Renewal</span>
         </div>
       </template>
 
@@ -336,38 +336,38 @@ onMounted(() => {
 
       <div v-if="loading || instPending" class="p-8">
         <div class="flex flex-col items-center justify-center py-12">
-          <div class="w-12 h-12 mb-4 border-b-2 border-amber-600 rounded-full animate-spin"></div>
-          <p class="text-slate-600">Loading renewal quotation...</p>
+          <div class="w-12 h-12 mb-4 border-b-2 border-warning rounded-full animate-spin"></div>
+          <p class="text-ink-muted">Loading renewal quotation...</p>
         </div>
       </div>
 
       <div v-else-if="error" class="p-8">
-        <div class="p-6 border border-red-200 rounded-xl bg-red-50">
-          <h3 class="font-semibold text-red-800">Failed to load renewal quotation</h3>
-          <p class="mt-1 text-red-600">{{ error }}</p>
+        <div class="p-6 border border-error/20 rounded-xl bg-error-soft">
+          <h3 class="font-semibold text-error-strong">Failed to load renewal quotation</h3>
+          <p class="mt-1 text-error">{{ error }}</p>
         </div>
       </div>
 
       <div v-else class="flex flex-col gap-4 mx-auto w-full max-w-7xl">
         
         <!-- Institution Details Card -->
-        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
-          <div class="px-6 py-4 bg-gradient-to-r from-blue-50 border-b to-blue-100/50 border-slate-200">
+        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-line">
+          <div class="px-6 py-4 bg-gradient-to-r from-primary/5 border-b to-primary/5 border-line">
             <div class="flex justify-between items-center">
               <div class="flex gap-3 items-center">
-                <div class="w-2 h-8 bg-blue-600 rounded"></div>
-                <h2 class="text-xl font-semibold text-slate-800">Institution Details</h2>
+                <div class="w-2 h-8 bg-primary rounded"></div>
+                <h2 class="text-xl font-semibold text-ink">Institution Details</h2>
               </div>
               <button 
                 @click.prevent="showInstitution = !showInstitution"
-                class="px-3 py-1 text-sm font-medium text-blue-600 rounded-lg transition-colors hover:text-blue-800 hover:bg-blue-50"
+                class="px-3 py-1 text-sm font-medium text-primary rounded-lg transition-colors hover:text-primary-hover hover:bg-primary/5"
               >
                 {{ showInstitution ? 'Hide Details' : 'Show Details' }}
               </button>
             </div>
             <div class="flex gap-2 items-center mt-2">
-              <span class="text-sm text-slate-600">Registering quotation for:</span>
-              <span class="text-sm font-semibold text-green-600">{{ instituton?.institutionName }}</span>
+              <span class="text-sm text-ink-muted">Registering quotation for:</span>
+              <span class="text-sm font-semibold text-success">{{ instituton?.institutionName }}</span>
             </div>
           </div>
           
@@ -375,38 +375,38 @@ onMounted(() => {
             <div class="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2">
               <div class="space-y-4">
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Institution Name</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Institution Name</label>
                   <Input name="institutionName" v-model="institutionForm.institutionName" :attributes="{ class: 'w-full', disabled: true }" />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Email</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Email</label>
                   <Input name="email" v-model="institutionForm.email" :attributes="{ class: 'w-full', disabled: true }" />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">TIN Number</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">TIN Number</label>
                   <Input name="tinNumber" v-model="institutionForm.tinNumber" :attributes="{ class: 'w-full', disabled: true }" />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Telephone</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Telephone</label>
                   <Input name="telephone" v-model="institutionForm.telephone" :attributes="{ class: 'w-full', disabled: true }" />
                 </div>
               </div>
               
               <div class="space-y-4">
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Description</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Description</label>
                   <Input name="description" v-model="institutionForm.description" :attributes="{ class: 'w-full', disabled: true }" />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Category</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Category</label>
                   <Input name="category" v-model="institutionForm.category" :attributes="{ class: 'w-full', disabled: true }" />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Source of Business</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Source of Business</label>
                   <Input name="referralType" v-model="institutionForm.referralType" :attributes="{ class: 'w-full', disabled: true }" />
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">Address</label>
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">Address</label>
                   <Input name="address" v-model="institutionForm.address" :attributes="{ class: 'w-full', disabled: true }" />
                 </div>
               </div>
@@ -416,64 +416,64 @@ onMounted(() => {
 
         <!-- Quotation Details Card -->
         <QuotationCreationDataProvider v-slot="{ packages, pending: pkgPending }">
-          <div class="overflow-hidden bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div class="overflow-hidden bg-white border border-line rounded-xl shadow-sm">
             <!-- Header -->
-            <div class="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-emerald-100/50">
+            <div class="px-6 py-5 border-b border-line bg-gradient-to-r from-success-soft to-success-soft/50">
               <div class="flex items-center justify-between">
                 <div>
-                  <h2 class="text-xl font-semibold text-slate-800">Renewal quotation details</h2>
-                  <p class="mt-1 text-sm text-slate-600">Edit the package selection and coverage values before issuing.</p>
+                  <h2 class="text-xl font-semibold text-ink">Renewal quotation details</h2>
+                  <p class="mt-1 text-sm text-ink-muted">Edit the package selection and coverage values before issuing.</p>
                 </div>
-                <div class="text-sm text-slate-600">
-                  <span class="font-medium text-emerald-700">{{ draft?.quoatedServices?.length || 0 }} services</span>
+                <div class="text-sm text-ink-muted">
+                  <span class="font-medium text-success-strong">{{ draft?.quoatedServices?.length || 0 }} services</span>
                 </div>
               </div>
             </div>
 
             <!-- Date Range Section -->
-            <div class="px-6 py-4 border-b bg-slate-50 border-slate-200">
+            <div class="px-6 py-4 border-b bg-surface-muted border-line">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">
                     Coverage Begin Date
-                    <span class="text-red-500">*</span>
+                    <span class="text-error">*</span>
                   </label>
                   <input
                     v-model="beginDate"
                     type="date"
-                    class="px-3 py-2 w-4/5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    :class="{ 'border-red-500': dateError && !beginDate }"
+                    class="px-3 py-2 w-4/5 text-sm rounded-lg border border-line-strong focus:outline-none focus:ring-2 focus:ring-success focus:border-success"
+                    :class="{ 'border-error': dateError && !beginDate }"
                   />
-                  <p class="mt-1 text-xs text-slate-500">Select the start date of coverage</p>
+                  <p class="mt-1 text-xs text-ink-subtle">Select the start date of coverage</p>
                 </div>
                 <div>
-                  <label class="block mb-1 text-sm font-medium text-slate-700">
+                  <label class="block mb-1 text-sm font-medium text-ink-muted">
                     Coverage End Date
-                    <span class="text-red-500">*</span>
+                    <span class="text-error">*</span>
                   </label>
                   <input
                     v-model="endDate"
                     type="date"
-                    class="px-3 py-2 w-4/5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    :class="{ 'border-red-500': dateError && !endDate }"
+                    class="px-3 py-2 w-4/5 text-sm rounded-lg border border-line-strong focus:outline-none focus:ring-2 focus:ring-success focus:border-success"
+                    :class="{ 'border-error': dateError && !endDate }"
                   />
-                  <p class="mt-1 text-xs text-slate-500">Auto-set to 1 year from begin date. Change if needed.</p>
+                  <p class="mt-1 text-xs text-ink-subtle">Auto-set to 1 year from begin date. Change if needed.</p>
                 </div>
               </div>
-              <div v-if="dateError" class="mt-2 text-sm text-red-600">{{ dateError }}</div>
-              <div v-else-if="beginDate && endDate" class="mt-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+              <div v-if="dateError" class="mt-2 text-sm text-error">{{ dateError }}</div>
+              <div v-else-if="beginDate && endDate" class="mt-3 p-3 bg-success-soft rounded-lg border border-success/20">
                 <div class="flex items-center gap-2">
-                  <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                   </svg>
                   <div>
-                    <p class="text-sm text-slate-700">
+                    <p class="text-sm text-ink-muted">
                       <span class="font-semibold">Coverage Period:</span> 
-                      <span class="text-slate-800">{{ beginDate }}</span> 
-                      <span class="text-slate-500">to</span> 
-                      <span class="text-slate-800">{{ endDate }}</span>
+                      <span class="text-ink">{{ beginDate }}</span> 
+                      <span class="text-ink-subtle">to</span> 
+                      <span class="text-ink">{{ endDate }}</span>
                     </p>
-                    <p class="text-sm font-semibold text-emerald-700">
+                    <p class="text-sm font-semibold text-success-strong">
                       Duration: {{ calculateDuration(beginDate, endDate) }}
                     </p>
                   </div>
@@ -483,7 +483,7 @@ onMounted(() => {
             
             <!-- Broker (Agent) Selection Toggle and Dropdown -->
             <div class="px-6 py-4">
-              <div class="mt-4 pt-4 border-t border-slate-200/60 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+              <div class="mt-4 pt-4 border-t border-line/60 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                 <div class="flex items-center">
                   <label class="relative inline-flex items-center cursor-pointer select-none">
                     <input 
@@ -491,20 +491,20 @@ onMounted(() => {
                       v-model="isBrokerEnabled" 
                       class="sr-only peer"
                     />
-                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                    <span class="ml-3 text-sm font-semibold text-slate-700">Broker (Agent)</span>
+                    <div class="w-11 h-6 bg-line peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-success/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-line-strong after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
+                    <span class="ml-3 text-sm font-semibold text-ink-muted">Broker (Agent)</span>
                   </label>
                 </div>
                 
                 <div v-if="isBrokerEnabled" class="flex flex-col gap-1">
-                  <label class="block text-sm font-medium text-slate-700">
+                  <label class="block text-sm font-medium text-ink-muted">
                     Select Broker (Agent)
-                    <span class="text-red-500">*</span>
+                    <span class="text-error">*</span>
                   </label>
                   <select
                     v-model="selectedBrokerUuid"
-                    class="px-3 py-2 w-4/5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
-                    :class="{ 'border-red-500': attemptedSubmit && !selectedBrokerUuid }"
+                    class="px-3 py-2 w-4/5 text-sm rounded-lg border border-line-strong focus:outline-none focus:ring-2 focus:ring-success focus:border-success bg-white"
+                    :class="{ 'border-error': attemptedSubmit && !selectedBrokerUuid }"
                   >
                     <option :value="null" disabled>Select a Broker...</option>
                     <option
@@ -515,17 +515,17 @@ onMounted(() => {
                       {{ broker.firstName }} {{ broker.lastName }} ({{ broker.licenseNumber || 'No License' }})
                     </option>
                   </select>
-                  <p v-if="brokerStore.loading" class="text-xs text-slate-400 mt-0.5 animate-pulse">Loading brokers...</p>
-                  <p v-else-if="brokerStore.activeBrokers.length === 0" class="text-xs text-amber-500 mt-0.5">No active brokers found</p>
-                  <p v-if="attemptedSubmit && !selectedBrokerUuid" class="text-xs text-red-500 mt-0.5">Please select a broker</p>
+                  <p v-if="brokerStore.loading" class="text-xs text-ink-subtle mt-0.5 animate-pulse">Loading brokers...</p>
+                  <p v-else-if="brokerStore.activeBrokers.length === 0" class="text-xs text-warning mt-0.5">No active brokers found</p>
+                  <p v-if="attemptedSubmit && !selectedBrokerUuid" class="text-xs text-error mt-0.5">Please select a broker</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Quotation Form Section -->
-          <div v-if="pkgPending" class="p-8 text-center text-slate-500">Loading package catalog...</div>
-          <div v-else-if="!draft" class="p-8 text-center text-slate-500">No renewal quotation data available.</div>
+          <div v-if="pkgPending" class="p-8 text-center text-ink-subtle">Loading package catalog...</div>
+          <div v-else-if="!draft" class="p-8 text-center text-ink-subtle">No renewal quotation data available.</div>
           <div v-else class="p-6">
             <QuotationForm
               :packages="packages"

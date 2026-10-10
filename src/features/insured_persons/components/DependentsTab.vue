@@ -1,13 +1,13 @@
 <template>
   <div class="space-y-6">
     <!-- No Coverage Alert -->
-    <div v-if="insuredData.dependantCoverage === false" class="flex gap-4 items-start p-4 bg-yellow-50 rounded-2xl border border-yellow-300 shadow-md">
-      <div class="flex-shrink-0 text-yellow-500">
+    <div v-if="insuredData.dependantCoverage === false" class="flex gap-4 items-start p-4 bg-warning-soft rounded-2xl border border-warning/40 shadow-md">
+      <div class="flex-shrink-0 text-warning">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
         </svg>
       </div>
-      <div class="text-sm text-yellow-800">
+      <div class="text-sm text-warning-strong">
         <h3 class="text-base font-semibold">Dependents Not Allowed</h3>
         <p>This company does not allow coverage for dependents under this contract or policy.</p>
       </div>
@@ -18,16 +18,16 @@
       <!-- Header with Add Button -->
       <div class="flex justify-between items-center mb-6">
         <div>
-          <h3 class="text-2xl font-bold text-gray-900">Dependents</h3>
-          <p class="mt-1 text-sm text-gray-600">Manage and view dependent information</p>
+          <h3 class="text-2xl font-bold text-ink">Dependents</h3>
+          <p class="mt-1 text-sm text-ink-muted">Manage and view dependent information</p>
         </div>
         <button 
           @click="toggleNewDependentForm"
            v-if="!isReadOnly"
           :class="`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
             showNewDependentForm
-              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-              : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
+              ? 'bg-error-soft text-error-strong hover:bg-error/20'
+              : 'bg-primary text-white hover:bg-primary-hover shadow-lg'
           }`"
         >
           <svg v-if="!showNewDependentForm" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,29 +41,29 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="dependentsList.length === 0 && !showNewDependentForm" class="py-12 text-center bg-gray-50 rounded-2xl border-2 border-gray-300 border-dashed">
-        <svg class="mx-auto mb-4 w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-if="dependentsList.length === 0 && !showNewDependentForm" class="py-12 text-center bg-surface-muted rounded-2xl border-2 border-line-strong border-dashed">
+        <svg class="mx-auto mb-4 w-16 h-16 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 3.75l-2.25 2.25-1.5-1.5" />
         </svg>
-        <p class="font-medium text-gray-600">No dependents added yet</p>
-        <p class="mt-1 text-sm text-gray-500">Click "Add Dependent" to get started</p>
+        <p class="font-medium text-ink-muted">No dependents added yet</p>
+        <p class="mt-1 text-sm text-ink-subtle">Click "Add Dependent" to get started</p>
       </div>
 
       <!-- Dependents Table -->
-      <div v-else-if="dependentsList.length > 0 || showNewDependentForm" class="overflow-visible relative rounded-2xl border shadow-md border-slate-200">
+      <div v-else-if="dependentsList.length > 0 || showNewDependentForm" class="overflow-visible relative rounded-2xl border shadow-md border-line">
         <div class="overflow-x-auto overflow-y-visible">
-          <table class="w-full divide-y divide-slate-200">
-            <thead class="bg-gradient-to-r from-slate-700 to-slate-800">
+          <table class="w-full divide-y divide-line">
+            <thead class="bg-gradient-to-r from-ink-muted to-ink">
               <tr>
                 <th v-for="header in headers" :key="header" class="px-6 py-4 text-xs font-bold tracking-wider text-left text-white uppercase">
                   {{ header }}
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-line">
               <!-- New dependent form row (ONE LINE) -->
-              <tr v-if="showNewDependentForm" class="bg-blue-50">
-                <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+              <tr v-if="showNewDependentForm" class="bg-primary/5">
+                <td class="px-6 py-4 text-sm text-ink-subtle whitespace-nowrap">
                   {{ dependentsList.length + 1 }}
                 </td>
 
@@ -72,7 +72,7 @@
                   <div class="flex relative flex-col items-start">
                     <label
                       for="dependent-photo-upload"
-                      class="cursor-pointer flex items-center justify-center w-12 h-12 bg-primary/10 rounded hover:bg-blue-100 overflow-hidden relative"
+                      class="cursor-pointer flex items-center justify-center w-12 h-12 bg-primary/10 rounded hover:bg-primary/10 overflow-hidden relative"
                     >
                       <template v-if="newDependentPhotoPreview">
                         <img :src="newDependentPhotoPreview" class="object-cover w-full h-full" />
@@ -85,7 +85,7 @@
                     <button
                       v-if="newDependentPhotoPreview"
                       @click.stop="newDependentPhotoPreview = null; newDependent.photo = null"
-                      class="absolute -top-2 -right-2 p-0.5 text-red-600 bg-white rounded-full shadow-md hover:text-red-800"
+                      class="absolute -top-2 -right-2 p-0.5 text-error bg-white rounded-full shadow-md hover:text-error-strong"
                       title="Remove image"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -112,7 +112,7 @@
                     :attributes="{ placeholder: 'First Middle Last', class: 'w-full input-compact' }"
                     required
                   />
-                  <p class="mt-1 text-xs text-gray-500">Enter full name separated by spaces</p>
+                  <p class="mt-1 text-xs text-ink-subtle">Enter full name separated by spaces</p>
                 </td>
 
                 <!-- ID Number -->
@@ -185,7 +185,7 @@
                     </button>
                     <button
                       @click="cancelAddDependent"
-                      class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors duration-200 hover:bg-gray-50"
+                      class="px-4 py-2 text-sm font-medium text-ink-muted bg-white rounded-lg border border-line-strong transition-colors duration-200 hover:bg-surface-muted"
                     >
                       Cancel
                     </button>
@@ -193,9 +193,9 @@
                 </td>
               </tr>
 
-              <tr v-for="(dependent, index) in dependentsList" :key="dependent.dependantUuid" class="transition-colors hover:bg-slate-50">
+              <tr v-for="(dependent, index) in dependentsList" :key="dependent.dependantUuid" class="transition-colors hover:bg-surface-muted">
                 <template v-if="editingDependentIndex === index">
-                  <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                  <td class="px-6 py-4 text-sm text-ink-subtle whitespace-nowrap">
                     {{ index + 1 }}
                   </td>
 
@@ -204,7 +204,7 @@
                     <div class="flex relative flex-col items-start">
                       <label
                         :for="`edit-dependent-photo-${editingDependentIndex}`"
-                        class="cursor-pointer flex items-center justify-center w-12 h-12 bg-primary/10 rounded hover:bg-blue-100 overflow-hidden relative"
+                        class="cursor-pointer flex items-center justify-center w-12 h-12 bg-primary/10 rounded hover:bg-primary/10 overflow-hidden relative"
                       >
                         <template v-if="editingDependentPhotoPreview || dependent.profile || dependent.profilePictureBase64 || dependent.photoUrl">
                           <img
@@ -221,7 +221,7 @@
                       <button
                         v-if="editingDependentPhotoPreview || dependent.profile || dependent.profilePictureBase64 || dependent.photoUrl"
                         @click.stop="editingDependentPhotoPreview = null; editingDependent.profile = null"
-                        class="absolute -top-2 -right-2 p-0.5 text-red-600 bg-white rounded-full shadow-md hover:text-red-800"
+                        class="absolute -top-2 -right-2 p-0.5 text-error bg-white rounded-full shadow-md hover:text-error-strong"
                         title="Remove image"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -318,7 +318,7 @@
                       <button
                         @click="cancelEdit"
                         type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors duration-200 hover:bg-gray-50"
+                        class="px-4 py-2 text-sm font-medium text-ink-muted bg-white rounded-lg border border-line-strong transition-colors duration-200 hover:bg-surface-muted"
                         :disabled="isUpdating"
                       >
                         Cancel
@@ -329,7 +329,7 @@
 
                 <template v-else>
                   <!-- Index -->
-                  <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ index + 1 }}</td>
+                  <td class="px-6 py-4 text-sm font-medium text-ink">{{ index + 1 }}</td>
 
                   <!-- Photo -->
                   <td class="px-6 py-4 whitespace-nowrap">
@@ -340,25 +340,25 @@
                         getProfileUrl(dependent.photoUrl) ||
                         genderFallbackUrl(dependent.gender)
                       "
-                      class="object-cover w-10 h-10 rounded-full border-2 border-blue-300"
+                      class="object-cover w-10 h-10 rounded-full border-2 border-primary/30"
                       alt="Profile"
                       @error="(e) => (e.target.src = genderFallbackUrl(dependent.gender))"
                     />
                   </td>
 
                   <!-- Full Name -->
-                  <td class="px-6 py-4 text-sm font-semibold text-gray-900">
+                  <td class="px-6 py-4 text-sm font-semibold text-ink">
                     {{ dependent.fullName || `${dependent.firstName} ${dependent.fatherName} ${dependent.grandFatherName}` }}
                   </td>
-                  <td class="px-6 py-4 text-sm text-green-600">{{ dependent.idNumber }}</td>
+                  <td class="px-6 py-4 text-sm text-success">{{ dependent.idNumber }}</td>
                   <!-- Relationship -->
-                  <td class="px-6 py-4 text-sm text-gray-600">{{ dependent.relationship }}</td>
+                  <td class="px-6 py-4 text-sm text-ink-muted">{{ dependent.relationship }}</td>
 
                   <!-- Age -->
-                  <td class="px-6 py-4 text-sm text-gray-600">{{ dependent.age || calculateAge(dependent.birthDate) }}</td>
+                  <td class="px-6 py-4 text-sm text-ink-muted">{{ dependent.age || calculateAge(dependent.birthDate) }}</td>
 
                   <!-- Gender -->
-                  <td class="px-6 py-4 text-sm text-gray-600">{{ capitalizeFirstLetter(dependent.gender) }}</td>
+                  <td class="px-6 py-4 text-sm text-ink-muted">{{ capitalizeFirstLetter(dependent.gender) }}</td>
 
                   <!-- Status -->
                   <td class="px-6 py-4 whitespace-nowrap">
@@ -366,8 +366,8 @@
                       dependent.status === 'ACTIVE'
                         ? 'bg-teal-100 text-teal-700'
                         : dependent.status === 'SUSPENDED'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-slate-100 text-slate-700'
+                        ? 'bg-warning-soft text-warning-strong'
+                        : 'bg-surface-muted text-ink-muted'
                     }`">
                       {{ dependent.status === 'ACTIVE' ? 'Active' : dependent.status === 'SUSPENDED' ? 'Suspended' : 'Inactive' }}
                     </span>
@@ -380,7 +380,7 @@
                       <button
                         @click="startEdit(dependent)"
                          v-if="!isReadOnly"
-                        class="flex gap-2 items-center p-2 text-blue-600 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100 group"
+                        class="flex gap-2 items-center p-2 text-primary bg-primary/5 rounded-lg transition-colors hover:bg-primary/10 group"
                         title="Edit"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,7 +402,7 @@
                             gender: dependent?.gender,
                           })
                         "
-                        class="flex gap-2 items-center p-2 text-green-600 bg-green-50 rounded-lg transition-colors hover:bg-green-100 group"
+                        class="flex gap-2 items-center p-2 text-success bg-success-soft rounded-lg transition-colors hover:bg-success-soft group"
                         title="Benefits"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,7 +431,7 @@
                       <button
                         v-if="(dependent.status === 'ACTIVE' || dependent.status === 'Active')&& !isReadOnly"
                         @click="handleDeactivateWithClose(dependent.dependantUuid)"
-                        class="flex gap-2 items-center p-2 bg-red-50 rounded-lg transition-colors text-slate-600 hover:bg-red-100 group"
+                        class="flex gap-2 items-center p-2 bg-error-soft rounded-lg transition-colors text-ink-muted hover:bg-error-soft group"
                         title="Deactivate"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

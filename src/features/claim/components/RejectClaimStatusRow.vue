@@ -64,23 +64,23 @@ function getStatusStyle(status) {
 
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
+      return `${base} bg-success-soft text-success-strong border border-success/20`;
     case "PENDING":
-      return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
+      return `${base} bg-warning-soft text-warning-strong border border-warning/20`;
     case "PROCESSED":
       return `${base} bg-purple-50 text-purple-700 border border-purple-200`;
     case "VERIFIED":
-      return `${base} bg-blue-50 text-blue-700 border border-blue-200`;
+      return `${base} bg-primary/5 text-primary-hover border border-primary/20`;
     case "APPROVED":
       return `${base} bg-sky-50 text-sky-700 border border-sky-200`;
     case "REJECTED":
-      return `${base} bg-rose-50 text-rose-700 border border-rose-200`;
+      return `${base} bg-error-soft text-error-strong border border-error/20`;
     case "COMPLETED":
-      return `${base} bg-indigo-50 text-indigo-700 border border-indigo-200`;
+      return `${base} bg-primary/5 text-primary-hover border border-primary/20`;
     case "REJECTION_REQUESTED":
       return `${base} bg-orange-50 text-orange-700 border border-orange-200`;
     default:
-      return `${base} bg-gray-50 text-gray-600 border border-gray-200`;
+      return `${base} bg-surface-muted text-ink-muted border border-line`;
   }
 }
 
@@ -167,11 +167,11 @@ function getInstitutionName(row) {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click.self="onRowClick(row)" 
-    class="bg-white border-b transition-all duration-200 ease-in-out hover:bg-gray-50/80 hover:shadow-sm group"
-    :class="{ 'bg-red-50/30': row.claimStatus?.toUpperCase() === 'REJECTED' }"
+    class="bg-white border-b transition-all duration-200 ease-in-out hover:bg-surface-muted/80 hover:shadow-sm group"
+    :class="{ 'bg-error-soft/30': row.claimStatus?.toUpperCase() === 'REJECTED' }"
   >
     <!-- Index -->
-    <td class="p-4 font-medium text-gray-400 text-sm">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+    <td class="p-4 font-medium text-ink-subtle text-sm">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
     
     <!-- Dynamic Columns -->
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
@@ -184,52 +184,52 @@ function getInstitutionName(row) {
       </div>
       
       <!-- Period Column -->
-      <div v-else-if="key === 'period'" class="space-y-1 text-gray-700">
+      <div v-else-if="key === 'period'" class="space-y-1 text-ink-muted">
         <div class="flex gap-1.5 items-center text-sm">
-          <span class="text-xs text-gray-400">From:</span>
+          <span class="text-xs text-ink-subtle">From:</span>
           <span class="font-medium">{{ formatDate(row.claimFromDate) }}</span>
         </div>
         <div class="flex gap-1.5 items-center text-sm">
-          <span class="text-xs text-gray-400">To:</span>
+          <span class="text-xs text-ink-subtle">To:</span>
           <span class="font-medium">{{ formatDate(row.claimToDate) }}</span>
         </div>
       </div>
       
       <!-- Date Columns -->
-      <div v-else-if="key.includes('Date')" class="text-gray-700 text-sm">
+      <div v-else-if="key.includes('Date')" class="text-ink-muted text-sm">
         {{ formatDate(row[key]) }}
       </div>
       
       <!-- Institution Name Column - Enhanced with icon and tooltip -->
       <div v-else-if="key === 'institutionName'" class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-error to-error flex items-center justify-center text-white text-xs font-bold shadow-sm">
           {{ getInstitutionName(row).charAt(0) || 'I' }}
         </div>
         <div class="flex flex-col">
-          <span class="text-sm font-medium text-gray-800">{{ getInstitutionName(row) }}</span>
-          <span class="text-xs text-gray-400">Institution</span>
+          <span class="text-sm font-medium text-ink">{{ getInstitutionName(row) }}</span>
+          <span class="text-xs text-ink-subtle">Institution</span>
         </div>
       </div>
       
       <!-- Provider Name Column -->
       <div v-else-if="key === 'providerName'" class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-success to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
           {{ row.providerName?.charAt(0) || 'P' }}
         </div>
         <div class="flex flex-col">
-          <span class="text-sm font-medium text-gray-800">{{ row.providerName || 'N/A' }}</span>
-          <span class="text-xs text-gray-400">Provider</span>
+          <span class="text-sm font-medium text-ink">{{ row.providerName || 'N/A' }}</span>
+          <span class="text-xs text-ink-subtle">Provider</span>
         </div>
       </div>
       
       <!-- Total Amount Column -->
       <div v-else-if="key === 'totalAmount'" class="flex flex-col">
-        <span class="text-sm font-bold text-gray-800">${{ row.totalAmount?.toLocaleString() || '0.00' }}</span>
-        <span class="text-xs text-gray-400">Total Claim</span>
+        <span class="text-sm font-bold text-ink">${{ row.totalAmount?.toLocaleString() || '0.00' }}</span>
+        <span class="text-xs text-ink-subtle">Total Claim</span>
       </div>
       
       <!-- Default Column -->
-      <span v-else class="text-sm text-gray-700">
+      <span v-else class="text-sm text-ink-muted">
         {{ row[key] || 'N/A' }}
       </span>
     </td>
@@ -240,7 +240,7 @@ function getInstitutionName(row) {
         <Button 
           size="xs" 
           type="elevated" 
-          class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-rose-600 to-rose-700 rounded-lg hover:from-rose-700 hover:to-rose-800 transition-all duration-200 shadow-md hover:shadow-lg"
+          class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-error to-error-strong rounded-lg hover:from-error-strong hover:to-error-strong transition-all duration-200 shadow-md hover:shadow-lg"
         >
           <RouterLink 
             :to="{
@@ -259,7 +259,7 @@ function getInstitutionName(row) {
         </Button>
         
         <!-- Batch Code Badge -->
-        <div v-if="row.batchCode" class="px-2 py-1 bg-gray-100 rounded-md text-xs text-gray-600 font-mono border border-gray-200">
+        <div v-if="row.batchCode" class="px-2 py-1 bg-surface-muted rounded-md text-xs text-ink-muted font-mono border border-line">
           {{ row.batchCode }}
         </div>
       </div>
@@ -278,7 +278,7 @@ tr:hover {
   transform: scale(1.001);
 }
 
-tr.bg-red-50\/30:hover {
+tr.bg-error-soft\/30:hover {
   background-color: rgb(var(--error-soft));
 }
 

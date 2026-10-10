@@ -46,7 +46,7 @@ onMounted(() => {});
   <DefaultPage placeholder="Search Active Contracts">
       <!-- <template #filter>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-surface-muted"
       > 
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
@@ -88,8 +88,8 @@ onMounted(() => {});
             <div class="py-12 text-center">
               <div class="flex flex-col items-center justify-center">
                 <i v-html="icons.document"></i>
-                <p class="text-gray-500">No contracts found</p>
-                <p v-if="search" class="text-sm text-gray-400 mt-1">
+                <p class="text-ink-subtle">No contracts found</p>
+                <p v-if="search" class="text-sm text-ink-subtle mt-1">
                   No results match your search criteria
                 </p>
               </div>

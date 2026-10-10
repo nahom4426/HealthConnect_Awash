@@ -22,19 +22,19 @@ function getStatusStyle(status) {
   switch (status?.toUpperCase()) {
     case "ACTIVE":
       // Bright green for active
-      return `${base} bg-green-100 text-green-700`;
+      return `${base} bg-success-soft text-success-strong`;
     case "PENDING":
       // Soft amber/yellow for pending
-      return `${base} bg-amber-100 text-amber-700`;
+      return `${base} bg-warning-soft text-warning-strong`;
     case "RENEWED":
       // Fresh blue for renewed
-      return `${base} bg-blue-100 text-blue-700`;
+      return `${base} bg-primary/10 text-primary-hover`;
     case "EXPIRED":
       // Muted red for expired
-      return `${base} bg-red-100 text-red-700`;
+      return `${base} bg-error-soft text-error-strong`;
     default:
       // Neutral gray for unknown statuses
-      return `${base} bg-gray-100 text-gray-600`;
+      return `${base} bg-surface-muted text-ink-muted`;
   }
 }
 
@@ -97,31 +97,31 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     v-for="(row, idx) in rowData"
     :key="row.payerInstitutionContractUuid || idx"
     @click.self="props.onRowClick(row)"
-    class="bg-white border-b hover:shadow-md hover:bg-blue-50 transition-all duration-200 cursor-pointer group rounded-lg"
+    class="bg-white border-b hover:shadow-md hover:bg-primary/5 transition-all duration-200 cursor-pointer group rounded-lg"
   >
     <!-- Index -->
-    <td class="p-4 font-semibold text-gray-400 select-none text-sm">
+    <td class="p-4 font-semibold text-ink-subtle select-none text-sm">
       {{ idx + 1 }}
     </td>
 
     <!-- Contract Name -->
-    <td class="p-4 text-gray-800 font-medium">
+    <td class="p-4 text-ink font-medium">
       {{ row.contractName }}
-      <div class="text-xs text-gray-500">Code: {{ row.contractCode }}</div>
+      <div class="text-xs text-ink-subtle">Code: {{ row.contractCode }}</div>
     </td>
 
     <!-- Benefit -->
-    <td class="p-4 text-green-700 font-semibold">
+    <td class="p-4 text-success-strong font-semibold">
       {{ formatCurrency(row.benefit) }}
     </td>
 
     <!-- Premium -->
-    <!-- <td class="p-4 text-blue-700 font-semibold">
+    <!-- <td class="p-4 text-primary-hover font-semibold">
       {{ formatCurrency(row.premium) }}
     </td> -->
 
     <!-- Date Range -->
-    <!-- <td class="p-4 text-gray-600">
+    <!-- <td class="p-4 text-ink-muted">
       {{ formatDate(row.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row.endDate) }}
     </td> -->
 
@@ -138,7 +138,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
    <div>
   <button
     @click.stop="openEditModal(row)"
-    class="flex rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors p-2 rounded-full hover:bg-blue-100 text-blue-600 transition-colors"
+    class="flex rounded-lg bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary-hover transition-colors p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
   >
     <svg xmlns="http://www.w3.org/2000/svg"
          class="h-5 w-5"
@@ -151,7 +151,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
  <!-- Set Contribution -->
           <button
             @click.stop="openContributionModal(row)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-success bg-success-soft rounded-xl border border-success/20 transition-all duration-200 hover:bg-success-soft hover:shadow-sm"
             title="Set Benefit Contributions"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   <!-- Delete Policy Button -->
   <!-- <button
     @click.stop="openDeleteModal(row)"
-    class="flex rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-100 text-red-600 transition-colors"
+    class="flex rounded-lg bg-error-soft text-error hover:bg-error-soft hover:text-error-strong transition-colors p-2 rounded-full hover:bg-error-soft text-error transition-colors"
   >
     <svg xmlns="http://www.w3.org/2000/svg"
          class="h-5 w-5"
@@ -189,10 +189,10 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   display: inline-block;
   text-transform: capitalize;
 }
-.bg-green-100 { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
-.bg-yellow-100 { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
-.bg-red-100 { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
-.bg-gray-100 { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
+.bg-success-soft { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
+.bg-warning-soft { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
+.bg-error-soft { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
+.bg-surface-muted { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
 
 /* Dropdown Animation */
 .dropdown-menu {
@@ -220,7 +220,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   background-color: rgb(var(--primary) / 0.05);
   color: rgb(var(--primary-hover));
 }
-.dropdown-item.text-red-600:hover {
+.dropdown-item.text-error:hover {
   background-color: rgb(var(--error-soft));
   color: rgb(var(--error));
 }

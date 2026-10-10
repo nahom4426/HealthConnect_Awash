@@ -136,10 +136,10 @@ async function unmapSelected() {
   <div class="flex flex-col gap-6 p-6 bg-white rounded-lg min-h-screen">
 
     <!-- Page Header -->
-    <div class="flex gap-4 items-center pb-4 border-b border-gray-200">
+    <div class="flex gap-4 items-center pb-4 border-b border-line">
       <button
         @click="router.back()"
-        class="flex gap-2 items-center px-3 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg transition-colors hover:bg-gray-200"
+        class="flex gap-2 items-center px-3 py-2 text-sm text-ink-muted bg-surface-muted rounded-lg transition-colors hover:bg-line"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -147,8 +147,8 @@ async function unmapSelected() {
         Back
       </button>
       <div>
-        <h1 class="text-xl font-bold text-gray-800">Add Institutions</h1>
-        <p class="text-sm text-gray-500">{{ contractName }}</p>
+        <h1 class="text-xl font-bold text-ink">Add Institutions</h1>
+        <p class="text-sm text-ink-subtle">{{ contractName }}</p>
       </div>
     </div>
 
@@ -164,7 +164,7 @@ async function unmapSelected() {
             ? index === 0
               ? 'bg-base-clr text-white rounded-l font-medium'
               : 'bg-base-clr text-white rounded-r font-medium'
-            : 'text-gray-600 hover:bg-gray-50',
+            : 'text-ink-muted hover:bg-surface-muted',
         ]"
       >
         {{ tab }}
@@ -184,22 +184,22 @@ async function unmapSelected() {
             <!-- Bulk action bar -->
             <div
               v-if="selectedPolicies.size > 0"
-              class="flex gap-3 justify-between items-center px-4 py-3 mb-3 bg-blue-50 rounded-lg border border-blue-200"
+              class="flex gap-3 justify-between items-center px-4 py-3 mb-3 bg-primary/5 rounded-lg border border-primary/20"
             >
-              <span class="text-sm font-medium text-blue-700">
+              <span class="text-sm font-medium text-primary-hover">
                 {{ selectedPolicies.size }} institution(s) selected
               </span>
               <div class="flex gap-2">
                 <button
                   @click="selectedPolicies.clear(); allPoliciesSelected = false"
-                  class="px-3 py-1.5 text-sm text-gray-600 bg-white rounded-lg border border-gray-300 hover:bg-gray-50"
+                  class="px-3 py-1.5 text-sm text-ink-muted bg-white rounded-lg border border-line-strong hover:bg-surface-muted"
                 >
                   Clear
                 </button>
                 <button
                   @click="mapSelected"
                   :disabled="mappingPending"
-                  class="flex gap-2 items-center px-4 py-1.5 text-sm font-semibold text-white bg-blue-600 rounded-lg transition-colors hover:bg-blue-700 disabled:opacity-60"
+                  class="flex gap-2 items-center px-4 py-1.5 text-sm font-semibold text-white bg-primary rounded-lg transition-colors hover:bg-primary-hover disabled:opacity-60"
                 >
                   <svg v-if="mappingPending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -211,9 +211,9 @@ async function unmapSelected() {
             </div>
 
             <!-- Table -->
-            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <div class="overflow-x-auto rounded-lg border border-line shadow-sm">
+              <table class="min-w-full divide-y divide-line">
+                <thead class="bg-surface-muted">
                   <tr>
                     <!-- Select All checkbox -->
                     <th class="px-4 py-3 w-10">
@@ -221,22 +221,22 @@ async function unmapSelected() {
                         type="checkbox"
                         :checked="allPoliciesSelected"
                         @change="toggleSelectAllPolicies(policies ?? [])"
-                        class="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer focus:ring-blue-500"
+                        class="w-4 h-4 text-primary rounded border-line-strong cursor-pointer focus:ring-primary"
                       />
                     </th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">#</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Institution Name</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Contract Name</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Contract Code</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Status</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Action</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">#</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Institution Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Contract Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Contract Code</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Status</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Action</th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white divide-y divide-line">
                   <!-- Loading -->
                   <tr v-if="pending">
                     <td colspan="7" class="py-12 text-center">
-                      <div class="flex gap-2 justify-center items-center text-gray-400">
+                      <div class="flex gap-2 justify-center items-center text-ink-subtle">
                         <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -247,7 +247,7 @@ async function unmapSelected() {
                   </tr>
                   <!-- Empty -->
                   <tr v-else-if="!policies || policies.length === 0">
-                    <td colspan="7" class="py-12 text-center text-gray-400">No policies found</td>
+                    <td colspan="7" class="py-12 text-center text-ink-subtle">No policies found</td>
                   </tr>
                   <!-- Rows -->
                   <tr
@@ -256,8 +256,8 @@ async function unmapSelected() {
                     :key="policy.payerInstitutionContractUuid"
                     @click="togglePolicy(policy.payerInstitutionContractUuid)"
                     :class="[
-                      'transition-colors duration-150 cursor-pointer hover:bg-gray-50',
-                      isPolicySelected(policy.payerInstitutionContractUuid) ? 'bg-blue-50' : 'bg-white',
+                      'transition-colors duration-150 cursor-pointer hover:bg-surface-muted',
+                      isPolicySelected(policy.payerInstitutionContractUuid) ? 'bg-primary/5' : 'bg-white',
                     ]"
                   >
                     <td class="px-4 py-3" @click.stop>
@@ -265,17 +265,17 @@ async function unmapSelected() {
                         type="checkbox"
                         :checked="isPolicySelected(policy.payerInstitutionContractUuid)"
                         @change="togglePolicy(policy.payerInstitutionContractUuid)"
-                        class="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer focus:ring-blue-500"
+                        class="w-4 h-4 text-primary rounded border-line-strong cursor-pointer focus:ring-primary"
                       />
                     </td>
-                    <td class="px-4 py-3 text-sm text-gray-500">{{ idx + 1 }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-subtle">{{ idx + 1 }}</td>
                     <td class="px-4 py-3">
-                      <div class="text-sm font-medium text-gray-800">{{ policy.institutionName || policy.payerInstitutionName || '—' }}</div>
+                      <div class="text-sm font-medium text-ink">{{ policy.institutionName || policy.payerInstitutionName || '—' }}</div>
                     </td>
-                    <td class="px-4 py-3 text-sm text-gray-600">{{ policy.payerInstitutionContractName || policy.contractName || '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">{{ policy.payerInstitutionContractCode || policy.contractCode || '—' }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ policy.payerInstitutionContractName || policy.contractName || '—' }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ policy.payerInstitutionContractCode || policy.contractCode || '—' }}</td>
                     <td class="px-4 py-3">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success-strong">
                         {{ policy.status || 'ACTIVE' }}
                       </span>
                     </td>
@@ -287,7 +287,7 @@ async function unmapSelected() {
                           mapSelected();
                         "
                         :disabled="mappingPending"
-                        class="flex gap-1.5 items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg border border-blue-200 transition-colors hover:bg-blue-100 disabled:opacity-60"
+                        class="flex gap-1.5 items-center px-3 py-1.5 text-sm font-medium text-primary bg-primary/5 rounded-lg border border-primary/20 transition-colors hover:bg-primary/10 disabled:opacity-60"
                       >
                         <i v-html="icons.plus || '+'" class="w-3.5 h-3.5" />
                         Map
@@ -315,22 +315,22 @@ async function unmapSelected() {
             <!-- Bulk action bar -->
             <div
               v-if="selectedMapped.size > 0"
-              class="flex gap-3 justify-between items-center px-4 py-3 mb-3 bg-red-50 rounded-lg border border-red-200"
+              class="flex gap-3 justify-between items-center px-4 py-3 mb-3 bg-error-soft rounded-lg border border-error/20"
             >
-              <span class="text-sm font-medium text-red-700">
+              <span class="text-sm font-medium text-error-strong">
                 {{ selectedMapped.size }} institution(s) selected
               </span>
               <div class="flex gap-2">
                 <button
                   @click="selectedMapped.clear(); allMappedSelected = false"
-                  class="px-3 py-1.5 text-sm text-gray-600 bg-white rounded-lg border border-gray-300 hover:bg-gray-50"
+                  class="px-3 py-1.5 text-sm text-ink-muted bg-white rounded-lg border border-line-strong hover:bg-surface-muted"
                 >
                   Clear
                 </button>
                 <button
                   @click="unmapSelected"
                   :disabled="unmappingPending"
-                  class="flex gap-2 items-center px-4 py-1.5 text-sm font-semibold text-white bg-red-600 rounded-lg transition-colors hover:bg-red-700 disabled:opacity-60"
+                  class="flex gap-2 items-center px-4 py-1.5 text-sm font-semibold text-white bg-error rounded-lg transition-colors hover:bg-error-strong disabled:opacity-60"
                 >
                   <svg v-if="unmappingPending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -342,30 +342,30 @@ async function unmapSelected() {
             </div>
 
             <!-- Table -->
-            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <div class="overflow-x-auto rounded-lg border border-line shadow-sm">
+              <table class="min-w-full divide-y divide-line">
+                <thead class="bg-surface-muted">
                   <tr>
                     <th class="px-4 py-3 w-10">
                       <input
                         type="checkbox"
                         :checked="allMappedSelected"
                         @change="toggleSelectAllMapped(institutions ?? [])"
-                        class="w-4 h-4 text-red-600 rounded border-gray-300 cursor-pointer focus:ring-red-500"
+                        class="w-4 h-4 text-error rounded border-line-strong cursor-pointer focus:ring-error"
                       />
                     </th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">#</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Institution Name</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Contract Name</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Contract Code</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Status</th>
-                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Action</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">#</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Institution Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Contract Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Contract Code</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Status</th>
+                    <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Action</th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white divide-y divide-line">
                   <tr v-if="pending">
                     <td colspan="7" class="py-12 text-center">
-                      <div class="flex gap-2 justify-center items-center text-gray-400">
+                      <div class="flex gap-2 justify-center items-center text-ink-subtle">
                         <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -375,7 +375,7 @@ async function unmapSelected() {
                     </td>
                   </tr>
                   <tr v-else-if="!institutions || institutions.length === 0">
-                    <td colspan="7" class="py-12 text-center text-gray-400">No mapped institutions found</td>
+                    <td colspan="7" class="py-12 text-center text-ink-subtle">No mapped institutions found</td>
                   </tr>
                   <tr
                     v-else
@@ -383,8 +383,8 @@ async function unmapSelected() {
                     :key="inst.mapContractUuid"
                     @click="toggleMapped(inst.mapContractUuid)"
                     :class="[
-                      'transition-colors duration-150 cursor-pointer hover:bg-gray-50',
-                      isMappedSelected(inst.mapContractUuid) ? 'bg-red-50' : 'bg-white',
+                      'transition-colors duration-150 cursor-pointer hover:bg-surface-muted',
+                      isMappedSelected(inst.mapContractUuid) ? 'bg-error-soft' : 'bg-white',
                     ]"
                   >
                     <td class="px-4 py-3" @click.stop>
@@ -392,17 +392,17 @@ async function unmapSelected() {
                         type="checkbox"
                         :checked="isMappedSelected(inst.mapContractUuid)"
                         @change="toggleMapped(inst.mapContractUuid)"
-                        class="w-4 h-4 text-red-600 rounded border-gray-300 cursor-pointer focus:ring-red-500"
+                        class="w-4 h-4 text-error rounded border-line-strong cursor-pointer focus:ring-error"
                       />
                     </td>
-                    <td class="px-4 py-3 text-sm text-gray-500">{{ idx + 1 }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-subtle">{{ idx + 1 }}</td>
                     <td class="px-4 py-3">
-                      <div class="text-sm font-medium text-gray-800">{{ inst.institutionName || '—' }}</div>
+                      <div class="text-sm font-medium text-ink">{{ inst.institutionName || '—' }}</div>
                     </td>
-                    <td class="px-4 py-3 text-sm text-gray-600">{{ inst.payerInstitutionContractName || inst.contractName || '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">{{ inst.payerInstitutionContractCode || inst.contractCode || '—' }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ inst.payerInstitutionContractName || inst.contractName || '—' }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ inst.payerInstitutionContractCode || inst.contractCode || '—' }}</td>
                     <td class="px-4 py-3">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success-strong">
                         {{ inst.status || 'ACTIVE' }}
                       </span>
                     </td>
@@ -414,7 +414,7 @@ async function unmapSelected() {
                           unmapSelected();
                         "
                         :disabled="unmappingPending"
-                        class="flex gap-1.5 items-center px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg border border-red-200 transition-colors hover:bg-red-100 disabled:opacity-60"
+                        class="flex gap-1.5 items-center px-3 py-1.5 text-sm font-medium text-error bg-error-soft rounded-lg border border-error/20 transition-colors hover:bg-error-soft disabled:opacity-60"
                       >
                         <i v-html="icons.trash || '✕'" class="w-3.5 h-3.5" />
                         Unmap

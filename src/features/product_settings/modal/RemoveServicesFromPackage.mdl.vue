@@ -171,16 +171,16 @@ onMounted(() => {
       :subtitle="`Remove services from ${packageName}`"
     >
       <div class="space-y-6">
-        <div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-6 border border-red-100">
+        <div class="bg-gradient-to-r from-error-soft to-pink-50 rounded-xl p-6 border border-error-soft">
           <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+            <div class="w-10 h-10 bg-error rounded-lg flex items-center justify-center">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
             </div>
             <div>
-              <h3 class="text-xl font-bold text-gray-800">Remove Services</h3>
-              <p class="text-sm text-gray-600">Select services to remove from this package</p>
+              <h3 class="text-xl font-bold text-ink">Remove Services</h3>
+              <p class="text-sm text-ink-muted">Select services to remove from this package</p>
             </div>
           </div>
 
@@ -191,10 +191,10 @@ onMounted(() => {
                 v-model="searchTerm"
                 placeholder="Search services by name, code, or category..."
                 :attributes="{
-                  class: 'pl-10 w-full bg-white border-red-200 focus:border-red-400'
+                  class: 'pl-10 w-full bg-white border-error/20 focus:border-error'
                 }"
               />
-              <div class="absolute left-3 top-3 text-gray-400">
+              <div class="absolute left-3 top-3 text-ink-subtle">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
@@ -210,13 +210,13 @@ onMounted(() => {
                 id="selectAll"
                 v-model="selectAll"
                 @change="toggleSelectAll"
-                class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                class="h-4 w-4 text-error focus:ring-error border-line-strong rounded"
               />
-              <label for="selectAll" class="ml-2 text-sm text-gray-700 font-medium">
+              <label for="selectAll" class="ml-2 text-sm text-ink-muted font-medium">
                 Select All Services
               </label>
             </div>
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-ink-subtle">
               {{ selectedServicesToRemove.length }} service(s) selected for removal
             </div>
           </div>
@@ -226,34 +226,34 @@ onMounted(() => {
             <Spinner size="lg" />
           </div>
 
-          <div v-else class="overflow-y-auto max-h-96 border border-red-200 rounded-lg">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50 sticky top-0">
+          <div v-else class="overflow-y-auto max-h-96 border border-error/20 rounded-lg">
+            <table class="min-w-full divide-y divide-line">
+              <thead class="bg-surface-muted sticky top-0">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-6 py-3 text-left text-xs font-medium text-ink-subtle uppercase tracking-wider">
                     Remove
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-6 py-3 text-left text-xs font-medium text-ink-subtle uppercase tracking-wider">
                     Service Code
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-6 py-3 text-left text-xs font-medium text-ink-subtle uppercase tracking-wider">
                     Service Name
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-6 py-3 text-left text-xs font-medium text-ink-subtle uppercase tracking-wider">
                     Category
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-6 py-3 text-left text-xs font-medium text-ink-subtle uppercase tracking-wider">
                     Price (ETB)
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="bg-white divide-y divide-line">
                 <tr
                   v-for="service in filteredServices"
                   :key="service.serviceId"
                   :class="{
-                    'bg-red-50': isServiceSelected(service),
-                    'hover:bg-gray-50': !isServiceSelected(service)
+                    'bg-error-soft': isServiceSelected(service),
+                    'hover:bg-surface-muted': !isServiceSelected(service)
                   }"
                 >
                   <td class="px-6 py-4 whitespace-nowrap">
@@ -261,24 +261,24 @@ onMounted(() => {
                       type="checkbox"
                       :checked="isServiceSelected(service)"
                       @change="toggleServiceSelection(service)"
-                      class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                      class="h-4 w-4 text-error focus:ring-error border-line-strong rounded"
                     />
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-ink">
                     {{ service.itemCode || 'N/A' }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-ink">
                     {{ service.item || 'N/A' }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-ink-subtle">
                     {{ service.category || 'N/A' }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-ink-subtle">
                     {{ service.price?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00' }}
                   </td>
                 </tr>
                 <tr v-if="filteredServices.length === 0">
-                  <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colspan="5" class="px-6 py-8 text-center text-sm text-ink-subtle">
                     {{ existingServices.length === 0 ? 'No services in this package' : 'No services found matching your search' }}
                   </td>
                 </tr>
@@ -288,7 +288,7 @@ onMounted(() => {
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+        <div class="flex justify-end gap-4 pt-6 border-t border-line">
           <Button @click="closeModal" variant="outline">
             Cancel
           </Button>
@@ -297,7 +297,7 @@ onMounted(() => {
             @click="removeServices"
             :pending="api.pending.value"
             :disabled="selectedServicesToRemove.length === 0"
-            class="bg-red-500 hover:bg-red-600 text-white"
+            class="bg-error hover:bg-error text-white"
           >
             Remove {{ selectedServicesToRemove.length }} Service(s)
           </Button>

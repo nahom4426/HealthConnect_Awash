@@ -71,16 +71,16 @@ const openMapPicker = () => {
 <template>
   <Form id="institution-form" :inner="false" class="space-y-8 p-6">
     <!-- Basic Information Section -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+    <div class="bg-gradient-to-r from-primary/5 to-primary/5 rounded-xl p-6 border border-primary/10">
       <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
           </svg>
         </div>
         <div>
-          <h3 class="text-xl font-bold text-gray-800">Basic Information</h3>
-          <p class="text-sm text-gray-600">Essential details about the institution</p>
+          <h3 class="text-xl font-bold text-ink">Basic Information</h3>
+          <p class="text-sm text-ink-muted">Essential details about the institution</p>
         </div>
       </div>
       
@@ -143,26 +143,26 @@ const openMapPicker = () => {
     </div>
 
     <!-- Location Information Section -->
-    <div class="border border-gray-200 rounded-xl overflow-hidden">
+    <div class="border border-line rounded-xl overflow-hidden">
       <button 
         type="button"
         @click="emit('toggle-location')"
-        class="w-full flex items-center justify-between p-6 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-colors duration-200"
+        class="w-full flex items-center justify-between p-6 bg-gradient-to-r from-success-soft to-success-soft hover:from-success-soft hover:to-success-soft transition-colors duration-200"
       >
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+          <div class="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
           </div>
           <div class="text-left">
-            <h3 class="text-xl font-bold text-gray-800">Location Information</h3>
-            <p class="text-sm text-gray-600">Address and geographical details</p>
+            <h3 class="text-xl font-bold text-ink">Location Information</h3>
+            <p class="text-sm text-ink-muted">Address and geographical details</p>
           </div>
         </div>
         <svg 
-          class="w-5 h-5 text-gray-600 transition-transform duration-200" 
+          class="w-5 h-5 text-ink-muted transition-transform duration-200" 
           :class="{ 'rotate-180': showLocationSection }"
           fill="none" 
           stroke="currentColor" 
@@ -176,7 +176,7 @@ const openMapPicker = () => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Region/State -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Region/State</label>
+            <label class="block text-sm font-semibold text-ink-muted mb-2">Region/State</label>
             <Select
               name="state"
               v-model="formData.state"
@@ -189,7 +189,7 @@ const openMapPicker = () => {
 
           <!-- City -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">City</label>
+            <label class="block text-sm font-semibold text-ink-muted mb-2">City</label>
             <Select
               name="address3"
               v-if="availableCities.length > 0"
@@ -210,7 +210,7 @@ const openMapPicker = () => {
 
           <!-- Sub City (only for Addis) -->
           <div v-if="isAddisAbaba">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Sub City</label>
+            <label class="block text-sm font-semibold text-ink-muted mb-2">Sub City</label>
             <Select
               name="address2"
               v-if="availableSubCities.length > 0"
@@ -231,7 +231,7 @@ const openMapPicker = () => {
 
           <!-- Woreda -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Woreda</label>
+            <label class="block text-sm font-semibold text-ink-muted mb-2">Woreda</label>
             <Input
               name="address1"
               v-model="formData.address1"
@@ -243,7 +243,7 @@ const openMapPicker = () => {
 
           <!-- Country -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Country</label>
+            <label class="block text-sm font-semibold text-ink-muted mb-2">Country</label>
             <Input
               name="country"
               v-model="formData.country"
@@ -256,25 +256,25 @@ const openMapPicker = () => {
 
           <!-- Map Coordinates -->
           <div class="md:col-span-2">
-            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div class="bg-surface-muted rounded-lg p-4 border border-line">
               <div class="flex items-center justify-between">
                 <div class="flex-1">
-                  <label class="block text-sm font-semibold text-gray-700 mb-3">GPS Coordinates</label>
+                  <label class="block text-sm font-semibold text-ink-muted mb-3">GPS Coordinates</label>
                   <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white p-3 rounded-lg border border-gray-200">
-                      <div class="text-xs text-gray-500 mb-1">Latitude</div>
-                      <div class="font-mono text-sm font-semibold text-gray-800">{{ formData.latitude.toFixed(6) }}</div>
+                    <div class="bg-white p-3 rounded-lg border border-line">
+                      <div class="text-xs text-ink-subtle mb-1">Latitude</div>
+                      <div class="font-mono text-sm font-semibold text-ink">{{ formData.latitude.toFixed(6) }}</div>
                     </div>
-                    <div class="bg-white p-3 rounded-lg border border-gray-200">
-                      <div class="text-xs text-gray-500 mb-1">Longitude</div>
-                      <div class="font-mono text-sm font-semibold text-gray-800">{{ formData.longitude.toFixed(6) }}</div>
+                    <div class="bg-white p-3 rounded-lg border border-line">
+                      <div class="text-xs text-ink-subtle mb-1">Longitude</div>
+                      <div class="font-mono text-sm font-semibold text-ink">{{ formData.longitude.toFixed(6) }}</div>
                     </div>
                   </div>
                 </div>
                 <button 
                   type="button"
                   @click="openMapPicker"
-                  class="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 shadow-md hover:shadow-lg"
+                  class="ml-4 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg transition-colors duration-200 flex items-center gap-2 shadow-md hover:shadow-lg"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -289,7 +289,7 @@ const openMapPicker = () => {
     </div>
 
     <!-- Additional Information Section -->
-    <div class="border border-gray-200 rounded-xl overflow-hidden">
+    <div class="border border-line rounded-xl overflow-hidden">
       <button 
         type="button"
         @click="emit('toggle-additional')"
@@ -302,12 +302,12 @@ const openMapPicker = () => {
             </svg>
           </div>
           <div class="text-left">
-            <h3 class="text-xl font-bold text-gray-800">Additional Information</h3>
-            <p class="text-sm text-gray-600">Referral and partnership details</p>
+            <h3 class="text-xl font-bold text-ink">Additional Information</h3>
+            <p class="text-sm text-ink-muted">Referral and partnership details</p>
           </div>
         </div>
         <svg 
-          class="w-5 h-5 text-gray-600 transition-transform duration-200" 
+          class="w-5 h-5 text-ink-muted transition-transform duration-200" 
           :class="{ 'rotate-180': showAdditionalSection }"
           fill="none" 
           stroke="currentColor" 
@@ -320,7 +320,7 @@ const openMapPicker = () => {
       <div v-show="showAdditionalSection" class="p-6 space-y-6 bg-white">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Referral Type</label>
+            <label class="block text-sm font-semibold text-ink-muted mb-2">Referral Type</label>
             <Select
               name="referralType"
               v-model="formData.referralType"
@@ -332,7 +332,7 @@ const openMapPicker = () => {
           </div>
           
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Referred By</label>
+            <label class="block text-sm font-semibold text-ink-muted mb-2">Referred By</label>
             <Input
               name="referredBy"
               v-model="formData.referredBy"
@@ -363,11 +363,11 @@ const openMapPicker = () => {
 <style scoped>
 /* Enhanced form styling */
 :deep(.form-control) {
-  @apply border-2 border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-all duration-200;
+  @apply border-2 border-line text-ink text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary block w-full p-3 transition-all duration-200;
 }
 
 :deep(.form-select) {
-  @apply border-2 border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-all duration-200;
+  @apply border-2 border-line text-ink text-sm rounded-lg focus:ring-2 focus:ring-primary focus:border-primary block w-full p-3 transition-all duration-200;
 }
 
 /* Enhanced select dropdown styling */

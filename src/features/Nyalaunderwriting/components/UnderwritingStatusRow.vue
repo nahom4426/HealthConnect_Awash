@@ -13,21 +13,21 @@ const props = defineProps({
 const getStatusClass = (status) => {
   switch (status?.toLowerCase()) {
     case 'active':
-      return 'bg-green-100 text-green-800';
+      return 'bg-success-soft text-success-strong';
     case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-warning-soft text-warning-strong';
     case 'history':
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-surface-muted text-ink';
     case 'issued':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-primary/10 text-primary-hover';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-surface-muted text-ink';
   }
 };
 </script>
 
 <template>
-  <tr class="border-b hover:bg-gray-50">
+  <tr class="border-b hover:bg-surface-muted">
     <td v-for="key in rowKeys" :key="key" class="px-4 py-3">
       <span v-if="key === 'status'" 
             :class="getStatusClass(rowData[key])"
@@ -40,17 +40,17 @@ const getStatusClass = (status) => {
       <div class="flex items-center gap-2">
         <button 
           @click="onView?.(rowData.id)"
-          class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+          class="text-primary hover:text-primary-hover text-sm font-medium">
           View
         </button>
         <button 
           @click="onEdit?.(rowData.id)"
-          class="text-green-600 hover:text-green-800 text-sm font-medium">
+          class="text-success hover:text-success-strong text-sm font-medium">
           Edit
         </button>
         <button 
           @click="onDelete?.(rowData.id)"
-          class="text-red-600 hover:text-red-800 text-sm font-medium">
+          class="text-error hover:text-error-strong text-sm font-medium">
           Delete
         </button>
       </div>

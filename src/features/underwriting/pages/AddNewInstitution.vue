@@ -40,7 +40,7 @@ const saveInstitution = async ({ values }) => {
     <template #add-action>
       <button
         @click="router.go(-1)"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-surface-muted"
       >
         <i v-html="icons.arrow_left"></i>
         <p class="text-base">Back</p>
@@ -51,7 +51,7 @@ const saveInstitution = async ({ values }) => {
       <div class="w-full mx-auto bg-white rounded-xl shadow-md overflow-hidden p-8 m-3">
         <Form id="add-institution-form" class="grid space-y-4">
           <!-- Policy Holder Information -->
-          <div class="sm:col-span-6 text-sm font-semibold bg-gray-100 px-2">
+          <div class="sm:col-span-6 text-sm font-semibold bg-surface-muted px-2">
             Policy Holder Information
           </div>
           
@@ -94,7 +94,7 @@ const saveInstitution = async ({ values }) => {
           </div>
 
           <!-- Address Information -->
-          <div class="sm:col-span-6 text-sm font-semibold bg-gray-100 px-2">
+          <div class="sm:col-span-6 text-sm font-semibold bg-surface-muted px-2">
             Address Information
           </div>
           

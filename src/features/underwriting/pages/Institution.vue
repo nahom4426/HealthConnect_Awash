@@ -42,7 +42,7 @@ const openImportInstitutions = () => {
 <template>
   <DefaultPage placeholder="Search Active Institutions">
     <!-- <template #filter>
-      <button class="flex gap-2 justify-center items-center px-6 py-3 font-semibold bg-gray-100 rounded-lg transition-colors text-primary hover:bg-gray-200">
+      <button class="flex gap-2 justify-center items-center px-6 py-3 font-semibold bg-surface-muted rounded-lg transition-colors text-primary hover:bg-line">
         <i v-html="icons.filter"></i>
         <p class="text-sm sm:text-base">Filters</p>
       </button>
@@ -52,7 +52,7 @@ const openImportInstitutions = () => {
       <div class="flex gap-2">
         <button
           @click.prevent="openImportInstitutions"
-          class="flex gap-2 justify-center items-center px-6 py-3 font-semibold text-white rounded-lg transition-colors bg-amber-500 hover:bg-amber-600"
+          class="flex gap-2 justify-center items-center px-6 py-3 font-semibold text-white rounded-lg transition-colors bg-warning hover:bg-warning"
         >
           <i v-html="icons.upload || icons.import"></i>
           <p class="text-sm sm:text-base">Import Institutions</p>
@@ -88,11 +88,11 @@ const openImportInstitutions = () => {
           <template #empty>
             <div class="py-12 text-center">
               <div class="flex flex-col justify-center items-center">
-                <svg class="mb-4 w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="mb-4 w-16 h-16 text-line-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p class="font-semibold text-gray-600">No institutions found</p>
-                <p v-if="search" class="mt-2 text-sm text-gray-400">
+                <p class="font-semibold text-ink-muted">No institutions found</p>
+                <p v-if="search" class="mt-2 text-sm text-ink-subtle">
                   No results match your search criteria
                 </p>
               </div>

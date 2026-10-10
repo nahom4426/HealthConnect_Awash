@@ -86,11 +86,11 @@ function createContract({ values }) {
       </div>
 
       <template #bottom>
-        <div class="flex gap-4 justify-end p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200">
+        <div class="flex gap-4 justify-end p-6 bg-gradient-to-r from-surface-muted to-surface-muted border-t border-line">
           <Button
             type="button"
             @click="closeModal"
-            class="px-6 py-3 font-medium text-gray-700 rounded-lg border-2 border-gray-300 shadow-sm transition-all duration-200 hover:bg-gray-100 hover:shadow-md"
+            class="px-6 py-3 font-medium text-ink-muted rounded-lg border-2 border-line-strong shadow-sm transition-all duration-200 hover:bg-surface-muted hover:shadow-md"
           >
             Cancel
           </Button>
@@ -98,7 +98,7 @@ function createContract({ values }) {
             type="button"
             :pending="req.pending.value"
             @click="submit(createContract)"
-            class="flex gap-2 items-center px-8 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-blue-700 hover:shadow-xl"
+            class="flex gap-2 items-center px-8 py-3 font-medium text-white bg-gradient-to-r from-primary to-primary rounded-lg shadow-lg transition-all duration-200 hover:from-primary hover:to-primary-hover hover:shadow-xl"
           >
             {{ req.pending.value ? 'Creating Contract...' : 'Create Contract' }}
           </Button>

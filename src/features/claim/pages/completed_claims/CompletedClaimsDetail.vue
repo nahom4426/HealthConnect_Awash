@@ -392,21 +392,21 @@ const totals = computed(() => {
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary flex items-center justify-center text-white font-bold shadow-lg">
               {{ getInitials(institutionName) }}
             </div>
             <div>
-              <h1 class="text-xl font-bold text-gray-800">{{ institutionName }}</h1>
-              <p class="text-sm text-gray-500">Completed Claim Details</p>
+              <h1 class="text-xl font-bold text-ink">{{ institutionName }}</h1>
+              <p class="text-sm text-ink-subtle">Completed Claim Details</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
-            <span class="text-xs font-medium text-gray-600">Batch:</span>
-            <span class="text-xs font-mono text-gray-800">{{ batchCode || 'N/A' }}</span>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-muted rounded-lg border border-line">
+            <span class="text-xs font-medium text-ink-muted">Batch:</span>
+            <span class="text-xs font-mono text-ink">{{ batchCode || 'N/A' }}</span>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
-            <span class="text-xs font-medium text-green-600">Status:</span>
-            <span class="text-xs font-semibold text-green-700">COMPLETED</span>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-success-soft rounded-lg border border-success/20">
+            <span class="text-xs font-medium text-success">Status:</span>
+            <span class="text-xs font-semibold text-success-strong">COMPLETED</span>
           </div>
         </div>
       </div>
@@ -420,7 +420,7 @@ const totals = computed(() => {
           :pending="exportingExcel"
           type="elevated"
           size="sm"
-          class="flex gap-2 items-center text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-emerald-200"
+          class="flex gap-2 items-center text-white bg-gradient-to-r from-success to-success hover:from-success hover:to-success-strong shadow-emerald-200"
         >
           <div v-html="icons.documentArrowDown" class="w-4 h-4"></div>
           Export Excel
@@ -431,7 +431,7 @@ const totals = computed(() => {
           :pending="exportingPdf"
           type="elevated"
           size="sm"
-          class="flex gap-2 items-center text-white bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-rose-200"
+          class="flex gap-2 items-center text-white bg-gradient-to-r from-error to-error hover:from-error hover:to-error-strong shadow-rose-200"
         >
           <div v-html="icons.documentPdf" class="w-4 h-4"></div>
           Export PDF
@@ -452,16 +452,16 @@ const totals = computed(() => {
 
     <!-- Summary Cards with Modern Design -->
     <div class="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2 lg:grid-cols-4">
-      <div class="p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md">
+      <div class="p-4 bg-gradient-to-br from-white to-surface-muted rounded-xl border border-line shadow-sm transition-all duration-200 hover:shadow-md">
         <div class="flex items-center">
-          <div class="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-            <div v-html="icons.documentText" class="w-6 h-6 text-blue-600"></div>
+          <div class="p-3 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+            <div v-html="icons.documentText" class="w-6 h-6 text-primary"></div>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Total Claims</p>
+            <p class="text-sm font-medium text-ink-muted">Total Claims</p>
             <div class="flex items-baseline">
-              <p class="text-2xl font-bold text-gray-900">{{ totals.totalCount }}</p>
-              <span class="px-2 py-0.5 ml-2 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+              <p class="text-2xl font-bold text-ink">{{ totals.totalCount }}</p>
+              <span class="px-2 py-0.5 ml-2 text-xs font-medium text-primary-hover bg-primary/10 rounded-full">
                 {{ Math.round((totals.totalCount / totals.totalCount) * 100) || 0 }}%
               </span>
             </div>
@@ -469,33 +469,33 @@ const totals = computed(() => {
         </div>
       </div>
       
-      <div class="p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md">
+      <div class="p-4 bg-gradient-to-br from-white to-surface-muted rounded-xl border border-line shadow-sm transition-all duration-200 hover:shadow-md">
         <div class="flex items-center">
-          <div class="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200">
-            <div v-html="icons.currencyDollar" class="w-6 h-6 text-emerald-600"></div>
+          <div class="p-3 bg-gradient-to-br from-success-soft to-success-soft rounded-xl border border-success/20">
+            <div v-html="icons.currencyDollar" class="w-6 h-6 text-success"></div>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Total Amount</p>
+            <p class="text-sm font-medium text-ink-muted">Total Amount</p>
             <div class="flex items-baseline">
-              <p class="text-2xl font-bold text-gray-900">ETB {{ formatCurrency(totals.totalAmount) }}</p>
+              <p class="text-2xl font-bold text-ink">ETB {{ formatCurrency(totals.totalAmount) }}</p>
             </div>
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="mt-1 text-xs text-ink-subtle">
               Across all {{ totals.totalCount }} claims
             </p>
           </div>
         </div>
       </div>
       
-      <div class="p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md">
+      <div class="p-4 bg-gradient-to-br from-white to-surface-muted rounded-xl border border-line shadow-sm transition-all duration-200 hover:shadow-md">
         <div class="flex items-center">
-          <div class="p-3 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl border border-amber-200">
-            <div v-html="icons.shoppingBag" class="w-6 h-6 text-amber-600"></div>
+          <div class="p-3 bg-gradient-to-br from-warning-soft to-warning-soft rounded-xl border border-warning/20">
+            <div v-html="icons.shoppingBag" class="w-6 h-6 text-warning"></div>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Total Items</p>
+            <p class="text-sm font-medium text-ink-muted">Total Items</p>
             <div class="flex items-baseline">
-              <p class="text-2xl font-bold text-gray-900">{{ totals.totalItems }}</p>
-              <span class="px-2 py-0.5 ml-2 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
+              <p class="text-2xl font-bold text-ink">{{ totals.totalItems }}</p>
+              <span class="px-2 py-0.5 ml-2 text-xs font-medium text-warning-strong bg-warning-soft rounded-full">
                 {{ Math.round((totals.totalItems / totals.totalCount) || 0) }}/claim
               </span>
             </div>
@@ -503,31 +503,31 @@ const totals = computed(() => {
         </div>
       </div>
       
-      <div class="p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md">
+      <div class="p-4 bg-gradient-to-br from-white to-surface-muted rounded-xl border border-line shadow-sm transition-all duration-200 hover:shadow-md">
         <div class="flex items-center">
           <div class="p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
             <div v-html="icons.chartBar" class="w-6 h-6 text-purple-600"></div>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Status Overview</p>
+            <p class="text-sm font-medium text-ink-muted">Status Overview</p>
             <div class="flex items-center mt-1 space-x-3">
-              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-hover bg-primary/10 rounded-full">
                 <div v-html="icons.clock" class="mr-1 w-3 h-3"></div>
                 {{ totals.pendingCount }}
               </span>
-              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-success-strong bg-success-soft rounded-full">
                 <div v-html="icons.checkCircle" class="mr-1 w-3 h-3"></div>
                 {{ totals.processedCount }}
               </span>
-              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-100 rounded-full">
+              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-success-strong bg-success-soft rounded-full">
                 <div v-html="icons.shieldCheck" class="mr-1 w-3 h-3"></div>
                 {{ totals.checkedCount }}
               </span>
-              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
+              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-error-strong bg-error-soft rounded-full">
                 <div v-html="icons.xCircle" class="mr-1 w-3 h-3"></div>
                 {{ totals.rejectedCount }}
               </span>
-              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full">
+              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-hover bg-primary/10 rounded-full">
                 <div v-html="icons.checkCircle" class="mr-1 w-3 h-3"></div>
                 {{ totals.completedCount }}
               </span>
@@ -538,15 +538,15 @@ const totals = computed(() => {
     </div>
 
     <!-- Selection Info Banner -->
-    <div v-if="checked.length" class="p-4 mb-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+    <div v-if="checked.length" class="p-4 mb-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
       <div class="flex justify-between items-center">
         <div class="flex items-center">
-          <div v-html="icons.informationCircle" class="mr-3 w-5 h-5 text-blue-600"></div>
+          <div v-html="icons.informationCircle" class="mr-3 w-5 h-5 text-primary"></div>
           <div>
-            <p class="text-sm font-semibold text-blue-800">
+            <p class="text-sm font-semibold text-primary-hover">
               {{ checked.length }} claim{{ checked.length > 1 ? 's' : '' }} selected
             </p>
-            <p class="text-sm text-blue-700">
+            <p class="text-sm text-primary-hover">
               Click "Settle Payment" to settle the selected claims
             </p>
           </div>
@@ -555,7 +555,7 @@ const totals = computed(() => {
           @click="checked = []"
           type="text"
           size="sm"
-          class="text-blue-700 hover:text-blue-900"
+          class="text-primary-hover hover:text-primary-hover"
         >
           <div v-html="icons.xCircle" class="w-4 h-4"></div>
           Clear Selection
@@ -564,7 +564,7 @@ const totals = computed(() => {
     </div>
 
     <!-- Main Table Area -->
-    <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
+    <div class="overflow-hidden bg-white rounded-xl border border-line shadow-sm">
       <TableWithCheckBox
         :pending="pagination.pending.value"
         :show-pagination="false"
@@ -582,11 +582,11 @@ const totals = computed(() => {
       
       <!-- Empty State -->
       <div v-if="!store.claims?.length && !pagination.pending.value" class="p-12 text-center">
-        <div class="inline-flex p-4 mb-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200">
-          <div v-html="icons.documentSearch" class="w-12 h-12 text-gray-400"></div>
+        <div class="inline-flex p-4 mb-4 bg-gradient-to-br from-surface-muted to-surface-muted rounded-2xl border border-line">
+          <div v-html="icons.documentSearch" class="w-12 h-12 text-ink-subtle"></div>
         </div>
-        <h3 class="mb-2 text-lg font-semibold text-gray-900">No Claims Found</h3>
-        <p class="mx-auto max-w-md text-gray-600">
+        <h3 class="mb-2 text-lg font-semibold text-ink">No Claims Found</h3>
+        <p class="mx-auto max-w-md text-ink-muted">
           There are no claims available for this batch. Please check if the batch code is correct or if claims have been submitted.
         </p>
       </div>

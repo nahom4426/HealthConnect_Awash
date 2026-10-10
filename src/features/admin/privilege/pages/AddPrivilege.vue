@@ -189,19 +189,19 @@ function create({ values, reset }) {
 
 </script>
 <template>
-  <div class="p-4 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 sm:p-6 lg:p-8">
+  <div class="p-4 min-h-screen bg-gradient-to-br from-surface-muted to-surface-muted sm:p-6 lg:p-8">
     <div class="mx-auto max-w-8xl">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 sm:text-4xl">Add New Privilege</h1>
-        <p class="mt-2 text-gray-600">Create a new privilege with detailed permissions and settings</p>
+        <h1 class="text-3xl font-bold text-ink sm:text-4xl">Add New Privilege</h1>
+        <p class="mt-2 text-ink-muted">Create a new privilege with detailed permissions and settings</p>
       </div>
 
       <!-- Form Card -->
       <div class="overflow-hidden bg-white rounded-2xl shadow-lg">
         <!-- Form Header -->
-        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 sm:px-8">
-          <h2 class="text-lg font-semibold text-gray-900">Privilege Details</h2>
+        <div class="px-6 py-4 bg-gradient-to-r from-primary/5 to-primary/5 border-b border-line sm:px-8">
+          <h2 class="text-lg font-semibold text-ink">Privilege Details</h2>
         </div>
 
         <!-- Form Content -->
@@ -209,16 +209,16 @@ function create({ values, reset }) {
           <PrivilegeForm />
 
           <!-- Info Alert -->
-          <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div class="p-4 bg-primary/5 rounded-lg border border-primary/20">
             <div class="flex gap-3">
-              <svg class="flex-shrink-0 mt-0.5 w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="flex-shrink-0 mt-0.5 w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
               </svg>
               <div>
-                <p class="text-sm font-medium text-blue-900">
+                <p class="text-sm font-medium text-primary-hover">
                   <strong>Field Requirements:</strong>
                 </p>
-                <ul class="mt-2 space-y-1 text-sm list-disc list-inside text-blue-800">
+                <ul class="mt-2 space-y-1 text-sm list-disc list-inside text-primary-hover">
                   <li>All fields must be at least 3 characters long</li>
                   <li>Privilege Name and Category must be less than 50 characters</li>
                 </ul>
@@ -241,13 +241,13 @@ function create({ values, reset }) {
             </Button>
             <!-- <button
   @click="uploadAllPrivileges"
-  class="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-semibold text-white bg-green-600 rounded-lg transition-all duration-200 hover:bg-green-700"
+  class="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-semibold text-white bg-success rounded-lg transition-all duration-200 hover:bg-success-strong"
 >
   🚀 Bulk Upload Privileges
 </button> -->
             <button
               @click="$router.back()"
-              class="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-semibold text-gray-700 bg-gray-100 rounded-lg transition-all duration-200 hover:bg-gray-200"
+              class="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-semibold text-ink-muted bg-surface-muted rounded-lg transition-all duration-200 hover:bg-line"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

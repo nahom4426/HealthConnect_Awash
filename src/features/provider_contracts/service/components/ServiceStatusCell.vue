@@ -7,12 +7,12 @@ const props = defineProps({
 
 const statusStyle = computed(() => {
   const s = (props.row?.status || '').toUpperCase();
-  if (s === 'ACTIVE') return 'bg-green-100 text-green-700 ring-green-200';
-  if (s === 'INACTIVE') return 'bg-gray-100 text-gray-700 ring-gray-200';
-  if (s === 'SUSPENDED') return 'bg-yellow-100 text-yellow-700 ring-yellow-200';
-  if (s === 'PENDING') return 'bg-blue-100 text-blue-700 ring-blue-200';
-  if (s === 'DEACTIVATED' || s === 'CANCELLED') return 'bg-red-100 text-red-700 ring-red-200';
-  return 'bg-slate-100 text-slate-700 ring-slate-200';
+  if (s === 'ACTIVE') return 'bg-success-soft text-success-strong ring-success/20';
+  if (s === 'INACTIVE') return 'bg-surface-muted text-ink-muted ring-line';
+  if (s === 'SUSPENDED') return 'bg-warning-soft text-warning-strong ring-warning/20';
+  if (s === 'PENDING') return 'bg-primary/10 text-primary-hover ring-primary/20';
+  if (s === 'DEACTIVATED' || s === 'CANCELLED') return 'bg-error-soft text-error-strong ring-error/20';
+  return 'bg-surface-muted text-ink-muted ring-line';
 });
 </script>
 

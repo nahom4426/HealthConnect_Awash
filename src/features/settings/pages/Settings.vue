@@ -64,17 +64,17 @@ function saveMode(mode) {
   <div class="min-h-full p-6 lg:p-10">
     <!-- Page Header -->
     <div class="mb-8">
-      <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
-      <p class="mt-1 text-sm text-gray-500">Manage your payer account configuration and preferences.</p>
+      <h1 class="text-2xl font-bold text-ink">Settings</h1>
+      <p class="mt-1 text-sm text-ink-subtle">Manage your payer account configuration and preferences.</p>
     </div>
 
     <!-- Settings Card -->
     <div class="max-w-3xl space-y-6">
 
       <!-- Claim Processing Mode Section -->
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
         <!-- Section Header -->
-        <div class="px-6 py-5 border-b border-gray-100">
+        <div class="px-6 py-5 border-b border-line">
           <div class="flex items-center gap-3">
             <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-primary">
@@ -83,8 +83,8 @@ function saveMode(mode) {
               </svg>
             </div>
             <div>
-              <h2 class="text-base font-semibold text-gray-900">Claim Processing Mode</h2>
-              <p class="text-xs text-gray-500 mt-0.5">Choose how claims are processed for your institution</p>
+              <h2 class="text-base font-semibold text-ink">Claim Processing Mode</h2>
+              <p class="text-xs text-ink-subtle mt-0.5">Choose how claims are processed for your institution</p>
             </div>
           </div>
         </div>
@@ -101,14 +101,14 @@ function saveMode(mode) {
               :class="[
                 currentMode === mode.value
                   ? 'border-primary bg-primary/5 shadow-sm'
-                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
+                  : 'border-line bg-white hover:border-line-strong hover:bg-surface-muted',
                 saving ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
               ]"
             >
               <!-- Selected indicator -->
               <div
                 class="absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200"
-                :class="currentMode === mode.value ? 'border-primary bg-primary' : 'border-gray-300 bg-white'"
+                :class="currentMode === mode.value ? 'border-primary bg-primary' : 'border-line-strong bg-white'"
               >
                 <svg v-if="currentMode === mode.value" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -118,7 +118,7 @@ function saveMode(mode) {
               <!-- Icon -->
               <div
                 class="flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-200"
-                :class="currentMode === mode.value ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'"
+                :class="currentMode === mode.value ? 'bg-primary text-white' : 'bg-surface-muted text-ink-subtle'"
               >
                 <span v-html="mode.icon" />
               </div>
@@ -127,43 +127,43 @@ function saveMode(mode) {
               <div>
                 <p
                   class="font-semibold text-sm transition-colors duration-200"
-                  :class="currentMode === mode.value ? 'text-primary' : 'text-gray-800'"
+                  :class="currentMode === mode.value ? 'text-primary' : 'text-ink'"
                 >
                   {{ mode.label }}
                 </p>
-                <p class="mt-1 text-xs text-gray-500 leading-relaxed">{{ mode.description }}</p>
+                <p class="mt-1 text-xs text-ink-subtle leading-relaxed">{{ mode.description }}</p>
               </div>
             </button>
           </div>
 
           <!-- Status & Info -->
-          <div class="mt-5 flex items-start gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
+          <div class="mt-5 flex items-start gap-3 p-4 rounded-lg bg-surface-muted border border-line">
             <!-- Spinner while saving -->
             <template v-if="saving">
               <svg class="w-4 h-4 text-primary animate-spin mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
-              <p class="text-xs text-gray-600">Applying mode change, please wait...</p>
+              <p class="text-xs text-ink-muted">Applying mode change, please wait...</p>
             </template>
 
             <!-- Selected mode info -->
             <template v-else-if="currentMode">
-              <svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="w-4 h-4 text-success mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>
-              <p class="text-xs text-gray-600">
-                Active mode: <span class="font-semibold text-gray-800">{{ currentMode }}</span>. Changes take effect immediately for all claim submissions.
+              <p class="text-xs text-ink-muted">
+                Active mode: <span class="font-semibold text-ink">{{ currentMode }}</span>. Changes take effect immediately for all claim submissions.
               </p>
             </template>
 
             <!-- No selection yet -->
             <template v-else>
-              <svg class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="w-4 h-4 text-warning mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
-              <p class="text-xs text-gray-600">
-                Select a mode above to configure how claims are processed for payer <span class="font-mono font-semibold text-gray-800">{{ payerUuid || 'N/A' }}</span>.
+              <p class="text-xs text-ink-muted">
+                Select a mode above to configure how claims are processed for payer <span class="font-mono font-semibold text-ink">{{ payerUuid || 'N/A' }}</span>.
               </p>
             </template>
           </div>
@@ -171,43 +171,43 @@ function saveMode(mode) {
       </div>
 
       <!-- Payer Info Card -->
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-100">
+      <div class="bg-white rounded-2xl border border-line shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-line">
           <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-600">
+            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-primary">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
               </svg>
             </div>
             <div>
-              <h2 class="text-base font-semibold text-gray-900">Account Information</h2>
-              <p class="text-xs text-gray-500 mt-0.5">Current payer account details</p>
+              <h2 class="text-base font-semibold text-ink">Account Information</h2>
+              <p class="text-xs text-ink-subtle mt-0.5">Current payer account details</p>
             </div>
           </div>
         </div>
         <div class="p-6">
           <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="flex flex-col gap-1">
-              <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Payer UUID</dt>
-              <dd class="text-sm font-mono text-gray-800 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 truncate">
+              <dt class="text-xs font-medium text-ink-subtle uppercase tracking-wide">Payer UUID</dt>
+              <dd class="text-sm font-mono text-ink bg-surface-muted px-3 py-2 rounded-lg border border-line truncate">
                 {{ payerUuid || 'Not available' }}
               </dd>
             </div>
             <div class="flex flex-col gap-1">
-              <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Company</dt>
-              <dd class="text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 truncate">
+              <dt class="text-xs font-medium text-ink-subtle uppercase tracking-wide">Company</dt>
+              <dd class="text-sm text-ink bg-surface-muted px-3 py-2 rounded-lg border border-line truncate">
                 {{ auth.auth?.user?.companyName || 'N/A' }}
               </dd>
             </div>
             <div class="flex flex-col gap-1">
-              <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">User Role</dt>
-              <dd class="text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+              <dt class="text-xs font-medium text-ink-subtle uppercase tracking-wide">User Role</dt>
+              <dd class="text-sm text-ink bg-surface-muted px-3 py-2 rounded-lg border border-line">
                 {{ auth.auth?.user?.roleName || 'N/A' }}
               </dd>
             </div>
             <div class="flex flex-col gap-1">
-              <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</dt>
-              <dd class="text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 truncate">
+              <dt class="text-xs font-medium text-ink-subtle uppercase tracking-wide">Email</dt>
+              <dd class="text-sm text-ink bg-surface-muted px-3 py-2 rounded-lg border border-line truncate">
                 {{ auth.auth?.user?.email || 'N/A' }}
               </dd>
             </div>

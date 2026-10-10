@@ -59,16 +59,16 @@ function getStatusStyle(status: any) {
     case "APPROVED":
     case "ACCEPTED":
     case "PAID":
-      return `${base} bg-emerald-50 text-emerald-700 ring-emerald-200`;
+      return `${base} bg-success-soft text-success-strong ring-success/20`;
     case "PENDING":
     case "SUBMITTED":
-      return `${base} bg-amber-50 text-amber-700 ring-amber-200`;
+      return `${base} bg-warning-soft text-warning-strong ring-warning/20`;
     case "INACTIVE":
     case "REJECTED":
     case "UNPAID":
-      return `${base} bg-rose-50 text-rose-700 ring-rose-200`;
+      return `${base} bg-error-soft text-error-strong ring-error/20`;
     default:
-      return `${base} bg-slate-50 text-slate-700 ring-slate-200`;
+      return `${base} bg-surface-muted text-ink-muted ring-line`;
   }
 }
 
@@ -95,10 +95,10 @@ const hasActions = computed(() =>
     v-for="(row, idx) in (rowData || []).filter((r: any) => r !== null)"
     :key="row?.quotationUuid || row?.id || idx"
     @click.self="onRowClick(row)"
-    class="bg-white border-b transition-colors duration-150 hover:bg-gray-50"
+    class="bg-white border-b transition-colors duration-150 hover:bg-surface-muted"
   >
     <!-- # -->
-    <td class="p-4 font-medium text-gray-500">
+    <td class="p-4 font-medium text-ink-subtle">
       {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
     </td>
 
@@ -115,7 +115,7 @@ const hasActions = computed(() =>
         <!-- Hidden - just for data passing -->
       </div>
 
-      <span v-else class="text-gray-700">
+      <span v-else class="text-ink-muted">
         {{ formatCellValue(key as any, row) }}
       </span>
     </td>
@@ -125,7 +125,7 @@ const hasActions = computed(() =>
       <div class="flex gap-2 items-center">
         <RouterLink
           :to="{ name: 'ViewIssuedQuotation', params:  { quotationUuid: (row as any)?.quotationUuid }, query: { viewOnly: '1' } }"
-          class="inline-flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-full shadow-sm transition-all duration-200 hover:shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none"
+          class="inline-flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-primary-hover rounded-full shadow-sm transition-all duration-200 hover:shadow-md hover:from-primary-hover hover:to-primary-hover focus:outline-none"
           @click.stop
         >
           <span class="flex justify-center items-center w-6 h-6 rounded-full bg-white/20">
@@ -137,7 +137,7 @@ const hasActions = computed(() =>
 
         <button
           @click.stop="() => goToInclusion(row)"
-          class="inline-flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-full shadow-sm transition-all duration-200 hover:shadow-md hover:from-green-700 hover:to-green-800 focus:outline-none"
+          class="inline-flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-success to-success-strong rounded-full shadow-sm transition-all duration-200 hover:shadow-md hover:from-success-strong hover:to-success-strong focus:outline-none"
           title="Create Inclusion"
         >
           <span class="flex justify-center items-center w-6 h-6 rounded-full bg-white/20">

@@ -44,7 +44,7 @@ function viewDetails(id) {
   <DefaultPage placeholder="Search Active Providers">
     <!-- <template #filter>
       <button
-        class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary"
+        class="flex gap-2 justify-center items-center px-6 py-4 bg-surface-muted rounded-md text-primary"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>

@@ -46,7 +46,7 @@ function showMedicationResults() {
           <h2 class="text-xl font-semibold border-b py-2">Insured Detail
           <button
     @click="$router.go(-1)"
-    class="back-button group relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+    class="back-button group relative p-2 rounded-full hover:bg-surface-muted transition-colors"
     aria-label="Back"
   >
     <svg
@@ -54,7 +54,7 @@ function showMedicationResults() {
       width="24"
       height="24"
       viewBox="0 0 24 24"
-      class="w-5 h-5 text-gray-600 group-hover:text-primary transition-colors"
+      class="w-5 h-5 text-ink-muted group-hover:text-primary transition-colors"
     >
       <path
         fill="currentColor"
@@ -69,7 +69,7 @@ function showMedicationResults() {
           <div class="flex flex-col gap-4 pt-2">
             <template v-for="(value, key) in insuredDetails" :key="key">
               <div class="flex gap-6 pt-3">
-                <span class="text-sm text-gray-500 w-32">{{ key }}</span>
+                <span class="text-sm text-ink-subtle w-32">{{ key }}</span>
                 <span class="font-medium">{{ value }}</span>
               </div>
             </template>
@@ -81,7 +81,7 @@ function showMedicationResults() {
           <div class="flex flex-col gap-4 pt-2">
             <template v-for="(value, key) in insuranceDetails" :key="key">
               <div class="flex gap-6 pt-3">
-                <span class="text-sm text-gray-500 w-32">{{ key }}</span>
+                <span class="text-sm text-ink-subtle w-32">{{ key }}</span>
                 <span class="font-medium">{{ value }}</span>
               </div>
             </template>

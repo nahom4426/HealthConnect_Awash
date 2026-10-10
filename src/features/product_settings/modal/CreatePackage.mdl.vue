@@ -85,12 +85,12 @@ function generatePackageCode(category) {
       />
 
       <template #bottom>
-        <div class="flex gap-3 justify-end p-4 w-full border-t border-gray-200">
+        <div class="flex gap-3 justify-end p-4 w-full border-t border-line">
           <Button
             @click="closeModal"
             type="secondary"
             size="lg"
-            class="border border-gray-300 hover:bg-gray-50"
+            class="border border-line-strong hover:bg-surface-muted"
           >
             Cancel
           </Button>
@@ -99,7 +99,7 @@ function generatePackageCode(category) {
             @click.prevent="submit(handleCreate)"
             type="primary"
             size="lg"
-            class="text-white bg-blue-600 hover:bg-blue-700"
+            class="text-white bg-primary hover:bg-primary-hover"
           >
             Create Package
           </Button>

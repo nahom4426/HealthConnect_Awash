@@ -139,16 +139,16 @@ function getStatusStyle(status) {
     case "PAID":
     case "APPROVED":
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
     case "PENDING":
     case "SUBMITTED":
-      return `${base} bg-yellow-100 text-yellow-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
     case "REJECTED":
     case "CANCELLED":
     case "DECLINED":
-      return `${base} bg-red-100 text-red-800`;
+      return `${base} bg-error-soft text-error-strong`;
     default:
-      return `${base} bg-gray-100 text-gray-700`;
+      return `${base} bg-surface-muted text-ink-muted`;
   }
 }
 
@@ -260,20 +260,20 @@ onMounted(() => {
       subtitle="Service provided history for the selected insured member."
     >
       <div class="bg-white rounded-lg">
-        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        <div v-if="error" class="p-4 mb-4 text-sm text-error-strong bg-error-soft rounded-lg">
           {{ error }}
         </div>
 
-        <div class="flex flex-wrap gap-3 justify-between items-center p-4 mb-4 bg-gray-50 rounded-lg border">
+        <div class="flex flex-wrap gap-3 justify-between items-center p-4 mb-4 bg-surface-muted rounded-lg border">
           <div class="flex flex-col gap-2">
             <input
               v-model="itemSearch"
               type="text"
-              class="px-3 py-2 w-72 max-w-full text-sm bg-white rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              class="px-3 py-2 w-72 max-w-full text-sm bg-white rounded-lg border border-line-strong focus:outline-none focus:ring-2 focus:ring-primary/20"
               placeholder="Search by item name..."
             />
 
-            <div v-if="itemSearch" class="text-xs text-gray-600">
+            <div v-if="itemSearch" class="text-xs text-ink-muted">
               Matched services: {{ filteredRows.length }}
               <span v-if="matchedItemsCount">• Matched items: {{ matchedItemsCount }}</span>
             </div>
@@ -282,18 +282,18 @@ onMounted(() => {
           <div class="flex gap-2 items-center">
             <Button
               size="sm"
-              class="text-gray-700 border border-gray-300 hover:bg-gray-50"
+              class="text-ink-muted border border-line-strong hover:bg-surface-muted"
               :disabled="pending || page <= 1"
               @click="prevPage"
             >
               Prev
             </Button>
-            <div class="text-sm text-gray-600">
+            <div class="text-sm text-ink-muted">
               Page {{ page }} / {{ totalPages }} ({{ totalItems }} items)
             </div>
             <Button
               size="sm"
-              class="text-gray-700 border border-gray-300 hover:bg-gray-50"
+              class="text-ink-muted border border-line-strong hover:bg-surface-muted"
               :disabled="pending || page >= totalPages"
               @click="nextPage"
             >
@@ -306,39 +306,39 @@ onMounted(() => {
           <Spinner />
         </div>
 
-        <div v-else class="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+        <div v-else class="overflow-hidden rounded-xl border border-line shadow-sm">
           <div class="hidden overflow-x-auto lg:block">
             <table class="min-w-full bg-white">
-              <thead class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+              <thead class="bg-gradient-to-r from-surface-muted to-surface-muted border-b border-line">
                 <tr>
-                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase">#</th>
-                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase">Provider / Institution</th>
-                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase">Member</th>
-                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase">Provided Date</th>
-                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase">Items</th>
-                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase">Amount</th>
-                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase">Status</th>
-                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase"> </th>
+                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase">#</th>
+                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase">Provider / Institution</th>
+                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase">Member</th>
+                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase">Provided Date</th>
+                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase">Items</th>
+                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase">Amount</th>
+                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase">Status</th>
+                  <th class="px-4 py-4 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase"> </th>
                 </tr>
               </thead>
 
-              <tbody class="divide-y divide-gray-200">
+              <tbody class="divide-y divide-line">
                 <template v-if="filteredRows && filteredRows.length">
                   <template v-for="(row, idx) in filteredRows" :key="row?.serviceProvidedUuid || idx">
                     <tr
-                      class="bg-white transition-colors hover:bg-gray-50"
-                      :class="itemSearch && rowHasItemMatch(row) ? 'ring-1 ring-amber-200 bg-amber-50/30' : ''"
+                      class="bg-white transition-colors hover:bg-surface-muted"
+                      :class="itemSearch && rowHasItemMatch(row) ? 'ring-1 ring-warning/20 bg-warning-soft/30' : ''"
                     >
-                      <td class="px-4 py-4 text-sm font-medium text-gray-500">
+                      <td class="px-4 py-4 text-sm font-medium text-ink-subtle">
                         {{ (page - 1) * limit + idx + 1 }}
                       </td>
 
                       <td class="px-4 py-4">
                         <div class="leading-tight">
-                          <div class="font-semibold text-gray-900 truncate">
+                          <div class="font-semibold text-ink truncate">
                             {{ row?.providerName || 'N/A' }}
                           </div>
-                          <div class="text-xs text-gray-500 truncate">
+                          <div class="text-xs text-ink-subtle truncate">
                             {{ row?.institutionName || 'N/A' }}
                           </div>
                         </div>
@@ -346,33 +346,33 @@ onMounted(() => {
 
                       <td class="px-4 py-4">
                         <div class="leading-tight">
-                          <div class="font-semibold text-gray-900 truncate">
+                          <div class="font-semibold text-ink truncate">
                             {{ row?.dependantName || row?.insuredName || 'N/A' }}
                           </div>
-                          <div class="text-xs text-gray-500 truncate">
+                          <div class="text-xs text-ink-subtle truncate">
                             {{ row?.dependantUuid ? 'Dependent' : 'Insured' }}
                           </div>
                         </div>
                       </td>
 
-                      <td class="px-4 py-4 text-sm text-gray-700">
+                      <td class="px-4 py-4 text-sm text-ink-muted">
                         {{ formatDate(row?.providedDate) }}
                       </td>
 
                       <td class="px-4 py-4">
-                        <div class="text-sm font-semibold text-gray-900">
+                        <div class="text-sm font-semibold text-ink">
                           {{ Array.isArray(row?.providedItemResponses) ? row.providedItemResponses.length : 0 }} item(s)
                         </div>
                         <div v-if="row?.providedItemResponses && row.providedItemResponses.length" class="mt-1 space-y-0.5">
                           <div
                             v-for="(name, i) in getItemsPreview(row.providedItemResponses).shown"
                             :key="`${row?.serviceProvidedUuid || 'row'}-item-${i}`"
-                            class="text-xs text-gray-500 truncate"
+                            class="text-xs text-ink-subtle truncate"
                           >
                             <span v-for="(part, pi) in splitHighlight(name, itemSearch)" :key="pi">
                               <span
                                 v-if="part.match"
-                                class="px-1 font-semibold text-amber-900 rounded bg-amber-200/60"
+                                class="px-1 font-semibold text-warning-strong rounded bg-warning/[0.12]"
                               >
                                 {{ part.text }}
                               </span>
@@ -381,14 +381,14 @@ onMounted(() => {
                           </div>
                           <div
                             v-if="getItemsPreview(row.providedItemResponses).remaining > 0"
-                            class="text-xs text-gray-500"
+                            class="text-xs text-ink-subtle"
                           >
                             +{{ getItemsPreview(row.providedItemResponses).remaining }} more
                           </div>
                         </div>
                       </td>
 
-                      <td class="px-4 py-4 text-sm font-semibold text-gray-900">
+                      <td class="px-4 py-4 text-sm font-semibold text-ink">
                         {{ formatMoney(row?.amount) }}
                       </td>
 
@@ -400,7 +400,7 @@ onMounted(() => {
 
                       <td class="px-4 py-4">
                         <button
-                          class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50"
+                          class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-ink-muted rounded-lg border border-line hover:bg-surface-muted"
                           @click="toggleExpanded(row)"
                           type="button"
                         >
@@ -409,74 +409,74 @@ onMounted(() => {
                       </td>
                     </tr>
 
-                    <tr v-if="isExpanded(row)" class="bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <tr v-if="isExpanded(row)" class="bg-gradient-to-r from-primary/5 to-primary/5">
                       <td colspan="100%" class="px-6 py-5">
                         <div class="space-y-3">
                           <div class="flex justify-between items-center">
-                            <div class="text-sm font-semibold text-gray-900">Provided Items</div>
-                            <!-- <div class="text-xs text-gray-600">
+                            <div class="text-sm font-semibold text-ink">Provided Items</div>
+                            <!-- <div class="text-xs text-ink-muted">
                               Ref: {{ row?.serviceProvidedUuid || 'N/A' }}
                             </div> -->
                           </div>
 
-                          <div class="overflow-hidden bg-white rounded-lg border border-blue-100">
+                          <div class="overflow-hidden bg-white rounded-lg border border-primary/10">
                             <table class="min-w-full">
-                              <thead class="bg-blue-50 border-b border-blue-100">
+                              <thead class="bg-primary/5 border-b border-primary/10">
                                 <tr>
-                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-blue-700 uppercase">Code</th>
-                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-blue-700 uppercase">Name</th>
-                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-blue-700 uppercase">Qty</th>
-                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-blue-700 uppercase">Unit Price</th>
-                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-blue-700 uppercase">Total</th>
-                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-blue-700 uppercase">Type</th>
+                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-primary-hover uppercase">Code</th>
+                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-primary-hover uppercase">Name</th>
+                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-primary-hover uppercase">Qty</th>
+                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-primary-hover uppercase">Unit Price</th>
+                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-primary-hover uppercase">Total</th>
+                                  <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-primary-hover uppercase">Type</th>
                                 </tr>
                               </thead>
-                              <tbody class="divide-y divide-blue-50">
+                              <tbody class="divide-y divide-primary/5">
                                 <tr
                                   v-for="(item, i) in (row?.providedItemResponses || [])"
                                   :key="item?.providedItemUuid || i"
-                                  class="hover:bg-blue-50/40"
+                                  class="hover:bg-primary/[0.02]"
                                 >
-                                  <td class="px-4 py-3 text-sm font-medium text-gray-800">
+                                  <td class="px-4 py-3 text-sm font-medium text-ink">
                                     <span v-for="(part, pi) in splitHighlight(item?.itemCode || 'N/A', itemSearch)" :key="pi">
                                       <span
                                         v-if="part.match"
-                                        class="px-1 font-semibold text-amber-900 rounded bg-amber-200/60"
+                                        class="px-1 font-semibold text-warning-strong rounded bg-warning/[0.12]"
                                       >
                                         {{ part.text }}
                                       </span>
                                       <span v-else>{{ part.text }}</span>
                                     </span>
                                   </td>
-                                  <td class="px-4 py-3 text-sm text-gray-800">
+                                  <td class="px-4 py-3 text-sm text-ink">
                                     <span v-for="(part, pi) in splitHighlight(item?.itemName || 'N/A', itemSearch)" :key="pi">
                                       <span
                                         v-if="part.match"
-                                        class="px-1 font-semibold text-amber-900 rounded bg-amber-200/60"
+                                        class="px-1 font-semibold text-warning-strong rounded bg-warning/[0.12]"
                                       >
                                         {{ part.text }}
                                       </span>
                                       <span v-else>{{ part.text }}</span>
                                     </span>
                                   </td>
-                                  <td class="px-4 py-3 text-sm text-gray-800">
+                                  <td class="px-4 py-3 text-sm text-ink">
                                     {{ item?.quantity ?? 'N/A' }}
                                   </td>
-                                  <td class="px-4 py-3 text-sm text-gray-800">
+                                  <td class="px-4 py-3 text-sm text-ink">
                                     {{ formatMoney(item?.unitPrice) }}
                                   </td>
-                                  <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                                  <td class="px-4 py-3 text-sm font-semibold text-ink">
                                     {{ formatMoney(item?.totalPrice) }}
                                   </td>
-                                  <td class="px-4 py-3 text-sm text-gray-800">
-                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-gray-700 bg-gray-100 rounded-full">
+                                  <td class="px-4 py-3 text-sm text-ink">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-ink-muted bg-surface-muted rounded-full">
                                       {{ item?.itemType || 'N/A' }}
                                     </span>
                                   </td>
                                 </tr>
 
                                 <tr v-if="!(row?.providedItemResponses && row.providedItemResponses.length)">
-                                  <td colspan="100%" class="px-4 py-6 text-sm text-center text-gray-500">
+                                  <td colspan="100%" class="px-4 py-6 text-sm text-center text-ink-subtle">
                                     No items found for this service.
                                   </td>
                                 </tr>
@@ -492,10 +492,10 @@ onMounted(() => {
                 <tr v-else>
                   <td colspan="100%" class="py-10">
                     <div class="text-center">
-                      <div class="text-sm font-semibold text-gray-900">
+                      <div class="text-sm font-semibold text-ink">
                         {{ itemSearch ? 'No Matches Found' : 'No History Found' }}
                       </div>
-                      <div class="text-sm text-gray-500">
+                      <div class="text-sm text-ink-subtle">
                         {{ itemSearch ? 'No services include that item.' : 'This insured member has no service provided records yet.' }}
                       </div>
                     </div>
@@ -506,19 +506,19 @@ onMounted(() => {
           </div>
 
           <!-- Mobile cards -->
-          <div class="p-3 space-y-3 bg-gray-50 lg:hidden">
+          <div class="p-3 space-y-3 bg-surface-muted lg:hidden">
             <div
               v-for="(row, idx) in (filteredRows || [])"
               :key="row?.serviceProvidedUuid || idx"
-              class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm"
-              :class="itemSearch && rowHasItemMatch(row) ? 'ring-1 ring-amber-200 bg-amber-50/30' : ''"
+              class="p-4 bg-white rounded-xl border border-line shadow-sm"
+              :class="itemSearch && rowHasItemMatch(row) ? 'ring-1 ring-warning/20 bg-warning-soft/30' : ''"
             >
               <div class="flex gap-3 justify-between items-start">
                 <div class="min-w-0">
-                  <div class="text-sm font-semibold text-gray-900 truncate">
+                  <div class="text-sm font-semibold text-ink truncate">
                     {{ row?.providerName || 'N/A' }}
                   </div>
-                  <div class="text-xs text-gray-500 truncate">
+                  <div class="text-xs text-ink-subtle truncate">
                     {{ row?.institutionName || 'N/A' }}
                   </div>
                 </div>
@@ -529,38 +529,38 @@ onMounted(() => {
 
               <div class="grid grid-cols-2 gap-3 mt-4">
                 <div>
-                  <div class="text-xs font-semibold text-gray-500 uppercase">Member</div>
-                  <div class="text-sm text-gray-900 truncate">
+                  <div class="text-xs font-semibold text-ink-subtle uppercase">Member</div>
+                  <div class="text-sm text-ink truncate">
                     {{ row?.dependantName || row?.insuredName || 'N/A' }}
                   </div>
                 </div>
                 <div>
-                  <div class="text-xs font-semibold text-gray-500 uppercase">Provided Date</div>
-                  <div class="text-sm text-gray-900">
+                  <div class="text-xs font-semibold text-ink-subtle uppercase">Provided Date</div>
+                  <div class="text-sm text-ink">
                     {{ formatDate(row?.providedDate) }}
                   </div>
                 </div>
                 <div>
-                  <div class="text-xs font-semibold text-gray-500 uppercase">Amount</div>
-                  <div class="text-sm font-semibold text-gray-900">
+                  <div class="text-xs font-semibold text-ink-subtle uppercase">Amount</div>
+                  <div class="text-sm font-semibold text-ink">
                     {{ formatMoney(row?.amount) }}
                   </div>
                 </div>
                 <div>
-                  <div class="text-xs font-semibold text-gray-500 uppercase">Items</div>
-                  <div class="text-sm text-gray-900">
+                  <div class="text-xs font-semibold text-ink-subtle uppercase">Items</div>
+                  <div class="text-sm text-ink">
                     {{ Array.isArray(row?.providedItemResponses) ? row.providedItemResponses.length : 0 }}
                   </div>
                   <div v-if="row?.providedItemResponses && row.providedItemResponses.length" class="mt-1 space-y-0.5">
                     <div
                       v-for="(name, i) in getItemsPreview(row.providedItemResponses).shown"
                       :key="`${row?.serviceProvidedUuid || 'row'}-m-item-${i}`"
-                      class="text-xs text-gray-500 truncate"
+                      class="text-xs text-ink-subtle truncate"
                     >
                       <span v-for="(part, pi) in splitHighlight(name, itemSearch)" :key="pi">
                         <span
                           v-if="part.match"
-                          class="px-1 font-semibold text-amber-900 rounded bg-amber-200/60"
+                          class="px-1 font-semibold text-warning-strong rounded bg-warning/[0.12]"
                         >
                           {{ part.text }}
                         </span>
@@ -569,7 +569,7 @@ onMounted(() => {
                     </div>
                     <div
                       v-if="getItemsPreview(row.providedItemResponses).remaining > 0"
-                      class="text-xs text-gray-500"
+                      class="text-xs text-ink-subtle"
                     >
                       +{{ getItemsPreview(row.providedItemResponses).remaining }} more
                     </div>
@@ -579,7 +579,7 @@ onMounted(() => {
 
               <div class="mt-4">
                 <button
-                  class="inline-flex justify-center items-center px-3 py-2 w-full text-sm font-semibold text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50"
+                  class="inline-flex justify-center items-center px-3 py-2 w-full text-sm font-semibold text-ink-muted rounded-lg border border-line hover:bg-surface-muted"
                   @click="toggleExpanded(row)"
                   type="button"
                 >
@@ -587,45 +587,45 @@ onMounted(() => {
                 </button>
               </div>
 
-              <div v-if="isExpanded(row)" class="p-3 mt-4 bg-blue-50 rounded-lg border border-blue-100">
-                <div class="mb-2 text-sm font-semibold text-gray-900">Provided Items</div>
+              <div v-if="isExpanded(row)" class="p-3 mt-4 bg-primary/5 rounded-lg border border-primary/10">
+                <div class="mb-2 text-sm font-semibold text-ink">Provided Items</div>
                 <div class="space-y-2">
                   <div
                     v-for="(item, i) in (row?.providedItemResponses || [])"
                     :key="item?.providedItemUuid || i"
-                    class="p-3 bg-white rounded-lg border border-blue-100"
+                    class="p-3 bg-white rounded-lg border border-primary/10"
                   >
                     <div class="flex gap-3 justify-between">
                       <div class="min-w-0">
-                        <div class="text-sm font-semibold text-gray-900 truncate">
+                        <div class="text-sm font-semibold text-ink truncate">
                           {{ item?.itemName || 'N/A' }}
                         </div>
-                        <div class="text-xs text-gray-500 truncate">
+                        <div class="text-xs text-ink-subtle truncate">
                           {{ item?.itemCode || 'N/A' }} • {{ item?.itemType || 'N/A' }}
                         </div>
                       </div>
                       <div class="text-right">
-                        <div class="text-sm font-semibold text-gray-900">
+                        <div class="text-sm font-semibold text-ink">
                           {{ formatMoney(item?.totalPrice) }}
                         </div>
-                        <div class="text-xs text-gray-500">
+                        <div class="text-xs text-ink-subtle">
                           Qty: {{ item?.quantity ?? 'N/A' }}
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div v-if="!(row?.providedItemResponses && row.providedItemResponses.length)" class="text-sm text-gray-600">
+                  <div v-if="!(row?.providedItemResponses && row.providedItemResponses.length)" class="text-sm text-ink-muted">
                     No items found for this service.
                   </div>
                 </div>
               </div>
             </div>
 
-            <div v-if="!(filteredRows && filteredRows.length)" class="p-6 text-center bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div class="text-sm font-semibold text-gray-900">
+            <div v-if="!(filteredRows && filteredRows.length)" class="p-6 text-center bg-white rounded-xl border border-line shadow-sm">
+              <div class="text-sm font-semibold text-ink">
                 {{ itemSearch ? 'No Matches Found' : 'No History Found' }}
               </div>
-              <div class="text-sm text-gray-500">
+              <div class="text-sm text-ink-subtle">
                 {{ itemSearch ? 'No services include that item.' : 'This insured member has no service provided records yet.' }}
               </div>
             </div>
@@ -637,7 +637,7 @@ onMounted(() => {
         <div class="flex gap-3 justify-end items-center p-4 w-full border-t">
           <Button
             size="md"
-            class="text-gray-700 border border-gray-300 hover:bg-gray-50"
+            class="text-ink-muted border border-line-strong hover:bg-surface-muted"
             @click="closeModal()"
           >
             Close

@@ -199,18 +199,18 @@ const handleUpdateContract = () => {
 
       <div class="grid gap-6 pl-12 md:grid-cols-2">
         <div>
-          <label class="block flex items-center mb-2 text-sm font-medium text-gray-700">
+          <label class="block flex items-center mb-2 text-sm font-medium text-ink-muted">
             Provider
-            <span class="ml-1 text-red-500">*</span>
+            <span class="ml-1 text-error">*</span>
           </label>
 
-          <div v-if="isFetchingProviders" class="flex items-center p-3 space-x-2 rounded-lg border border-gray-300">
+          <div v-if="isFetchingProviders" class="flex items-center p-3 space-x-2 rounded-lg border border-line-strong">
             <ButtonSpinner class="h-4 w-4 text-primary" />
-            <span class="text-sm text-gray-500">Loading providers...</span>
+            <span class="text-sm text-ink-subtle">Loading providers...</span>
           </div>
 
           <div v-else-if="fetchError" class="space-y-3">
-            <div class="p-3 text-sm text-red-500 bg-red-50 rounded-lg border border-red-200">
+            <div class="p-3 text-sm text-error bg-error-soft rounded-lg border border-error/20">
               <strong>Error loading providers:</strong> {{ fetchError }}
             </div>
           </div>
@@ -219,7 +219,7 @@ const handleUpdateContract = () => {
             <select
               v-model="formData.providerUuid"
               class="w-full py-3 px-1 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzk5OTk5OSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem] bg-[length:16px_16px] pr-10"
-              :class="{ 'border-red-500': submitAttempted && !formData.providerUuid }"
+              :class="{ 'border-error': submitAttempted && !formData.providerUuid }"
               disabled
               required
             >
@@ -232,12 +232,12 @@ const handleUpdateContract = () => {
                 {{ provider.providerName }}
               </option>
             </select>
-            <p v-if="submitAttempted && !formData.providerUuid" class="mt-1 ml-1 text-xs text-red-500">
+            <p v-if="submitAttempted && !formData.providerUuid" class="mt-1 ml-1 text-xs text-error">
               Provider is required
             </p>
           </div>
 
-          <div v-else class="p-3 text-sm text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+          <div v-else class="p-3 text-sm text-ink-subtle bg-surface-muted rounded-lg border border-line">
             No providers available
           </div>
         </div>
@@ -256,16 +256,16 @@ const handleUpdateContract = () => {
 
         <div class="pl-12 space-y-5">
           <div>
-            <label class="block flex items-center mb-2 text-sm font-medium text-gray-700">
+            <label class="block flex items-center mb-2 text-sm font-medium text-ink-muted">
               Contract Code
-              <span class="ml-1 text-red-500">*</span>
+              <span class="ml-1 text-error">*</span>
             </label>
             <div class="relative">
               <input
                 v-model="formData.contractCode"
                 placeholder="e.g. PVD-ABC123"
                 class="w-full p-3  border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm"
-                :class="{ 'border-red-500': submitAttempted && !formData.contractCode }"
+                :class="{ 'border-error': submitAttempted && !formData.contractCode }"
                 required
               />
               <button
@@ -278,22 +278,22 @@ const handleUpdateContract = () => {
                 Generate
               </button>
             </div>
-            <p v-if="submitAttempted && !formData.contractCode" class="mt-1 ml-1 text-xs text-red-500">
+            <p v-if="submitAttempted && !formData.contractCode" class="mt-1 ml-1 text-xs text-error">
               Contract code is required
             </p>
           </div>
 
           <div>
-            <label class="block flex items-center mb-2 text-sm font-medium text-gray-700">
+            <label class="block flex items-center mb-2 text-sm font-medium text-ink-muted">
               Contract Name
-              <span class="ml-1 text-red-500">*</span>
+              <span class="ml-1 text-error">*</span>
             </label>
             <div class="relative">
               <input
                 v-model="formData.contractName"
                 placeholder="e.g. Annual Service Contract"
                 class="w-full p-3  border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm"
-                :class="{ 'border-red-500': submitAttempted && !formData.contractName }"
+                :class="{ 'border-error': submitAttempted && !formData.contractName }"
                 required
               />
               <button
@@ -306,13 +306,13 @@ const handleUpdateContract = () => {
                 Generate
               </button>
             </div>
-            <p v-if="submitAttempted && !formData.contractName" class="mt-1 ml-1 text-xs text-red-500">
+            <p v-if="submitAttempted && !formData.contractName" class="mt-1 ml-1 text-xs text-error">
               Contract name is required
             </p>
           </div>
 
           <div>
-            <label class="block flex items-center mb-2 text-sm font-medium text-gray-700">
+            <label class="block flex items-center mb-2 text-sm font-medium text-ink-muted">
               Description
             </label>
             <textarea
@@ -375,7 +375,7 @@ const handleUpdateContract = () => {
     <div class="flex justify-end pt-8 space-x-4 border-t">
       <button
         @click="router.push('/create_contract')"
-        class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 rounded-lg border border-gray-300 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md"
+        class="flex items-center px-6 py-3 text-sm font-medium text-ink-muted rounded-lg border border-line-strong shadow-sm transition-all duration-200 hover:bg-surface-muted hover:shadow-md"
         :disabled="isLoading"
       >
         <span v-html="icons.cancel" class="mr-2 w-4 h-4"></span>

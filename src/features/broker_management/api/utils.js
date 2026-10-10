@@ -18,19 +18,19 @@ export const formatCurrency = (amount) => {
 // Map Stakeholder Status to UI labels and colors
 export const getStatusMeta = (status) => {
   const map = {
-    ACTIVE: { label: 'Active', color: 'green', cls: 'bg-green-100 text-green-800' },
-    INACTIVE: { label: 'Inactive', color: 'red', cls: 'bg-red-100 text-red-800' },
+    ACTIVE: { label: 'Active', color: 'green', cls: 'bg-success-soft text-success-strong' },
+    INACTIVE: { label: 'Inactive', color: 'red', cls: 'bg-error-soft text-error-strong' },
     PENDING: { label: 'Pending', color: 'orange', cls: 'bg-orange-100 text-orange-800' },
   };
-  return map[status] || { label: status || 'Unknown', color: 'gray', cls: 'bg-gray-100 text-gray-800' };
+  return map[status] || { label: status || 'Unknown', color: 'gray', cls: 'bg-surface-muted text-ink' };
 };
 
 // Map Transaction Types to UI labels and colors
 export const getTransactionTypeMeta = (type) => {
   const map = {
-    COMMISSION_EARNED: { label: 'Earned', color: 'green', cls: 'text-green-600 font-medium' },
-    PAYMENT_PROCESSED: { label: 'Paid', color: 'red', cls: 'text-red-600 font-medium' },
-    PENDING_APPROVAL: { label: 'Pending', color: 'yellow', cls: 'text-yellow-600 font-medium' },
+    COMMISSION_EARNED: { label: 'Earned', color: 'green', cls: 'text-success font-medium' },
+    PAYMENT_PROCESSED: { label: 'Paid', color: 'red', cls: 'text-error font-medium' },
+    PENDING_APPROVAL: { label: 'Pending', color: 'yellow', cls: 'text-warning font-medium' },
   };
-  return map[type] || { label: type || 'Unknown', color: 'gray', cls: 'text-gray-600' };
+  return map[type] || { label: type || 'Unknown', color: 'gray', cls: 'text-ink-muted' };
 };

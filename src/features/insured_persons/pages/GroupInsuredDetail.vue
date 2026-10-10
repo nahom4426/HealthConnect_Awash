@@ -11,7 +11,7 @@ import GroupInsuredDataProvider from "../components/GroupComponents/GroupInsured
     <template #filter>
       <button
         @click="openModal('AddMembersToGroup', $route.params?.id)"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-gray-100"
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-surface-muted"
       >
         <p class="text-base">Add Members</p>
       </button>

@@ -57,21 +57,21 @@
 
         <!-- Transaction Columns -->
         <div v-else-if="key === 'createdAt'" class="truncate">
-          <span class="text-sm text-gray-600">{{ formatDate(row.createdAt) }}</span>
+          <span class="text-sm text-ink-muted">{{ formatDate(row.createdAt) }}</span>
         </div>
 
         <div v-else-if="key === 'transactionUuid'" class="truncate">
-          <span class="text-xs text-gray-400 font-mono">{{ row.transactionUuid }}</span>
+          <span class="text-xs text-ink-subtle font-mono">{{ row.transactionUuid }}</span>
         </div>
 
         <div v-else-if="key === 'type'" class="truncate">
           <span
             class="inline-flex px-2 py-0.5 rounded text-[11px] font-bold uppercase"
             :class="{
-              'bg-green-100 text-green-700': row.type === 'EARNED',
-              'bg-red-100 text-red-700': row.type === 'PAID',
-              'bg-yellow-100 text-yellow-700': row.type === 'PENDING',
-              'bg-gray-100 text-gray-600': !['EARNED','PAID','PENDING'].includes(row.type),
+              'bg-success-soft text-success-strong': row.type === 'EARNED',
+              'bg-error-soft text-error-strong': row.type === 'PAID',
+              'bg-warning-soft text-warning-strong': row.type === 'PENDING',
+              'bg-surface-muted text-ink-muted': !['EARNED','PAID','PENDING'].includes(row.type),
             }"
           >{{ row.type }}</span>
         </div>
@@ -134,8 +134,8 @@ const getStatusStr = (row) => (row?.transactionStatus || row?.status || 'PENDING
 const isPendingOrPaid = (row) => getStatusStr(row) === 'PENDING' || getStatusStr(row) === 'PAID';
 
 const getPingClass = (row) => {
-  if (getStatusStr(row) === 'PENDING') return 'bg-yellow-400';
-  if (getStatusStr(row) === 'PAID') return 'bg-green-400';
+  if (getStatusStr(row) === 'PENDING') return 'bg-warning';
+  if (getStatusStr(row) === 'PAID') return 'bg-success';
   return '';
 };
 
@@ -163,28 +163,28 @@ const getRowKey = (row, idx) => {
 };
 
 const getRowStatusClass = (row) => {
-  return 'bg-white border-b transition-all duration-200 cursor-pointer hover:bg-gray-50 border-gray-200';
+  return 'bg-white border-b transition-all duration-200 cursor-pointer hover:bg-surface-muted border-line';
 };
 
 const getStatusDotClass = (row) => {
   const s = getStatusStr(row);
-  if (s === 'PENDING') return 'bg-yellow-500';
-  if (s === 'PAID' || s === 'COMPLETED' || s === 'SUCCESS') return 'bg-green-500';
-  if (s === 'FAILED' || s === 'CANCELLED') return 'bg-red-500';
-  return 'bg-gray-400';
+  if (s === 'PENDING') return 'bg-warning';
+  if (s === 'PAID' || s === 'COMPLETED' || s === 'SUCCESS') return 'bg-success';
+  if (s === 'FAILED' || s === 'CANCELLED') return 'bg-error';
+  return 'bg-ink-subtle';
 };
 
 const getTextStatusClass = (row) => {
-  return 'text-gray-700';
+  return 'text-ink-muted';
 };
 
 const getMutedTextStatusClass = (row) => {
-  return 'text-gray-500';
+  return 'text-ink-subtle';
 };
 
 const getAmountClass = (row) => {
-  if (row.type === 'EARNED') return 'text-green-600';
-  if (row.type === 'PAID') return 'text-red-600';
+  if (row.type === 'EARNED') return 'text-success';
+  if (row.type === 'PAID') return 'text-error';
   return 'text-primary';
 };
 
@@ -192,34 +192,34 @@ const getStatusBadgeClass = (row) => {
   const s = getStatusStr(row);
   const base = "px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm inline-flex items-center gap-1.5";
   
-  if (s === 'PENDING') return `${base} bg-yellow-100 text-yellow-800 border border-yellow-200`;
-  if (s === 'APPROVED') return `${base} bg-blue-100 text-blue-800 border border-blue-200`;
+  if (s === 'PENDING') return `${base} bg-warning-soft text-warning-strong border border-warning/20`;
+  if (s === 'APPROVED') return `${base} bg-primary/10 text-primary-hover border border-primary/20`;
   if (s === 'IN_PAYMENT') return `${base} bg-indigo-100 text-indigo-800 border border-indigo-200`;
-  if (s === 'PAID' || s === 'SUCCESS' || s === 'COMPLETED') return `${base} bg-green-100 text-green-800 border border-green-200`;
-  if (s === 'FAILED' || s === 'CANCELLED') return `${base} bg-red-100 text-red-800 border border-red-200`;
+  if (s === 'PAID' || s === 'SUCCESS' || s === 'COMPLETED') return `${base} bg-success-soft text-success-strong border border-success/20`;
+  if (s === 'FAILED' || s === 'CANCELLED') return `${base} bg-error-soft text-error-strong border border-error/20`;
   
-  return `${base} bg-gray-100 text-gray-800 border border-gray-200`;
+  return `${base} bg-surface-muted text-ink border border-line`;
 };
 
 const getStatusInnerDotClass = (row) => {
   const s = getStatusStr(row);
-  if (s === 'PENDING') return 'bg-yellow-600';
-  if (s === 'APPROVED') return 'bg-blue-600';
+  if (s === 'PENDING') return 'bg-warning';
+  if (s === 'APPROVED') return 'bg-primary';
   if (s === 'IN_PAYMENT') return 'bg-indigo-600';
-  if (s === 'PAID' || s === 'SUCCESS' || s === 'COMPLETED') return 'bg-green-600';
-  if (s === 'FAILED' || s === 'CANCELLED') return 'bg-red-600';
-  return 'bg-gray-600';
+  if (s === 'PAID' || s === 'SUCCESS' || s === 'COMPLETED') return 'bg-success';
+  if (s === 'FAILED' || s === 'CANCELLED') return 'bg-error';
+  return 'bg-ink-muted';
 };
 
 const getStatusSelectClass = (row) => {
   const s = getStatusStr(row);
-  if (s === 'PENDING') return 'bg-yellow-50 text-yellow-800 border-yellow-300 focus:ring-yellow-500/20';
-  if (s === 'APPROVED') return 'bg-blue-50 text-blue-800 border-blue-300 focus:ring-blue-500/20';
+  if (s === 'PENDING') return 'bg-warning-soft text-warning-strong border-warning/40 focus:ring-warning/20';
+  if (s === 'APPROVED') return 'bg-primary/5 text-primary-hover border-primary/30 focus:ring-primary/20';
   if (s === 'IN_PAYMENT') return 'bg-indigo-50 text-indigo-800 border-indigo-300 focus:ring-indigo-500/20';
-  if (s === 'PAID' || s === 'SUCCESS' || s === 'COMPLETED') return 'bg-green-50 text-green-800 border-green-300 focus:ring-green-500/20';
-  if (s === 'FAILED' || s === 'CANCELLED') return 'bg-red-50 text-red-800 border-red-300 focus:ring-red-500/20';
+  if (s === 'PAID' || s === 'SUCCESS' || s === 'COMPLETED') return 'bg-success-soft text-success-strong border-success/40 focus:ring-success/20';
+  if (s === 'FAILED' || s === 'CANCELLED') return 'bg-error-soft text-error-strong border-error/40 focus:ring-error/20';
   
-  return 'bg-gray-50 text-gray-800 border-gray-300 focus:ring-gray-500/20';
+  return 'bg-surface-muted text-ink border-line-strong focus:ring-ink-subtle/20';
 };
 </script>
 

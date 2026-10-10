@@ -299,11 +299,11 @@ watch(selectedClaims, (newVal) => {
       <DefaultPage :hideSearch="true">
         <!-- FILTER HEADER -->
         <template #header v-if="!hasGenerated">
-          <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
             <div class="flex flex-col gap-4 md:flex-row md:items-end">
               <!-- Institution -->
               <div class="flex-1 min-w-0">
-                <label class="block mb-2 text-sm font-medium text-gray-700">Institution</label>
+                <label class="block mb-2 text-sm font-medium text-ink-muted">Institution</label>
                 <SearchSelect
                   v-model="institutionName"
                   placeholder="Search institution..."
@@ -351,17 +351,17 @@ watch(selectedClaims, (newVal) => {
         <!-- RESULTS -->
         <div v-if="hasGenerated" class="space-y-6">
           <!-- summary -->
-          <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
             <div class="gap-4 md:flex md:items-center md:justify-between">
               <div>
-                <h3 class="text-lg font-semibold text-gray-900">Cash Claims</h3>
-                <div v-if="institutionName" class="p-2 mt-2 bg-blue-50 rounded border border-blue-200">
-                  <p class="text-sm text-blue-900"><strong>Institution:</strong> {{ institutionName }}</p>
+                <h3 class="text-lg font-semibold text-ink">Cash Claims</h3>
+                <div v-if="institutionName" class="p-2 mt-2 bg-primary/5 rounded border border-primary/20">
+                  <p class="text-sm text-primary-hover"><strong>Institution:</strong> {{ institutionName }}</p>
                 </div>
               </div>
-              <div class="p-2 mt-2 rounded border border-blue-200 bg-primary-50">
-                <p class="mt-1 text-sm text-gray-600">{{ fromDate }} → {{ toDate }}</p>
-                <p class="mt-1 text-sm text-gray-500">{{ selectedClaims.length }} of {{ claims?.length || 0 }} claims selected</p>
+              <div class="p-2 mt-2 rounded border border-primary/20 bg-primary-50">
+                <p class="mt-1 text-sm text-ink-muted">{{ fromDate }} → {{ toDate }}</p>
+                <p class="mt-1 text-sm text-ink-subtle">{{ selectedClaims.length }} of {{ claims?.length || 0 }} claims selected</p>
               </div>
               <div class="flex gap-3 items-center mt-4 md:mt-0">
                 <Button type="secondary" @click="() => { hasGenerated = false; selectedClaims = []; }">Back to Filter</Button>
@@ -377,7 +377,7 @@ watch(selectedClaims, (newVal) => {
           </div>
 
           <!-- table -->
-          <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
             <div class="mb-4">
               <Input
                 v-model="searchTerm"
@@ -436,15 +436,15 @@ watch(selectedClaims, (newVal) => {
         </div>
 
         <!-- EMPTY / PROMPT -->
-        <div v-else class="flex flex-col gap-4 justify-center items-center p-12 bg-white rounded-lg border border-gray-200 border-dashed">
-          <div class="flex justify-center items-center w-16 h-16 bg-gray-50 rounded-full">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else class="flex flex-col gap-4 justify-center items-center p-12 bg-white rounded-lg border border-line border-dashed">
+          <div class="flex justify-center items-center w-16 h-16 bg-surface-muted rounded-full">
+            <svg class="w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0 0h6"></path>
             </svg>
           </div>
           <div class="text-center">
-            <p class="text-lg font-medium text-gray-700">Select Institution</p>
-            <p class="mt-1 text-sm text-gray-500">Choose an institution to generate cash claims</p>
+            <p class="text-lg font-medium text-ink-muted">Select Institution</p>
+            <p class="mt-1 text-sm text-ink-subtle">Choose an institution to generate cash claims</p>
           </div>
         </div>
       </DefaultPage>

@@ -124,7 +124,7 @@ function handleUpdateProfile({values}){
 
 </script>
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-surface-muted">
     <div class="p-6">
       <div class="relative">
         <!-- Banner -->
@@ -173,7 +173,7 @@ function handleUpdateProfile({values}){
                     'px-6 py-3 transition-all duration-200',
                     active === index
                       ? 'bg-base-clr text-white font-medium'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                      : 'bg-white text-ink-muted hover:bg-surface-muted'
                   ]"
                 >
                   {{ item.name }}
@@ -184,7 +184,7 @@ function handleUpdateProfile({values}){
                 v-if="active === 0"
                 :pending="api.pending.value"
                 @click.prevent="submit(handleUpdateProfile)"
-                class="bg-[#FFD665] font-medium text-gray-900"
+                class="bg-[#FFD665] font-medium text-ink"
               >
                 Edit
               </Button>

@@ -139,10 +139,10 @@ onMounted(() => {
               :class="[
                 'px-4 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2',
                 active === i
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-primary to-primary text-white shadow-lg'
                   : i === 0 || selection.person
-                  ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  : 'text-gray-400'
+                  ? 'text-ink-muted hover:text-ink hover:bg-surface-muted'
+                  : 'text-ink-subtle'
               ]"
             >
               <span v-if="i === 0">✓</span>
@@ -152,7 +152,7 @@ onMounted(() => {
             <!-- Underline Animation -->
             <div
               v-if="active === i"
-              class="absolute right-0 bottom-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
+              class="absolute right-0 bottom-0 left-0 h-1 bg-gradient-to-r from-primary to-primary rounded-full"
             ></div>
           </div>
         </div>
@@ -171,19 +171,19 @@ onMounted(() => {
         <Transition name="slide-left">
           <div
             v-if="selection.person"
-            class="flex gap-3 items-center px-4 py-2 mx-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border border-blue-200"
+            class="flex gap-3 items-center px-4 py-2 mx-4 bg-gradient-to-r from-primary/5 to-primary/5 rounded-lg border border-primary/20"
           >
             <div class="relative">
               <div v-if="selection.person.profile" class="flex overflow-hidden justify-center items-center w-8 h-8 rounded-full border-2 border-white shadow-sm">
                 <img :src="formatImageSource(selection.person.profile)" class="object-cover w-full h-full" alt="Profile" />
               </div>
-              <div v-else class="flex justify-center items-center w-8 h-8 text-sm font-bold text-white bg-gradient-to-br from-blue-400 to-blue-600 rounded-full shadow-sm">
+              <div v-else class="flex justify-center items-center w-8 h-8 text-sm font-bold text-white bg-gradient-to-br from-primary/70 to-primary rounded-full shadow-sm">
                 {{ selection.person.firstName?.charAt(0)?.toUpperCase() || selection.person?.name?.charAt(0)?.toUpperCase() }}
               </div>
             </div>
             <div class="min-w-0">
-              <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase truncate">Current Person</p>
-              <p class="text-sm font-bold text-gray-900 truncate">{{ selection.person?.name }}</p>
+              <p class="text-xs font-semibold tracking-wide text-ink-subtle uppercase truncate">Current Person</p>
+              <p class="text-sm font-bold text-ink truncate">{{ selection.person?.name }}</p>
             </div>
           </div>
         </Transition>

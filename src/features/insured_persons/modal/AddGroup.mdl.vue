@@ -68,10 +68,10 @@ function handleSubmit() {
       subtitle="Select benefit packages and set sum assured"
     >
       <div class="p-6">
-        <div class="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <div class="p-6 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Select Benefit Packages</h3>
-            <p class="mt-1 text-sm text-gray-500">Choose packages and set sum assured. Plan type is selected per package.</p>
+        <div class="overflow-hidden bg-white rounded-2xl border border-line shadow-sm">
+          <div class="p-6 border-b border-line">
+            <h3 class="text-lg font-bold text-ink">Select Benefit Packages</h3>
+            <p class="mt-1 text-sm text-ink-subtle">Choose packages and set sum assured. Plan type is selected per package.</p>
           </div>
 
           <div class="p-6">
@@ -83,10 +83,10 @@ function handleSubmit() {
             />
           </div>
 
-          <div class="flex flex-col gap-3 justify-end p-4 border-t border-gray-100 sm:p-6 bg-gray-50/60 sm:flex-row">
+          <div class="flex flex-col gap-3 justify-end p-4 border-t border-line sm:p-6 bg-surface-muted/60 sm:flex-row">
             <Button
               type="button"
-              class="px-6 py-3 text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50"
+              class="px-6 py-3 text-ink-muted rounded-lg border border-line-strong hover:bg-surface-muted"
               @click.prevent="closeModal"
             >
               Cancel

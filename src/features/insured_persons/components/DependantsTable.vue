@@ -1,6 +1,6 @@
 <template>
   <div class="overflow-x-auto">
-    <table class="min-w-full bg-white border border-gray-200">
+    <table class="min-w-full bg-white border border-line">
       <thead>
         <tr>
           <th class="py-2 px-4 border-b text-left">Name</th>
@@ -12,7 +12,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(dependant, index) in dependants" :key="index" class="hover:bg-gray-50">
+        <tr v-for="(dependant, index) in dependants" :key="index" class="hover:bg-surface-muted">
           <td v-if="editingIndex === index" class="py-2 px-4 border-b">
             <input v-model="editingDependant.fullName" class="border p-1 w-full" />
           </td>
@@ -48,7 +48,7 @@
           </td>
           <td v-else class="py-2 px-4 border-b">
             <span 
-              :class="dependant.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+              :class="dependant.status === 'ACTIVE' ? 'bg-success-soft text-success-strong' : 'bg-error-soft text-error-strong'"
               class="px-2 py-1 rounded-full text-xs font-medium"
             >
               {{ dependant.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
@@ -59,7 +59,7 @@
             <div class="dropdown-container relative">
               <button 
                 @click.stop="toggleDropdown($event, dependant.dependantUuid || index)"
-                class="inline-flex items-center justify-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
+                class="inline-flex items-center justify-center p-2 text-sm font-medium text-center text-ink-subtle hover:text-ink rounded-lg hover:bg-surface-muted focus:outline-none"
                 type="button"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -75,14 +75,14 @@
                   <template v-if="editingIndex === index">
                     <button 
                       @click.stop="saveEdit()"
-                      class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      class="flex items-center w-full px-4 py-2 text-sm text-ink-muted hover:bg-surface-muted"
                     >
                       <i class="fas fa-save mr-2"></i>
                       Save
                     </button>
                     <button 
                       @click.stop="cancelEdit()"
-                      class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      class="flex items-center w-full px-4 py-2 text-sm text-ink-muted hover:bg-surface-muted"
                     >
                       <i class="fas fa-times mr-2"></i>
                       Cancel
@@ -91,7 +91,7 @@
                   <template v-else>
                     <button 
                       @click.stop="startEdit(index, dependant)"
-                      class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      class="flex items-center w-full px-4 py-2 text-sm text-ink-muted hover:bg-surface-muted"
                     >
                       <i class="fas fa-edit mr-2"></i>
                       Edit
@@ -99,7 +99,7 @@
                     <button 
                       v-if="dependant.status === 'ACTIVE'"
                       @click.stop="toggleStatus(dependant, 'INACTIVE')"
-                      class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      class="flex items-center w-full px-4 py-2 text-sm text-error hover:bg-surface-muted"
                     >
                       <i class="fas fa-ban mr-2"></i>
                       Deactivate
@@ -107,7 +107,7 @@
                     <button 
                       v-else
                       @click.stop="toggleStatus(dependant, 'ACTIVE')"
-                      class="flex items-center w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-100"
+                      class="flex items-center w-full px-4 py-2 text-sm text-success hover:bg-surface-muted"
                     >
                       <i class="fas fa-check-circle mr-2"></i>
                       Activate

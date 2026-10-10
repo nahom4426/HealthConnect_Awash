@@ -81,13 +81,13 @@ onUnmounted(() => {
 
 function getCategoryColor(category) {
   const colors = {
-    claim_attachment: 'from-blue-500 to-cyan-600',
+    claim_attachment: 'from-primary to-cyan-600',
     dependent: 'from-purple-500 to-pink-600',
-    insured: 'from-green-500 to-emerald-600',
-    payer: 'from-orange-500 to-red-600',
-    provider_contract: 'from-indigo-500 to-blue-600',
+    insured: 'from-success to-success',
+    payer: 'from-orange-500 to-error',
+    provider_contract: 'from-primary to-primary',
     package: 'from-violet-500 to-purple-600',
-    default: 'from-gray-500 to-slate-600'
+    default: 'from-ink-subtle to-ink-muted'
   };
   return colors[category] || colors.default;
 }
@@ -100,27 +100,27 @@ function getCategoryColor(category) {
       <!-- Desktop Table Row -->
       <tr
         @click.self="onRowClick(row)"
-        class="bg-white border-b transition-all duration-150 ease-in-out hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50"
+        class="bg-white border-b transition-all duration-150 ease-in-out hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/5"
       >
-      <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+      <td class="p-4 font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
       <!-- Role Name -->
       <td class="px-4 py-4">
         <div class="flex flex-col gap-1">
-          <span class="font-semibold text-gray-900">{{ row.roleName }}</span>
-          <!-- <span class="text-xs text-gray-500">{{ row.roleUuid }}</span> -->
+          <span class="font-semibold text-ink">{{ row.roleName }}</span>
+          <!-- <span class="text-xs text-ink-subtle">{{ row.roleUuid }}</span> -->
         </div>
       </td>
 
       <!-- Role Description -->
       <td class="px-4 py-4">
-        <span class="text-sm text-gray-700 line-clamp-2">{{ row.roleDescription || '—' }}</span>
+        <span class="text-sm text-ink-muted line-clamp-2">{{ row.roleDescription || '—' }}</span>
       </td>
 
       <!-- Privileges Count with Tooltip -->
       <td class="relative px-4 py-4">
         <div class="inline-block relative group">
-          <span class="inline-flex gap-2 items-center px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-md transition-shadow cursor-help hover:shadow-lg">
+          <span class="inline-flex gap-2 items-center px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-primary to-purple-600 rounded-full shadow-md transition-shadow cursor-help hover:shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
             </svg>
@@ -128,21 +128,21 @@ function getCategoryColor(category) {
           </span>
 
           <!-- Hover Tooltip - Attractive design with animations -->
-          <div v-if="getPrivilegeList(row).length > 0" class="hidden absolute top-full left-1/2 z-[9999] p-5 mt-3 w-96 text-left bg-white rounded-2xl border border-gray-200 shadow-2xl transform -translate-x-1/2 group-hover:block pointer-events-auto backdrop-blur-sm">
+          <div v-if="getPrivilegeList(row).length > 0" class="hidden absolute top-full left-1/2 z-[9999] p-5 mt-3 w-96 text-left bg-white rounded-2xl border border-line shadow-2xl transform -translate-x-1/2 group-hover:block pointer-events-auto backdrop-blur-sm">
             <!-- Tooltip Header -->
-            <div class="flex justify-between items-center pb-3 mb-4 border-b-2 border-gray-100">
+            <div class="flex justify-between items-center pb-3 mb-4 border-b-2 border-line">
               <div class="flex gap-2 items-center">
-                <div class="p-2 bg-indigo-100 rounded-lg">
-                  <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                <div class="p-2 bg-primary/10 rounded-lg">
+                  <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
                   </svg>
                 </div>
                 <div>
-                  <h4 class="text-sm font-bold text-gray-900">Assigned Privileges</h4>
-                  <p class="text-xs text-gray-500">{{ getPrivilegeCount(row) }} permission{{ getPrivilegeCount(row) !== 1 ? 's' : '' }}</p>
+                  <h4 class="text-sm font-bold text-ink">Assigned Privileges</h4>
+                  <p class="text-xs text-ink-subtle">{{ getPrivilegeCount(row) }} permission{{ getPrivilegeCount(row) !== 1 ? 's' : '' }}</p>
                 </div>
               </div>
-              <span class="px-3 py-1 text-xs font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full">{{ getPrivilegeCount(row) }}</span>
+              <span class="px-3 py-1 text-xs font-bold text-white bg-gradient-to-r from-primary to-purple-600 rounded-full">{{ getPrivilegeCount(row) }}</span>
             </div>
             
             <!-- Privileges List -->
@@ -150,7 +150,7 @@ function getCategoryColor(category) {
               <div
                 v-for="(privilege, i) in getPrivilegeList(row)"
                 :key="privilege.privilegeUuid || i"
-                class="p-3 bg-gradient-to-r rounded-lg border border-gray-100 transition-all duration-200 hover:shadow-md hover:border-indigo-300"
+                class="p-3 bg-gradient-to-r rounded-lg border border-line transition-all duration-200 hover:shadow-md hover:border-primary/30"
                 :class="getCategoryColor(privilege.privilegeCategory)"
               >
                 <div class="flex gap-3 items-start">
@@ -170,15 +170,15 @@ function getCategoryColor(category) {
           </div>
           
           <!-- Empty State Tooltip -->
-          <div v-else class="hidden absolute top-full left-1/2 z-[9999] p-4 mt-3 w-80 text-left bg-white rounded-2xl border border-gray-200 shadow-2xl transform -translate-x-1/2 group-hover:block pointer-events-auto">
+          <div v-else class="hidden absolute top-full left-1/2 z-[9999] p-4 mt-3 w-80 text-left bg-white rounded-2xl border border-line shadow-2xl transform -translate-x-1/2 group-hover:block pointer-events-auto">
             <div class="py-4 text-center">
-              <div class="flex justify-center items-center p-3 mx-auto mb-3 w-12 h-12 bg-gray-100 rounded-full">
-                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex justify-center items-center p-3 mx-auto mb-3 w-12 h-12 bg-surface-muted rounded-full">
+                <svg class="w-6 h-6 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
               </div>
-              <p class="text-sm font-semibold text-gray-600">No privileges assigned</p>
-              <p class="mt-1 text-xs text-gray-500">This role has no permissions yet</p>
+              <p class="text-sm font-semibold text-ink-muted">No privileges assigned</p>
+              <p class="mt-1 text-xs text-ink-subtle">This role has no permissions yet</p>
             </div>
           </div>
         </div>
@@ -189,7 +189,7 @@ function getCategoryColor(category) {
         <div class="flex flex-wrap gap-2 justify-start items-center">
           <!-- <button
             @click.stop.prevent="handleDetailWithClose(row)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm"
             title="View Details"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -201,7 +201,7 @@ function getCategoryColor(category) {
 
           <button
             @click.stop.prevent="handleEditWithClose(row)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-xl border border-indigo-200 transition-all duration-200 hover:bg-indigo-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm"
             title="Edit Role"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -213,7 +213,7 @@ function getCategoryColor(category) {
 <!-- 
           <button
             @click.stop.prevent="handleDeleteWithClose(row)"
-            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 rounded-xl border border-red-200 transition-all duration-200 hover:bg-red-100 hover:shadow-sm"
+            class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-error bg-error-soft rounded-xl border border-error/20 transition-all duration-200 hover:bg-error-soft hover:shadow-sm"
             title="Delete Role"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -235,17 +235,17 @@ function getCategoryColor(category) {
     <template v-for="(row, idx) in rowData.filter(r => r !== null)" :key="row?.roleUuid || idx">
       <!-- Mobile Card View -->
       <div
-        class="p-2 mx-1 mb-2 bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md"
+        class="p-2 mx-1 mb-2 bg-white rounded-lg border border-line shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md"
         @click="onRowClick(row)"
       >
       <div class="space-y-2">
         <!-- Header with Role Name -->
         <div class="flex gap-2 justify-between items-start">
           <div class="flex-1 min-w-0">
-            <h3 class="text-sm font-bold text-gray-900 truncate">{{ row.roleName }}</h3>
-            <!-- <p class="mt-0.5 text-xs text-gray-500 truncate">{{ row.roleUuid }}</p> -->
+            <h3 class="text-sm font-bold text-ink truncate">{{ row.roleName }}</h3>
+            <!-- <p class="mt-0.5 text-xs text-ink-subtle truncate">{{ row.roleUuid }}</p> -->
           </div>
-          <span class="inline-flex flex-shrink-0 gap-1 items-center px-2 py-0.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-md">
+          <span class="inline-flex flex-shrink-0 gap-1 items-center px-2 py-0.5 text-xs font-bold text-white bg-gradient-to-r from-primary to-purple-600 rounded-full shadow-md">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
             </svg>
@@ -255,13 +255,13 @@ function getCategoryColor(category) {
 
         <!-- Description -->
         <div>
-          <p class="mb-1 text-xs font-semibold tracking-wide text-gray-600 uppercase">Description</p>
-          <p class="text-sm text-gray-700 line-clamp-2">{{ row.roleDescription || '—' }}</p>
+          <p class="mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase">Description</p>
+          <p class="text-sm text-ink-muted line-clamp-2">{{ row.roleDescription || '—' }}</p>
         </div>
 
         <!-- Privileges Preview -->
         <div>
-          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-600 uppercase">Privileges</p>
+          <p class="mb-2 text-xs font-semibold tracking-wide text-ink-muted uppercase">Privileges</p>
           <div class="flex flex-wrap gap-1.5">
             <span
               v-for="(privilege, i) in getPrivilegeList(row).slice(0, 3)"
@@ -273,7 +273,7 @@ function getCategoryColor(category) {
             </span>
             <span
               v-if="getPrivilegeCount(row) > 3"
-              class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full"
+              class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-ink-muted bg-line rounded-full"
             >
               +{{ getPrivilegeCount(row) - 3 }} more
             </span>
@@ -281,11 +281,11 @@ function getCategoryColor(category) {
         </div>
 
         <!-- Mobile Actions -->
-        <div class="flex flex-col gap-1 pt-2 border-t border-gray-100 sm:flex-row">
+        <div class="flex flex-col gap-1 pt-2 border-t border-line sm:flex-row">
           <!-- Detail Button -->
           <button
             @click.stop.prevent="handleDetailWithClose(row)"
-            class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md border border-blue-200 transition-all duration-200 hover:bg-blue-100"
+            class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-primary bg-primary/5 rounded-md border border-primary/20 transition-all duration-200 hover:bg-primary/10"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -297,7 +297,7 @@ function getCategoryColor(category) {
           <!-- Edit Button -->
           <button
             @click.stop.prevent="handleEditWithClose(row)"
-            class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md border border-indigo-200 transition-all duration-200 hover:bg-indigo-100"
+            class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-primary bg-primary/5 rounded-md border border-primary/20 transition-all duration-200 hover:bg-primary/10"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 20h9"/>
@@ -309,7 +309,7 @@ function getCategoryColor(category) {
           <!-- Delete Button -->
           <button
             @click.stop.prevent="handleDeleteWithClose(row)"
-            class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md border border-red-200 transition-all duration-200 hover:bg-red-100"
+            class="flex flex-1 gap-1 justify-center items-center px-2 py-1.5 text-xs font-medium text-error bg-error-soft rounded-md border border-error/20 transition-all duration-200 hover:bg-error-soft"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"/>

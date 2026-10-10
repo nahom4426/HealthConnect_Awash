@@ -106,10 +106,10 @@ function selectPackage(pkg) {
         </Table>
       </CoverageDataProvider>
 
-      <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
+      <div class="flex gap-3 justify-end pt-4 border-t border-line">
         <button
           type="button"
-          class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg"
+          class="px-4 py-2 text-ink-muted bg-line rounded-lg"
           @click="closeModal()"
         >
           Cancel

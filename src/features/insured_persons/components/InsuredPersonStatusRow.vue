@@ -163,14 +163,14 @@
             <div class="py-1" role="none">
               <button 
                 @click.stop="handleEditWithClose(row)"
-                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                class="flex gap-3 items-center px-4 py-2 w-full text-ink-muted rounded-md transition-colors hover:bg-primary/5 hover:text-primary-hover"
               >
                 <i v-html="icons.edits || '✏️'" class="w-5 h-5" />
                 Edit
               </button>
 
               <button
-                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                class="flex gap-3 items-center px-4 py-2 w-full text-ink-muted rounded-md transition-colors hover:bg-primary/5 hover:text-primary-hover"
                 @click.stop="openModal('AddPackages', {
                   payerInstitutionContractUuid: route.params.id || row?.payerInstitutionContractUuid,
                   insuredUuid: row?.insuredUuid,
@@ -184,7 +184,7 @@
 
               <button 
                 @click.stop="$router.push(`/insured_list/detail/${getRowId(row)}`)"
-                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                class="flex gap-3 items-center px-4 py-2 w-full text-ink-muted rounded-md transition-colors hover:bg-primary/5 hover:text-primary-hover"
               >
                 <i v-html="icons.Dependants || '👥'" class="w-5 h-5" />
                 Dependents
@@ -192,9 +192,9 @@
               
               <button
                 @click.stop="handleHistoryWithClose(row)"
-                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                class="flex gap-3 items-center px-4 py-2 w-full text-ink-muted rounded-md transition-colors hover:bg-primary/5 hover:text-primary-hover"
               >
-                <i v-html="icons.historys || '🕘'" class="w-4 h-4 text-gray-700" />
+                <i v-html="icons.historys || '🕘'" class="w-4 h-4 text-ink-muted" />
                 History
               </button>
             </div>
@@ -242,10 +242,10 @@
               :class="getTogglePositionClass(row)"
             >
               <!-- Icon inside toggle -->
-              <svg v-if="isActive(row)" class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-if="isActive(row)" class="w-3 h-3 text-success" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
               </svg>
-              <svg v-else class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-else class="w-3 h-3 text-error" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
               </svg>
             </span>
@@ -362,7 +362,7 @@ function getRowStatusClass(row) {
   const baseClasses = 'bg-white border-b transition-all duration-200 cursor-pointer';
   
   if (isInactive(row)) {
-    return `${baseClasses} bg-red-100 hover:bg-red-200 border-red-300`;
+    return `${baseClasses} bg-error-soft hover:bg-error/20 border-error/40`;
   }
   
   if (isSuspended(row)) {
@@ -370,133 +370,133 @@ function getRowStatusClass(row) {
   }
   
   if (isPending(row)) {
-    return `${baseClasses} bg-yellow-50 hover:bg-yellow-100 border-yellow-200`;
+    return `${baseClasses} bg-warning-soft hover:bg-warning-soft border-warning/20`;
   }
   
   if (isActive(row)) {
-    return `${baseClasses} hover:bg-green-50 border-green-200`;
+    return `${baseClasses} hover:bg-success-soft border-success/20`;
   }
   
-  return `${baseClasses} hover:bg-gray-50 border-gray-200`;
+  return `${baseClasses} hover:bg-surface-muted border-line`;
 }
 
 // Status dot colors
 function getStatusDotClass(row) {
-  if (isInactive(row)) return 'bg-red-500';
+  if (isInactive(row)) return 'bg-error';
   if (isSuspended(row)) return 'bg-orange-500';
-  if (isPending(row)) return 'bg-yellow-500';
-  if (isActive(row)) return 'bg-green-500';
-  return 'bg-gray-400';
+  if (isPending(row)) return 'bg-warning';
+  if (isActive(row)) return 'bg-success';
+  return 'bg-ink-subtle';
 }
 
 // Status ping animation
 function getStatusPingClass(row) {
-  if (isInactive(row)) return 'bg-red-400';
+  if (isInactive(row)) return 'bg-error';
   if (isSuspended(row)) return 'bg-orange-400';
-  if (isPending(row)) return 'bg-yellow-400';
-  if (isActive(row)) return 'bg-green-400';
-  return 'bg-gray-400';
+  if (isPending(row)) return 'bg-warning';
+  if (isActive(row)) return 'bg-success';
+  return 'bg-ink-subtle';
 }
 
 // Text color based on status
 function getTextStatusClass(row) {
-  if (isInactive(row)) return 'text-red-800';
+  if (isInactive(row)) return 'text-error-strong';
   if (isSuspended(row)) return 'text-orange-800';
-  if (isPending(row)) return 'text-yellow-800';
-  if (isActive(row)) return 'text-gray-900';
-  return 'text-gray-700';
+  if (isPending(row)) return 'text-warning-strong';
+  if (isActive(row)) return 'text-ink';
+  return 'text-ink-muted';
 }
 
 // Muted text color
 function getMutedTextStatusClass(row) {
-  if (isInactive(row)) return 'text-red-600/70';
+  if (isInactive(row)) return 'text-error/70';
   if (isSuspended(row)) return 'text-orange-600/70';
-  if (isPending(row)) return 'text-yellow-600/70';
-  return 'text-gray-500';
+  if (isPending(row)) return 'text-warning/70';
+  return 'text-ink-subtle';
 }
 
 // Status badge class
 function getStatusBadgeClass(row) {
   const base = "px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm inline-flex items-center gap-1.5";
   
-  if (isInactive(row)) return `${base} bg-red-200 text-red-800 border border-red-300`;
+  if (isInactive(row)) return `${base} bg-error/20 text-error-strong border border-error/40`;
   if (isSuspended(row)) return `${base} bg-orange-200 text-orange-800 border border-orange-300`;
-  if (isPending(row)) return `${base} bg-yellow-200 text-yellow-800 border border-yellow-300`;
-  if (isActive(row)) return `${base} bg-green-200 text-green-800 border border-green-300`;
+  if (isPending(row)) return `${base} bg-warning/20 text-warning-strong border border-warning/40`;
+  if (isActive(row)) return `${base} bg-success/20 text-success-strong border border-success/40`;
   
-  return `${base} bg-gray-200 text-gray-800 border border-gray-300`;
+  return `${base} bg-line text-ink border border-line-strong`;
 }
 
 // Inner dot for status badge
 function getStatusInnerDotClass(row) {
-  if (isInactive(row)) return 'bg-red-600';
+  if (isInactive(row)) return 'bg-error';
   if (isSuspended(row)) return 'bg-orange-600';
-  if (isPending(row)) return 'bg-yellow-600';
-  if (isActive(row)) return 'bg-green-600';
-  return 'bg-gray-600';
+  if (isPending(row)) return 'bg-warning';
+  if (isActive(row)) return 'bg-success';
+  return 'bg-ink-muted';
 }
 
 // Status text for toggle
 function getStatusTextClass(row) {
-  if (isInactive(row)) return 'text-red-700';
+  if (isInactive(row)) return 'text-error-strong';
   if (isSuspended(row)) return 'text-orange-700';
-  if (isPending(row)) return 'text-yellow-700';
-  if (isActive(row)) return 'text-green-700';
-  return 'text-gray-700';
+  if (isPending(row)) return 'text-warning-strong';
+  if (isActive(row)) return 'text-success-strong';
+  return 'text-ink-muted';
 }
 
 // Image border class
 function getImageBorderClass(row) {
-  if (isInactive(row)) return 'border-red-300';
+  if (isInactive(row)) return 'border-error/40';
   if (isSuspended(row)) return 'border-orange-300';
-  if (isPending(row)) return 'border-yellow-300';
-  if (isActive(row)) return 'border-green-300';
-  return 'border-gray-200';
+  if (isPending(row)) return 'border-warning/40';
+  if (isActive(row)) return 'border-success/40';
+  return 'border-line';
 }
 
 // Dependents button class
 function getDependantsButtonClass(row, isExpanded) {
   if (isExpanded) {
-    return 'bg-blue-600 text-white hover:bg-blue-700';
+    return 'bg-primary text-white hover:bg-primary-hover';
   }
   
   if (isInactive(row)) {
-    return 'bg-red-200 text-red-800 hover:bg-red-300 border border-red-300';
+    return 'bg-error/20 text-error-strong hover:bg-error/40 border border-error/40';
   }
   
   if (isSuspended(row)) {
     return 'bg-orange-200 text-orange-800 hover:bg-orange-300 border border-orange-300';
   }
   
-  return 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200';
+  return 'bg-primary/10 text-primary-hover hover:bg-primary/20 border border-primary/20';
 }
 
 // No dependents class
 function getNoDependantsClass(row) {
   if (isInactive(row)) {
-    return 'bg-red-100 text-red-600 border border-red-200';
+    return 'bg-error-soft text-error border border-error/20';
   }
   if (isSuspended(row)) {
     return 'bg-orange-100 text-orange-600 border border-orange-200';
   }
-  return 'bg-gray-100 text-gray-600 border border-gray-200';
+  return 'bg-surface-muted text-ink-muted border border-line';
 }
 
 // Action button class
 function getActionButtonClass(row) {
   if (isInactive(row)) {
-    return 'text-red-600 hover:text-red-800 hover:bg-red-200';
+    return 'text-error hover:text-error-strong hover:bg-error/20';
   }
   if (isSuspended(row)) {
     return 'text-orange-600 hover:text-orange-800 hover:bg-orange-200';
   }
-  return 'text-gray-500 hover:text-gray-800 hover:bg-gray-100';
+  return 'text-ink-subtle hover:text-ink hover:bg-surface-muted';
 }
 
 // Dropdown menu class
 function getDropdownMenuClass(row) {
   if (isInactive(row)) {
-    return 'border border-red-200';
+    return 'border border-error/20';
   }
   return '';
 }
@@ -504,9 +504,9 @@ function getDropdownMenuClass(row) {
 // Toggle class
 function getToggleClass(row) {
   if (isActive(row)) {
-    return 'bg-green-500 hover:bg-green-600 focus:ring-green-500';
+    return 'bg-success hover:bg-success focus:ring-success';
   }
-  return 'bg-red-400 hover:bg-red-500 focus:ring-red-500';
+  return 'bg-error hover:bg-error focus:ring-error';
 }
 
 // Toggle position class
@@ -527,37 +527,37 @@ function canToggleStatus(row) {
 // Secondary button class for amend page
 function getSecondaryButtonClass(row) {
   if (isInactive(row)) {
-    return 'text-red-700 bg-red-100 hover:bg-red-200 border border-red-200';
+    return 'text-error-strong bg-error-soft hover:bg-error/20 border border-error/20';
   }
   if (isSuspended(row)) {
     return 'text-orange-700 bg-orange-100 hover:bg-orange-200 border border-orange-200';
   }
-  return 'text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-200';
+  return 'text-ink-muted bg-surface-muted hover:bg-line border border-line';
 }
 
 // Expanded row class
 function getExpandedRowClass(row) {
   if (isInactive(row)) {
-    return 'bg-red-50 border-red-200';
+    return 'bg-error-soft border-error/20';
   }
   if (isSuspended(row)) {
     return 'bg-orange-50 border-orange-200';
   }
-  return 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200';
+  return 'bg-gradient-to-r from-primary/5 to-primary/5 border-primary/20';
 }
 
 // Expanded header icon class
 function getExpandedHeaderIconClass(row) {
-  if (isInactive(row)) return 'text-red-600';
+  if (isInactive(row)) return 'text-error';
   if (isSuspended(row)) return 'text-orange-600';
-  return 'text-blue-600';
+  return 'text-primary';
 }
 
 // Expanded header text class
 function getExpandedHeaderTextClass(row) {
-  if (isInactive(row)) return 'text-red-900';
+  if (isInactive(row)) return 'text-error-strong';
   if (isSuspended(row)) return 'text-orange-900';
-  return 'text-gray-900';
+  return 'text-ink';
 }
 
 // Toggle status function
@@ -734,7 +734,7 @@ tr {
 }
 
 /* Hover effects for status rows */
-tr.bg-red-100:hover {
+tr.bg-error-soft:hover {
   background-color: rgb(var(--error-soft)) !important;
 }
 
@@ -742,7 +742,7 @@ tr.bg-orange-100:hover {
   background-color: rgb(var(--warning) / 0.3) !important;
 }
 
-tr.bg-yellow-50:hover {
+tr.bg-warning-soft:hover {
   background-color: rgb(var(--warning-soft)) !important;
 }
 
@@ -781,7 +781,7 @@ tr.bg-yellow-50:hover {
   color: rgb(var(--primary-hover));
 }
 
-.dropdown-menu button.text-red-600:hover {
+.dropdown-menu button.text-error:hover {
   background-color: rgb(var(--error-soft));
   color: rgb(var(--error));
 }

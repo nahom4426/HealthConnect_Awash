@@ -106,23 +106,23 @@ const hasActiveFilters = computed(() => {
 <template>
   <DefaultPage title="Field Update Logs" placeholder="Search logs...">
     <template #header>
-      <div class="flex gap-3 items-center px-4 py-2 bg-gradient-to-r rounded-lg border shadow-sm from-indigo-50 to-indigo-100/50 border-indigo-200">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600">
+      <div class="flex gap-3 items-center px-4 py-2 bg-gradient-to-r rounded-lg border shadow-sm from-primary/5 to-primary/5 border-primary/20">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
           <path d="M3 3v5h5"/>
           <path d="M12 7v5l4 2"/>
         </svg>
-        <span class="text-sm font-semibold text-indigo-700">Audit Trail</span>
+        <span class="text-sm font-semibold text-primary-hover">Audit Trail</span>
       </div>
     </template>
 
     <template #default="{ search }">
       <!-- Modern Filter Bar -->
-      <div class="p-4 mb-5 bg-white rounded-xl border border-gray-100 shadow-sm">
+      <div class="p-4 mb-5 bg-white rounded-xl border border-line shadow-sm">
         <div class="flex flex-wrap gap-3 items-end">
           <!-- Entity filter -->
           <div class="flex flex-col gap-1.5 min-w-[180px]">
-            <label class="text-xs font-semibold tracking-wider text-gray-400 uppercase">Entity</label>
+            <label class="text-xs font-semibold tracking-wider text-ink-subtle uppercase">Entity</label>
             <CustomSelect
               v-model="updateEntity"
               :options="entityOptions"
@@ -132,7 +132,7 @@ const hasActiveFilters = computed(() => {
 
           <!-- Field filter -->
           <div class="flex flex-col gap-1.5 min-w-[180px]">
-            <label class="text-xs font-semibold tracking-wider text-gray-400 uppercase">Field</label>
+            <label class="text-xs font-semibold tracking-wider text-ink-subtle uppercase">Field</label>
             <CustomSelect
               v-model="updateField"
               :options="fieldOptions"
@@ -142,8 +142,8 @@ const hasActiveFilters = computed(() => {
 
           <!-- From Date -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold tracking-wider text-gray-400 uppercase">From</label>
-            <div class="flex items-center h-10 rounded-md border border-gray-300 min-w-[160px]">
+            <label class="text-xs font-semibold tracking-wider text-ink-subtle uppercase">From</label>
+            <div class="flex items-center h-10 rounded-md border border-line-strong min-w-[160px]">
               <input
                 v-model="fromDate"
                 type="date"
@@ -154,8 +154,8 @@ const hasActiveFilters = computed(() => {
 
           <!-- To Date -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold tracking-wider text-gray-400 uppercase">To</label>
-            <div class="flex items-center h-10 rounded-md border border-gray-300 min-w-[160px]">
+            <label class="text-xs font-semibold tracking-wider text-ink-subtle uppercase">To</label>
+            <div class="flex items-center h-10 rounded-md border border-line-strong min-w-[160px]">
               <input
                 v-model="toDate"
                 type="date"
@@ -168,7 +168,7 @@ const hasActiveFilters = computed(() => {
           <button
             v-if="hasActiveFilters"
             @click="clearFilters"
-            class="flex gap-1.5 items-center px-3 h-10 text-sm font-medium text-red-600 bg-red-50 rounded-md border border-red-200 transition-colors hover:bg-red-100"
+            class="flex gap-1.5 items-center px-3 h-10 text-sm font-medium text-error bg-error-soft rounded-md border border-error/20 transition-colors hover:bg-error-soft"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
@@ -188,28 +188,28 @@ const hasActiveFilters = computed(() => {
       >
         <!-- Results count badge -->
         <div v-if="totalElements" class="flex gap-2 items-center mb-3">
-          <span class="px-3 py-1 text-xs font-semibold rounded-full text-indigo-700 bg-indigo-50">
+          <span class="px-3 py-1 text-xs font-semibold rounded-full text-primary-hover bg-primary/5">
             {{ totalElements?.toLocaleString() }} records
           </span>
         </div>
 
-        <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
+        <div class="overflow-hidden bg-white rounded-xl border border-line shadow-sm">
           <table class="w-full text-sm">
             <thead>
-              <tr class="border-b border-gray-100 bg-gray-50/80">
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-400 uppercase">#</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-400 uppercase">Date & Time</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-400 uppercase">User</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-400 uppercase">Entity</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-400 uppercase">Field</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-400 uppercase">Change</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-400 uppercase">Remark</th>
+              <tr class="border-b border-line bg-surface-muted/80">
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">#</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Date & Time</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">User</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Entity</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Field</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Change</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-subtle uppercase">Remark</th>
               </tr>
             </thead>
             <tbody v-if="pending">
-              <tr v-for="i in 8" :key="i" class="border-b border-gray-50">
+              <tr v-for="i in 8" :key="i" class="border-b border-line">
                 <td v-for="j in 7" :key="j" class="px-4 py-3">
-                  <div class="h-4 bg-gray-100 rounded animate-pulse" :style="{ width: (40 + Math.random() * 60) + '%' }"></div>
+                  <div class="h-4 bg-surface-muted rounded animate-pulse" :style="{ width: (40 + Math.random() * 60) + '%' }"></div>
                 </td>
               </tr>
             </tbody>
@@ -217,22 +217,22 @@ const hasActiveFilters = computed(() => {
               <tr
                 v-for="(log, idx) in logs"
                 :key="log.id"
-                class="border-b border-gray-50 transition-colors hover:bg-indigo-50/30 group"
+                class="border-b border-line transition-colors hover:bg-primary/[0.015] group"
               >
                 <!-- Row number -->
-                <td class="px-4 py-3 text-xs font-medium text-gray-300">
+                <td class="px-4 py-3 text-xs font-medium text-line-strong">
                   {{ ((currentPage - 1) * itemsPerPage) + idx + 1 }}
                 </td>
 
                 <!-- Date -->
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
-                    <div class="flex justify-center items-center w-7 h-7 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600">
+                    <div class="flex justify-center items-center w-7 h-7 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
                         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                       </svg>
                     </div>
-                    <span class="text-sm font-medium text-gray-700 whitespace-nowrap">{{ formatDate(log.updateDate) }}</span>
+                    <span class="text-sm font-medium text-ink-muted whitespace-nowrap">{{ formatDate(log.updateDate) }}</span>
                   </div>
                 </td>
 
@@ -250,14 +250,14 @@ const hasActiveFilters = computed(() => {
 
                 <!-- Entity -->
                 <td class="px-4 py-3">
-                  <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700">
+                  <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/5 text-primary-hover">
                     {{ formatEntity(log.updateEntity) }}
                   </span>
                 </td>
 
                 <!-- Field -->
                 <td class="px-4 py-3">
-                  <span class="text-sm font-medium text-gray-600">
+                  <span class="text-sm font-medium text-ink-muted">
                     {{ formatField(log.updateField) }}
                   </span>
                 </td>
@@ -265,13 +265,13 @@ const hasActiveFilters = computed(() => {
                 <!-- Change (From → To) -->
                 <td class="px-4 py-3">
                   <div class="flex gap-1.5 items-center">
-                    <span class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-50 rounded line-through">
+                    <span class="px-2 py-0.5 text-xs font-medium text-error-strong bg-error-soft rounded line-through">
                       {{ log.fromValue || '—' }}
                     </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-ink-subtle flex-shrink-0">
                       <polyline points="9 18 15 12 9 6"/>
                     </svg>
-                    <span class="px-2 py-0.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded">
+                    <span class="px-2 py-0.5 text-xs font-medium text-success-strong bg-success-soft rounded">
                       {{ log.toValue || '—' }}
                     </span>
                   </div>
@@ -279,8 +279,8 @@ const hasActiveFilters = computed(() => {
 
                 <!-- Remark -->
                 <td class="px-4 py-3">
-                  <span v-if="log.remark" class="text-sm text-gray-500 italic">{{ log.remark }}</span>
-                  <span v-else class="text-gray-300">—</span>
+                  <span v-if="log.remark" class="text-sm text-ink-subtle italic">{{ log.remark }}</span>
+                  <span v-else class="text-line-strong">—</span>
                 </td>
               </tr>
             </tbody>
@@ -288,11 +288,11 @@ const hasActiveFilters = computed(() => {
               <tr>
                 <td colspan="7" class="py-16 text-center">
                   <div class="flex flex-col justify-center items-center">
-                    <svg class="mb-3 w-16 h-16 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="mb-3 w-16 h-16 text-line" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <p class="text-sm font-medium text-gray-400">No update logs found</p>
-                    <p class="mt-1 text-xs text-gray-300">Try adjusting your filters</p>
+                    <p class="text-sm font-medium text-ink-subtle">No update logs found</p>
+                    <p class="mt-1 text-xs text-line-strong">Try adjusting your filters</p>
                   </div>
                 </td>
               </tr>
@@ -302,21 +302,21 @@ const hasActiveFilters = computed(() => {
 
         <!-- Pagination -->
         <div v-if="logs && logs.length > 0" class="flex gap-3 justify-between items-center mt-4">
-          <span class="text-xs text-gray-400">
+          <span class="text-xs text-ink-subtle">
             Page {{ currentPage }} of {{ totalPages }}
           </span>
           <div class="flex gap-2">
             <button
               @click="handlePageChange(currentPage - 1)"
               :disabled="currentPage <= 1"
-              class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white rounded-lg border border-gray-200 transition-colors hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+              class="px-3 py-1.5 text-xs font-medium text-ink-muted bg-white rounded-lg border border-line transition-colors hover:bg-surface-muted disabled:opacity-30 disabled:cursor-not-allowed"
             >
               ← Prev
             </button>
             <button
               @click="handlePageChange(currentPage + 1)"
               :disabled="currentPage >= totalPages"
-              class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white rounded-lg border border-gray-200 transition-colors hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+              class="px-3 py-1.5 text-xs font-medium text-ink-muted bg-white rounded-lg border border-line transition-colors hover:bg-surface-muted disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Next →
             </button>

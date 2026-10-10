@@ -95,10 +95,10 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
     <!-- Header Section with Gradient -->
     <div class="mb-2 lg:col-span-2">
       <div class="flex gap-2 items-center">
-        <div class="w-1 h-8 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-        <h3 class="text-lg font-semibold text-gray-900">Package Information</h3>
+        <div class="w-1 h-8 bg-gradient-to-b from-primary to-primary rounded-full"></div>
+        <h3 class="text-lg font-semibold text-ink">Package Information</h3>
       </div>
-      <p class="mt-1 text-sm text-gray-500">Define the basic details and coverage parameters for this benefit package</p>
+      <p class="mt-1 text-sm text-ink-subtle">Define the basic details and coverage parameters for this benefit package</p>
     </div>
 
     <!-- Package Name - Full Width -->
@@ -139,10 +139,10 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
     />
 
     <!-- Coverage Limits Section -->
-    <div class="pt-6 mt-2 border-t border-gray-200 lg:col-span-2">
+    <div class="pt-6 mt-2 border-t border-line lg:col-span-2">
       <div class="flex gap-2 items-center mb-1">
-        <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
-        <h3 class="text-base font-medium text-gray-900">Coverage Configuration</h3>
+        <div class="w-1 h-6 bg-primary rounded-full"></div>
+        <h3 class="text-base font-medium text-ink">Coverage Configuration</h3>
       </div>
       
       <div class="grid grid-cols-1 gap-6 mt-4 lg:grid-cols-2">
@@ -172,16 +172,16 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
     </div>
 
     <!-- Package Features Section -->
-    <div class="pt-6 mt-2 border-t border-gray-200 lg:col-span-2">
+    <div class="pt-6 mt-2 border-t border-line lg:col-span-2">
       <div class="flex gap-2 items-center mb-1">
-        <div class="w-1 h-6 bg-indigo-600 rounded-full"></div>
-        <h3 class="text-base font-medium text-gray-900">Package Features</h3>
+        <div class="w-1 h-6 bg-primary rounded-full"></div>
+        <h3 class="text-base font-medium text-ink">Package Features</h3>
       </div>
-      <p class="mb-4 text-sm text-gray-500">Configure special features and restrictions for this package</p>
+      <p class="mb-4 text-sm text-ink-subtle">Configure special features and restrictions for this package</p>
       
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <!-- Service Exclusivity Toggle - Professional naming and description -->
-        <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+        <div class="p-5 bg-surface-muted rounded-xl border border-line">
           <Toggle
             v-model="formData.exclusive_benefit"
             name="exclusive_benefit"
@@ -189,15 +189,15 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
             description="When enabled, services assigned to this package cannot be used in any other package"
           />
           <div class="pl-11 mt-3">
-            <p class="text-xs text-gray-500">
-              <span class="font-medium text-indigo-600">● Exclusive mapping:</span> 
+            <p class="text-xs text-ink-subtle">
+              <span class="font-medium text-primary">● Exclusive mapping:</span> 
               Services will be dedicated to this package only
             </p>
           </div>
         </div>
 
         <!-- All Services Toggle -->
-        <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+        <div class="p-5 bg-surface-muted rounded-xl border border-line">
           <Toggle
             v-model="formData.allServices"
             name="allServices"
@@ -205,8 +205,8 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
             description="Enable to automatically include all available services in this package"
           />
           <div class="pl-11 mt-3">
-            <p class="text-xs text-gray-500">
-              <span class="font-medium text-blue-600">● Auto-include:</span> 
+            <p class="text-xs text-ink-subtle">
+              <span class="font-medium text-primary">● Auto-include:</span> 
               New services will be automatically added to this package
             </p>
           </div>
@@ -215,13 +215,13 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
     </div>
 
     <!-- C-Section Sharing Section -->
-    <div class="pt-6 mt-2 border-t border-gray-200 lg:col-span-2">
+    <div class="pt-6 mt-2 border-t border-line lg:col-span-2">
       <div class="flex gap-2 items-center mb-4">
         <div class="w-1 h-6 bg-purple-600 rounded-full"></div>
-        <h3 class="text-base font-medium text-gray-900">Advanced Benefits</h3>
+        <h3 class="text-base font-medium text-ink">Advanced Benefits</h3>
       </div>
       
-      <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+      <div class="p-5 bg-surface-muted rounded-xl border border-line">
       <Toggle
   v-model="formData.benefit_pooling"
   name="benefit_pooling"
@@ -244,8 +244,8 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
             hint="The selected package's C-Section coverage will apply to this package"
           />
           
-          <div v-if="cSectionShareOptions.length === 0" class="p-3 mt-3 bg-amber-50 rounded-lg border border-amber-200">
-            <p class="flex gap-2 items-center text-xs text-amber-700">
+          <div v-if="cSectionShareOptions.length === 0" class="p-3 mt-3 bg-warning-soft rounded-lg border border-warning/20">
+            <p class="flex gap-2 items-center text-xs text-warning-strong">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>

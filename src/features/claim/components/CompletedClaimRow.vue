@@ -71,17 +71,17 @@ function getStatusStyle(status) {
 
   switch (status?.toUpperCase()) {
     case "APPROVED":
-      return `${base} bg-green-50 text-green-700 border border-green-200`;
+      return `${base} bg-success-soft text-success-strong border border-success/20`;
     case "COMPLETED":
-      return `${base} bg-blue-50 text-blue-700 border border-blue-200`;
+      return `${base} bg-primary/5 text-primary-hover border border-primary/20`;
     case "AUTHORIZED":
       return `${base} bg-purple-50 text-purple-700 border border-purple-200`;
     case "CHECKED":
-      return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
+      return `${base} bg-success-soft text-success-strong border border-success/20`;
     case "REJECTED":
-      return `${base} bg-rose-50 text-rose-700 border border-rose-200`;
+      return `${base} bg-error-soft text-error-strong border border-error/20`;
     default:
-      return `${base} bg-gray-50 text-gray-600 border border-gray-200`;
+      return `${base} bg-surface-muted text-ink-muted border border-line`;
   }
 }
 
@@ -124,54 +124,54 @@ function navigateToDetail(row) {
     v-for="(row, idx) in rowData" 
     :key="row.claimUuid || idx"
     @click.self="onRowClick(row) || navigateToDetail(row)"
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50 cursor-pointer"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted cursor-pointer"
   >
-    <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+    <td class="px-4 py-3 text-sm font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
       <!-- Institution Name Column -->
       <div v-if="key === 'institutionName'" class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
           {{ getInstitutionName(row).charAt(0) || 'I' }}
         </div>
         <div class="flex flex-col">
-          <span class="text-sm font-medium text-gray-800">{{ getInstitutionName(row) }}</span>
-          <span class="text-xs text-gray-400">Institution</span>
+          <span class="text-sm font-medium text-ink">{{ getInstitutionName(row) }}</span>
+          <span class="text-xs text-ink-subtle">Institution</span>
         </div>
       </div>
 
       <!-- Provider Name Column -->
       <div v-else-if="key === 'providerName'" class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-success to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
           {{ row.providerName?.charAt(0) || 'P' }}
         </div>
         <div class="flex flex-col">
-          <span class="text-sm font-medium text-gray-800">{{ row.providerName || 'N/A' }}</span>
-          <span class="text-xs text-gray-400">Provider</span>
+          <span class="text-sm font-medium text-ink">{{ row.providerName || 'N/A' }}</span>
+          <span class="text-xs text-ink-subtle">Provider</span>
         </div>
       </div>
 
       <!-- Total Amount Column -->
       <div v-else-if="key === 'totalAmount'" class="flex flex-col">
-        <span class="text-sm font-bold text-gray-800">ETB {{ formatCurrency(row.totalAmount) }}</span>
-        <span class="text-xs text-gray-400">Total Claim</span>
+        <span class="text-sm font-bold text-ink">ETB {{ formatCurrency(row.totalAmount) }}</span>
+        <span class="text-xs text-ink-subtle">Total Claim</span>
       </div>
 
       <!-- Claim Date Column -->
       <div v-else-if="key === 'claimFromDate'" class="flex flex-col">
-        <span class="text-sm text-gray-700">{{ formatDate(row.claimFromDate) }}</span>
-        <span class="text-xs text-gray-400">From Date</span>
+        <span class="text-sm text-ink-muted">{{ formatDate(row.claimFromDate) }}</span>
+        <span class="text-xs text-ink-subtle">From Date</span>
       </div>
 
       <!-- Claim Level Column -->
       <div v-else-if="key === 'claimLevel'" class="flex flex-col">
-        <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+        <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-primary-hover bg-primary/5 rounded-full border border-primary/20">
           {{ row.claimLevel || 'N/A' }}
         </span>
       </div>
 
       <!-- Status Column -->
-      <div v-else-if="key === 'claimStatus'" class="text-gray-700">
+      <div v-else-if="key === 'claimStatus'" class="text-ink-muted">
         <span :class="getStatusStyle(row.claimStatus)">
           <span class="text-xs">{{ getStatusIcon(row.claimStatus) }}</span>
           {{ row.claimStatus || 'Unknown' }}
@@ -179,7 +179,7 @@ function navigateToDetail(row) {
       </div>
 
       <!-- Default Column -->
-      <div v-else class="text-gray-700">
+      <div v-else class="text-ink-muted">
         {{ row[key] || 'N/A' }}
       </div>
     </td>
@@ -190,7 +190,7 @@ function navigateToDetail(row) {
         <Button 
           size="xs" 
           type="elevated" 
-          class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg"
+          class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-primary to-primary-hover rounded-lg hover:from-primary-hover hover:to-primary-hover transition-all duration-200 shadow-md hover:shadow-lg"
           @click.stop="navigateToDetail(row)"
         >
           <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,7 +201,7 @@ function navigateToDetail(row) {
         </Button>
         
         <!-- Batch Code Badge -->
-        <div v-if="row.batchCode" class="px-2 py-1 bg-gray-100 rounded-md text-xs text-gray-600 font-mono border border-gray-200">
+        <div v-if="row.batchCode" class="px-2 py-1 bg-surface-muted rounded-md text-xs text-ink-muted font-mono border border-line">
           {{ row.batchCode }}
         </div>
       </div>

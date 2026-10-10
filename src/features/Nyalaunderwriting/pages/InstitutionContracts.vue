@@ -28,49 +28,49 @@ const STATUS_FILTERS = [
     value: 'ACTIVE',
     label: 'Active',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
-    bgColor: 'bg-emerald-50',
-    activeColor: 'bg-emerald-500',
-    textColor: 'text-emerald-700',
+    bgColor: 'bg-success-soft',
+    activeColor: 'bg-success',
+    textColor: 'text-success-strong',
     activeTextColor: 'text-white',
-    borderColor: 'border-emerald-200',
-    hoverColor: 'hover:bg-emerald-100',
-    dotColor: 'bg-emerald-500',
+    borderColor: 'border-success/20',
+    hoverColor: 'hover:bg-success-soft',
+    dotColor: 'bg-success',
   },
   {
     value: 'PENDING',
     label: 'Pending',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-    bgColor: 'bg-amber-50',
-    activeColor: 'bg-amber-500',
-    textColor: 'text-amber-700',
+    bgColor: 'bg-warning-soft',
+    activeColor: 'bg-warning',
+    textColor: 'text-warning-strong',
     activeTextColor: 'text-white',
-    borderColor: 'border-amber-200',
-    hoverColor: 'hover:bg-amber-100',
-    dotColor: 'bg-amber-500',
+    borderColor: 'border-warning/20',
+    hoverColor: 'hover:bg-warning-soft',
+    dotColor: 'bg-warning',
   },
   {
     value: 'EXPIRED',
     label: 'Expired',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
-    bgColor: 'bg-red-50',
-    activeColor: 'bg-red-500',
-    textColor: 'text-red-700',
+    bgColor: 'bg-error-soft',
+    activeColor: 'bg-error',
+    textColor: 'text-error-strong',
     activeTextColor: 'text-white',
-    borderColor: 'border-red-200',
-    hoverColor: 'hover:bg-red-100',
-    dotColor: 'bg-red-500',
+    borderColor: 'border-error/20',
+    hoverColor: 'hover:bg-error-soft',
+    dotColor: 'bg-error',
   },
   {
     value: 'RENEWED',
     label: 'Renewed',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>`,
-    bgColor: 'bg-blue-50',
-    activeColor: 'bg-blue-500',
-    textColor: 'text-blue-700',
+    bgColor: 'bg-primary/5',
+    activeColor: 'bg-primary',
+    textColor: 'text-primary-hover',
     activeTextColor: 'text-white',
-    borderColor: 'border-blue-200',
-    hoverColor: 'hover:bg-blue-100',
-    dotColor: 'bg-blue-500',
+    borderColor: 'border-primary/20',
+    hoverColor: 'hover:bg-primary/10',
+    dotColor: 'bg-primary',
   },
   {
     value: 'RENEWAL_IN_PROGRESS',
@@ -100,13 +100,13 @@ const STATUS_FILTERS = [
     value: 'VOIDED_MIGRATION',
     label: 'Voided',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
-    bgColor: 'bg-gray-50',
-    activeColor: 'bg-gray-500',
-    textColor: 'text-gray-600',
+    bgColor: 'bg-surface-muted',
+    activeColor: 'bg-ink-subtle',
+    textColor: 'text-ink-muted',
     activeTextColor: 'text-white',
-    borderColor: 'border-gray-200',
-    hoverColor: 'hover:bg-gray-100',
-    dotColor: 'bg-gray-500',
+    borderColor: 'border-line',
+    hoverColor: 'hover:bg-surface-muted',
+    dotColor: 'bg-ink-subtle',
   },
 ];
 
@@ -170,7 +170,7 @@ onMounted(async () => {
       >
         <span class="w-2.5 h-2.5 rounded-full shadow bg-base-clr"></span>
         <div class="flex flex-col leading-tight">
-          <span class="text-[11px] font-medium text-gray-500">Institution</span>
+          <span class="text-[11px] font-medium text-ink-subtle">Institution</span>
           <span class="max-w-[16rem] text-sm font-semibold tracking-tight truncate md:text-base text-base-clr">
             {{ institutionName }}
           </span>
@@ -282,11 +282,11 @@ onMounted(async () => {
           <template #placeholder>
             <div class="py-12 text-center">
               <div class="flex flex-col justify-center items-center">
-                <svg class="mb-4 w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="mb-4 w-20 h-20 text-line-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p class="text-lg font-semibold text-gray-600">No Contracts Found</p>
-                <p class="mt-2 text-sm text-gray-400">No contracts with status "{{ STATUS_FILTERS.find(f => f.value === status)?.label || status }}"</p>
+                <p class="text-lg font-semibold text-ink-muted">No Contracts Found</p>
+                <p class="mt-2 text-sm text-ink-subtle">No contracts with status "{{ STATUS_FILTERS.find(f => f.value === status)?.label || status }}"</p>
                 <button
                   @click="openModal('CreateInstitutionContract', { institutionUuid: route.params.id, onRefetch: handleRefetch })"
                   class="flex gap-2 justify-center items-center px-6 py-3 mt-6 font-semibold text-white rounded-lg transition-colors bg-primary hover:bg-primary/90"

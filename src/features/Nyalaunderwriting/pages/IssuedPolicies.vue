@@ -18,7 +18,7 @@ const viewDetails = (id) => {
 <template>
   <DefaultPage placeholder="Search Issued Policies">
     <!--  <template #filter>
-      <button class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary">
+      <button class="flex gap-2 justify-center items-center px-6 py-4 bg-surface-muted rounded-md text-primary">
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
@@ -52,8 +52,8 @@ const viewDetails = (id) => {
             <div class="py-12 text-center">
               <div class="flex flex-col justify-center items-center">
                 <i v-html="icons.document"></i>
-                <p class="text-gray-500">No issued policies found</p>
-                <p v-if="search" class="mt-1 text-sm text-gray-400">
+                <p class="text-ink-subtle">No issued policies found</p>
+                <p v-if="search" class="mt-1 text-sm text-ink-subtle">
                   No results match your search criteria
                 </p>
               </div>

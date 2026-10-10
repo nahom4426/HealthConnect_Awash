@@ -186,11 +186,11 @@ async function handleSubmit(formValues) {
       subtitle="To update employee information, please modify the fields below."
     >
       <div class="bg-white rounded-lg">
-        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        <div v-if="error" class="p-4 mb-4 text-sm text-error-strong bg-error-soft rounded-lg">
           {{ error }}
         </div>
 
-        <div v-if="!insuredUuid || Object.keys(insuredData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
+        <div v-if="!insuredUuid || Object.keys(insuredData).length === 0" class="p-4 mb-4 text-sm text-warning-strong bg-warning-soft rounded-lg">
           Loading employee data...
         </div>
 

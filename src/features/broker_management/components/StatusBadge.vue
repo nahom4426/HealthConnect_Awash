@@ -20,10 +20,10 @@ const meta = computed(() => {
     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
     :class="meta.cls"
   >
-    <span v-if="meta.color === 'green'" class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
-    <span v-else-if="meta.color === 'red'" class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>
-    <span v-else-if="meta.color === 'orange' || meta.color === 'yellow'" class="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-1.5"></span>
-    <span v-else class="w-1.5 h-1.5 rounded-full bg-gray-500 mr-1.5"></span>
+    <span v-if="meta.color === 'green'" class="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>
+    <span v-else-if="meta.color === 'red'" class="w-1.5 h-1.5 rounded-full bg-error mr-1.5"></span>
+    <span v-else-if="meta.color === 'orange' || meta.color === 'yellow'" class="w-1.5 h-1.5 rounded-full bg-warning mr-1.5"></span>
+    <span v-else class="w-1.5 h-1.5 rounded-full bg-ink-subtle mr-1.5"></span>
     {{ meta.label }}
   </span>
 </template>

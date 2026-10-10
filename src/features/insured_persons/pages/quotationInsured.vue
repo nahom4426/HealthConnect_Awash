@@ -139,7 +139,7 @@ onMounted(() => {
                 ? index === 0
                   ? 'bg-base-clr text-white font-medium rounded-l-lg shadow-sm'
                   : 'bg-base-clr text-white font-medium rounded-r-lg shadow-sm'
-                : 'text-gray-500 hover:text-base-clr hover:bg-base-clr/10',
+                : 'text-ink-subtle hover:text-base-clr hover:bg-base-clr/10',
             ]"
           >
             {{ item.name }}
@@ -163,7 +163,7 @@ onMounted(() => {
         <!-- Search input -->
         <div
           tabindex="0"
-          class="flex items-center pr-10 w-full bg-gray-100 rounded-lg overflow-hidden md:m focus-within:border-primary"
+          class="flex items-center pr-10 w-full bg-surface-muted rounded-lg overflow-hidden md:m focus-within:border-primary"
         >
           <span
             class="grid place-items-center w-10 h-full text-base-clr"
@@ -202,7 +202,7 @@ onMounted(() => {
 
           <button
             v-if="actionPage === 'amend'"
-            class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 rounded-md border border-gray-400 shadow-md transition-all hover:from-gray-800 hover:to-gray-600"
+            class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-ink-muted via-ink-muted to-ink-subtle rounded-md border border-ink-subtle shadow-md transition-all hover:from-ink hover:to-ink-muted"
             @click="openModal('AddBenefitsForAllInsured', { payerInstitutionContractUuid: route.params.id })"
           >
             <i v-html="icons.Benefits || icons.plus_circle"></i>
@@ -212,7 +212,7 @@ onMounted(() => {
           <!-- Export Dropdown -->
           <Dropdown v-if="actionPage !== 'amend' && actionPage !== 'history'" v-slot="{ setRef, toggleDropdown }">
             <button
-              class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 rounded-md border border-gray-400 shadow-md transition-all hover:from-gray-800 hover:to-gray-600"
+              class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-ink-muted via-ink-muted to-ink-subtle rounded-md border border-ink-subtle shadow-md transition-all hover:from-ink hover:to-ink-muted"
               @click.prevent="toggleDropdown"
               title="Export insured templates"
             >
@@ -225,7 +225,7 @@ onMounted(() => {
               :ref="setRef"
             >
               <button
-                class="p-2 text-left rounded-md hover:bg-gray-50"
+                class="p-2 text-left rounded-md hover:bg-surface-muted"
                 @click.prevent="downloadSample('quoted-main')"
               >
                 Export insured and dependant format
@@ -233,7 +233,7 @@ onMounted(() => {
 
               <button
                 v-if="hasAnyInsured"
-                class="p-2 text-left rounded-md hover:bg-gray-50"
+                class="p-2 text-left rounded-md hover:bg-surface-muted"
                 @click.prevent="downloadSample('quoted-dependants')"
               >
                 Export dependant format

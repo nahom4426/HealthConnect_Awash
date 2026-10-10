@@ -36,7 +36,7 @@ const generateReport = () => {
       <div class="space-y-6">
         <!-- Report Type Selection -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+          <label class="block text-sm font-medium text-ink-muted mb-2">Report Type</label>
           <div class="flex space-x-4">
             <label class="inline-flex items-center">
               <input 
@@ -62,22 +62,22 @@ const generateReport = () => {
         <!-- Date Range Picker -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
+            <label for="startDate" class="block text-sm font-medium text-ink-muted">Start Date</label>
             <input 
               type="date" 
               id="startDate" 
               v-model="dateRange.start" 
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+              class="mt-1 block w-full rounded-md border-line-strong shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
               :disabled="reportType === 'daily'"
             >
           </div>
           <div>
-            <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
+            <label for="endDate" class="block text-sm font-medium text-ink-muted">End Date</label>
             <input 
               type="date" 
               id="endDate" 
               v-model="dateRange.end" 
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+              class="mt-1 block w-full rounded-md border-line-strong shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
               :disabled="reportType === 'daily'"
             >
           </div>
@@ -85,16 +85,16 @@ const generateReport = () => {
 
         <!-- Report Options -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Report Options</label>
+          <label class="block text-sm font-medium text-ink-muted">Report Options</label>
           <div class="space-y-2">
             <div class="flex items-center">
               <input 
                 id="includeDetails" 
                 type="checkbox" 
-                class="h-4 w-4 text-primary focus:ring-primary rounded border-gray-300"
+                class="h-4 w-4 text-primary focus:ring-primary rounded border-line-strong"
                 checked
               >
-              <label for="includeDetails" class="ml-2 block text-sm text-gray-700">
+              <label for="includeDetails" class="ml-2 block text-sm text-ink-muted">
                 Include Detailed Transactions
               </label>
             </div>
@@ -102,10 +102,10 @@ const generateReport = () => {
               <input 
                 id="includeSummary" 
                 type="checkbox" 
-                class="h-4 w-4 text-primary focus:ring-primary rounded border-gray-300"
+                class="h-4 w-4 text-primary focus:ring-primary rounded border-line-strong"
                 checked
               >
-              <label for="includeSummary" class="ml-2 block text-sm text-gray-700">
+              <label for="includeSummary" class="ml-2 block text-sm text-ink-muted">
                 Include Summary Section
               </label>
             </div>
@@ -113,10 +113,10 @@ const generateReport = () => {
               <input 
                 id="formatAsTable" 
                 type="checkbox" 
-                class="h-4 w-4 text-primary focus:ring-primary rounded border-gray-300"
+                class="h-4 w-4 text-primary focus:ring-primary rounded border-line-strong"
                 checked
               >
-              <label for="formatAsTable" class="ml-2 block text-sm text-gray-700">
+              <label for="formatAsTable" class="ml-2 block text-sm text-ink-muted">
                 Format as Excel Table
               </label>
             </div>

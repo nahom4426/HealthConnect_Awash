@@ -249,8 +249,8 @@ function handleSubmit() {
       subtitle="Member package limits, used benefits, and remaining balances"
     >
       <div class="p-6 overflow-y-auto overflow-x-hidden form-scrollbar space-y-4">
-        <div v-if="loading" class="flex justify-center items-center py-8 text-sm text-gray-500">
-          <div class="w-6 h-6 rounded-full border-2 border-blue-200 animate-spin border-t-blue-600 mr-2"></div>
+        <div v-if="loading" class="flex justify-center items-center py-8 text-sm text-ink-subtle">
+          <div class="w-6 h-6 rounded-full border-2 border-primary/20 animate-spin border-t-primary mr-2"></div>
           Loading packages...
         </div>
 
@@ -261,23 +261,23 @@ function handleSubmit() {
             :class="[
               'p-3.5 rounded-xl border transition-all duration-200 shadow-2xs',
               pkg.packageName?.toUpperCase()?.includes('BASIC COVER')
-                ? 'bg-blue-50/60 border-blue-200 ring-1 ring-blue-300/50'
-                : 'bg-white border-gray-200 hover:border-gray-300'
+                ? 'bg-primary/[0.03] border-primary/20 ring-1 ring-primary/15'
+                : 'bg-white border-line hover:border-line-strong'
             ]"
           >
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2 mb-1.5">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-sm font-bold text-gray-900 truncate">
+                  <span class="text-sm font-bold text-ink truncate">
                     {{ pkg.packageName }}
                   </span>
                   <span
                     v-if="pkg.packageName?.toUpperCase()?.includes('BASIC COVER')"
-                    class="inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-blue-600 text-white shadow-2xs shrink-0"
+                    class="inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-primary text-white shadow-2xs shrink-0"
                   >
                     ★ Main Cover
                   </span>
-                  <span class="text-xs text-gray-400 font-mono truncate">
+                  <span class="text-xs text-ink-subtle font-mono truncate">
                     ({{ pkg.packageCode || pkg.packageUuid?.slice(0, 8) }})
                   </span>
                 </div>
@@ -296,29 +296,29 @@ function handleSubmit() {
                 </span>
               </div>
 
-              <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-gray-100 text-xs">
+              <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-line text-xs">
                 <div class="flex flex-col">
-                  <span class="text-[11px] font-medium text-gray-500">Limit</span>
-                  <span class="font-bold text-gray-900 font-mono">
+                  <span class="text-[11px] font-medium text-ink-subtle">Limit</span>
+                  <span class="font-bold text-ink font-mono">
                     ETB {{ formatMoney(getPackageLimit(pkg)) }}
                   </span>
                 </div>
 
                 <div class="flex flex-col">
-                  <span class="text-[11px] font-medium text-gray-500">Used</span>
-                  <span class="font-bold text-gray-700 font-mono">
+                  <span class="text-[11px] font-medium text-ink-subtle">Used</span>
+                  <span class="font-bold text-ink-muted font-mono">
                     ETB {{ formatMoney(getPackageUsed(pkg)) }}
                   </span>
                 </div>
 
                 <div class="flex flex-col items-end">
-                  <span class="text-[11px] font-medium text-gray-500">Remaining</span>
+                  <span class="text-[11px] font-medium text-ink-subtle">Remaining</span>
                   <span
                     :class="[
                       'font-extrabold font-mono px-2 py-0.5 rounded text-xs',
                       getPackageRemaining(pkg) <= 0
-                        ? 'bg-red-100 text-red-700 border border-red-200'
-                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        ? 'bg-error-soft text-error-strong border border-error/20'
+                        : 'bg-success-soft text-success-strong border border-success/20'
                     ]"
                   >
                     ETB {{ formatMoney(getPackageRemaining(pkg)) }}
@@ -328,12 +328,12 @@ function handleSubmit() {
             </div>
           </div>
 
-          <div v-if="!packages.length" class="py-8 text-center text-sm text-gray-500">
+          <div v-if="!packages.length" class="py-8 text-center text-sm text-ink-subtle">
             No active package benefits found for this member.
           </div>
         </div>
 
-        <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
+        <div class="flex gap-3 justify-end pt-4 border-t border-line">
           <Button type="primary" @click="closeModal" class="px-5 py-2 text-white bg-primary">
             Close
           </Button>

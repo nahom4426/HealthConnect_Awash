@@ -575,8 +575,8 @@ onMounted(() => {
                 :class="[
                   'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200',
                   currentStep >= step.number
-                    ? 'bg-blue-500 border-blue-500 text-white'
-                    : 'border-gray-300 text-gray-500'
+                    ? 'bg-primary border-primary text-white'
+                    : 'border-line-strong text-ink-subtle'
                 ]"
               >
                 <span class="text-sm font-medium">{{ step.number }}</span>
@@ -585,18 +585,18 @@ onMounted(() => {
                 <p
                   :class="[
                     'text-sm font-medium',
-                    currentStep >= step.number ? 'text-blue-600' : 'text-gray-500'
+                    currentStep >= step.number ? 'text-primary' : 'text-ink-subtle'
                   ]"
                 >
                   {{ step.title }}
                 </p>
-                <p class="text-xs text-gray-400">{{ step.description }}</p>
+                <p class="text-xs text-ink-subtle">{{ step.description }}</p>
               </div>
               <div
                 v-if="step.number < steps.length"
                 :class="[
                   'w-16 h-0.5 ml-8 transition-all duration-200',
-                  currentStep > step.number ? 'bg-blue-500' : 'bg-gray-300'
+                  currentStep > step.number ? 'bg-primary' : 'bg-line-strong'
                 ]"
               ></div>
             </div>
@@ -604,16 +604,16 @@ onMounted(() => {
 
           <!-- Step 1: Provider Selection -->
           <div v-if="currentStep === 1" class="space-y-4">
-            <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+            <div class="p-6 bg-gradient-to-r from-primary/5 to-primary/5 rounded-xl border border-primary/10">
               <div class="flex gap-3 items-center mb-4">
-                <div class="flex justify-center items-center w-10 h-10 bg-blue-500 rounded-lg">
+                <div class="flex justify-center items-center w-10 h-10 bg-primary rounded-lg">
                   <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                   </svg>
                 </div>
                 <div>
-                  <h3 class="text-xl font-bold text-gray-800">Select Provider</h3>
-                  <p class="text-sm text-gray-600">Choose a provider to view their available services</p>
+                  <h3 class="text-xl font-bold text-ink">Select Provider</h3>
+                  <p class="text-sm text-ink-muted">Choose a provider to view their available services</p>
                 </div>
               </div>
 
@@ -625,7 +625,7 @@ onMounted(() => {
                 <select
                   v-model="selectedpayerProviderContractUuid"
                   @change="onProviderChange($event.target.value)"
-                  class="px-4 py-2 w-full bg-white rounded-lg border border-blue-200 transition duration-200 focus:border-blue-400 focus:ring focus:ring-blue-100"
+                  class="px-4 py-2 w-full bg-white rounded-lg border border-primary/20 transition duration-200 focus:border-primary/70 focus:ring focus:ring-primary/10"
                 >
                   <option value="" disabled selected>Select a provider...</option>
                   <option 
@@ -637,23 +637,23 @@ onMounted(() => {
                   </option>
                 </select>
 
-                <div v-if="selectedProvider" class="p-4 mt-4 bg-white rounded-lg border border-blue-200">
-                  <h4 class="mb-2 font-medium text-gray-800">Selected Provider Details:</h4>
+                <div v-if="selectedProvider" class="p-4 mt-4 bg-white rounded-lg border border-primary/20">
+                  <h4 class="mb-2 font-medium text-ink">Selected Provider Details:</h4>
                   <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span class="text-gray-500">Name:</span>
+                      <span class="text-ink-subtle">Name:</span>
                       <span class="ml-2 font-medium">{{ selectedProvider.providerName }}</span>
                     </div>
                     <div>
-                      <span class="text-gray-500">Category:</span>
+                      <span class="text-ink-subtle">Category:</span>
                       <span class="ml-2 font-medium">{{ selectedProvider.category }}</span>
                     </div>
                     <div>
-                      <span class="text-gray-500">Phone:</span>
+                      <span class="text-ink-subtle">Phone:</span>
                       <span class="ml-2 font-medium">{{ selectedProvider.telephone }}</span>
                     </div>
                     <div>
-                      <span class="text-gray-500">Location:</span>
+                      <span class="text-ink-subtle">Location:</span>
                       <span class="ml-2 font-medium">{{ selectedProvider.address1 }}, {{ selectedProvider.state }}</span>
                     </div>
                   </div>
@@ -664,16 +664,16 @@ onMounted(() => {
 
           <!-- Step 2: Service Selection -->
           <div v-if="currentStep === 2" class="space-y-4">
-            <div class="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+            <div class="p-6 bg-gradient-to-r from-success-soft to-success-soft rounded-xl border border-success-soft">
               <div class="flex gap-3 items-center mb-4">
-                <div class="flex w-10 h-10 bg-green-500 rounded-lg">
+                <div class="flex w-10 h-10 bg-success rounded-lg">
                   <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                   </svg>
                 </div>
                 <div>
-                  <h3 class="text-xl font-bold text-gray-800">Select Services</h3>
-                  <p class="flex text-sm text-gray-600">Choose services from <span class="px-2 font-bold">{{ selectedProvider?.providerName }}</span> to add to {{ props.data?.packageName }} Benefit</p>
+                  <h3 class="text-xl font-bold text-ink">Select Services</h3>
+                  <p class="flex text-sm text-ink-muted">Choose services from <span class="px-2 font-bold">{{ selectedProvider?.providerName }}</span> to add to {{ props.data?.packageName }} Benefit</p>
                 </div>
               </div>
 
@@ -685,10 +685,10 @@ onMounted(() => {
                     v-model="searchTerm"
                     placeholder="Search services by name, code, or category..."
                     :attributes="{
-                      class: 'pl-10 h-9 w-full bg-white border-green-200 focus:border-green-400'
+                      class: 'pl-10 h-9 w-full bg-white border-success/20 focus:border-success'
                     }"
                   />
-                  <div class="absolute top-2.5 left-3 text-gray-400">
+                  <div class="absolute top-2.5 left-3 text-ink-subtle">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
@@ -700,19 +700,19 @@ onMounted(() => {
                   <div class="flex flex-col gap-2">
                     <button
                       @click="showCategoryFilter = !showCategoryFilter"
-                      class="flex justify-between items-center px-4 h-10 text-sm font-medium text-gray-700 bg-white rounded-lg border border-green-200 transition-colors duration-200 hover:bg-green-50"
+                      class="flex justify-between items-center px-4 h-10 text-sm font-medium text-ink-muted bg-white rounded-lg border border-success/20 transition-colors duration-200 hover:bg-success-soft"
                     >
                       <span class="flex gap-2 items-center">
-                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                         </svg>
                         Filter by Categories
-                        <span v-if="selectedCategoryFilter.length > 0" class="px-2 py-0.5 text-xs font-semibold text-white bg-green-600 rounded-full">
+                        <span v-if="selectedCategoryFilter.length > 0" class="px-2 py-0.5 text-xs font-semibold text-white bg-success rounded-full">
                           {{ selectedCategoryFilter.length }}
                         </span>
                       </span>
                       <svg 
-                        class="w-5 h-5 text-gray-400 transition-transform duration-200"
+                        class="w-5 h-5 text-ink-subtle transition-transform duration-200"
                         :class="{ 'rotate-180': showCategoryFilter }"
                         fill="none" 
                         stroke="currentColor" 
@@ -731,19 +731,19 @@ onMounted(() => {
                       leave-from-class="opacity-100 transform scale-100"
                       leave-to-class="opacity-0 transform scale-95"
                     >
-                      <div v-if="showCategoryFilter" class="flex flex-wrap gap-3 p-3 bg-white border border-green-200 rounded-lg shadow-lg max-h-[120px] overflow-y-auto">
+                      <div v-if="showCategoryFilter" class="flex flex-wrap gap-3 p-3 bg-white border border-success/20 rounded-lg shadow-lg max-h-[120px] overflow-y-auto">
                         <label 
                           v-for="category in uniqueCategories" 
                           :key="category"
-                          class="flex gap-2 items-center px-3 py-1.5 bg-gray-50 rounded-md transition-colors duration-200 cursor-pointer hover:bg-green-50"
+                          class="flex gap-2 items-center px-3 py-1.5 bg-surface-muted rounded-md transition-colors duration-200 cursor-pointer hover:bg-success-soft"
                         >
                           <input
                             type="checkbox"
                             :value="category"
                             v-model="selectedCategoryFilter"
-                            class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                            class="w-4 h-4 text-success rounded border-line-strong focus:ring-success"
                           />
-                          <span class="text-sm text-gray-700">
+                          <span class="text-sm text-ink-muted">
                             {{ category || 'Uncategorized' }}
                           </span>
                         </label>
@@ -761,40 +761,40 @@ onMounted(() => {
                     id="selectAll"
                     v-model="selectAll"
                     @change="toggleSelectAll"
-                    class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                    class="w-4 h-4 text-success rounded border-line-strong focus:ring-success"
                   />
-                  <label for="selectAll" class="ml-2 text-sm font-medium text-gray-700">
+                  <label for="selectAll" class="ml-2 text-sm font-medium text-ink-muted">
                     Select All Available Services
                   </label>
                 </div>
-                <div class="text-sm text-gray-500">
+                <div class="text-sm text-ink-subtle">
                   {{ newServicesCount }} new services selected
                 </div>
               </div>
 
               <!-- Pagination -->
               <div class="flex flex-col gap-3 justify-between items-start mb-4 sm:flex-row sm:items-center">
-                <div class="text-sm text-gray-600">
+                <div class="text-sm text-ink-muted">
                   Page {{ page }} of {{ totalPages }}
-                  <span v-if="totalElements" class="ml-2 text-gray-400">({{ totalElements }} total)</span>
+                  <span v-if="totalElements" class="ml-2 text-ink-subtle">({{ totalElements }} total)</span>
                 </div>
                 <div class="flex gap-2 items-center">
                   <button
-                    class="px-3 py-1 text-sm bg-white rounded border border-green-200 disabled:opacity-50 hover:bg-gray-50"
+                    class="px-3 py-1 text-sm bg-white rounded border border-success/20 disabled:opacity-50 hover:bg-surface-muted"
                     :disabled="page === 1 || loadingServices"
                     @click="goToPage(page - 1)"
                   >
                     Prev
                   </button>
                   <button
-                    class="px-3 py-1 text-sm bg-white rounded border border-green-200 disabled:opacity-50 hover:bg-gray-50"
+                    class="px-3 py-1 text-sm bg-white rounded border border-success/20 disabled:opacity-50 hover:bg-surface-muted"
                     :disabled="page >= totalPages || loadingServices"
                     @click="goToPage(page + 1)"
                   >
                     Next
                   </button>
                   <select
-                    class="px-2 py-1 text-sm bg-white rounded border border-green-200"
+                    class="px-2 py-1 text-sm bg-white rounded border border-success/20"
                     :value="limit"
                     @change="changeLimit($event.target.value)"
                   >
@@ -826,8 +826,8 @@ onMounted(() => {
                       v-for="service in filteredServices"
                       :key="service.eligibleServiceUuid"
                       :class="{
-                        'bg-green-50': isServiceSelected(service) && service.isExisting,
-                        'hover:bg-gray-50': true
+                        'bg-success-soft': isServiceSelected(service) && service.isExisting,
+                        'hover:bg-surface-muted': true
                       }"
                     >
                       <td class="col-select">
@@ -836,11 +836,11 @@ onMounted(() => {
                           :checked="isServiceSelected(service)"
                           @change="toggleServiceSelection(service)"
                           :disabled="service.isExisting"
-                          class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                          class="w-4 h-4 text-success rounded border-line-strong focus:ring-success"
                         />
                       </td>
                       <td class="col-code">
-                        <span class="text-sm font-medium text-gray-900">
+                        <span class="text-sm font-medium text-ink">
                           {{ service.itemCode || 'N/A' }}
                         </span>
                       </td>
@@ -853,7 +853,7 @@ onMounted(() => {
                         </div>
                       </td>
                       <td class="col-price">
-                        <span class="text-sm text-gray-500">
+                        <span class="text-sm text-ink-subtle">
                           {{ service.price?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00' }}
                         </span>
                       </td>
@@ -934,7 +934,7 @@ onMounted(() => {
                 v-if="currentStep === 1"
                 @click="nextStep"
                 :disabled="!selectedProvider"
-                class="flex gap-2 items-center text-white bg-blue-500 hover:bg-blue-600"
+                class="flex gap-2 items-center text-white bg-primary hover:bg-primary"
               >
                 Continue to Services
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -947,7 +947,7 @@ onMounted(() => {
                 @click="submitServices"
                 :pending="isSubmitting || api.pending.value"
                 :disabled="isSaveDisabled"
-                class="text-white bg-green-500 hover:bg-green-600"
+                class="text-white bg-success hover:bg-success"
               >
                 <span class="flex gap-2 items-center">
                   <!-- Show spinner when submitting -->
@@ -974,10 +974,10 @@ onMounted(() => {
                   </svg>
                   <span v-if="isSubmitting || api.pending.value">Saving...</span>
                   <span v-else>Save Changes</span>
-                  <span v-if="!(isSubmitting || api.pending.value) && newServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-blue-600 rounded-full">
+                  <span v-if="!(isSubmitting || api.pending.value) && newServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-primary rounded-full">
                     +{{ newServicesCount }}
                   </span>
-                  <span v-if="!(isSubmitting || api.pending.value) && removedServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-red-600 rounded-full">
+                  <span v-if="!(isSubmitting || api.pending.value) && removedServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-error rounded-full">
                     -{{ removedServicesCount }}
                   </span>
                 </span>
@@ -1267,7 +1267,7 @@ onMounted(() => {
   background-color: rgb(var(--surface-muted));
 }
 
-.services-table tbody tr.bg-green-50:hover {
+.services-table tbody tr.bg-success-soft:hover {
   background-color: rgb(var(--success-soft));
 }
 

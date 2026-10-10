@@ -97,17 +97,17 @@ const variantClasses = computed(() => {
     secondary:
       "bg-secondary text-white shadow-xs hover:bg-secondary/90 hover:shadow-soft active:shadow-none focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:ring-offset-2",
     ghost:
-      "bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200 focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-1",
+      "bg-transparent text-ink-muted hover:bg-surface-muted active:bg-line focus-visible:ring-2 focus-visible:ring-line-strong focus-visible:ring-offset-1",
     outline:
-      "bg-white text-gray-700 border border-gray-200 shadow-xs hover:bg-gray-50 hover:border-gray-300 active:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1",
+      "bg-white text-ink-muted border border-line shadow-xs hover:bg-surface-muted hover:border-line-strong active:bg-surface-muted focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1",
     destructive:
-      "bg-red-500 text-white shadow-xs hover:bg-red-600 hover:shadow-soft active:shadow-none focus-visible:ring-2 focus-visible:ring-red-400/50 focus-visible:ring-offset-2",
+      "bg-error text-white shadow-xs hover:bg-error hover:shadow-soft active:shadow-none focus-visible:ring-2 focus-visible:ring-error/50 focus-visible:ring-offset-2",
     success:
-      "bg-emerald-500 text-white shadow-xs hover:bg-emerald-600 hover:shadow-soft active:shadow-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 focus-visible:ring-offset-2",
+      "bg-success text-white shadow-xs hover:bg-success hover:shadow-soft active:shadow-none focus-visible:ring-2 focus-visible:ring-success/50 focus-visible:ring-offset-2",
     link:
       "bg-transparent text-primary underline-offset-4 hover:underline hover:text-primary/80 p-0 h-auto",
     elevated:
-      "bg-white text-gray-700 shadow-soft border border-gray-100 hover:shadow-medium hover:border-gray-200 active:shadow-xs focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-1",
+      "bg-white text-ink-muted shadow-soft border border-line hover:shadow-medium hover:border-line active:shadow-xs focus-visible:ring-2 focus-visible:ring-line-strong focus-visible:ring-offset-1",
   };
   return variants[resolvedVariant.value] || variants.primary;
 });

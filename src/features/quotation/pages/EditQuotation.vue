@@ -97,31 +97,31 @@ async function onFormSubmit(e: any) {
   <DefaultPage :first="false">
     <template #header>
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-slate-800">Edit Draft Quotation</h1>
-        <div class="text-sm text-slate-500">
-          <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">Draft</span>
+        <h1 class="text-2xl font-bold text-ink">Edit Draft Quotation</h1>
+        <div class="text-sm text-ink-subtle">
+          <span class="px-3 py-1 bg-primary/10 text-primary-hover rounded-full font-medium">Draft</span>
         </div>
       </div>
     </template>
     
     <div v-if="loading" class="p-8">
       <div class="flex flex-col items-center justify-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-        <p class="text-slate-600">Loading draft quotation...</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+        <p class="text-ink-muted">Loading draft quotation...</p>
       </div>
     </div>
     
     <div v-else-if="error" class="p-8">
-      <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+      <div class="bg-error-soft border border-error/20 rounded-xl p-6">
         <div class="flex items-center gap-3">
-          <div class="p-2 rounded-full bg-red-100">
-            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-2 rounded-full bg-error-soft">
+            <svg class="w-6 h-6 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
           <div>
-            <h3 class="font-semibold text-red-800">Failed to load quotation</h3>
-            <p class="text-red-600 mt-1">{{ error }}</p>
+            <h3 class="font-semibold text-error-strong">Failed to load quotation</h3>
+            <p class="text-error mt-1">{{ error }}</p>
           </div>
         </div>
       </div>
@@ -129,23 +129,23 @@ async function onFormSubmit(e: any) {
     
     <QuotationCreationDataProvider v-else v-slot="{ packages, pending }">
       <div class="max-w-7xl mx-auto w-full">
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-          <div class="px-6 py-5 bg-gradient-to-r from-blue-50 to-blue-100/50 border-b border-slate-200">
+        <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden mb-6">
+          <div class="px-6 py-5 bg-gradient-to-r from-primary/5 to-primary/5 border-b border-line">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <div class="w-2 h-8 bg-blue-600 rounded"></div>
+                <div class="w-2 h-8 bg-primary rounded"></div>
                 <div>
-                  <h2 class="text-xl font-semibold text-slate-800">Edit Draft Quotation</h2>
-                  <p class="text-sm text-slate-600 mt-1">
+                  <h2 class="text-xl font-semibold text-ink">Edit Draft Quotation</h2>
+                  <p class="text-sm text-ink-muted mt-1">
                     Modify services and coverage as needed. You can save changes or issue the quotation.
                   </p>
                 </div>
               </div>
               
-              <div class="text-sm text-slate-600">
+              <div class="text-sm text-ink-muted">
                 <div class="flex items-center gap-2">
-                  <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                  <span class="font-medium text-blue-700">Draft Mode</span>
+                  <div class="w-2 h-2 rounded-full bg-primary"></div>
+                  <span class="font-medium text-primary-hover">Draft Mode</span>
                 </div>
               </div>
             </div>
@@ -153,30 +153,30 @@ async function onFormSubmit(e: any) {
           
           <div v-if="pending" class="p-8">
             <div class="flex items-center justify-center">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span class="ml-3 text-slate-600">Loading packages...</span>
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span class="ml-3 text-ink-muted">Loading packages...</span>
             </div>
           </div>
           
-          <div v-else-if="!draft" class="p-8 text-center text-slate-500">
+          <div v-else-if="!draft" class="p-8 text-center text-ink-subtle">
             <p>No draft quotation data available</p>
           </div>
           
           <div v-else class="p-6">
             <!-- Quotation Information Summary -->
-            <div class="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div class="mb-8 p-4 bg-primary/5 rounded-lg border border-primary/20">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <div class="text-sm text-blue-700 mb-1 font-medium">Quotation ID</div>
-                  <div class="font-mono text-sm text-blue-900 truncate">{{ draft.quotationUuid }}</div>
+                  <div class="text-sm text-primary-hover mb-1 font-medium">Quotation ID</div>
+                  <div class="font-mono text-sm text-primary-hover truncate">{{ draft.quotationUuid }}</div>
                 </div>
                 <div>
-                  <div class="text-sm text-blue-700 mb-1 font-medium">Institution</div>
-                  <div class="font-medium text-blue-900 truncate">{{ draft.institution?.institutionName || 'N/A' }}</div>
+                  <div class="text-sm text-primary-hover mb-1 font-medium">Institution</div>
+                  <div class="font-medium text-primary-hover truncate">{{ draft.institution?.institutionName || 'N/A' }}</div>
                 </div>
                 <div>
-                  <div class="text-sm text-blue-700 mb-1 font-medium">Services Count</div>
-                  <div class="font-medium text-blue-900">{{ draft.quoatedServices?.length || 0 }}</div>
+                  <div class="text-sm text-primary-hover mb-1 font-medium">Services Count</div>
+                  <div class="font-medium text-primary-hover">{{ draft.quoatedServices?.length || 0 }}</div>
                 </div>
               </div>
             </div>
@@ -193,26 +193,26 @@ async function onFormSubmit(e: any) {
             />
             
             <!-- Editing Instructions -->
-            <div class="mt-8 pt-6 border-t border-slate-200">
-              <div class="flex items-start gap-3 p-4 bg-slate-50 rounded-lg">
-                <div class="p-2 rounded-full bg-slate-200 mt-0.5">
-                  <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="mt-8 pt-6 border-t border-line">
+              <div class="flex items-start gap-3 p-4 bg-surface-muted rounded-lg">
+                <div class="p-2 rounded-full bg-line mt-0.5">
+                  <svg class="w-5 h-5 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                 </div>
                 <div>
-                  <h4 class="font-medium text-slate-800 mb-1">Editing Mode</h4>
-                  <ul class="text-sm text-slate-600 space-y-1">
+                  <h4 class="font-medium text-ink mb-1">Editing Mode</h4>
+                  <ul class="text-sm text-ink-muted space-y-1">
                     <li class="flex items-center gap-2">
-                      <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                      <div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
                       <span>You can modify any field in the quotation</span>
                     </li>
                     <li class="flex items-center gap-2">
-                      <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                      <div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
                       <span>Add new coverage types using the "Add New Coverage" section</span>
                     </li>
                     <li class="flex items-center gap-2">
-                      <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                      <div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
                       <span>Use "Save Changes" to update the draft or "Issue Saved" to finalize</span>
                     </li>
                   </ul>

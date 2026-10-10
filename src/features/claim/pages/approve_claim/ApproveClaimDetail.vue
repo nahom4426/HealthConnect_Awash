@@ -173,17 +173,17 @@ function getInitials(name) {
               {{ getInitials(institutionName) }}
             </div>
             <div>
-              <h1 class="text-xl font-bold text-gray-800">{{ institutionName }}</h1>
-              <p class="text-sm text-gray-500">Approve Claim Details</p>
+              <h1 class="text-xl font-bold text-ink">{{ institutionName }}</h1>
+              <p class="text-sm text-ink-subtle">Approve Claim Details</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
-            <span class="text-xs font-medium text-gray-600">Batch:</span>
-            <span class="text-xs font-mono text-gray-800">{{ batchCode || 'N/A' }}</span>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-muted rounded-lg border border-line">
+            <span class="text-xs font-medium text-ink-muted">Batch:</span>
+            <span class="text-xs font-mono text-ink">{{ batchCode || 'N/A' }}</span>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-lg border border-indigo-200">
-            <span class="text-xs font-medium text-indigo-600">Status:</span>
-            <span class="text-xs font-semibold text-indigo-700">CONFIRMED</span>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-lg border border-primary/20">
+            <span class="text-xs font-medium text-primary">Status:</span>
+            <span class="text-xs font-semibold text-primary-hover">CONFIRMED</span>
           </div>
         </div>
       </div>

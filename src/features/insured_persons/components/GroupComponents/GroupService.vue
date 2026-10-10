@@ -58,7 +58,7 @@ function selectService(id, data = []) {
           <input
             v-model="search"
             placeholder="Search and Select Services"
-            class="p-4 w-[36rem] bg-gray-100 rounded-md"
+            class="p-4 w-[36rem] bg-surface-muted rounded-md"
             type="text"
           />
         </div>
@@ -98,7 +98,7 @@ function selectService(id, data = []) {
                     )
                   "
                   @change="selectService(row?.serviceUuid, serviceList)"
-                  class="size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  class="size-4 rounded border-line-strong text-primary focus:ring-primary"
                 />
               </Button>
             </template>

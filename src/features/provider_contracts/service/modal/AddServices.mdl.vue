@@ -7,16 +7,16 @@
     >
       <div class="space-y-4">
         <!-- Top Toolbar: Search, Filter, Discount -->
-        <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
+        <div class="p-4 bg-surface-muted rounded-xl border border-line space-y-3">
           <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <!-- Search input -->
             <div class="relative flex-1">
               <Input
                 v-model="searchTerm"
                 placeholder="Search master services by name, code, or category..."
-                :attributes="{ class: 'pl-10 w-full bg-white border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary rounded-lg text-sm' }"
+                :attributes="{ class: 'pl-10 w-full bg-white border-line focus:border-primary focus:ring-1 focus:ring-primary rounded-lg text-sm' }"
               />
-              <div class="absolute top-2.5 left-3 text-gray-400">
+              <div class="absolute top-2.5 left-3 text-ink-subtle">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
@@ -24,12 +24,12 @@
             </div>
 
             <!-- Filter Tabs -->
-            <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-gray-200 text-xs font-medium">
+            <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-line text-xs font-medium">
               <button
                 type="button"
                 @click="filterMode = 'all'"
                 class="px-3 py-1.5 rounded-md transition-colors"
-                :class="filterMode === 'all' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                :class="filterMode === 'all' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-ink-muted hover:text-ink'"
               >
                 All ({{ totalMasterCount }})
               </button>
@@ -37,7 +37,7 @@
                 type="button"
                 @click="filterMode = 'available'"
                 class="px-3 py-1.5 rounded-md transition-colors"
-                :class="filterMode === 'available' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                :class="filterMode === 'available' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-ink-muted hover:text-ink'"
               >
                 Available ({{ totalAvailableCount }})
               </button>
@@ -45,15 +45,15 @@
                 type="button"
                 @click="filterMode = 'mapped'"
                 class="px-3 py-1.5 rounded-md transition-colors"
-                :class="filterMode === 'mapped' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                :class="filterMode === 'mapped' ? 'bg-primary text-white font-semibold shadow-sm' : 'text-ink-muted hover:text-ink'"
               >
                 Already Mapped ({{ totalMappedCount }})
               </button>
             </div>
 
             <!-- Global Discount % -->
-            <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
-              <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Bulk Discount</span>
+            <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-line shadow-sm">
+              <span class="text-xs font-semibold text-ink-muted uppercase tracking-wider">Bulk Discount</span>
               <div class="relative flex items-center">
                 <input
                   type="number"
@@ -63,22 +63,22 @@
                   v-model.number="discountPercent"
                   @input="onDiscountChanged"
                   placeholder="0"
-                  class="w-16 px-2 py-1 text-sm font-semibold text-right rounded border border-gray-300 focus:border-primary focus:outline-none"
+                  class="w-16 px-2 py-1 text-sm font-semibold text-right rounded border border-line-strong focus:border-primary focus:outline-none"
                 />
-                <span class="ml-1 text-xs text-gray-500">%</span>
+                <span class="ml-1 text-xs text-ink-subtle">%</span>
               </div>
             </div>
           </div>
 
           <!-- Selection status bar & page select all -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-gray-200/60 text-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-line/60 text-xs">
             <div class="flex items-center gap-4">
-              <label class="flex items-center gap-2 font-medium text-gray-700 cursor-pointer select-none">
+              <label class="flex items-center gap-2 font-medium text-ink-muted cursor-pointer select-none">
                 <input
                   type="checkbox"
                   :checked="isCurrentPageAvailableSelected"
                   @change="toggleSelectAvailableCurrentPage"
-                  class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
+                  class="h-4 w-4 text-primary focus:ring-primary border-line-strong rounded cursor-pointer"
                 />
                 <span>Select all available on this page ({{ currentPageAvailableCount }})</span>
               </label>
@@ -86,13 +86,13 @@
               <button
                 v-if="selectedMap.size > 0"
                 @click="clearAllSelections"
-                class="text-red-600 hover:text-red-800 font-medium hover:underline"
+                class="text-error hover:text-error-strong font-medium hover:underline"
               >
                 Clear all {{ selectedMap.size }} selected
               </button>
             </div>
 
-            <div class="text-gray-500 font-medium">
+            <div class="text-ink-subtle font-medium">
               Showing {{ displayPageServices.length }} items on page {{ page }} of {{ totalPages }} ({{ filteredMasterServices.length.toLocaleString() }} total matching)
             </div>
           </div>
@@ -114,31 +114,31 @@
         <!-- Table Container -->
         <div v-if="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border">
           <Spinner size="lg" />
-          <span class="mt-3 text-sm font-medium text-gray-500">Loading master catalog...</span>
+          <span class="mt-3 text-sm font-medium text-ink-subtle">Loading master catalog...</span>
         </div>
         <div v-else class="overflow-x-auto max-h-[50vh] border rounded-xl shadow-sm bg-white">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="sticky top-0 bg-gray-50 z-10">
+          <table class="min-w-full divide-y divide-line">
+            <thead class="sticky top-0 bg-surface-muted z-10">
               <tr>
-                <th class="w-12 px-4 py-3 text-xs font-semibold tracking-wider text-center text-gray-600 uppercase border-b">Select</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase border-b">Status</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase border-b">Code</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase border-b">Name</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase border-b">Category</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-gray-600 uppercase border-b">Sub Category</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-right text-gray-600 uppercase border-b">Base Price (ETB)</th>
-                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-right text-gray-600 uppercase border-b">Negotiated Price (ETB)</th>
+                <th class="w-12 px-4 py-3 text-xs font-semibold tracking-wider text-center text-ink-muted uppercase border-b">Select</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase border-b">Status</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase border-b">Code</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase border-b">Name</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase border-b">Category</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-left text-ink-muted uppercase border-b">Sub Category</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-right text-ink-muted uppercase border-b">Base Price (ETB)</th>
+                <th class="px-4 py-3 text-xs font-semibold tracking-wider text-right text-ink-muted uppercase border-b">Negotiated Price (ETB)</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 bg-white">
+            <tbody class="divide-y divide-line bg-white">
               <tr
                 v-for="svc in displayPageServices"
                 :key="svcKey(svc)"
                 class="transition-colors duration-150"
                 :class="{
                   'bg-teal-50/50 hover:bg-teal-50/80': isSelected(svc),
-                  'bg-gray-50/60': svc.isExisting && !isSelected(svc),
-                  'hover:bg-gray-50': !svc.isExisting && !isSelected(svc)
+                  'bg-surface-muted/60': svc.isExisting && !isSelected(svc),
+                  'hover:bg-surface-muted': !svc.isExisting && !isSelected(svc)
                 }"
               >
                 <!-- Select Checkbox -->
@@ -147,7 +147,7 @@
                     type="checkbox"
                     :checked="isSelected(svc)"
                     @change="toggleOne(svc)"
-                    class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
+                    class="h-4 w-4 text-primary focus:ring-primary border-line-strong rounded cursor-pointer"
                   />
                 </td>
 
@@ -155,18 +155,18 @@
                 <td class="px-4 py-3 text-xs whitespace-nowrap">
                   <span
                     v-if="svc.isExisting"
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800 border border-amber-200/60"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold bg-warning-soft text-warning-strong border border-warning/[0.12]"
                   >
-                    <svg class="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-3 h-3 text-warning" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
                     Already in Contract
                   </span>
                   <span
                     v-else
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200/60"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold bg-success-soft text-success-strong border border-success/[0.12]"
                   >
-                    <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-3 h-3 text-success" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
                     </svg>
                     Available
@@ -174,29 +174,29 @@
                 </td>
 
                 <!-- Code -->
-                <td class="px-4 py-3 text-sm font-semibold text-gray-900 whitespace-nowrap">
+                <td class="px-4 py-3 text-sm font-semibold text-ink whitespace-nowrap">
                   {{ svc.itemCode || 'N/A' }}
                 </td>
 
                 <!-- Name -->
-                <td class="px-4 py-3 text-sm text-gray-900 font-medium">
+                <td class="px-4 py-3 text-sm text-ink font-medium">
                   {{ svc.item || 'N/A' }}
                 </td>
 
                 <!-- Category -->
-                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                <td class="px-4 py-3 text-sm text-ink-muted whitespace-nowrap">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-muted text-ink">
                     {{ svc.category || 'N/A' }}
                   </span>
                 </td>
 
                 <!-- Sub Category -->
-                <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+                <td class="px-4 py-3 text-sm text-ink-subtle whitespace-nowrap">
                   {{ svc.subCategory || 'N/A' }}
                 </td>
 
                 <!-- Base Price -->
-                <td class="px-4 py-3 text-sm font-mono text-right text-gray-600 whitespace-nowrap">
+                <td class="px-4 py-3 text-sm font-mono text-right text-ink-muted whitespace-nowrap">
                   {{ Number(svc.price ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
                 </td>
 
@@ -210,20 +210,20 @@
                       min="0"
                       step="0.01"
                       @input="onEditPrice(svc, $event.target.value)"
-                      class="px-2 py-1 w-28 text-right font-mono text-sm rounded border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 transition-colors"
+                      class="px-2 py-1 w-28 text-right font-mono text-sm rounded border border-line-strong focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:bg-surface-muted disabled:text-ink-subtle disabled:border-line transition-colors"
                     />
                   </div>
                 </td>
               </tr>
 
               <tr v-if="displayPageServices.length === 0">
-                <td colspan="8" class="px-4 py-12 text-sm text-center text-gray-500">
+                <td colspan="8" class="px-4 py-12 text-sm text-center text-ink-subtle">
                   <div class="flex flex-col items-center justify-center space-y-2">
-                    <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-8 h-8 text-line-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                     <span>No services found matching your criteria</span>
-                    <span v-if="searchTerm" class="text-xs text-gray-400">Try adjusting your search query</span>
+                    <span v-if="searchTerm" class="text-xs text-ink-subtle">Try adjusting your search query</span>
                   </div>
                 </td>
               </tr>
@@ -233,15 +233,15 @@
 
         <!-- Pagination Bar -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-          <div class="text-xs text-gray-600">
-            Page <span class="font-semibold text-gray-900">{{ page }}</span> of <span class="font-semibold text-gray-900">{{ totalPages }}</span>
-            <span class="ml-2 text-gray-400">({{ filteredMasterServices.length.toLocaleString() }} total matching master services)</span>
+          <div class="text-xs text-ink-muted">
+            Page <span class="font-semibold text-ink">{{ page }}</span> of <span class="font-semibold text-ink">{{ totalPages }}</span>
+            <span class="ml-2 text-ink-subtle">({{ filteredMasterServices.length.toLocaleString() }} total matching master services)</span>
           </div>
 
           <div class="flex items-center gap-2">
             <button
               type="button"
-              class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              class="px-3 py-1.5 text-xs font-medium rounded-lg border border-line-strong bg-white text-ink-muted hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               :disabled="page <= 1 || loading"
               @click="goToPage(page - 1)"
             >
@@ -250,7 +250,7 @@
 
             <button
               type="button"
-              class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              class="px-3 py-1.5 text-xs font-medium rounded-lg border border-line-strong bg-white text-ink-muted hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               :disabled="page >= totalPages || loading"
               @click="goToPage(page + 1)"
             >
@@ -258,7 +258,7 @@
             </button>
 
             <select
-              class="px-2 py-1.5 text-xs font-medium rounded-lg border border-gray-300 bg-white text-gray-700 focus:border-primary focus:outline-none"
+              class="px-2 py-1.5 text-xs font-medium rounded-lg border border-line-strong bg-white text-ink-muted focus:border-primary focus:outline-none"
               :value="limit"
               @change="changeLimit($event.target.value)"
               :disabled="loading"
@@ -271,11 +271,11 @@
         </div>
 
         <!-- Footer Actions -->
-        <div class="flex justify-between items-center pt-4 border-t border-gray-200">
-          <div class="text-sm font-medium text-gray-700 flex items-center gap-3">
+        <div class="flex justify-between items-center pt-4 border-t border-line">
+          <div class="text-sm font-medium text-ink-muted flex items-center gap-3">
             <span>Selected: <span class="px-2 py-0.5 rounded-full bg-teal-100 text-primary font-bold text-xs">{{ selectedMap.size }}</span></span>
-            <span v-if="newServicesCount > 0" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold">+{{ newServicesCount }} New</span>
-            <span v-if="updateServicesCount > 0" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">{{ updateServicesCount }} Update</span>
+            <span v-if="newServicesCount > 0" class="px-2 py-0.5 rounded-full bg-success-soft text-success-strong text-xs font-semibold">+{{ newServicesCount }} New</span>
+            <span v-if="updateServicesCount > 0" class="px-2 py-0.5 rounded-full bg-warning-soft text-warning-strong text-xs font-semibold">{{ updateServicesCount }} Update</span>
           </div>
 
           <div class="flex gap-3">

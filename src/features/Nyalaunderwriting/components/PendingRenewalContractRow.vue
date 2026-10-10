@@ -32,15 +32,15 @@ function getStatusStyle(status: string) {
   const base = 'px-3 py-0.5 rounded-full text-center';
   switch (status?.toUpperCase()) {
     case 'PENDING_RENEWAL':
-      return `${base} bg-amber-100 text-amber-700`;
+      return `${base} bg-warning-soft text-warning-strong`;
     case 'RENEWAL_IN_PROGRESS':
-      return `${base} bg-blue-100 text-blue-700`;
+      return `${base} bg-primary/10 text-primary-hover`;
     case 'RENEWAL_SCHEDULED':
       return `${base} bg-purple-100 text-purple-700`;
     case 'RENEWED':
-      return `${base} bg-green-100 text-green-700`;
+      return `${base} bg-success-soft text-success-strong`;
     default:
-      return `${base} bg-gray-100 text-gray-600`;
+      return `${base} bg-surface-muted text-ink-muted`;
   }
 }
 
@@ -201,23 +201,23 @@ function openModifyInsuredMembers(row: any) {
     v-for="(row, idx) in rowData"
     :key="row?.payerInstitutionContractUuid || idx"
     @click.self="props.onRowClick(row)"
-    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-blue-50 group"
+    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-primary/5 group"
   >
-    <td class="p-4 text-sm font-semibold text-gray-400 select-none">
+    <td class="p-4 text-sm font-semibold text-ink-subtle select-none">
       {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
     </td>
 
     <td class="p-4">
       <div class="flex flex-col">
-        <span class="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-md shadow-sm w-fit">
+        <span class="px-3 py-1 text-sm font-medium text-primary-hover bg-primary/5 rounded-md shadow-sm w-fit">
           {{ row?.institutionName || '—' }}
         </span>
       </div>
     </td>
 
-    <td class="p-4 font-medium text-gray-500">
+    <td class="p-4 font-medium text-ink-subtle">
       {{ row?.contractName || '—' }}
-      <div class="text-xs text-gray-500">
+      <div class="text-xs text-ink-subtle">
         {{ formatDate(row?.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row?.endDate) }}
       </div>
     </td>
@@ -228,7 +228,7 @@ function openModifyInsuredMembers(row: any) {
       </span>
     </td>
 
-    <td class="flex gap-2 pt-2 border-gray-100">
+    <td class="flex gap-2 pt-2 border-line">
       <!-- For RENEWAL_IN_PROGRESS: Show appropriate button based on quotation existence -->
       <template v-if="row?.status === 'RENEWAL_IN_PROGRESS'">
         <button
@@ -236,8 +236,8 @@ function openModifyInsuredMembers(row: any) {
           :disabled="loadingQuotation[row?.payerInstitutionContractUuid]"
           class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :class="quotationExistsMap[row?.payerInstitutionContractUuid] 
-            ? 'text-blue-700 bg-blue-50 hover:bg-blue-100 hover:text-blue-800' 
-            : 'text-amber-700 bg-amber-50 hover:bg-amber-100 hover:text-amber-800'"
+            ? 'text-primary-hover bg-primary/5 hover:bg-primary/10 hover:text-primary-hover' 
+            : 'text-warning-strong bg-warning-soft hover:bg-warning-soft hover:text-warning-strong'"
           :title="quotationExistsMap[row?.payerInstitutionContractUuid] ? 'View Quotation' : 'Edit Quotation'"
         >
           <!-- Loading spinner -->
@@ -270,7 +270,7 @@ function openModifyInsuredMembers(row: any) {
         <!-- <button
           @click.stop="openViewQuotation(row)"
           :disabled="loadingQuotation[row?.payerInstitutionContractUuid]"
-          class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary-hover bg-primary/5 rounded-lg transition-colors hover:bg-primary/10 hover:text-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
           title="View Quotation"
         >
           <svg v-if="loadingQuotation[row?.payerInstitutionContractUuid]" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -287,7 +287,7 @@ function openModifyInsuredMembers(row: any) {
         <!-- Modify Insured Members button -->
         <button
           @click.stop="openModifyInsuredMembers(row)"
-          class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-lg transition-colors hover:bg-green-100 hover:text-green-800"
+          class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-success-strong bg-success-soft rounded-lg transition-colors hover:bg-success-soft hover:text-success-strong"
           title="Modify Insured Members"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

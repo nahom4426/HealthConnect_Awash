@@ -43,11 +43,11 @@ function handleLimitChange(limit: number) {
   <DefaultPage :title="title" placeholder="Search contracts...">
     <template #filter>
       <div class="flex gap-2 items-center">
-        <label class="text-sm text-gray-600">Status</label>
+        <label class="text-sm text-ink-muted">Status</label>
         <select
           :value="status"
           @change="status = $event.target.value"
-          class="px-3 py-2 text-sm bg-white rounded-lg border border-gray-200"
+          class="px-3 py-2 text-sm bg-white rounded-lg border border-line"
         >
           <option v-for="opt in statusOptions" :key="opt" :value="opt">
             {{ opt }}

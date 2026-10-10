@@ -291,12 +291,12 @@ onBeforeUnmount(() => {
               </svg>
             </div>
             <div>
-              <h2 class="text-lg font-semibold text-gray-900 tracking-tight">{{ isEditing ? 'Edit Commission Rule' : 'Create Commission Rule' }}</h2>
-              <p class="text-xs text-gray-500 mt-0.5">{{ isEditing ? 'Update the rule details below' : 'Define a new commission structure' }}</p>
+              <h2 class="text-lg font-semibold text-ink tracking-tight">{{ isEditing ? 'Edit Commission Rule' : 'Create Commission Rule' }}</h2>
+              <p class="text-xs text-ink-subtle mt-0.5">{{ isEditing ? 'Update the rule details below' : 'Define a new commission structure' }}</p>
             </div>
           </div>
           <button 
-            class="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200" 
+            class="w-9 h-9 flex items-center justify-center rounded-xl text-ink-subtle hover:text-ink-muted hover:bg-surface-muted transition-all duration-200" 
             @click="closeModal"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4.5 h-4.5">
@@ -307,7 +307,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Modal Body -->
-      <div class="modal-body-wrapper flex-1 px-7 py-6 overflow-y-auto max-h-[calc(100vh-13rem)] bg-gray-50/60">
+      <div class="modal-body-wrapper flex-1 px-7 py-6 overflow-y-auto max-h-[calc(100vh-13rem)] bg-surface-muted/60">
         <div class="flex flex-col gap-5">
           <!-- Error Banner - Stays visible until user dismisses or fixes -->
           <transition 
@@ -318,10 +318,10 @@ onBeforeUnmount(() => {
             leave-from-class="opacity-100 translate-y-0 scale-100"
             leave-to-class="opacity-0 -translate-y-4 scale-95"
           >
-            <div v-if="showError" class="px-4 py-3.5 text-sm text-red-700 bg-gradient-to-r from-red-50 to-red-50/50 rounded-2xl border border-red-200/60 shadow-sm">
+            <div v-if="showError" class="px-4 py-3.5 text-sm text-error-strong bg-gradient-to-r from-error-soft to-error-soft/50 rounded-2xl border border-error/[0.12] shadow-sm">
               <div class="flex items-start gap-3">
                 <div class="flex-shrink-0 mt-0.5">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-red-500">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-error">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -331,7 +331,7 @@ onBeforeUnmount(() => {
                 </div>
                 <button 
                   @click="showError = false; formError = ''" 
-                  class="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors"
+                  class="flex-shrink-0 text-error hover:text-error transition-colors"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -362,9 +362,9 @@ onBeforeUnmount(() => {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-primary">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span class="text-xs font-semibold text-gray-700 uppercase tracking-wider">Effective Period</span>
+                <span class="text-xs font-semibold text-ink-muted uppercase tracking-wider">Effective Period</span>
               </div>
-              <span class="text-[11px] text-gray-400" v-if="formData.effectiveFrom && formData.effectiveTo">
+              <span class="text-[11px] text-ink-subtle" v-if="formData.effectiveFrom && formData.effectiveTo">
                 {{ formatDisplayDate(formData.effectiveFrom) }} → {{ formatDisplayDate(formData.effectiveTo) }}
               </span>
             </div>
@@ -372,8 +372,8 @@ onBeforeUnmount(() => {
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <div class="flex items-center justify-between mb-1.5">
-                  <label class="text-[11px] font-medium text-gray-600 uppercase tracking-wider">
-                    From <span class="text-red-500">*</span>
+                  <label class="text-[11px] font-medium text-ink-muted uppercase tracking-wider">
+                    From <span class="text-error">*</span>
                   </label>
                   <button
                     type="button"
@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
 
               <div>
                 <div class="flex items-center justify-between mb-1.5">
-                  <label class="text-[11px] font-medium text-gray-600 uppercase tracking-wider">
+                  <label class="text-[11px] font-medium text-ink-muted uppercase tracking-wider">
                     To
                   </label>
                 </div>
@@ -416,7 +416,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="flex gap-2 mt-3 flex-wrap">
-              <span class="text-[11px] text-gray-400 self-center mr-1">Quick set:</span>
+              <span class="text-[11px] text-ink-subtle self-center mr-1">Quick set:</span>
               <button
                 v-for="opt in [{ label: '1 mo', months: 1 }, { label: '3 mo', months: 3 }, { label: '6 mo', months: 6 }, { label: '1 yr', months: 12 }]"
                 :key="opt.label"
@@ -431,19 +431,19 @@ onBeforeUnmount(() => {
 
           <!-- Description -->
           <div class="field-card">
-            <label class="block text-xs font-medium text-gray-700 uppercase tracking-wider mb-2">
+            <label class="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-2">
               Description
             </label>
             <textarea
               v-model="formData.description"
-              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-inherit resize-vertical min-h-[80px] focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+              class="w-full px-3 py-2.5 border border-line rounded-xl text-sm font-inherit resize-vertical min-h-[80px] focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
               placeholder="Brief description of this rule..."
             ></textarea>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div class="field-card">
-              <label class="block text-xs font-medium text-gray-700 uppercase tracking-wider mb-2">
+              <label class="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-2">
                 Stakeholder Type
               </label>
               <Select
@@ -455,7 +455,7 @@ onBeforeUnmount(() => {
               />
             </div>
             <div class="field-card">
-              <label class="block text-xs font-medium text-gray-700 uppercase tracking-wider mb-2">
+              <label class="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-2">
                 Policy Type
               </label>
               <Select
@@ -474,8 +474,8 @@ onBeforeUnmount(() => {
           <!-- Commission Percentage -->
           <div class="bg-gradient-to-br from-primary/[0.07] to-primary/[0.12] rounded-2xl p-5 border border-primary/20">
             <div class="flex justify-between items-center mb-3">
-              <label class="block text-xs font-medium text-gray-700 uppercase tracking-wider">
-                Commission Percentage <span class="text-red-500">*</span>
+              <label class="block text-xs font-medium text-ink-muted uppercase tracking-wider">
+                Commission Percentage <span class="text-error">*</span>
               </label>
               <span class="text-2xl font-bold text-primary">
                 {{ formData.commissionPercentage }}%
@@ -490,7 +490,7 @@ onBeforeUnmount(() => {
                 step="0.5"
                 v-model="formData.commissionPercentage"
                 @input="updatePercentage($event.target.value)"
-                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary
+                class="w-full h-2 bg-line rounded-lg appearance-none cursor-pointer accent-primary
                        [&::-webkit-slider-thumb]:appearance-none
                        [&::-webkit-slider-thumb]:w-5
                        [&::-webkit-slider-thumb]:h-5
@@ -510,11 +510,11 @@ onBeforeUnmount(() => {
               />
               
               <div class="flex justify-between px-1 mt-1">
-                <span class="text-xs text-gray-400">0%</span>
-                <span class="text-xs text-gray-400">25%</span>
-                <span class="text-xs text-gray-400">50%</span>
-                <span class="text-xs text-gray-400">75%</span>
-                <span class="text-xs text-gray-400">100%</span>
+                <span class="text-xs text-ink-subtle">0%</span>
+                <span class="text-xs text-ink-subtle">25%</span>
+                <span class="text-xs text-ink-subtle">50%</span>
+                <span class="text-xs text-ink-subtle">75%</span>
+                <span class="text-xs text-ink-subtle">100%</span>
               </div>
             </div>
 
@@ -526,13 +526,13 @@ onBeforeUnmount(() => {
                 class="px-3 py-1 text-xs font-medium rounded-full transition-all duration-200"
                 :class="formData.commissionPercentage === value 
                   ? 'bg-primary text-white shadow-md shadow-primary/30' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-primary/10 hover:text-primary'"
+                  : 'bg-surface-muted text-ink-muted hover:bg-primary/10 hover:text-primary'"
               >
                 {{ value }}%
               </button>
             </div>
 
-            <p class="text-xs text-gray-500 mt-3 flex items-center gap-1">
+            <p class="text-xs text-ink-subtle mt-3 flex items-center gap-1">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -543,11 +543,11 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Modal Footer -->
-      <div class="px-7 py-4 bg-white border-t border-gray-100 flex justify-end gap-3">
+      <div class="px-7 py-4 bg-white border-t border-line flex justify-end gap-3">
         <Button 
           variant="outline" 
           @click="closeModal"
-          class="px-5 py-2.5 hover:bg-gray-50 transition-all duration-200 rounded-xl"
+          class="px-5 py-2.5 hover:bg-surface-muted transition-all duration-200 rounded-xl"
           :disabled="saving"
         >
           Cancel

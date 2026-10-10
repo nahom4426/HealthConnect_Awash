@@ -99,7 +99,7 @@ const openAddIndividualModal = () => {
       </button>
     </template>
     <template #header>
-      <div class="flex border-b border-gray-200 ">
+      <div class="flex border-b border-line ">
         <button
           v-for="(config, tab) in tabConfig"
           :key="tab"
@@ -108,7 +108,7 @@ const openAddIndividualModal = () => {
           :class="[
             activeTab === tab 
               ? 'border-primary text-primary' 
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              : 'border-transparent text-ink-subtle hover:text-ink-muted hover:border-line-strong'
           ]"
         >
           {{ config.label }}

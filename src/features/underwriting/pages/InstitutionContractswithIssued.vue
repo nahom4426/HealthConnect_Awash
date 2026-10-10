@@ -140,10 +140,10 @@ onMounted(async () => {
       <TabGroup :tabs="['GENERAL','INDIVIDUAL']" v-model="activeTab" />
 
       <!-- Institution Picker -->
-      <div v-if="showInstitutionPicker" class="p-4 mb-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div v-if="showInstitutionPicker" class="p-4 mb-4 bg-surface-muted rounded-lg border border-line">
         <div class="flex gap-3 items-center">
           <div class="flex-1">
-            <div class="flex overflow-hidden items-center w-full h-10 bg-white rounded-lg border border-gray-200 focus-within:border-primary">
+            <div class="flex overflow-hidden items-center w-full h-10 bg-white rounded-lg border border-line focus-within:border-primary">
               <span class="grid place-items-center w-10 h-10 text-base border-r text-base-clr" v-html='icons.search' />
               <input
                 v-model="institutionSearch"
@@ -154,7 +154,7 @@ onMounted(async () => {
           </div>
           <button
             type="button"
-            class="px-4 py-2 bg-white rounded-md border border-gray-300"
+            class="px-4 py-2 bg-white rounded-md border border-line-strong"
             @click="closeInstitutionPicker"
           >
             Cancel
@@ -207,11 +207,11 @@ onMounted(async () => {
         <!-- Empty State -->
         <div v-if="!pending && (!contracts || contracts.length === 0)" class="py-12 text-center">
           <div class="flex flex-col justify-center items-center">
-            <svg class="mb-4 w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="mb-4 w-20 h-20 text-line-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.5a1 1 0 00-.8.4l-3-4a1 1 0 00-1.6 1.2l2.5 3.333H7a2 2 0 00-2 2v4a2 2 0 002 2z" />
             </svg>
-            <p class="text-lg font-semibold text-gray-600">No Membership Polices</p>
-            <p class="mt-2 text-sm text-gray-400">No Polices are currently available</p>
+            <p class="text-lg font-semibold text-ink-muted">No Membership Polices</p>
+            <p class="mt-2 text-sm text-ink-subtle">No Polices are currently available</p>
           </div>
         </div>
 

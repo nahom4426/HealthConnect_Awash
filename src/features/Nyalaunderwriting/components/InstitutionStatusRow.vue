@@ -21,14 +21,14 @@ function getStatusStyle(status) {
   const base = "inline-flex justify-center items-center min-w-[80px] px-3 py-1 rounded text-sm font-semibold";
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
     case "INACTIVE":
-      return `${base} bg-red-100 text-red-800`;
+      return `${base} bg-error-soft text-error-strong`;
     case "PENDING":
     case "SUSPENDED":
-      return `${base} bg-yellow-100 text-yellow-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
     default:
-      return `${base} bg-gray-100 text-gray-800`;
+      return `${base} bg-surface-muted text-ink`;
   }
 }
 
@@ -73,13 +73,13 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   <tr
     v-for="(row, idx) in rowData"
     :key="row.institutionUuid || idx"
-    class="bg-white border-b transition-colors cursor-pointer hover:bg-blue-50"
+    class="bg-white border-b transition-colors cursor-pointer hover:bg-primary/5"
   >
     <!-- Index -->
-    <td class="p-4 font-semibold text-gray-600 select-none">{{ idx + 1 }}</td>
+    <td class="p-4 font-semibold text-ink-muted select-none">{{ idx + 1 }}</td>
 
     <!-- Data Columns -->
-    <td v-for="key in rowKeys" :key="key" class="p-4 text-gray-700 whitespace-nowrap">
+    <td v-for="key in rowKeys" :key="key" class="p-4 text-ink-muted whitespace-nowrap">
       <span v-if="key === 'status'" :class="getStatusStyle(row.status)">
         {{ row.status }}
       </span>
@@ -93,10 +93,10 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
       <button
         @click.stop="toggleDropdown($event, row.institutionUuid)"
         aria-label="Actions"
-        class="p-2 rounded-full transition-colors hover:bg-gray-200"
+        class="p-2 rounded-full transition-colors hover:bg-line"
         type="button"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-ink-muted" fill="currentColor" viewBox="0 0 20 20">
           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
         </svg>
       </button>
@@ -126,7 +126,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           <button
             @click.stop="handleStatusChange(row)"
             class="dropdown-item"
-            :class="row.status === 'ACTIVE' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'"
+            :class="row.status === 'ACTIVE' ? 'text-error hover:text-error-strong' : 'text-success hover:text-success-strong'"
           >
             <i v-html="row.status === 'ACTIVE' ? (icons.delete || '🛑') : (icons.add || '✅')" class="w-4 h-4" />
             {{ row.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
@@ -172,7 +172,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   color: rgb(var(--primary-hover));
 }
 
-.dropdown-menu button.text-red-600:hover {
+.dropdown-menu button.text-error:hover {
   background-color: rgb(var(--error-soft));
   color: rgb(var(--error));
 }

@@ -61,7 +61,7 @@ function clearFilters() {
     <template #filter>
       <button
         @click="showFilters = !showFilters"
-        class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary"
+        class="flex gap-2 justify-center items-center px-6 py-4 bg-surface-muted rounded-md text-primary"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
@@ -69,10 +69,10 @@ function clearFilters() {
     </template>
 
     <template #default="{ search }">
-      <div v-if="showFilters" class="p-4 bg-white rounded-xl border border-gray-200">
+      <div v-if="showFilters" class="p-4 bg-white rounded-xl border border-line">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div class="flex flex-col gap-1">
-            <label class="text-sm text-gray-600">Provider Contract</label>
+            <label class="text-sm text-ink-muted">Provider Contract</label>
             <SearchSelect
               placeholder="Search provider / contract"
               :searchCb="(data) => getActiveContract({ ...data })"
@@ -84,7 +84,7 @@ function clearFilters() {
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm text-gray-600">Policy / Institution</label>
+            <label class="text-sm text-ink-muted">Policy / Institution</label>
             <SearchSelect
               placeholder="Search institution policy"
               :searchCb="(data) => getIssuedContracts({ ...data, status: 'ACTIVE' })"
@@ -97,7 +97,7 @@ function clearFilters() {
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm text-gray-600">Member</label>
+            <label class="text-sm text-ink-muted">Member</label>
             <template v-if="selected.institutionUuid">
               <SearchSelect
                 placeholder="Search insured person"
@@ -166,7 +166,7 @@ function clearFilters() {
                   <div
                     v-for="(item, idx) in result"
                     :key="item.insuredUuid || item.dependantUuid || idx"
-                    class="flex gap-3 items-center px-3 py-2 rounded-lg transition-colors cursor-pointer hover:bg-blue-50 focus:outline-none"
+                    class="flex gap-3 items-center px-3 py-2 rounded-lg transition-colors cursor-pointer hover:bg-primary/5 focus:outline-none"
                     tabindex="0"
                     @click.prevent.stop="onSelect(item)"
                     @keydown.enter.prevent.stop="onSelect(item)"
@@ -187,7 +187,7 @@ function clearFilters() {
                     <!-- Text content -->
                     <div class="flex flex-col flex-1 min-w-0">
                       <div class="flex gap-2 items-center">
-                        <span class="text-sm font-semibold text-gray-900 truncate">
+                        <span class="text-sm font-semibold text-ink truncate">
                           {{ item.fullName }}
                         </span>
                         <span
@@ -206,13 +206,13 @@ function clearFilters() {
 
                       <span
                         v-if="item.relationship && item.type === 'DEPENDANT'"
-                        class="text-xs text-gray-500 truncate"
+                        class="text-xs text-ink-subtle truncate"
                       >
                         Relationship: {{ item.relationship }}
                       </span>
                       <span
                         v-else-if="item.idNumber"
-                        class="text-xs text-gray-400 truncate"
+                        class="text-xs text-ink-subtle truncate"
                       >
                         ID: {{ item.idNumber }}
                       </span>
@@ -224,7 +224,7 @@ function clearFilters() {
             <template v-else>
               <input
                 disabled
-                class="px-3 h-10 text-sm bg-gray-50 rounded-lg border border-gray-200"
+                class="px-3 h-10 text-sm bg-surface-muted rounded-lg border border-line"
                 placeholder="Select policy first"
               />
             </template>
@@ -234,7 +234,7 @@ function clearFilters() {
         <div class="flex gap-2 justify-end mt-4">
           <button
             @click="clearFilters"
-            class="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50"
+            class="px-4 py-2 text-sm rounded-lg border border-line hover:bg-surface-muted"
           >
             Clear
           </button>
@@ -272,8 +272,8 @@ function clearFilters() {
             <div class="py-12 text-center">
               <div class="flex flex-col justify-center items-center">
                 <i v-html="icons.document"></i>
-                <p class="text-gray-500">No authorizations found</p>
-                <p v-if="search" class="mt-1 text-sm text-gray-400">
+                <p class="text-ink-subtle">No authorizations found</p>
+                <p v-if="search" class="mt-1 text-sm text-ink-subtle">
                   No results match your search criteria
                 </p>
               </div>

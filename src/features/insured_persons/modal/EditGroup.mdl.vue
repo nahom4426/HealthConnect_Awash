@@ -103,8 +103,8 @@ function handleUpdateCoverage() {
     >
       <div class="grid grid-cols-1 gap-8 p-6">
         <div class="space-y-8">
-          <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
-            <h3 class="mb-4 text-lg font-bold text-gray-900">Benefit Packages</h3>
+          <div class="p-6 bg-white rounded-xl border border-line shadow-sm">
+            <h3 class="mb-4 text-lg font-bold text-ink">Benefit Packages</h3>
             <GroupPackageSelector
               v-model="packageUuids"
               label=""

@@ -40,20 +40,20 @@ function getStatusStyle(status) {
   switch (status?.toUpperCase()) {
     case "APPROVED":
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
     case "SUBMITTED":
     case "PENDING":
     case "SUSPENDED":
-      return `${base} bg-yellow-100 text-yellow-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
     case "INACTIVE":
     case "REJECTED":
-      return `${base} bg-red-100 text-red-800`;
+      return `${base} bg-error-soft text-error-strong`;
     case "ACCEPTED":
-      return `${base} bg-blue-100 text-blue-800`;
+      return `${base} bg-primary/10 text-primary-hover`;
     case "RESUBMITTED":
       return `${base} bg-purple-100 text-purple-800`;
     default:
-      return `${base} bg-gray-100 text-gray-800`;
+      return `${base} bg-surface-muted text-ink`;
   }
 }
 
@@ -109,17 +109,17 @@ watch(person, (newValue) => {
 </script>
 
 <template>
-  <div v-if="loading" class="text-center py-12 text-lg font-semibold text-gray-600 animate-pulse">
+  <div v-if="loading" class="text-center py-12 text-lg font-semibold text-ink-muted animate-pulse">
     Loading...
   </div>
   
-  <div v-else-if="error" class="text-center py-8 text-red-600 text-lg font-semibold">
+  <div v-else-if="error" class="text-center py-8 text-error text-lg font-semibold">
     {{ error }}
   </div>
   
   <div v-else-if="person" class="bg-white shadow-xl rounded-2xl overflow-hidden">
-    <div class="px-6 py-5 bg-blue-50 border-b border-gray-200 flex justify-between items-center">
-      <h2 class="text-2xl font-bold text-blue-900">Insured Person Details</h2>
+    <div class="px-6 py-5 bg-primary/5 border-b border-line flex justify-between items-center">
+      <h2 class="text-2xl font-bold text-primary-hover">Insured Person Details</h2>
       <Button v-if="!isEditing" @click="toggleEdit" type="primary">Edit</Button>
     </div>
 
@@ -128,7 +128,7 @@ watch(person, (newValue) => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- PERSONAL INFO -->
         <div>
-          <h3 class="text-xl font-semibold text-gray-800 mb-4">Personal Information</h3>
+          <h3 class="text-xl font-semibold text-ink mb-4">Personal Information</h3>
           <div class="space-y-4">
             <template v-if="isEditing">
               <Select v-model="editedPerson.insuredTitle" :options="['Mr', 'Mrs', 'Ms', 'Dr']" label="Title" name="insuredTitle"
@@ -145,16 +145,16 @@ watch(person, (newValue) => {
                 :attributes="{ class: 'w-full input-compact' }" />
             </template>
             <template v-else>
-              <p class="text-sm text-gray-700">👤 <span class="font-medium">Name:</span> {{ formatName(person) }}</p>
-              <p class="text-sm text-gray-700">🚻 <span class="font-medium">Gender:</span> {{ person.gender }}</p>
-              <p class="text-sm text-gray-700">🎂 <span class="font-medium">Birth Date:</span> {{ formatDate(person.birthDate) }}</p>
+              <p class="text-sm text-ink-muted">👤 <span class="font-medium">Name:</span> {{ formatName(person) }}</p>
+              <p class="text-sm text-ink-muted">🚻 <span class="font-medium">Gender:</span> {{ person.gender }}</p>
+              <p class="text-sm text-ink-muted">🎂 <span class="font-medium">Birth Date:</span> {{ formatDate(person.birthDate) }}</p>
             </template>
           </div>
         </div>
 
         <!-- CONTACT INFO -->
         <div>
-          <h3 class="text-xl font-semibold text-gray-800 mb-4">Contact Information</h3>
+          <h3 class="text-xl font-semibold text-ink mb-4">Contact Information</h3>
           <div class="space-y-4">
             <template v-if="isEditing">
               <Input v-model="editedPerson.phone" label="Phone" name="phone"
@@ -167,9 +167,9 @@ watch(person, (newValue) => {
                 :attributes="{ placeholder: 'Enter Address 2', class: 'w-full input-compact' }" />
             </template>
             <template v-else>
-              <p class="text-sm text-gray-700">📞 <span class="font-medium">Phone:</span> {{ person.phone }}</p>
-              <p class="text-sm text-gray-700">📧 <span class="font-medium">Email:</span> {{ person.email }}</p>
-              <p class="text-sm text-gray-700">🏠 <span class="font-medium">Address:</span> {{ person.address1 }}, {{ person.address2 }}</p>
+              <p class="text-sm text-ink-muted">📞 <span class="font-medium">Phone:</span> {{ person.phone }}</p>
+              <p class="text-sm text-ink-muted">📧 <span class="font-medium">Email:</span> {{ person.email }}</p>
+              <p class="text-sm text-ink-muted">🏠 <span class="font-medium">Address:</span> {{ person.address1 }}, {{ person.address2 }}</p>
             </template>
           </div>
         </div>
@@ -178,20 +178,20 @@ watch(person, (newValue) => {
       <!-- INSURANCE + STATUS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <h3 class="text-xl font-semibold text-gray-800 mb-4">Insurance Details</h3>
+          <h3 class="text-xl font-semibold text-ink mb-4">Insurance Details</h3>
           <div class="space-y-2">
             <template v-if="isEditing">
               <Input v-model="editedPerson.insuranceId" label="Insurance ID" name="insuranceId"
                 :attributes="{ placeholder: 'Enter Insurance ID', class: 'w-full input-compact' }" />
             </template>
             <template v-else>
-              <p class="text-sm text-gray-700">🆔 <span class="font-medium">Insurance ID:</span> {{ person.insuranceId }}</p>
-              <p class="text-sm text-gray-700">🔑 <span class="font-medium">Insured UUID:</span> {{ person.insuredPersonUuid }}</p>
+              <p class="text-sm text-ink-muted">🆔 <span class="font-medium">Insurance ID:</span> {{ person.insuranceId }}</p>
+              <p class="text-sm text-ink-muted">🔑 <span class="font-medium">Insured UUID:</span> {{ person.insuredPersonUuid }}</p>
             </template>
           </div>
         </div>
         <div>
-          <h3 class="text-xl font-semibold text-gray-800 mb-4">Status</h3>
+          <h3 class="text-xl font-semibold text-ink mb-4">Status</h3>
           <div>
             <template v-if="isEditing">
               <Select v-model="editedPerson.status" :options="['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING']" label="Status" name="status"
@@ -209,14 +209,14 @@ watch(person, (newValue) => {
       <!-- DEPENDANTS -->
       <div>
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-semibold text-gray-800">Dependants</h3>
+          <h3 class="text-xl font-semibold text-ink">Dependants</h3>
           <Button v-if="isEditing" @click="addDependant" type="secondary" class="text-sm">Add Dependent</Button>
         </div>
         <div v-if="editedPerson.dependants && editedPerson.dependants.length > 0" class="mt-4 space-y-6">
           <div
             v-for="(dependant, index) in editedPerson.dependants"
             :key="dependant.dependantUuid"
-            class="p-4 bg-gray-100 rounded-xl shadow-sm"
+            class="p-4 bg-surface-muted rounded-xl shadow-sm"
           >
             <template v-if="isEditing">
               <!-- Editable dependant fields -->
@@ -236,17 +236,17 @@ watch(person, (newValue) => {
                 label="Status" :name="`dependant-${index}-status`" :attributes="{ class: 'w-full input-compact' }" />
             </template>
             <template v-else>
-              <h4 class="font-semibold text-gray-900">
+              <h4 class="font-semibold text-ink">
                 {{ dependant.dependantFirstName }} {{ dependant.dependantFatherName }} {{ dependant.dependantGrandFatherName }}
               </h4>
-              <p class="text-sm text-gray-700">Relationship: {{ dependant.relationship }}</p>
-              <p class="text-sm text-gray-700">Gender: {{ dependant.dependantGender }}</p>
-              <p class="text-sm text-gray-700">Birth Date: {{ formatDate(dependant.dependantBirthDate) }}</p>
-              <p class="text-sm text-gray-700">Status: {{ dependant.dependantStatus }}</p>
+              <p class="text-sm text-ink-muted">Relationship: {{ dependant.relationship }}</p>
+              <p class="text-sm text-ink-muted">Gender: {{ dependant.dependantGender }}</p>
+              <p class="text-sm text-ink-muted">Birth Date: {{ formatDate(dependant.dependantBirthDate) }}</p>
+              <p class="text-sm text-ink-muted">Status: {{ dependant.dependantStatus }}</p>
             </template>
           </div>
         </div>
-        <p v-else class="mt-2 text-sm text-gray-600">No dependants found.</p>
+        <p v-else class="mt-2 text-sm text-ink-muted">No dependants found.</p>
       </div>
       <div v-if="isEditing" class="p-4 m-2 px-2 gap-4 flex justify-end">
         <Button class="px-2" @click="saveChanges" type="primary">Save</Button>

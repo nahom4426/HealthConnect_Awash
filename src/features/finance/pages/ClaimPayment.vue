@@ -55,7 +55,7 @@ const filteredClaims = computed(() => {
           <div class="flex space-x-4">
             <div class="relative">
               <input v-model="searchQuery" type="text" placeholder="Search claims..."
-                class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary"
                 @input="(e: Event) => searchQuery = (e.target as HTMLInputElement).value" />
             </div>
           </div>

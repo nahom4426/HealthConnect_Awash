@@ -50,15 +50,15 @@ function getStatusStyle(status) {
 
   switch (status && status.toUpperCase()) {
     case "APPROVED":
-    case "ACTIVE": return `${base} bg-green-100 text-green-800`
+    case "ACTIVE": return `${base} bg-success-soft text-success-strong`
     case "SUBMITTED":
     case "PENDING":
-    case "SUSPENDED": return `${base} bg-yellow-100 text-yellow-800`
+    case "SUSPENDED": return `${base} bg-warning-soft text-warning-strong`
     case "INACTIVE":
-    case "REJECTED": return `${base} bg-red-100 text-red-800`
-    case "ACCEPTED": return `${base} bg-blue-100 text-blue-800`
+    case "REJECTED": return `${base} bg-error-soft text-error-strong`
+    case "ACCEPTED": return `${base} bg-primary/10 text-primary-hover`
     case "RESUBMITTED": return `${base} bg-purple-100 text-purple-800`
-    default: return `${base} bg-gray-100 text-gray-800`
+    default: return `${base} bg-surface-muted text-ink`
   }
 }
 
@@ -99,10 +99,10 @@ onUnmounted(() => document.removeEventListener('click', handleDocumentClick))
 
 <template>
   <tr v-for="(row, idx) in rowData" :key="idx" @click.self="props.onRowClick(row)"
-      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50">
+      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted">
 
     <!-- Index -->
-    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+    <td class="p-4 font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
     <!-- Dynamic Cells -->
     <td v-for="key in rowKeys" :key="key" class="p-3 py-4">
@@ -112,31 +112,31 @@ onUnmounted(() => document.removeEventListener('click', handleDocumentClick))
         </span>
       </div>
       <div v-else-if="key === 'totalContracts'" class="truncate">
-        <span class="text-gray-700">{{ row.totalContracts || 0 }}</span>
+        <span class="text-ink-muted">{{ row.totalContracts || 0 }}</span>
       </div>
-      <div v-else-if="key === 'providerName'" class="flex gap-2.5 items-center text-gray-700">
+      <div v-else-if="key === 'providerName'" class="flex gap-2.5 items-center text-ink-muted">
         <div class="flex justify-center items-center">
           <img v-if="row.logoBase64" :src="row.logoBase64" alt="Provider Logo"
-               class="object-contain w-10 h-10 rounded-full border border-gray-200" />
+               class="object-contain w-10 h-10 rounded-full border border-line" />
           <img v-else-if="row.logoUrl" :src="row.logoUrl" alt="Provider Logo"
-               class="object-contain w-10 h-10 rounded-full border border-gray-200" @error="handleImageError" />
+               class="object-contain w-10 h-10 rounded-full border border-line" @error="handleImageError" />
           <img v-else-if="row.logoPath" :src="`${getBaseUrl()}/provider/logo/${row.logoPath}`" alt="Provider Logo"
-               class="object-contain w-10 h-10 rounded-full border border-gray-200" @error="handleImageError" />
-          <div v-else class="flex justify-center items-center w-10 h-10 text-center bg-gray-200 rounded-full">
-            <span class="text-xs text-gray-500">No Logo</span>
+               class="object-contain w-10 h-10 rounded-full border border-line" @error="handleImageError" />
+          <div v-else class="flex justify-center items-center w-10 h-10 text-center bg-line rounded-full">
+            <span class="text-xs text-ink-subtle">No Logo</span>
           </div>
         </div>
         <div>{{ row.providerName }}</div>
       </div>
-      <span v-else class="text-gray-700">{{ row[key] }}</span>
+      <span v-else class="text-ink-muted">{{ row[key] }}</span>
     </td>
 
     <!-- Actions -->
     <td class="p-3">
       <div class="flex flex-wrap gap-2 justify-start items-center">
         <button @click.stop="handleEditWithClose(row)"
-                class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm">
-          <i v-html="icons.plus" class="text-blue-500" />
+                class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm">
+          <i v-html="icons.plus" class="text-primary" />
           <span>Add This Provider</span>
         </button>
       </div>

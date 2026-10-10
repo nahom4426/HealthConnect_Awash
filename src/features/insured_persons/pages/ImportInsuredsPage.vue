@@ -65,15 +65,15 @@ function progressWidth() {
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-gray-50">
+  <div class="flex flex-col min-h-screen bg-surface-muted">
 
     <!-- ── Page Header ── -->
-    <div class="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+    <div class="bg-white border-b border-line px-6 py-4 flex-shrink-0">
       <div class="max-w-5xl mx-auto flex items-center gap-4">
         <!-- Back button -->
         <button
           @click="goBack"
-          class="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+          class="flex items-center justify-center w-9 h-9 rounded-xl border border-line text-ink-subtle hover:text-ink-muted hover:bg-surface-muted transition-colors"
           title="Go back"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,8 +89,8 @@ function progressWidth() {
             </svg>
           </div>
           <div>
-            <h1 class="text-base font-semibold text-gray-800">Import Existing Insureds</h1>
-            <p class="text-xs text-gray-400">Transfer insured members from the previous contract</p>
+            <h1 class="text-base font-semibold text-ink">Import Existing Insureds</h1>
+            <p class="text-xs text-ink-subtle">Transfer insured members from the previous contract</p>
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@ function progressWidth() {
       <div class="max-w-5xl mx-auto flex flex-col gap-6">
 
         <!-- Step Indicators + Progress -->
-        <div class="bg-white rounded-2xl border border-gray-200 px-6 py-4">
+        <div class="bg-white rounded-2xl border border-line px-6 py-4">
           <div class="flex items-center gap-2 mb-3">
             <div
               v-for="(label, idx) in STEP_LABELS"
@@ -114,7 +114,7 @@ function progressWidth() {
                   ? 'bg-purple-600 text-white'
                   : currentStep === idx + 1
                     ? 'bg-purple-600 text-white ring-2 ring-purple-200'
-                    : 'bg-gray-100 text-gray-400'"
+                    : 'bg-surface-muted text-ink-subtle'"
               >
                 <svg v-if="currentStep > idx + 1" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -123,7 +123,7 @@ function progressWidth() {
               </div>
               <span
                 class="text-sm font-medium transition-colors duration-200"
-                :class="currentStep === idx + 1 ? 'text-purple-600' : 'text-gray-400'"
+                :class="currentStep === idx + 1 ? 'text-purple-600' : 'text-ink-subtle'"
               >
                 {{ label }}
               </span>
@@ -131,12 +131,12 @@ function progressWidth() {
               <div
                 v-if="idx < STEP_LABELS.length - 1"
                 class="w-16 h-0.5 mx-2 rounded-full transition-colors duration-300"
-                :class="currentStep > idx + 1 ? 'bg-purple-400' : 'bg-gray-200'"
+                :class="currentStep > idx + 1 ? 'bg-purple-400' : 'bg-line'"
               />
             </div>
           </div>
           <!-- Progress bar -->
-          <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div class="w-full h-1.5 bg-surface-muted rounded-full overflow-hidden">
             <div
               class="h-full bg-purple-500 rounded-full transition-all duration-500"
               :style="{ width: progressWidth() }"
@@ -145,13 +145,13 @@ function progressWidth() {
         </div>
 
         <!-- Step Content Card -->
-        <div class="bg-white rounded-2xl border border-gray-200 p-6">
+        <div class="bg-white rounded-2xl border border-line p-6">
 
           <!-- Step 1: Benefit Group Selection -->
           <template v-if="currentStep === 1">
             <div class="mb-4">
-              <h2 class="text-sm font-semibold text-gray-800 mb-1">Select a Benefit Group</h2>
-              <p class="text-xs text-gray-500">
+              <h2 class="text-sm font-semibold text-ink mb-1">Select a Benefit Group</h2>
+              <p class="text-xs text-ink-subtle">
                 Choose a benefit group from the current contract. Only groups with available slots can be selected.
               </p>
             </div>
@@ -194,8 +194,8 @@ function progressWidth() {
             </div>
 
             <div class="mb-4">
-              <h2 class="text-sm font-semibold text-gray-800 mb-1">Select Insureds to Import</h2>
-              <p class="text-xs text-gray-500">
+              <h2 class="text-sm font-semibold text-ink mb-1">Select Insureds to Import</h2>
+              <p class="text-xs text-ink-subtle">
                 Pick employees and dependents from the previous contract. Already-enrolled members are grayed out.
               </p>
             </div>
@@ -219,13 +219,13 @@ function progressWidth() {
         </div>
 
         <!-- Footer Navigation -->
-        <div class="flex items-center justify-between bg-white rounded-2xl border border-gray-200 px-6 py-4">
+        <div class="flex items-center justify-between bg-white rounded-2xl border border-line px-6 py-4">
           <!-- Back step -->
           <button
             v-if="currentStep > 1"
             @click="previousStep"
             :disabled="isSubmitting"
-            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink hover:bg-surface-muted rounded-lg transition-colors disabled:opacity-50"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -239,7 +239,7 @@ function progressWidth() {
             <button
               @click="goBack"
               :disabled="isSubmitting"
-              class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              class="px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink hover:bg-surface-muted rounded-lg transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

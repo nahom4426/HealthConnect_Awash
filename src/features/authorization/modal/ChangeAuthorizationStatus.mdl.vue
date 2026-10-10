@@ -195,31 +195,31 @@ async function submit() {
       <div class="flex flex-col gap-4 py-2">
         <div
           v-if="props.data?.authorizedAmount !== undefined && props.data?.authorizedAmount !== null"
-          class="p-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl space-y-2"
+          class="p-3 bg-gradient-to-r from-success-soft to-teal-50 border border-success/[0.16] rounded-xl space-y-2"
         >
           <div class="flex justify-between items-center">
-            <span class="text-xs font-semibold text-emerald-800">Authorized Amount</span>
-            <span class="inline-flex gap-1.5 items-center text-sm font-bold font-mono text-emerald-950">
-              <span class="text-[10px] bg-emerald-200/90 text-emerald-800 px-1.5 py-0.5 rounded font-extrabold">ETB</span>
+            <span class="text-xs font-semibold text-success-strong">Authorized Amount</span>
+            <span class="inline-flex gap-1.5 items-center text-sm font-bold font-mono text-success-strong">
+              <span class="text-[10px] bg-success/[0.18] text-success-strong px-1.5 py-0.5 rounded font-extrabold">ETB</span>
               {{ formatMoney(props.data?.authorizedAmount) }}
             </span>
           </div>
           <div
             v-if="props.data?.usedAmount !== undefined && props.data?.usedAmount !== null"
-            class="flex justify-between items-center pt-1.5 border-t border-emerald-200/60"
+            class="flex justify-between items-center pt-1.5 border-t border-success/[0.12]"
           >
-            <span class="text-xs font-medium text-gray-600">Used Amount</span>
-            <span class="inline-flex gap-1 items-center text-xs font-semibold font-mono text-gray-800">
-              <span class="text-[10px] bg-gray-200/90 text-gray-700 px-1 py-0.5 rounded font-bold">ETB</span>
+            <span class="text-xs font-medium text-ink-muted">Used Amount</span>
+            <span class="inline-flex gap-1 items-center text-xs font-semibold font-mono text-ink">
+              <span class="text-[10px] bg-line/90 text-ink-muted px-1 py-0.5 rounded font-bold">ETB</span>
               {{ formatMoney(props.data?.usedAmount) }}
             </span>
           </div>
         </div>
 
-        <div v-if="insuredUuid" class="p-3 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2">
+        <div v-if="insuredUuid" class="p-3 bg-primary/[0.035] border border-primary/20 rounded-xl space-y-2">
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-semibold text-blue-900">Member Package Benefits</span>
+              <span class="text-xs font-semibold text-primary-hover">Member Package Benefits</span>
               <span
                 v-if="dependantUuid"
                 class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-purple-100 text-purple-700 border border-purple-200"
@@ -236,7 +236,7 @@ async function submit() {
             <button
               type="button"
               @click="() => { showPackages = !showPackages; if (showPackages && !packages.length) fetchPackageBenefits(); }"
-              class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              class="text-xs font-semibold text-primary hover:text-primary-hover flex items-center gap-1"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -246,27 +246,27 @@ async function submit() {
             </button>
           </div>
 
-          <div v-if="showPackages" class="space-y-2 pt-2 border-t border-blue-200/60 max-h-52 overflow-y-auto">
-            <div v-if="loadingPackages" class="py-2 text-xs text-blue-700">Loading package limits...</div>
-            <div v-else-if="!packages.length" class="py-2 text-xs text-gray-500">No active packages found.</div>
+          <div v-if="showPackages" class="space-y-2 pt-2 border-t border-primary/[0.12] max-h-52 overflow-y-auto">
+            <div v-if="loadingPackages" class="py-2 text-xs text-primary-hover">Loading package limits...</div>
+            <div v-else-if="!packages.length" class="py-2 text-xs text-ink-subtle">No active packages found.</div>
             <div
               v-else
               v-for="pkg in packages"
               :key="pkg.packageUuid"
-              class="p-2 bg-white rounded-lg border border-blue-100 shadow-2xs space-y-1 text-xs"
+              class="p-2 bg-white rounded-lg border border-primary/10 shadow-2xs space-y-1 text-xs"
             >
-              <div class="flex justify-between items-center font-semibold text-gray-800">
+              <div class="flex justify-between items-center font-semibold text-ink">
                 <span>{{ pkg.packageName }}</span>
                 <span
                   :class="[
                     'px-1.5 py-0.5 rounded text-[10px] font-bold',
-                    getPkgRemaining(pkg) <= 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                    getPkgRemaining(pkg) <= 0 ? 'bg-error-soft text-error-strong' : 'bg-success-soft text-success-strong'
                   ]"
                 >
                   Remaining: ETB {{ formatMoney(getPkgRemaining(pkg)) }}
                 </span>
               </div>
-              <div class="flex justify-between text-[11px] text-gray-500">
+              <div class="flex justify-between text-[11px] text-ink-subtle">
                 <span>Limit: ETB {{ formatMoney(getPkgLimit(pkg)) }}</span>
                 <span>Used: ETB {{ formatMoney(getPkgUsed(pkg)) }}</span>
               </div>
@@ -276,7 +276,7 @@ async function submit() {
 
         <div class="grid grid-cols-1 gap-4">
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-gray-700">Status</label>
+            <label class="text-sm font-medium text-ink-muted">Status</label>
             <CustomSelect
               v-model="status"
               placeholder="Select status"
@@ -290,34 +290,34 @@ async function submit() {
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-gray-700">Authorized Amount</label>
+            <label class="text-sm font-medium text-ink-muted">Authorized Amount</label>
             <input
               v-model="amount"
               type="number"
               step="any"
               min="0"
               placeholder="e.g. 1000.00"
-              class="h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+              class="h-10 px-3 text-sm border border-line rounded-lg focus:outline-none focus:border-primary"
             />
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-gray-700">End Date</label>
+            <label class="text-sm font-medium text-ink-muted">End Date</label>
             <input
               v-model="endDateRaw"
               type="date"
-              class="h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+              class="h-10 px-3 text-sm border border-line rounded-lg focus:outline-none focus:border-primary"
             />
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-gray-700">Active Days (optional)</label>
+            <label class="text-sm font-medium text-ink-muted">Active Days (optional)</label>
             <input
               v-model="activeDays"
               type="number"
               min="0"
               placeholder="e.g. 10"
-              class="h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+              class="h-10 px-3 text-sm border border-line rounded-lg focus:outline-none focus:border-primary"
             />
           </div>
         </div>

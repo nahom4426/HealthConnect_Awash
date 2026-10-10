@@ -25,7 +25,7 @@ req.send(
     <div @keydown.esc='closeModal()' @click.self='closeModal()'
         class="min-h-full w-full grid place-items-center bg-black/50 p-4">
         <button @click="closeModal()"
-            class="bg-gray-400 text-white size-6 rounded-full grid place-items-center fixed top-2 right-2">
+            class="bg-ink-subtle text-white size-6 rounded-full grid place-items-center fixed top-2 right-2">
             X
         </button>
         <p v-if="req.pending.value" class="m-auto text-lg text-white">Loadgin...</p>

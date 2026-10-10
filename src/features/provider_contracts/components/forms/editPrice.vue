@@ -53,7 +53,7 @@ const EditServicePrice = async () => {
 </script>
 
 <template>
-    <div class="space-y-10 divide-y divide-gray-900/10 flex items-center justify-center">
+    <div class="space-y-10 divide-y divide-ink/10 flex items-center justify-center">
         <div class="px-4 py-6 sm:p-8">
             <div class="grid max-w-2xl grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-6">
                 <div class="sm:col-span-4">

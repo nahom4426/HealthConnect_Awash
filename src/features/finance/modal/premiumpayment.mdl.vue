@@ -353,17 +353,17 @@ function handleCancel() {
           <div class="flex flex-col gap-1.5">
             <label 
               for="receiptNumber"
-              class="text-sm font-semibold text-gray-700"
+              class="text-sm font-semibold text-ink-muted"
             >
-              Receipt Number <span class="text-red-500" aria-hidden="true">*</span>
+              Receipt Number <span class="text-error" aria-hidden="true">*</span>
               <span class="sr-only">Required</span>
             </label>
             <input
               id="receiptNumber"
               v-model="receiptNumber"
               type="text"
-              class="px-4 py-3 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              :class="{ 'border-red-500 ring-2 ring-red-200': hasAttemptedSubmit && !receiptNumber.trim() }"
+              class="px-4 py-3 w-full text-sm rounded-xl border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent"
+              :class="{ 'border-error ring-2 ring-error/20': hasAttemptedSubmit && !receiptNumber.trim() }"
               placeholder="Enter receipt number"
               :disabled="req.pending.value"
               aria-required="true"
@@ -373,7 +373,7 @@ function handleCancel() {
             <p 
               v-if="hasAttemptedSubmit && !receiptNumber.trim()" 
               id="receiptNumber-error"
-              class="text-xs text-red-500"
+              class="text-xs text-error"
             >
               Receipt number is required
             </p>
@@ -383,24 +383,24 @@ function handleCancel() {
           <div class="flex flex-col gap-1.5">
             <label 
               for="receiptDate"
-              class="text-sm font-semibold text-gray-700"
+              class="text-sm font-semibold text-ink-muted"
             >
-              Receipt Date <span class="text-red-500" aria-hidden="true">*</span>
+              Receipt Date <span class="text-error" aria-hidden="true">*</span>
               <span class="sr-only">Required</span>
             </label>
             <input
               id="receiptDate"
               v-model="receiptDate"
               type="date"
-              class="px-4 py-3 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              :class="{ 'border-red-500 ring-2 ring-red-200': hasAttemptedSubmit && !receiptDate }"
+              class="px-4 py-3 w-full text-sm rounded-xl border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent"
+              :class="{ 'border-error ring-2 ring-error/20': hasAttemptedSubmit && !receiptDate }"
               :disabled="req.pending.value"
               aria-required="true"
               max="2100-12-31"
             />
             <p 
               v-if="hasAttemptedSubmit && !receiptDate" 
-              class="text-xs text-red-500"
+              class="text-xs text-error"
             >
               Receipt date is required
             </p>
@@ -408,13 +408,13 @@ function handleCancel() {
 
           <!-- Requested Premium (Disabled) -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-gray-700">Requested Premium</label>
+            <label class="text-sm font-semibold text-ink-muted">Requested Premium</label>
             <div class="relative">
-              <span class="absolute left-4 top-1/2 text-sm font-medium text-gray-400 -translate-y-1/2">ETB</span>
+              <span class="absolute left-4 top-1/2 text-sm font-medium text-ink-subtle -translate-y-1/2">ETB</span>
               <input
                 :value="state.requestedPremium"
                 type="number"
-                class="py-3 pr-4 pl-12 w-full text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-100 cursor-not-allowed"
+                class="py-3 pr-4 pl-12 w-full text-sm text-ink-subtle bg-surface-muted rounded-xl border border-line cursor-not-allowed"
                 disabled
                 aria-readonly="true"
               />
@@ -425,12 +425,12 @@ function handleCancel() {
           <div class="flex flex-col gap-1.5">
             <label 
               for="revenueStamp"
-              class="text-sm font-semibold text-gray-700"
+              class="text-sm font-semibold text-ink-muted"
             >
               Revenue Stamp
             </label>
             <div class="relative">
-              <span class="absolute left-4 top-1/2 text-sm font-medium text-gray-400 -translate-y-1/2">ETB</span>
+              <span class="absolute left-4 top-1/2 text-sm font-medium text-ink-subtle -translate-y-1/2">ETB</span>
               <input
                 id="revenueStamp"
                 v-model.number="state.revenueStamp"
@@ -438,7 +438,7 @@ function handleCancel() {
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                class="py-3 pr-4 pl-12 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                class="py-3 pr-4 pl-12 w-full text-sm rounded-xl border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent"
                 :disabled="req.pending.value"
                 aria-label="Revenue Stamp amount in ETB"
               />
@@ -450,11 +450,11 @@ function handleCancel() {
             <div class="flex justify-between items-center">
               <label 
                 for="taxPercentage"
-                class="text-sm font-semibold text-gray-700"
+                class="text-sm font-semibold text-ink-muted"
               >
                 Tax Percentage
               </label>
-              <span class="px-2 py-0.5 text-xs text-gray-400 bg-gray-100 rounded-full">Default: 3%</span>
+              <span class="px-2 py-0.5 text-xs text-ink-subtle bg-surface-muted rounded-full">Default: 3%</span>
             </div>
             <div class="relative">
               <input
@@ -465,11 +465,11 @@ function handleCancel() {
                 step="0.5"
                 min="0"
                 max="100"
-                class="px-4 py-3 pr-10 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                class="px-4 py-3 pr-10 w-full text-sm rounded-xl border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent"
                 :disabled="req.pending.value"
                 aria-label="Tax percentage"
               />
-              <span class="absolute right-4 top-1/2 text-sm font-semibold text-gray-400 -translate-y-1/2">%</span>
+              <span class="absolute right-4 top-1/2 text-sm font-semibold text-ink-subtle -translate-y-1/2">%</span>
             </div>
           </div>
 
@@ -478,7 +478,7 @@ function handleCancel() {
             <div class="flex justify-between items-center">
               <label 
                 for="withholdingTax"
-                class="text-sm font-semibold text-gray-700"
+                class="text-sm font-semibold text-ink-muted"
               >
                 Withholding Tax
               </label>
@@ -486,7 +486,7 @@ function handleCancel() {
                 v-if="!state.calculateTax"
                 @click="recalcTax"
                 type="button"
-                class="text-xs font-semibold text-green-600 transition-colors duration-200 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg px-2 py-1"
+                class="text-xs font-semibold text-success transition-colors duration-200 hover:text-success-strong focus:outline-none focus:ring-2 focus:ring-success rounded-lg px-2 py-1"
                 :disabled="req.pending.value"
                 aria-label="Auto-calculate withholding tax"
               >
@@ -494,7 +494,7 @@ function handleCancel() {
               </button>
             </div>
             <div class="relative">
-              <span class="absolute left-4 top-1/2 text-sm font-medium text-gray-400 -translate-y-1/2">ETB</span>
+              <span class="absolute left-4 top-1/2 text-sm font-medium text-ink-subtle -translate-y-1/2">ETB</span>
               <input
                 id="withholdingTax"
                 :value="state.withHoldingTax"
@@ -503,8 +503,8 @@ function handleCancel() {
                 step="0.01"
                 min="0"
                 :disabled="state.calculateTax || req.pending.value"
-                class="py-3 pr-4 pl-12 w-full text-sm rounded-xl border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                :class="{ 'bg-gray-50 text-gray-500 cursor-not-allowed': state.calculateTax }"
+                class="py-3 pr-4 pl-12 w-full text-sm rounded-xl border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent"
+                :class="{ 'bg-surface-muted text-ink-subtle cursor-not-allowed': state.calculateTax }"
                 :aria-readonly="state.calculateTax"
                 aria-label="Withholding tax amount in ETB"
               />
@@ -512,30 +512,30 @@ function handleCancel() {
           </div>
 
           <!-- Net Premium Display -->
-          <div class="flex justify-between items-center px-5 py-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 sm:col-span-2">
+          <div class="flex justify-between items-center px-5 py-4 bg-gradient-to-r from-success-soft to-success-soft rounded-2xl border border-success/20 sm:col-span-2">
             <div>
-              <p class="text-xs font-medium text-green-700">Net Premium</p>
-              <p class="text-xs text-green-600 opacity-70">Requested + Stamp − WHT</p>
+              <p class="text-xs font-medium text-success-strong">Net Premium</p>
+              <p class="text-xs text-success opacity-70">Requested + Stamp − WHT</p>
             </div>
-            <span class="text-2xl font-bold tracking-tight text-green-700" aria-live="polite">
+            <span class="text-2xl font-bold tracking-tight text-success-strong" aria-live="polite">
               ETB {{ formatCurrency(netPremium) }}
             </span>
           </div>
 
           <!-- File Upload -->
           <div class="flex flex-col gap-2 sm:col-span-2">
-            <label class="text-sm font-semibold text-gray-700">
-              Attachment <span class="text-red-500" aria-hidden="true">*</span>
+            <label class="text-sm font-semibold text-ink-muted">
+              Attachment <span class="text-error" aria-hidden="true">*</span>
               <span class="sr-only">Required</span>
-              <span class="ml-1 text-xs font-normal text-gray-400">(PDF, Image, Word, Excel, or text files, max 10MB)</span>
+              <span class="ml-1 text-xs font-normal text-ink-subtle">(PDF, Image, Word, Excel, or text files, max 10MB)</span>
             </label>
 
             <div
               class="relative p-6 rounded-2xl border-2 border-dashed transition-all duration-200 cursor-pointer group"
               :class="{
-                'border-green-400 bg-green-50': attachmentFile,
-                'border-gray-300 bg-gray-50': !attachmentFile && !hasAttemptedSubmit && !req.pending.value,
-                'border-red-300 bg-red-50': !attachmentFile && hasAttemptedSubmit && !req.pending.value,
+                'border-success bg-success-soft': attachmentFile,
+                'border-line-strong bg-surface-muted': !attachmentFile && !hasAttemptedSubmit && !req.pending.value,
+                'border-error/40 bg-error-soft': !attachmentFile && hasAttemptedSubmit && !req.pending.value,
                 'opacity-50 cursor-not-allowed': req.pending.value
               }"
               @click="!attachmentFile && !req.pending.value && triggerFileUpload()"
@@ -558,16 +558,16 @@ function handleCancel() {
               />
 
               <div v-if="!attachmentFile" class="flex flex-col gap-3 items-center py-2">
-                <div class="flex justify-center items-center w-12 h-12 bg-green-100 rounded-2xl transition-colors duration-200 group-hover:bg-green-200">
-                  <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <div class="flex justify-center items-center w-12 h-12 bg-success-soft rounded-2xl transition-colors duration-200 group-hover:bg-success/20">
+                  <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
                 <div class="text-center">
-                  <p class="text-sm font-medium text-gray-700">
-                    <span class="text-green-600">Click to upload</span> or drag and drop
+                  <p class="text-sm font-medium text-ink-muted">
+                    <span class="text-success">Click to upload</span> or drag and drop
                   </p>
-                  <p class="mt-0.5 text-xs text-gray-500">
+                  <p class="mt-0.5 text-xs text-ink-subtle">
                     {{ hasAttemptedSubmit ? 'Attachment is required' : 'Supported files: PDF, Image, Word, Excel' }}
                   </p>
                 </div>
@@ -577,33 +577,33 @@ function handleCancel() {
                 <div class="flex gap-4 items-center min-w-0">
                   <div class="flex justify-center items-center w-12 h-12 rounded-xl shrink-0"
                     :class="{
-                      'bg-red-100': fileName.endsWith('.pdf'),
-                      'bg-green-100': fileName.match(/\.(xlsx|xls|csv)$/i),
-                      'bg-blue-100': fileName.match(/\.(doc|docx|txt|rtf)$/i),
+                      'bg-error-soft': fileName.endsWith('.pdf'),
+                      'bg-success-soft': fileName.match(/\.(xlsx|xls|csv)$/i),
+                      'bg-primary/10': fileName.match(/\.(doc|docx|txt|rtf)$/i),
                       'bg-purple-100': fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i),
-                      'bg-gray-100': !fileName.match(/\.(pdf|xlsx|xls|csv|doc|docx|txt|rtf|jpg|jpeg|png|gif|bmp|webp|svg)$/i)
+                      'bg-surface-muted': !fileName.match(/\.(pdf|xlsx|xls|csv|doc|docx|txt|rtf|jpg|jpeg|png|gif|bmp|webp|svg)$/i)
                     }"
                   >
                     <!-- File type icons -->
-                    <svg v-if="fileName.endsWith('.pdf')" class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg v-if="fileName.endsWith('.pdf')" class="w-6 h-6 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
                     <svg v-else-if="fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i)" class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <svg v-else-if="fileName.match(/\.(doc|docx|txt|rtf)$/i)" class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg v-else-if="fileName.match(/\.(doc|docx|txt|rtf)$/i)" class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <svg v-else-if="fileName.match(/\.(xlsx|xls|csv)$/i)" class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg v-else-if="fileName.match(/\.(xlsx|xls|csv)$/i)" class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                     </svg>
-                    <svg v-else class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg v-else class="w-6 h-6 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 truncate" :title="fileName">{{ fileName }}</p>
-                    <p class="mt-0.5 text-xs text-gray-400">
+                    <p class="text-sm font-semibold text-ink truncate" :title="fileName">{{ fileName }}</p>
+                    <p class="mt-0.5 text-xs text-ink-subtle">
                       {{ formatFileSize(attachmentFile.size) }} · 
                       {{ getFileTypeDisplay(fileName.split('.').pop()?.toLowerCase()) }}
                     </p>
@@ -611,7 +611,7 @@ function handleCancel() {
                 </div>
                 <button
                   @click.stop="removeFile"
-                  class="flex justify-center items-center w-8 h-8 text-gray-400 rounded-lg transition-all duration-200 hover:text-red-500 hover:bg-red-50 shrink-0 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  class="flex justify-center items-center w-8 h-8 text-ink-subtle rounded-lg transition-all duration-200 hover:text-error hover:bg-error-soft shrink-0 focus:outline-none focus:ring-2 focus:ring-error"
                   type="button"
                   :disabled="req.pending.value"
                   aria-label="Remove file"
@@ -624,7 +624,7 @@ function handleCancel() {
             </div>
             <p 
               v-if="hasAttemptedSubmit && !attachmentFile" 
-              class="text-xs text-red-500"
+              class="text-xs text-error"
               role="alert"
             >
               Payment attachment is required
@@ -636,7 +636,7 @@ function handleCancel() {
       <template #bottom>
         <div class="flex gap-3 justify-end p-2 px-4 w-full">
           <Button 
-            class="!text-white bg-red-500 hover:bg-red-600 focus:ring-2 focus:ring-red-500" 
+            class="!text-white bg-error hover:bg-error focus:ring-2 focus:ring-error" 
             @click.prevent="handleCancel"
             :disabled="req.pending.value"
             aria-label="Cancel payment"

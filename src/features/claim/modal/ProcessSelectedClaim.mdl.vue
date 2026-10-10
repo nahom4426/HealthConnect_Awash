@@ -109,16 +109,16 @@ function submit(action) {
       <Form id="process-claim-form" :inner="false" class="p-0 bg-white">
         <div class="flex flex-col gap-4 py-2">
 
-          <div v-if="error" class="p-3 text-sm text-red-700 bg-red-100 rounded">
+          <div v-if="error" class="p-3 text-sm text-error-strong bg-error-soft rounded">
             {{ error }}
           </div>
 
-          <div class="p-3 text-sm text-blue-700 bg-blue-50 rounded">
+          <div class="p-3 text-sm text-primary-hover bg-primary/5 rounded">
             <div class="font-medium">Selected Items:</div>
-            <div class="mt-1 text-xs text-blue-600">
+            <div class="mt-1 text-xs text-primary">
               {{ selectedCount }} item{{ selectedCount !== 1 ? 's' : '' }} selected
             </div>
-            <!-- <div v-if="selectedCount > 0" class="mt-2 font-mono text-xs text-blue-500 break-all">
+            <!-- <div v-if="selectedCount > 0" class="mt-2 font-mono text-xs text-primary break-all">
               First UUID: {{ data?.selectedUuids[0]?.substring(0, 8) }}...
             </div> -->
           </div>
@@ -130,8 +130,8 @@ function submit(action) {
             label="Remark"
           />
 
-          <div class="p-3 bg-gray-50 rounded border">
-            <label class="flex gap-3 items-center text-sm text-gray-700">
+          <div class="p-3 bg-surface-muted rounded border">
+            <label class="flex gap-3 items-center text-sm text-ink-muted">
               <input v-model="canResubmit" type="checkbox" class="w-4 h-4" />
               <span>Allow resubmission after rejection</span>
             </label>

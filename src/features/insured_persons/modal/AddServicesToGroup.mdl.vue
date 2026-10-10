@@ -40,7 +40,7 @@ const selectedProvider = ref("");
     >
       <ContractProvidersDataProvider v-slot="{ providers, pending }">
         <div class="flex flex-col gap-10">
-          <div class="flex flex-col gap-6 bg-gray-100 w-full p-6 rounded-lg">
+          <div class="flex flex-col gap-6 bg-surface-muted w-full p-6 rounded-lg">
             <div class="grid grid-cols-2 gap-4">
               <div
                 class="grid grid-cols-2 border border-base-clr rounded w-full"

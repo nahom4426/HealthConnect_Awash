@@ -48,34 +48,34 @@ onMounted(() => {
           <!-- Role Information -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Role Name</label>
-              <p class="text-gray-900 bg-gray-50 p-3 rounded-lg">{{ role.roleName }}</p>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Role Name</label>
+              <p class="text-ink bg-surface-muted p-3 rounded-lg">{{ role.roleName }}</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Role Description</label>
-              <p class="text-gray-900 bg-gray-50 p-3 rounded-lg">{{ role.roleDescription }}</p>
+              <label class="block text-sm font-medium text-ink-muted mb-1">Role Description</label>
+              <p class="text-ink bg-surface-muted p-3 rounded-lg">{{ role.roleDescription }}</p>
             </div>
           </div>
 
           <!-- Privileges Section -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-3">Assigned Privileges</label>
+            <label class="block text-sm font-medium text-ink-muted mb-3">Assigned Privileges</label>
             <div v-if="role.privilegeList && role.privilegeList.length > 0" 
                  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               <div v-for="privilege in role.privilegeList" 
                    :key="privilege.privileges"
-                   class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <h4 class="font-medium text-blue-900">{{ privilege.privilegeName }}</h4>
-                <p class="text-sm text-blue-700 mt-1">{{ privilege.privilegeDescription }}</p>
+                   class="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <h4 class="font-medium text-primary-hover">{{ privilege.privilegeName }}</h4>
+                <p class="text-sm text-primary-hover mt-1">{{ privilege.privilegeDescription }}</p>
               </div>
             </div>
-            <div v-else class="text-gray-500 italic bg-gray-50 p-4 rounded-lg text-center">
+            <div v-else class="text-ink-subtle italic bg-surface-muted p-4 rounded-lg text-center">
               No privileges assigned to this role
             </div>
           </div>
         </div>
 
-        <div v-else class="p-4 text-center text-red-600">
+        <div v-else class="p-4 text-center text-error">
           Failed to load role details
         </div>
 
@@ -83,7 +83,7 @@ onMounted(() => {
         <div class="flex justify-end mt-6 pt-4 border-t">
           <button 
             @click="closeModal()"
-            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            class="px-4 py-2 bg-ink-subtle text-white rounded-lg hover:bg-ink-muted transition-colors"
           >
             Close
           </button>

@@ -116,21 +116,21 @@ function getStatusStyle(status) {
 
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
+      return `${base} bg-success-soft text-success-strong border border-success/20`;
     case "PENDING":
-      return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
+      return `${base} bg-warning-soft text-warning-strong border border-warning/20`;
     case "PROCESSED":
       return `${base} bg-purple-50 text-purple-700 border border-purple-200`;
     case "VERIFIED":
-      return `${base} bg-blue-50 text-blue-700 border border-blue-200`;
+      return `${base} bg-primary/5 text-primary-hover border border-primary/20`;
     case "APPROVED":
       return `${base} bg-sky-50 text-sky-700 border border-sky-200`;
     case "REJECTED":
-      return `${base} bg-rose-50 text-rose-700 border border-rose-200`;
+      return `${base} bg-error-soft text-error-strong border border-error/20`;
     case "COMPLETED":
-      return `${base} bg-indigo-50 text-indigo-700 border border-indigo-200`;
+      return `${base} bg-primary/5 text-primary-hover border border-primary/20`;
     default:
-      return `${base} bg-gray-50 text-gray-600 border border-gray-200`;
+      return `${base} bg-surface-muted text-ink-muted border border-line`;
   }
 }
 
@@ -173,17 +173,17 @@ function getStatusBadge(status) {
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-bold shadow-lg">
               {{ getInitials(institutionName) }}
             </div>
             <div>
-              <h1 class="text-xl font-bold text-gray-800">{{ institutionName }}</h1>
-              <p class="text-sm text-gray-500">Process Claim Details</p>
+              <h1 class="text-xl font-bold text-ink">{{ institutionName }}</h1>
+              <p class="text-sm text-ink-subtle">Process Claim Details</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
-            <span class="text-xs font-medium text-gray-600">Batch:</span>
-            <span class="text-xs font-mono text-gray-800">{{ batchCode || 'N/A' }}</span>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-muted rounded-lg border border-line">
+            <span class="text-xs font-medium text-ink-muted">Batch:</span>
+            <span class="text-xs font-mono text-ink">{{ batchCode || 'N/A' }}</span>
           </div>
         </div>
       </div>
@@ -225,7 +225,7 @@ function getStatusBadge(status) {
             size="xs" 
             type="elevated" 
             @click="openItemsModal(row)"
-            class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg"
+            class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-primary to-primary-hover rounded-lg hover:from-primary-hover hover:to-primary-hover transition-all duration-200 shadow-md hover:shadow-lg"
           >
             <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -245,7 +245,7 @@ function getStatusBadge(status) {
     </TableWithCheckBox>
 
     <div class="flex justify-end pb-8 mt-4" v-if="canProcessWholeClaim">
-      <Button type="primary" @click="openProcessWholeClaim" class="px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
+      <Button type="primary" @click="openProcessWholeClaim" class="px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-success to-success-strong hover:from-success-strong hover:to-success-strong rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>

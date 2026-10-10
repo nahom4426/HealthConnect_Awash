@@ -77,12 +77,12 @@ async function handleSubmit(formValues) {
       subtitle="Add a new user to the system by filling out the required information below."
     >
       <!-- Error Alert -->
-      <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+      <div v-if="error" class="mb-6 p-4 bg-error-soft border border-error/20 rounded-lg">
         <div class="flex items-center">
-          <svg class="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-error mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p class="text-sm text-red-700">{{ error }}</p>
+          <p class="text-sm text-error-strong">{{ error }}</p>
         </div>
       </div>
       

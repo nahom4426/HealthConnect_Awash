@@ -69,7 +69,7 @@ const navigateToInstitutionsPage = (contract) => {
             <div class="py-12 text-center">
               <div class="flex flex-col justify-center items-center">
                 <i v-html="icons.document"></i>
-                <p class="text-gray-500">No contracts found</p>
+                <p class="text-ink-subtle">No contracts found</p>
               </div>
             </div>
           </template>

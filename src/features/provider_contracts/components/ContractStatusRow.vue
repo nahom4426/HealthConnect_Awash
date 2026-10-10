@@ -77,19 +77,19 @@ function getStatusStyle(status) {
 
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-green-50 text-green-700 border border-green-200`;
+      return `${base} bg-success-soft text-success-strong border border-success/20`;
     case "PENDING":
-      return `${base} bg-yellow-50 text-yellow-700 border border-yellow-200`;
+      return `${base} bg-warning-soft text-warning-strong border border-warning/20`;
     case "SUSPENDED":
-      return `${base} bg-red-50 text-red-700 border border-red-200`;
+      return `${base} bg-error-soft text-error-strong border border-error/20`;
     case "APPROVED":
-      return `${base} bg-blue-50 text-blue-700 border border-blue-200`;
+      return `${base} bg-primary/5 text-primary-hover border border-primary/20`;
     case "REJECTED":
-      return `${base} bg-red-50 text-red-700 border border-red-200`;
+      return `${base} bg-error-soft text-error-strong border border-error/20`;
     case "COMPLETED":
       return `${base} bg-purple-50 text-purple-700 border border-purple-200`;
     default:
-      return `${base} bg-gray-50 text-gray-600 border border-gray-200`;
+      return `${base} bg-surface-muted text-ink-muted border border-line`;
   }
 }
 
@@ -222,9 +222,9 @@ onUnmounted(() => {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click.self="onRowClick(row)" 
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted"
   >
-    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+    <td class="p-4 font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
     
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
       <div v-if="key === 'status'" class="truncate">
@@ -233,26 +233,26 @@ onUnmounted(() => {
           {{ row.status || 'Unknown' }}
         </span>
       </div>
-      <div v-else-if="key === 'period'" class="space-y-1 text-gray-700">
+      <div v-else-if="key === 'period'" class="space-y-1 text-ink-muted">
         <div class="flex gap-1 items-center text-sm">
-          <span class="text-xs text-gray-400">From:</span>
+          <span class="text-xs text-ink-subtle">From:</span>
           <span class="font-medium">{{ formatDate(row.beginDate) }}</span>
         </div>
         <div class="flex gap-1 items-center text-sm">
-          <span class="text-xs text-gray-400">To:</span>
+          <span class="text-xs text-ink-subtle">To:</span>
           <span class="font-medium">{{ formatDate(row.endDate) }}</span>
         </div>
       </div>
-      <div v-else-if="key.includes('Date')" class="text-gray-700">
+      <div v-else-if="key.includes('Date')" class="text-ink-muted">
         {{ formatDate(row[key]) }}
       </div>
-      <div v-else-if="key === 'description'" class="max-w-[200px] truncate text-gray-700" :title="row[key]">
+      <div v-else-if="key === 'description'" class="max-w-[200px] truncate text-ink-muted" :title="row[key]">
         {{ row[key] || 'No description' }}
       </div>
-      <div v-else-if="key === 'providerEmail'" class="text-blue-600 cursor-pointer hover:text-blue-800">
+      <div v-else-if="key === 'providerEmail'" class="text-primary cursor-pointer hover:text-primary-hover">
         <a :href="`mailto:${row[key]}`">{{ row[key] }}</a>
       </div>
-      <span v-else class="text-gray-700">
+      <span v-else class="text-ink-muted">
         {{ row[key] || 'N/A' }}
       </span>
     </td>
@@ -264,9 +264,9 @@ onUnmounted(() => {
     <!-- 👁️ View (common for all statuses) -->
     <!-- <button
       @click.stop="handleViewWithClose(row)"
-      class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-200 hover:bg-gray-100 hover:shadow-sm"
+      class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-ink-muted bg-surface-muted rounded-xl border border-line transition-all duration-200 hover:bg-surface-muted hover:shadow-sm"
     >
-      <i v-html="icons.details" class="text-gray-500" />
+      <i v-html="icons.details" class="text-ink-subtle" />
       <span>View</span>
     </button> -->
 
@@ -275,18 +275,18 @@ onUnmounted(() => {
       <!-- ✏️ Edit -->
       <button
         @click.stop="handleEditWithClose(row)"
-        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm"
       >
-        <i v-html="icons.edits" class="text-blue-500" />
+        <i v-html="icons.edits" class="text-primary" />
         <span>Edit</span>
       </button>
 
       <!-- ✅ Activate -->
       <button
         @click.stop="handleActivateWithClose(row.payerProviderContractUuid)"
-        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-success bg-success-soft rounded-xl border border-success/20 transition-all duration-200 hover:bg-success-soft hover:shadow-sm"
       >
-        <i v-html="icons.activate" class="text-green-500" />
+        <i v-html="icons.activate" class="text-success" />
         <span>Activate</span>
       </button>
     </template>
@@ -296,27 +296,27 @@ onUnmounted(() => {
       <!-- 🧾 Services -->
       <button
         @click.stop="handleServicesWithClose(row)"
-        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-xl border border-indigo-200 transition-all duration-200 hover:bg-indigo-100 hover:shadow-sm"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm"
       >
-        <i v-html="icons.details" class="text-indigo-500" />
+        <i v-html="icons.details" class="text-primary" />
         <span>Services</span>
       </button>
 
       <!-- 🏥 Add Institutions -->
       <button
         @click.stop="onAddInstitutions(row)"
-        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-success bg-success-soft rounded-xl border border-success/20 transition-all duration-200 hover:bg-success-soft hover:shadow-sm"
       >
-        <i v-html="icons.plus" class="text-green-500" />
+        <i v-html="icons.plus" class="text-success" />
         <span>Add Institutions</span>
       </button>
 
       <!-- ⛔ Deactivate -->
       <button
         @click.stop="handleDeactivateWithClose(row.payerProviderContractUuid)"
-        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 rounded-xl border border-red-200 transition-all duration-200 hover:bg-red-100 hover:shadow-sm"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-error bg-error-soft rounded-xl border border-error/20 transition-all duration-200 hover:bg-error-soft hover:shadow-sm"
       >
-        <i v-html="icons.deactivate" class="text-red-500" />
+        <i v-html="icons.deactivate" class="text-error" />
         <span>Deactivate</span>
       </button>
     </template>
@@ -325,9 +325,9 @@ onUnmounted(() => {
     <template v-else-if="row.status?.toUpperCase() === 'SUSPENDED' ">
       <button
         @click.stop="handleActivateForSuspendedWithClose(row.payerProviderContractUuid)"
-        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-success bg-success-soft rounded-xl border border-success/20 transition-all duration-200 hover:bg-success-soft hover:shadow-sm"
       >
-        <i v-html="icons.activate" class="text-green-500" />
+        <i v-html="icons.activate" class="text-success" />
         <span>Activate</span>
       </button>
     </template>
@@ -335,9 +335,9 @@ onUnmounted(() => {
       <button
        @click.stop="handleReActivateForSuspendedWithClose(row)"
       
-        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-green-600 bg-green-50 rounded-xl border border-green-200 transition-all duration-200 hover:bg-green-100 hover:shadow-sm"
+        class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-success bg-success-soft rounded-xl border border-success/20 transition-all duration-200 hover:bg-success-soft hover:shadow-sm"
       >
-        <i v-html="icons.activate" class="text-green-500" />
+        <i v-html="icons.activate" class="text-success" />
         <span>ReActivate</span>
       </button>
     </template>

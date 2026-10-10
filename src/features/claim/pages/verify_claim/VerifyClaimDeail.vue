@@ -168,17 +168,17 @@ function getInitials(name) {
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary flex items-center justify-center text-white font-bold shadow-lg">
               {{ getInitials(institutionName) }}
             </div>
             <div>
-              <h1 class="text-xl font-bold text-gray-800">{{ institutionName }}</h1>
-              <p class="text-sm text-gray-500">Approve Level 1 Claim Details</p>
+              <h1 class="text-xl font-bold text-ink">{{ institutionName }}</h1>
+              <p class="text-sm text-ink-subtle">Approve Level 1 Claim Details</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
-            <span class="text-xs font-medium text-gray-600">Batch:</span>
-            <span class="text-xs font-mono text-gray-800">{{ batchCode || 'N/A' }}</span>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-muted rounded-lg border border-line">
+            <span class="text-xs font-medium text-ink-muted">Batch:</span>
+            <span class="text-xs font-mono text-ink">{{ batchCode || 'N/A' }}</span>
           </div>
           <div class="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-lg border border-purple-200">
             <span class="text-xs font-medium text-purple-600">Status:</span>

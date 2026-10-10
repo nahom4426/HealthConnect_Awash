@@ -64,31 +64,31 @@ function getStatusStyle(status) {
   switch (status?.toUpperCase()) {
     case "APPROVED":
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
     case "SUBMITTED":
     case "PENDING":
     case "SUSPENDED":
-      return `${base} bg-yellow-100 text-yellow-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
     case "INACTIVE":
     case "REJECTED":
-      return `${base} bg-red-100 text-red-800`;
+      return `${base} bg-error-soft text-error-strong`;
     case "ACCEPTED":
-      return `${base} bg-blue-100 text-blue-800`;
+      return `${base} bg-primary/10 text-primary-hover`;
     case "RESUBMITTED":
       return `${base} bg-purple-100 text-purple-800`;
     default:
-      return `${base} bg-gray-100 text-gray-800`;
+      return `${base} bg-surface-muted text-ink`;
   }
 }
 
 function getGenderStyle(gender) {
   switch(gender?.toLowerCase()) {
     case 'male':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-primary/10 text-primary-hover';
     case 'female':
       return 'bg-pink-100 text-pink-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-surface-muted text-ink';
   }
 }
 
@@ -104,11 +104,11 @@ function getUserType(row) {
 
 function getTypeStyle(statusOrType) {
   switch (statusOrType) {
-    case 'Payer': return 'bg-blue-100 text-blue-800';
-    case 'Provider': return 'bg-green-100 text-green-800';
-    case 'Admin': return 'bg-yellow-100 text-yellow-800';
+    case 'Payer': return 'bg-primary/10 text-primary-hover';
+    case 'Provider': return 'bg-success-soft text-success-strong';
+    case 'Admin': return 'bg-warning-soft text-warning-strong';
     case 'Payer and Provider': return 'bg-purple-100 text-purple-800';
-    default: return 'bg-gray-100 text-gray-800';
+    default: return 'bg-surface-muted text-ink';
   }
 }
 
@@ -217,35 +217,35 @@ onUnmounted(() => {
   v-for="(row, idx) in rowData.filter(r => r !== null)" 
   :key="idx"
   @click.self="onRowClick(row)" 
-  class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
+  class="bg-white border-b hover:bg-surface-muted transition-colors duration-150 ease-in-out" 
 >
-    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
+    <td class="p-4 font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
 
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <!-- Fullname field -->
-      <span v-if="key === 'fullname'" class="font-medium text-gray-700">
+      <span v-if="key === 'fullname'" class="font-medium text-ink-muted">
         {{ formatFullName(row) }}
       </span>
 
       <!-- Email field -->
-      <span v-else-if="key === 'email'" class="text-gray-600">
+      <span v-else-if="key === 'email'" class="text-ink-muted">
         {{ row?.email }}
       </span>
 
       <!-- Mobile Phone field -->
-      <span v-else-if="key === 'mobilePhone'" class="text-gray-600">
+      <span v-else-if="key === 'mobilePhone'" class="text-ink-muted">
         {{ row.mobilePhone }}
       </span>
 
       <!-- Role Name field -->
-      <span v-else-if="key === 'roleName'" class="text-gray-700">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+      <span v-else-if="key === 'roleName'" class="text-ink-muted">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-primary/10 text-primary-hover">
           {{ capitalizeFirstLetter(row.roleName) }}
         </span>
       </span>
 
       <!-- Gender field -->
-      <span v-else-if="key === 'gender'" class="text-gray-700">
+      <span v-else-if="key === 'gender'" class="text-ink-muted">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium"
               :class="getGenderStyle(row.gender)">
           {{ capitalizeFirstLetter(row.gender) }}
@@ -273,7 +273,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Default field -->
-      <span v-else class="text-gray-600">
+      <span v-else class="text-ink-muted">
         {{ row[key] }}
       </span>
     </td>
@@ -282,7 +282,7 @@ onUnmounted(() => {
       <div class="dropdown-container relative w-full">
         <button 
           @click.stop="toggleDropdown($event, row.userUuid || row.id)"
-          class="inline-flex items-center justify-center p-2 w-full text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
+          class="inline-flex items-center justify-center p-2 w-full text-sm font-medium text-center text-ink-subtle hover:text-ink rounded-lg hover:bg-surface-muted focus:outline-none"
           type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -297,7 +297,7 @@ onUnmounted(() => {
           <div class="py-1" role="none">
             <button 
               @click.stop="handleEditWithClose(row)"
-              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
+              class="block w-full text-start py-2 text-sm text-ink-muted hover:bg-surface-muted"
             >
               <div class="flex items-start justify-start pl-4 gap-4">
                 <i v-html="icons.edits" />
@@ -307,7 +307,7 @@ onUnmounted(() => {
             
             <button 
               @click.stop="handleViewWithClose(row)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+              class="block w-full text-center py-2 text-sm text-ink-muted hover:bg-surface-muted"
             >
               <div class="flex items-center justify-start pl-4 gap-4">
                 <i v-html="icons.details" />
@@ -319,7 +319,7 @@ onUnmounted(() => {
               <button 
                 v-if="row.userStatus === 'INACTIVE' || row.userStatus === 'Inactive'"
                 @click.stop="handleActivateWithClose(row.userUuid || row.id)"
-                class="block w-full text-center py-2 text-sm text-success hover:bg-gray-100"
+                class="block w-full text-center py-2 text-sm text-success hover:bg-surface-muted"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
                   <i v-html="icons.activate" />
@@ -330,7 +330,7 @@ onUnmounted(() => {
               <button 
                 v-if="row.userStatus === 'ACTIVE' || row.userStatus === 'Active'"
                 @click.stop="handleDeactivateWithClose(row.userUuid || row.id)"
-                class="block w-full text-center py-2 text-sm text-error hover:bg-gray-100"
+                class="block w-full text-center py-2 text-sm text-error hover:bg-surface-muted"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
                   <i v-html="icons.deactivate" />

@@ -57,16 +57,16 @@ function getStatusStyle(status) {
     case "ACCEPTED":
     case "ISSUED":
     case "APPROVED":
-      return `${base} bg-emerald-50 text-emerald-700 ring-emerald-200`;
+      return `${base} bg-success-soft text-success-strong ring-success/20`;
     case "PENDING":
     case "SUBMITTED":
-      return `${base} bg-amber-50 text-amber-700 ring-amber-200`;
+      return `${base} bg-warning-soft text-warning-strong ring-warning/20`;
     case "REJECTED":
     case "CANCELLED":
     case "INACTIVE":
-      return `${base} bg-rose-50 text-rose-700 ring-rose-200`;
+      return `${base} bg-error-soft text-error-strong ring-error/20`;
     default:
-      return `${base} bg-slate-50 text-slate-700 ring-slate-200`;
+      return `${base} bg-surface-muted text-ink-muted ring-line`;
   }
 }
 
@@ -83,9 +83,9 @@ function isPaid(row) {
   <tr
     v-for="(row, idx) in (rowData || []).filter((r) => r !== null)"
     :key="row?.quotationUuid || row?.id || idx"
-    class="bg-white border-b transition-colors duration-150 hover:bg-gray-50"
+    class="bg-white border-b transition-colors duration-150 hover:bg-surface-muted"
   >
-    <td class="p-4 font-medium text-gray-500">
+    <td class="p-4 font-medium text-ink-subtle">
       {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
     </td>
 
@@ -101,17 +101,17 @@ function isPaid(row) {
         class="max-w-[220px]"
         :title="[formatDateTime(row?.dates?.issuedDate), formatDateTime(row?.dates?.acceptedDate), formatDateTime(row?.dates?.poDate)].filter(Boolean).join('\n')"
       >
-        <div class="space-y-1 text-xs text-gray-700">
+        <div class="space-y-1 text-xs text-ink-muted">
           <div class="flex gap-2 justify-between items-center">
-            <span class="text-gray-500">Issued</span>
+            <span class="text-ink-subtle">Issued</span>
             <span class="font-medium">{{ formatDateOnly(row?.dates?.issuedDate) }}</span>
           </div>
           <div class="flex gap-2 justify-between items-center">
-            <span class="text-gray-500">Accepted</span>
+            <span class="text-ink-subtle">Accepted</span>
             <span class="font-medium">{{ formatDateOnly(row?.dates?.acceptedDate) }}</span>
           </div>
           <div class="flex gap-2 justify-between items-center">
-            <span class="text-gray-500">PO</span>
+            <span class="text-ink-subtle">PO</span>
             <span class="font-medium">{{ formatDateOnly(row?.dates?.poDate) }}</span>
           </div>
         </div>
@@ -122,14 +122,14 @@ function isPaid(row) {
         class="max-w-[240px]"
         :title="toText(formatCellValue(key, row))"
       >
-        <span class="font-medium text-gray-700">
+        <span class="font-medium text-ink-muted">
           {{ Array.isArray(row?.quoatedServices) ? `${row.quoatedServices.length} service(s)` : '' }}
         </span>
       </div>
 
       <span
         v-else
-        class="text-gray-700 block max-w-[220px] truncate"
+        class="text-ink-muted block max-w-[220px] truncate"
         :title="toText(formatCellValue(key, row))"
       >
         {{ formatCellValue(key, row) }}

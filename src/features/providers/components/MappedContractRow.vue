@@ -67,13 +67,13 @@ function getStatusStyle(status) {
 
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
     case "INACTIVE":
-      return `${base} bg-red-100 text-red-800`;
+      return `${base} bg-error-soft text-error-strong`;
     case "PENDING":
-      return `${base} bg-yellow-100 text-yellow-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
     default:
-      return `${base} bg-gray-100 text-gray-800`;
+      return `${base} bg-surface-muted text-ink`;
   }
 }
 
@@ -116,8 +116,8 @@ function handleDocumentClick(event) {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click="toggleRow(row)"
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50 cursor-pointer"
-    :class="{ 'bg-red-50': selectedUuids.has(row[selectionKey]) }"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted cursor-pointer"
+    :class="{ 'bg-error-soft': selectedUuids.has(row[selectionKey]) }"
   >  
     <!-- Checkbox -->
     <td class="px-4 py-3" @click.stop>
@@ -125,10 +125,10 @@ function handleDocumentClick(event) {
         type="checkbox"
         :checked="selectedUuids.has(row[selectionKey])"
         @change="toggleRow(row)"
-        class="w-4 h-4 text-red-600 rounded border-gray-300 cursor-pointer focus:ring-red-500"
+        class="w-4 h-4 text-error rounded border-line-strong cursor-pointer focus:ring-error"
       />
     </td>
-    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
+    <td class="p-4 font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
 
     <!-- Data Columns -->
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
@@ -141,19 +141,19 @@ function handleDocumentClick(event) {
         </span>
       </div>
       
-      <div v-else-if="key === 'providerName'" class="text-gray-700">
+      <div v-else-if="key === 'providerName'" class="text-ink-muted">
         {{ row.providerName || "-" }}
       </div>
 
-      <div v-else-if="key === 'payerProviderContractName'" class="text-gray-700">
+      <div v-else-if="key === 'payerProviderContractName'" class="text-ink-muted">
         {{ row.payerProviderContractName || "-" }}
       </div>
 
-      <div v-else-if="key === 'payerProviderContractCode'" class="text-gray-700">
+      <div v-else-if="key === 'payerProviderContractCode'" class="text-ink-muted">
         {{ row.payerProviderContractCode || "-" }}
       </div>
       
-      <span v-else class="text-gray-700">
+      <span v-else class="text-ink-muted">
         {{ row[key] || "-" }}
       </span>
     </td>  
@@ -162,16 +162,16 @@ function handleDocumentClick(event) {
     <td class="gap-2 p-3">
   <button
     @click.stop="handleRemovecatagories(row)"
-    class="inline-flex gap-2 items-center px-1 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100"
+    class="inline-flex gap-2 items-center px-1 py-2 text-sm font-medium text-primary bg-primary/5 rounded-lg border border-primary/20 hover:bg-primary/10"
   >
-    <i v-html="icons.trash" class="text-blue-600"></i>
+    <i v-html="icons.trash" class="text-primary"></i>
     Service Categories
   </button>
   <button
     @click.stop="handleRemove(row)"
-    class="inline-flex gap-2 items-center px-1 py-2 mx-1 text-sm font-medium text-red-600 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100"
+    class="inline-flex gap-2 items-center px-1 py-2 mx-1 text-sm font-medium text-error bg-error-soft rounded-lg border border-error/20 hover:bg-error-soft"
   >
-    <i v-html="icons.trash" class="text-red-600"></i>
+    <i v-html="icons.trash" class="text-error"></i>
     Remove Provider
   </button>
 </td>

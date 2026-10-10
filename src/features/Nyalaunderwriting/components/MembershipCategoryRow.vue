@@ -29,13 +29,13 @@ function getStatusStyle(status) {
   const base = "px-3 py-0.5 rounded-full text-center";
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-600`;
+      return `${base} bg-success-soft text-success`;
     case "PENDING":
-      return `${base} bg-yellow-100 text-yellow-600`;
+      return `${base} bg-warning-soft text-warning`;
     case "CLOSED":
-      return `${base} bg-red-100 text-red-600`;
+      return `${base} bg-error-soft text-error`;
     default:
-      return `${base} bg-gray-100 text-gray-600`;
+      return `${base} bg-surface-muted text-ink-muted`;
   }
 }
 
@@ -86,25 +86,25 @@ function closeAllDropdowns() {
     v-for="(row, idx) in rowData"
     :key="row.payerInstitutionContractUuid || row.contractUuid || idx"
     @click.self="props.onRowClick(row)"
-    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-blue-50"
+    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-primary/5"
   >
-    <td class="p-4 text-sm font-semibold text-gray-400 select-none">
+    <td class="p-4 text-sm font-semibold text-ink-subtle select-none">
       {{ idx + 1 }}
     </td>
 
-    <td class="p-4 font-medium text-gray-800">
+    <td class="p-4 font-medium text-ink">
       {{ row.institutionName || row.insuredName || row.contractName }}
     </td>
 
-    <td class="p-4 font-medium text-gray-800">
+    <td class="p-4 font-medium text-ink">
       {{ row.contractCode }}
     </td>
 
-    <td class="p-4 font-medium text-gray-800">
+    <td class="p-4 font-medium text-ink">
       {{ row.contractName }}
     </td>
 
-    <td class="p-4 text-gray-600">
+    <td class="p-4 text-ink-muted">
       {{ formatDate(row.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row.endDate) }}
     </td>
 
@@ -118,22 +118,22 @@ function closeAllDropdowns() {
       <div class="flex gap-1.5 items-center">
         <button
           @click.prevent="navigateToInsuredPersons(row)"
-          class="relative p-2 text-green-600 bg-green-50 rounded-lg transition-all duration-200 group hover:bg-green-100 hover:text-green-700 hover:scale-105 hover:shadow-md"
+          class="relative p-2 text-success bg-success-soft rounded-lg transition-all duration-200 group hover:bg-success-soft hover:text-success-strong hover:scale-105 hover:shadow-md"
           title="Insured Persons"
         >
           <i v-html="icons.users || '👥'" class="w-4 h-4"></i>
-          <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+          <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-ink rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
             Insured Persons
           </span>
         </button>
 
         <button
           @click.prevent="$router.push(`/addInstitution/${row?.payerInstitutionContractUuid || row?.contractUuid}/${row?.institutionUuid || institutionUuid || row?.insuredUuid}`)"
-          class="relative p-2 text-green-600 bg-green-50 rounded-lg transition-all duration-200 group hover:bg-green-100 hover:text-green-700 hover:scale-105 hover:shadow-md"
+          class="relative p-2 text-success bg-success-soft rounded-lg transition-all duration-200 group hover:bg-success-soft hover:text-success-strong hover:scale-105 hover:shadow-md"
           title="Add Providers"
         >
           <i v-html="icons.plus_circle || '➕'" class="w-4 h-4"></i>
-          <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+          <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-ink rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
             Add Providers
           </span>
         </button>
@@ -143,8 +143,8 @@ function closeAllDropdowns() {
 </template>
 
 <style scoped>
-.bg-green-100 { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
-.bg-yellow-100 { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
-.bg-red-100 { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
-.bg-gray-100 { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
+.bg-success-soft { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
+.bg-warning-soft { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
+.bg-error-soft { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
+.bg-surface-muted { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
 </style>

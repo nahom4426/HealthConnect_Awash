@@ -195,22 +195,22 @@ async function handleSubmit(formValues) {
       subtitle="Update the user information in the fields below."
     >
       <!-- Error Alert -->
-      <div v-if="error" class="p-4 mb-6 bg-red-50 rounded-lg border border-red-200">
+      <div v-if="error" class="p-4 mb-6 bg-error-soft rounded-lg border border-error/20">
         <div class="flex items-center">
-          <svg class="mr-3 w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="mr-3 w-5 h-5 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p class="text-sm text-red-700">{{ error }}</p>
+          <p class="text-sm text-error-strong">{{ error }}</p>
         </div>
       </div>
       
       <!-- Loading State -->
-      <div v-if="pending && Object.keys(userData).length === 0" class="p-4 mb-6 bg-blue-50 rounded-lg border border-blue-200">
+      <div v-if="pending && Object.keys(userData).length === 0" class="p-4 mb-6 bg-primary/5 rounded-lg border border-primary/20">
         <div class="flex items-center">
-          <svg class="mr-3 w-5 h-5 text-blue-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="mr-3 w-5 h-5 text-primary/70 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <p class="text-sm text-blue-700">Loading user data...</p>
+          <p class="text-sm text-primary-hover">Loading user data...</p>
         </div>
       </div>
       
@@ -228,10 +228,10 @@ async function handleSubmit(formValues) {
       
       <!-- No Data State -->
       <div v-else-if="!pending" class="p-8 text-center">
-        <svg class="mx-auto mb-4 w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="mx-auto mb-4 w-12 h-12 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
         </svg>
-        <p class="text-gray-500">No user data available</p>
+        <p class="text-ink-subtle">No user data available</p>
       </div>
     </NewFormParent>
   </ModalParent>

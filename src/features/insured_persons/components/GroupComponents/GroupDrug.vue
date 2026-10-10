@@ -71,7 +71,7 @@ function handleAddDrugsToGroup() {
           <input
             v-model="search"
             placeholder="Search and Select Drugs"
-            class="p-4 w-[36rem] bg-gray-100 rounded-md"
+            class="p-4 w-[36rem] bg-surface-muted rounded-md"
             type="text"
           />
         </div>
@@ -104,7 +104,7 @@ function handleAddDrugsToGroup() {
                     useSelectedDrug.selectedValues.includes(row?.drugUuid)
                   "
                   @change="selectService(row?.drugUuid, drugs)"
-                  class="size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  class="size-4 rounded border-line-strong text-primary focus:ring-primary"
                 />
               </Button>
             </template>

@@ -74,12 +74,12 @@ onUnmounted(() => {
     v-for="(row, idx) in rowData" 
     :key="row.serviceQuotedUuid || idx"
     @click.self="props.onRowClick(row)"
-    class="bg-white border-b border-gray-100 transition-all duration-200 cursor-pointer hover:bg-blue-50/30 group"
+    class="bg-white border-b border-line transition-all duration-200 cursor-pointer hover:bg-primary/[0.015] group"
   >
     <!-- Index Number -->
     <td class="p-4">
-      <div class="flex justify-center items-center w-8 h-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-        <span class="text-sm font-bold text-blue-700 select-none">
+      <div class="flex justify-center items-center w-8 h-8 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+        <span class="text-sm font-bold text-primary-hover select-none">
           {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
         </span>
       </div>
@@ -93,9 +93,9 @@ onUnmounted(() => {
     >
       <!-- Plan Type -->
       <template v-if="key === 'planType'">
-        <div class="inline-flex gap-2 items-center px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-          <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-          <span class="text-sm font-semibold text-blue-700">
+        <div class="inline-flex gap-2 items-center px-3 py-2 bg-gradient-to-r from-primary/5 to-primary/5 rounded-lg border border-primary/10">
+          <div class="w-2 h-2 bg-primary rounded-full"></div>
+          <span class="text-sm font-semibold text-primary-hover">
             {{ row.planType }}
           </span>
         </div>
@@ -103,10 +103,10 @@ onUnmounted(() => {
 
       <!-- Package Name -->
       <template v-else-if="key === 'packageName'">
-        <div class="inline-flex gap-2 items-center px-3 py-2 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-100">
-          <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
-          <span class="text-sm font-semibold text-gray-900">{{ row.packageName }}</span>
-          <span class="px-2 py-0.5 text-xs font-medium text-emerald-700 bg-emerald-100 rounded">
+        <div class="inline-flex gap-2 items-center px-3 py-2 bg-gradient-to-r from-success-soft to-teal-50 rounded-lg border border-success-soft">
+          <div class="w-2 h-2 bg-success rounded-full"></div>
+          <span class="text-sm font-semibold text-ink">{{ row.packageName }}</span>
+          <span class="px-2 py-0.5 text-xs font-medium text-success-strong bg-success-soft rounded">
             Benefit
           </span>
         </div>
@@ -114,8 +114,8 @@ onUnmounted(() => {
 
       <!-- Coverage & Premium (Currency) -->
       <template v-else-if="key === 'coverage' || key === 'premium'">
-        <div class="px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
-          <span class="text-sm font-bold text-green-700">
+        <div class="px-3 py-2 bg-gradient-to-r from-success-soft to-success-soft rounded-lg border border-success-soft">
+          <span class="text-sm font-bold text-success-strong">
             {{ formatCurrency(row[key]) }}
           </span>
         </div>
@@ -123,24 +123,24 @@ onUnmounted(() => {
 
       <!-- Rate -->
       <template v-else-if="key === 'rate'">
-        <div class="inline-flex gap-2 items-center px-3 py-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-100">
-          <span class="text-sm font-semibold text-amber-800">
+        <div class="inline-flex gap-2 items-center px-3 py-2 bg-gradient-to-r from-warning-soft to-orange-50 rounded-lg border border-warning-soft">
+          <span class="text-sm font-semibold text-warning-strong">
             {{ Number(row.rate) || 0 }}
           </span>
-          <span class="text-xs font-medium text-amber-600">rate</span>
+          <span class="text-xs font-medium text-warning">rate</span>
         </div>
       </template>
 
       <!-- Number of Insured -->
       <template v-else-if="key === 'numberOfInsured'">
         <div class="relative">
-          <div class="flex justify-center items-center w-10 h-10 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full border border-indigo-100">
-            <span class="text-base font-bold text-indigo-700">
+          <div class="flex justify-center items-center w-10 h-10 bg-gradient-to-br from-primary/5 to-purple-50 rounded-full border border-primary/10">
+            <span class="text-base font-bold text-primary-hover">
               {{ Number(row.numberOfInsured) || 0 }}
             </span>
           </div>
-          <!-- <div class="absolute -right-1 -bottom-1 px-2 py-0.5 bg-indigo-100 rounded-md">
-            <span class="text-xs font-medium text-indigo-700">Insured</span>
+          <!-- <div class="absolute -right-1 -bottom-1 px-2 py-0.5 bg-primary/10 rounded-md">
+            <span class="text-xs font-medium text-primary-hover">Insured</span>
           </div> -->
         </div>
       </template>
@@ -158,8 +158,8 @@ onUnmounted(() => {
 
       <!-- Default cell content -->
       <template v-else>
-        <div class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">
-          <span class="text-sm text-gray-700">{{ row[key] }}</span>
+        <div class="px-3 py-2 bg-surface-muted rounded-lg border border-line">
+          <span class="text-sm text-ink-muted">{{ row[key] }}</span>
         </div>
       </template>
     </td>
@@ -171,10 +171,10 @@ onUnmounted(() => {
         <button 
           @click.stop="toggleDropdown($event, row.serviceQuotedUuid)"
           aria-label="Actions"
-          class="p-2 rounded-lg transition-all hover:bg-blue-100 hover:scale-105"
+          class="p-2 rounded-lg transition-all hover:bg-primary/10 hover:scale-105"
           type="button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600 transition-colors hover:text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-ink-muted transition-colors hover:text-primary" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
           </svg>
         </button>
@@ -182,17 +182,17 @@ onUnmounted(() => {
         <!-- Dropdown Menu -->
         <div 
           :id="`dropdown-${row.serviceQuotedUuid}`"
-          class="hidden absolute right-0 z-50 mt-2 w-56 bg-white rounded-xl border border-gray-200 shadow-xl dropdown-menu"
+          class="hidden absolute right-0 z-50 mt-2 w-56 bg-white rounded-xl border border-line shadow-xl dropdown-menu"
         >
           <!-- Dropdown header -->
-          <div class="px-4 py-3 border-b border-gray-100">
+          <div class="px-4 py-3 border-b border-line">
             <div class="flex gap-3 items-center">
-              <div class="flex justify-center items-center w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+              <div class="flex justify-center items-center w-8 h-8 bg-gradient-to-br from-primary to-primary rounded-lg">
                 <span class="text-xs font-bold text-white">P</span>
               </div>
               <div>
-                <p class="text-sm font-semibold text-gray-900">{{ row.planType || 'Plan' }}</p>
-                <p class="text-xs text-gray-500">Action Menu</p>
+                <p class="text-sm font-semibold text-ink">{{ row.planType || 'Plan' }}</p>
+                <p class="text-xs text-ink-subtle">Action Menu</p>
               </div>
             </div>
           </div>
@@ -202,16 +202,16 @@ onUnmounted(() => {
             <!-- Edit Button -->
             <button 
               @click.stop="handleEditWithClose(row)" 
-              class="flex gap-3 items-center px-4 py-3 w-full text-gray-700 transition-colors hover:bg-blue-50 group/item"
+              class="flex gap-3 items-center px-4 py-3 w-full text-ink-muted transition-colors hover:bg-primary/5 group/item"
             >
-              <div class="p-1.5 bg-blue-100 rounded-md group-hover/item:bg-blue-200">
-                <i v-html="icons.edits || '✏️'" class="w-4 h-4 text-blue-600" />
+              <div class="p-1.5 bg-primary/10 rounded-md group-hover/item:bg-primary/20">
+                <i v-html="icons.edits || '✏️'" class="w-4 h-4 text-primary" />
               </div>
               <div class="text-left">
                 <span class="text-sm font-medium">Edit</span>
-                <p class="text-xs text-gray-500">Modify plan details</p>
+                <p class="text-xs text-ink-subtle">Modify plan details</p>
               </div>
-              <svg class="ml-auto w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="ml-auto w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -219,44 +219,44 @@ onUnmounted(() => {
             <!-- Add Insured Person -->
             <button 
               @click.stop="handleViewWithClose(row)" 
-              class="flex gap-3 items-center px-4 py-3 w-full text-gray-700 transition-colors hover:bg-emerald-50 group/item"
+              class="flex gap-3 items-center px-4 py-3 w-full text-ink-muted transition-colors hover:bg-success-soft group/item"
             >
-              <div class="p-1.5 bg-emerald-100 rounded-md group-hover/item:bg-emerald-200">
-                <i v-html="icons.details || '➕'" class="w-4 h-4 text-emerald-600" />
+              <div class="p-1.5 bg-success-soft rounded-md group-hover/item:bg-success/20">
+                <i v-html="icons.details || '➕'" class="w-4 h-4 text-success" />
               </div>
               <div class="text-left">
                 <span class="text-sm font-medium">Add Insured</span>
-                <p class="text-xs text-gray-500">Add new insured person</p>
+                <p class="text-xs text-ink-subtle">Add new insured person</p>
               </div>
-              <svg class="ml-auto w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="ml-auto w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
             </button>
 
             <!-- Divider -->
-            <div class="my-2 h-px bg-gray-200"></div>
+            <div class="my-2 h-px bg-line"></div>
 
             <!-- Deactivate Button -->
             <button 
               @click.stop="handleRemoveWithClose(row.serviceQuotedUuid)" 
-              class="flex gap-3 items-center px-4 py-3 w-full text-red-600 transition-colors hover:bg-red-50 group/item"
+              class="flex gap-3 items-center px-4 py-3 w-full text-error transition-colors hover:bg-error-soft group/item"
             >
-              <div class="p-1.5 bg-red-100 rounded-md group-hover/item:bg-red-200">
-                <i v-html="icons.deactivate || '🚫'" class="w-4 h-4 text-red-600" />
+              <div class="p-1.5 bg-error-soft rounded-md group-hover/item:bg-error/20">
+                <i v-html="icons.deactivate || '🚫'" class="w-4 h-4 text-error" />
               </div>
               <div class="text-left">
                 <span class="text-sm font-semibold">Deactivate</span>
-                <p class="text-xs text-red-500">Disable this plan</p>
+                <p class="text-xs text-error">Disable this plan</p>
               </div>
-              <svg class="ml-auto w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="ml-auto w-4 h-4 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
           <!-- Dropdown footer -->
-          <div class="px-4 py-2 bg-gray-50 rounded-b-xl border-t border-gray-100">
-            <p class="text-xs text-gray-500">ID: {{ row.serviceQuotedUuid?.slice(-8) || 'N/A' }}</p>
+          <div class="px-4 py-2 bg-surface-muted rounded-b-xl border-t border-line">
+            <p class="text-xs text-ink-subtle">ID: {{ row.serviceQuotedUuid?.slice(-8) || 'N/A' }}</p>
           </div>
         </div>
       </div>

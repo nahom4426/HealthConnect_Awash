@@ -138,7 +138,7 @@ defineExpose({ selected, toggleSelectAll, toggleData, isSelected, allSelected })
           :indeterminate="someSelected"
           @change="toggleSelectAll"
           type="checkbox"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          class="w-4 h-4 rounded border-line-strong text-primary focus:ring-primary cursor-pointer"
         />
       </div>
     </template>
@@ -148,7 +148,7 @@ defineExpose({ selected, toggleSelectAll, toggleData, isSelected, allSelected })
           :checked="isSelected(row)"
           @change="() => toggleData(getNestedValue(row, toBeSelected))"
           type="checkbox"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          class="w-4 h-4 rounded border-line-strong text-primary focus:ring-primary cursor-pointer"
         />
       </div>
     </template>

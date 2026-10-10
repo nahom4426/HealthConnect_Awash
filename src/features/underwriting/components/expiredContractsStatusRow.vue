@@ -43,15 +43,15 @@ function getStatusStyle(status) {
   const base = 'px-3 py-0.5 rounded-full text-center';
   switch (status?.toUpperCase()) {
     case 'ACTIVE':
-      return `${base} bg-green-100 text-green-600`;
+      return `${base} bg-success-soft text-success`;
     case 'PENDING':
-      return `${base} bg-yellow-100 text-yellow-600`;
+      return `${base} bg-warning-soft text-warning`;
     case 'EXPIRED':
-      return `${base} bg-red-100 text-red-600`;
+      return `${base} bg-error-soft text-error`;
     case 'CLOSED':
-      return `${base} bg-red-100 text-red-600`;
+      return `${base} bg-error-soft text-error`;
     default:
-      return `${base} bg-gray-100 text-gray-600`;
+      return `${base} bg-surface-muted text-ink-muted`;
   }
 }
 
@@ -87,23 +87,23 @@ function openHistoryPage(row) {
     v-for="(row, idx) in rowData"
     :key="row.payerInstitutionContractUuid || idx"
     @click.self="props.onRowClick(row)"
-    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-blue-50 group"
+    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-primary/5 group"
   >
-    <td class="p-4 text-sm font-semibold text-gray-400 select-none">
+    <td class="p-4 text-sm font-semibold text-ink-subtle select-none">
       {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
     </td>
 
     <td class="p-4">
       <div class="flex flex-col">
-        <span class="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-md shadow-sm w-fit">
+        <span class="px-3 py-1 text-sm font-medium text-primary-hover bg-primary/5 rounded-md shadow-sm w-fit">
           {{ row.institutionName || '—' }}
         </span>
       </div>
     </td>
 
-    <td class="p-4 font-medium text-gray-500">
+    <td class="p-4 font-medium text-ink-subtle">
       {{ row.contractName }}
-      <div class="text-xs text-gray-500">
+      <div class="text-xs text-ink-subtle">
         {{ formatDate(row.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row.endDate) }}
       </div>
     </td>
@@ -114,10 +114,10 @@ function openHistoryPage(row) {
       </span>
     </td>
 
-    <td class="flex gap-2 pt-2 border-gray-100">
+    <td class="flex gap-2 pt-2 border-line">
       <button
         @click.stop="isRenewedList ? openHistoryPage(row) : openRenewModal(row)"
-        class="flex p-2 text-blue-600 bg-blue-50 rounded-lg rounded-full transition-colors hover:bg-blue-100 hover:text-blue-700"
+        class="flex p-2 text-primary bg-primary/5 rounded-lg rounded-full transition-colors hover:bg-primary/10 hover:text-primary-hover"
         :title="isRenewedList ? 'History' : 'Renew'"
       >
        <svg xmlns="http://www.w3.org/2000/svg"

@@ -82,7 +82,7 @@ function mapRows(listRaw) {
       :search="search"
       :auto="true"
     >
-      <div v-if="error" class="p-3 text-red-600">{{ error }}</div>
+      <div v-if="error" class="p-3 text-error">{{ error }}</div>
 
       <Table
         :pending="pending"

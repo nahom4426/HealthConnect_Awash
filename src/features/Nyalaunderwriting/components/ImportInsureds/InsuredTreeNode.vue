@@ -26,10 +26,10 @@ function getGenderClass(gender) {
 function getRelationshipClass(rel) {
   const map = {
     Spouse: 'bg-violet-50 text-violet-600 border border-violet-200',
-    Child: 'bg-amber-50 text-amber-600 border border-amber-200',
+    Child: 'bg-warning-soft text-warning border border-warning/20',
     Parent: 'bg-teal-50 text-teal-600 border border-teal-200',
   };
-  return map[rel] || 'bg-gray-50 text-gray-600 border border-gray-200';
+  return map[rel] || 'bg-surface-muted text-ink-muted border border-line';
 }
 
 const dependents = props.insured.dependantResponses || [];
@@ -40,7 +40,7 @@ const dependents = props.insured.dependantResponses || [];
   <div
     class="flex items-start gap-3 px-4 py-3 transition-colors duration-150"
     :class="[
-      isSelected && !isDisabled ? 'bg-blue-50/60' : 'hover:bg-gray-50',
+      isSelected && !isDisabled ? 'bg-primary/[0.03]' : 'hover:bg-surface-muted',
       isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
     ]"
     @click="!isDisabled && emit('toggle', insured)"
@@ -51,7 +51,7 @@ const dependents = props.insured.dependantResponses || [];
         type="checkbox"
         :checked="isSelected"
         :disabled="isDisabled"
-        class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed"
+        class="w-4 h-4 rounded border-line-strong text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed"
         @change.stop="emit('toggle', insured)"
         @click.stop
       />
@@ -60,12 +60,12 @@ const dependents = props.insured.dependantResponses || [];
     <!-- Info -->
     <div class="flex-1 min-w-0">
       <div class="flex flex-wrap items-center gap-1.5">
-        <span class="font-semibold text-gray-800 text-sm">
+        <span class="font-semibold text-ink text-sm">
           {{ insured.firstName }} {{ insured.fatherName }}
-          <span v-if="insured.grandFatherName" class="text-gray-500">{{ insured.grandFatherName }}</span>
+          <span v-if="insured.grandFatherName" class="text-ink-subtle">{{ insured.grandFatherName }}</span>
         </span>
 
-        <span class="px-1.5 py-0.5 text-xs rounded-md bg-gray-100 text-gray-600 border border-gray-200 font-medium">
+        <span class="px-1.5 py-0.5 text-xs rounded-md bg-surface-muted text-ink-muted border border-line font-medium">
           Employee
         </span>
 
@@ -79,7 +79,7 @@ const dependents = props.insured.dependantResponses || [];
         <!-- Warning badge -->
         <span
           v-if="warning && !isDisabled"
-          class="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md bg-amber-50 text-amber-700 border border-amber-200"
+          class="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md bg-warning-soft text-warning-strong border border-warning/20"
           :title="warning"
         >
           <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -91,7 +91,7 @@ const dependents = props.insured.dependantResponses || [];
         <!-- Already enrolled badge -->
         <span
           v-if="isDisabled"
-          class="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md bg-gray-100 text-gray-500 border border-gray-200"
+          class="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md bg-surface-muted text-ink-subtle border border-line"
         >
           <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -100,14 +100,14 @@ const dependents = props.insured.dependantResponses || [];
         </span>
       </div>
 
-      <div class="mt-0.5 text-xs text-gray-400 flex items-center gap-3">
+      <div class="mt-0.5 text-xs text-ink-subtle flex items-center gap-3">
         <span>ID: {{ insured.idNumber || '—' }}</span>
         <span v-if="insured.insuranceId">Insurance: {{ insured.insuranceId }}</span>
       </div>
     </div>
 
     <!-- Dependent count badge -->
-    <div class="flex-shrink-0 flex items-center gap-1 text-xs text-gray-400">
+    <div class="flex-shrink-0 flex items-center gap-1 text-xs text-ink-subtle">
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -117,12 +117,12 @@ const dependents = props.insured.dependantResponses || [];
   </div>
 
   <!-- Dependents (indented) -->
-  <div v-if="dependents.length > 0" class="ml-10 border-l-2 border-gray-200">
+  <div v-if="dependents.length > 0" class="ml-10 border-l-2 border-line">
     <div
       v-for="dep in dependents"
       :key="dep.dependantUuid"
       class="flex items-start gap-3 px-4 py-2.5 transition-colors duration-150 cursor-pointer"
-      :class="isDependentSelected(dep) && !isDisabled ? 'bg-blue-50/40' : 'hover:bg-gray-50'"
+      :class="isDependentSelected(dep) && !isDisabled ? 'bg-primary/[0.02]' : 'hover:bg-surface-muted'"
       @click="!isDisabled && emit('toggle-dependent', { insured, dependent: dep })"
     >
       <!-- Checkbox -->
@@ -131,7 +131,7 @@ const dependents = props.insured.dependantResponses || [];
           type="checkbox"
           :checked="isDependentSelected(dep)"
           :disabled="isDisabled"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed"
+          class="w-4 h-4 rounded border-line-strong text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed"
           @change.stop="emit('toggle-dependent', { insured, dependent: dep })"
           @click.stop
         />
@@ -140,7 +140,7 @@ const dependents = props.insured.dependantResponses || [];
       <!-- Info -->
       <div class="flex-1 min-w-0">
         <div class="flex flex-wrap items-center gap-1.5">
-          <span class="font-medium text-gray-700 text-sm">
+          <span class="font-medium text-ink-muted text-sm">
             {{ dep.firstName }} {{ dep.fatherName }}
           </span>
 
@@ -159,7 +159,7 @@ const dependents = props.insured.dependantResponses || [];
           </span>
         </div>
 
-        <div class="mt-0.5 text-xs text-gray-400">
+        <div class="mt-0.5 text-xs text-ink-subtle">
           ID: {{ dep.idNumber || '—' }}
         </div>
       </div>

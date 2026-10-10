@@ -253,14 +253,14 @@
           // Some records were imported successfully
           messageType = "success";
           messageText = `
-            <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+            <div class="p-4 bg-success-soft rounded-lg border border-success-soft">
               <div class="flex items-start">
-                <svg class="mt-0.5 mr-2 w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="mt-0.5 mr-2 w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <h4 class="text-sm font-medium text-green-800">Partial Import Success</h4>
-                  <p class="mt-1 text-sm text-green-700">
+                  <h4 class="text-sm font-medium text-success-strong">Partial Import Success</h4>
+                  <p class="mt-1 text-sm text-success-strong">
                     Total Rows Processed: ${cleanData.totalRows || 0}<br>
                     Successfully Imported: ${cleanData.successCount || 0}<br>
                     Failed: ${cleanData.errorCount || 0}
@@ -273,19 +273,19 @@
           // All records failed
           messageType = "error";
           messageText = `
-            <div class="p-4 bg-red-50 rounded-lg border border-red-100">
+            <div class="p-4 bg-error-soft rounded-lg border border-error-soft">
               <div class="flex items-start">
-                <svg class="mt-0.5 mr-2 w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="mt-0.5 mr-2 w-5 h-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <h4 class="text-sm font-medium text-red-800">Import Failed</h4>
-                  <p class="mt-1 text-sm text-red-700">
+                  <h4 class="text-sm font-medium text-error-strong">Import Failed</h4>
+                  <p class="mt-1 text-sm text-error-strong">
                     Total Rows: ${cleanData.totalRows || 0}<br>
                     Successfully Imported: ${cleanData.successCount || 0}<br>
                     Errors: ${cleanData.errorCount || 0}
                   </p>
-                  <p class="mt-2 text-sm text-red-600">
+                  <p class="mt-2 text-sm text-error">
                     No records were imported. Please fix the errors below and try again.
                   </p>
                 </div>
@@ -296,14 +296,14 @@
           // No records processed
           messageType = "warning";
           messageText = `
-            <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+            <div class="p-4 bg-warning-soft rounded-lg border border-warning-soft">
               <div class="flex items-start">
-                <svg class="mt-0.5 mr-2 w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="mt-0.5 mr-2 w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <div>
-                  <h4 class="text-sm font-medium text-yellow-800">No Records Processed</h4>
-                  <p class="mt-1 text-sm text-yellow-700">
+                  <h4 class="text-sm font-medium text-warning-strong">No Records Processed</h4>
+                  <p class="mt-1 text-sm text-warning-strong">
                     The file was processed but no records were imported.
                     Please check your file format and try again.
                   </p>
@@ -322,16 +322,16 @@
           // Show successful rows if any
           if (successRows.length > 0) {
             messageText += `
-              <div class="p-4 mt-4 bg-green-50 rounded-lg border border-green-100">
+              <div class="p-4 mt-4 bg-success-soft rounded-lg border border-success-soft">
                 <div class="flex items-start">
-                  <svg class="mt-0.5 mr-2 w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="mt-0.5 mr-2 w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <h4 class="text-sm font-medium text-green-800">Successfully Imported Rows (${successRows.length})</h4>
-                    <ul class="overflow-y-auto mt-1 space-y-1 max-h-40 text-xs text-green-700">
+                    <h4 class="text-sm font-medium text-success-strong">Successfully Imported Rows (${successRows.length})</h4>
+                    <ul class="overflow-y-auto mt-1 space-y-1 max-h-40 text-xs text-success-strong">
                       ${successRows.map(row => `
-                        <li class="py-1 pl-1 border-b border-green-100 last:border-b-0">
+                        <li class="py-1 pl-1 border-b border-success-soft last:border-b-0">
                           <strong>Row ${row.rowNumber}:</strong> Successfully imported
                         </li>
                       `).join('')}
@@ -345,18 +345,18 @@
           // Show error rows if any
           if (errorRows.length > 0) {
             messageText += `
-              <div class="p-4 mt-4 bg-red-50 rounded-lg border border-red-100">
+              <div class="p-4 mt-4 bg-error-soft rounded-lg border border-error-soft">
                 <div class="flex items-start">
-                  <svg class="mt-0.5 mr-2 w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="mt-0.5 mr-2 w-5 h-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <h4 class="text-sm font-medium text-red-800">Error Rows (${errorRows.length})</h4>
-                    <ul class="overflow-y-auto mt-1 space-y-2 max-h-40 text-xs text-red-700">
+                    <h4 class="text-sm font-medium text-error-strong">Error Rows (${errorRows.length})</h4>
+                    <ul class="overflow-y-auto mt-1 space-y-2 max-h-40 text-xs text-error-strong">
                       ${errorRows.map(row => `
-                        <li class="py-1 pl-1 border-b border-red-100 last:border-b-0">
+                        <li class="py-1 pl-1 border-b border-error-soft last:border-b-0">
                           <div class="font-medium">Row ${row.rowNumber}:</div>
-                          <div class="mt-0.5 text-red-600">${row.message || 'Unknown error'}</div>
+                          <div class="mt-0.5 text-error">${row.message || 'Unknown error'}</div>
                         </li>
                       `).join('')}
                     </ul>
@@ -369,18 +369,18 @@
           // Show skipped rows if any
           if (skippedRows.length > 0) {
             messageText += `
-              <div class="p-4 mt-4 bg-yellow-50 rounded-lg border border-yellow-100">
+              <div class="p-4 mt-4 bg-warning-soft rounded-lg border border-warning-soft">
                 <div class="flex items-start">
-                  <svg class="mt-0.5 mr-2 w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="mt-0.5 mr-2 w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   <div>
-                    <h4 class="text-sm font-medium text-yellow-800">Skipped Rows (${skippedRows.length})</h4>
-                    <ul class="overflow-y-auto mt-1 space-y-2 max-h-40 text-xs text-yellow-700">
+                    <h4 class="text-sm font-medium text-warning-strong">Skipped Rows (${skippedRows.length})</h4>
+                    <ul class="overflow-y-auto mt-1 space-y-2 max-h-40 text-xs text-warning-strong">
                       ${skippedRows.map(row => `
-                        <li class="py-1 pl-1 border-b border-yellow-100 last:border-b-0">
+                        <li class="py-1 pl-1 border-b border-warning-soft last:border-b-0">
                           <div class="font-medium">Row ${row.rowNumber}:</div>
-                          <div class="mt-0.5 text-yellow-600">${row.message || 'Skipped'}</div>
+                          <div class="mt-0.5 text-warning">${row.message || 'Skipped'}</div>
                         </li>
                       `).join('')}
                     </ul>
@@ -418,14 +418,14 @@
         message.value = {
           type: "error",
           text: `
-            <div class="p-4 bg-red-50 rounded-lg border border-red-100">
+            <div class="p-4 bg-error-soft rounded-lg border border-error-soft">
               <div class="flex items-start">
-                <svg class="mt-0.5 mr-2 w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="mt-0.5 mr-2 w-5 h-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <h4 class="text-sm font-medium text-red-800">Unexpected Response Format</h4>
-                  <p class="mt-1 text-sm text-red-700">The server returned an unexpected response format.</p>
+                  <h4 class="text-sm font-medium text-error-strong">Unexpected Response Format</h4>
+                  <p class="mt-1 text-sm text-error-strong">The server returned an unexpected response format.</p>
                 </div>
               </div>
             </div>
@@ -439,14 +439,14 @@
       message.value = {
         type: "error",
         text: `
-          <div class="p-4 bg-red-50 rounded-lg border border-red-100">
+          <div class="p-4 bg-error-soft rounded-lg border border-error-soft">
             <div class="flex items-start">
-              <svg class="mt-0.5 mr-2 w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="mt-0.5 mr-2 w-5 h-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <h4 class="text-sm font-medium text-red-800">Network Error</h4>
-                <p class="mt-1 text-sm text-red-700">Failed to connect to server. Please try again.</p>
+                <h4 class="text-sm font-medium text-error-strong">Network Error</h4>
+                <p class="mt-1 text-sm text-error-strong">Failed to connect to server. Please try again.</p>
               </div>
             </div>
           </div>
@@ -516,14 +516,14 @@
             <!-- Modern Header -->
             <div class="mb-8">
               <div class="flex items-center space-x-3">
-                <div class="flex justify-center items-center w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+                <div class="flex justify-center items-center w-10 h-10 bg-gradient-to-br from-primary to-primary rounded-xl">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-xl font-bold text-gray-900">{{ title }}</h2>
-                  <p class="text-sm text-gray-500">Upload Excel or CSV file to bulk import records</p>
+                  <h2 class="text-xl font-bold text-ink">{{ title }}</h2>
+                  <p class="text-sm text-ink-subtle">Upload Excel or CSV file to bulk import records</p>
                 </div>
               </div>
             </div>
@@ -533,14 +533,14 @@
               <!-- Left Column: Settings -->
               <div class="space-y-6 lg:col-span-1">
                 <!-- Capped Limit Toggle (updated with multiple package option) -->
-                <div class="p-5 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="p-5 bg-white rounded-xl border border-line shadow-sm">
                   <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-sm font-semibold text-gray-800">Capped Package Options</h3>
+                    <h3 class="text-sm font-semibold text-ink">Capped Package Options</h3>
                     <button
                       @click="showCappedOptions = !showCappedOptions"
                       type="button"
-                      class="inline-flex relative flex-shrink-0 items-center w-11 h-6 rounded-full border-2 border-transparent transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      :class="showCappedOptions ? 'bg-blue-600' : 'bg-gray-200'"
+                      class="inline-flex relative flex-shrink-0 items-center w-11 h-6 rounded-full border-2 border-transparent transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                      :class="showCappedOptions ? 'bg-primary' : 'bg-line'"
                     >
                       <span
                         :class="showCappedOptions ? 'translate-x-5' : 'translate-x-0'"
@@ -548,21 +548,21 @@
                       />
                     </button>
                   </div>
-                  <p class="mb-4 text-xs text-gray-500">Enable to set capped limits from packages.</p>
+                  <p class="mb-4 text-xs text-ink-subtle">Enable to set capped limits from packages.</p>
 
-                  <div v-if="showCappedOptions" class="pt-4 space-y-4 border-t border-gray-100 animate-slide-down">
+                  <div v-if="showCappedOptions" class="pt-4 space-y-4 border-t border-line animate-slide-down">
                     <div class="space-y-3">
                       <!-- Capped From -->
-                      <div class="p-3 rounded-lg border border-gray-200 bg-white">
-                        <label class="block mb-2 text-xs font-medium text-gray-600">Capped From Package</label>
-                        <div v-if="loadingPackages" class="flex items-center text-sm text-gray-600">
-                          <div class="mr-2 w-4 h-4 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin"></div>
+                      <div class="p-3 rounded-lg border border-line bg-white">
+                        <label class="block mb-2 text-xs font-medium text-ink-muted">Capped From Package</label>
+                        <div v-if="loadingPackages" class="flex items-center text-sm text-ink-muted">
+                          <div class="mr-2 w-4 h-4 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
                           Loading packages...
                         </div>
                         <select
                           v-else
                           v-model="selectedPackage"
-                          class="px-4 py-2.5 w-full text-sm rounded-lg border border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          class="px-4 py-2.5 w-full text-sm rounded-lg border border-line-strong transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                         >
                           <option value="" disabled>Choose a package</option>
                           <option v-for="pkg in packages" :key="pkg.packageUuid" :value="pkg" class="py-2">
@@ -572,20 +572,20 @@
                       </div>
 
                       <!-- Capped To -->
-                      <div class="p-3 rounded-lg border border-gray-200 bg-white">
+                      <div class="p-3 rounded-lg border border-line bg-white">
                         <div class="flex justify-between items-center mb-2">
-                          <label class="block text-xs font-medium text-gray-600">Capped To Packages</label>
+                          <label class="block text-xs font-medium text-ink-muted">Capped To Packages</label>
                           <button
                             @click="selectAllPackages"
                             type="button"
-                            class="text-xs text-blue-600 transition-colors hover:text-blue-800"
+                            class="text-xs text-primary transition-colors hover:text-primary-hover"
                           >
                             Select All
                           </button>
                         </div>
 
-                        <div v-if="loadingPackages" class="flex items-center text-sm text-gray-600">
-                          <div class="mr-2 w-4 h-4 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin"></div>
+                        <div v-if="loadingPackages" class="flex items-center text-sm text-ink-muted">
+                          <div class="mr-2 w-4 h-4 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
                           Loading packages...
                         </div>
                         <div v-else class="overflow-y-auto p-1 space-y-2 max-h-48 custom-scrollbar">
@@ -593,9 +593,9 @@
                             v-for="pkg in packages"
                             :key="pkg.packageUuid"
                             @click="!isPackageDisabledForTo(pkg) && togglePackage(pkg)"
-                            class="flex items-center p-2 rounded-lg border border-gray-200 transition-all cursor-pointer hover:bg-gray-50"
+                            class="flex items-center p-2 rounded-lg border border-line transition-all cursor-pointer hover:bg-surface-muted"
                             :class="{
-                              'bg-blue-50 border-blue-200': isPackageSelected(pkg),
+                              'bg-primary/5 border-primary/20': isPackageSelected(pkg),
                               'opacity-50 cursor-not-allowed': isPackageDisabledForTo(pkg)
                             }"
                           >
@@ -605,11 +605,11 @@
                               :disabled="isPackageDisabledForTo(pkg)"
                               @click.stop
                               @change="togglePackage(pkg)"
-                              class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                              class="w-4 h-4 text-primary rounded border-line-strong focus:ring-primary"
                             />
                             <div class="ml-3">
-                              <span class="text-sm font-medium text-gray-900">{{ pkg.packageName }}</span>
-                              <p v-if="pkg.packageDescription" class="text-xs text-gray-500">{{ pkg.packageDescription }}</p>
+                              <span class="text-sm font-medium text-ink">{{ pkg.packageName }}</span>
+                              <p v-if="pkg.packageDescription" class="text-xs text-ink-subtle">{{ pkg.packageDescription }}</p>
                             </div>
                           </div>
                         </div>
@@ -621,39 +621,39 @@
   
               <!-- Right Column: File Upload & Preview (unchanged) -->
               <div class="lg:col-span-2">
-                <div class="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="p-6 bg-white rounded-xl border border-line shadow-sm">
                   <!-- File Upload Area -->
                   <div class="mb-6">
-                    <h3 class="mb-4 text-sm font-semibold text-gray-800">Upload File</h3>
+                    <h3 class="mb-4 text-sm font-semibold text-ink">Upload File</h3>
                     <div
                       @click="triggerFileInput"
                       class="p-8 text-center rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer"
                       :class="{ 
-                        'border-blue-400 bg-blue-50/50': selectedFile,
-                        'border-gray-300 hover:border-blue-400 hover:bg-blue-50/30': !selectedFile 
+                        'border-primary/70 bg-primary/[0.025]': selectedFile,
+                        'border-line-strong hover:border-primary/70 hover:bg-primary/[0.015]': !selectedFile 
                       }"
                     >
                       <template v-if="!selectedFile">
-                        <div class="flex justify-center items-center mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-50 rounded-full">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="flex justify-center items-center mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-surface-muted to-surface-muted rounded-full">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-ink-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
                         </div>
-                        <p class="text-sm font-medium text-gray-700">Drop your file here or click to browse</p>
-                        <p class="mt-1 text-xs text-gray-500">Supports .xlsx, .xls, .csv (Max 5MB)</p>
+                        <p class="text-sm font-medium text-ink-muted">Drop your file here or click to browse</p>
+                        <p class="mt-1 text-xs text-ink-subtle">Supports .xlsx, .xls, .csv (Max 5MB)</p>
                       </template>
                       <template v-else>
                         <div class="flex flex-col items-center">
-                          <div class="flex justify-center items-center mb-4 w-16 h-16 bg-gradient-to-br from-green-100 to-green-50 rounded-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div class="flex justify-center items-center mb-4 w-16 h-16 bg-gradient-to-br from-success-soft to-success-soft rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                           </div>
                           <div class="text-center">
-                            <p class="max-w-xs text-sm font-medium text-gray-700 truncate">{{ fileName }}</p>
+                            <p class="max-w-xs text-sm font-medium text-ink-muted truncate">{{ fileName }}</p>
                             <button 
                               @click.stop="removeFile" 
-                              class="inline-flex items-center mt-2 text-xs text-red-500 transition-colors hover:text-red-700"
+                              class="inline-flex items-center mt-2 text-xs text-error transition-colors hover:text-error-strong"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -675,13 +675,13 @@
   
                   <!-- Import Progress -->
                   <div v-if="importing" class="mb-6">
-                    <div class="flex justify-between mb-2 text-sm text-gray-600">
+                    <div class="flex justify-between mb-2 text-sm text-ink-muted">
                       <span class="font-medium">Uploading...</span>
                       <span class="font-semibold">{{ progress }}%</span>
                     </div>
-                    <div class="overflow-hidden w-full h-2.5 bg-gray-200 rounded-full">
+                    <div class="overflow-hidden w-full h-2.5 bg-line rounded-full">
                       <div 
-                        class="h-2.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300 ease-out" 
+                        class="h-2.5 bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-300 ease-out" 
                         :style="`width: ${progress}%`" 
                       />
                     </div>
@@ -690,37 +690,37 @@
                   <!-- File Preview -->
                   <div v-if="previewLoading" class="py-4 mb-6 text-center">
                     <div class="inline-flex items-center">
-                      <div class="mr-2 w-5 h-5 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin"></div>
-                      <span class="text-sm text-gray-600">Loading preview...</span>
+                      <div class="mr-2 w-5 h-5 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
+                      <span class="text-sm text-ink-muted">Loading preview...</span>
                     </div>
                   </div>
   
                   <div v-if="showPreview && previewData.length > 0 && !message.type" class="mb-6">
                     <div class="flex justify-between items-center mb-3">
-                      <h3 class="text-sm font-semibold text-gray-800">File Preview</h3>
-                      <span class="text-xs text-gray-500">{{ previewData.length }} rows</span>
+                      <h3 class="text-sm font-semibold text-ink">File Preview</h3>
+                      <span class="text-xs text-ink-subtle">{{ previewData.length }} rows</span>
                     </div>
-                    <div class="overflow-hidden rounded-lg border border-gray-200">
+                    <div class="overflow-hidden rounded-lg border border-line">
                       <div class="overflow-x-auto custom-scrollbar" :style="`max-height: ${maxPreviewHeight}`">
-                        <table class="min-w-full divide-y divide-gray-200">
-                          <thead class="bg-gray-50">
+                        <table class="min-w-full divide-y divide-line">
+                          <thead class="bg-surface-muted">
                             <tr>
                               <th 
                                 v-for="(header, idx) in previewHeaders" 
                                 :key="idx"
-                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase whitespace-nowrap"
+                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase whitespace-nowrap"
                               >
                                 {{ header }}
                               </th>
                             </tr>
                           </thead>
-                          <tbody class="bg-white divide-y divide-gray-200">
+                          <tbody class="bg-white divide-y divide-line">
                             <tr v-for="(row, rowIdx) in previewData.slice(0, maxPreviewRows)" :key="rowIdx" 
-                                :class="rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'">
+                                :class="rowIdx % 2 === 0 ? 'bg-white' : 'bg-surface-muted/50'">
                               <td 
                                 v-for="(cell, cellIdx) in row" 
                                 :key="cellIdx"
-                                class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap"
+                                class="px-4 py-3 text-sm text-ink-muted whitespace-nowrap"
                               >
                                 {{ cell }}
                               </td>
@@ -728,7 +728,7 @@
                           </tbody>
                         </table>
                       </div>
-                      <div v-if="previewData.length > maxPreviewRows" class="px-4 py-2 text-xs text-center text-gray-500 bg-gray-50 border-t">
+                      <div v-if="previewData.length > maxPreviewRows" class="px-4 py-2 text-xs text-center text-ink-subtle bg-surface-muted border-t">
                         Showing first {{ maxPreviewRows }} rows of {{ previewData.length }}
                       </div>
                     </div>
@@ -738,8 +738,8 @@
                   <div v-if="message.text" class="transition-all duration-300 animate-fade-in">
                     <div v-if="message.isHtml" v-html="message.text"></div>
                     <div v-else class="p-4 text-sm rounded-lg" :class="{
-                      'bg-red-50 border border-red-100 text-red-700': message.type === 'error',
-                      'bg-blue-50 border border-blue-100 text-blue-700': !message.type
+                      'bg-error-soft border border-error-soft text-error-strong': message.type === 'error',
+                      'bg-primary/5 border border-primary/10 text-primary-hover': !message.type
                     }">
                       {{ message.text }}
                     </div>
@@ -751,10 +751,10 @@
   
           <!-- Footer Actions -->
           <template #bottom>
-            <div class="flex gap-3 justify-between items-center p-6 w-full bg-gray-50 border-t border-gray-200">
+            <div class="flex gap-3 justify-between items-center p-6 w-full bg-surface-muted border-t border-line">
               <Button
                 @click="closeModal('import-modal')"
-                class="px-6 text-gray-700 bg-white border border-gray-300 transition-colors hover:bg-gray-50 hover:border-gray-400 active:bg-gray-100"
+                class="px-6 text-ink-muted bg-white border border-line-strong transition-colors hover:bg-surface-muted hover:border-ink-subtle active:bg-surface-muted"
                 size="md"
               >
                 {{ wasSuccessful ? 'Close' : 'Cancel' }}
@@ -763,7 +763,7 @@
                 <Button
                   v-if="selectedFile && !importing && !wasSuccessful"
                   @click="reset"
-                  class="px-6 text-gray-700 bg-white border border-gray-300 transition-colors hover:bg-gray-50 hover:border-gray-400 active:bg-gray-100"
+                  class="px-6 text-ink-muted bg-white border border-line-strong transition-colors hover:bg-surface-muted hover:border-ink-subtle active:bg-surface-muted"
                   size="md"
                 >
                   Reset
@@ -771,7 +771,7 @@
                 <Button
                   v-if="selectedFile && !importing && !wasSuccessful"
                   @click="importFile"
-                  class="px-6 text-white bg-gradient-to-r from-blue-600 to-blue-700 transition-all duration-200 hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  class="px-6 text-white bg-gradient-to-r from-primary to-primary-hover transition-all duration-200 hover:from-primary-hover hover:to-primary-hover focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   size="md"
                   :disabled="importing"
                 >
@@ -855,10 +855,10 @@
   
   /* Toggle button styles */
   .toggle-checkbox:checked {
-    @apply right-0 border-blue-600;
+    @apply right-0 border-primary;
   }
   
   .toggle-checkbox:checked + .toggle-label {
-    @apply bg-blue-600;
+    @apply bg-primary;
   }
   </style>

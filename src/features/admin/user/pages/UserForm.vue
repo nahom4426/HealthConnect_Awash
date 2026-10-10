@@ -215,7 +215,7 @@ function handleSubmit() {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
+  <div class="bg-white rounded-xl border border-line shadow-sm">
     <Form 
       ref="formEl"
       :inner="true" 
@@ -225,10 +225,10 @@ function handleSubmit() {
     >
       <!-- Form Header -->
       <div class="mb-6 sm:mb-8">
-        <h3 class="mb-2 text-base font-semibold text-gray-900 sm:text-lg">
+        <h3 class="mb-2 text-base font-semibold text-ink sm:text-lg">
           {{ isEdit ? 'Update User Information' : 'Create New User' }}
         </h3>
-        <p class="text-sm text-gray-600">
+        <p class="text-sm text-ink-muted">
           {{ isEdit ? 'Modify the user details below.' : 'Fill in the required information to create a new user account.' }}
         </p>
       </div>
@@ -236,8 +236,8 @@ function handleSubmit() {
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
         <!-- Email -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Email <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Email <span class="text-error">*</span>
           </label>
           <Input
             v-model="email"
@@ -252,8 +252,8 @@ function handleSubmit() {
 
         <!-- Password (Create only) -->
         <div v-if="!isEdit" class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Password <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Password <span class="text-error">*</span>
           </label>
           <InputPassword
             v-model="password"
@@ -269,8 +269,8 @@ function handleSubmit() {
 
         <!-- Title -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Title <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Title <span class="text-error">*</span>
           </label>
           <Select
             v-model="title"
@@ -286,8 +286,8 @@ function handleSubmit() {
 
         <!-- First Name -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            First Name <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            First Name <span class="text-error">*</span>
           </label>
           <Input
             v-model="firstName"
@@ -302,8 +302,8 @@ function handleSubmit() {
 
         <!-- Father Name -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Father Name <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Father Name <span class="text-error">*</span>
           </label>
           <Input
             v-model="fatherName"
@@ -318,8 +318,8 @@ function handleSubmit() {
 
         <!-- Grandfather Name -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Grandfather Name <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Grandfather Name <span class="text-error">*</span>
           </label>
           <Input
             v-model="grandFatherName"
@@ -334,8 +334,8 @@ function handleSubmit() {
 
         <!-- Gender -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Gender <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Gender <span class="text-error">*</span>
           </label>
           <Select
             v-model="gender"
@@ -351,8 +351,8 @@ function handleSubmit() {
 
         <!-- Mobile Phone -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Mobile Phone <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Mobile Phone <span class="text-error">*</span>
           </label>
           <Input
             v-model="mobilePhone"
@@ -369,15 +369,15 @@ function handleSubmit() {
 
         <!-- Role -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Role <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Role <span class="text-error">*</span>
           </label>
           <InputLayout>
             <select
             v-model="roleUuid"
             name="roleUuid"
               required
-              class="px-3 py-2 w-full text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="px-3 py-2 w-full text-ink bg-white rounded-lg border border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="" disabled>
                 {{ roleOptions.length ? 'Select role' : 'No roles available' }}
@@ -395,8 +395,8 @@ function handleSubmit() {
 
         <!-- User Status -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            User Status <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            User Status <span class="text-error">*</span>
           </label>
           <Select
             v-model="userStatus"
@@ -412,11 +412,11 @@ function handleSubmit() {
       </div>
 
       <!-- Form Actions -->
-      <div class="flex flex-col-reverse gap-3 justify-end pt-4 mt-6 border-t border-gray-200 sm:mt-8 sm:pt-6 sm:flex-row">
+      <div class="flex flex-col-reverse gap-3 justify-end pt-4 mt-6 border-t border-line sm:mt-8 sm:pt-6 sm:flex-row">
         <button
           type="button"
           @click="onCancel"
-          class="px-4 py-2.5 w-full text-sm text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors sm:w-auto sm:px-6 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 sm:text-base"
+          class="px-4 py-2.5 w-full text-sm text-ink-muted bg-white rounded-lg border border-line-strong transition-colors sm:w-auto sm:px-6 hover:bg-surface-muted focus:ring-2 focus:ring-line sm:text-base"
           :disabled="isPending"
         >
           Cancel
@@ -424,7 +424,7 @@ function handleSubmit() {
         <button
           type="button"
           @click="submit(() => handleSubmit())"
-          class="flex gap-2 justify-center items-center px-4 py-2.5 w-full text-sm text-white bg-blue-600 rounded-lg transition-colors sm:w-auto sm:px-6 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 sm:text-base"
+          class="flex gap-2 justify-center items-center px-4 py-2.5 w-full text-sm text-white bg-primary rounded-lg transition-colors sm:w-auto sm:px-6 hover:bg-primary-hover focus:ring-2 focus:ring-primary disabled:opacity-50 sm:text-base"
           :disabled="isPending"
         >
           <svg v-if="isPending" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">

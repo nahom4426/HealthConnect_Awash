@@ -34,18 +34,18 @@ const totalPages = inject("totalPages", 1);
 <template>
   <div :class="$attrs.class">
     <!-- Desktop Table View -->
-    <div class="hidden lg:block overflow-x-auto rounded-lg border border-gray-200/80 bg-white">
+    <div class="hidden lg:block overflow-x-auto rounded-lg border border-line/80 bg-white">
       <div class="inline-block min-w-full align-middle">
         <table class="min-w-full">
           <thead>
-            <tr class="border-b border-gray-100 bg-gray-50/60">
+            <tr class="border-b border-line bg-surface-muted/60">
               <!-- First column slot -->
-              <th v-if="firstCol" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <th v-if="firstCol" class="px-4 py-3 text-left text-xs font-semibold text-ink-subtle uppercase tracking-wider whitespace-nowrap">
                 <slot name="headerFirst"></slot>
               </th>
 
               <!-- Index column -->
-              <th v-if="!hideIndex" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap w-12">
+              <th v-if="!hideIndex" class="px-4 py-3 text-left text-xs font-semibold text-ink-subtle uppercase tracking-wider whitespace-nowrap w-12">
                 #
               </th>
 
@@ -53,18 +53,18 @@ const totalPages = inject("totalPages", 1);
               <th
                 v-for="(header, index) in headers"
                 :key="index"
-                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                class="px-4 py-3 text-left text-xs font-semibold text-ink-subtle uppercase tracking-wider whitespace-nowrap"
               >
                 {{ header }}
               </th>
 
               <!-- Last column slot -->
-              <th v-if="lastCol" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+              <th v-if="lastCol" class="px-4 py-3 text-left text-xs font-semibold text-ink-subtle uppercase tracking-wider whitespace-nowrap">
                 <slot name="headerLast"></slot>
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
+          <tbody class="divide-y divide-line">
             <slot />
           </tbody>
         </table>

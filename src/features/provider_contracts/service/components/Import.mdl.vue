@@ -519,22 +519,22 @@ const title = importType.value === "drug"
           
           <!-- Title -->
           <div class="text-center">
-            <div class="flex justify-center items-center mx-auto w-12 h-12 bg-blue-100 rounded-full">
-              <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex justify-center items-center mx-auto w-12 h-12 bg-primary/10 rounded-full">
+              <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             </div>
-            <h2 class="mt-3 text-lg font-semibold text-gray-900">{{ title }}</h2>
-            <p class="mt-1 text-sm text-gray-500">Upload your Excel or CSV file to import data</p>
+            <h2 class="mt-3 text-lg font-semibold text-ink">{{ title }}</h2>
+            <p class="mt-1 text-sm text-ink-subtle">Upload your Excel or CSV file to import data</p>
           </div>
 
           <!-- Message -->
           <div v-if="message.text" class="p-4 rounded-md border shadow-sm"
             :class="{
-              'bg-green-50 border-green-200 text-green-800': message.type === 'success',
-              'bg-red-50 border-red-200 text-red-800': message.type === 'error',
-              'bg-blue-50 border-blue-200 text-blue-800': !message.type
+              'bg-success-soft border-success/20 text-success-strong': message.type === 'success',
+              'bg-error-soft border-error/20 text-error-strong': message.type === 'error',
+              'bg-primary/5 border-primary/20 text-primary-hover': !message.type
             }">
             <p class="text-sm font-medium leading-snug">{{ message.text }}</p>
           </div>
@@ -542,53 +542,53 @@ const title = importType.value === "drug"
           <!-- File Upload -->
           <div @click="triggerFileInput"
             class="relative p-8 text-center rounded-lg border-2 border-dashed transition-all duration-200 cursor-pointer"
-            :class="{ 'border-blue-400 bg-blue-50/30': selectedFile, 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/30': !selectedFile }">
+            :class="{ 'border-primary/70 bg-primary/[0.015]': selectedFile, 'border-line-strong hover:border-primary/70 hover:bg-primary/[0.015]': !selectedFile }">
             <template v-if="!selectedFile">
-              <svg class="mx-auto w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="mx-auto w-12 h-12 text-ink-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              <p class="mt-4 text-sm text-gray-600">Click to upload or drag and drop</p>
-              <p class="mt-1 text-xs text-gray-500">Excel or CSV files up to 5MB</p>
+              <p class="mt-4 text-sm text-ink-muted">Click to upload or drag and drop</p>
+              <p class="mt-1 text-xs text-ink-subtle">Excel or CSV files up to 5MB</p>
               <input ref="fileInput" type="file" class="sr-only" @change="handleFile" />
             </template>
             <template v-else>
-              <svg class="mx-auto w-12 h-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="mx-auto w-12 h-12 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p class="mt-2 text-sm font-medium text-gray-700 truncate">{{ fileName }}</p>
-              <p class="mt-1 text-xs text-gray-500">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+              <p class="mt-2 text-sm font-medium text-ink-muted truncate">{{ fileName }}</p>
+              <p class="mt-1 text-xs text-ink-subtle">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
               <button @click.stop="removeFile"
-                class="mt-3 text-sm font-medium text-red-600 hover:text-red-500">Remove file</button>
+                class="mt-3 text-sm font-medium text-error hover:text-error">Remove file</button>
             </template>
           </div>
 
           <!-- Preview -->
           <div v-if="previewLoading" class="flex justify-center items-center py-8">
-            <div class="w-8 h-8 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin"></div>
+            <div class="w-8 h-8 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
           </div>
 
           <div v-if="showPreview && previewData.length > 0" class="overflow-hidden rounded-lg border shadow-sm">
-            <div class="flex justify-between items-center px-4 py-3 bg-gray-50 border-b">
-              <h3 class="text-sm font-medium text-gray-700">File Preview</h3>
-              <span class="text-xs text-gray-500">{{ previewData.length }} rows</span>
+            <div class="flex justify-between items-center px-4 py-3 bg-surface-muted border-b">
+              <h3 class="text-sm font-medium text-ink-muted">File Preview</h3>
+              <span class="text-xs text-ink-subtle">{{ previewData.length }} rows</span>
             </div>
             <div class="overflow-x-scroll overflow-y-scroll custom-scrollbar" :style="`height: ${maxPreviewHeight}`">
-              <table class="min-w-max divide-y divide-gray-200">
-                <thead class="sticky top-0 bg-gray-50">
+              <table class="min-w-max divide-y divide-line">
+                <thead class="sticky top-0 bg-surface-muted">
                   <tr>
                     <th v-for="(header, idx) in previewHeaders" :key="idx"
-                      class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase whitespace-nowrap">
+                      class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase whitespace-nowrap">
                       {{ header }}
                     </th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-line">
                   <tr v-for="(row, rowIdx) in previewData" :key="rowIdx"
-                    :class="rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100 transition-colors'">
+                    :class="rowIdx % 2 === 0 ? 'bg-white' : 'bg-surface-muted hover:bg-surface-muted transition-colors'">
                     <td v-for="(cell, cellIdx) in row" :key="cellIdx"
-                      class="px-4 py-2 text-xs text-gray-500 whitespace-nowrap">
+                      class="px-4 py-2 text-xs text-ink-subtle whitespace-nowrap">
                       {{ cell }}
                     </td>
                   </tr>
@@ -599,61 +599,61 @@ const title = importType.value === "drug"
 
           <!-- Progress -->
           <div v-if="importing" class="space-y-2">
-            <div class="flex justify-between text-sm text-gray-600">
+            <div class="flex justify-between text-sm text-ink-muted">
               <span>Uploading...</span>
               <span>{{ progress }}%</span>
             </div>
-            <div class="overflow-hidden w-full h-2.5 bg-gray-200 rounded-full">
-              <div class="h-2.5 bg-blue-600 rounded-full transition-all duration-300 ease-out"
+            <div class="overflow-hidden w-full h-2.5 bg-line rounded-full">
+              <div class="h-2.5 bg-primary rounded-full transition-all duration-300 ease-out"
                 :style="`width: ${progress}%`"></div>
             </div>
           </div>
 
           <!-- Results -->
           <div v-if="showResults && importResults" class="overflow-hidden rounded-lg border shadow-sm">
-            <div class="flex justify-between items-center px-4 py-3 bg-gray-50 border-b">
-              <h3 class="text-sm font-medium text-gray-700">Import Results</h3>
+            <div class="flex justify-between items-center px-4 py-3 bg-surface-muted border-b">
+              <h3 class="text-sm font-medium text-ink-muted">Import Results</h3>
               <div class="flex space-x-4">
-                <span class="px-2.5 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+                <span class="px-2.5 py-0.5 text-xs font-medium text-success-strong bg-success-soft rounded-full">
                   {{ importResults.successCount || 0 }} Success
                 </span>
-                <span class="px-2.5 py-0.5 text-xs font-medium text-red-800 bg-red-100 rounded-full">
+                <span class="px-2.5 py-0.5 text-xs font-medium text-error-strong bg-error-soft rounded-full">
                   {{ importResults.errorCount || 0 }} Failed
                 </span>
-                <span class="px-2.5 py-0.5 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
+                <span class="px-2.5 py-0.5 text-xs font-medium text-ink bg-surface-muted rounded-full">
                   {{ importResults.totalRows || 0 }} Total
                 </span>
               </div>
             </div>
             <div class="overflow-x-scroll overflow-y-scroll custom-scrollbar" style="height: 200px">
-              <table class="min-w-max divide-y divide-gray-200">
-                <thead class="sticky top-0 bg-gray-50">
+              <table class="min-w-max divide-y divide-line">
+                <thead class="sticky top-0 bg-surface-muted">
                   <tr>
-                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Row</th>
-                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
-                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Message</th>
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase">Row</th>
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase">Status</th>
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase">Message</th>
                     <th v-if="importType === 'service'"
-                      class="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Service UUID
+                      class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase">Service UUID
                     </th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-line">
                   <tr v-for="(result, idx) in importResults.rowResults" :key="idx"
                     :class="[
-                      result.success ? 'bg-green-50' : result.error ? 'bg-red-50' : 'bg-white',
-                      'hover:bg-gray-100 transition-colors'
+                      result.success ? 'bg-success-soft' : result.error ? 'bg-error-soft' : 'bg-white',
+                      'hover:bg-surface-muted transition-colors'
                     ]">
-                    <td class="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">{{ result.rowNumber }}</td>
+                    <td class="px-4 py-2 text-sm text-ink-subtle whitespace-nowrap">{{ result.rowNumber }}</td>
                     <td class="px-4 py-2 text-sm whitespace-nowrap">
                       <span v-if="result.success"
-                        class="px-2.5 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">Success</span>
+                        class="px-2.5 py-0.5 text-xs font-medium text-success-strong bg-success-soft rounded-full">Success</span>
                       <span v-else-if="result.error"
-                        class="px-2.5 py-0.5 text-xs font-medium text-red-800 bg-red-100 rounded-full">Error</span>
+                        class="px-2.5 py-0.5 text-xs font-medium text-error-strong bg-error-soft rounded-full">Error</span>
                       <span v-else
-                        class="px-2.5 py-0.5 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">Skipped</span>
+                        class="px-2.5 py-0.5 text-xs font-medium text-ink bg-surface-muted rounded-full">Skipped</span>
                     </td>
-                    <td class="px-4 py-2 text-sm text-gray-500">{{ result.message || '-' }}</td>
-                    <td v-if="importType === 'service'" class="px-4 py-2 text-sm text-gray-500">{{ result.serviceUuid || '-' }}</td>
+                    <td class="px-4 py-2 text-sm text-ink-subtle">{{ result.message || '-' }}</td>
+                    <td v-if="importType === 'service'" class="px-4 py-2 text-sm text-ink-subtle">{{ result.serviceUuid || '-' }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -663,7 +663,7 @@ const title = importType.value === "drug"
 
         <!-- Footer -->
         <template #bottom>
-          <div class="flex justify-between px-4 py-3 bg-gray-50 rounded-b-lg sm:px-6">
+          <div class="flex justify-between px-4 py-3 bg-surface-muted rounded-b-lg sm:px-6">
             <Button @click="closeModal" variant="outline" size="md" :disabled="importing">
               {{ showResults ? 'Close' : 'Cancel' }}
             </Button>
@@ -696,15 +696,15 @@ const title = importType.value === "drug"
 }
 
 :deep(.custom-scrollbar::-webkit-scrollbar-track) {
-  @apply bg-gray-200 rounded;
+  @apply bg-line rounded;
 }
 
 :deep(.custom-scrollbar::-webkit-scrollbar-thumb) {
-  @apply bg-gray-500 rounded;
+  @apply bg-ink-subtle rounded;
 }
 
 :deep(.custom-scrollbar::-webkit-scrollbar-thumb:hover) {
-  @apply bg-gray-400;
+  @apply bg-ink-subtle;
 }
 
 .fade-enter-active,

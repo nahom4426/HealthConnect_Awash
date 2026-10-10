@@ -53,7 +53,7 @@ const toggleBrokerStatus = async (broker) => {
           <template #filter>
             <select
               v-model="status"
-              class="h-9 px-3 pr-8 text-sm font-medium text-gray-600 bg-white rounded-lg border border-gray-200 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+              class="h-9 px-3 pr-8 text-sm font-medium text-ink-muted bg-white rounded-lg border border-line appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
             >
               <option value="ALL">All Statuses</option>
               <option value="ACTIVE">Active</option>

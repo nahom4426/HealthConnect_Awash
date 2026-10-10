@@ -163,30 +163,30 @@ onMounted(() => {
       title="Manage Benefit Contributions"
       :subtitle="`Set contribution percentages for policy ${props.data?.contract?.policyNumber || ''}`"
     >
-      <div class="overflow-y-auto overflow-x-hidden form-scrollbar bg-gray-50/50">
+      <div class="overflow-y-auto overflow-x-hidden form-scrollbar bg-surface-muted/50">
         <Form
           class="p-6 space-y-5"
           id="manageContributionsForm"
           @submit.prevent="handleSubmit"
         >
           <div v-if="loading" class="flex justify-center py-12">
-            <div class="w-9 h-9 rounded-full border-4 border-indigo-100 animate-spin border-t-indigo-600"></div>
+            <div class="w-9 h-9 rounded-full border-4 border-primary/10 animate-spin border-t-primary"></div>
           </div>
 
           <div v-else class="space-y-5">
             <!-- Header row -->
-            <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-line shadow-sm">
               <label for="selectAll" class="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   id="selectAll"
                   type="checkbox"
                   v-model="selectAll"
                   @change="toggleSelectAll"
-                  class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer"
+                  class="w-5 h-5 text-primary rounded border-line-strong focus:ring-primary cursor-pointer"
                 />
-                <span class="font-semibold text-gray-900">Select All Benefits</span>
+                <span class="font-semibold text-ink">Select All Benefits</span>
               </label>
-              <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+              <span class="text-xs font-medium text-ink-subtle bg-surface-muted px-2.5 py-1 rounded-full">
                 {{ selectedCount }} / {{ packagesList.length }} selected
               </span>
             </div>
@@ -195,9 +195,9 @@ onMounted(() => {
             <transition name="fade-slide">
               <div
                 v-if="selectedCount > 0"
-                class="flex items-center gap-4 p-4 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 shadow-sm"
+                class="flex items-center gap-4 p-4 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 to-primary/5 shadow-sm"
               >
-                <label class="shrink-0 text-sm font-semibold text-indigo-900">
+                <label class="shrink-0 text-sm font-semibold text-primary-hover">
                   Apply to all {{ selectedCount }} selected
                 </label>
                 <input
@@ -217,9 +217,9 @@ onMounted(() => {
                     @input="applyBulkPercentage"
                     min="0"
                     max="100"
-                    class="py-2 pr-7 pl-3 w-full text-sm font-semibold text-right text-indigo-900 bg-white rounded-lg border border-indigo-300 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
+                    class="py-2 pr-7 pl-3 w-full text-sm font-semibold text-right text-primary-hover bg-white rounded-lg border border-primary/30 focus:ring-2 focus:ring-primary/70 focus:border-primary/70 outline-none"
                   />
-                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-500 pointer-events-none">%</span>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-primary pointer-events-none">%</span>
                 </div>
               </div>
             </transition>
@@ -231,8 +231,8 @@ onMounted(() => {
                 :key="pkg.packageUuid"
                 class="flex flex-col p-4 rounded-xl border transition-all duration-150"
                 :class="pkg.isSelected
-                  ? 'bg-white border-indigo-200 shadow-sm ring-1 ring-indigo-100'
-                  : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'"
+                  ? 'bg-white border-primary/20 shadow-sm ring-1 ring-primary/10'
+                  : 'bg-white border-line hover:border-line-strong hover:shadow-sm'"
               >
                 <!-- Row for checkbox, name, slider -->
                 <div class="flex items-center w-full">
@@ -241,15 +241,15 @@ onMounted(() => {
                     type="checkbox"
                     v-model="pkg.isSelected"
                     @change="updateSelectAllState"
-                    class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 shrink-0 cursor-pointer"
+                    class="w-5 h-5 text-primary rounded border-line-strong focus:ring-primary shrink-0 cursor-pointer"
                   />
 
                   <label
                     :for="`pkg-${pkg.packageUuid}`"
                     class="flex-1 ml-3.5 min-w-0 cursor-pointer"
                   >
-                    <div class="text-sm font-semibold text-gray-900 truncate">{{ pkg.packageName }}</div>
-                    <div class="text-xs text-gray-400">{{ pkg.packageCode }}</div>
+                    <div class="text-sm font-semibold text-ink truncate">{{ pkg.packageName }}</div>
+                    <div class="text-xs text-ink-subtle">{{ pkg.packageCode }}</div>
                   </label>
 
                   <div v-if="pkg.isSelected" class="flex items-center gap-3 ml-4 w-64 shrink-0">
@@ -266,17 +266,17 @@ onMounted(() => {
                       <input
                         type="number"
                         v-model="pkg.contributionPercentage"
-                        class="py-1.5 pr-6 pl-2.5 w-full text-sm font-medium text-right text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
+                        class="py-1.5 pr-6 pl-2.5 w-full text-sm font-medium text-right text-ink rounded-lg border border-line-strong focus:ring-2 focus:ring-primary/70 focus:border-primary/70 outline-none"
                         min="0"
                         max="100"
                       />
-                      <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">%</span>
+                      <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-ink-subtle pointer-events-none">%</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Expanded area for benefit pooling -->
-                <div v-if="pkg.isSelected" class="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-4">
+                <div v-if="pkg.isSelected" class="mt-4 pt-4 border-t border-line flex flex-col gap-4">
                   <Toggle
                     v-model="pkg.benefitPooling"
                     :name="'benefitPooling_' + pkg.packageUuid"
@@ -299,13 +299,13 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div v-if="packagesList.length === 0" class="py-10 text-center text-gray-400 text-sm">
+              <div v-if="packagesList.length === 0" class="py-10 text-center text-ink-subtle text-sm">
                 No benefit packages available
               </div>
             </div>
           </div>
 
-          <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
+          <div class="flex gap-3 justify-end pt-4 border-t border-line">
             <Button
               type="button"
               @click="closeModal"

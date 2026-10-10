@@ -216,22 +216,22 @@ function viewDetails(id) {
             <div class="flex flex-wrap gap-4 items-center mb-3">
               <div
                 v-if="selectedToBeMapped.size > 0"
-                class="flex gap-3 justify-between items-center px-4 py-1 bg-blue-50 rounded-lg border border-blue-200"
+                class="flex gap-3 justify-between items-center px-4 py-1 bg-primary/5 rounded-lg border border-primary/20"
               >
-                <span class="text-sm font-medium text-blue-700">
+                <span class="text-sm font-medium text-primary-hover">
                   {{ selectedToBeMapped.size }} provider(s) selected
                 </span>
                 <div class="flex gap-2">
                   <button
                     @click="selectedToBeMapped.clear(); allToBeMappedSelected = false"
-                    class="px-3 py-1 text-sm text-gray-600 bg-white rounded-lg border border-gray-300 hover:bg-gray-50"
+                    class="px-3 py-1 text-sm text-ink-muted bg-white rounded-lg border border-line-strong hover:bg-surface-muted"
                   >
                     Clear
                   </button>
                   <button
                     @click="mapSelected"
                     :disabled="mappingPending"
-                    class="flex gap-2 items-center px-4 py-1 text-sm font-semibold text-white bg-blue-600 rounded-lg transition-colors hover:bg-blue-700 disabled:opacity-60"
+                    class="flex gap-2 items-center px-4 py-1 text-sm font-semibold text-white bg-primary rounded-lg transition-colors hover:bg-primary-hover disabled:opacity-60"
                   >
                     <i v-html="icons.plus || '+'" class="w-4 h-4"></i>
                     {{ mappingPending ? 'Mapping...' : `Map ${selectedToBeMapped.size} Selected` }}
@@ -269,7 +269,7 @@ function viewDetails(id) {
                   type="checkbox"
                   :checked="allToBeMappedSelected"
                   @change="toggleSelectAllToBeMapped(providers)"
-                  class="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer focus:ring-blue-500"
+                  class="w-4 h-4 text-primary rounded border-line-strong cursor-pointer focus:ring-primary"
                 />
               </template>
             </Table>
@@ -292,22 +292,22 @@ function viewDetails(id) {
             <div class="flex flex-wrap gap-4 items-center mb-3">
               <div
                 v-if="selectedMapped.size > 0"
-                class="flex gap-3 justify-between items-center px-4 py-1 bg-red-50 rounded-lg border border-red-200"
+                class="flex gap-3 justify-between items-center px-4 py-1 bg-error-soft rounded-lg border border-error/20"
               >
-                <span class="text-sm font-medium text-red-700">
+                <span class="text-sm font-medium text-error-strong">
                   {{ selectedMapped.size }} provider(s) selected
                 </span>
                 <div class="flex gap-2">
                   <button
                     @click="selectedMapped.clear(); allMappedSelected = false"
-                    class="px-3 py-1 text-sm text-gray-600 bg-white rounded-lg border border-gray-300 hover:bg-gray-50"
+                    class="px-3 py-1 text-sm text-ink-muted bg-white rounded-lg border border-line-strong hover:bg-surface-muted"
                   >
                     Clear
                   </button>
                   <button
                     @click="unmapSelected"
                     :disabled="unmappingPending"
-                    class="flex gap-2 items-center px-4 py-1 text-sm font-semibold text-white bg-red-600 rounded-lg transition-colors hover:bg-red-700 disabled:opacity-60"
+                    class="flex gap-2 items-center px-4 py-1 text-sm font-semibold text-white bg-error rounded-lg transition-colors hover:bg-error-strong disabled:opacity-60"
                   >
                     <i v-html="icons.trash || '✕'" class="w-4 h-4"></i>
                     {{ unmappingPending ? 'Unmapping...' : `Unmap ${selectedMapped.size} Selected` }}
@@ -348,7 +348,7 @@ function viewDetails(id) {
                   type="checkbox"
                   :checked="allMappedSelected"
                   @change="toggleSelectAllMapped(mappedContracts)"
-                  class="w-4 h-4 text-red-600 rounded border-gray-300 cursor-pointer focus:ring-red-500"
+                  class="w-4 h-4 text-error rounded border-line-strong cursor-pointer focus:ring-error"
                 />
               </template>
             </Table>

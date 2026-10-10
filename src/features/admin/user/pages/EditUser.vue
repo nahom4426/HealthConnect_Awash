@@ -116,12 +116,12 @@ const goBack = () => {
     </div>
     <div
       v-else-if="!userData || rolesData.length === 0"
-      class="p-6 text-center text-red-500"
+      class="p-6 text-center text-error"
     >
       Failed to load user data. Please try again.
       <pre
         v-if="process.env.NODE_ENV === 'development'"
-        class="mt-4 text-xs text-left bg-gray-100 p-2 rounded"
+        class="mt-4 text-xs text-left bg-surface-muted p-2 rounded"
       >
                 User data: {{ userData ? "Available" : "Missing" }}
                 Roles data: {{ rolesData.length }} roles loaded

@@ -72,21 +72,21 @@ const pagination = usePagination({
           <RouterLink
             v-ripple
             :to="`/add_new_policy/detail/${row?.institutionUuid}/institution_coveraage/${row?.payerInstitutionContractUuid}`"
-            class="size-8 bg-gray-200 rounded-full shadow-lg grid place-items-center"
+            class="size-8 bg-line rounded-full shadow-lg grid place-items-center"
           >
             <i v-html="icons.coverage" />
           </RouterLink>
           <RouterLink
             v-ripple
             :to="`/add_new_policy/detail/${row?.institutionUuid}/insured_persons/${row?.payerInstitutionContractUuid}`"
-            class="size-8 bg-gray-200 rounded-full shadow-lg grid place-items-center"
+            class="size-8 bg-line rounded-full shadow-lg grid place-items-center"
           >
             <i v-html="icons.insured" />
           </RouterLink>
           <RouterLink
             v-ripple
             to=""
-            class="size-8 bg-gray-200 rounded-full shadow-lg grid place-items-center"
+            class="size-8 bg-line rounded-full shadow-lg grid place-items-center"
           >
             <i v-html="icons.provider" />
           </RouterLink>

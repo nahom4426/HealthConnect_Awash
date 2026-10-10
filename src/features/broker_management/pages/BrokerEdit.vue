@@ -94,15 +94,15 @@ const sectionConfig = [
   {
     key: 'personal',
     title: 'Personal Information',
-    accent: 'border-l-blue-500',
-    iconBg: 'bg-blue-50 text-blue-600',
+    accent: 'border-l-primary',
+    iconBg: 'bg-primary/5 text-primary',
     icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
   },
   {
     key: 'address',
     title: 'Address Information',
-    accent: 'border-l-emerald-500',
-    iconBg: 'bg-emerald-50 text-emerald-600',
+    accent: 'border-l-success',
+    iconBg: 'bg-success-soft text-success',
     icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
   },
   {
@@ -115,37 +115,37 @@ const sectionConfig = [
   {
     key: 'banking',
     title: 'Payout Configuration',
-    accent: 'border-l-amber-500',
-    iconBg: 'bg-amber-50 text-amber-600',
+    accent: 'border-l-warning',
+    iconBg: 'bg-warning-soft text-warning',
     icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
   },
 ];
 </script>
 
 <template>
-  <div class="p-6 h-full flex flex-col bg-gray-50 max-w-5xl mx-auto w-full">
+  <div class="p-6 h-full flex flex-col bg-surface-muted max-w-5xl mx-auto w-full">
     <!-- Page Header -->
     <div class="mb-6">
-      <button @click="cancel" class="text-sm font-medium text-gray-400 hover:text-primary flex items-center mb-4 transition-colors gap-1.5">
+      <button @click="cancel" class="text-sm font-medium text-ink-subtle hover:text-primary flex items-center mb-4 transition-colors gap-1.5">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
         Back to Broker
       </button>
-      <h1 class="text-2xl font-bold text-gray-900">Edit Broker</h1>
-      <p class="text-sm text-gray-400 mt-1">Update broker information and payout details.</p>
+      <h1 class="text-2xl font-bold text-ink">Edit Broker</h1>
+      <p class="text-sm text-ink-subtle mt-1">Update broker information and payout details.</p>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">
       <div class="flex flex-col items-center gap-3">
         <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-gray-400">Loading broker details...</span>
+        <span class="text-sm text-ink-subtle">Loading broker details...</span>
       </div>
     </div>
 
     <!-- Error Alert -->
-    <div v-if="saveError" class="mb-4 px-4 py-3 text-sm text-red-700 bg-red-50 rounded-xl border border-red-200 flex items-center gap-2">
+    <div v-if="saveError" class="mb-4 px-4 py-3 text-sm text-error-strong bg-error-soft rounded-xl border border-error/20 flex items-center gap-2">
       <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
       </svg>
@@ -158,14 +158,14 @@ const sectionConfig = [
       <div
         v-for="sec in sectionConfig"
         :key="sec.key"
-        class="bg-white rounded-xl shadow-xs border-l-4 border-t border-r border-b border-gray-200 overflow-hidden transition-all duration-300"
+        class="bg-white rounded-xl shadow-xs border-l-4 border-t border-r border-b border-line overflow-hidden transition-all duration-300"
         :class="sec.accent"
       >
         <!-- Section Header -->
         <button
           type="button"
           @click="toggleSection(sec.key)"
-          class="w-full px-6 py-4 flex justify-between items-center hover:bg-gray-50 select-none transition-colors"
+          class="w-full px-6 py-4 flex justify-between items-center hover:bg-surface-muted select-none transition-colors"
         >
           <div class="flex items-center gap-3">
             <div class="p-2 rounded-lg" :class="sec.iconBg">
@@ -173,15 +173,15 @@ const sectionConfig = [
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="sec.icon" />
               </svg>
             </div>
-            <h3 class="text-base font-semibold text-gray-900">{{ sec.title }}</h3>
+            <h3 class="text-base font-semibold text-ink">{{ sec.title }}</h3>
           </div>
-          <svg class="h-5 w-5 text-gray-400 transition-transform duration-300" :class="{ 'rotate-180': sections[sec.key] }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="h-5 w-5 text-ink-subtle transition-transform duration-300" :class="{ 'rotate-180': sections[sec.key] }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
         <!-- Personal Information Fields -->
-        <div v-if="sec.key === 'personal'" v-show="sections.personal" class="px-6 pb-6 pt-4 border-t border-gray-100">
+        <div v-if="sec.key === 'personal'" v-show="sections.personal" class="px-6 pb-6 pt-4 border-t border-line">
           <div class="grid grid-cols-2 gap-4">
             <Input
               v-model="form.firstName"
@@ -203,7 +203,7 @@ const sectionConfig = [
         </div>
 
         <!-- Address Information Fields -->
-        <div v-if="sec.key === 'address'" v-show="sections.address" class="px-6 pb-6 pt-4 border-t border-gray-100">
+        <div v-if="sec.key === 'address'" v-show="sections.address" class="px-6 pb-6 pt-4 border-t border-line">
           <div class="grid grid-cols-2 gap-4">
             <div class="col-span-2">
               <Input
@@ -227,7 +227,7 @@ const sectionConfig = [
         </div>
 
         <!-- Professional Details Fields -->
-        <div v-if="sec.key === 'professional'" v-show="sections.professional" class="px-6 pb-6 pt-4 border-t border-gray-100">
+        <div v-if="sec.key === 'professional'" v-show="sections.professional" class="px-6 pb-6 pt-4 border-t border-line">
           <div class="grid grid-cols-2 gap-4">
             <Input
               v-model="form.licenseNumber"
@@ -238,7 +238,7 @@ const sectionConfig = [
               :attributes="{ placeholder: 'e.g. TIN-123456789', name: 'taxId', label: 'Tax ID', required: true }"
             />
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Broker Type</label>
+              <label class="block text-sm font-medium text-ink-muted mb-1.5">Broker Type</label>
               <Select
                 name="type"
                 :obj="true"
@@ -248,7 +248,7 @@ const sectionConfig = [
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+              <label class="block text-sm font-medium text-ink-muted mb-1.5">Status</label>
               <Select
                 name="status"
                 :obj="true"
@@ -261,7 +261,7 @@ const sectionConfig = [
         </div>
 
         <!-- Banking Fields -->
-        <div v-if="sec.key === 'banking'" v-show="sections.banking" class="px-6 pb-6 pt-4 border-t border-gray-100">
+        <div v-if="sec.key === 'banking'" v-show="sections.banking" class="px-6 pb-6 pt-4 border-t border-line">
           <div class="grid grid-cols-2 gap-4">
             <Input
               v-model="form.bankName"
@@ -276,7 +276,7 @@ const sectionConfig = [
       </div>
 
       <!-- Fixed Action Bar -->
-      <div class="fixed bottom-0 left-64 right-0 bg-white border-t border-gray-200 px-8 py-4 z-10 flex justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)]">
+      <div class="fixed bottom-0 left-64 right-0 bg-white border-t border-line px-8 py-4 z-10 flex justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)]">
         <Button type="button" variant="outline" @click="cancel">Cancel</Button>
         <Button html-type="submit" variant="primary" :pending="isSubmitting">Update Broker</Button>
       </div>

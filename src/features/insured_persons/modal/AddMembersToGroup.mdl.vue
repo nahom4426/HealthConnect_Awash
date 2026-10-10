@@ -741,20 +741,20 @@ input[type="checkbox"] {
 }
 
 .table-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--surface-muted));
   border-radius: 3px;
 }
 
 .table-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: rgb(var(--line-strong));
   border-radius: 3px;
 }
 
 .table-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgb(var(--line-strong));
 }
 
 tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: rgb(var(--surface-muted));
 }
 </style>

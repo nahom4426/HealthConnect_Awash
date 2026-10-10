@@ -189,7 +189,7 @@ tr {
 }
 
 tr:hover {
-  background-color: #f8fafc;
+  background-color: rgb(var(--surface-muted));
   transform: scale(1.001);
 }
 

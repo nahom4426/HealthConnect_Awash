@@ -88,7 +88,7 @@ const props = defineProps({
 }
 
 .form-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #d1c9c9;
+  background-color: rgb(var(--line-strong));
   border-radius: 50px;
 }
 </style>

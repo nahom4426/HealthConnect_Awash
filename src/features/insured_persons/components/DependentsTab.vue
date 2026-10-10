@@ -72,7 +72,7 @@
                   <div class="flex relative flex-col items-start">
                     <label
                       for="dependent-photo-upload"
-                      class="cursor-pointer flex items-center justify-center w-12 h-12 bg-[#DFF1F1] rounded hover:bg-blue-100 overflow-hidden relative"
+                      class="cursor-pointer flex items-center justify-center w-12 h-12 bg-primary/10 rounded hover:bg-blue-100 overflow-hidden relative"
                     >
                       <template v-if="newDependentPhotoPreview">
                         <img :src="newDependentPhotoPreview" class="object-cover w-full h-full" />
@@ -204,7 +204,7 @@
                     <div class="flex relative flex-col items-start">
                       <label
                         :for="`edit-dependent-photo-${editingDependentIndex}`"
-                        class="cursor-pointer flex items-center justify-center w-12 h-12 bg-[#DFF1F1] rounded hover:bg-blue-100 overflow-hidden relative"
+                        class="cursor-pointer flex items-center justify-center w-12 h-12 bg-primary/10 rounded hover:bg-blue-100 overflow-hidden relative"
                       >
                         <template v-if="editingDependentPhotoPreview || dependent.profile || dependent.profilePictureBase64 || dependent.photoUrl">
                           <img

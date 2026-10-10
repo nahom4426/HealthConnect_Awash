@@ -193,7 +193,7 @@ onMounted(() => {
 .custom-scrollbar {
   scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
-  scrollbar-color: #9ca3af #f3f4f6;
+  scrollbar-color: rgb(var(--ink-subtle)) rgb(var(--surface-muted));
 }
 
 :deep(.custom-scrollbar::-webkit-scrollbar) {
@@ -202,16 +202,16 @@ onMounted(() => {
 }
 
 :deep(.custom-scrollbar::-webkit-scrollbar-track) {
-  background: #e5e7eb;
+  background: rgb(var(--line));
   border-radius: 6px;
 }
 
 :deep(.custom-scrollbar::-webkit-scrollbar-thumb) {
-  background: #6b7280;
+  background: rgb(var(--ink-muted));
   border-radius: 6px;
 }
 
 :deep(.custom-scrollbar::-webkit-scrollbar-thumb:hover) {
-  background: #4b5563;
+  background: rgb(var(--ink-muted));
 }
 </style>

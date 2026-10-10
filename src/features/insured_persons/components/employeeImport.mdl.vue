@@ -799,17 +799,17 @@
   }
   
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgb(var(--surface-muted));
     border-radius: 3px;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: rgb(var(--line-strong));
     border-radius: 3px;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
+    background: rgb(var(--ink-subtle));
   }
   
   /* Animations */

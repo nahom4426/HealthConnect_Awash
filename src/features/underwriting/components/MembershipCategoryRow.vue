@@ -233,10 +233,10 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   display: inline-block;
   text-transform: capitalize;
 }
-.bg-green-100 { background-color: #d1fae5; color: #065f46; }
-.bg-yellow-100 { background-color: #fef3c7; color: #92400e; }
-.bg-red-100 { background-color: #fee2e2; color: #991b1b; }
-.bg-gray-100 { background-color: #f3f4f6; color: #374151; }
+.bg-green-100 { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
+.bg-yellow-100 { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
+.bg-red-100 { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
+.bg-gray-100 { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
 
 /* Dropdown Animation */
 .dropdown-menu {
@@ -261,11 +261,11 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .dropdown-item:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: rgb(var(--primary) / 0.05);
+  color: rgb(var(--primary-hover));
 }
 .dropdown-item.text-red-600:hover {
-  background-color: #fef2f2;
-  color: #dc2626;
+  background-color: rgb(var(--error-soft));
+  color: rgb(var(--error));
 }
 </style>

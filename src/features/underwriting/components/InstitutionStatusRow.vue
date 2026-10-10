@@ -264,12 +264,12 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
 
 /* Hover */
 .dropdown-menu button:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: rgb(var(--primary) / 0.05);
+  color: rgb(var(--primary-hover));
 }
 
 .dropdown-menu button.text-red-600:hover {
-  background-color: #fef2f2;
-  color: #dc2626;
+  background-color: rgb(var(--error-soft));
+  color: rgb(var(--error));
 }
 </style>

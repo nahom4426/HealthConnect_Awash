@@ -290,7 +290,7 @@ tr {
 }
 
 tr:hover {
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 2px 8px rgb(var(--primary) / 0.1);
 }
 
 /* Smooth icon transitions */

@@ -345,15 +345,15 @@ tr {
 
 /* Hover effects for status rows */
 tr.bg-red-100:hover {
-  background-color: #fee2e2 !important;
+  background-color: rgb(var(--error-soft)) !important;
 }
 
 tr.bg-orange-100:hover {
-  background-color: #fed7aa !important;
+  background-color: rgb(var(--warning) / 0.3) !important;
 }
 
 tr.bg-yellow-50:hover {
-  background-color: #fef9c3 !important;
+  background-color: rgb(var(--warning-soft)) !important;
 }
 
 /* Pulse animation for status dots */

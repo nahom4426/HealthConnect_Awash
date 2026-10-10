@@ -195,7 +195,7 @@ th {
   text-align: left;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #6b7280;
+  color: rgb(var(--ink-muted));
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

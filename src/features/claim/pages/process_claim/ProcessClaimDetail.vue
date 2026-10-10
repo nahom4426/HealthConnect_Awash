@@ -274,19 +274,19 @@ function getStatusBadge(status) {
 }
 
 .modern-table :deep(th) {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(135deg, rgb(var(--surface-muted)) 0%, rgb(var(--surface-muted)) 100%);
   padding: 12px 16px;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #475569;
-  border-bottom: 2px solid #e2e8f0;
+  color: rgb(var(--ink-muted));
+  border-bottom: 2px solid rgb(var(--line));
 }
 
 .modern-table :deep(td) {
   padding: 12px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid rgb(var(--surface-muted));
   transition: all 0.2s ease;
 }
 
@@ -295,7 +295,7 @@ function getStatusBadge(status) {
 }
 
 .modern-table :deep(tbody tr:hover) {
-  background-color: #f8fafc;
+  background-color: rgb(var(--surface-muted));
   transform: scale(1.001);
 }
 
@@ -318,18 +318,18 @@ function getStatusBadge(status) {
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  border: 2px solid #cbd5e1;
+  border: 2px solid rgb(var(--line-strong));
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .modern-table :deep(input[type="checkbox"]:checked) {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
+  background-color: rgb(var(--primary));
+  border-color: rgb(var(--primary));
 }
 
 .modern-table :deep(input[type="checkbox"]:hover) {
-  border-color: #3b82f6;
+  border-color: rgb(var(--primary));
 }
 
 /* Status badge inline styles */

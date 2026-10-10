@@ -609,7 +609,7 @@ watch(employeeSearchTerm, () => {
 
 <!-- Security Background Pattern -->
 <div class="absolute inset-0 opacity-[0.08] pointer-events-none"
-     style="background-image: repeating-linear-gradient(45deg, #0ea5e9 0, #0ea5e9 1px, transparent 1px, transparent 8px);">
+     style="background-image: repeating-linear-gradient(45deg, rgb(var(--primary) / 0.4) 0, rgb(var(--primary) / 0.4) 1px, transparent 1px, transparent 8px);">
 </div>
 
 <!-- UV Watermark -->

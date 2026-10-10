@@ -268,7 +268,7 @@ tr {
 }
 
 tr:hover {
-  background-color: #f8fafc;
+  background-color: rgb(var(--surface-muted));
   transform: scale(1.001);
 }
 
@@ -284,7 +284,7 @@ tr:hover {
 
 /* Gradient Avatars */
 .avatar-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-hover)) 100%);
 }
 
 /* Dropdown Styles */
@@ -316,7 +316,7 @@ tr:hover {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--surface-muted));
   border-radius: 3px;
 }
 

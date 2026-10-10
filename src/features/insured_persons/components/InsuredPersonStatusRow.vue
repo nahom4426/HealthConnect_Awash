@@ -735,15 +735,15 @@ tr {
 
 /* Hover effects for status rows */
 tr.bg-red-100:hover {
-  background-color: #fee2e2 !important;
+  background-color: rgb(var(--error-soft)) !important;
 }
 
 tr.bg-orange-100:hover {
-  background-color: #fed7aa !important;
+  background-color: rgb(var(--warning) / 0.3) !important;
 }
 
 tr.bg-yellow-50:hover {
-  background-color: #fef9c3 !important;
+  background-color: rgb(var(--warning-soft)) !important;
 }
 
 /* Dropdown menu styles */
@@ -777,13 +777,13 @@ tr.bg-yellow-50:hover {
 }
 
 .dropdown-menu button:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: rgb(var(--primary) / 0.05);
+  color: rgb(var(--primary-hover));
 }
 
 .dropdown-menu button.text-red-600:hover {
-  background-color: #fef2f2;
-  color: #dc2626;
+  background-color: rgb(var(--error-soft));
+  color: rgb(var(--error));
 }
 
 /* Pulse animation for status dots */
@@ -812,7 +812,7 @@ button:focus-visible {
 /* Custom scrollbar for expanded sections */
 .grid {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: rgb(var(--line-strong)) rgb(var(--surface-muted));
 }
 
 .grid::-webkit-scrollbar {
@@ -821,16 +821,16 @@ button:focus-visible {
 }
 
 .grid::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: rgb(var(--surface-muted));
   border-radius: 3px;
 }
 
 .grid::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgb(var(--line-strong));
   border-radius: 3px;
 }
 
 .grid::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgb(var(--ink-subtle));
 }
 </style>

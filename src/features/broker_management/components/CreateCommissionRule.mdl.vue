@@ -608,16 +608,16 @@ onBeforeUnmount(() => {
 }
 
 .date-input-shell:focus-within {
-  border-color: var(--primary-color, #3b82f6);
+  border-color: var(--primary-color, rgb(var(--primary)));
   background: white;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color, #3b82f6) 15%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color, rgb(var(--primary))) 15%, transparent);
 }
 
 .date-icon {
   width: 16px;
   height: 16px;
   margin-left: 12px;
-  color: var(--primary-color, #3b82f6);
+  color: var(--primary-color, rgb(var(--primary)));
   flex-shrink: 0;
   pointer-events: none;
 }
@@ -655,8 +655,8 @@ onBeforeUnmount(() => {
 }
 
 .preset-chip:hover {
-  background: color-mix(in srgb, var(--primary-color, #3b82f6) 12%, transparent);
-  color: var(--primary-color, #3b82f6);
+  background: color-mix(in srgb, var(--primary-color, rgb(var(--primary))) 12%, transparent);
+  color: var(--primary-color, rgb(var(--primary)));
 }
 
 .modal-body-wrapper::-webkit-scrollbar {
@@ -668,27 +668,27 @@ onBeforeUnmount(() => {
 }
 
 .modal-body-wrapper::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: rgb(var(--line-strong));
   border-radius: 9999px;
 }
 
 .modal-body-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: rgb(var(--ink-subtle));
 }
 
 .modal-body-wrapper {
   scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
+  scrollbar-color: rgb(var(--line-strong)) transparent;
 }
 
 .modal-body-wrapper:hover {
-  scrollbar-color: #9ca3af transparent;
+  scrollbar-color: rgb(var(--ink-subtle)) transparent;
 }
 
 input[type="range"]::-moz-range-track {
   width: 100%;
   height: 8px;
-  background: #e5e7eb;
+  background: rgb(var(--line));
   border-radius: 9999px;
   border: none;
 }
@@ -697,10 +697,10 @@ input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--primary-color, #3b82f6);
+  background: var(--primary-color, rgb(var(--primary)));
   cursor: pointer;
   border: none;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 6px -1px rgb(var(--primary) / 0.3);
 }
 
 input[type="range"]::-moz-range-thumb:hover {

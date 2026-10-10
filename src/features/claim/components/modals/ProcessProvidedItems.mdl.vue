@@ -534,7 +534,7 @@ async function performAction(action) {
   top: 0;
   bottom: 0;
   width: 3px;
-  background: #ef4444;
+  background: rgb(var(--error));
   border-radius: 2px;
 }
 </style>

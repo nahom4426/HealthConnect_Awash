@@ -688,7 +688,7 @@ const title = importType.value === "drug"
 .custom-scrollbar {
   scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
-  scrollbar-color: #9ca3af #f3f4f6;
+  scrollbar-color: rgb(var(--ink-subtle)) rgb(var(--surface-muted));
 }
 
 :deep(.custom-scrollbar::-webkit-scrollbar) {

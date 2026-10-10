@@ -143,8 +143,8 @@ function closeAllDropdowns() {
 </template>
 
 <style scoped>
-.bg-green-100 { background-color: #d1fae5; color: #065f46; }
-.bg-yellow-100 { background-color: #fef3c7; color: #92400e; }
-.bg-red-100 { background-color: #fee2e2; color: #991b1b; }
-.bg-gray-100 { background-color: #f3f4f6; color: #374151; }
+.bg-green-100 { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
+.bg-yellow-100 { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
+.bg-red-100 { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
+.bg-gray-100 { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
 </style>

@@ -175,7 +175,7 @@ function toOptions(opts: string[] | undefined) {
 
 .rpf-no-params-text {
   font-size: 12px;
-  color: #64748b;
+  color: rgb(var(--ink-muted));
   font-weight: 500;
 }
 
@@ -217,7 +217,7 @@ function toOptions(opts: string[] | undefined) {
 .rpf-label {
   font-size: 10px;
   font-weight: 700;
-  color: #475569;
+  color: rgb(var(--ink-muted));
   text-transform: uppercase;
   letter-spacing: 0.05em;
   display: flex;
@@ -230,7 +230,7 @@ function toOptions(opts: string[] | undefined) {
 }
 
 .rpf-required {
-  color: #ef4444;
+  color: rgb(var(--error));
   font-size: 11px;
   line-height: 1;
 }
@@ -248,21 +248,21 @@ function toOptions(opts: string[] | undefined) {
   height: 36px !important;
   min-height: 36px !important;
   border-radius: 8px !important;
-  border-color: #cbd5e1 !important;
+  border-color: rgb(var(--line-strong)) !important;
 }
 
 :deep(.dp__input) {
   height: 36px !important;
   font-size: 12.5px !important;
   border-radius: 8px !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
+  border-color: rgb(var(--line-strong)) !important;
+  color: rgb(var(--ink)) !important;
 }
 
 :deep(.search-select-input) {
   height: 36px !important;
   border-radius: 8px !important;
-  border-color: #cbd5e1 !important;
+  border-color: rgb(var(--line-strong)) !important;
   font-size: 12.5px !important;
 }
 
@@ -276,10 +276,10 @@ function toOptions(opts: string[] | undefined) {
   width: 100%;
   height: 36px;
   padding: 0 10px;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid rgb(var(--line-strong));
   border-radius: 8px;
   font-size: 12.5px;
-  color: #0f172a;
+  color: rgb(var(--ink));
   background: #fff;
   outline: none;
   box-sizing: border-box;
@@ -288,12 +288,12 @@ function toOptions(opts: string[] | undefined) {
 }
 
 .rpf-text-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  border-color: rgb(var(--primary));
+  box-shadow: 0 0 0 3px rgb(var(--primary) / 0.12);
 }
 
 .rpf-text-input::placeholder {
-  color: #94a3b8;
+  color: rgb(var(--ink-subtle));
 }
 
 /* Action Buttons Wrapper */
@@ -320,12 +320,12 @@ function toOptions(opts: string[] | undefined) {
   font-size: 12px !important;
   font-weight: 700 !important;
   border-radius: 8px !important;
-  background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
+  background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-hover))) !important;
+  box-shadow: 0 2px 8px rgb(var(--primary) / 0.25) !important;
   white-space: nowrap;
 }
 .rpf-btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35) !important;
+  box-shadow: 0 4px 12px rgb(var(--primary) / 0.35) !important;
 }
 </style>

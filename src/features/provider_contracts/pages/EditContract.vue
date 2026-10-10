@@ -384,7 +384,7 @@ const handleUpdateContract = () => {
 
       <button
         @click="handleUpdateContract"
-        class="px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-white rounded-lg text-sm font-medium hover:from-primary-hover hover:to-[#013436] transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+        class="px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-white rounded-lg text-sm font-medium hover:from-primary-hover hover:to-primary-hover transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
         :disabled="isLoading || isFetchingProviders || isFetchingContract || fetchError"
       >
         <ButtonSpinner v-if="isLoading" class="w-4 h-4 text-white" />
@@ -403,7 +403,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   border-color: rgb(var(--primary));
   outline: none;
-  box-shadow: 0 0 0 2px rgba(2, 103, 107, 0.2);
+  box-shadow: 0 0 0 2px rgb(var(--primary) / 0.2);
 }
 
 button:disabled {

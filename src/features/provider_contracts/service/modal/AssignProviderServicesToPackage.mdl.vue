@@ -741,23 +741,23 @@ const isSaveDisabled = computed(() => {
 }
 
 .scrollable-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--surface-muted));
   border-radius: 4px;
 }
 
 .scrollable-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: rgb(var(--line-strong));
   border-radius: 4px;
 }
 
 .scrollable-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgb(var(--line-strong));
 }
 
 /* Firefox scrollbar for scrollable-content */
 .scrollable-content {
   scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f1f1f1;
+  scrollbar-color: rgb(var(--line-strong)) rgb(var(--surface-muted));
 }
 
 /* ============================================
@@ -767,7 +767,7 @@ const isSaveDisabled = computed(() => {
 .action-buttons {
   flex-shrink: 0;
   padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid rgb(var(--line));
   background: white;
   position: sticky;
   bottom: 0;
@@ -782,7 +782,7 @@ const isSaveDisabled = computed(() => {
   overflow: auto;
   max-height: 450px;
   border-radius: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgb(var(--line-strong));
   background: white;
   position: relative;
 }
@@ -794,23 +794,23 @@ const isSaveDisabled = computed(() => {
 }
 
 .table-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--surface-muted));
   border-radius: 4px;
 }
 
 .table-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: rgb(var(--line-strong));
   border-radius: 4px;
 }
 
 .table-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgb(var(--line-strong));
 }
 
 /* Firefox scrollbar for table container */
 .table-container {
   scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f1f1f1;
+  scrollbar-color: rgb(var(--line-strong)) rgb(var(--surface-muted));
 }
 
 /* ============================================
@@ -886,7 +886,7 @@ const isSaveDisabled = computed(() => {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #f9fafb;
+  background: rgb(var(--surface-muted));
 }
 
 .services-table thead th {
@@ -895,10 +895,10 @@ const isSaveDisabled = computed(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #6b7280;
-  border-bottom: 2px solid #e5e7eb;
+  color: rgb(var(--ink-muted));
+  border-bottom: 2px solid rgb(var(--line));
   text-align: left;
-  background: #f9fafb;
+  background: rgb(var(--surface-muted));
 }
 
 /* ============================================
@@ -910,11 +910,11 @@ const isSaveDisabled = computed(() => {
 }
 
 .services-table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: rgb(var(--surface-muted));
 }
 
 .services-table tbody tr.bg-green-50:hover {
-  background-color: #d1fae5;
+  background-color: rgb(var(--success-soft));
 }
 
 .services-table tbody tr:last-child td {
@@ -928,7 +928,7 @@ const isSaveDisabled = computed(() => {
 .service-name {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #111827;
+  color: rgb(var(--ink));
   word-break: break-word;
   line-height: 1.25;
 }
@@ -954,13 +954,13 @@ const isSaveDisabled = computed(() => {
 }
 
 .status-existing {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: rgb(var(--success-soft));
+  color: rgb(var(--success-strong));
 }
 
 .status-available {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: rgb(var(--primary) / 0.1);
+  color: rgb(var(--primary-hover));
 }
 
 /* ============================================
@@ -969,7 +969,7 @@ const isSaveDisabled = computed(() => {
    
 .remove-btn {
   padding: 0.375rem;
-  color: #dc2626;
+  color: rgb(var(--error));
   border-radius: 0.5rem;
   transition: all 0.2s;
   flex-shrink: 0;
@@ -982,13 +982,13 @@ const isSaveDisabled = computed(() => {
 }
 
 .remove-btn:hover {
-  color: #991b1b;
-  background-color: #fee2e2;
+  color: rgb(var(--error-strong));
+  background-color: rgb(var(--error-soft));
 }
 
 .remove-btn:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #dc2626;
+  box-shadow: 0 0 0 2px rgb(var(--error));
 }
 
 .remove-btn:active {
@@ -1019,7 +1019,7 @@ const isSaveDisabled = computed(() => {
   padding: 2rem 1.5rem;
   text-align: center;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: rgb(var(--ink-muted));
 }
 
 /* ============================================

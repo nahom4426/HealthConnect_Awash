@@ -440,9 +440,9 @@ function handleSubmit() {
 <style scoped>
 /* Additional styling for the form */
 :deep(.form-control) {
-  background-color: #f9fafb;
-  border: 1px solid #d1d5db;
-  color: #111827;
+  background-color: rgb(var(--surface-muted));
+  border: 1px solid rgb(var(--line-strong));
+  color: rgb(var(--ink));
   font-size: 0.875rem;
   border-radius: 0.5rem;
   display: block;
@@ -452,14 +452,14 @@ function handleSubmit() {
 
 :deep(.form-control:focus) {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgb(var(--primary) / 0.5);
+  border-color: rgb(var(--primary));
 }
 
 :deep(.form-select) {
-  background-color: #f9fafb;
-  border: 1px solid #d1d5db;
-  color: #111827;
+  background-color: rgb(var(--surface-muted));
+  border: 1px solid rgb(var(--line-strong));
+  color: rgb(var(--ink));
   font-size: 0.875rem;
   border-radius: 0.5rem;
   display: block;
@@ -469,7 +469,7 @@ function handleSubmit() {
 
 :deep(.form-select:focus) {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgb(var(--primary) / 0.5);
+  border-color: rgb(var(--primary));
 }
 </style>

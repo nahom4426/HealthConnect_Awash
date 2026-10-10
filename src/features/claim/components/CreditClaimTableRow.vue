@@ -349,7 +349,7 @@ function getSourceIndicator(source) {
 }
 
 tr:hover {
-  background-color: #f8fafc;
+  background-color: rgb(var(--surface-muted));
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -364,7 +364,7 @@ td {
 /* Smooth scroll for service items list */
 ul {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e0 #f7fafc;
+  scrollbar-color: rgb(var(--line-strong)) rgb(var(--surface-muted));
 }
 
 ul::-webkit-scrollbar {
@@ -372,16 +372,16 @@ ul::-webkit-scrollbar {
 }
 
 ul::-webkit-scrollbar-track {
-  background: #f7fafc;
+  background: rgb(var(--surface-muted));
   border-radius: 3px;
 }
 
 ul::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
+  background: rgb(var(--line-strong));
   border-radius: 3px;
 }
 
 ul::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
+  background: rgb(var(--ink-subtle));
 }
 </style>

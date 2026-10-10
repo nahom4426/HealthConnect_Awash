@@ -227,7 +227,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
             class="bg-white p-5 border border-[#75778B33] rounded-lg flex flex-col items-center justify-center h-full"
           >
             <div
-              class="w-56 h-52 bg-[#F6F7FA] rounded-lg flex items-center justify-center mb-4 overflow-hidden"
+              class="w-56 h-52 bg-surface-muted rounded-lg flex items-center justify-center mb-4 overflow-hidden"
             >
               <img
                 v-if="previewImage"
@@ -439,11 +439,11 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
       <!-- Address Information -->
       <div class="border border-[#75778B33] p-5">
-        <h3 class="text-md font-medium text-[#75778B] mb-4">Address Information</h3>
+        <h3 class="text-md font-medium text-ink-muted mb-4">Address Information</h3>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <!-- State/Region -->
           <div>
-            <label class="block text-sm font-medium text-[#75778B] mb-1">
+            <label class="block text-sm font-medium text-ink-muted mb-1">
               State/Region 
             </label>
             <Select
@@ -458,7 +458,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           
           <!-- City -->
           <div>
-            <label class="block text-sm font-medium text-[#75778B] mb-1">
+            <label class="block text-sm font-medium text-ink-muted mb-1">
               City 
             </label>
             <Select
@@ -482,7 +482,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           
           <!-- Sub City -->
           <div>
-            <label class="block text-sm font-medium text-[#75778B] mb-1">
+            <label class="block text-sm font-medium text-ink-muted mb-1">
               Sub City 
             </label>
             <Select
@@ -506,7 +506,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           
           <!-- Woreda -->
           <div>
-            <label class="block text-sm font-medium text-[#75778B] mb-1">
+            <label class="block text-sm font-medium text-ink-muted mb-1">
               Woreda 
             </label>
             <Input
@@ -532,7 +532,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       <label
         class="inline-flex items-center p-3 rounded-md transition-all cursor-pointer"
         :class="{ 
-          'text-primary bg-[#DFF1F1] border-2 border-primary': status === 'ACTIVE',
+          'text-primary bg-primary/10 border-2 border-primary': status === 'ACTIVE',
           'border border-gray-200 hover:bg-gray-50': status !== 'ACTIVE'
         }"
       >
@@ -540,7 +540,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           type="radio"
           v-model="status"
           value="ACTIVE"
-          class="form-radio h-5 w-5 text-primary focus:ring-[#DFF1F1]"
+          class="form-radio h-5 w-5 text-primary focus:ring-primary/10"
         />
         <span class="ml-2 font-medium">Active</span>
       </label>
@@ -549,7 +549,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       <label
         class="inline-flex items-center p-3 rounded-md transition-all cursor-pointer"
         :class="{ 
-          'text-[#D92D20] bg-[#FEE4E2] border-2 border-[#D92D20]': status === 'INACTIVE',
+          'text-error bg-error-soft border-2 border-error': status === 'INACTIVE',
           'border border-gray-200 hover:bg-gray-50': status !== 'INACTIVE'
         }"
       >
@@ -557,7 +557,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           type="radio"
           v-model="status"
           value="INACTIVE"
-          class="form-radio h-5 w-5 text-[#D92D20] focus:ring-[#FEE4E2]"
+          class="form-radio h-5 w-5 text-error focus:ring-error-soft"
           @change="hasInactiveDate = 'no'"
         />
         <span class="ml-2 font-medium">Inactive</span>
@@ -579,7 +579,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
         <label 
           class="inline-flex items-center p-2 px-3 rounded-md cursor-pointer"
           :class="{
-            'bg-[#DFF1F1] border border-primary': hasInactiveDate === 'yes',
+            'bg-primary/10 border border-primary': hasInactiveDate === 'yes',
             'border border-gray-200 hover:bg-gray-50': hasInactiveDate !== 'yes'
           }"
         >

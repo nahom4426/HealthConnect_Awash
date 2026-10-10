@@ -333,17 +333,17 @@ div::-webkit-scrollbar {
 }
 
 div::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: rgb(var(--surface-muted));
   border-radius: 10px;
 }
 
 div::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgb(var(--line-strong));
   border-radius: 10px;
 }
 
 div::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgb(var(--ink-subtle));
 }
 
 /* Line clamp for older browsers */

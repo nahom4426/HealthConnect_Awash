@@ -231,9 +231,9 @@ function handlePerPageChange(newPerPage) {
   padding: 0 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: rgb(var(--ink-muted));
   background-color: white;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgb(var(--line-strong));
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -243,8 +243,8 @@ function handlePerPageChange(newPerPage) {
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: rgb(var(--surface-muted));
+  border-color: rgb(var(--ink-subtle));
 }
 
 .pagination-btn:disabled {
@@ -253,14 +253,14 @@ function handlePerPageChange(newPerPage) {
 }
 
 .pagination-btn-active {
-  background-color: #2563eb;
+  background-color: rgb(var(--primary));
   color: white;
-  border-color: #2563eb;
+  border-color: rgb(var(--primary));
 }
 
 .pagination-btn-active:hover {
-  background-color: #1d4ed8;
-  border-color: #1d4ed8;
+  background-color: rgb(var(--primary-hover));
+  border-color: rgb(var(--primary-hover));
 }
 
 @media (max-width: 640px) {

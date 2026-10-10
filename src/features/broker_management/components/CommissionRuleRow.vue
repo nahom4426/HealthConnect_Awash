@@ -389,15 +389,15 @@ tr {
 }
 
 tr.bg-red-50\/50:hover {
-  background-color: #fee2e2 !important;
+  background-color: rgb(var(--error-soft)) !important;
 }
 
 tr.bg-yellow-50\/50:hover {
-  background-color: #fef9c3 !important;
+  background-color: rgb(var(--warning-soft)) !important;
 }
 
 tr.bg-green-50\/50:hover {
-  background-color: #dcfce7 !important;
+  background-color: rgb(var(--success-soft)) !important;
 }
 
 @keyframes ping {

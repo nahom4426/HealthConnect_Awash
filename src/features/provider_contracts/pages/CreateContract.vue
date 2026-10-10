@@ -429,7 +429,7 @@ const debugState = computed(() => {
       
       <button
         @click="handleCreateContract"
-        class="px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-white rounded-lg text-sm font-medium hover:from-primary-hover hover:to-[#013436] transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+        class="px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-white rounded-lg text-sm font-medium hover:from-primary-hover hover:to-primary-hover transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
         :disabled="isLoading || isFetchingProviders || fetchError"
       >
         <ButtonSpinner v-if="isLoading" class="w-4 h-4 text-white" />
@@ -478,7 +478,7 @@ input[type="date"]:required {
 
 @keyframes highlight {
   0% { background-color: transparent; }
-  50% { background-color: rgba(251, 191, 36, 0.3); }
+  50% { background-color: rgb(var(--warning) / 0.3); }
   100% { background-color: transparent; }
 }
 

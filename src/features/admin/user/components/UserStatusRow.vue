@@ -319,7 +319,7 @@ onUnmounted(() => {
               <button 
                 v-if="row.userStatus === 'INACTIVE' || row.userStatus === 'Inactive'"
                 @click.stop="handleActivateWithClose(row.userUuid || row.id)"
-                class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
+                class="block w-full text-center py-2 text-sm text-success hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
                   <i v-html="icons.activate" />
@@ -330,7 +330,7 @@ onUnmounted(() => {
               <button 
                 v-if="row.userStatus === 'ACTIVE' || row.userStatus === 'Active'"
                 @click.stop="handleDeactivateWithClose(row.userUuid || row.id)"
-                class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
+                class="block w-full text-center py-2 text-sm text-error hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
                   <i v-html="icons.deactivate" />

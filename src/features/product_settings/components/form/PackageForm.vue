@@ -291,7 +291,7 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
 }
 
 :deep(.toggle-description) {
-  color: #6b7280;
+  color: rgb(var(--ink-muted));
   font-size: 0.875rem;
   line-height: 1.25rem;
 }

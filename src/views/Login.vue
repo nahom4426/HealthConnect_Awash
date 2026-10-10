@@ -1,7 +1,7 @@
 <script setup>
 import LoginForm from "./LoginForm.vue";
-import logo from "@/assets/img/logo.png";
-import mark from "@/assets/img/awash-mark.png";
+import logo from "@/assets/img/logoD.png";
+import mark from "@/assets/img/nyala-mark.png";
 import family from "@/assets/img/login-family.png";
 
 const year = new Date().getFullYear();
@@ -30,8 +30,8 @@ const features = [
     <!-- Decorative layer (clipped so it never adds scroll) -->
     <div class="overflow-hidden absolute inset-0 pointer-events-none" aria-hidden="true">
       <div class="login-rings" />
-      <div class="login-orb login-orb--cyan" />
-      <div class="login-orb login-orb--blue" />
+      <div class="login-orb login-orb--bronze" />
+      <div class="login-orb login-orb--rust" />
     </div>
 
     <div class="flex relative flex-col min-h-full">
@@ -40,7 +40,7 @@ const features = [
         <span class="grid place-items-center w-10 h-10 bg-white rounded-xl shadow-sm">
           <img :src="mark" alt="" class="w-7 h-7" />
         </span>
-        <span class="text-lg font-semibold tracking-tight text-white">Awash Insurance</span>
+        <span class="text-lg font-semibold tracking-tight text-white">Nyala Insurance</span>
       </header>
 
       <div
@@ -50,7 +50,7 @@ const features = [
         <section class="hidden flex-col-reverse gap-8 items-center lg:flex 2xl:flex-row 2xl:gap-12 2xl:justify-between" aria-label="About Health Connect">
           <ul class="space-y-5 w-full max-w-md 2xl:max-w-sm 2xl:space-y-6">
             <li v-for="item in features" :key="item.title" class="flex gap-4 items-start">
-              <span class="grid place-items-center w-10 h-10 rounded-xl ring-1 shrink-0 bg-white/10 ring-white/15 text-[#7dd3fc]" aria-hidden="true">
+              <span class="grid place-items-center w-10 h-10 rounded-xl ring-1 shrink-0 bg-white/10 ring-white/15 text-[#f3cfa6]" aria-hidden="true">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                   <path :d="item.icon" />
                 </svg>
@@ -70,14 +70,14 @@ const features = [
         <!-- Sign in -->
         <main class="justify-self-center w-full max-w-[440px] login-card" aria-labelledby="login-title">
           <div class="flex justify-center mb-6">
-            <img :src="logo" alt="Awash Insurance" class="w-auto h-12 sm:h-14" />
+            <img :src="logo" alt="Nyala Insurance" class="w-auto h-14 sm:h-16" />
           </div>
           <LoginForm />
         </main>
       </div>
 
       <footer class="px-5 pb-6 text-xs text-center sm:px-10 lg:px-14 lg:text-left text-white/60">
-        © {{ year }} Awash Insurance Company S.C. All rights reserved.
+        © {{ year }} Nyala Insurance S.C. All rights reserved.
       </footer>
     </div>
   </div>
@@ -86,7 +86,7 @@ const features = [
 <style scoped>
 .login-backdrop {
   isolation: isolate;
-  background: linear-gradient(150deg, rgb(52 60 112) 0%, rgb(36 44 92) 45%, rgb(22 28 64) 100%);
+  background: linear-gradient(150deg, rgb(96 76 70) 0%, rgb(70 54 50) 45%, rgb(40 29 27) 100%);
 }
 
 /* Concentric rings centred behind the card (CSS replacement for ornament.jpg) */
@@ -107,19 +107,19 @@ const features = [
   border-radius: 9999px;
   filter: blur(80px);
 }
-.login-orb--cyan {
+.login-orb--bronze {
   width: 460px;
   height: 460px;
   right: 6%;
   top: 4%;
-  background: radial-gradient(circle, rgb(0 174 217 / 0.45), rgb(0 174 217 / 0) 70%);
+  background: radial-gradient(circle, rgb(184 128 84 / 0.42), rgb(184 128 84 / 0) 70%);
 }
-.login-orb--blue {
+.login-orb--rust {
   width: 520px;
   height: 520px;
   left: 22%;
   bottom: -12%;
-  background: radial-gradient(circle, rgb(91 120 255 / 0.35), rgb(91 120 255 / 0) 70%);
+  background: radial-gradient(circle, rgb(150 70 30 / 0.4), rgb(150 70 30 / 0) 70%);
 }
 
 /* Soft spotlight + ground shadow under the illustration */
@@ -151,7 +151,7 @@ const features = [
   border: 1px solid rgb(255 255 255 / 0.7);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.9),
-    0 30px 70px -20px rgb(6 10 35 / 0.6);
+    0 30px 70px -20px rgb(25 12 6 / 0.6);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   backdrop-filter: blur(20px) saturate(160%);
 }

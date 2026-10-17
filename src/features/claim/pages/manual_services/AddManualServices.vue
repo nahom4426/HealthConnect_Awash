@@ -1,27 +1,28 @@
 <script setup>
 // Manually enter services or drugs for an insured, as a two-step wizard like Cash Services:
-// 1. Eligibility Check (shared with Cash Services)  2. the services form.
+// 1. Eligibility Check (shared with Cash Services)  2. a services form laid out like Cash Services.
 // Cash mode (/cash_claims/manual) posts like the Cash Services page's "Other provider" mode;
 // credit mode (/credit_claims/manual, route meta serviceType CREDIT) creates a manual credit service.
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import Button from "@/components/Button.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import EligibilityCheck from "@/features/claim/components/cash_services/EligibilityCheck.vue";
 import CustomSelect from "@/components/CustomSelect.vue";
+import Table from "@/components/Table.vue";
+import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmitButton.vue";
+import EligibilityCheck from "@/features/claim/components/cash_services/EligibilityCheck.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { getInstitutionContracts } from "@/features/underwriting/api/underwritingApi";
 import { getPackageDropdown } from "@/features/product_settings/api/coverageApi";
 import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
 import { createCashServiceProvided, createCreditServiceProvided } from "../../api/claimApi";
 import { formatCurrency, toasted } from "@/utils/utils";
+import icons from "@/utils/icons";
 
 const route = useRoute();
 const router = useRouter();
 
 const isCredit = computed(() => route.meta?.serviceType === "CREDIT");
 const listPath = computed(() => (isCredit.value ? "/credit_claims" : "/cash_claims"));
-const listName = computed(() => (isCredit.value ? "Credit Services" : "Cash Services"));
 const steps = computed(() => ["Eligibility Check", isCredit.value ? "Credit Services" : "Manual Services"]);
 
 function toList(res) {
@@ -91,7 +92,7 @@ const formatImageSource = (profile) => {
   return isBase64 ? `data:image/png;base64,${profile}` : profile;
 };
 
-/* ---------- Contract (from the institution) ---------- */
+/* ---------- Contract (from Eligibility Check; only asked for when it can't be inferred) ---------- */
 const contracts = ref([]);
 const contractUuid = ref("");
 const contractsReq = useApiRequest();
@@ -118,28 +119,8 @@ const contractOptions = computed(() =>
     label: c.contractName || c.contractCode || c.payerInstitutionContractUuid,
   }))
 );
-
-/* ---------- Package (from the patient) ---------- */
-const packages = ref([]);
-const pkg = ref("");
-const packagesReq = useApiRequest();
-watch(
-  () => patient.value?.insuredPersonUuid + "|" + (patient.value?.dependantUuid || ""),
-  () => {
-    packages.value = [];
-    pkg.value = "";
-    if (!patient.value?.insuredPersonUuid) return;
-    packagesReq.send(
-      () => getPackageDropdown(patient.value.insuredPersonUuid, patient.value.dependantUuid),
-      (res) => {
-        packages.value = toList(res);
-        if (packages.value.length === 1) pkg.value = packages.value[0].packageUuid;
-      }
-    );
-  },
-  { immediate: true }
-);
-const packageOptions = computed(() => packages.value.map((p) => ({ value: p.packageUuid, label: p.packageName })));
+// Pre-filled from the list with several contracts: the only case where we must ask
+const needsContract = computed(() => !presetContract.value && contracts.value.length > 1);
 
 /* ---------- Provider (providers mapped to the contract, or "Other") ---------- */
 const OTHER = "OTHER";
@@ -164,7 +145,7 @@ watch(
 );
 const providerOptions = computed(() => [
   ...providers.value.map((p) => ({ value: p.providerUuid, label: p.providerName })),
-  { value: OTHER, label: "Other provider (not in the list)" },
+  { value: OTHER, label: "🔹 Other Provider" },
 ]);
 const isOtherProvider = computed(() => providerUuid.value === OTHER);
 const selectedProvider = computed(() => providers.value.find((p) => p.providerUuid === providerUuid.value) || null);
@@ -172,70 +153,134 @@ const providerName = computed(() =>
   isOtherProvider.value ? otherProviderName.value.trim() : selectedProvider.value?.providerName || ""
 );
 
-/* ---------- Claim details ---------- */
+/* ---------- Package (from the patient) ---------- */
+const packages = ref([]);
+const pkg = ref("");
+const packagesReq = useApiRequest();
+watch(
+  () => patient.value?.insuredPersonUuid + "|" + (patient.value?.dependantUuid || ""),
+  () => {
+    packages.value = [];
+    pkg.value = "";
+    if (!patient.value?.insuredPersonUuid) return;
+    packagesReq.send(
+      () => getPackageDropdown(patient.value.insuredPersonUuid, patient.value.dependantUuid),
+      (res) => {
+        packages.value = toList(res);
+        if (packages.value.length === 1) pkg.value = packages.value[0].packageUuid;
+      }
+    );
+  },
+  { immediate: true }
+);
+const packageOptions = computed(() => packages.value.map((p) => ({ value: p.packageUuid, label: p.packageName })));
+
+/* ---------- Date & reference ---------- */
 const referenceNumber = ref("");
 const today = new Date().toISOString().slice(0, 10);
 const providedDate = ref(today);
 
-/* ---------- Items ---------- */
-let rowId = 0;
-const newItem = () => ({ id: ++rowId, itemType: "SERVICE", serviceName: "", serviceCode: "", qty: 1, unitPrice: null });
-const items = ref([newItem()]);
+/* ---------- Items list ---------- */
+const items = ref([]);
+const grandTotal = computed(() => items.value.reduce((sum, i) => sum + i.totalPrice, 0));
 
-function addRow(type = "SERVICE") {
-  items.value.push({ ...newItem(), itemType: type });
+/* ---------- Entry row (Service / Drug), like Cash Services' manual entry ---------- */
+const activeItemTab = ref("SERVICE");
+const entryCode = ref("");
+const entryName = ref("");
+const entryPrice = ref(null);
+const entryQty = ref(1);
+const editingIndex = ref(null);
+
+const entryTotal = computed(() => (Number(entryPrice.value) || 0) * (Number(entryQty.value) || 0));
+const canAddEntry = computed(() => !!entryName.value.trim() && Number(entryPrice.value) > 0 && Number(entryQty.value) > 0);
+
+function resetEntry() {
+  entryCode.value = "";
+  entryName.value = "";
+  entryPrice.value = null;
+  entryQty.value = 1;
+  editingIndex.value = null;
 }
-function removeRow(index) {
+
+function addEntry() {
+  if (!canAddEntry.value) return;
+  const row = {
+    itemType: activeItemTab.value,
+    serviceCode: entryCode.value.trim(),
+    serviceName: entryName.value.trim(),
+    unitPrice: Number(entryPrice.value),
+    qty: Number(entryQty.value),
+    totalPrice: entryTotal.value,
+  };
+  if (editingIndex.value !== null) {
+    items.value.splice(editingIndex.value, 1, row);
+    toasted(true, "Item updated");
+  } else {
+    items.value.push(row);
+  }
+  resetEntry();
+}
+
+function editItem(row) {
+  const index = items.value.indexOf(row);
+  if (index === -1) return;
+  activeItemTab.value = row.itemType;
+  entryCode.value = row.serviceCode;
+  entryName.value = row.serviceName;
+  entryPrice.value = row.unitPrice;
+  entryQty.value = row.qty;
+  editingIndex.value = index;
+}
+function removeItem(row) {
+  const index = items.value.indexOf(row);
+  if (index === -1) return;
   items.value.splice(index, 1);
-  if (!items.value.length) items.value.push(newItem());
+  if (editingIndex.value === index) resetEntry();
 }
-
-const lineTotal = (item) => (Number(item.unitPrice) || 0) * (Number(item.qty) || 0);
-const filledItems = computed(() => items.value.filter((i) => i.serviceName.trim()));
-const grandTotal = computed(() => filledItems.value.reduce((sum, item) => sum + lineTotal(item), 0));
-const serviceCount = computed(() => filledItems.value.filter((i) => i.itemType === "SERVICE").length);
-const drugCount = computed(() => filledItems.value.filter((i) => i.itemType === "DRUG").length);
 
 /* ---------- Attachments ---------- */
 const files = ref([]);
-const dragging = ref(false);
-function addFiles(list) {
-  for (const f of list || []) {
-    if (!files.value.some((x) => x.name === f.name && x.size === f.size)) files.value.push(f);
-  }
+function onFilesSelected(e) {
+  const list = Array.from(e?.target?.files || []);
+  files.value = [...files.value, ...list].slice(0, 20);
+  e.target.value = "";
 }
-function onDrop(ev) {
-  dragging.value = false;
-  addFiles(ev.dataTransfer?.files);
+function removeFile(i) {
+  files.value.splice(i, 1);
 }
-const fileSize = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
 /* ---------- Validation ---------- */
 const submitted = ref(false);
-const errors = computed(() => ({
-  patient: !patient.value?.insuredPersonUuid,
-  contract: !contractUuid.value,
-  provider: !providerUuid.value,
-  otherProvider: isOtherProvider.value && !otherProviderName.value.trim(),
-  pkg: !pkg.value,
-  date: !providedDate.value || providedDate.value > today,
-  items: !filledItems.value.length,
-  amounts: filledItems.value.some((i) => !(Number(i.qty) > 0) || !(Number(i.unitPrice) > 0)),
-}));
-const hasErrors = computed(() => Object.values(errors.value).some(Boolean));
-const show = (key) => submitted.value && errors.value[key];
+const missingRequiredFields = computed(() => {
+  const m = [];
+  if (!patient.value?.insuredPersonUuid) m.push("Patient");
+  if (!contractUuid.value) m.push("Contract");
+  if (!providerUuid.value) m.push("Provider");
+  else if (isOtherProvider.value && !otherProviderName.value.trim()) m.push("Provider Name");
+  if (!pkg.value) m.push("Package");
+  if (!providedDate.value) m.push("Service Date");
+  if (!items.value.length) m.push("At least one service or drug");
+  return m;
+});
 
 /* ---------- Submit ---------- */
 const saveReq = useApiRequest();
-const saved = ref(null);
+const submitAction = ref("");
 
-function save() {
+function submit(action) {
   submitted.value = true;
-  if (hasErrors.value) {
-    toasted(false, "", "Please complete the highlighted fields");
+  if (missingRequiredFields.value.length) {
+    toasted(false, "", `Missing required: ${missingRequiredFields.value.join(", ")}`);
+    return;
+  }
+  if (providedDate.value > today) {
+    toasted(false, "", "Service date can't be in the future");
     return;
   }
 
+  // Credit: the institution contract (as the manual-credit modal does).
+  // Cash: the provider's own contract, or the institution contract for "Other" (as Cash Services does).
   const sendProviderContract = !isCredit.value && !isOtherProvider.value && selectedProvider.value?.payerProviderContractUuid;
   const body = {
     contractUuid: sendProviderContract ? selectedProvider.value.payerProviderContractUuid : contractUuid.value,
@@ -245,11 +290,11 @@ function save() {
     insuredUuid: patient.value.insuredPersonUuid,
     dependentUuid: patient.value.dependantUuid || undefined,
     deleted: false,
-    items: filledItems.value.map((item) => ({
-      serviceName: item.serviceName.trim(),
-      serviceCode: item.serviceCode.trim(),
-      qty: Number(item.qty),
-      totalPrice: lineTotal(item),
+    items: items.value.map((item) => ({
+      serviceName: item.serviceName,
+      serviceCode: item.serviceCode,
+      qty: item.qty,
+      totalPrice: item.totalPrice,
       recordNumber: referenceNumber.value.trim(),
       packageUuid: pkg.value,
       itemType: item.itemType,
@@ -267,42 +312,31 @@ function save() {
     form.append("serviceProvidedRequest ", JSON.stringify(body));
   }
 
+  submitAction.value = action;
   saveReq.send(
     () => (isCredit.value ? createCreditServiceProvided(form) : createCashServiceProvided(form)),
     (res) => {
       if (res.success) {
-        saved.value = { total: grandTotal.value, count: filledItems.value.length, provider: body.providerName };
-        toasted(true, isCredit.value ? "Credit services added" : "Services added");
+        toasted(true, isCredit.value ? "Credit service submitted" : "Service submitted");
+        if (action === "close") router.push(listPath.value);
+        else startNextPerson();
       } else {
-        toasted(false, "", res.error || "Failed to add services");
+        toasted(false, "", res.error || "Failed to submit");
       }
     }
   );
 }
 
-function resetForm() {
-  items.value = [newItem()];
+// Back to Eligibility Check for another person of the same institution (as Cash Services does)
+function startNextPerson() {
+  items.value = [];
   files.value = [];
   referenceNumber.value = "";
   submitted.value = false;
-  saved.value = null;
-}
-
-// Same patient, another set of services
-function startAnother() {
-  resetForm();
-}
-
-// Back to Eligibility Check for another person of the same institution (as Cash Services does)
-function startNextPerson() {
-  resetForm();
+  resetEntry();
   patient.value = null;
   eligibilityRef.value?.resetForNextPerson?.();
   active.value = 0;
-}
-
-function goBack() {
-  router.push(listPath.value);
 }
 </script>
 
@@ -329,7 +363,7 @@ function goBack() {
               ]"
             >
               <span v-if="i === 0">✓</span>
-              <span v-else>📝</span>
+              <span v-else>💳</span>
               {{ tab }}
             </div>
             <div v-if="active === i" class="absolute right-0 bottom-0 left-0 h-1 bg-gradient-to-r rounded-full from-primary to-primary"></div>
@@ -358,347 +392,319 @@ function goBack() {
     </template>
 
     <div class="py-6">
-    <!-- Step 1: Eligibility Check -->
-    <EligibilityCheck v-show="active === 0" ref="eligibilityRef" @complete="handleEligibilityComplete" />
+      <!-- Step 1: Eligibility Check -->
+      <EligibilityCheck v-show="active === 0" ref="eligibilityRef" @complete="handleEligibilityComplete" />
 
-    <!-- Step 2 -->
-    <template v-if="active === 1">
-    <!-- Success -->    <!-- Success -->
-    <section v-if="saved" class="p-8 mx-auto max-w-lg text-center rounded-2xl border shadow-card border-line bg-surface" aria-live="polite">
-      <div class="grid place-items-center mx-auto mb-4 w-14 h-14 rounded-full bg-success-soft text-success">
-        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
-      </div>
-      <h2 class="text-lg font-semibold text-ink">{{ isCredit ? "Credit services added" : "Services added" }}</h2>
-      <p class="mt-1 text-sm text-ink-muted">
-        {{ saved.count }} item(s) from {{ saved.provider }} for <span class="font-medium text-ink">{{ patient?.name }}</span>,
-        totalling <span class="font-semibold text-ink">{{ formatCurrency(saved.total) }}</span>.
-      </p>
-      <div class="flex flex-wrap gap-2 justify-center mt-6">
-        <Button type="secondary" @click="startAnother">Add more for this patient</Button>
-        <Button type="secondary" @click="startNextPerson">Next person</Button>
-        <Button type="primary" @click="goBack">Back to {{ listName }}</Button>
-      </div>
-    </section>
-
-    <div v-else class="grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div class="space-y-6 min-w-0">
-        <!-- 1. Claim details -->
-        <section class="rounded-2xl border shadow-card border-line bg-surface" aria-labelledby="details-title">
-          <div class="flex gap-3 items-center px-5 py-4 border-b border-line">
-            <span class="step">1</span>
-            <h2 id="details-title" class="text-base font-semibold text-ink">Claim details</h2>
-          </div>
-          <div class="grid gap-x-4 gap-y-5 p-5 sm:grid-cols-2">
-            <div>
-              <label class="field-label">Contract<span class="text-error">*</span></label>
-              <CustomSelect
-                v-model="contractUuid"
-                class="w-full"
-                :options="contractOptions"
-                :pending="contractsReq.pending.value"
-                :placeholder="institutionUuid ? 'Choose contract...' : 'Choose an institution first'"
-              />
-              <p v-if="institutionUuid && contractsReq.dirty.value && !contractsReq.pending.value && !contracts.length" class="field-error">
-                This institution has no active contract.
-              </p>
-              <p v-else-if="show('contract')" class="field-error">Contract is required.</p>
+      <!-- Step 2: services, laid out like Cash Services -->
+      <div v-if="active === 1" class="mx-auto space-y-6 w-full max-w-2xl xl:max-w-4xl 2xl:max-w-[80rem]">
+        <!-- Provider, Package, Date & Reference (same line) -->
+        <div class="p-4 rounded-lg border shadow-sm bg-surface border-line">
+          <div
+            :class="[
+              'grid grid-cols-1 gap-4',
+              isOtherProvider && needsContract
+                ? 'md:grid-cols-3 xl:grid-cols-6'
+                : isOtherProvider || needsContract
+                ? 'md:grid-cols-5'
+                : 'md:grid-cols-4',
+            ]"
+          >
+            <div v-if="needsContract">
+              <label class="block mb-2 text-sm font-semibold text-ink-muted">📄 Contract<span class="text-error">*</span></label>
+              <CustomSelect v-model="contractUuid" placeholder="Choose contract..." :options="contractOptions" class="w-full" />
+              <p v-if="submitted && !contractUuid" class="mt-1 text-xs text-error">Contract is required.</p>
             </div>
             <div>
-              <label class="field-label">Package<span class="text-error">*</span></label>
-              <CustomSelect
-                v-model="pkg"
-                class="w-full"
-                :options="packageOptions"
-                :pending="packagesReq.pending.value"
-                :placeholder="patient ? 'Choose package...' : 'Choose a patient first'"
-              />
-              <p v-if="show('pkg')" class="field-error">Package is required.</p>
-            </div>
-            <div>
-              <label class="field-label">Provider<span class="text-error">*</span></label>
+              <label class="block mb-2 text-sm font-semibold text-ink-muted">🏥 Provider<span class="text-error">*</span></label>
               <CustomSelect
                 v-model="providerUuid"
-                class="w-full"
+                placeholder="Choose provider..."
                 :options="providerOptions"
                 :pending="providersReq.pending.value"
-                :placeholder="contractUuid ? 'Choose provider...' : 'Choose a contract first'"
+                class="w-full"
               />
-              <p v-if="show('provider')" class="field-error">Provider is required.</p>
+              <p v-if="submitted && !providerUuid" class="mt-1 text-xs text-error">Provider is required.</p>
+            </div>
+            <div v-if="isOtherProvider">
+              <label class="block mb-2 text-sm font-semibold text-ink-muted">🏢 Provider Name<span class="text-error">*</span></label>
               <input
-                v-if="isOtherProvider"
                 id="provider-name"
                 v-model="otherProviderName"
-                class="mt-2 field"
-                :class="{ 'field--error': show('otherProvider') }"
-                placeholder="Provider name (hospital, clinic or pharmacy)"
+                placeholder="Enter provider name..."
+                class="pl-2 w-full h-10 text-sm rounded-md border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
               />
-              <p v-if="show('otherProvider')" class="field-error">Enter the provider's name.</p>
+              <p v-if="submitted && !otherProviderName.trim()" class="mt-1 text-xs text-error">Provider name is required.</p>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="field-label" for="service-date">Service date<span class="text-error">*</span></label>
-                <input id="service-date" v-model="providedDate" type="date" :max="today" class="field" :class="{ 'field--error': show('date') }" />
-                <p v-if="show('date')" class="field-error">Pick a date up to today.</p>
-              </div>
-              <div>
-                <label class="field-label" for="reference-no">Reference no.</label>
-                <input id="reference-no" v-model="referenceNumber" class="field" placeholder="e.g., CR-002" />
-              </div>
+            <div>
+              <label class="block mb-2 text-sm font-semibold text-ink-muted">📦 Package<span class="text-error">*</span></label>
+              <CustomSelect
+                v-model="pkg"
+                placeholder="Choose package..."
+                :options="packageOptions"
+                :pending="packagesReq.pending.value"
+                class="w-full"
+              />
+              <p v-if="submitted && !pkg" class="mt-1 text-xs text-error">Package is required.</p>
             </div>
-          </div>
-        </section>
-
-        <!-- 2. Services & drugs -->
-        <section class="rounded-2xl border shadow-card border-line bg-surface" aria-labelledby="items-title">
-          <div class="flex flex-wrap gap-3 justify-between items-center px-5 py-4 border-b border-line">
-            <div class="flex gap-3 items-center">
-              <span class="step">2</span>
-              <h2 id="items-title" class="text-base font-semibold text-ink">Services &amp; drugs</h2>
+            <div>
+              <label class="block mb-2 text-sm font-semibold text-ink-muted">📅 Service Date<span class="text-error">*</span></label>
+              <input
+                id="service-date"
+                v-model="providedDate"
+                type="date"
+                :max="today"
+                class="px-2 w-full h-10 text-sm rounded-md border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+              <p v-if="submitted && !providedDate" class="mt-1 text-xs text-error">Service date is required.</p>
             </div>
-            <div class="flex gap-2">
-              <button type="button" class="chip-btn" @click="addRow('SERVICE')">+ Service</button>
-              <button type="button" class="chip-btn" @click="addRow('DRUG')">+ Drug</button>
+            <div>
+              <label class="block mb-2 text-sm font-semibold text-ink-muted">🧾 Reference No.</label>
+              <input
+                id="reference-no"
+                v-model="referenceNumber"
+                placeholder="e.g., CR-002"
+                class="pl-2 w-full h-10 text-sm rounded-md border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
+              />
             </div>
-          </div>
-
-          <!-- Column headings (wide screens only; rows stack on two lines below that) -->
-          <div class="hidden 2xl:grid-cols-[7rem_minmax(0,1fr)_7rem_4.5rem_7.5rem_6.5rem_2.25rem] gap-3 px-5 pt-4 pb-1 text-xs font-medium tracking-wide uppercase 2xl:grid text-ink-subtle">
-            <span>Type</span><span>Name</span><span>Code</span><span>Qty</span><span>Unit price</span><span class="text-right">Amount</span><span class="sr-only">Remove</span>
-          </div>
-
-          <ul class="px-5 divide-y divide-line 2xl:divide-y-0">
-            <li
-              v-for="(item, index) in items"
-              :key="item.id"
-              class="flex flex-col gap-2 py-4 2xl:grid 2xl:grid-cols-[7rem_minmax(0,1fr)_7rem_4.5rem_7.5rem_6.5rem_2.25rem] 2xl:gap-3 2xl:items-center 2xl:py-2"
-            >
-              <!-- Line 1: type + name -->
-              <div class="flex flex-col gap-2 sm:flex-row 2xl:contents">
-                <div class="flex p-0.5 h-10 rounded-lg sm:w-32 shrink-0 2xl:w-auto bg-surface-muted" role="group" :aria-label="`Row ${index + 1} type`">
-                  <button
-                    v-for="t in ['SERVICE', 'DRUG']"
-                    :key="t"
-                    type="button"
-                    class="flex-1 text-xs font-medium rounded-md transition-colors"
-                    :class="item.itemType === t ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted hover:text-ink'"
-                    :aria-pressed="item.itemType === t"
-                    @click="item.itemType = t"
-                  >
-                    {{ t === "SERVICE" ? "Service" : "Drug" }}
-                  </button>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <label class="sr-only" :for="`name-${item.id}`">Name</label>
-                  <input
-                    :id="`name-${item.id}`"
-                    v-model="item.serviceName"
-                    class="field"
-                    :class="{ 'field--error': show('items') && index === 0 }"
-                    :placeholder="item.itemType === 'DRUG' ? 'Drug name, e.g., Amoxicillin 500mg' : 'Service name, e.g., Consultation'"
-                  />
-                </div>
-              </div>
-
-              <!-- Line 2: code, qty, price, amount -->
-              <div class="grid grid-cols-6 gap-2 items-center sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)_7rem_2.25rem] 2xl:contents">
-                <div class="col-span-4 sm:col-auto">
-                  <label class="sr-only" :for="`code-${item.id}`">Code</label>
-                  <input :id="`code-${item.id}`" v-model="item.serviceCode" class="field" placeholder="Code (optional)" />
-                </div>
-                <div class="col-span-2 sm:col-auto">
-                  <label class="sr-only" :for="`qty-${item.id}`">Quantity</label>
-                  <input
-                    :id="`qty-${item.id}`"
-                    v-model.number="item.qty"
-                    type="number"
-                    min="1"
-                    class="text-center field"
-                    placeholder="Qty"
-                    :class="{ 'field--error': submitted && item.serviceName.trim() && !(Number(item.qty) > 0) }"
-                  />
-                </div>
-                <div class="col-span-3 sm:col-auto">
-                  <label class="sr-only" :for="`price-${item.id}`">Unit price</label>
-                  <input
-                    :id="`price-${item.id}`"
-                    v-model.number="item.unitPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="field"
-                    placeholder="Unit price"
-                    :class="{ 'field--error': submitted && item.serviceName.trim() && !(Number(item.unitPrice) > 0) }"
-                  />
-                </div>
-                <div class="col-span-2 text-right sm:col-auto">
-                  <span class="block text-[0.6875rem] uppercase tracking-wide 2xl:hidden text-ink-subtle">Amount</span>
-                  <span class="text-sm font-semibold tabular-nums text-ink">{{ formatCurrency(lineTotal(item)) }}</span>
-                </div>
-                <div class="flex justify-end">
-                  <button
-                    type="button"
-                    class="grid place-items-center w-9 h-9 rounded-lg text-ink-subtle hover:text-error hover:bg-error-soft"
-                    :aria-label="`Remove row ${index + 1}`"
-                    @click="removeRow(index)"
-                  >
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
-                  </button>
-                </div>
-              </div>
-            </li>
-          </ul>
-
-          <p v-if="show('items')" class="px-5 pb-3 field-error">Add at least one service or drug.</p>
-          <p v-else-if="show('amounts')" class="px-5 pb-3 field-error">Every item needs a quantity and a unit price.</p>
-
-          <div class="flex justify-between items-center px-5 py-3 rounded-b-2xl border-t border-line bg-surface-muted">
-            <span class="text-sm text-ink-muted">{{ filledItems.length }} item(s)</span>
-            <span class="text-sm text-ink-muted">Subtotal <span class="ml-2 font-semibold tabular-nums text-ink">{{ formatCurrency(grandTotal) }}</span></span>
-          </div>
-        </section>
-
-        <!-- 3. Attachments -->
-        <section class="rounded-2xl border shadow-card border-line bg-surface" aria-labelledby="files-title">
-          <div class="flex gap-3 items-center px-5 py-4 border-b border-line">
-            <span class="step">3</span>
-            <h2 id="files-title" class="text-base font-semibold text-ink">Receipts <span class="text-sm font-normal text-ink-subtle">(optional)</span></h2>
-          </div>
-          <div class="p-5">
-            <label
-              class="flex flex-col gap-1 items-center px-4 py-7 text-center rounded-xl border-2 border-dashed transition-colors cursor-pointer"
-              :class="dragging ? 'border-primary bg-primary/5' : 'border-line hover:border-line-strong hover:bg-surface-muted'"
-              @dragover.prevent="dragging = true"
-              @dragleave.prevent="dragging = false"
-              @drop.prevent="onDrop"
-            >
-              <svg class="mb-1 w-7 h-7 text-ink-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
-              <span class="text-sm font-medium text-ink">Drop receipts here or <span class="text-primary">browse</span></span>
-              <span class="text-xs text-ink-subtle">PDF or images</span>
-              <input type="file" multiple accept=".pdf,image/*" class="sr-only" @change="(e) => { addFiles(e.target.files); e.target.value = ''; }" />
-            </label>
-            <ul v-if="files.length" class="mt-3 space-y-2">
-              <li v-for="(f, i) in files" :key="f.name + f.size" class="flex gap-3 items-center px-3 py-2 rounded-lg border border-line">
-                <svg class="w-5 h-5 shrink-0 text-ink-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" /><path d="M14 3v5h5" /></svg>
-                <span class="flex-1 min-w-0 text-sm truncate text-ink">{{ f.name }}</span>
-                <span class="text-xs text-ink-subtle">{{ fileSize(f.size) }}</span>
-                <button type="button" class="text-xs font-medium text-ink-muted hover:text-error" :aria-label="`Remove ${f.name}`" @click="files.splice(i, 1)">Remove</button>
-              </li>
-            </ul>
-          </div>
-        </section>
-      </div>
-
-      <!-- Summary -->
-      <aside class="lg:sticky lg:top-4" aria-label="Summary">
-        <div class="overflow-hidden rounded-2xl border shadow-card border-line bg-surface">
-          <div class="px-5 py-4 text-white summary-head">
-            <p class="text-xs tracking-wide uppercase opacity-80">Total claimed</p>
-            <p class="mt-1 text-3xl font-semibold tabular-nums">{{ formatCurrency(grandTotal) }}</p>
-          </div>
-          <dl class="px-5 py-4 space-y-3 text-sm">
-            <div class="flex gap-3 justify-between">
-              <dt class="text-ink-muted">Patient</dt>
-              <dd class="font-medium text-right truncate text-ink">{{ patient?.name || "—" }}</dd>
-            </div>
-            <div class="flex gap-3 justify-between">
-              <dt class="text-ink-muted">Provider</dt>
-              <dd class="font-medium text-right truncate text-ink">{{ providerName || "—" }}</dd>
-            </div>
-            <div class="flex gap-3 justify-between">
-              <dt class="text-ink-muted">Date</dt>
-              <dd class="font-medium text-ink">{{ providedDate || "—" }}</dd>
-            </div>
-            <div class="flex gap-3 justify-between">
-              <dt class="text-ink-muted">Services</dt>
-              <dd class="font-medium tabular-nums text-ink">{{ serviceCount }}</dd>
-            </div>
-            <div class="flex gap-3 justify-between">
-              <dt class="text-ink-muted">Drugs</dt>
-              <dd class="font-medium tabular-nums text-ink">{{ drugCount }}</dd>
-            </div>
-            <div class="flex gap-3 justify-between">
-              <dt class="text-ink-muted">Receipts</dt>
-              <dd class="font-medium tabular-nums text-ink">{{ files.length }}</dd>
-            </div>
-          </dl>
-          <div class="px-5 pb-5 space-y-2">
-            <Button type="primary" class="w-full" :pending="saveReq.pending.value" @click="save">Save services</Button>
-            <Button type="secondary" class="w-full" :disabled="saveReq.pending.value" @click="active = 0">← Back to eligibility</Button>
           </div>
         </div>
-      </aside>
-    </div>
-    </template>
+
+        <!-- Service / Drug entry -->
+        <div class="p-4 rounded-lg border shadow-sm bg-surface border-line">
+          <div class="flex gap-2 items-center mb-4">
+            <button
+              type="button"
+              :class="[
+                'px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors',
+                activeItemTab === 'SERVICE' ? 'bg-primary text-white border-primary' : 'bg-surface text-ink-muted border-line-strong hover:bg-surface-muted',
+              ]"
+              @click="activeItemTab = 'SERVICE'"
+            >
+              Service
+            </button>
+            <button
+              type="button"
+              :class="[
+                'px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors',
+                activeItemTab === 'DRUG' ? 'bg-error text-white border-error' : 'bg-surface text-ink-muted border-line-strong hover:bg-surface-muted',
+              ]"
+              @click="activeItemTab = 'DRUG'"
+            >
+              Drug
+            </button>
+          </div>
+
+          <div
+            :class="[
+              'p-4 rounded-lg border shadow-sm',
+              activeItemTab === 'SERVICE' ? 'bg-primary/5 border-primary/20' : 'bg-warning-soft border-error/20',
+            ]"
+          >
+            <h3 :class="['mb-4 text-sm font-bold', activeItemTab === 'SERVICE' ? 'text-primary-hover' : 'text-error-strong']">
+              {{ activeItemTab === "SERVICE" ? "📝 Service Entry" : "💊 Drug Entry" }}
+            </h3>
+            <div class="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 lg:grid-cols-9">
+              <div class="lg:col-span-2">
+                <label class="block mb-2 text-xs font-semibold text-ink-muted">Code (optional)</label>
+                <input
+                  v-model="entryCode"
+                  :placeholder="activeItemTab === 'SERVICE' ? 'e.g., SRV001' : 'e.g., DRG001'"
+                  class="py-2 pl-2 w-full text-sm rounded border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div class="lg:col-span-3">
+                <label class="block mb-2 text-xs font-semibold text-ink-muted">{{ activeItemTab === "SERVICE" ? "Service Name" : "Drug Name" }}</label>
+                <input
+                  id="entry-name"
+                  v-model="entryName"
+                  :placeholder="activeItemTab === 'SERVICE' ? 'e.g., Consultation' : 'e.g., Amoxicillin 500mg'"
+                  class="py-2 pl-2 w-full text-sm rounded border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary"
+                  @keyup.enter="addEntry"
+                />
+              </div>
+              <div class="lg:col-span-1">
+                <label class="block mb-2 text-xs font-semibold text-ink-muted">Price</label>
+                <input
+                  id="entry-price"
+                  v-model.number="entryPrice"
+                  type="number"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  class="py-2 pl-2 w-full text-sm rounded border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary"
+                  @keyup.enter="addEntry"
+                />
+              </div>
+              <div class="lg:col-span-1">
+                <label class="block mb-2 text-xs font-semibold text-ink-muted">Qty</label>
+                <input
+                  id="entry-qty"
+                  v-model.number="entryQty"
+                  type="number"
+                  placeholder="1"
+                  min="1"
+                  class="py-2 pl-2 w-full text-sm text-center rounded border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary"
+                  @keyup.enter="addEntry"
+                />
+              </div>
+              <div class="lg:col-span-1">
+                <label class="block mb-2 text-xs font-semibold text-ink-muted">Total</label>
+                <input
+                  :value="formatCurrency(entryTotal)"
+                  readonly
+                  class="py-2 pl-2 w-full text-sm font-bold rounded border cursor-not-allowed text-primary-hover bg-primary/10 border-primary/30"
+                />
+              </div>
+              <div class="lg:col-span-1">
+                <button
+                  type="button"
+                  :disabled="!canAddEntry"
+                  class="py-2 w-full text-sm font-bold text-white rounded bg-primary hover:bg-primary-hover disabled:bg-line-strong disabled:cursor-not-allowed"
+                  @click="addEntry"
+                >
+                  {{ editingIndex !== null ? "✏️ Update" : "➕ Add" }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Services List -->
+        <div class="overflow-hidden rounded-xl border shadow-sm bg-surface border-line">
+          <div class="px-6 py-4 border-b bg-surface-muted border-line">
+            <h3 class="text-lg font-bold text-ink">📋 Services List</h3>
+            <p class="text-sm text-ink-muted">{{ items.length }} item(s)</p>
+          </div>
+          <div class="p-6">
+            <p v-if="submitted && !items.length" class="mb-3 text-xs text-error">Please add at least one item.</p>
+            <div v-if="!items.length" class="py-8 text-center">
+              <div class="inline-flex justify-center items-center mb-4 w-16 h-16 rounded-full bg-surface-muted">
+                <svg class="w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <p class="font-medium text-ink-subtle">No items yet</p>
+              <p class="mt-1 text-xs text-ink-subtle">Add services or drugs above</p>
+            </div>
+            <div v-else class="overflow-x-auto">
+              <div class="min-w-[720px]">
+                <Table
+                  :pending="false"
+                  :headers="{
+                    head: ['Type', 'Code', 'Name', 'Price', 'Qty', 'Total', 'actions'],
+                    row: ['itemType', 'serviceCode', 'serviceName', 'unitPrice', 'qty', 'totalPrice'],
+                  }"
+                  :rows="items"
+                  :cells="{
+                    unitPrice: (v) => formatCurrency(v),
+                    totalPrice: (v) => formatCurrency(v),
+                  }"
+                >
+                  <template #itemType="{ row }">
+                    <span
+                      :class="[
+                        'px-2 py-0.5 text-xs font-semibold rounded-full',
+                        row.itemType === 'DRUG' ? 'bg-warning-soft text-error-strong' : 'bg-primary/10 text-primary',
+                      ]"
+                    >
+                      {{ row.itemType === "DRUG" ? "Drug" : "Service" }}
+                    </span>
+                  </template>
+                  <template #serviceName="{ row }">
+                    <div class="max-w-[260px] truncate" :title="row.serviceName">{{ row.serviceName }}</div>
+                  </template>
+                  <template #actions="{ row }">
+                    <div class="flex gap-2 items-center">
+                      <button type="button" class="p-1 rounded text-primary hover:bg-primary/5" title="Edit" @click="editItem(row)">
+                        <span class="inline-flex w-4 h-4" v-html="icons.edit"></span>
+                      </button>
+                      <button type="button" class="p-1 rounded text-error hover:bg-error-soft" title="Remove" @click="removeItem(row)">
+                        <span class="inline-flex w-5 h-5" v-html="icons.delete"></span>
+                      </button>
+                    </div>
+                  </template>
+                </Table>
+              </div>
+            </div>
+            <div v-if="items.length" class="p-3 mt-4 rounded-lg border bg-primary/5 border-primary/20">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-ink">Grand Total</span>
+                <span class="text-lg font-bold text-primary">{{ formatCurrency(grandTotal) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Request Details -->
+        <div class="overflow-hidden rounded-xl border shadow-sm bg-surface border-line">
+          <div class="px-6 py-4 border-b bg-surface-muted border-line">
+            <h3 class="text-lg font-bold text-ink">📝 Request Details</h3>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="block mb-2 text-sm font-semibold text-ink-muted">
+                📎 Medical Files <span class="text-xs font-normal text-ink-subtle">(optional)</span>
+              </label>
+              <div class="p-4 text-center rounded-lg border border-dashed transition-colors cursor-pointer bg-surface-muted border-line-strong">
+                <input id="manual-file-input" type="file" multiple accept="image/*,.pdf" class="hidden" @change="onFilesSelected" />
+                <label for="manual-file-input" class="cursor-pointer">
+                  <svg class="mx-auto mb-2 w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <p class="text-sm font-medium text-ink-muted">Click to upload</p>
+                  <p class="mt-1 text-xs text-ink-subtle">Images or PDF (max 20 files)</p>
+                </label>
+              </div>
+              <ul v-if="files.length" class="mt-3 space-y-2 text-xs">
+                <li
+                  v-for="(f, i) in files"
+                  :key="f.name + i"
+                  class="flex gap-2 justify-between items-center p-2 rounded border bg-success-soft border-success/20"
+                >
+                  <div class="flex flex-1 gap-2 items-center min-w-0 text-success-strong">
+                    <svg class="flex-shrink-0 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="truncate">{{ f.name }}</span>
+                  </div>
+                  <button type="button" class="flex-shrink-0 font-bold text-error hover:text-error-strong" :aria-label="`Remove ${f.name}`" @click="removeFile(i)">✕</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div v-if="submitted && missingRequiredFields.length" class="p-3 rounded-lg border bg-error-soft border-error/20">
+          <p class="text-sm font-semibold text-error-strong">Please fill the required fields:</p>
+          <ul class="mt-1 ml-5 text-sm list-disc text-error-strong">
+            <li v-for="f in missingRequiredFields" :key="f">{{ f }}</li>
+          </ul>
+        </div>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ModalFormSubmitButton
+            :pending="saveReq.pending.value && submitAction === 'add'"
+            :disabled="saveReq.pending.value"
+            btn-text="Submit & Add"
+            class="w-full"
+            :class="{ 'opacity-60 cursor-not-allowed': missingRequiredFields.length }"
+            @click="() => submit('add')"
+          />
+          <ModalFormSubmitButton
+            :pending="saveReq.pending.value && submitAction === 'close'"
+            :disabled="saveReq.pending.value"
+            btn-text="Submit & Close"
+            class="w-full"
+            :class="{ 'opacity-60 cursor-not-allowed': missingRequiredFields.length }"
+            @click="() => submit('close')"
+          />
+        </div>
+      </div>
     </div>
   </DefaultPage>
 </template>
 
 <style scoped>
-.step {
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 9999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: rgb(var(--primary));
-  background: rgb(var(--primary) / 0.1);
-}
-.field-label {
-  display: block;
-  margin-bottom: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: rgb(var(--ink));
-}
-.field {
-  width: 100%;
-  height: 2.5rem;
-  padding: 0 0.75rem;
-  font-size: 0.875rem;
-  color: rgb(var(--ink));
-  background: rgb(var(--surface));
-  border: 1px solid rgb(var(--line-strong));
-  border-radius: 0.5rem;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-.field::placeholder {
-  color: rgb(var(--ink-subtle));
-}
-.field:focus {
-  outline: none;
-  border-color: rgb(var(--primary));
-  box-shadow: var(--focus-ring);
-}
-.field:disabled {
-  background: rgb(var(--surface-muted));
-  cursor: not-allowed;
-}
-.field--error {
-  border-color: rgb(var(--error));
-}
-.field-error {
-  margin-top: 0.375rem;
-  font-size: 0.75rem;
-  color: rgb(var(--error));
-}
-.chip-btn {
-  height: 2rem;
-  padding: 0 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: rgb(var(--primary));
-  border: 1px solid rgb(var(--primary) / 0.25);
-  border-radius: 9999px;
-  transition: background-color 150ms ease;
-}
-.chip-btn:hover {
-  background: rgb(var(--primary) / 0.06);
-}
-.summary-head {
-  background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-hover)));
-}
 .slide-left-enter-active,
 .slide-left-leave-active {
   transition: all 0.3s ease;

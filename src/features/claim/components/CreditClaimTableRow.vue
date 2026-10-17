@@ -1,5 +1,6 @@
 <script setup>
 import { defineProps, onMounted, onUnmounted } from 'vue';
+import { canEditServiceProvided, editLockReason } from "../utils/serviceEditLock";
 import Button from "@/components/Button.vue";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 
@@ -85,6 +86,28 @@ function handleViewDetails(row) {
   if (props.cells?.onView && typeof props.cells.onView === 'function') {
     props.cells.onView(row);
   }
+}
+
+// Status badge: serviceClaimStatus is the source of truth
+function rowStatus(row) {
+  return String(row?.serviceClaimStatus || row?.status || "PENDING").toUpperCase();
+}
+function statusLabel(row) {
+  return rowStatus(row)
+    .toLowerCase()
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+function statusTone(row) {
+  const s = rowStatus(row);
+  if (s === "REJECTED") return { badge: "text-error-strong bg-error-soft border-error/20", dot: "bg-error" };
+  if (s === "REJECTION_REQUESTED") return { badge: "text-error-strong bg-error-soft border-error/20", dot: "bg-error animate-pulse" };
+  if (["PAID", "PAYED", "COMPLETED", "APPROVED", "AUTHORIZED"].includes(s))
+    return { badge: "text-success-strong bg-success-soft border-success/20", dot: "bg-success" };
+  if (["PROCESSED", "VERIFIED", "REQUESTED"].includes(s))
+    return { badge: "text-primary bg-primary/10 border-primary/20", dot: "bg-primary" };
+  return { badge: "text-warning-strong bg-warning-soft border-warning/20", dot: "bg-warning animate-pulse" };
 }
 
 function handleEdit(row) {
@@ -266,9 +289,14 @@ function getSourceIndicator(source) {
 
       <!-- Status -->
       <div v-else-if="key === 'status'">
-        <span class="inline-flex gap-1.5 items-center px-3 py-1.5 text-xs font-semibold text-warning-strong bg-warning-soft rounded-full border border-warning/20">
-          <span class="w-1.5 h-1.5 bg-warning rounded-full animate-pulse"></span>
-          Pending
+        <span
+          :class="[
+            'inline-flex gap-1.5 items-center px-3 py-1.5 text-xs font-semibold rounded-full border whitespace-nowrap',
+            statusTone(row).badge,
+          ]"
+        >
+          <span :class="['w-1.5 h-1.5 rounded-full', statusTone(row).dot]"></span>
+          {{ statusLabel(row) }}
         </span>
       </div>
 
@@ -286,14 +314,25 @@ function getSourceIndicator(source) {
     <!-- Actions Column -->
     <td class="p-3" v-if="headKeys.find((head) => head.toLowerCase() === 'actions')">
       <div class="flex items-center space-x-3">
-        <Button
-          v-if="props.cells?.onEdit && String(row?.source || '').toUpperCase() === 'MANUAL'"
-          type="link"
-          @click.stop="handleEdit(row)"
-          class="!text-success hover:!text-success-strong font-medium transition-colors"
-        >
-          Edit
-        </Button>
+        <template v-if="props.cells?.onEdit && String(row?.source || '').toUpperCase() === 'MANUAL'">
+          <Button
+            v-if="canEditServiceProvided(row)"
+            type="link"
+            @click.stop="handleEdit(row)"
+            class="!text-success hover:!text-success-strong font-medium transition-colors"
+          >
+            Edit
+          </Button>
+          <span
+            v-else
+            class="inline-flex gap-1 items-center text-xs font-medium cursor-help text-ink-subtle"
+            :title="editLockReason(row)"
+            :aria-label="editLockReason(row)"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" /></svg>
+            Locked
+          </span>
+        </template>
         <Button 
           type="link" 
           @click.stop="handleViewDetails(row)" 

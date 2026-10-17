@@ -8,6 +8,8 @@ import ServiceSelection from '@/features/claim/components/cash_services/ServiceS
 import { useRouter, useRoute } from 'vue-router';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { getServiceProvidedById } from '@/features/claim/api/claimApi';
+import { canEditServiceProvided, editLockReason } from '@/features/claim/utils/serviceEditLock';
+import { toasted } from '@/utils/utils';
 
 const router = useRouter();
 const route = useRoute();
@@ -47,6 +49,11 @@ async function loadEditServiceProvided() {
     (res) => {
       if (!res?.success) return;
       const data = res?.data ?? res;
+      if (!canEditServiceProvided(data)) {
+        toasted(false, '', editLockReason(data));
+        router.replace({ path: '/cash_claims' });
+        return;
+      }
       editServiceProvided.value = data;
 
       selection.value = {

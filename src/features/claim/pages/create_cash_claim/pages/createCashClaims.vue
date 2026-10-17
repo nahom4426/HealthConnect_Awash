@@ -295,6 +295,12 @@ onMounted(() => {
   if (typeof route.query?.institutionName === 'string' && route.query.institutionName) {
     institutionName.value = route.query.institutionName;
   }
+  // Credit: provider pre-selected by the manual entry page's "Submit & Create Claims"
+  if (isCredit.value && typeof route.query?.contractUuid === 'string' && route.query.contractUuid) {
+    contractUuid.value = route.query.contractUuid;
+    providerUuid.value = typeof route.query.providerUuid === 'string' ? route.query.providerUuid || null : null;
+    providerName.value = typeof route.query.providerName === 'string' ? route.query.providerName : "";
+  }
 
   if (route.query?.autoGenerate === '1') {
     nextTick(() => {

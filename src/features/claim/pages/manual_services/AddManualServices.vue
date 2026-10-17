@@ -7,6 +7,7 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DefaultPage from "@/components/DefaultPage.vue";
 import CustomSelect from "@/components/CustomSelect.vue";
+import datePicker from "@/components/datePicker.vue";
 import Table from "@/components/Table.vue";
 import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmitButton.vue";
 import EligibilityCheck from "@/features/claim/components/cash_services/EligibilityCheck.vue";
@@ -21,6 +22,7 @@ import {
   updateManualCreditServiceProvided,
 } from "../../api/claimApi";
 import { formatCurrency, toasted } from "@/utils/utils";
+import { canEditServiceProvided, editLockReason } from "../../utils/serviceEditLock";
 import icons from "@/utils/icons";
 
 const route = useRoute();
@@ -52,6 +54,8 @@ const eligibilityRef = ref();
 // Patient: from the Eligibility Check step, or pre-filled from the Cash Services list
 const institutionUuid = ref(String(route.query.institutionUuid || ""));
 const presetContract = ref("");
+// Policy period info from Eligibility Check (cash period window; Nyala also sends begin/end)
+const eligibilityPeriod = ref({});
 // Provider saved on a record being edited, until it's matched in the provider list
 const pendingProvider = ref(null);
 const patient = ref(
@@ -74,6 +78,11 @@ function cleanName(name) {
 
 function handleEligibilityComplete(payload) {
   presetContract.value = payload.payerInstitutionContractUuid || "";
+  eligibilityPeriod.value = {
+    cashPeriodLimitPerDay: payload.cashPeriodLimitPerDay,
+    beginDate: payload.beginDate,
+    endDate: payload.endDate,
+  };
   institutionUuid.value = payload.institutionUuid || "";
   contractUuid.value = presetContract.value || contractUuid.value;
   patient.value = {
@@ -261,15 +270,119 @@ watch(
 );
 const packageOptions = computed(() => packages.value.map((p) => ({ value: p.packageUuid, label: p.packageName })));
 
+/* ---------- Package balance (same rules as Cash Services) ---------- */
+const isDependent = computed(() => !!patient.value?.dependantUuid);
+// When editing, the record's own amounts are already in "used"; add them back
+const initialEditPackageTotals = ref({});
+
+function getPackageLimit(p) {
+  if (!p) return 0;
+  if (isDependent.value) {
+    const depLimit = Number(p.depSumAssured ?? 0);
+    if (Number.isFinite(depLimit) && depLimit > 0) return depLimit;
+  }
+  const limit = Number(p.sumAssured ?? 0);
+  return Number.isFinite(limit) ? limit : 0;
+}
+function getPackageUsed(p) {
+  if (!p) return 0;
+  if (isDependent.value) {
+    const depUsed = Number(p.depUsedBenefit ?? 0);
+    if (Number.isFinite(depUsed) && depUsed > 0) return depUsed;
+  }
+  const used = Number(p.used ?? 0);
+  return Number.isFinite(used) ? used : 0;
+}
+function getAdjustedUsed(p) {
+  if (!p) return 0;
+  const initial = initialEditPackageTotals.value[p.packageUuid] || 0;
+  return Math.max(0, getPackageUsed(p) - initial);
+}
+// Packages can share a "cup" limit with others
+function getCupUuid(p) {
+  if (!p) return null;
+  if (p.cupPackageUuid) return p.cupPackageUuid;
+  return packages.value.some((x) => x?.cupPackageUuid === p.packageUuid) ? p.packageUuid : null;
+}
+function getCupStart(cupUuid) {
+  const cupPkg = packages.value.find((x) => x?.packageUuid === cupUuid);
+  const members = packages.value.filter((x) => x?.cupPackageUuid === cupUuid || x?.packageUuid === cupUuid);
+  return getPackageLimit(cupPkg) - members.reduce((sum, x) => sum + getAdjustedUsed(x), 0);
+}
+
+const selectedPackage = computed(() => packages.value.find((p) => p.packageUuid === pkg.value) || null);
+const packageBalance = computed(() => {
+  const p = selectedPackage.value;
+  if (!p) return null;
+  const limit = getPackageLimit(p);
+  const used = getAdjustedUsed(p);
+  const cart = items.value.reduce((sum, i) => sum + i.totalPrice, 0);
+  let remaining = limit - used - cart;
+  const cupUuid = getCupUuid(p);
+  if (cupUuid) remaining = Math.min(remaining, getCupStart(cupUuid) - cart);
+  return { limit, used, cart, remaining, available: remaining + cart };
+});
+
+// Running balance after each item (every item uses the selected package)
+const itemsWithBalance = computed(() => {
+  const p = selectedPackage.value;
+  if (!p) return items.value.map((it) => ({ ...it, remainingAfter: null, isOverLimit: false, overBy: 0 }));
+  const cupUuid = getCupUuid(p);
+  let own = getPackageLimit(p) - getAdjustedUsed(p);
+  let cup = cupUuid ? getCupStart(cupUuid) : Infinity;
+  return items.value.map((it) => {
+    own -= it.totalPrice;
+    cup -= it.totalPrice;
+    const after = Math.min(own, cup);
+    return { ...it, remainingAfter: after, isOverLimit: after < 0, overBy: after < 0 ? -after : 0 };
+  });
+});
+
 /* ---------- Date, reference & invoice ---------- */
 const referenceNumber = ref("");
 const invoiceNumber = ref("");
-const today = new Date().toISOString().slice(0, 10);
+
+function toISODate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function parsePeriodDays(input) {
+  const n = Number(String(input ?? "").match(/\d+/)?.[0]);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 90;
+}
+const today = toISODate(new Date());
 const providedDate = ref(today);
+const originalProvidedDate = ref(""); // a record being edited keeps its own date valid
+
+// Allowed service dates, like Cash Services: the claim window up to today, inside the policy period
+const selectedInstitutionContract = computed(
+  () => contracts.value.find((c) => c.payerInstitutionContractUuid === contractUuid.value) || null
+);
+const periodDays = computed(() =>
+  parsePeriodDays(selectedInstitutionContract.value?.cashPeriodLimitPerDay ?? eligibilityPeriod.value.cashPeriodLimitPerDay)
+);
+const policyBegin = computed(() =>
+  String(selectedInstitutionContract.value?.beginDate || eligibilityPeriod.value.beginDate || "").slice(0, 10)
+);
+const policyEnd = computed(() =>
+  String(selectedInstitutionContract.value?.endDate || eligibilityPeriod.value.endDate || "").slice(0, 10)
+);
+const minProvidedDate = computed(() => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - periodDays.value);
+  let min = toISODate(d);
+  if (policyBegin.value && policyBegin.value > min) min = policyBegin.value;
+  if (originalProvidedDate.value && originalProvidedDate.value < min) min = originalProvidedDate.value;
+  return min;
+});
+const maxProvidedDate = computed(() => (policyEnd.value && policyEnd.value < today ? policyEnd.value : today));
+const isProvidedDateOutOfRange = computed(
+  () => !!providedDate.value && (providedDate.value < minProvidedDate.value || providedDate.value > maxProvidedDate.value)
+);
 
 // Provider, package, date, reference + optional contract / other-provider name / invoice
 const headerGridClass = computed(() => {
-  const count = 4 + [needsContract.value, isOtherProvider.value, isCredit.value].filter(Boolean).length;
+  const count = 4 + [needsContract.value, isOtherProvider.value].filter(Boolean).length;
   return {
     4: "md:grid-cols-2 lg:grid-cols-4",
     5: "md:grid-cols-3 xl:grid-cols-5",
@@ -325,8 +438,13 @@ function addEntry() {
   resetEntry();
 }
 
+// Table rows are copies (with balance); map back to the real item by position
+function itemIndexOf(row) {
+  return itemsWithBalance.value.findIndex((r) => r === row);
+}
+
 function editItem(row) {
-  const index = items.value.indexOf(row);
+  const index = itemIndexOf(row);
   if (index === -1) return;
   activeItemTab.value = row.itemType;
   entryCode.value = row.serviceCode;
@@ -336,10 +454,10 @@ function editItem(row) {
   editingIndex.value = index;
 }
 function removeItem(row) {
-  const index = items.value.indexOf(row);
+  const index = itemIndexOf(row);
   if (index === -1) return;
-  items.value.splice(index, 1);
-  if (row.itemUuid) removedItems.value.push(row);
+  const [removed] = items.value.splice(index, 1);
+  if (removed.itemUuid) removedItems.value.push(removed);
   if (editingIndex.value === index) resetEntry();
 }
 
@@ -380,8 +498,8 @@ function submit(action) {
     toasted(false, "", `Missing required: ${missingRequiredFields.value.join(", ")}`);
     return;
   }
-  if (providedDate.value > today) {
-    toasted(false, "", "Service date can't be in the future");
+  if (isProvidedDateOutOfRange.value) {
+    toasted(false, "", `Service date must be between ${minProvidedDate.value} and ${maxProvidedDate.value}`);
     return;
   }
 
@@ -406,7 +524,7 @@ function submit(action) {
       serviceCode: item.serviceCode,
       qty: item.qty,
       totalPrice: item.totalPrice,
-      recordNumber: referenceNumber.value.trim(),
+      recordNumber: isCredit.value ? invoiceNumber.value.trim() : referenceNumber.value.trim(),
       packageUuid: pkg.value,
       itemType: item.itemType,
       c_section: false,
@@ -436,6 +554,7 @@ function submit(action) {
       if (res.success) {
         toasted(true, isEdit.value ? "Credit service updated" : isCredit.value ? "Credit service submitted" : "Service submitted");
         if (action === "close") router.push(listPath.value);
+        else if (action === "claims") goToCreateClaims();
         else startNextPerson();
       } else {
         toasted(false, "", res.error || "Failed to submit");
@@ -471,6 +590,7 @@ function hydrateFromRecord(data) {
   };
   pendingProvider.value = { contract: data?.contractUuid, uuid: data?.providerUuid, name: data?.providerName };
   providedDate.value = data?.providedDate ? String(data.providedDate).slice(0, 10) : providedDate.value;
+  originalProvidedDate.value = data?.providedDate ? String(data.providedDate).slice(0, 10) : "";
   invoiceNumber.value = data?.invoiceNumber || "";
   referenceNumber.value = data?.recordNumber || provided[0]?.recordNumber || "";
   items.value = provided.map((it) => ({
@@ -484,6 +604,10 @@ function hydrateFromRecord(data) {
     totalPrice: Number(it?.totalPrice) || 0,
   }));
   removedItems.value = [];
+  initialEditPackageTotals.value = provided.reduce((totals, it) => {
+    if (it?.packageUuid) totals[it.packageUuid] = (totals[it.packageUuid] || 0) + (Number(it?.totalPrice) || 0);
+    return totals;
+  }, {});
   const firstPkg = provided.find((it) => it?.packageUuid)?.packageUuid;
   if (firstPkg) pendingPackage = firstPkg;
   active.value = 1;
@@ -507,15 +631,39 @@ if (isEdit.value) {
         toasted(false, "", "Couldn't load this credit service");
         return;
       }
-      hydrateFromRecord(res?.data ?? res);
+      const record = res?.data ?? res;
+      if (!canEditServiceProvided(record)) {
+        toasted(false, "", editLockReason(record));
+        router.replace(listPath.value);
+        return;
+      }
+      hydrateFromRecord(record);
     }
   );
+}
+
+// Like Cash Services' "Submit & Generate": open Create Claims pre-filtered and generate straight away
+function goToCreateClaims() {
+  if (isCredit.value) {
+    router.push({
+      path: "/create_credit_claims",
+      query: {
+        contractUuid: selectedProvider.value?.payerProviderContractUuid || "",
+        providerUuid: selectedProvider.value?.providerUuid || "",
+        providerName: selectedProvider.value?.providerName || "",
+        autoGenerate: "1",
+      },
+    });
+  } else {
+    router.push({ path: "/create_cash_claims", query: { institutionUuid: institutionUuid.value, autoGenerate: "1" } });
+  }
 }
 
 // Back to Eligibility Check for another person of the same institution (as Cash Services does)
 function startNextPerson() {
   items.value = [];
   removedItems.value = [];
+  initialEditPackageTotals.value = {};
   files.value = [];
   referenceNumber.value = "";
   invoiceNumber.value = "";
@@ -695,18 +843,40 @@ function startNextPerson() {
                 :pending="packagesReq.pending.value"
                 class="w-full"
               />
+              <div v-if="packageBalance" class="mt-1.5 text-xs text-ink-muted">
+                <div class="flex flex-wrap gap-x-3 gap-y-0.5">
+                  <span><span class="font-semibold">Limit:</span> {{ formatCurrency(packageBalance.limit) }}</span>
+                  <span><span class="font-semibold">Used:</span> {{ formatCurrency(packageBalance.used) }}</span>
+                  <span><span class="font-semibold">Cart:</span> {{ formatCurrency(packageBalance.cart) }}</span>
+                </div>
+                <div class="mt-0.5">
+                  <span class="font-semibold">Remaining:</span>
+                  <span :class="packageBalance.remaining < 0 ? 'font-bold text-error-strong' : 'font-bold text-success-strong'">
+                    {{ formatCurrency(packageBalance.remaining) }}
+                  </span>
+                  <span v-if="packageBalance.remaining < 0" class="ml-1 font-semibold text-error-strong">
+                    (Over limit by {{ formatCurrency(Math.abs(packageBalance.remaining)) }})
+                  </span>
+                  <span v-if="isDependent" class="ml-1 text-ink-subtle">(Dependent)</span>
+                </div>
+              </div>
               <p v-if="submitted && !pkg" class="mt-1 text-xs text-error">Package is required.</p>
             </div>
             <div>
               <label class="block mb-2 text-sm font-semibold text-ink-muted">📅 Service Date<span class="text-error">*</span></label>
-              <input
-                id="service-date"
+              <datePicker
+                label=""
+                required
                 v-model="providedDate"
-                type="date"
-                :max="today"
-                class="px-2 w-full h-10 text-sm rounded-md border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
+                :min="minProvidedDate"
+                :max="maxProvidedDate"
+                :error="submitted && (!providedDate || isProvidedDateOutOfRange)"
               />
               <p v-if="submitted && !providedDate" class="mt-1 text-xs text-error">Service date is required.</p>
+              <p v-else-if="isProvidedDateOutOfRange" class="mt-1 text-xs text-error">
+                Must be between {{ minProvidedDate }} and {{ maxProvidedDate }}.
+              </p>
+              <p v-else class="mt-1 text-[11px] text-ink-subtle">Allowed: {{ minProvidedDate }} → {{ maxProvidedDate }}</p>
             </div>
             <div v-if="isCredit">
               <label for="invoice-no" class="block mb-2 text-sm font-semibold text-ink-muted">🧾 Invoice No.<span v-if="!isEdit" class="text-error">*</span></label>
@@ -718,7 +888,7 @@ function startNextPerson() {
               />
               <p v-if="submitted && !isEdit && !invoiceNumber.trim()" class="mt-1 text-xs text-error">Invoice number is required.</p>
             </div>
-            <div>
+            <div v-if="!isCredit">
               <label class="block mb-2 text-sm font-semibold text-ink-muted">🔖 Reference No.</label>
               <input
                 id="reference-no"
@@ -852,10 +1022,10 @@ function startNextPerson() {
                 <Table
                   :pending="false"
                   :headers="{
-                    head: ['Type', 'Code', 'Name', 'Price', 'Qty', 'Total', 'actions'],
-                    row: ['itemType', 'serviceCode', 'serviceName', 'unitPrice', 'qty', 'totalPrice'],
+                    head: ['Type', 'Code', 'Name', 'Price', 'Qty', 'Total', 'Balance', 'actions'],
+                    row: ['itemType', 'serviceCode', 'serviceName', 'unitPrice', 'qty', 'totalPrice', 'remainingAfter'],
                   }"
-                  :rows="items"
+                  :rows="itemsWithBalance"
                   :cells="{
                     unitPrice: (v) => formatCurrency(v),
                     totalPrice: (v) => formatCurrency(v),
@@ -870,6 +1040,15 @@ function startNextPerson() {
                     >
                       {{ row.itemType === "DRUG" ? "Drug" : "Service" }}
                     </span>
+                  </template>
+                  <template #remainingAfter="{ row }">
+                    <span v-if="row.remainingAfter === null" class="text-ink-subtle">—</span>
+                    <div v-else class="flex flex-col">
+                      <span :class="row.isOverLimit ? 'font-bold text-error-strong' : 'font-semibold text-success-strong'">
+                        {{ formatCurrency(row.remainingAfter) }}
+                      </span>
+                      <span v-if="row.isOverLimit" class="text-[11px] text-error-strong">Over by {{ formatCurrency(row.overBy) }}</span>
+                    </div>
                   </template>
                   <template #serviceName="{ row }">
                     <div class="max-w-[260px] truncate" :title="row.serviceName">{{ row.serviceName }}</div>
@@ -891,6 +1070,12 @@ function startNextPerson() {
               <div class="flex justify-between items-center">
                 <span class="font-bold text-ink">Grand Total</span>
                 <span class="text-lg font-bold text-primary">{{ formatCurrency(grandTotal) }}</span>
+              </div>
+              <div v-if="packageBalance" class="flex justify-between items-center pt-2 mt-2 text-sm border-t border-primary/20">
+                <span class="text-ink-muted">Remaining balance after this claim</span>
+                <span :class="packageBalance.remaining < 0 ? 'font-bold text-error-strong' : 'font-semibold text-success-strong'">
+                  {{ formatCurrency(packageBalance.remaining) }}
+                </span>
               </div>
             </div>
           </div>
@@ -970,12 +1155,12 @@ function startNextPerson() {
             @click="() => submit('add')"
           />
           <ModalFormSubmitButton
-            :pending="saveReq.pending.value && submitAction === 'close'"
+            :pending="saveReq.pending.value && submitAction === 'claims'"
             :disabled="saveReq.pending.value"
-            btn-text="Submit & Close"
+            btn-text="Submit & Create Claims"
             class="w-full"
             :class="{ 'opacity-60 cursor-not-allowed': missingRequiredFields.length }"
-            @click="() => submit('close')"
+            @click="() => submit('claims')"
           />
         </div>
       </div>

@@ -2,7 +2,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useToast } from "./store/toast.js";
 
-const DURATION_MS = 6000;
+// Successes clear quickly; errors stay a little longer so they can be read
+const DURATION_MS = { success: 3000, info: 3000, error: 5000 };
 
 const { removeToast } = useToast();
 const props = defineProps({
@@ -30,7 +31,7 @@ function pause() {
 
 function resume() {
   clearTimeout(timeout);
-  timeout = setTimeout(dismiss, DURATION_MS);
+  timeout = setTimeout(dismiss, DURATION_MS[tone.value] ?? 3000);
 }
 
 onMounted(resume);

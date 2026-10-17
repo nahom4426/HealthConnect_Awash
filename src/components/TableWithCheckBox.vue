@@ -92,22 +92,27 @@ function isSelected(row) {
 }
 
 // Computed property to check if all rows are selected
+const selectableIds = computed(() =>
+  selectableRows.value.map((r) => getNestedValue(r, props.toBeSelected)).filter(Boolean)
+);
+
 const allSelected = computed(() => {
   const modelVal = props.modelValue || [];
-  return selectableRows.value.length > 0 && modelVal.length >= selectableRows.value.length;
+  return selectableIds.value.length > 0 && selectableIds.value.every((id) => modelVal.includes(id));
 });
 
 // Computed: some but not all selected (for indeterminate state)
 const someSelected = computed(() => {
   const modelVal = props.modelValue || [];
-  return modelVal.length > 0 && modelVal.length < selectableRows.value.length;
+  return !allSelected.value && selectableIds.value.some((id) => modelVal.includes(id));
 });
 
 // When rows change (e.g. after refetch), clean up stale selections
-watch(() => props.rows, (newRows) => {
-  if (newRows.length === 0) {
-    emit('update:modelValue', []);
-  }
+// Rows can disappear (e.g. rejected services are removed): drop their ids too
+watch(selectableIds, (ids) => {
+  const modelVal = props.modelValue || [];
+  const kept = modelVal.filter((id) => ids.includes(id));
+  if (kept.length !== modelVal.length) emit('update:modelValue', kept);
 });
 
 // Expose for parent components

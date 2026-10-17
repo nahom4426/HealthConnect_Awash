@@ -1,6 +1,7 @@
 <script setup>
 import { defineProps, onMounted, onUnmounted } from 'vue';
 import { canEditServiceProvided, editLockReason } from "../utils/serviceEditLock";
+import { claimStatusLabel, claimStatusTone } from "../utils/claimStatus";
 import Button from "@/components/Button.vue";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 
@@ -89,26 +90,8 @@ function handleViewDetails(row) {
 }
 
 // Status badge: serviceClaimStatus is the source of truth
-function rowStatus(row) {
-  return String(row?.serviceClaimStatus || row?.status || "PENDING").toUpperCase();
-}
-function statusLabel(row) {
-  return rowStatus(row)
-    .toLowerCase()
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-function statusTone(row) {
-  const s = rowStatus(row);
-  if (s === "REJECTED") return { badge: "text-error-strong bg-error-soft border-error/20", dot: "bg-error" };
-  if (s === "REJECTION_REQUESTED") return { badge: "text-error-strong bg-error-soft border-error/20", dot: "bg-error animate-pulse" };
-  if (["PAID", "PAYED", "COMPLETED", "APPROVED", "AUTHORIZED"].includes(s))
-    return { badge: "text-success-strong bg-success-soft border-success/20", dot: "bg-success" };
-  if (["PROCESSED", "VERIFIED", "REQUESTED"].includes(s))
-    return { badge: "text-primary bg-primary/10 border-primary/20", dot: "bg-primary" };
-  return { badge: "text-warning-strong bg-warning-soft border-warning/20", dot: "bg-warning animate-pulse" };
-}
+const statusLabel = claimStatusLabel;
+const statusTone = claimStatusTone;
 
 function handleEdit(row) {
   closeAllDropdowns();

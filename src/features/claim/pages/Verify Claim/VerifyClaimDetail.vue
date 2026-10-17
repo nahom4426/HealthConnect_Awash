@@ -8,7 +8,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { PaymentStatus } from '@/types/interface';
 import { formatCurrency, secondDateFormat } from '@/utils/utils';
 import Button from '@/components/Button.vue';
-import TableWithCheckBox from '@/components/TableWithCheckBox.vue';
+import BatchServicesReview from '../../components/BatchServicesReview.vue';
 import { ref, onMounted, computed } from 'vue';
 import { openModal } from '@customizer/modal-x';
 import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
@@ -181,7 +181,7 @@ function getStatusBadge(status) {
 </script>
 
 <template>
-  <DefaultPage>
+  <DefaultPage :hideSearch="true">
     <!-- Header with Institution Name -->
     <template #header>
       <div class="flex items-center justify-between w-full">
@@ -203,69 +203,17 @@ function getStatusBadge(status) {
       </div>
     </template>
 
-    <template #more>
-      <Button class="ml-auto" @click="batchProcessed" type="primary" v-if="checked.length">
-        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-        </svg>
-        Process/Reject Selected ({{ checked.length }})
-      </Button>
-    </template>
-
-    <TableWithCheckBox
+    <BatchServicesReview
       v-model="checked"
-      toBeSelected="serviceProvidedUuid"
+      :rows="store.claims || []"
       :pending="pagination.pending.value"
-      :show-pagination="false"
-      :headers="{
-        head: [ 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions'],
-        row: [ 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus', 'actions']
-      }"
-      :cells="{
-        insuredName: (_, row) => row?.insuredName || row?.dependantName || 'N/A',
-        itemsCount: (_, row) => (row?.providedItemResponses || []).length,
-        amount: (value) => `$${formatCurrency(value)}`,
-        providedDate: secondDateFormat,
-        serviceClaimStatus: (status) => {
-          return getStatusBadge(status);
-        }
-      }"
-      :rows="store.claims"
-      class="modern-table"
-    >
-      <template #actions="{ row }">
-        <div class="flex items-center gap-2">
-          <Button 
-            size="xs" 
-            type="elevated" 
-            @click="openItemsModal(row)"
-            class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-primary to-primary-hover rounded-lg hover:from-primary-hover hover:to-primary-hover transition-all duration-200 shadow-md hover:shadow-lg"
-          >
-            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-            View Items
-          </Button>
-        </div>
-      </template>
-
-      <!-- Custom status cell using scoped slot -->
-      <template #cell-serviceClaimStatus="{ row }">
-        <span :class="getStatusStyle(row.serviceClaimStatus)">
-          <span class="text-xs">{{ getStatusIcon(row.serviceClaimStatus) }}</span>
-          {{ row.serviceClaimStatus || 'Unknown' }}
-        </span>
-      </template>
-    </TableWithCheckBox>
-
-    <div class="flex justify-end pb-8 mt-4" v-if="canProcessWholeClaim">
-      <Button type="primary" @click="openProcessWholeClaim" class="px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-success to-success-strong hover:from-success-strong hover:to-success-strong rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        Verify Claim
-      </Button>
-    </div>
+      action-label="Verify Claim"
+      :can-run-action="canProcessWholeClaim"
+      :blocking-statuses="['PENDING', 'REJECTION_REQUESTED']"
+      @view-items="openItemsModal"
+      @bulk="batchProcessed"
+      @action="openProcessWholeClaim"
+    />
 
     <ProvidedItemsModal
       v-if="showItemsModal"
@@ -277,85 +225,3 @@ function getStatusBadge(status) {
   </DefaultPage>
 </template>
 
-<style scoped>
-.modern-table :deep(table) {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.modern-table :deep(th) {
-  background: linear-gradient(135deg, rgb(var(--surface-muted)) 0%, rgb(var(--surface-muted)) 100%);
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: rgb(var(--ink-muted));
-  border-bottom: 2px solid rgb(var(--line));
-}
-
-.modern-table :deep(td) {
-  padding: 12px 16px;
-  border-bottom: 1px solid rgb(var(--surface-muted));
-  transition: all 0.2s ease;
-}
-
-.modern-table :deep(tbody tr) {
-  transition: all 0.2s ease;
-}
-
-.modern-table :deep(tbody tr:hover) {
-  background-color: rgb(var(--surface-muted));
-  transform: scale(1.001);
-}
-
-.modern-table :deep(tbody tr:last-child td) {
-  border-bottom: none;
-}
-
-/* Status badge styles */
-.modern-table :deep(.status-badge) {
-  transition: all 0.3s ease;
-}
-
-.modern-table :deep(.status-badge:hover) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Checkbox styling */
-.modern-table :deep(input[type="checkbox"]) {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 2px solid rgb(var(--line-strong));
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.modern-table :deep(input[type="checkbox"]:checked) {
-  background-color: rgb(var(--primary));
-  border-color: rgb(var(--primary));
-}
-
-.modern-table :deep(input[type="checkbox"]:hover) {
-  border-color: rgb(var(--primary));
-}
-
-/* Status badge inline styles */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-</style>

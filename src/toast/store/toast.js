@@ -21,10 +21,13 @@ export const useToast = defineStore('toast', () => {
     )
     if (duplicate) return
     toasts.value.push({ id: id.next().value, toast })
+    // Keep the stack short: the oldest goes when a 4th arrives
+    if (toasts.value.length > 3) toasts.value.splice(0, toasts.value.length - 3)
   }
 
   function removeToast(id) {
-    toasts.value.splice(toasts.value.findIndex(el => el.id == id), 1)
+    const idx = toasts.value.findIndex(el => el.id == id)
+    if (idx !== -1) toasts.value.splice(idx, 1)
     
   }
 

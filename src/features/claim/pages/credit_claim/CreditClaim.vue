@@ -34,17 +34,10 @@ function viewDetail(row) {
   selectedRow.value = row;
 }
 
+// Manual credit services are edited on the full manual-entry page
 function editManual(row) {
-  openModal('UtilizeUsage', {
-    mode: 'edit_manual_credit',
-    serviceProvidedUuid: row?.serviceProvidedUuid,
-    sourceRow: row,
-    contractUuid: row?.contractUuid,
-    providerName: row?.providerName,
-    providedDate: row?.providedDate,
-    insuredUuid: row?.insuredPersonUuid,
-    dependantUuid: row?.dependantUuid,
-  });
+  if (!row?.serviceProvidedUuid) return;
+  router.push({ path: "/credit_claims/manual", query: { edit: String(row.serviceProvidedUuid) } });
 }
 
 function goBack() {

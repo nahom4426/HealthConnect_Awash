@@ -14,7 +14,12 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { getInstitutionContracts } from "@/features/underwriting/api/underwritingApi";
 import { getPackageDropdown } from "@/features/product_settings/api/coverageApi";
 import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
-import { createCashServiceProvided, createCreditServiceProvided } from "../../api/claimApi";
+import {
+  createCashServiceProvided,
+  createCreditServiceProvided,
+  getServiceProvidedById,
+  updateManualCreditServiceProvided,
+} from "../../api/claimApi";
 import { formatCurrency, toasted } from "@/utils/utils";
 import icons from "@/utils/icons";
 
@@ -23,7 +28,13 @@ const router = useRouter();
 
 const isCredit = computed(() => route.meta?.serviceType === "CREDIT");
 const listPath = computed(() => (isCredit.value ? "/credit_claims" : "/cash_claims"));
-const steps = computed(() => ["Eligibility Check", isCredit.value ? "Credit Services" : "Manual Services"]);
+// Edit an existing manual credit service: /credit_claims/manual?edit=<serviceProvidedUuid>
+const editId = computed(() => (isCredit.value && route.query.edit ? String(route.query.edit) : ""));
+const isEdit = computed(() => !!editId.value);
+const steps = computed(() => [
+  "Eligibility Check",
+  isEdit.value ? "Edit Credit Service" : isCredit.value ? "Credit Services" : "Manual Services",
+]);
 
 function toList(res) {
   const raw = res?.data ?? res;
@@ -74,6 +85,7 @@ function handleEligibilityComplete(payload) {
 }
 
 function goToStep(i) {
+  if (isEdit.value) return; // the person can't change while editing
   if (i === 0 || patient.value) active.value = i;
 }
 
@@ -138,6 +150,7 @@ watch(
       () => getAlreadyMappedActiveProviders(id),
       (res) => {
         providers.value = toList(res);
+        applyPendingProvider();
       }
     );
   },
@@ -246,6 +259,8 @@ const headerGridClass = computed(() => {
 
 /* ---------- Items list ---------- */
 const items = ref([]);
+// Existing items removed while editing are sent back flagged deleted
+const removedItems = ref([]);
 const grandTotal = computed(() => items.value.reduce((sum, i) => sum + i.totalPrice, 0));
 
 /* ---------- Entry row (Service / Drug), like Cash Services' manual entry ---------- */
@@ -269,7 +284,10 @@ function resetEntry() {
 
 function addEntry() {
   if (!canAddEntry.value) return;
+  const existing = editingIndex.value !== null ? items.value[editingIndex.value] : null;
   const row = {
+    serviceId: existing?.serviceId || "",
+    itemUuid: existing?.itemUuid || "",
     itemType: activeItemTab.value,
     serviceCode: entryCode.value.trim(),
     serviceName: entryName.value.trim(),
@@ -300,6 +318,7 @@ function removeItem(row) {
   const index = items.value.indexOf(row);
   if (index === -1) return;
   items.value.splice(index, 1);
+  if (row.itemUuid) removedItems.value.push(row);
   if (editingIndex.value === index) resetEntry();
 }
 
@@ -356,7 +375,12 @@ function submit(action) {
     dependentUuid: patient.value.dependantUuid || undefined,
     ...(isCredit.value ? { invoiceNumber: invoiceNumber.value.trim() } : {}),
     deleted: false,
-    items: items.value.map((item) => ({
+    items: [
+      ...items.value.map((item) => ({ ...item, deleted: false })),
+      ...removedItems.value.map((item) => ({ ...item, deleted: true })),
+    ].map((item) => ({
+      ...(item.serviceId ? { serviceId: item.serviceId } : {}),
+      ...(item.itemUuid ? { itemUuid: item.itemUuid } : {}),
       serviceName: item.serviceName,
       serviceCode: item.serviceCode,
       qty: item.qty,
@@ -365,21 +389,31 @@ function submit(action) {
       packageUuid: pkg.value,
       itemType: item.itemType,
       c_section: false,
-      deleted: false,
+      deleted: item.deleted,
     })),
   };
 
   const form = new FormData();
   files.value.forEach((f) => form.append("attachment", f));
   // Multipart field names as the backend defines them (the cash endpoint's has a trailing space)
-  form.append(isCredit.value ? "serviceProvidedRequest" : "serviceProvidedRequest ", JSON.stringify(body));
+  if (isEdit.value) {
+    // Same field the manual-credit update has always used
+    form.append("itemRequests", JSON.stringify(body));
+  } else {
+    form.append(isCredit.value ? "serviceProvidedRequest" : "serviceProvidedRequest ", JSON.stringify(body));
+  }
 
   submitAction.value = action;
   saveReq.send(
-    () => (isCredit.value ? createCreditServiceProvided(form) : createCashServiceProvided(form)),
+    () =>
+      isEdit.value
+        ? updateManualCreditServiceProvided(editId.value, form)
+        : isCredit.value
+        ? createCreditServiceProvided(form)
+        : createCashServiceProvided(form),
     (res) => {
       if (res.success) {
-        toasted(true, isCredit.value ? "Credit service submitted" : "Service submitted");
+        toasted(true, isEdit.value ? "Credit service updated" : isCredit.value ? "Credit service submitted" : "Service submitted");
         if (action === "close") router.push(listPath.value);
         else startNextPerson();
       } else {
@@ -389,9 +423,80 @@ function submit(action) {
   );
 }
 
+/* ---------- Edit: load the existing record ---------- */
+const editReq = useApiRequest();
+let pendingProvider = null;
+
+function applyPendingProvider() {
+  if (!pendingProvider) return;
+  const { contract, uuid, name } = pendingProvider;
+  const match =
+    providers.value.find((p) => contract && p.payerProviderContractUuid === contract) ||
+    providers.value.find((p) => uuid && p.providerUuid === uuid) ||
+    providers.value.find((p) => name && p.providerName?.trim().toLowerCase() === name.trim().toLowerCase());
+  if (match) {
+    providerUuid.value = match.providerUuid;
+    pendingProvider = null;
+  }
+}
+
+function hydrateFromRecord(data) {
+  const provided = Array.isArray(data?.providedItemResponses) ? data.providedItemResponses : [];
+  presetContract.value = data?.payerInstitutionContractUuid || "";
+  institutionUuid.value = data?.institutionUuid || institutionUuid.value;
+  patient.value = {
+    insuredPersonUuid: data?.insuredPersonUuid || data?.insuredUuid || "",
+    dependantUuid: data?.dependantUuid || data?.dependentUuid || null,
+    name: cleanName(data?.dependantName || data?.insuredName || data?.fullname),
+    profile: null,
+  };
+  pendingProvider = { contract: data?.contractUuid, uuid: data?.providerUuid, name: data?.providerName };
+  providedDate.value = data?.providedDate ? String(data.providedDate).slice(0, 10) : providedDate.value;
+  invoiceNumber.value = data?.invoiceNumber || "";
+  referenceNumber.value = data?.recordNumber || provided[0]?.recordNumber || "";
+  items.value = provided.map((it) => ({
+    serviceId: it?.itemId || it?.serviceId || "",
+    itemUuid: it?.providedItemUuid || it?.itemUuid || "",
+    itemType: String(it?.itemType || "SERVICE").toUpperCase() === "DRUG" ? "DRUG" : "SERVICE",
+    serviceCode: it?.itemCode || it?.serviceCode || "",
+    serviceName: it?.itemName || it?.serviceName || "",
+    unitPrice: Number(it?.unitPrice) || (Number(it?.totalPrice) || 0) / (Number(it?.quantity) || 1),
+    qty: Number(it?.quantity || it?.qty) || 1,
+    totalPrice: Number(it?.totalPrice) || 0,
+  }));
+  removedItems.value = [];
+  const firstPkg = provided.find((it) => it?.packageUuid)?.packageUuid;
+  if (firstPkg) pendingPackage = firstPkg;
+  active.value = 1;
+  applyPendingProvider();
+}
+
+let pendingPackage = "";
+watch(packages, () => {
+  if (pendingPackage && packages.value.some((p) => p.packageUuid === pendingPackage)) {
+    pkg.value = pendingPackage;
+    pendingPackage = "";
+  }
+});
+
+if (isEdit.value) {
+  active.value = 1;
+  editReq.send(
+    () => getServiceProvidedById(editId.value),
+    (res) => {
+      if (!res?.success) {
+        toasted(false, "", "Couldn't load this credit service");
+        return;
+      }
+      hydrateFromRecord(res?.data ?? res);
+    }
+  );
+}
+
 // Back to Eligibility Check for another person of the same institution (as Cash Services does)
 function startNextPerson() {
   items.value = [];
+  removedItems.value = [];
   files.value = [];
   referenceNumber.value = "";
   invoiceNumber.value = "";
@@ -458,8 +563,17 @@ function startNextPerson() {
       <!-- Step 1: Eligibility Check -->
       <EligibilityCheck v-show="active === 0" ref="eligibilityRef" @complete="handleEligibilityComplete" />
 
+      <!-- Edit: loading the record -->
+      <div v-if="isEdit && editReq.pending.value" class="flex gap-3 justify-center items-center py-16 text-sm text-ink-muted">
+        <svg class="w-5 h-5 animate-spin text-primary" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
+          <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+        </svg>
+        Loading credit service…
+      </div>
+
       <!-- Step 2: services, laid out like Cash Services -->
-      <div v-if="active === 1" class="mx-auto space-y-6 w-full max-w-2xl xl:max-w-4xl 2xl:max-w-[80rem]">
+      <div v-else-if="active === 1" class="mx-auto space-y-6 w-full max-w-2xl xl:max-w-4xl 2xl:max-w-[80rem]">
         <!-- Provider, Package, Date & Reference (same line) -->
         <div class="p-4 rounded-lg border shadow-sm bg-surface border-line">
           <div :class="['grid grid-cols-1 gap-4', headerGridClass]">
@@ -803,7 +917,25 @@ function startNextPerson() {
             <li v-for="f in missingRequiredFields" :key="f">{{ f }}</li>
           </ul>
         </div>
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div v-if="isEdit" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ModalFormSubmitButton
+            :pending="saveReq.pending.value"
+            :disabled="saveReq.pending.value"
+            btn-text="Save Changes"
+            class="w-full"
+            :class="{ 'opacity-60 cursor-not-allowed': missingRequiredFields.length }"
+            @click="() => submit('close')"
+          />
+          <button
+            type="button"
+            class="w-full h-11 text-sm font-semibold rounded-lg border transition-colors border-line-strong text-ink-muted hover:bg-surface-muted"
+            :disabled="saveReq.pending.value"
+            @click="router.push(listPath)"
+          >
+            Cancel
+          </button>
+        </div>
+        <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <ModalFormSubmitButton
             :pending="saveReq.pending.value && submitAction === 'add'"
             :disabled="saveReq.pending.value"

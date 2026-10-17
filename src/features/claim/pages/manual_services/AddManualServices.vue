@@ -12,6 +12,7 @@ import CustomSelect from "@/components/CustomSelect.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { getInstitutionContracts } from "@/features/underwriting/api/underwritingApi";
 import { getPackageDropdown } from "@/features/product_settings/api/coverageApi";
+import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
 import { createCashServiceProvided, createCreditServiceProvided } from "../../api/claimApi";
 import { formatCurrency, toasted } from "@/utils/utils";
 
@@ -140,8 +141,38 @@ watch(
 );
 const packageOptions = computed(() => packages.value.map((p) => ({ value: p.packageUuid, label: p.packageName })));
 
+/* ---------- Provider (providers mapped to the contract, or "Other") ---------- */
+const OTHER = "OTHER";
+const providers = ref([]);
+const providerUuid = ref("");
+const otherProviderName = ref("");
+const providersReq = useApiRequest();
+watch(
+  contractUuid,
+  (id) => {
+    providers.value = [];
+    providerUuid.value = "";
+    if (!id) return;
+    providersReq.send(
+      () => getAlreadyMappedActiveProviders(id),
+      (res) => {
+        providers.value = toList(res);
+      }
+    );
+  },
+  { immediate: true }
+);
+const providerOptions = computed(() => [
+  ...providers.value.map((p) => ({ value: p.providerUuid, label: p.providerName })),
+  { value: OTHER, label: "Other provider (not in the list)" },
+]);
+const isOtherProvider = computed(() => providerUuid.value === OTHER);
+const selectedProvider = computed(() => providers.value.find((p) => p.providerUuid === providerUuid.value) || null);
+const providerName = computed(() =>
+  isOtherProvider.value ? otherProviderName.value.trim() : selectedProvider.value?.providerName || ""
+);
+
 /* ---------- Claim details ---------- */
-const providerName = ref("");
 const referenceNumber = ref("");
 const today = new Date().toISOString().slice(0, 10);
 const providedDate = ref(today);
@@ -184,7 +215,8 @@ const submitted = ref(false);
 const errors = computed(() => ({
   patient: !patient.value?.insuredPersonUuid,
   contract: !contractUuid.value,
-  provider: !providerName.value.trim(),
+  provider: !providerUuid.value,
+  otherProvider: isOtherProvider.value && !otherProviderName.value.trim(),
   pkg: !pkg.value,
   date: !providedDate.value || providedDate.value > today,
   items: !filledItems.value.length,
@@ -204,9 +236,10 @@ function save() {
     return;
   }
 
+  const sendProviderContract = !isCredit.value && !isOtherProvider.value && selectedProvider.value?.payerProviderContractUuid;
   const body = {
-    contractUuid: contractUuid.value,
-    providerName: providerName.value.trim(),
+    contractUuid: sendProviderContract ? selectedProvider.value.payerProviderContractUuid : contractUuid.value,
+    providerName: providerName.value,
     totalPrice: grandTotal.value,
     providedDate: providedDate.value,
     insuredUuid: patient.value.insuredPersonUuid,
@@ -263,7 +296,6 @@ function startAnother() {
 // Back to Eligibility Check for another person of the same institution (as Cash Services does)
 function startNextPerson() {
   resetForm();
-  providerName.value = "";
   patient.value = null;
   eligibilityRef.value?.resetForNextPerson?.();
   active.value = 0;
@@ -383,9 +415,24 @@ function goBack() {
               <p v-if="show('pkg')" class="field-error">Package is required.</p>
             </div>
             <div>
-              <label class="field-label" for="provider-name">Provider<span class="text-error">*</span></label>
-              <input id="provider-name" v-model="providerName" class="field" :class="{ 'field--error': show('provider') }" placeholder="Hospital, clinic or pharmacy name" />
-              <p v-if="show('provider')" class="field-error">Provider name is required.</p>
+              <label class="field-label">Provider<span class="text-error">*</span></label>
+              <CustomSelect
+                v-model="providerUuid"
+                class="w-full"
+                :options="providerOptions"
+                :pending="providersReq.pending.value"
+                :placeholder="contractUuid ? 'Choose provider...' : 'Choose a contract first'"
+              />
+              <p v-if="show('provider')" class="field-error">Provider is required.</p>
+              <input
+                v-if="isOtherProvider"
+                id="provider-name"
+                v-model="otherProviderName"
+                class="mt-2 field"
+                :class="{ 'field--error': show('otherProvider') }"
+                placeholder="Provider name (hospital, clinic or pharmacy)"
+              />
+              <p v-if="show('otherProvider')" class="field-error">Enter the provider's name.</p>
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -555,7 +602,7 @@ function goBack() {
             </div>
             <div class="flex gap-3 justify-between">
               <dt class="text-ink-muted">Provider</dt>
-              <dd class="font-medium text-right truncate text-ink">{{ providerName.trim() || "—" }}</dd>
+              <dd class="font-medium text-right truncate text-ink">{{ providerName || "—" }}</dd>
             </div>
             <div class="flex gap-3 justify-between">
               <dt class="text-ink-muted">Date</dt>

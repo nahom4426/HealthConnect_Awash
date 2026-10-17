@@ -153,6 +153,56 @@ const providerName = computed(() =>
   isOtherProvider.value ? otherProviderName.value.trim() : selectedProvider.value?.providerName || ""
 );
 
+// Search-and-select combobox over the loaded providers
+const providerQuery = ref("");
+const providerOpen = ref(false);
+const providerHighlight = ref(0);
+const selectedProviderLabel = computed(() =>
+  isOtherProvider.value ? "🔹 Other Provider" : selectedProvider.value?.providerName || ""
+);
+const filteredProviderOptions = computed(() => {
+  const q = providerQuery.value.trim().toLowerCase();
+  const list = providerOptions.value.filter((o) => o.value !== OTHER && (!q || o.label?.toLowerCase().includes(q)));
+  return [...list, providerOptions.value[providerOptions.value.length - 1]];
+});
+function openProviderList() {
+  providerQuery.value = "";
+  providerHighlight.value = 0;
+  providerOpen.value = true;
+}
+function closeProviderList() {
+  providerOpen.value = false;
+  providerQuery.value = "";
+}
+function chooseProvider(option) {
+  providerUuid.value = option.value;
+  closeProviderList();
+}
+function onProviderKeydown(e) {
+  const count = filteredProviderOptions.value.length;
+  if (!providerOpen.value && ["ArrowDown", "Enter"].includes(e.key)) {
+    openProviderList();
+    e.preventDefault();
+    return;
+  }
+  if (e.key === "ArrowDown") {
+    providerHighlight.value = (providerHighlight.value + 1) % count;
+    e.preventDefault();
+  } else if (e.key === "ArrowUp") {
+    providerHighlight.value = (providerHighlight.value - 1 + count) % count;
+    e.preventDefault();
+  } else if (e.key === "Enter") {
+    const option = filteredProviderOptions.value[providerHighlight.value];
+    if (option) chooseProvider(option);
+    e.preventDefault();
+  } else if (e.key === "Escape") {
+    closeProviderList();
+  }
+}
+watch(providerQuery, () => {
+  providerHighlight.value = 0;
+});
+
 /* ---------- Package (from the patient) ---------- */
 const packages = ref([]);
 const pkg = ref("");
@@ -415,14 +465,66 @@ function startNextPerson() {
               <p v-if="submitted && !contractUuid" class="mt-1 text-xs text-error">Contract is required.</p>
             </div>
             <div>
-              <label class="block mb-2 text-sm font-semibold text-ink-muted">🏥 Provider<span class="text-error">*</span></label>
-              <CustomSelect
-                v-model="providerUuid"
-                placeholder="Choose provider..."
-                :options="providerOptions"
-                :pending="providersReq.pending.value"
-                class="w-full"
-              />
+              <label for="provider-search" class="block mb-2 text-sm font-semibold text-ink-muted">🏥 Provider<span class="text-error">*</span></label>
+              <div class="relative">
+                <input
+                  id="provider-search"
+                  :value="providerOpen ? providerQuery : selectedProviderLabel"
+                  type="text"
+                  role="combobox"
+                  autocomplete="off"
+                  aria-autocomplete="list"
+                  aria-controls="provider-listbox"
+                  :aria-expanded="providerOpen"
+                  :aria-activedescendant="providerOpen ? `provider-opt-${providerHighlight}` : undefined"
+                  :placeholder="providerOpen ? 'Search provider...' : 'Search & select provider...'"
+                  class="pr-9 pl-9 w-full h-10 text-sm rounded-md border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
+                  @focus="openProviderList"
+                  @blur="closeProviderList"
+                  @input="(e) => { providerQuery = e.target.value; providerOpen = true; }"
+                  @keydown="onProviderKeydown"
+                />
+                <svg class="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 pointer-events-none text-ink-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                  <circle cx="9" cy="9" r="5.5" /><path d="m13.5 13.5 3 3" />
+                </svg>
+                <span class="grid absolute inset-y-0 right-0 place-items-center w-9 pointer-events-none text-ink-subtle" aria-hidden="true">
+                  <svg v-if="providersReq.pending.value" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
+                    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                  </svg>
+                  <svg v-else class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 8 4 4 4-4" /></svg>
+                </span>
+                <ul
+                  v-if="providerOpen"
+                  id="provider-listbox"
+                  role="listbox"
+                  class="overflow-y-auto absolute z-40 py-1 mt-1 w-full min-w-[16rem] max-h-64 rounded-lg border shadow-pop bg-surface border-line"
+                >
+                  <li
+                    v-if="filteredProviderOptions.length === 1 && providerQuery.trim()"
+                    class="px-3 py-2 text-xs text-ink-subtle"
+                  >
+                    No provider matches "{{ providerQuery.trim() }}"
+                  </li>
+                  <li
+                    v-for="(option, i) in filteredProviderOptions"
+                    :id="`provider-opt-${i}`"
+                    :key="option.value"
+                    role="option"
+                    :aria-selected="option.value === providerUuid"
+                    :class="[
+                      'flex gap-2 justify-between items-center px-3 py-2 text-sm cursor-pointer',
+                      i === providerHighlight ? 'bg-primary/10 text-ink' : 'text-ink-muted',
+                      option.value === OTHER ? 'border-t border-line mt-1' : '',
+                    ]"
+                    @mousedown.prevent="chooseProvider(option)"
+                    @mouseenter="providerHighlight = i"
+                  >
+                    <span class="truncate">{{ option.label }}</span>
+                    <svg v-if="option.value === providerUuid" class="w-4 h-4 shrink-0 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 10.5 3 3 7-7" /></svg>
+                  </li>
+                </ul>
+              </div>
               <p v-if="submitted && !providerUuid" class="mt-1 text-xs text-error">Provider is required.</p>
             </div>
             <div v-if="isOtherProvider">

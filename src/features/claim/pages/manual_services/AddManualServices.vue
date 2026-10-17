@@ -1,21 +1,19 @@
 <script setup>
-// Manually enter services or drugs for an insured.
+// Manually enter services or drugs for an insured, as a two-step wizard like Cash Services:
+// 1. Eligibility Check (shared with Cash Services)  2. the services form.
 // Cash mode (/cash_claims/manual) posts like the Cash Services page's "Other provider" mode;
 // credit mode (/credit_claims/manual, route meta serviceType CREDIT) creates a manual credit service.
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
+import DefaultPage from "@/components/DefaultPage.vue";
+import EligibilityCheck from "@/features/claim/components/cash_services/EligibilityCheck.vue";
 import CustomSelect from "@/components/CustomSelect.vue";
-import SearchSelect from "@/components/SearchSelect.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
-import { searchInsuredByInstitution } from "@/features/insured_persons/api/insuredPersonsApi";
 import { getInstitutionContracts } from "@/features/underwriting/api/underwritingApi";
 import { getPackageDropdown } from "@/features/product_settings/api/coverageApi";
 import { createCashServiceProvided, createCreditServiceProvided } from "../../api/claimApi";
-import { Status } from "@/types/interface";
 import { formatCurrency, toasted } from "@/utils/utils";
-import icons from "@/utils/icons";
 
 const route = useRoute();
 const router = useRouter();
@@ -23,6 +21,7 @@ const router = useRouter();
 const isCredit = computed(() => route.meta?.serviceType === "CREDIT");
 const listPath = computed(() => (isCredit.value ? "/credit_claims" : "/cash_claims"));
 const listName = computed(() => (isCredit.value ? "Credit Services" : "Cash Services"));
+const steps = computed(() => ["Eligibility Check", isCredit.value ? "Credit Services" : "Manual Services"]);
 
 function toList(res) {
   const raw = res?.data ?? res;
@@ -33,60 +32,47 @@ function toList(res) {
   return [];
 }
 
-/* ---------- Patient (pre-filled from the Cash Services list, changeable here) ---------- */
+/* ---------- Wizard ---------- */
+const active = ref(0);
+const eligibilityRef = ref();
+
+// Patient: from the Eligibility Check step, or pre-filled from the Cash Services list
 const institutionUuid = ref(String(route.query.institutionUuid || ""));
+const presetContract = ref("");
 const patient = ref(
   route.query.insuredPersonUuid
     ? {
         insuredPersonUuid: String(route.query.insuredPersonUuid),
         dependantUuid: route.query.dependantUuid ? String(route.query.dependantUuid) : null,
         name: String(route.query.name || ""),
-        detail: String(route.query.detail || ""),
+        profile: null,
       }
     : null
 );
-const changingPatient = ref(!patient.value);
+if (patient.value) active.value = 1;
 
-const insuredQuery = ref("");
-const insuredResults = ref([]);
-const insuredSearchOpen = ref(false);
-const insuredSearchReq = useApiRequest();
-let insuredSearchTimer;
-
-function runInsuredSearch() {
-  const query = insuredQuery.value.trim();
-  if (!institutionUuid.value || !query) {
-    insuredResults.value = [];
-    return;
-  }
-  insuredSearchReq.send(
-    () => searchInsuredByInstitution(institutionUuid.value, { search: query, page: 1, limit: 10 }),
-    (res) => {
-      insuredResults.value = toList(res);
-    }
-  );
-}
-watch(insuredQuery, () => {
-  clearTimeout(insuredSearchTimer);
-  insuredSearchTimer = setTimeout(runInsuredSearch, 300);
-});
-
-function handleInstitutionSelect(result) {
-  institutionUuid.value = result?.institutionUuid || "";
-  insuredQuery.value = "";
-  insuredResults.value = [];
+// EligibilityCheck builds the name by string concatenation, so missing parts read "undefined"
+function cleanName(name) {
+  const parts = String(name || "").split(/\s+/).filter((w) => w && w !== "undefined" && w !== "null");
+  return parts.join(" ") || "Selected member";
 }
 
-function pickPatient(insured, dependant = null) {
+function handleEligibilityComplete(payload) {
+  presetContract.value = payload.payerInstitutionContractUuid || "";
+  institutionUuid.value = payload.institutionUuid || "";
+  contractUuid.value = presetContract.value || contractUuid.value;
   patient.value = {
-    insuredPersonUuid: insured.insuredUuid,
-    dependantUuid: dependant?.dependantUuid || null,
-    name: dependant ? dependant.dependantFullName : insured.insuredFullName,
-    detail: dependant ? `${dependant.relationship || "Dependant"} of ${insured.insuredFullName}` : insured.insuranceId || "",
+    insuredPersonUuid: payload.insuredUuid,
+    dependantUuid: payload.dependantUuid || null,
+    name: cleanName(payload.person?.name),
+    profile: payload.person?.profile || null,
   };
-  insuredQuery.value = "";
-  insuredResults.value = [];
-  changingPatient.value = false;
+  submitted.value = false;
+  active.value = 1;
+}
+
+function goToStep(i) {
+  if (i === 0 || patient.value) active.value = i;
 }
 
 const initials = computed(() =>
@@ -97,6 +83,12 @@ const initials = computed(() =>
     .map((w) => w[0].toUpperCase())
     .join("")
 );
+
+const formatImageSource = (profile) => {
+  if (!profile) return "";
+  const isBase64 = profile.startsWith("iVBOR") || profile.startsWith("/9j/");
+  return isBase64 ? `data:image/png;base64,${profile}` : profile;
+};
 
 /* ---------- Contract (from the institution) ---------- */
 const contracts = ref([]);
@@ -112,7 +104,8 @@ watch(
       () => getInstitutionContracts(id, { status: "ACTIVE" }),
       (res) => {
         contracts.value = toList(res);
-        if (contracts.value.length === 1) contractUuid.value = contracts.value[0].payerInstitutionContractUuid;
+        contractUuid.value =
+          presetContract.value || (contracts.value.length === 1 ? contracts.value[0].payerInstitutionContractUuid : "");
       }
     );
   },
@@ -254,12 +247,26 @@ function save() {
   );
 }
 
-function startAnother() {
+function resetForm() {
   items.value = [newItem()];
   files.value = [];
   referenceNumber.value = "";
   submitted.value = false;
   saved.value = null;
+}
+
+// Same patient, another set of services
+function startAnother() {
+  resetForm();
+}
+
+// Back to Eligibility Check for another person of the same institution (as Cash Services does)
+function startNextPerson() {
+  resetForm();
+  providerName.value = "";
+  patient.value = null;
+  eligibilityRef.value?.resetForNextPerson?.();
+  active.value = 0;
 }
 
 function goBack() {
@@ -268,24 +275,63 @@ function goBack() {
 </script>
 
 <template>
-  <div class="px-4 py-5 mx-auto w-full max-w-6xl sm:px-6 lg:py-8">
-    <!-- Page header -->
-    <header class="flex flex-wrap gap-4 justify-between items-start mb-6">
-      <div>
-        <h1 class="!px-0 text-xl font-semibold tracking-tight sm:text-2xl text-ink">
-          {{ isCredit ? "Add credit services" : "Add services manually" }}
-        </h1>
-        <p class="mt-1 text-sm text-ink-muted">
-          {{
-            isCredit
-              ? "Record services or drugs a patient received on credit."
-              : "Record services or drugs a patient received at a provider outside the network."
-          }}
-        </p>
-      </div>
-    </header>
+  <DefaultPage :hideSearch="true">
+    <template #header>
+      <div class="flex flex-wrap gap-4 justify-between items-center w-full">
+        <!-- Step indicator (same as Cash Services) -->
+        <div class="flex gap-8 items-center">
+          <div
+            v-for="(tab, i) in steps"
+            :key="tab"
+            :class="['relative group', i === 0 || patient ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
+            @click="goToStep(i)"
+          >
+            <div
+              :class="[
+                'px-4 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2',
+                active === i
+                  ? 'bg-gradient-to-r from-primary to-primary text-white shadow-lg'
+                  : i === 0 || patient
+                  ? 'text-ink-muted hover:text-ink hover:bg-surface-muted'
+                  : 'text-ink-subtle',
+              ]"
+            >
+              <span v-if="i === 0">✓</span>
+              <span v-else>📝</span>
+              {{ tab }}
+            </div>
+            <div v-if="active === i" class="absolute right-0 bottom-0 left-0 h-1 bg-gradient-to-r rounded-full from-primary to-primary"></div>
+          </div>
+        </div>
 
-    <!-- Success -->
+        <!-- Current person -->
+        <Transition name="slide-left">
+          <div
+            v-if="patient"
+            class="flex gap-3 items-center px-4 py-2 bg-gradient-to-r rounded-lg border from-primary/5 to-primary/5 border-primary/20"
+          >
+            <div v-if="patient.profile" class="flex overflow-hidden justify-center items-center w-8 h-8 rounded-full border-2 border-white shadow-sm">
+              <img :src="formatImageSource(patient.profile)" class="object-cover w-full h-full" alt="" />
+            </div>
+            <div v-else class="flex justify-center items-center w-8 h-8 text-xs font-bold text-white bg-gradient-to-br rounded-full shadow-sm from-primary/70 to-primary">
+              {{ initials }}
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs font-semibold tracking-wide uppercase truncate text-ink-subtle">Current Person</p>
+              <p class="text-sm font-bold truncate text-ink">{{ patient.name }}</p>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </template>
+
+    <div class="py-6">
+    <!-- Step 1: Eligibility Check -->
+    <EligibilityCheck v-show="active === 0" ref="eligibilityRef" @complete="handleEligibilityComplete" />
+
+    <!-- Step 2 -->
+    <template v-if="active === 1">
+    <!-- Success -->    <!-- Success -->
     <section v-if="saved" class="p-8 mx-auto max-w-lg text-center rounded-2xl border shadow-card border-line bg-surface" aria-live="polite">
       <div class="grid place-items-center mx-auto mb-4 w-14 h-14 rounded-full bg-success-soft text-success">
         <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
@@ -297,105 +343,17 @@ function goBack() {
       </p>
       <div class="flex flex-wrap gap-2 justify-center mt-6">
         <Button type="secondary" @click="startAnother">Add more for this patient</Button>
+        <Button type="secondary" @click="startNextPerson">Next person</Button>
         <Button type="primary" @click="goBack">Back to {{ listName }}</Button>
       </div>
     </section>
 
     <div v-else class="grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_320px]">
       <div class="space-y-6 min-w-0">
-        <!-- 1. Patient -->
-        <section class="rounded-2xl border shadow-card border-line bg-surface" aria-labelledby="patient-title">
-          <div class="flex gap-3 justify-between items-center px-5 py-4 border-b border-line">
-            <div class="flex gap-3 items-center">
-              <span class="step">1</span>
-              <h2 id="patient-title" class="text-base font-semibold text-ink">Patient</h2>
-            </div>
-            <button
-              v-if="patient && !changingPatient"
-              type="button"
-              class="text-sm font-medium text-primary hover:underline"
-              @click="changingPatient = true"
-            >
-              Change
-            </button>
-          </div>
-
-          <div class="p-5">
-            <div v-if="patient && !changingPatient" class="flex gap-4 items-center">
-              <span class="grid place-items-center w-12 h-12 text-base font-semibold rounded-full shrink-0 bg-primary/10 text-primary" aria-hidden="true">
-                {{ initials }}
-              </span>
-              <div class="min-w-0">
-                <p class="font-semibold truncate text-ink">{{ patient.name }}</p>
-                <p v-if="patient.detail" class="text-sm truncate text-ink-muted">{{ patient.detail }}</p>
-              </div>
-              <span v-if="patient.dependantUuid" class="px-2 py-0.5 ml-auto text-xs font-medium rounded-full bg-surface-muted text-ink-muted">Dependant</span>
-              <span v-else class="px-2 py-0.5 ml-auto text-xs font-medium rounded-full bg-primary/10 text-primary">Principal</span>
-            </div>
-
-            <div v-else class="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label class="field-label">Institution<span class="text-error">*</span></label>
-                <SearchSelect
-                  class="w-full"
-                  placeholder="Search institution..."
-                  :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
-                  :selectCb="handleInstitutionSelect"
-                  :option="{ label: 'institutionName', value: 'institutionUuid' }"
-                />
-              </div>
-              <div class="relative">
-                <label class="field-label" for="patient-search">Patient<span class="text-error">*</span></label>
-                <div class="relative">
-                  <input
-                    id="patient-search"
-                    v-model="insuredQuery"
-                    type="search"
-                    class="pr-9 field"
-                    :disabled="!institutionUuid"
-                    :placeholder="institutionUuid ? 'Search by name or insurance ID...' : 'Choose an institution first'"
-                    autocomplete="off"
-                    @focus="insuredSearchOpen = true"
-                    @blur="insuredSearchOpen = false"
-                  />
-                  <i v-if="insuredSearchReq.pending.value" class="absolute right-3 top-3 animate-spin text-ink-subtle *:size-4" v-html="icons.spinner" />
-                </div>
-                <div
-                  v-if="insuredSearchOpen && insuredQuery.trim()"
-                  class="overflow-y-auto absolute z-30 mt-1 w-full max-h-80 rounded-xl border shadow-pop border-line bg-surface"
-                >
-                  <p v-if="!insuredSearchReq.pending.value && !insuredResults.length" class="p-3 text-sm text-ink-muted">No patient found.</p>
-                  <div v-for="insured in insuredResults" :key="insured.insuredUuid" class="border-b border-line last:border-b-0">
-                    <button type="button" class="flex flex-col items-start px-3 py-2 w-full text-left hover:bg-surface-muted" @mousedown.prevent="pickPatient(insured)">
-                      <span class="text-sm font-medium text-ink">{{ insured.insuredFullName }}</span>
-                      <span class="text-xs text-ink-muted">{{ insured.insuranceId }}<template v-if="insured.phone"> · {{ insured.phone }}</template></span>
-                    </button>
-                    <button
-                      v-for="dep in insured.dependants || []"
-                      :key="dep.dependantUuid"
-                      type="button"
-                      class="flex gap-1 items-center py-1.5 pr-3 pl-7 w-full text-xs text-left text-ink-muted hover:bg-surface-muted"
-                      @mousedown.prevent="pickPatient(insured, dep)"
-                    >
-                      {{ dep.dependantFullName }} <span class="text-ink-subtle">({{ dep.relationship }})</span>
-                    </button>
-                  </div>
-                </div>
-                <p v-if="show('patient')" class="field-error">Choose the patient who received the services.</p>
-              </div>
-              <div v-if="patient" class="sm:col-span-2">
-                <button type="button" class="text-sm font-medium text-ink-muted hover:text-ink" @click="changingPatient = false">
-                  Keep {{ patient.name }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 2. Claim details -->
+        <!-- 1. Claim details -->
         <section class="rounded-2xl border shadow-card border-line bg-surface" aria-labelledby="details-title">
           <div class="flex gap-3 items-center px-5 py-4 border-b border-line">
-            <span class="step">2</span>
+            <span class="step">1</span>
             <h2 id="details-title" class="text-base font-semibold text-ink">Claim details</h2>
           </div>
           <div class="grid gap-x-4 gap-y-5 p-5 sm:grid-cols-2">
@@ -443,11 +401,11 @@ function goBack() {
           </div>
         </section>
 
-        <!-- 3. Services & drugs -->
+        <!-- 2. Services & drugs -->
         <section class="rounded-2xl border shadow-card border-line bg-surface" aria-labelledby="items-title">
           <div class="flex flex-wrap gap-3 justify-between items-center px-5 py-4 border-b border-line">
             <div class="flex gap-3 items-center">
-              <span class="step">3</span>
+              <span class="step">2</span>
               <h2 id="items-title" class="text-base font-semibold text-ink">Services &amp; drugs</h2>
             </div>
             <div class="flex gap-2">
@@ -552,10 +510,10 @@ function goBack() {
           </div>
         </section>
 
-        <!-- 4. Attachments -->
+        <!-- 3. Attachments -->
         <section class="rounded-2xl border shadow-card border-line bg-surface" aria-labelledby="files-title">
           <div class="flex gap-3 items-center px-5 py-4 border-b border-line">
-            <span class="step">4</span>
+            <span class="step">3</span>
             <h2 id="files-title" class="text-base font-semibold text-ink">Receipts <span class="text-sm font-normal text-ink-subtle">(optional)</span></h2>
           </div>
           <div class="p-5">
@@ -618,12 +576,14 @@ function goBack() {
           </dl>
           <div class="px-5 pb-5 space-y-2">
             <Button type="primary" class="w-full" :pending="saveReq.pending.value" @click="save">Save services</Button>
-            <Button type="secondary" class="w-full" :disabled="saveReq.pending.value" @click="goBack">Cancel</Button>
+            <Button type="secondary" class="w-full" :disabled="saveReq.pending.value" @click="active = 0">← Back to eligibility</Button>
           </div>
         </div>
       </aside>
     </div>
-  </div>
+    </template>
+    </div>
+  </DefaultPage>
 </template>
 
 <style scoped>
@@ -691,5 +651,17 @@ function goBack() {
 }
 .summary-head {
   background: linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary-hover)));
+}
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(10px);
+}
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 </style>

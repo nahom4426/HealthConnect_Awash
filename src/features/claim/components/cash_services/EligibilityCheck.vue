@@ -33,6 +33,12 @@ const activeTab = ref('select');
 // Institution search state
 const institutionSearchTerm = ref('');
 const showInstitutionDropdown = ref(false);
+// Delay so a click on a dropdown option lands before it closes
+function hideInstitutionDropdownSoon() {
+  setTimeout(() => {
+    showInstitutionDropdown.value = false;
+  }, 200);
+}
 const institutions = ref([]);
 const institutionLoading = ref(false);
 const institutionUuid = ref('');
@@ -389,7 +395,7 @@ watch(employeeSearchTerm, () => {
           type="text"
           placeholder="Search institutions..."
           @focus="showInstitutionDropdown = true"
-          @blur="setTimeout(() => showInstitutionDropdown = false, 200)"
+          @blur="hideInstitutionDropdownSoon"
           class="py-2.5 pr-10 pl-10 w-3/4 text-sm bg-surface-muted rounded-lg border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white"
         />
         <button

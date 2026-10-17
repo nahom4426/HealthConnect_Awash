@@ -143,9 +143,10 @@ watch(
   },
   { immediate: true }
 );
+// Credit needs the provider's contract UUID, so a provider outside the list ("Other") is cash-only
 const providerOptions = computed(() => [
   ...providers.value.map((p) => ({ value: p.providerUuid, label: p.providerName })),
-  { value: OTHER, label: "🔹 Other Provider" },
+  ...(isCredit.value ? [] : [{ value: OTHER, label: "🔹 Other Provider" }]),
 ]);
 const isOtherProvider = computed(() => providerUuid.value === OTHER);
 const selectedProvider = computed(() => providers.value.find((p) => p.providerUuid === providerUuid.value) || null);
@@ -163,7 +164,8 @@ const selectedProviderLabel = computed(() =>
 const filteredProviderOptions = computed(() => {
   const q = providerQuery.value.trim().toLowerCase();
   const list = providerOptions.value.filter((o) => o.value !== OTHER && (!q || o.label?.toLowerCase().includes(q)));
-  return [...list, providerOptions.value[providerOptions.value.length - 1]];
+  const other = providerOptions.value.find((o) => o.value === OTHER);
+  return other ? [...list, other] : list;
 });
 function openProviderList() {
   providerQuery.value = "";
@@ -225,10 +227,22 @@ watch(
 );
 const packageOptions = computed(() => packages.value.map((p) => ({ value: p.packageUuid, label: p.packageName })));
 
-/* ---------- Date & reference ---------- */
+/* ---------- Date, reference & invoice ---------- */
 const referenceNumber = ref("");
+const invoiceNumber = ref("");
 const today = new Date().toISOString().slice(0, 10);
 const providedDate = ref(today);
+
+// Provider, package, date, reference + optional contract / other-provider name / invoice
+const headerGridClass = computed(() => {
+  const count = 4 + [needsContract.value, isOtherProvider.value, isCredit.value].filter(Boolean).length;
+  return {
+    4: "md:grid-cols-2 lg:grid-cols-4",
+    5: "md:grid-cols-3 xl:grid-cols-5",
+    6: "md:grid-cols-3 xl:grid-cols-6",
+    7: "md:grid-cols-4 2xl:grid-cols-7",
+  }[count];
+});
 
 /* ---------- Items list ---------- */
 const items = ref([]);
@@ -308,6 +322,8 @@ const missingRequiredFields = computed(() => {
   if (!contractUuid.value) m.push("Contract");
   if (!providerUuid.value) m.push("Provider");
   else if (isOtherProvider.value && !otherProviderName.value.trim()) m.push("Provider Name");
+  else if (isCredit.value && !selectedProvider.value?.payerProviderContractUuid) m.push("A provider with a contract");
+  if (isCredit.value && !invoiceNumber.value.trim()) m.push("Invoice Number");
   if (!pkg.value) m.push("Package");
   if (!providedDate.value) m.push("Service Date");
   if (!items.value.length) m.push("At least one service or drug");
@@ -329,16 +345,16 @@ function submit(action) {
     return;
   }
 
-  // Credit: the institution contract (as the manual-credit modal does).
-  // Cash: the provider's own contract, or the institution contract for "Other" (as Cash Services does).
-  const sendProviderContract = !isCredit.value && !isOtherProvider.value && selectedProvider.value?.payerProviderContractUuid;
+  // contractUuid is the provider's contract UUID (required by manualCreditService);
+  // cash falls back to the institution contract for an "Other" provider, as Cash Services does.
   const body = {
-    contractUuid: sendProviderContract ? selectedProvider.value.payerProviderContractUuid : contractUuid.value,
+    contractUuid: isOtherProvider.value ? contractUuid.value : selectedProvider.value?.payerProviderContractUuid,
     providerName: providerName.value,
     totalPrice: grandTotal.value,
     providedDate: providedDate.value,
     insuredUuid: patient.value.insuredPersonUuid,
     dependentUuid: patient.value.dependantUuid || undefined,
+    ...(isCredit.value ? { invoiceNumber: invoiceNumber.value.trim() } : {}),
     deleted: false,
     items: items.value.map((item) => ({
       serviceName: item.serviceName,
@@ -355,12 +371,8 @@ function submit(action) {
 
   const form = new FormData();
   files.value.forEach((f) => form.append("attachment", f));
-  // The backend reads these exact multipart field names (spaces included)
-  if (isCredit.value) {
-    form.append("service provided request", JSON.stringify(body));
-  } else {
-    form.append("serviceProvidedRequest ", JSON.stringify(body));
-  }
+  // Multipart field names as the backend defines them (the cash endpoint's has a trailing space)
+  form.append(isCredit.value ? "serviceProvidedRequest" : "serviceProvidedRequest ", JSON.stringify(body));
 
   submitAction.value = action;
   saveReq.send(
@@ -382,6 +394,7 @@ function startNextPerson() {
   items.value = [];
   files.value = [];
   referenceNumber.value = "";
+  invoiceNumber.value = "";
   submitted.value = false;
   resetEntry();
   patient.value = null;
@@ -449,16 +462,7 @@ function startNextPerson() {
       <div v-if="active === 1" class="mx-auto space-y-6 w-full max-w-2xl xl:max-w-4xl 2xl:max-w-[80rem]">
         <!-- Provider, Package, Date & Reference (same line) -->
         <div class="p-4 rounded-lg border shadow-sm bg-surface border-line">
-          <div
-            :class="[
-              'grid grid-cols-1 gap-4',
-              isOtherProvider && needsContract
-                ? 'md:grid-cols-3 xl:grid-cols-6'
-                : isOtherProvider || needsContract
-                ? 'md:grid-cols-5'
-                : 'md:grid-cols-4',
-            ]"
-          >
+          <div :class="['grid grid-cols-1 gap-4', headerGridClass]">
             <div v-if="needsContract">
               <label class="block mb-2 text-sm font-semibold text-ink-muted">📄 Contract<span class="text-error">*</span></label>
               <CustomSelect v-model="contractUuid" placeholder="Choose contract..." :options="contractOptions" class="w-full" />
@@ -501,10 +505,10 @@ function startNextPerson() {
                   class="overflow-y-auto absolute z-40 py-1 mt-1 w-full min-w-[16rem] max-h-64 rounded-lg border shadow-pop bg-surface border-line"
                 >
                   <li
-                    v-if="filteredProviderOptions.length === 1 && providerQuery.trim()"
+                    v-if="!filteredProviderOptions.some((o) => o.value !== OTHER)"
                     class="px-3 py-2 text-xs text-ink-subtle"
                   >
-                    No provider matches "{{ providerQuery.trim() }}"
+                    {{ providerQuery.trim() ? `No provider matches "${providerQuery.trim()}"` : "No providers mapped to this contract" }}
                   </li>
                   <li
                     v-for="(option, i) in filteredProviderOptions"
@@ -526,6 +530,12 @@ function startNextPerson() {
                 </ul>
               </div>
               <p v-if="submitted && !providerUuid" class="mt-1 text-xs text-error">Provider is required.</p>
+              <p
+                v-else-if="isCredit && providerUuid && !selectedProvider?.payerProviderContractUuid"
+                class="mt-1 text-xs text-error"
+              >
+                This provider has no contract.
+              </p>
             </div>
             <div v-if="isOtherProvider">
               <label class="block mb-2 text-sm font-semibold text-ink-muted">🏢 Provider Name<span class="text-error">*</span></label>
@@ -559,8 +569,18 @@ function startNextPerson() {
               />
               <p v-if="submitted && !providedDate" class="mt-1 text-xs text-error">Service date is required.</p>
             </div>
+            <div v-if="isCredit">
+              <label for="invoice-no" class="block mb-2 text-sm font-semibold text-ink-muted">🧾 Invoice No.<span class="text-error">*</span></label>
+              <input
+                id="invoice-no"
+                v-model="invoiceNumber"
+                placeholder="e.g., INV-1042"
+                class="pl-2 w-full h-10 text-sm rounded-md border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+              <p v-if="submitted && !invoiceNumber.trim()" class="mt-1 text-xs text-error">Invoice number is required.</p>
+            </div>
             <div>
-              <label class="block mb-2 text-sm font-semibold text-ink-muted">🧾 Reference No.</label>
+              <label class="block mb-2 text-sm font-semibold text-ink-muted">🔖 Reference No.</label>
               <input
                 id="reference-no"
                 v-model="referenceNumber"

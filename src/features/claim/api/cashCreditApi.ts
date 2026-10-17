@@ -27,6 +27,8 @@ export function requestCashClaim(data: any) {
     claimFromDate: data.claimFromDate,
     claimToDate: data.claimToDate,
     totalAmount: data.totalAmount,
+    // CASH or CREDIT; callers that predate credit claims are cash
+    serviceType: data.serviceType || 'CASH',
     // Support both old format (cashCreditUuidRequest) and new format (serviceProvidedUuid)
     serviceProvidedUuid: data.serviceProvidedUuid || data.cashCreditUuidRequest?.map((item: any) => item.cashCreditUuid) || []
   };

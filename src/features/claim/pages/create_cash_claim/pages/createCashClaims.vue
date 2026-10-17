@@ -179,6 +179,7 @@ const submitClaims = async () => {
       claimFromDate: fromDate.value || undefined,
       claimToDate: toDate.value || undefined,
       totalAmount: totalAmount,
+      serviceType: serviceType.value,
       serviceProvidedUuid: selectedClaims.value.map(claim => claim.serviceProvidedUuid)
     };
 

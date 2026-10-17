@@ -77,6 +77,12 @@ export default [
         component: CreditClaim,
       },
       {
+        path: "manual",
+        name: "Add Credit Services",
+        component: AddManualServices,
+        meta: { serviceType: "CREDIT" },
+      },
+      {
         path: "detail/:claimUuid",
         name: "Claim Detail",
         component: CreditClaimDetail,

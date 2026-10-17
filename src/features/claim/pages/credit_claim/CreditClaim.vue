@@ -2,6 +2,7 @@
 import Table from "@/components/Table.vue";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import DefaultPage from "@/components/DefaultPage.vue";
 import { getActiveContracts } from "@/features/provider_contracts/api/contractApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
@@ -23,6 +24,8 @@ const serviceType= ref("CREDIT"); // default to CREDIT
 const fromDate = ref("");
 const toDate = ref("");
 const showFilters = ref(false);
+
+const router = useRouter();
 
 // 👇 selected row state
 const selectedRow = ref(null);
@@ -91,6 +94,10 @@ function handleContractSelect(result) {
       </template>
 
       <template #more v-if="!selectedRow">
+        <Button type="primary" @click="router.push('/credit_claims/manual')">
+          <svg class="mr-1.5 w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+          Add
+        </Button>
         <button 
           @click="showFilters = !showFilters" 
           class="flex gap-2 items-center px-4 h-10 text-sm font-medium text-ink-muted bg-surface-muted rounded-lg border border-line shadow-sm transition-colors hover:bg-surface-muted"

@@ -1,6 +1,7 @@
 <script setup>
-// Manually enter cash/credit services for an insured.
-// Submits the same request as the Cash Services page's "Other provider" mode.
+// Manually enter services or drugs for an insured.
+// Cash mode (/cash_claims/manual) posts like the Cash Services page's "Other provider" mode;
+// credit mode (/credit_claims/manual, route meta serviceType CREDIT) creates a manual credit service.
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
@@ -11,13 +12,17 @@ import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/insti
 import { searchInsuredByInstitution } from "@/features/insured_persons/api/insuredPersonsApi";
 import { getInstitutionContracts } from "@/features/underwriting/api/underwritingApi";
 import { getPackageDropdown } from "@/features/product_settings/api/coverageApi";
-import { createCashServiceProvided } from "../../api/claimApi";
+import { createCashServiceProvided, createCreditServiceProvided } from "../../api/claimApi";
 import { Status } from "@/types/interface";
 import { formatCurrency, toasted } from "@/utils/utils";
 import icons from "@/utils/icons";
 
 const route = useRoute();
 const router = useRouter();
+
+const isCredit = computed(() => route.meta?.serviceType === "CREDIT");
+const listPath = computed(() => (isCredit.value ? "/credit_claims" : "/cash_claims"));
+const listName = computed(() => (isCredit.value ? "Credit Services" : "Cash Services"));
 
 function toList(res) {
   const raw = res?.data ?? res;
@@ -229,15 +234,19 @@ function save() {
 
   const form = new FormData();
   files.value.forEach((f) => form.append("attachment", f));
-  // The backend reads this exact multipart field name (trailing space included)
-  form.append("serviceProvidedRequest ", JSON.stringify(body));
+  // The backend reads these exact multipart field names (spaces included)
+  if (isCredit.value) {
+    form.append("service provided request", JSON.stringify(body));
+  } else {
+    form.append("serviceProvidedRequest ", JSON.stringify(body));
+  }
 
   saveReq.send(
-    () => createCashServiceProvided(form),
+    () => (isCredit.value ? createCreditServiceProvided(form) : createCashServiceProvided(form)),
     (res) => {
       if (res.success) {
         saved.value = { total: grandTotal.value, count: filledItems.value.length, provider: body.providerName };
-        toasted(true, "Services added");
+        toasted(true, isCredit.value ? "Credit services added" : "Services added");
       } else {
         toasted(false, "", res.error || "Failed to add services");
       }
@@ -254,7 +263,7 @@ function startAnother() {
 }
 
 function goBack() {
-  router.push("/cash_claims");
+  router.push(listPath.value);
 }
 </script>
 
@@ -263,8 +272,16 @@ function goBack() {
     <!-- Page header -->
     <header class="flex flex-wrap gap-4 justify-between items-start mb-6">
       <div>
-        <h1 class="!px-0 text-xl font-semibold tracking-tight sm:text-2xl text-ink">Add services manually</h1>
-        <p class="mt-1 text-sm text-ink-muted">Record services or drugs a patient received at a provider outside the network.</p>
+        <h1 class="!px-0 text-xl font-semibold tracking-tight sm:text-2xl text-ink">
+          {{ isCredit ? "Add credit services" : "Add services manually" }}
+        </h1>
+        <p class="mt-1 text-sm text-ink-muted">
+          {{
+            isCredit
+              ? "Record services or drugs a patient received on credit."
+              : "Record services or drugs a patient received at a provider outside the network."
+          }}
+        </p>
       </div>
     </header>
 
@@ -273,14 +290,14 @@ function goBack() {
       <div class="grid place-items-center mx-auto mb-4 w-14 h-14 rounded-full bg-success-soft text-success">
         <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
       </div>
-      <h2 class="text-lg font-semibold text-ink">Services added</h2>
+      <h2 class="text-lg font-semibold text-ink">{{ isCredit ? "Credit services added" : "Services added" }}</h2>
       <p class="mt-1 text-sm text-ink-muted">
         {{ saved.count }} item(s) from {{ saved.provider }} for <span class="font-medium text-ink">{{ patient?.name }}</span>,
         totalling <span class="font-semibold text-ink">{{ formatCurrency(saved.total) }}</span>.
       </p>
       <div class="flex flex-wrap gap-2 justify-center mt-6">
         <Button type="secondary" @click="startAnother">Add more for this patient</Button>
-        <Button type="primary" @click="goBack">Back to Cash Services</Button>
+        <Button type="primary" @click="goBack">Back to {{ listName }}</Button>
       </div>
     </section>
 

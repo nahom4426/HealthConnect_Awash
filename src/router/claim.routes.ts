@@ -61,6 +61,12 @@ export default [
     meta: { requiresAuth: true, permissions: ["Create Cash Claims"] },
   },
   {
+    path: "/create_credit_claims",
+    name: "Create Credit Claims",
+    component: CreateCashClaims,
+    meta: { requiresAuth: true, permissions: ["Credit Services"], serviceType: "CREDIT" },
+  },
+  {
     path: "/cash_services",
     name: "Cash Service",
     component: CashServices,

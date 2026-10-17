@@ -87,6 +87,7 @@ function handleContractSelect(result) {
       </template>
 
       <template #more v-if="!selectedRow">
+        <Button type="secondary" @click="router.push('/create_credit_claims')">Create Claims</Button>
         <Button type="primary" @click="router.push('/credit_claims/manual')">
           <svg class="mr-1.5 w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
           Add

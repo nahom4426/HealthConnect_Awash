@@ -12,12 +12,16 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { requestCashClaim } from "@/features/claim/api/cashCreditApi";
 import SearchSelect from "@/components/SearchSelect.vue";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
+import { getActiveContracts } from "@/features/provider_contracts/api/contractApi";
 import GenerateCashCreditClaimDataProvider from "@/features/claim/components/GenerateCashCreditClaimDataProvider.vue";
 import { useRequestdClaims } from "@/features/claim/store/requestedCreditClaimStore";
 import CreateCashClaimTableRow from "../component/CreateCashClaimTableRow.vue";
 
 const router = useRouter();
 const route = useRoute();
+
+// Cash claims are created per institution; credit claims (/create_credit_claims) per provider
+const isCredit = computed(() => route.meta?.serviceType === "CREDIT");
 
 const dataProvider = ref(null);
 
@@ -27,8 +31,8 @@ const providerUuid = ref(null);
 const providerName = ref("");
 const institutionUuid = ref("");
 const institutionName = ref("");
-const itemType = ref("SERVICE");
-const serviceType = ref("CASH");
+const itemType = computed(() => (isCredit.value ? "" : "SERVICE")); // credit: services and drugs
+const serviceType = computed(() => (isCredit.value ? "CREDIT" : "CASH"));
 const isGenerating = ref(false);
 const isSubmitting = ref(false);
 const hasGenerated = ref(false);
@@ -48,7 +52,20 @@ const toDate = ref(new Date().toISOString().split("T")[0]);
 const requestClaimReq = useApiRequest();
 
 /* computed guards */
-const isReadyToGenerate = computed(() => !!institutionUuid.value);
+const isReadyToGenerate = computed(() => (isCredit.value ? !!contractUuid.value : !!institutionUuid.value));
+
+// Query for the not-claimed services: by provider contract (credit) or institution (cash)
+const queryParams = computed(() =>
+  isCredit.value
+    ? { contractUuid: contractUuid.value, providerUuid: providerUuid.value, itemType: itemType.value, serviceType: serviceType.value, fromDate: fromDate.value, toDate: toDate.value }
+    : { institutionUuid: institutionUuid.value, itemType: itemType.value, serviceType: serviceType.value, fromDate: fromDate.value, toDate: toDate.value }
+);
+
+function handleProviderSelect(row) {
+  contractUuid.value = row?.payerProviderContractUuid || null;
+  providerUuid.value = row?.providerUuid || null;
+  providerName.value = row?.providerName || row?.contractName || "";
+}
 const isReadyToSubmit = computed(() => selectedClaims.value.length > 0);
 
 /* ----- selection handlers ----- */
@@ -145,11 +162,14 @@ const submitClaims = async () => {
       first?.providerUUID ||
       first?.providerId;
 
-    const derivedInstitutionUuid =
-      institutionUuid.value ||
-      first?.institutionUuid ||
-      first?.institutionUUID ||
-      first?.institutionId;
+    // Credit claims are per provider and can span institutions: only send one when they all share it
+    const rowInstitutions = [...new Set(selectedClaims.value.map((c) => c?.institutionUuid).filter(Boolean))];
+    const derivedInstitutionUuid = isCredit.value
+      ? (rowInstitutions.length === 1 ? rowInstitutions[0] : undefined)
+      : institutionUuid.value ||
+        first?.institutionUuid ||
+        first?.institutionUUID ||
+        first?.institutionId;
 
     // Build the payload with correct structure
     const payload = {
@@ -292,7 +312,7 @@ watch(selectedClaims, (newVal) => {
 <template>
   <GenerateCashCreditClaimDataProvider 
   ref="dataProvider"
-    :params="{ institutionUuid, itemType, serviceType, fromDate, toDate }"
+    :params="queryParams"
     :auto="false"
   >
     <template #default="{ claims, pending, search, send }">
@@ -301,8 +321,20 @@ watch(selectedClaims, (newVal) => {
         <template #header v-if="!hasGenerated">
           <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
             <div class="flex flex-col gap-4 md:flex-row md:items-end">
-              <!-- Institution -->
-              <div class="flex-1 min-w-0">
+              <!-- Provider (credit claims) -->
+              <div v-if="isCredit" class="flex-1 min-w-0">
+                <label class="block mb-2 text-sm font-medium text-ink-muted">Provider</label>
+                <SearchSelect
+                  v-model="providerName"
+                  placeholder="Search provider..."
+                  :searchCb="(data) => getActiveContracts({ ...data, status: Status.ACTIVE })"
+                  :selectCb="handleProviderSelect"
+                  :option="{ label: 'providerName', value: 'payerProviderContractUuid' }"
+                />
+              </div>
+
+              <!-- Institution (cash claims) -->
+              <div v-else class="flex-1 min-w-0">
                 <label class="block mb-2 text-sm font-medium text-ink-muted">Institution</label>
                 <SearchSelect
                   v-model="institutionName"
@@ -339,7 +371,7 @@ watch(selectedClaims, (newVal) => {
                   :pending="isGenerating"
                   btn-text="Generate Claims"
                   :disabled="!isReadyToGenerate"
-                  :title="!isReadyToGenerate ? 'Please select institution' : ''"
+                  :title="!isReadyToGenerate ? (isCredit ? 'Please select provider' : 'Please select institution') : ''"
                   @click="generateClaims(send)"
                   class="w-full md:w-auto"
                 />
@@ -354,8 +386,11 @@ watch(selectedClaims, (newVal) => {
           <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
             <div class="gap-4 md:flex md:items-center md:justify-between">
               <div>
-                <h3 class="text-lg font-semibold text-ink">Cash Claims</h3>
-                <div v-if="institutionName" class="p-2 mt-2 bg-primary/5 rounded border border-primary/20">
+                <h3 class="text-lg font-semibold text-ink">{{ isCredit ? "Credit Claims" : "Cash Claims" }}</h3>
+                <div v-if="isCredit && providerName" class="p-2 mt-2 rounded border bg-primary/5 border-primary/20">
+                  <p class="text-sm text-primary-hover"><strong>Provider:</strong> {{ providerName }}</p>
+                </div>
+                <div v-if="!isCredit && institutionName" class="p-2 mt-2 bg-primary/5 rounded border border-primary/20">
                   <p class="text-sm text-primary-hover"><strong>Institution:</strong> {{ institutionName }}</p>
                 </div>
               </div>

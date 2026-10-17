@@ -52,6 +52,8 @@ const eligibilityRef = ref();
 // Patient: from the Eligibility Check step, or pre-filled from the Cash Services list
 const institutionUuid = ref(String(route.query.institutionUuid || ""));
 const presetContract = ref("");
+// Provider saved on a record being edited, until it's matched in the provider list
+const pendingProvider = ref(null);
 const patient = ref(
   route.query.insuredPersonUuid
     ? {
@@ -120,6 +122,8 @@ watch(
         contracts.value = toList(res);
         contractUuid.value =
           presetContract.value || (contracts.value.length === 1 ? contracts.value[0].payerInstitutionContractUuid : "");
+        // Editing: the record only has the provider's contract, so find the institution contract it belongs to
+        if (!contractUuid.value && pendingProvider.value?.contract) findContractOfProvider(pendingProvider.value.contract);
       }
     );
   },
@@ -132,7 +136,24 @@ const contractOptions = computed(() =>
   }))
 );
 // Pre-filled from the list with several contracts: the only case where we must ask
-const needsContract = computed(() => !presetContract.value && contracts.value.length > 1);
+const needsContract = computed(() => !presetContract.value && contracts.value.length > 1 && !findingContract.value);
+
+const findingContract = ref(false);
+async function findContractOfProvider(providerContract) {
+  findingContract.value = true;
+  try {
+    for (const c of contracts.value) {
+      const res = await getAlreadyMappedActiveProviders(c.payerInstitutionContractUuid);
+      if (toList(res).some((p) => p.payerProviderContractUuid === providerContract)) {
+        presetContract.value = c.payerInstitutionContractUuid;
+        contractUuid.value = c.payerInstitutionContractUuid;
+        return;
+      }
+    }
+  } finally {
+    findingContract.value = false;
+  }
+}
 
 /* ---------- Provider (providers mapped to the contract, or "Other") ---------- */
 const OTHER = "OTHER";
@@ -342,7 +363,7 @@ const missingRequiredFields = computed(() => {
   if (!providerUuid.value) m.push("Provider");
   else if (isOtherProvider.value && !otherProviderName.value.trim()) m.push("Provider Name");
   else if (isCredit.value && !selectedProvider.value?.payerProviderContractUuid) m.push("A provider with a contract");
-  if (isCredit.value && !invoiceNumber.value.trim()) m.push("Invoice Number");
+  if (isCredit.value && !isEdit.value && !invoiceNumber.value.trim()) m.push("Invoice Number");
   if (!pkg.value) m.push("Package");
   if (!providedDate.value) m.push("Service Date");
   if (!items.value.length) m.push("At least one service or drug");
@@ -373,7 +394,7 @@ function submit(action) {
     providedDate: providedDate.value,
     insuredUuid: patient.value.insuredPersonUuid,
     dependentUuid: patient.value.dependantUuid || undefined,
-    ...(isCredit.value ? { invoiceNumber: invoiceNumber.value.trim() } : {}),
+    ...(isCredit.value && invoiceNumber.value.trim() ? { invoiceNumber: invoiceNumber.value.trim() } : {}),
     deleted: false,
     items: [
       ...items.value.map((item) => ({ ...item, deleted: false })),
@@ -425,18 +446,16 @@ function submit(action) {
 
 /* ---------- Edit: load the existing record ---------- */
 const editReq = useApiRequest();
-let pendingProvider = null;
-
 function applyPendingProvider() {
-  if (!pendingProvider) return;
-  const { contract, uuid, name } = pendingProvider;
+  if (!pendingProvider.value) return;
+  const { contract, uuid, name } = pendingProvider.value;
   const match =
     providers.value.find((p) => contract && p.payerProviderContractUuid === contract) ||
     providers.value.find((p) => uuid && p.providerUuid === uuid) ||
     providers.value.find((p) => name && p.providerName?.trim().toLowerCase() === name.trim().toLowerCase());
   if (match) {
     providerUuid.value = match.providerUuid;
-    pendingProvider = null;
+    pendingProvider.value = null;
   }
 }
 
@@ -450,7 +469,7 @@ function hydrateFromRecord(data) {
     name: cleanName(data?.dependantName || data?.insuredName || data?.fullname),
     profile: null,
   };
-  pendingProvider = { contract: data?.contractUuid, uuid: data?.providerUuid, name: data?.providerName };
+  pendingProvider.value = { contract: data?.contractUuid, uuid: data?.providerUuid, name: data?.providerName };
   providedDate.value = data?.providedDate ? String(data.providedDate).slice(0, 10) : providedDate.value;
   invoiceNumber.value = data?.invoiceNumber || "";
   referenceNumber.value = data?.recordNumber || provided[0]?.recordNumber || "";
@@ -643,7 +662,13 @@ function startNextPerson() {
                   </li>
                 </ul>
               </div>
-              <p v-if="submitted && !providerUuid" class="mt-1 text-xs text-error">Provider is required.</p>
+              <p
+                v-if="isEdit && pendingProvider && !providerUuid && !providersReq.pending.value && !findingContract"
+                class="mt-1 text-xs text-warning-strong"
+              >
+                Saved provider “{{ pendingProvider.name || "unknown" }}” isn't in this contract's list. Choose one.
+              </p>
+              <p v-else-if="submitted && !providerUuid" class="mt-1 text-xs text-error">Provider is required.</p>
               <p
                 v-else-if="isCredit && providerUuid && !selectedProvider?.payerProviderContractUuid"
                 class="mt-1 text-xs text-error"
@@ -684,14 +709,14 @@ function startNextPerson() {
               <p v-if="submitted && !providedDate" class="mt-1 text-xs text-error">Service date is required.</p>
             </div>
             <div v-if="isCredit">
-              <label for="invoice-no" class="block mb-2 text-sm font-semibold text-ink-muted">🧾 Invoice No.<span class="text-error">*</span></label>
+              <label for="invoice-no" class="block mb-2 text-sm font-semibold text-ink-muted">🧾 Invoice No.<span v-if="!isEdit" class="text-error">*</span></label>
               <input
                 id="invoice-no"
                 v-model="invoiceNumber"
                 placeholder="e.g., INV-1042"
                 class="pl-2 w-full h-10 text-sm rounded-md border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
               />
-              <p v-if="submitted && !invoiceNumber.trim()" class="mt-1 text-xs text-error">Invoice number is required.</p>
+              <p v-if="submitted && !isEdit && !invoiceNumber.trim()" class="mt-1 text-xs text-error">Invoice number is required.</p>
             </div>
             <div>
               <label class="block mb-2 text-sm font-semibold text-ink-muted">🔖 Reference No.</label>

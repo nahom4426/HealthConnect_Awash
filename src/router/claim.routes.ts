@@ -1,4 +1,5 @@
 const CashClaim = () => import("@/features/claim/pages/CashClaim.vue");
+const AddManualServices = () => import("@/features/claim/pages/manual_services/AddManualServices.vue");
 const CashServices = () => import("@/features/claim/pages/cash_services/CashServices.vue");
 const CompletedClaimss = () => import("@/features/claim/pages/completed_claims/CompletedClaims.vue");
 const CreditClaimsIndex = () => import("@/features/claim/pages/CreditClaimIndex.vue");
@@ -45,6 +46,12 @@ export default [
     path: "/cash_claims",
     name: "Cash Services",
     component: CashClaim,
+    meta: { requiresAuth: true, permissions: ["Cash Services"] },
+  },
+  {
+    path: "/cash_claims/manual",
+    name: "Add Services Manually",
+    component: AddManualServices,
     meta: { requiresAuth: true, permissions: ["Cash Services"] },
   },
   {

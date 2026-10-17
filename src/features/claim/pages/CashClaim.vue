@@ -93,19 +93,19 @@ function clearSelected() {
   selected.value = { insuredPersonUuid: "", dependantUuid: null, name: "" };
 }
 
-function openManualServices(refresh) {
-  openModal(
-    'AddClaimServices',
-    {
-      insuredPersonUuid: selected.value.insuredPersonUuid,
-      dependantUuid: selected.value.dependantUuid,
-      institutionUuid: institutionUuid.value,
-      name: selected.value.name,
-    },
-    (result) => {
-      if (result?.success) refresh?.();
-    }
-  );
+function openManualServices() {
+  const p = selected.value;
+  router.push({
+    path: '/cash_claims/manual',
+    query: p.insuredPersonUuid
+      ? {
+          institutionUuid: institutionUuid.value,
+          insuredPersonUuid: p.insuredPersonUuid,
+          dependantUuid: p.dependantUuid || undefined,
+          name: p.name,
+        }
+      : {},
+  });
 }
 
 function goBack() {
@@ -234,11 +234,7 @@ const search = ref("");
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
             </button>
           </span>
-          <Button
-            v-if="selected.insuredPersonUuid"
-            type="primary"
-            @click="openManualServices(send)"
-          >
+          <Button type="primary" @click="openManualServices">
             Add Services Manually
           </Button>
         </div>

@@ -9,10 +9,11 @@ export function searchPackageServices(packageUuid, { payerProviderContractUuid, 
   });
 }
 
-// Provider contract services search (paginated list of provider contracts with their services)
-export function searchProviderContractServices(search, { page = 1, size = 25 } = {}) {
-  return api.addAuthenticationHeader().get(`/claimconnect/payer-provider-contract/provider/lists`, {
-    params: { search: search || undefined, page, size, direction: "desc", sort: "id", status: "ACTIVE" },
+// Services on a provider's contract, searchable by name or code
+// (payer-provider-contract/provider/lists only returns the contracts themselves)
+export function searchContractServices(payerProviderContractUuid, search, { page = 1, limit = 50 } = {}) {
+  return api.addAuthenticationHeader().get(`/claimconnect/eligible-service/contract/${payerProviderContractUuid}`, {
+    params: { search: search || undefined, page, limit },
   });
 }
 

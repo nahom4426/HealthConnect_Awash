@@ -16,7 +16,7 @@ import { getInstitutionContracts } from "@/features/underwriting/api/underwritin
 import { getPackageDropdown, getEligiblePackage } from "@/features/product_settings/api/coverageApi";
 import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
 import { addEligibleService } from "@/features/provider_contracts/service/api/serviceApi";
-import { searchDrugLibrary, searchProviderContractServices, addServiceToPackage } from "../../api/manualEntryApi";
+import { searchDrugLibrary, searchContractServices, addServiceToPackage } from "../../api/manualEntryApi";
 import { openModal } from "@customizer/modal-x";
 import {
   createCashServiceProvided,
@@ -495,8 +495,7 @@ function isInPackage(sv) {
   );
 }
 
-// provider/lists returns provider contracts; take the service rows for the selected contract,
-// whether they come as the list itself or nested inside each contract
+// Keep the service rows of the selected contract (the list may also nest them per contract)
 const SERVICE_ARRAY_KEYS = ["eligibleServices", "eligibleServiceResponses", "services", "serviceResponses", "packageEligibleServices"];
 const looksLikeService = (row) => !!(row && (row.eligibleServiceUuid || row.itemCode || row.item));
 function extractContractServices(res, contractUuid) {
@@ -527,7 +526,7 @@ function runSuggest() {
     () =>
       tab === "DRUG"
         ? searchDrugLibrary(q, { limit: 20 })
-        : searchProviderContractServices(q, { size: 100 }),
+        : searchContractServices(providerContractUuid.value, q, { limit: 100 }),
     (res) => {
       if (tab !== activeItemTab.value || q !== searchQuery.value) return; // a newer search is on its way
       const rows = tab === "DRUG" ? toRows(res) : extractContractServices(res, providerContractUuid.value);

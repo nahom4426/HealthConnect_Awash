@@ -550,7 +550,7 @@ function runSuggest() {
               code: sv.itemCode || sv.serviceCode,
               price: Number(sv.price ?? sv.unitPrice) || null,
               meta: [sv.category, sv.subCategory].filter(Boolean).join(" · "),
-              serviceId: sv.serviceId || sv.eligibleServiceUuid,
+              serviceId: sv.serviceId || null, // never the eligibleServiceUuid
               eligibleServiceUuid: sv.eligibleServiceUuid,
             }))
             .map((sg) => ({ ...sg, inPackage: isInPackage(sg) }));
@@ -746,7 +746,7 @@ async function saveNewService() {
         name: created.item || n.item.trim(),
         code: created.itemCode || n.itemCode.trim(),
         price: Number(created.price ?? n.price),
-        serviceId: created.serviceId || created.eligibleServiceUuid,
+        serviceId: created.serviceId || null,
         eligibleServiceUuid: created.eligibleServiceUuid,
       },
       { justAdded: true }
@@ -760,7 +760,7 @@ function addEntry() {
   if (!canAddEntry.value) return;
   const existing = editingIndex.value !== null ? items.value[editingIndex.value] : null;
   const row = {
-    serviceId: entryRef.value?.kind === "SERVICE" ? entryRef.value.serviceId || "" : existing?.serviceId || "",
+    serviceId: entryRef.value?.kind === "SERVICE" ? entryRef.value.serviceId || null : existing?.serviceId || null,
     itemUuid: existing?.itemUuid || "",
     itemType: activeItemTab.value,
     serviceCode: entryCode.value.trim(),
@@ -860,7 +860,7 @@ function submit(action) {
       ...items.value.map((item) => ({ ...item, deleted: false })),
       ...removedItems.value.map((item) => ({ ...item, deleted: true })),
     ].map((item) => ({
-      ...(item.serviceId ? { serviceId: item.serviceId } : {}),
+      serviceId: item.serviceId || null, // the service's own id when there is one, otherwise null
       ...(item.itemUuid ? { itemUuid: item.itemUuid } : {}),
       serviceName: item.serviceName,
       serviceCode: item.serviceCode,
@@ -936,7 +936,7 @@ function hydrateFromRecord(data) {
   invoiceNumber.value = data?.invoiceNumber || "";
   referenceNumber.value = data?.recordNumber || provided[0]?.recordNumber || "";
   items.value = provided.map((it) => ({
-    serviceId: it?.itemId || it?.serviceId || "",
+    serviceId: it?.serviceId || it?.itemId || null,
     itemUuid: it?.providedItemUuid || it?.itemUuid || "",
     itemType: String(it?.itemType || "SERVICE").toUpperCase() === "DRUG" ? "DRUG" : "SERVICE",
     serviceCode: it?.itemCode || it?.serviceCode || "",

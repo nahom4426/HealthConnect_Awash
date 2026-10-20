@@ -8,6 +8,19 @@
     <title>Nyala Insurance HC</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
+    <!-- Apply the saved theme (light by default) before first paint — see src/composables/useTheme.js -->
+    <script>
+      (function () {
+        var t;
+        try { t = localStorage.getItem("hc-theme"); } catch (e) {}
+        if (t !== "dark") t = "light";
+        var root = document.documentElement;
+        root.dataset.theme = t;
+        root.style.colorScheme = t;
+        if (t === "dark") document.querySelector('meta[name="theme-color"]').setAttribute("content", "#161211");
+      })();
+    </script>
+
     <!-- SockJS / STOMP are used as globals by the notification socket -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>

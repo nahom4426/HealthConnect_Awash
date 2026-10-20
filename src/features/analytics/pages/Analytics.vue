@@ -16,7 +16,7 @@ interface ReportMeta {
   name: string;
   description: string;
   category: string;
-  reportGroup: string;
+  reportGroup: string | null;
   type: string;
   parameters: string;
   standalone: boolean;

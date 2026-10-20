@@ -22,7 +22,7 @@ const emit = defineEmits(["toggle-collapse", "navigate", "close"]);
     >
       <RouterLink to="/dashboard" class="flex items-center rounded-md" aria-label="Nyala Insurance — Dashboard" @click="emit('navigate')">
         <img v-if="collapsed" :src="mark" alt="" class="w-8 h-8" width="32" height="32" />
-        <img v-else :src="logo" alt="Nyala Insurance" class="w-auto h-9" height="36" />
+        <img v-else :src="logo" alt="Nyala Insurance" class="w-auto h-9 brand-logo-plate" height="36" />
       </RouterLink>
       <button
         v-if="mobile"

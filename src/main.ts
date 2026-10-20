@@ -1,4 +1,5 @@
 import './assets/wind.css'
+import './assets/theme-dark.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -10,6 +11,9 @@ import vFocus from '@/directives/vFocus'
 import vPrivilage from '@/directives/vPrivilage'
 import vRipple from '@/directives/vRipple'
 import toast from '@/toast'
+import { initTheme } from '@/composables/useTheme'
+
+initTheme()
 
 
 const app = createApp(App)

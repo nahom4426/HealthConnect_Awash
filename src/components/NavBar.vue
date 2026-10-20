@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/auth";
 import imageSrc from "@/assets/img/profile.png";
 import Dropdown from "./new_form_elements/Dropdown.vue";
 import NotificationBell from "./notifications/Notifications.vue";
+import ThemeToggle from "./ThemeToggle.vue";
 
 const props = defineProps({
   breadcrumbs: Object,
@@ -116,6 +117,8 @@ async function logout() {
       <span class="hidden px-3 py-1 mr-1 text-sm font-medium rounded-md xl:inline-block text-primary bg-primary/5">
         {{ companyName }}
       </span>
+
+      <ThemeToggle class="mx-1" />
 
       <NotificationBell />
 

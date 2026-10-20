@@ -9,11 +9,40 @@ const props = defineProps<{
   totalElements: number;
   totalPages: number;
   loading?: boolean;
+  /** Identifies the report so the chosen columns and layout survive re-runs (e.g. the report UUID) */
+  storageKey?: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'page-change', page: number): void;
+  (e: 'page-size-change', size: number): void;
 }>();
+
+const PAGE_SIZES = [10, 25, 50, 100];
+
+/* ---------- Saved view: chosen columns + layout, per report ---------- */
+type SavedView = { columns: string[]; mode: 'dual' | 'single' };
+const viewKey = (key?: string) => (key ? `report-view:${key}` : '');
+function readView(key?: string): SavedView | null {
+  if (!key) return null;
+  try {
+    const v = JSON.parse(localStorage.getItem(viewKey(key)) || 'null');
+    return v && Array.isArray(v.columns) ? v : null;
+  } catch {
+    return null;
+  }
+}
+function writeView() {
+  if (!props.storageKey) return;
+  try {
+    localStorage.setItem(
+      viewKey(props.storageKey),
+      JSON.stringify({ columns: selectedColumns.value, mode: columnMode.value })
+    );
+  } catch {
+    // storage full or blocked: the view just won't be remembered
+  }
+}
 
 // Column Selection & Customization State
 const selectedColumns = ref<string[]>([]);
@@ -23,18 +52,28 @@ const columnSearchQuery = ref('');
 
 // Sync selectedColumns when props.columns changes
 watch(
-  () => props.columns,
-  (newCols) => {
+  () => [props.columns, props.storageKey] as const,
+  ([newCols]) => {
     if (newCols && newCols.length) {
-      selectedColumns.value = [...newCols];
-      // Automatically default to dual view if column count > 10
-      columnMode.value = newCols.length > 10 ? 'dual' : 'single';
+      const saved = readView(props.storageKey);
+      const kept = saved ? saved.columns.filter((c) => newCols.includes(c)) : [];
+      if (saved && kept.length) {
+        selectedColumns.value = kept;
+        columnMode.value = saved.mode === 'single' ? 'single' : 'dual';
+      } else {
+        selectedColumns.value = [...newCols];
+        // Automatically default to dual view if column count > 10
+        columnMode.value = newCols.length > 10 ? 'dual' : 'single';
+      }
     } else {
       selectedColumns.value = [];
     }
   },
   { immediate: true }
 );
+
+// Remember the view whenever it changes
+watch([selectedColumns, columnMode], writeView, { deep: true });
 
 function toggleColumn(col: string) {
   if (selectedColumns.value.includes(col)) {
@@ -56,6 +95,13 @@ function selectAllColumns() {
 function resetColumns() {
   selectedColumns.value = [...props.columns];
   columnMode.value = props.columns.length > 10 ? 'dual' : 'single';
+  if (props.storageKey) {
+    try {
+      localStorage.removeItem(viewKey(props.storageKey));
+    } catch {
+      // ignore
+    }
+  }
 }
 
 const filteredColumnsForMenu = computed(() => {
@@ -423,12 +469,22 @@ function goToPage(p: number | '...') {
       </div>
 
       <!-- Pagination -->
-      <div class="pagination-bar" v-if="totalPages > 1">
+      <div class="pagination-bar" v-if="totalElements > 0">
         <p class="pagination-info">
           Showing {{ page * pageSize + 1 }}–{{ Math.min((page + 1) * pageSize, totalElements) }} of
           <strong>{{ totalElements.toLocaleString() }}</strong> records
         </p>
-        <div class="pagination-controls">
+        <label class="page-size">
+          Rows per page
+          <select
+            :value="pageSize"
+            class="page-size-select"
+            @change="emit('page-size-change', Number(($event.target as HTMLSelectElement).value))"
+          >
+            <option v-for="n in PAGE_SIZES" :key="n" :value="n">{{ n }}</option>
+          </select>
+        </label>
+        <div v-if="totalPages > 1" class="pagination-controls">
           <button
             class="pg-btn"
             :disabled="page <= 0"
@@ -456,6 +512,22 @@ function goToPage(p: number | '...') {
 </template>
 
 <style scoped>
+.page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgb(var(--ink-muted));
+}
+.page-size-select {
+  height: 30px;
+  padding: 0 24px 0 8px;
+  font-size: 12px;
+  color: rgb(var(--ink));
+  background-color: rgb(var(--surface));
+  border: 1px solid rgb(var(--line-strong));
+  border-radius: 8px;
+}
 .report-result-table {
   display: flex;
   flex-direction: column;
@@ -945,6 +1017,8 @@ function goToPage(p: number | '...') {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   padding: 6px 12px;
   border-top: 1px solid rgb(var(--surface-muted));
   background: rgb(var(--surface-muted));

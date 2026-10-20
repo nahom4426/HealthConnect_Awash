@@ -3,8 +3,17 @@ const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 
 export default {
   content: ["./index.html", "./src/**/*.{js,vue,ts,jsx,tsx}"],
+  // `dark:` follows the in-app theme toggle (data-theme on <html>), not just the OS setting
+  darkMode: ["variant", ':root[data-theme="dark"] &'],
   theme: {
     extend: {
+      // Brand-coloured text/icons use a lighter shade in dark mode (see --primary-fg)
+      textColor: {
+        primary: {
+          DEFAULT: token("primary-fg"),
+          hover: token("primary-hover"),
+        },
+      },
       colors: {
         // Brand
         primary: {
@@ -19,6 +28,7 @@ export default {
         surface: {
           DEFAULT: token("surface"),
           muted: token("surface-muted"),
+          raised: token("surface-raised"),
         },
         line: {
           DEFAULT: token("line"),
@@ -31,9 +41,9 @@ export default {
         },
 
         // Feedback
-        success: token("success"),
-        warning: token("warning"),
-        error: token("error"),
+        success: { DEFAULT: token("success"), soft: token("success-soft"), strong: token("success-strong") },
+        warning: { DEFAULT: token("warning"), soft: token("warning-soft"), strong: token("warning-strong") },
+        error: { DEFAULT: token("error"), soft: token("error-soft"), strong: token("error-strong") },
         info: token("info"),
 
         // Legacy names used across feature pages

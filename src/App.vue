@@ -1,5 +1,46 @@
-<script setup lang="ts">
-import { routeLoading } from "./router/loading";
+<script setup>
+import { computed, onMounted, watchEffect } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSocket } from './composables/useSocket';
+import { useNotifications } from './store/notifications';
+import { useAuthStore } from './stores/auth';
+import { routeLoading } from './router/loading';
+// import { useAuth } from './store/auth';
+
+const auth = useAuthStore();
+
+const socket = useSocket();
+const notifications = useNotifications();
+
+watchEffect(async (cleanUp) => {
+  if (!auth.auth?.user?.userUuid && !auth.auth?.user?.userType) return;
+
+  try {
+    let sock = await socket.connect();
+    socket.send(
+      '/app/notification',  // The destination endpoint
+      JSON.stringify({
+        userName: auth.auth?.user?.user, // Add userName to the payload
+        userUuid: auth.auth?.user?.userUuid, // Add userUuid to the payload
+        token: auth.auth?.user?.token       // Optionally, you can still include token
+      })
+    );
+    socket.subscribe('/topic/notify', (messgae) => {
+      
+      let messages = JSON.parse(messgae.body);
+      let type = Array.isArray(messages) ? messages?.[0]?.userType : messages.userType
+      if(type == auth.auth?.user?.userType) {
+        notifications.setNotifications(messgae);
+      }
+    })
+  } catch (err) {
+    console.error(err);
+  }
+
+  return cleanUp(async () => {
+    await socket.unSub();
+  });
+});
 </script>
 
 <template>
@@ -50,3 +91,4 @@ import { routeLoading } from "./router/loading";
   }
 }
 </style>
+ 

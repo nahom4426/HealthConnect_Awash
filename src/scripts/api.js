@@ -53,6 +53,21 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    const status = error?.response?.status;
+    const data = error?.response?.data;
+
+    const message =
+      (typeof data === "string" ? data : data?.message || data?.error || "")?.toString?.() || "";
+    const lower = message.trim().toLowerCase();
+
+    if (status === 401 && lower === "session invalid") {
+      try {
+        session.logoutUser();
+      } catch (_) {
+        // ignore
+      }
+    }
+
     return Promise.reject(error);
   }
 );

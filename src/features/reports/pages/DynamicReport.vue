@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import DefaultPage from '@/components/DefaultPage.vue';
 import { getReportsList, executeReport } from '@/features/analytics/api/analyticsApi';
 import ReportParamForm from '@/features/analytics/components/ReportParamForm.vue';
 import ReportResultTable from '@/features/analytics/components/ReportResultTable.vue';
+
+const route = useRoute();
 
 interface ReportDefinition {
   reportUuid: string;
@@ -39,7 +42,7 @@ const dynLoading = ref(false);
 const dynColumns = ref<string[]>([]);
 const dynRows = ref<Record<string, any>[]>([]);
 const dynPage = ref(0);
-const dynPageSize = ref(20);
+const dynPageSize = ref(25);
 const dynTotalElements = ref(0);
 const dynTotalPages = ref(0);
 const dynHasRun = ref(false);
@@ -53,13 +56,13 @@ const activeFilterCount = computed(() => {
 });
 
 const categoryConfig: Record<string, { color: string; bg: string; icon: string; accent: string }> = {
-  POLICY:  { color: '#4f46e5', bg: 'rgba(99,102,241,0.1)', icon: '📋', accent: '#4f46e5' },
+  POLICY:  { color: 'rgb(var(--primary))', bg: 'rgb(var(--primary) / 0.1)', icon: '📋', accent: 'rgb(var(--primary))' },
   CLAIMS:  { color: '#0891b2', bg: 'rgba(8,145,178,0.1)',  icon: '🏥', accent: '#0891b2' },
-  FINANCE: { color: '#059669', bg: 'rgba(5,150,105,0.1)',  icon: '💰', accent: '#059669' },
+  FINANCE: { color: 'rgb(var(--success))', bg: 'rgb(var(--success) / 0.1)',  icon: '💰', accent: 'rgb(var(--success))' },
 };
 
 function getCategoryStyle(category: string) {
-  return categoryConfig[category] || { color: '#6b7280', bg: 'rgba(107,114,128,0.1)', icon: '📄', accent: '#6b7280' };
+  return categoryConfig[category] || { color: 'rgb(var(--ink-muted))', bg: 'rgb(var(--ink-muted) / 0.1)', icon: '📄', accent: 'rgb(var(--ink-muted))' };
 }
 
 const groupedReports = computed(() => {
@@ -95,7 +98,7 @@ const dynKpis = computed(() => {
   const premiumKey = dynColumns.value.find(c => c.toLowerCase().includes('premium'));
   if (premiumKey) {
     const total = dynRows.value.reduce((s, r) => s + (parseFloat(String(r[premiumKey]).replace(/,/g, '')) || 0), 0);
-    kpiList.push({ label: 'Total Premium', value: total.toLocaleString('en-US', { maximumFractionDigits: 0 }), icon: '💰', color: '#4f46e5' });
+    kpiList.push({ label: 'Total Premium', value: total.toLocaleString('en-US', { maximumFractionDigits: 0 }), icon: '💰', color: 'rgb(var(--primary))' });
   }
   const membersKey = dynColumns.value.find(c => c.toLowerCase() === 'total members');
   if (membersKey) {
@@ -105,14 +108,14 @@ const dynKpis = computed(() => {
   const claimsKey = dynColumns.value.find(c => c.toLowerCase() === 'total claims');
   if (claimsKey) {
     const total = dynRows.value.reduce((s, r) => s + (parseFloat(String(r[claimsKey]).replace(/,/g, '')) || 0), 0);
-    kpiList.push({ label: 'Total Claims', value: total.toLocaleString('en-US', { maximumFractionDigits: 0 }), icon: '📊', color: '#dc2626' });
+    kpiList.push({ label: 'Total Claims', value: total.toLocaleString('en-US', { maximumFractionDigits: 0 }), icon: '📊', color: 'rgb(var(--error))' });
   }
   const lrKey = dynColumns.value.find(c => c.toLowerCase().includes('loss ratio'));
   if (lrKey) {
     const vals = dynRows.value.map(r => parseFloat(String(r[lrKey]).replace('%', ''))).filter(v => !isNaN(v));
     if (vals.length) {
       const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-      kpiList.push({ label: 'Avg Loss Ratio', value: `${avg.toFixed(1)}%`, icon: '📉', color: avg > 90 ? '#dc2626' : avg > 70 ? '#d97706' : '#059669' });
+      kpiList.push({ label: 'Avg Loss Ratio', value: `${avg.toFixed(1)}%`, icon: '📉', color: avg > 90 ? 'rgb(var(--error))' : avg > 70 ? 'rgb(var(--warning))' : 'rgb(var(--success))' });
     }
   }
   kpiList.push({ label: 'Records Found', value: dynTotalElements.value.toLocaleString(), icon: '🗂️', color: '#7c3aed' });
@@ -125,6 +128,12 @@ async function loadReportsList() {
   try {
     const res = await getReportsList();
     reportsList.value = Array.isArray(res) ? res : res?.data || res?.content || [];
+    // If navigated from Analytics with a specific reportUuid, pre-select it
+    const targetUuid = route.query.reportUuid as string | undefined;
+    if (targetUuid) {
+      const match = reportsList.value.find(r => r.reportUuid === targetUuid);
+      if (match) { selectReport(match); return; }
+    }
     if (reportsList.value.length > 0 && !selectedReport.value) {
       selectReport(reportsList.value[0]);
     }
@@ -173,6 +182,10 @@ async function runReport(params: Record<string, string>, page = 0) {
 }
 
 function handlePageChange(newPage: number) { runReport(dynLastParams.value, newPage); }
+function handlePageSizeChange(size: number) {
+  dynPageSize.value = size;
+  runReport(dynLastParams.value, 0);
+}
 
 async function exportDynReport() {
   if (!selectedReport.value || dynExporting.value || !dynColumns.value.length) return;
@@ -427,9 +440,6 @@ onMounted(() => { loadReportsList(); });
               </p>
             </div>
             <div class="dr-results-actions" v-if="dynRows.length > 0">
-              <span v-if="dynTotalPages > 1" class="dr-page-indicator">
-                Page {{ dynPage + 1 }} / {{ dynTotalPages }}
-              </span>
               <button
                 class="dr-export-btn"
                 :class="{ 'dr-export-btn--busy': dynExporting }"
@@ -448,16 +458,20 @@ onMounted(() => { loadReportsList(); });
             </div>
           </div>
 
-          <ReportResultTable
-            :columns="dynColumns"
-            :rows="dynRows"
-            :page="dynPage"
-            :page-size="dynPageSize"
-            :total-elements="dynTotalElements"
-            :total-pages="dynTotalPages"
-            :loading="dynLoading"
-            @page-change="handlePageChange"
-          />
+          <div class="dr-results-body">
+            <ReportResultTable
+              :columns="dynColumns"
+              :rows="dynRows"
+              :page="dynPage"
+              :page-size="dynPageSize"
+              :total-elements="dynTotalElements"
+              :total-pages="dynTotalPages"
+              :loading="dynLoading"
+              :storage-key="selectedReport?.reportUuid"
+              @page-change="handlePageChange"
+              @page-size-change="handlePageSizeChange"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -483,7 +497,7 @@ onMounted(() => { loadReportsList(); });
 .dr-splash, .dr-error {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 14px; padding: 60px 20px;
-  background: #fff; border: 1px solid rgb(var(--line)); border-radius: 14px;
+  background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 14px;
   color: rgb(var(--ink-muted)); font-size: 13px; font-weight: 500;
 }
 .dr-splash-spinner {
@@ -511,7 +525,7 @@ onMounted(() => { loadReportsList(); });
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px solid rgb(var(--line));
   border-radius: 12px;
   padding: 10px 14px;
@@ -609,7 +623,7 @@ onMounted(() => { loadReportsList(); });
   font-size: 12.5px;
   font-weight: 700;
   color: rgb(var(--ink));
-  background: #fff;
+  background: rgb(var(--surface));
   outline: none;
   appearance: none;
   cursor: pointer;
@@ -668,7 +682,7 @@ onMounted(() => { loadReportsList(); });
   font-size: 11px;
   font-weight: 700;
   color: rgb(var(--ink-muted));
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1.5px solid rgb(var(--line-strong));
   cursor: pointer;
   transition: all 0.18s ease;
@@ -730,7 +744,7 @@ onMounted(() => { loadReportsList(); });
   flex: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 10px; padding: 32px 24px;
-  background: #fff; border: 1px solid rgb(var(--line)); border-radius: 10px;
+  background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 10px;
 }
 .dr-empty-graphic svg { width: 56px; height: 56px; }
 .dr-empty-title { font-size: 15px; font-weight: 700; color: rgb(var(--ink)); margin: 0; }
@@ -751,7 +765,7 @@ onMounted(() => { loadReportsList(); });
 /* Params card */
 .dr-params-card {
   flex-shrink: 0;
-  background: #fff; border: 1px solid rgb(var(--line)); border-radius: 10px;
+  background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 10px;
   padding: 8px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
   width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
   transition: all 0.2s ease;
@@ -846,7 +860,7 @@ onMounted(() => { loadReportsList(); });
   font-size: 12px;
   font-weight: 700;
   color: rgb(var(--primary));
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1.5px solid rgb(var(--line-strong));
   cursor: pointer;
   transition: all 0.18s ease;
@@ -871,7 +885,7 @@ onMounted(() => { loadReportsList(); });
 
 .dr-kpi-card {
   display: flex; align-items: center; gap: 10px;
-  background: #fff; border: 1px solid rgb(var(--line)); border-radius: 10px;
+  background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 10px;
   padding: 8px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
   transition: box-shadow 0.2s, transform 0.2s;
   min-width: 0;
@@ -894,7 +908,7 @@ onMounted(() => { loadReportsList(); });
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  background: #fff; border: 1px solid rgb(var(--line)); border-radius: 10px;
+  background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 10px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.03);
   width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
 }
@@ -902,16 +916,15 @@ onMounted(() => { loadReportsList(); });
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 14px; border-bottom: 1px solid rgb(var(--surface-muted));
-  background: linear-gradient(180deg, rgb(var(--primary) / 0.05) 0%, #fff 100%);
+  background: linear-gradient(180deg, rgb(var(--primary) / 0.05) 0%, rgb(var(--surface)) 100%);
+}
+.dr-results-body {
+  padding: 12px 14px 14px;
+  min-width: 0;
 }
 .dr-results-title { font-size: 13px; font-weight: 800; color: rgb(var(--ink)); margin: 0; }
 .dr-results-sub { font-size: 11px; color: rgb(var(--ink-subtle)); margin: 0; }
 .dr-results-actions { display: flex; align-items: center; gap: 8px; }
-.dr-page-indicator {
-  background: rgb(var(--primary) / 0.05); color: rgb(var(--primary));
-  font-size: 10px; font-weight: 700;
-  padding: 3px 8px; border-radius: 9999px; border: 1px solid rgb(var(--primary) / 0.1);
-}
 .dr-export-btn {
   display: inline-flex; align-items: center; gap: 5px;
   height: 28px; padding: 0 12px 0 8px;

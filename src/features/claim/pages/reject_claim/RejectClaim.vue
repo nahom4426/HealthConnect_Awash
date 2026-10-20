@@ -25,25 +25,16 @@ const store = useProcessClaimByInstitutionBatch();
 const router = useRouter();
 
 const tableRowKeys = computed(() => {
-  if (active.value === ServiceTypes.cashService) {
-    return ["institutionName", "providerName", "totalAmount", "period", "claimStatus"];
-  } else {
-    return ["institutionName", "providerName", "totalAmount", "period", "claimStatus"];
-  }
+  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
+  return [nameKey, "totalAmount", "period", "claimStatus"];
 });
 
 const tableHeaders = computed(() => {
-  if (active.value === ServiceTypes.cashService) {
-    return {
-      head: ["Institution", "Provider Name", "Total Amount", "Contract Period", "Status", "Actions"],
-      row: ["institutionName", "providerName", "totalAmount", "period", "claimStatus"],
-    };
-  } else {
-    return {
-      head: ["Institution", "Provider Name", "Total Amount", "Contract Period", "Status", "Actions"],
-      row: ["institutionName", "providerName", "totalAmount", "period", "claimStatus"],
-    };
-  }
+  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
+  return {
+    head: [nameHeader, "Total Amount", "Contract Period", "Status", "Actions"],
+    row: tableRowKeys.value,
+  };
 });
 
 // Update serviceType based on active toggle

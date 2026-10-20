@@ -177,6 +177,16 @@ function getSourceIndicator(source) {
         </span>
       </div>
 
+      <!-- Record Number -->
+      <div v-else-if="key === 'recordNumber'">
+        <span
+          class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-surface-muted text-ink border border-line"
+          :title="`Record No: ${row.recordNumber}`"
+        >
+          {{ row.recordNumber || '—' }}
+        </span>
+      </div>
+
       <!-- Service Type / Item Type -->
       <div v-else-if="key === 'itemType'">
         <span 

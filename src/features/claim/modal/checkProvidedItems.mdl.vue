@@ -464,19 +464,18 @@ async function openAttachment() {
           </span>
         </div>
         
-        <!-- If processed or completed - show status message and Checked button only (no Reject) -->
+        <!-- If processed or completed - show status message (Reject/Checked are hidden, as in Awash) -->
         <div v-else-if="isServiceClaimProcessed || isServiceClaimCompleted" class="flex gap-3 items-center">
           <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-success-strong bg-success-soft rounded-lg border border-success/20">
             <span class="mr-2">✓</span> This claim is {{ isServiceClaimProcessed ? 'processed' : 'completed' }}
           </span>
-          <Button type="primary" @click="performAction('CHECKED')" :pending="req.pending.value">Checked</Button>
         </div>
-        
-        <!-- Normal state - show both Reject and Checked buttons -->
+
+        <!-- Reject/Checked actions are hidden here (same as Awash)
         <div v-else class="flex gap-3 items-center">
           <Button type="danger" @click="performAction('REJECTED')" :pending="req.pending.value">Reject</Button>
           <Button type="primary" @click="performAction('CHECKED')" :pending="req.pending.value">Checked</Button>
-        </div>
+        </div> -->
       </div>
 
     </div>

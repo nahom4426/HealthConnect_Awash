@@ -62,8 +62,6 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
 import { updatePayerContract } from "../api/contractApi";
 import { usecontracts } from "../store/cotractStore";
-import { updateBenefitContributions } from "@/features/underwriting/api/underwritingApi";
-import { getPackages } from "@/features/product_settings/api/coverageApi";
 
 const props = defineProps({
   data: {
@@ -147,16 +145,6 @@ function handleUpdate({ values }) {
         
         toasted(true, "Success", "Contract has been reactivated successfully");
         
-        if (contractUuid.value) {
-          getPackages().then((pkgRes) => {
-            const pkgs = Array.isArray(pkgRes?.data) ? pkgRes.data : (Array.isArray(pkgRes) ? pkgRes : []);
-            const contributions = pkgs.map((pkg) => ({
-              benefitPackageUuid: pkg.packageUuid || pkg.uuid,
-              contributionPercentage: 100
-            }));
-            updateBenefitContributions(contractUuid.value, contributions).catch(err => console.error(err));
-          });
-        }
         
         // Close modal and trigger parent refresh
         closeModal({ success: true, updatedContract: { ...contractData.value, ...payload, status: 'ACTIVE' } });

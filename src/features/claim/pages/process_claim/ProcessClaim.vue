@@ -24,14 +24,14 @@ const store = useProcessClaimByInstitutionBatch();
 const router = useRouter();
 
 const tableRowKeys = computed(() => {
-  // Add institutionName as a separate column
-  return ["institutionName", "providerName", "totalAmount", "period", "claimStatus"];
+  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
+  return [nameKey, "totalAmount", "period", "claimStatus"];
 });
 
 const tableHeaders = computed(() => {
-  const nameHeader = active.value === ServiceTypes.cashService ? "Provider Name" : "Provider Name";
+  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
   return {
-    head: [ "Institution", nameHeader, "Total Amount", "Contract Period", "Status", "Actions"],
+    head: [nameHeader, "Total Amount", "Contract Period", "Status", "Actions"],
     row: tableRowKeys.value,
   };
 });

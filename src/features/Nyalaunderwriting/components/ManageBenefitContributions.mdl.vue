@@ -20,7 +20,7 @@ const apiRequest = useApiRequest();
 const packagesList = ref([]);
 const loading = ref(true);
 const selectAll = ref(false);
-const bulkPercentage = ref(100);
+const bulkPercentage = ref(0);
 
 const contractUuid = computed(() => props.data?.payerInstitutionContractUuid || props.data?.contract?.payerInstitutionContractUuid);
 
@@ -59,7 +59,7 @@ async function fetchData() {
         packageName: pkg.packageName,
         packageCode: pkg.packageCode,
         isSelected: !!existing,
-        contributionPercentage: existing ? existing.contributionPercentage : 100,
+        contributionPercentage: existing ? existing.contributionPercentage : 0,
         benefitContributionUuid: existing ? existing.benefitContributionUuid : null,
         benefitPooling: existing ? existing.benefitPooling : false,
         benefitPoolingFrom: existing ? existing.benefitPoolingFrom : null

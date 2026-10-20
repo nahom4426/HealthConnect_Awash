@@ -7,8 +7,7 @@ import Button from '@/components/Button.vue';
 import { closeModal } from '@customizer/modal-x';
 import { toasted } from '@/utils/utils';
 import { useApiRequest } from '@/composables/useApiRequest';
-import { renewInstitutionContract, updateBenefitContributions } from '../api/underwritingApi';
-import { getPackages } from '@/features/product_settings/api/coverageApi';
+import { renewInstitutionContract } from '../api/underwritingApi';
 
 const props = defineProps({
   data: {
@@ -143,17 +142,6 @@ function handleSubmit() {
         toasted(true, 'Contract renewed successfully', '');
         window.dispatchEvent(new CustomEvent('renewContractSuccess'));
         
-        const newContractUuid = res?.data?.payerInstitutionContractUuid || contractUuid;
-        if (newContractUuid) {
-          getPackages().then((pkgRes) => {
-            const pkgs = Array.isArray(pkgRes?.data) ? pkgRes.data : (Array.isArray(pkgRes) ? pkgRes : []);
-            const contributions = pkgs.map((pkg) => ({
-              benefitPackageUuid: pkg.packageUuid || pkg.uuid,
-              contributionPercentage: 100
-            }));
-            updateBenefitContributions(newContractUuid, contributions).catch(err => console.error(err));
-          });
-        }
 
         if (typeof props.data?.onRefetch === 'function') {
           props.data.onRefetch();

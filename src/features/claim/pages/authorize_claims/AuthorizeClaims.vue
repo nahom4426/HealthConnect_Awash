@@ -34,14 +34,14 @@ const store = useAuthorizeClaimByInstitutionBatch();
 const search = ref("");
 
 const tableRowKeys = computed(() => {
-  const nameKey = active.value === ServiceTypes.cashService ? "providerName" : "providerName";
-  return ["institutionName", "providerName", "totalAmount", "claimFromDate", "claimLevel", "claimStatus"];
+  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
+  return [nameKey, "totalAmount", "claimFromDate", "claimLevel", "claimStatus"];
 });
 
 const tableHeaders = computed(() => {
-  const nameHeader = active.value === ServiceTypes.cashService ? "Provider Name" : "Provider Name";
+  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
   return {
-    head: ["Institution", nameHeader, "Total Amount", "Claim Date", "Level", "Status", "Actions"],
+    head: [nameHeader, "Total Amount", "Claim Date", "Level", "Status", "Actions"],
     row: tableRowKeys.value,
   };
 });

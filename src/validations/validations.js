@@ -214,10 +214,12 @@ function num_minmax(value, limit, _, message) {
 }
 
 function phone(value, limit, _, message) {
-  let regex = /^(\+?2519|09)[0-9]{8}$/;
+  // Supports +2511, +2513, +2517, +2519 and 01, 03, 07, 09 prefixes
+  let regex = /^(\+?251[1379]|0[1379])[0-9]{8}$/;
+
   if (regex.test(value)) return [true];
 
-  return [false, message || `not a valid phone number`];
+  return [false, message || `Not a valid Ethiopian phone number. Valid formats: +2511..., +2513..., 01..., 03..., +2519..., 09...`];
 }
 
 function alpha(value, limit, _, message) {

@@ -26,14 +26,14 @@ const store = useVerifyClaimByInstitutionBatch();
 const active = ref(ServiceTypes.creditService);
 
 const tableRowKeys = computed(() => {
-  const nameKey = active.value === ServiceTypes.cashService ? "providerName" : "institutionName";
-  return ["institutionName", "providerName", "totalAmount", "claimFromDate", "claimStatus"];
+  const nameKey = active.value === ServiceTypes.cashService ? "institutionName" : "providerName";
+  return [nameKey, "totalAmount", "claimFromDate", "claimStatus"];
 });
 
 const tableHeaders = computed(() => {
-  const nameHeader = active.value === ServiceTypes.cashService ? "Provider Name" : "Provider Name";
+  const nameHeader = active.value === ServiceTypes.cashService ? "Institution Name" : "Provider Name";
   return {
-    head: ["Institution", nameHeader, "Total Amount", "Claim Date", "Status", "Actions"],
+    head: [nameHeader, "Total Amount", "Claim Date", "Status", "Actions"],
     row: tableRowKeys.value,
   };
 });

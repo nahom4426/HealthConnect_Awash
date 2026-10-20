@@ -598,18 +598,24 @@ function fillFromService(sg) {
 
 const packageName = computed(() => packages.value.find((p) => p.packageUuid === pkg.value)?.packageName || "the package");
 
-function confirmAddToPackage(sg) {
+function confirmAddToPackage(sg, { justAdded = false } = {}) {
   suggestOpen.value = false;
+  const provider = selectedProvider.value?.providerName || "the provider";
   openModal(
     "Confirmation",
     {
-      title: "Add this service to the package?",
-      message: `“${sg.name}” is on ${selectedProvider.value?.providerName || "the provider"}'s contract but isn't covered by ${packageName.value}. Add it to ${packageName.value} for this provider?`,
+      title: justAdded ? "Service added — map it to the package?" : "Add this service to the package?",
+      message: justAdded
+        ? `“${sg.name}” was added to ${provider}'s contract. Add it to ${packageName.value} so it's covered for this claim?`
+        : `“${sg.name}” is on ${provider}'s contract but isn't covered by ${packageName.value}. Add it to ${packageName.value} for this provider?`,
       confirmText: "Add to package",
-      cancelText: "Cancel",
+      cancelText: justAdded ? "Not now" : "Cancel",
     },
     async (ok) => {
-      if (!ok) return;
+      if (!ok) {
+        if (justAdded) toasted(true, `Added to ${provider}'s contract — not in ${packageName.value} yet`);
+        return;
+      }
       const res = await addServiceToPackage(pkg.value, sg.eligibleServiceUuid);
       if (res?.success === false) {
         toasted(false, "", res?.error || "Couldn't add the service to the package");
@@ -699,9 +705,8 @@ function startAddNew() {
   suggestOpen.value = false;
 }
 
-// 1) add the service to the provider's contract, 2) make it eligible under the package
-//    (POST package/{packageUuid}/eligible-services/{eligibleServiceUuid}).
-//    If step 2 fails, a retry reuses the service created in step 1.
+// Add the service to the provider's contract, then ask whether to map it to the package
+// (confirmAddToPackage → POST package/{packageUuid}/eligible-services/{eligibleServiceUuid})
 async function saveNewService() {
   const n = addNew.value;
   if (!n || !n.item.trim() || !n.itemCode.trim() || !(Number(n.price) > 0)) {
@@ -709,7 +714,6 @@ async function saveNewService() {
     return;
   }
   const contract = providerContractUuid.value;
-  const packageUuid = pkg.value;
   addNewPending.value = true;
   try {
     let created = n.created;
@@ -734,23 +738,19 @@ async function saveNewService() {
       n.created = created;
     }
 
-    const assignRes = await addServiceToPackage(packageUuid, created.eligibleServiceUuid);
-    if (assignRes?.success === false) {
-      toasted(false, "", assignRes?.error || "Added to the contract, but couldn't add it to the package. Try again.");
-      return;
-    }
-
-    packageServiceIds.value = new Set([...packageServiceIds.value, created.eligibleServiceUuid]);
-    entryName.value = created.item || n.item.trim();
-    entryCode.value = created.itemCode || n.itemCode.trim();
-    entryPrice.value = Number(created.price ?? n.price);
-    entryRef.value = {
-      kind: "SERVICE",
-      serviceId: created.serviceId || created.eligibleServiceUuid,
-      eligibleServiceUuid: created.eligibleServiceUuid,
-    };
+    // Ask before mapping it to the package (POST package/{packageUuid}/eligible-services/{id})
     addNew.value = null;
-    toasted(true, `Added to ${selectedProvider.value?.providerName || "the provider"}'s contract and the package`);
+    confirmAddToPackage(
+      {
+        kind: "SERVICE",
+        name: created.item || n.item.trim(),
+        code: created.itemCode || n.itemCode.trim(),
+        price: Number(created.price ?? n.price),
+        serviceId: created.serviceId || created.eligibleServiceUuid,
+        eligibleServiceUuid: created.eligibleServiceUuid,
+      },
+      { justAdded: true }
+    );
   } finally {
     addNewPending.value = false;
   }
@@ -1514,7 +1514,7 @@ function startNextPerson() {
                     :disabled="addNewPending"
                     @click="saveNewService"
                   >
-                    {{ addNewPending ? "Adding..." : addNew.created ? "Add to package" : "Add to contract" }}
+                    {{ addNewPending ? "Adding..." : "Add to contract" }}
                   </button>
                   <button type="button" class="px-3 py-2 text-sm rounded border border-line-strong text-ink-muted hover:bg-surface-muted" @click="addNew = null">
                     Cancel

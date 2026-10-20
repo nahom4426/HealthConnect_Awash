@@ -8,16 +8,11 @@
           <div class="p-6 text-center">
             <div class="flex justify-center mb-4">
               <div class="relative">
-                <img
-                  :src="
-                    getProfileUrl(insuredData.profile) ||
-                    getProfileUrl(insuredData.profilePictureBase64) ||
-                    getProfileUrl(insuredData.photoUrl) ||
-                    imageSrc
-                  "
+                <PersonAvatar
+                  :photo="insuredData.profile || insuredData.profilePictureBase64 || insuredData.photoUrl"
+                  :gender="insuredData.gender"
                   alt="Profile"
-                  class="object-cover w-32 h-32 rounded-full border-4 border-primary shadow-lg"
-                  @error="(e) => (e.target.src = imageSrc)"
+                  class="w-32 h-32 rounded-full border-4 border-primary shadow-lg"
                 />
               </div>
             </div>
@@ -119,7 +114,7 @@
 
 <script setup>
 import { defineProps } from 'vue';
-import imageSrc from '@/assets/img/profile.png';
+import PersonAvatar from "@/components/PersonAvatar.vue";
 
 defineProps({
   insuredData: {

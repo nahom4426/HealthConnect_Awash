@@ -48,46 +48,12 @@
              class="flex gap-3 items-center"
              :class="getTextStatusClass(row)"
         >
-          <!-- Profile Image with fallbacks -->
-          <img 
-            v-if="row?.profile" 
-            :src="row.profile" 
-            alt="Profile" 
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
-            :class="getImageBorderClass(row)"
-            @error="handleImageError"
-          />
-          <img 
-            v-else-if="row?.photoBase64" 
-            :src="row.photoBase64" 
-            alt="Profile" 
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
-            :class="getImageBorderClass(row)"
-            @error="handleImageError"
-          />
-          <img 
-            v-else-if="row?.photoUrl" 
-            :src="row.photoUrl" 
-            alt="Profile" 
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
-            :class="getImageBorderClass(row)"
-            @error="handleImageError"
-          />
-          <img 
-            v-else-if="row?.photoPath" 
-            :src="`${getBaseUrl()}/insured/photo/${row.photoPath}`" 
-            alt="Profile" 
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
-            :class="getImageBorderClass(row)"
-            @error="handleImageError"
-          />
-          <img 
-            v-else
-            :src="genderFallbackUrl(row?.gender)"
+          <PersonAvatar
+            :photo="row?.profile || row?.photoBase64 || row?.photoUrl || (row?.photoPath ? `${getBaseUrl()}/insured/photo/${row.photoPath}` : '')"
+            :gender="row?.gender"
             alt="Profile"
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
+            class="w-10 h-10 rounded-full border-2 transition-all duration-200 shrink-0"
             :class="getImageBorderClass(row)"
-            @error="(e) => (e.target.src = '/src/assets/img/profile.png')"
           />
           
           <div class="leading-tight truncate">
@@ -313,6 +279,7 @@
 </template>
 
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
 import { defineProps, onMounted, onUnmounted, ref } from 'vue';
 import { openModal } from '@customizer/modal-x';
 import { insuredMembers } from "../store/insuredPersonsStore";
@@ -582,18 +549,6 @@ function formatPhoneNumber(phone) {
 
 function getBaseUrl() {
   return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-}
-
-function genderFallbackUrl(gender) {
-  const g = String(gender || '').trim().toLowerCase();
-  if (g.includes('female')) return '/src/assets/img/female.png';
-  if (g.includes('male')) return '/src/assets/img/male.png';
-  return '/src/assets/img/profile.png';
-}
-
-function handleImageError(event) {
-  const row = event.target.__vueParentComponent?.ctx?.row;
-  event.target.src = row ? genderFallbackUrl(row.gender) : '/src/assets/img/profile.png';
 }
 
 function handleEdit(row) {

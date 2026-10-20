@@ -1,4 +1,5 @@
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
 // Manually enter services or drugs for an insured, as a two-step wizard like Cash Services:
 // 1. Eligibility Check (shared with Cash Services)  2. a services form laid out like Cash Services.
 // Cash mode (/cash_claims/manual) posts like the Cash Services page's "Other provider" mode;
@@ -102,21 +103,6 @@ function goToStep(i) {
   if (isEdit.value) return; // the person can't change while editing
   if (i === 0 || patient.value) active.value = i;
 }
-
-const initials = computed(() =>
-  (patient.value?.name || "?")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("")
-);
-
-const formatImageSource = (profile) => {
-  if (!profile) return "";
-  const isBase64 = profile.startsWith("iVBOR") || profile.startsWith("/9j/");
-  return isBase64 ? `data:image/png;base64,${profile}` : profile;
-};
 
 /* ---------- Contract (from Eligibility Check; only asked for when it can't be inferred) ---------- */
 const contracts = ref([]);
@@ -1056,12 +1042,7 @@ function startNextPerson() {
             v-if="patient"
             class="flex gap-3 items-center px-4 py-2 bg-gradient-to-r rounded-lg border from-primary/5 to-primary/5 border-primary/20"
           >
-            <div v-if="patient.profile" class="flex overflow-hidden justify-center items-center w-8 h-8 rounded-full border-2 border-white shadow-sm">
-              <img :src="formatImageSource(patient.profile)" class="object-cover w-full h-full" alt="" />
-            </div>
-            <div v-else class="flex justify-center items-center w-8 h-8 text-xs font-bold text-white bg-gradient-to-br rounded-full shadow-sm from-primary/70 to-primary">
-              {{ initials }}
-            </div>
+            <PersonAvatar :photo="patient.profile" :gender="patient.gender" class="w-8 h-8 rounded-full border-2 border-white shadow-sm shrink-0" />
             <div class="min-w-0">
               <p class="text-xs font-semibold tracking-wide uppercase truncate text-ink-subtle">Current Person</p>
               <p class="text-sm font-bold truncate text-ink">{{ patient.name }}</p>

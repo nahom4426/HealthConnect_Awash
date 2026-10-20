@@ -1,4 +1,5 @@
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
 import { defineProps, defineEmits, computed } from 'vue';
 
 const props = defineProps({
@@ -13,16 +14,6 @@ function selectEmployee(row) {
   emit('select-employee', row);
 }
 
-// Format profile image source to handle both URLs and base64
-const formatImageSource = (profile) => {
-  if (!profile) return '';
-  
-  // Check if it's a base64 string (starts with iVBOR for PNG or /9j/ for JPEG)
-  const isBase64 = profile.startsWith('iVBOR') || profile.startsWith('/9j/');
-  
-  // If it's base64, add the data URL prefix, otherwise return as is
-  return isBase64 ? `data:image/png;base64,${profile}` : profile;
-};
 </script>
 
 <template>
@@ -64,14 +55,7 @@ const formatImageSource = (profile) => {
                 </td>
                 <td class="px-3 py-3 text-xs text-ink-subtle whitespace-nowrap sm:px-4 lg:px-6 sm:py-4 sm:text-sm">
                   <div class="flex items-center space-x-2 sm:space-x-3">
-                    <template v-if="employee.profile">
-                      <img :src="formatImageSource(employee.profile)" alt="Profile" class="object-cover w-6 h-6 rounded-full border border-line sm:w-8 sm:h-8" />
-                    </template>
-                    <template v-else>
-                      <div class="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-primary/70 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-[10px] sm:text-xs">
-                        {{ (employee.firstName || '').charAt(0).toUpperCase() }}
-                      </div>
-                    </template>
+                    <PersonAvatar :photo="employee.profile" :gender="employee.gender" alt="Profile" class="w-6 h-6 rounded-full border shrink-0 border-line sm:w-8 sm:h-8" />
                     <span class="font-medium text-ink truncate max-w-[120px] sm:max-w-none">
                       {{ employee.firstName }} {{ employee.fatherName || '' }} {{ employee.grandFatherName || '' }}
                     </span>
@@ -124,14 +108,7 @@ const formatImageSource = (profile) => {
                   </td>
                   <td class="px-3 py-3 pl-2 text-xs text-ink-subtle whitespace-nowrap sm:px-4 lg:px-6 sm:py-4 sm:text-sm">
                     <div class="flex items-center space-x-2 sm:space-x-3">
-                      <template v-if="dependant.profile">
-                        <img :src="formatImageSource(dependant.profile)" alt="Profile" class="object-cover w-6 h-6 rounded-full border border-line sm:w-8 sm:h-8" />
-                      </template>
-                      <template v-else>
-                        <div class="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-[10px] sm:text-xs">
-                          {{ (dependant.firstName || '').charAt(0).toUpperCase() }}
-                        </div>
-                      </template>
+                      <PersonAvatar :photo="dependant.profile" :gender="dependant.gender" alt="Profile" class="w-6 h-6 rounded-full border shrink-0 border-line sm:w-8 sm:h-8" />
                       <div class="flex flex-col min-w-0">
                         <span class="font-medium text-ink truncate max-w-[120px] sm:max-w-none">
                           {{ dependant.firstName }} {{ dependant.fatherName || '' }} {{ dependant.grandFatherName || '' }}

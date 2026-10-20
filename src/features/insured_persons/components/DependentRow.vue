@@ -6,16 +6,12 @@
       <div class="flex-shrink-0">
         <div class="relative">
           <div class="overflow-hidden w-20 h-20 bg-gradient-to-br from-primary/5 to-primary/5 rounded-xl border-4 border-white shadow-lg">
-            <img 
-              v-if="dependent.profile || dependent.photoBase64" 
-              :src="getProfileUrl(dependent.profile || dependent.photoBase64)" 
-              alt="Profile" 
-              class="object-cover w-full h-full"
-              @error="handleImageError"
+            <PersonAvatar
+              :photo="dependent.profile || dependent.photoBase64"
+              :gender="dependent.gender"
+              alt="Profile"
+              class="w-full h-full"
             />
-            <div v-else class="flex justify-center items-center w-full h-full text-2xl">
-              {{ getInitials(dependent.firstName) }}
-            </div>
           </div>
           <!-- Relationship indicator on photo -->
           <span :class="`absolute -bottom-1 -right-1 px-2 py-0.5 rounded-lg text-xs font-bold text-white ${getRelationshipBgColor(dependent.relationship)}`">
@@ -108,6 +104,7 @@
 </template>
 
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
 import { defineProps } from 'vue';  
 import icons from "@/utils/icons";
 
@@ -124,18 +121,6 @@ const props = defineProps({
 
 function getBaseUrl() {
   return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-}
-
-function handleImageError(event) {
-  event.target.style.display = 'none';
-  const parent = event.target.parentElement;
-  if (parent) {
-    parent.innerHTML = `
-      <div class="flex justify-center items-center w-full h-full text-2xl">
-        ${getInitials(props.dependent.firstName)}
-      </div>
-    `;
-  }
 }
 
 function getRelationshipColor(relationship) {

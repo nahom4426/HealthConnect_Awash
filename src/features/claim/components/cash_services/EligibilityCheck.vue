@@ -1,21 +1,11 @@
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
 import { ref, reactive, computed, watch } from 'vue';
 import Button from '@/components/Button.vue';
 import EmployeeTable from './EmployeeTable.vue';
 import { getActiveInstitutions } from '@/features/institutions/api/institutionApi';
 import { getInstitutionContracts } from '@/features/underwriting/api/underwritingApi';
 import { searchActiveInsuredByContract } from '@/features/insured_persons/api/insuredPersonsApi';
-
-// Format profile image source to handle both URLs and base64
-const formatImageSource = (profile) => {
-  if (!profile) return '';
-  
-  // Check if it's a base64 string (starts with iVBOR for PNG or /9j/ for JPEG)
-  const isBase64 = profile.startsWith('iVBOR') || profile.startsWith('/9j/');
-  
-  // If it's base64, add the data URL prefix, otherwise return as is
-  return isBase64 ? `data:image/png;base64,${profile}` : profile;
-};
 
 const emit = defineEmits(['complete']);
 
@@ -375,7 +365,7 @@ watch(employeeSearchTerm, () => {
      <div class="p-6 bg-white rounded-2xl border border-line shadow-lg">
   <div class="flex flex-wrap gap-5 items-end">
     <!-- Institution Search -->
-    <div class="w-4/5 md:w-64 shrink-0">
+    <div class="w-full md:w-80 shrink-0">
       <label class="block mb-2.5 text-sm font-semibold text-ink-muted">
         <span class="inline-flex gap-2 items-center">
           <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -396,7 +386,7 @@ watch(employeeSearchTerm, () => {
           placeholder="Search institutions..."
           @focus="showInstitutionDropdown = true"
           @blur="hideInstitutionDropdownSoon"
-          class="py-2.5 pr-10 pl-10 w-3/4 text-sm bg-surface-muted rounded-lg border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white"
+          class="py-2.5 pr-10 pl-10 w-full text-sm bg-surface-muted rounded-lg border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white"
         />
         <button
           v-if="institutionSearchTerm"
@@ -450,7 +440,7 @@ watch(employeeSearchTerm, () => {
 
     <!-- Policy Selector -->
     <div v-if="contracts.length > 1" class="w-4/5 md:w-64 shrink-0">
-      <label class="block mb-2.5 ml-2 text-sm font-semibold text-ink-muted">
+      <label class="block mb-2.5 text-sm font-semibold text-ink-muted">
         <span class="inline-flex gap-2 items-center">
           <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -487,8 +477,8 @@ watch(employeeSearchTerm, () => {
     </div>
 
     <!-- Employee Search -->
-    <div class="w-4/5 min-w-0 md:flex-1">
-      <label class="block mb-2.5 ml-2 text-sm font-semibold text-ink-muted">
+    <div class="w-full min-w-0 md:flex-1">
+      <label class="block mb-2.5 text-sm font-semibold text-ink-muted">
         <span class="inline-flex gap-2 items-center">
           <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -507,7 +497,7 @@ watch(employeeSearchTerm, () => {
           type="text"
           placeholder="Search by name, ID, or insurance number..."
           :disabled="!selectedContract"
-          class="py-2.5 pr-10 pl-10 ml-2 w-[90%] text-sm bg-surface-muted rounded-lg border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent focus:bg-white disabled:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-75"
+          class="py-2.5 pr-10 pl-10 w-full text-sm bg-surface-muted rounded-lg border border-line transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent focus:bg-white disabled:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-75"
         />
         <button
           v-if="employeeSearchTerm"
@@ -664,15 +654,8 @@ watch(employeeSearchTerm, () => {
 
       <div class="relative mb-4 w-full">
         <!-- Photo -->
-        <div v-if="employeeDetails.profile"
-             class="overflow-hidden w-full rounded-2xl border-4 border-white shadow-lg aspect-square">
-          <img :src="formatImageSource(employeeDetails.profile)" class="object-cover w-full h-full" />
-        </div>
-
-        <!-- Initial box -->
-        <div v-else
-          class="flex justify-center items-center w-full text-5xl font-bold text-white bg-gradient-to-br from-primary to-teal-500 rounded-2xl border-4 border-white shadow-lg aspect-square">
-          {{ employeeDetails.firstName?.charAt(0)?.toUpperCase() }}
+        <div class="overflow-hidden w-full rounded-2xl border-4 border-white shadow-lg aspect-square">
+          <PersonAvatar :photo="employeeDetails.profile" :gender="employeeDetails.gender" alt="Profile" class="w-full h-full" />
         </div>
 
         <!-- Hologram strip -->

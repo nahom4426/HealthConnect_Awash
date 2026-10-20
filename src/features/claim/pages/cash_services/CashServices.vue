@@ -1,4 +1,5 @@
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
 import { ref, onMounted } from 'vue';
 import DefaultPage from '@/components/DefaultPage.vue';
 import Button from '@/components/Button.vue';
@@ -16,15 +17,6 @@ const route = useRoute();
 
 const editReq = useApiRequest();
 const editServiceProvided = ref(null);
-
-// Format profile image source to handle both URLs and base64
-const formatImageSource = (profile) => {
-  if (!profile) return '';
-  // Check if it's a base64 string (starts with iVBOR for PNG or /9j/ for JPEG)
-  const isBase64 = profile.startsWith('iVBOR') || profile.startsWith('/9j/');
-  // If it's base64, add the data URL prefix, otherwise return as is
-  return isBase64 ? `data:image/png;base64,${profile}` : profile;
-};
 
 const active = ref(0);
 
@@ -181,12 +173,12 @@ onMounted(() => {
             class="flex gap-3 items-center px-4 py-2 mx-4 bg-gradient-to-r from-primary/5 to-primary/5 rounded-lg border border-primary/20"
           >
             <div class="relative">
-              <div v-if="selection.person.profile" class="flex overflow-hidden justify-center items-center w-8 h-8 rounded-full border-2 border-white shadow-sm">
-                <img :src="formatImageSource(selection.person.profile)" class="object-cover w-full h-full" alt="Profile" />
-              </div>
-              <div v-else class="flex justify-center items-center w-8 h-8 text-sm font-bold text-white bg-gradient-to-br from-primary/70 to-primary rounded-full shadow-sm">
-                {{ selection.person.firstName?.charAt(0)?.toUpperCase() || selection.person?.name?.charAt(0)?.toUpperCase() }}
-              </div>
+              <PersonAvatar
+                :photo="selection.person.profile"
+                :gender="selection.person.gender"
+                alt="Profile"
+                class="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+              />
             </div>
             <div class="min-w-0">
               <p class="text-xs font-semibold tracking-wide text-ink-subtle uppercase truncate">Current Person</p>

@@ -333,16 +333,11 @@
 
                   <!-- Photo -->
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <img
-                      :src="
-                        getProfileUrl(dependent.profile) ||
-                        getProfileUrl(dependent.profilePictureBase64) ||
-                        getProfileUrl(dependent.photoUrl) ||
-                        genderFallbackUrl(dependent.gender)
-                      "
-                      class="object-cover w-10 h-10 rounded-full border-2 border-primary/30"
+                    <PersonAvatar
+                      :photo="dependent.profile || dependent.profilePictureBase64 || dependent.photoUrl"
+                      :gender="dependent.gender"
                       alt="Profile"
-                      @error="(e) => (e.target.src = genderFallbackUrl(dependent.gender))"
+                      class="w-10 h-10 rounded-full border-2 border-primary/30"
                     />
                   </td>
 
@@ -454,6 +449,8 @@
 </template>
 
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
+import { genderAvatar } from "@/utils/avatar";
 import { defineProps, ref, computed, onMounted, onUnmounted } from 'vue';
 
 import Input from '@/components/new_form_elements/Input.vue';
@@ -566,10 +563,7 @@ function toIsoFromDateInput(dateStr) {
 }
 
 function genderFallbackUrl(gender) {
-  const g = String(gender || '').trim().toLowerCase();
-  if (g.includes('female')) return '/src/assets/img/female.png';
-  if (g.includes('male')) return '/src/assets/img/male.png';
-  return '/src/assets/img/profile.png';
+  return genderAvatar(gender);
 }
 
 function getProfileUrl(profileData) {

@@ -45,7 +45,12 @@ const formatImageSource = (profile) => {
               <tr :class="{
                 'bg-gradient-to-r from-teal-50 to-cyan-50 border-l-4 border-teal-400': props.selectedEmployee && props.selectedEmployee.insuredUuid === employee.insuredUuid,
                 'hover:bg-gradient-to-r hover:from-surface-muted hover:to-primary/5 transition-all duration-200': !(props.selectedEmployee && props.selectedEmployee.insuredUuid === employee.insuredUuid)
-              }" class="cursor-pointer group">
+              }" class="cursor-pointer group"
+                tabindex="0"
+                :aria-selected="!!(props.selectedEmployee && props.selectedEmployee.insuredUuid === employee.insuredUuid && !props.selectedEmployee.dependantUuid)"
+                @click="selectEmployee(employee)"
+                @keydown.enter.prevent="selectEmployee(employee)"
+                @keydown.space.prevent="selectEmployee(employee)">
                 <td class="px-3 py-3 text-xs text-ink-subtle whitespace-nowrap sm:px-4 lg:px-6 sm:py-4 sm:text-sm">
                   <div class="flex justify-center items-center w-6 h-6 text-xs font-semibold text-primary bg-primary/10 rounded-full transition-colors sm:w-8 sm:h-8 sm:text-sm group-hover:bg-primary/20">
                     {{ index + 1 }}
@@ -81,7 +86,7 @@ const formatImageSource = (profile) => {
                   </span>
                 </td>
                 <td class="px-3 py-3 text-xs font-medium whitespace-nowrap sm:px-4 lg:px-6 sm:py-4 sm:text-sm">
-                  <button type="button" @click="selectEmployee(employee)"
+                  <button type="button" @click.stop="selectEmployee(employee)"
                     :class="{
                       'bg-gradient-to-r from-primary to-teal-600 text-white shadow-lg transform scale-105': props.selectedEmployee && props.selectedEmployee.insuredUuid === employee.insuredUuid,
                       'bg-gradient-to-r from-surface-muted to-line text-ink-muted hover:from-primary hover:to-teal-600 hover:text-white hover:shadow-md transform hover:scale-105': !(props.selectedEmployee && props.selectedEmployee.insuredUuid === employee.insuredUuid)
@@ -95,6 +100,10 @@ const formatImageSource = (profile) => {
               <!-- Dependants -->
               <template v-if="employee.__dependants && employee.__dependants.length > 0">
                 <tr v-for="(dependant, dIndex) in employee.__dependants" :key="dependant.dependantUuid"
+                  tabindex="0"
+                  @click="selectEmployee(dependant)"
+                  @keydown.enter.prevent="selectEmployee(dependant)"
+                  @keydown.space.prevent="selectEmployee(dependant)"
                   :class="{
                     'bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-400': props.selectedEmployee && props.selectedEmployee.dependantUuid === dependant.dependantUuid,
                     'bg-gradient-to-r from-blue-25 to-indigo-25 hover:from-primary/5 hover:to-primary/5': !(props.selectedEmployee && props.selectedEmployee.dependantUuid === dependant.dependantUuid)
@@ -142,7 +151,7 @@ const formatImageSource = (profile) => {
                     </span>
                   </td>
                   <td class="px-3 py-3 text-xs font-medium whitespace-nowrap sm:px-4 lg:px-6 sm:py-4 sm:text-sm">
-                    <button type="button" @click="selectEmployee(dependant)"
+                    <button type="button" @click.stop="selectEmployee(dependant)"
                       :class="{
                         'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg transform scale-105': props.selectedEmployee && props.selectedEmployee.dependantUuid === dependant.dependantUuid,
                         'bg-gradient-to-r from-surface-muted to-line text-ink-muted hover:from-purple-500 hover:to-pink-600 hover:text-white hover:shadow-md transform hover:scale-105': !(props.selectedEmployee && props.selectedEmployee.dependantUuid === dependant.dependantUuid)

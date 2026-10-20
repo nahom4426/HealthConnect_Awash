@@ -13,10 +13,11 @@ import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmit
 import EligibilityCheck from "@/features/claim/components/cash_services/EligibilityCheck.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { getInstitutionContracts } from "@/features/underwriting/api/underwritingApi";
-import { getPackageDropdown, getEligiblePackage, addEligibleServices } from "@/features/product_settings/api/coverageApi";
+import { getPackageDropdown, getEligiblePackage } from "@/features/product_settings/api/coverageApi";
 import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
 import { addEligibleService } from "@/features/provider_contracts/service/api/serviceApi";
-import { searchPackageServices, searchDrugLibrary } from "../../api/manualEntryApi";
+import { searchDrugLibrary, searchProviderContractServices, addServiceToPackage } from "../../api/manualEntryApi";
+import { openModal } from "@customizer/modal-x";
 import {
   createCashServiceProvided,
   createCreditServiceProvided,
@@ -467,6 +468,53 @@ function toRows(res) {
   return [];
 }
 
+/* Services already eligible under the selected package for this provider contract */
+const packageServiceIds = ref(new Set());
+const packageServiceCodes = ref(new Set());
+const packageCoverageKey = ref("");
+async function loadPackageCoverage() {
+  const key = `${pkg.value}|${providerContractUuid.value}`;
+  if (!pkg.value || !providerContractUuid.value || key === packageCoverageKey.value) return;
+  packageCoverageKey.value = key;
+  const res = await getEligiblePackage(pkg.value, providerContractUuid.value);
+  if (key !== packageCoverageKey.value) return;
+  const rows = toRows(res);
+  packageServiceIds.value = new Set(rows.map((sv) => sv?.eligibleServiceUuid).filter(Boolean));
+  packageServiceCodes.value = new Set(rows.map((sv) => String(sv?.itemCode || "").toLowerCase()).filter(Boolean));
+}
+watch([pkg, providerContractUuid], () => {
+  packageCoverageKey.value = "";
+  packageServiceIds.value = new Set();
+  packageServiceCodes.value = new Set();
+  loadPackageCoverage();
+});
+function isInPackage(sv) {
+  return (
+    (sv.eligibleServiceUuid && packageServiceIds.value.has(sv.eligibleServiceUuid)) ||
+    (!sv.eligibleServiceUuid && sv.code && packageServiceCodes.value.has(String(sv.code).toLowerCase()))
+  );
+}
+
+// provider/lists returns provider contracts; take the service rows for the selected contract,
+// whether they come as the list itself or nested inside each contract
+const SERVICE_ARRAY_KEYS = ["eligibleServices", "eligibleServiceResponses", "services", "serviceResponses", "packageEligibleServices"];
+const looksLikeService = (row) => !!(row && (row.eligibleServiceUuid || row.itemCode || row.item));
+function extractContractServices(res, contractUuid) {
+  const rows = toRows(res);
+  const out = [];
+  rows.forEach((row) => {
+    if (looksLikeService(row)) {
+      if (!row.payerProviderContractUuid || row.payerProviderContractUuid === contractUuid) out.push(row);
+      return;
+    }
+    if (row?.payerProviderContractUuid && row.payerProviderContractUuid !== contractUuid) return;
+    SERVICE_ARRAY_KEYS.forEach((k) => {
+      if (Array.isArray(row?.[k])) out.push(...row[k].filter(looksLikeService));
+    });
+  });
+  return out;
+}
+
 function runSuggest() {
   const q = searchQuery.value;
   if (q.length < minChars.value || (activeItemTab.value === "SERVICE" && !serviceSearchReady.value)) {
@@ -474,14 +522,15 @@ function runSuggest() {
     return;
   }
   const tab = activeItemTab.value;
+  if (tab === "SERVICE") loadPackageCoverage();
   suggestReq.send(
     () =>
       tab === "DRUG"
         ? searchDrugLibrary(q, { limit: 20 })
-        : searchPackageServices(pkg.value, { payerProviderContractUuid: providerContractUuid.value, search: q, limit: 100 }),
+        : searchProviderContractServices(q, { size: 100 }),
     (res) => {
       if (tab !== activeItemTab.value || q !== searchQuery.value) return; // a newer search is on its way
-      const rows = toRows(res);
+      const rows = tab === "DRUG" ? toRows(res) : extractContractServices(res, providerContractUuid.value);
       const mapped =
         tab === "DRUG"
           ? rows
@@ -494,7 +543,8 @@ function runSuggest() {
                 meta: [d.dosageForm, d.category].filter(Boolean).join(" · "),
                 drugUuid: d.drugUuid,
               }))
-          : rows.map((sv) => ({
+          : rows
+            .map((sv) => ({
               kind: "SERVICE",
               key: sv.eligibleServiceUuid || sv.serviceId || sv.itemCode,
               name: sv.item || sv.serviceName || sv.itemName,
@@ -503,7 +553,8 @@ function runSuggest() {
               meta: [sv.category, sv.subCategory].filter(Boolean).join(" · "),
               serviceId: sv.serviceId || sv.eligibleServiceUuid,
               eligibleServiceUuid: sv.eligibleServiceUuid,
-            }));
+            }))
+            .map((sg) => ({ ...sg, inPackage: isInPackage(sg) }));
       suggestions.value = mapped.filter((sg) => matchesQuery(sg, q)).slice(0, 25);
       suggestHighlight.value = 0;
     }
@@ -539,7 +590,44 @@ function focusSearch(field) {
   suggestOpen.value = true;
 }
 
+function fillFromService(sg) {
+  entryName.value = sg.name || "";
+  entryCode.value = sg.code || "";
+  if (sg.price) entryPrice.value = sg.price;
+  entryRef.value = { kind: "SERVICE", serviceId: sg.serviceId, eligibleServiceUuid: sg.eligibleServiceUuid };
+}
+
+const packageName = computed(() => packages.value.find((p) => p.packageUuid === pkg.value)?.packageName || "the package");
+
+function confirmAddToPackage(sg) {
+  suggestOpen.value = false;
+  openModal(
+    "Confirmation",
+    {
+      title: "Add this service to the package?",
+      message: `“${sg.name}” is on ${selectedProvider.value?.providerName || "the provider"}'s contract but isn't covered by ${packageName.value}. Add it to ${packageName.value} for this provider?`,
+      confirmText: "Add to package",
+      cancelText: "Cancel",
+    },
+    async (ok) => {
+      if (!ok) return;
+      const res = await addServiceToPackage(pkg.value, sg.eligibleServiceUuid);
+      if (res?.success === false) {
+        toasted(false, "", res?.error || "Couldn't add the service to the package");
+        return;
+      }
+      packageServiceIds.value = new Set([...packageServiceIds.value, sg.eligibleServiceUuid]);
+      fillFromService({ ...sg, inPackage: true });
+      toasted(true, `Added to ${packageName.value}`);
+    }
+  );
+}
+
 function pickSuggestion(sg) {
+  if (sg.kind === "SERVICE" && !sg.inPackage && sg.eligibleServiceUuid) {
+    confirmAddToPackage(sg);
+    return;
+  }
   entryName.value = sg.name || "";
   entryCode.value = sg.code || "";
   if (sg.kind === "SERVICE") {
@@ -553,7 +641,12 @@ function pickSuggestion(sg) {
 
 // Options shown under the name field: results, then "add as new" for services
 const suggestOptions = computed(() => {
-  const list = suggestions.value.map((sg) => ({ ...sg, type: "pick" }));
+  // "in package" is computed live: the package's coverage may load after the search results
+  const list = suggestions.value.map((sg) => ({
+    ...sg,
+    type: "pick",
+    inPackage: sg.kind === "SERVICE" ? isInPackage(sg) : undefined,
+  }));
   const q = searchQuery.value;
   if (activeItemTab.value === "SERVICE" && q && serviceSearchReady.value && !suggestReq.pending.value) {
     const exact = suggestions.value.some(
@@ -608,7 +701,7 @@ function startAddNew() {
 }
 
 // 1) add the service to the provider's contract, 2) make it eligible under the package
-//    (PUT package/addEligibleServices with the contract's existing package services + the new one).
+//    (POST package/{packageUuid}/eligible-services/{eligibleServiceUuid}).
 //    If step 2 fails, a retry reuses the service created in step 1.
 async function saveNewService() {
   const n = addNew.value;
@@ -642,17 +735,13 @@ async function saveNewService() {
       n.created = created;
     }
 
-    const existingRes = await getEligiblePackage(packageUuid, contract);
-    const existingIds = toRows(existingRes).map((sv) => sv?.eligibleServiceUuid).filter(Boolean);
-    const assignRes = await addEligibleServices(packageUuid, {
-      payerProviderContractUuid: contract,
-      eligibleServiceUuids: [...new Set([...existingIds, created.eligibleServiceUuid])],
-    });
+    const assignRes = await addServiceToPackage(packageUuid, created.eligibleServiceUuid);
     if (assignRes?.success === false) {
       toasted(false, "", assignRes?.error || "Added to the contract, but couldn't add it to the package. Try again.");
       return;
     }
 
+    packageServiceIds.value = new Set([...packageServiceIds.value, created.eligibleServiceUuid]);
     entryName.value = created.item || n.item.trim();
     entryCode.value = created.itemCode || n.itemCode.trim();
     entryPrice.value = Number(created.price ?? n.price);
@@ -1239,7 +1328,18 @@ function startNextPerson() {
                     </template>
                     <template v-else>
                       <div class="flex gap-3 justify-between items-baseline">
-                        <span class="text-sm font-medium truncate text-ink">{{ opt.name }}</span>
+                        <span class="flex gap-2 items-center min-w-0">
+                          <span class="text-sm font-medium truncate text-ink">{{ opt.name }}</span>
+                          <span
+                            v-if="opt.kind === 'SERVICE'"
+                            :class="[
+                              'px-1.5 py-px text-[10px] font-semibold rounded-full whitespace-nowrap',
+                              opt.inPackage ? 'bg-success-soft text-success-strong' : 'bg-warning-soft text-warning-strong',
+                            ]"
+                          >
+                            {{ opt.inPackage ? "In package" : "Not in package" }}
+                          </span>
+                        </span>
                         <span v-if="opt.price" class="text-xs font-semibold whitespace-nowrap tabular-nums text-ink">{{ formatCurrency(opt.price) }}</span>
                       </div>
                       <p class="text-xs truncate text-ink-subtle">{{ [opt.code, opt.meta].filter(Boolean).join(" · ") }}</p>
@@ -1318,7 +1418,18 @@ function startNextPerson() {
                     </template>
                     <template v-else>
                       <div class="flex gap-3 justify-between items-baseline">
-                        <span class="text-sm font-medium truncate text-ink">{{ opt.name }}</span>
+                        <span class="flex gap-2 items-center min-w-0">
+                          <span class="text-sm font-medium truncate text-ink">{{ opt.name }}</span>
+                          <span
+                            v-if="opt.kind === 'SERVICE'"
+                            :class="[
+                              'px-1.5 py-px text-[10px] font-semibold rounded-full whitespace-nowrap',
+                              opt.inPackage ? 'bg-success-soft text-success-strong' : 'bg-warning-soft text-warning-strong',
+                            ]"
+                          >
+                            {{ opt.inPackage ? "In package" : "Not in package" }}
+                          </span>
+                        </span>
                         <span v-if="opt.price" class="text-xs font-semibold whitespace-nowrap tabular-nums text-ink">{{ formatCurrency(opt.price) }}</span>
                       </div>
                       <p class="text-xs truncate text-ink-subtle">{{ [opt.code, opt.meta].filter(Boolean).join(" · ") }}</p>

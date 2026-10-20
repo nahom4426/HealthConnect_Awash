@@ -447,6 +447,14 @@ let suggestTimer;
 const providerContractUuid = computed(() => selectedProvider.value?.payerProviderContractUuid || "");
 const serviceSearchReady = computed(() => !!pkg.value && !!providerContractUuid.value);
 const minChars = computed(() => (activeItemTab.value === "DRUG" ? 2 : 1));
+const searchField = ref("name"); // the list searches by whichever field you type in
+const searchQuery = computed(() => (searchField.value === "code" ? entryCode.value : entryName.value).trim());
+
+// Keep only real matches on name or code (the API may return a wider list)
+function matchesQuery(sg, q) {
+  const needle = q.toLowerCase();
+  return (sg.name || "").toLowerCase().includes(needle) || (sg.code || "").toLowerCase().includes(needle);
+}
 
 function toRows(res) {
   const raw = res?.data ?? res;
@@ -460,7 +468,7 @@ function toRows(res) {
 }
 
 function runSuggest() {
-  const q = entryName.value.trim();
+  const q = searchQuery.value;
   if (q.length < minChars.value || (activeItemTab.value === "SERVICE" && !serviceSearchReady.value)) {
     suggestions.value = [];
     return;
@@ -470,11 +478,11 @@ function runSuggest() {
     () =>
       tab === "DRUG"
         ? searchDrugLibrary(q, { limit: 20 })
-        : searchPackageServices(pkg.value, { payerProviderContractUuid: providerContractUuid.value, search: q, limit: 25 }),
+        : searchPackageServices(pkg.value, { payerProviderContractUuid: providerContractUuid.value, search: q, limit: 100 }),
     (res) => {
-      if (tab !== activeItemTab.value) return;
+      if (tab !== activeItemTab.value || q !== searchQuery.value) return; // a newer search is on its way
       const rows = toRows(res);
-      suggestions.value =
+      const mapped =
         tab === "DRUG"
           ? rows
               .filter((d) => d?.active !== false)
@@ -496,18 +504,39 @@ function runSuggest() {
               serviceId: sv.serviceId || sv.eligibleServiceUuid,
               eligibleServiceUuid: sv.eligibleServiceUuid,
             }));
+      suggestions.value = mapped.filter((sg) => matchesQuery(sg, q)).slice(0, 25);
       suggestHighlight.value = 0;
     }
   );
 }
 
-function onEntryNameInput(e) {
-  entryName.value = e.target.value;
+function startSearch() {
   entryRef.value = null; // typing again un-picks
   addNew.value = null;
   suggestOpen.value = true;
   clearTimeout(suggestTimer);
   suggestTimer = setTimeout(runSuggest, 300);
+}
+function onEntryNameInput(e) {
+  entryName.value = e.target.value;
+  searchField.value = "name";
+  startSearch();
+}
+function onEntryCodeInput(e) {
+  entryCode.value = e.target.value;
+  searchField.value = "code";
+  startSearch();
+}
+function focusSearch(field) {
+  if (searchField.value !== field) {
+    searchField.value = field;
+    suggestions.value = [];
+    if (searchQuery.value.length >= minChars.value && !entryRef.value) {
+      clearTimeout(suggestTimer);
+      suggestTimer = setTimeout(runSuggest, 150);
+    }
+  }
+  suggestOpen.value = true;
 }
 
 function pickSuggestion(sg) {
@@ -525,9 +554,11 @@ function pickSuggestion(sg) {
 // Options shown under the name field: results, then "add as new" for services
 const suggestOptions = computed(() => {
   const list = suggestions.value.map((sg) => ({ ...sg, type: "pick" }));
-  const q = entryName.value.trim();
+  const q = searchQuery.value;
   if (activeItemTab.value === "SERVICE" && q && serviceSearchReady.value && !suggestReq.pending.value) {
-    const exact = suggestions.value.some((sg) => sg.name?.trim().toLowerCase() === q.toLowerCase());
+    const exact = suggestions.value.some(
+      (sg) => sg.name?.trim().toLowerCase() === q.toLowerCase() || sg.code?.trim().toLowerCase() === q.toLowerCase()
+    );
     if (!exact) list.push({ type: "new", key: "__new__", name: q });
   }
   return list;
@@ -567,7 +598,12 @@ const addNew = ref(null); // { itemCode, item, category, price }
 const addNewReq = useApiRequest();
 
 function startAddNew() {
-  addNew.value = { itemCode: entryCode.value.trim(), item: entryName.value.trim(), category: "", price: entryPrice.value };
+  addNew.value = {
+    itemCode: entryCode.value.trim(),
+    item: searchField.value === "code" ? "" : entryName.value.trim(),
+    category: "",
+    price: entryPrice.value,
+  };
   suggestOpen.value = false;
 }
 
@@ -1129,13 +1165,66 @@ function startNextPerson() {
               {{ activeItemTab === "SERVICE" ? "📝 Service Entry" : "💊 Drug Entry" }}
             </h3>
             <div class="grid grid-cols-1 gap-4 items-start sm:grid-cols-2 lg:grid-cols-9">
-              <div class="lg:col-span-2">
-                <label class="block mb-2 text-xs font-semibold text-ink-muted">Code (optional)</label>
-                <input
-                  v-model="entryCode"
-                  :placeholder="activeItemTab === 'SERVICE' ? 'e.g., SRV001' : 'e.g., DRG001'"
-                  class="py-2 pl-2 w-full text-sm rounded border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary"
-                />
+              <div class="relative lg:col-span-2">
+                <label for="entry-code" class="block mb-2 text-xs font-semibold text-ink-muted">Code</label>
+                <div class="relative">
+                  <svg class="absolute left-2.5 top-1/2 w-4 h-4 -translate-y-1/2 pointer-events-none text-ink-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                    <circle cx="9" cy="9" r="5.5" /><path d="m13.5 13.5 3 3" />
+                  </svg>
+                  <input
+                    id="entry-code"
+                    :value="entryCode"
+                    role="combobox"
+                    autocomplete="off"
+                    aria-autocomplete="list"
+                    aria-controls="entry-code-suggestions"
+                    :aria-expanded="searchField === 'code' && suggestOpen && !!suggestOptions.length"
+                    :disabled="activeItemTab === 'SERVICE' && !serviceSearchReady"
+                    :placeholder="activeItemTab === 'SERVICE' ? 'Search code, e.g. SRV001' : 'Search code, e.g. DRG001'"
+                    class="py-2 pr-2 pl-8 w-full text-sm rounded border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary disabled:bg-surface-muted disabled:cursor-not-allowed"
+                    @input="onEntryCodeInput"
+                    @focus="focusSearch('code')"
+                    @blur="suggestOpen = false"
+                    @keydown="onEntryNameKeydown"
+                  />
+                </div>
+                <ul
+                  v-if="searchField === 'code' && suggestOpen && searchQuery.length >= minChars && (suggestOptions.length || !suggestReq.pending.value)"
+                  id="entry-code-suggestions"
+                  role="listbox"
+                  class="overflow-y-auto absolute z-40 py-1 mt-1 w-full min-w-[18rem] max-h-72 rounded-lg border shadow-pop bg-surface border-line"
+                >
+                  <li
+                    v-for="(opt, i) in suggestOptions"
+                    :key="opt.key"
+                    role="option"
+                    :aria-selected="i === suggestHighlight"
+                    :class="[
+                      'px-3 py-2 cursor-pointer',
+                      i === suggestHighlight ? 'bg-primary/10' : '',
+                      opt.type === 'new' ? 'border-t border-line mt-1' : '',
+                    ]"
+                    @mousedown.prevent="chooseOption(opt)"
+                    @mouseenter="suggestHighlight = i"
+                  >
+                    <template v-if="opt.type === 'new'">
+                      <p class="text-sm font-semibold text-primary">
+                        + Add {{ searchField === "code" ? "code " : "" }}“{{ opt.name }}” as a new service
+                      </p>
+                      <p class="text-xs text-ink-subtle">Not eligible yet — adds it to {{ selectedProvider?.providerName || "the provider" }}'s contract</p>
+                    </template>
+                    <template v-else>
+                      <div class="flex gap-3 justify-between items-baseline">
+                        <span class="text-sm font-medium truncate text-ink">{{ opt.name }}</span>
+                        <span v-if="opt.price" class="text-xs font-semibold whitespace-nowrap tabular-nums text-ink">{{ formatCurrency(opt.price) }}</span>
+                      </div>
+                      <p class="text-xs truncate text-ink-subtle">{{ [opt.code, opt.meta].filter(Boolean).join(" · ") }}</p>
+                    </template>
+                  </li>
+                  <li v-if="!suggestOptions.length && !suggestReq.pending.value" class="px-3 py-2 text-xs text-ink-subtle">
+                    {{ activeItemTab === "DRUG" ? "Not in the drug library — you can still add it as typed." : "No eligible services found." }}
+                  </li>
+                </ul>
               </div>
               <div class="relative lg:col-span-3">
                 <label for="entry-name" class="block mb-2 text-xs font-semibold text-ink-muted">
@@ -1166,7 +1255,7 @@ function startNextPerson() {
                       entryNeedsPick ? 'border-warning' : 'border-line-strong',
                     ]"
                     @input="onEntryNameInput"
-                    @focus="suggestOpen = true"
+                    @focus="focusSearch('name')"
                     @blur="suggestOpen = false"
                     @keydown="onEntryNameKeydown"
                   />
@@ -1179,7 +1268,7 @@ function startNextPerson() {
                   </svg>
                 </div>
                 <ul
-                  v-if="suggestOpen && entryName.trim().length >= minChars && (suggestOptions.length || !suggestReq.pending.value)"
+                  v-if="searchField === 'name' && suggestOpen && searchQuery.length >= minChars && (suggestOptions.length || !suggestReq.pending.value)"
                   id="entry-suggestions"
                   role="listbox"
                   class="overflow-y-auto absolute z-40 py-1 mt-1 w-full min-w-[18rem] max-h-72 rounded-lg border shadow-pop bg-surface border-line"
@@ -1198,7 +1287,9 @@ function startNextPerson() {
                     @mouseenter="suggestHighlight = i"
                   >
                     <template v-if="opt.type === 'new'">
-                      <p class="text-sm font-semibold text-primary">+ Add “{{ opt.name }}” as a new service</p>
+                      <p class="text-sm font-semibold text-primary">
+                        + Add {{ searchField === "code" ? "code " : "" }}“{{ opt.name }}” as a new service
+                      </p>
                       <p class="text-xs text-ink-subtle">Not eligible yet — adds it to {{ selectedProvider?.providerName || "the provider" }}'s contract</p>
                     </template>
                     <template v-else>

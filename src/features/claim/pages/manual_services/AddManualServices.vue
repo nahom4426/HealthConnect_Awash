@@ -15,6 +15,8 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { getInstitutionContracts } from "@/features/underwriting/api/underwritingApi";
 import { getPackageDropdown } from "@/features/product_settings/api/coverageApi";
 import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
+import { addEligibleService } from "@/features/provider_contracts/service/api/serviceApi";
+import { searchPackageServices, searchDrugLibrary } from "../../api/manualEntryApi";
 import {
   createCashServiceProvided,
   createCreditServiceProvided,
@@ -406,7 +408,22 @@ const entryQty = ref(1);
 const editingIndex = ref(null);
 
 const entryTotal = computed(() => (Number(entryPrice.value) || 0) * (Number(entryQty.value) || 0));
-const canAddEntry = computed(() => !!entryName.value.trim() && Number(entryPrice.value) > 0 && Number(entryQty.value) > 0);
+
+// What the typed name refers to: an eligible service / library drug picked from the search
+const entryRef = ref(null); // { kind: "SERVICE", serviceId, eligibleServiceUuid } | { kind: "DRUG", drugUuid }
+const editingOriginalName = ref("");
+
+// Services must be eligible (picked from the package search, or added to the contract);
+// drugs may be typed when they aren't in the library
+const canAddEntry = computed(() => {
+  if (!entryName.value.trim() || !(Number(entryPrice.value) > 0) || !(Number(entryQty.value) > 0)) return false;
+  if (activeItemTab.value === "DRUG") return true;
+  if (entryRef.value?.kind === "SERVICE") return true;
+  return editingIndex.value !== null && entryName.value.trim() === editingOriginalName.value; // unchanged saved item
+});
+const entryNeedsPick = computed(
+  () => activeItemTab.value === "SERVICE" && !!entryName.value.trim() && !canAddEntry.value && !entryRef.value
+);
 
 function resetEntry() {
   entryCode.value = "";
@@ -414,13 +431,188 @@ function resetEntry() {
   entryPrice.value = null;
   entryQty.value = 1;
   editingIndex.value = null;
+  entryRef.value = null;
+  editingOriginalName.value = "";
+  suggestions.value = [];
+  suggestOpen.value = false;
+  addNew.value = null;
+}
+
+/* ---------- Search: eligible services (package @ provider) / drug library ---------- */
+const suggestions = ref([]);
+const suggestOpen = ref(false);
+const suggestHighlight = ref(0);
+const suggestReq = useApiRequest();
+let suggestTimer;
+const providerContractUuid = computed(() => selectedProvider.value?.payerProviderContractUuid || "");
+const serviceSearchReady = computed(() => !!pkg.value && !!providerContractUuid.value);
+const minChars = computed(() => (activeItemTab.value === "DRUG" ? 2 : 1));
+
+function toRows(res) {
+  const raw = res?.data ?? res;
+  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw?.packageEligibleServices)) return raw.packageEligibleServices;
+  if (Array.isArray(raw?.content)) return raw.content;
+  if (Array.isArray(raw?.data?.packageEligibleServices)) return raw.data.packageEligibleServices;
+  if (Array.isArray(raw?.data?.content)) return raw.data.content;
+  if (Array.isArray(raw?.data)) return raw.data;
+  return [];
+}
+
+function runSuggest() {
+  const q = entryName.value.trim();
+  if (q.length < minChars.value || (activeItemTab.value === "SERVICE" && !serviceSearchReady.value)) {
+    suggestions.value = [];
+    return;
+  }
+  const tab = activeItemTab.value;
+  suggestReq.send(
+    () =>
+      tab === "DRUG"
+        ? searchDrugLibrary(q, { limit: 20 })
+        : searchPackageServices(pkg.value, { payerProviderContractUuid: providerContractUuid.value, search: q, limit: 25 }),
+    (res) => {
+      if (tab !== activeItemTab.value) return;
+      const rows = toRows(res);
+      suggestions.value =
+        tab === "DRUG"
+          ? rows
+              .filter((d) => d?.active !== false)
+              .map((d) => ({
+                kind: "DRUG",
+                key: d.drugUuid,
+                name: d.drugName,
+                code: d.drugCode,
+                meta: [d.dosageForm, d.category].filter(Boolean).join(" · "),
+                drugUuid: d.drugUuid,
+              }))
+          : rows.map((sv) => ({
+              kind: "SERVICE",
+              key: sv.eligibleServiceUuid || sv.serviceId || sv.itemCode,
+              name: sv.item || sv.serviceName || sv.itemName,
+              code: sv.itemCode || sv.serviceCode,
+              price: Number(sv.price ?? sv.unitPrice) || null,
+              meta: [sv.category, sv.subCategory].filter(Boolean).join(" · "),
+              serviceId: sv.serviceId || sv.eligibleServiceUuid,
+              eligibleServiceUuid: sv.eligibleServiceUuid,
+            }));
+      suggestHighlight.value = 0;
+    }
+  );
+}
+
+function onEntryNameInput(e) {
+  entryName.value = e.target.value;
+  entryRef.value = null; // typing again un-picks
+  addNew.value = null;
+  suggestOpen.value = true;
+  clearTimeout(suggestTimer);
+  suggestTimer = setTimeout(runSuggest, 300);
+}
+
+function pickSuggestion(sg) {
+  entryName.value = sg.name || "";
+  entryCode.value = sg.code || "";
+  if (sg.kind === "SERVICE") {
+    if (sg.price) entryPrice.value = sg.price;
+    entryRef.value = { kind: "SERVICE", serviceId: sg.serviceId, eligibleServiceUuid: sg.eligibleServiceUuid };
+  } else {
+    entryRef.value = { kind: "DRUG", drugUuid: sg.drugUuid };
+  }
+  suggestOpen.value = false;
+}
+
+// Options shown under the name field: results, then "add as new" for services
+const suggestOptions = computed(() => {
+  const list = suggestions.value.map((sg) => ({ ...sg, type: "pick" }));
+  const q = entryName.value.trim();
+  if (activeItemTab.value === "SERVICE" && q && serviceSearchReady.value && !suggestReq.pending.value) {
+    const exact = suggestions.value.some((sg) => sg.name?.trim().toLowerCase() === q.toLowerCase());
+    if (!exact) list.push({ type: "new", key: "__new__", name: q });
+  }
+  return list;
+});
+
+function chooseOption(opt) {
+  if (opt.type === "new") startAddNew();
+  else pickSuggestion(opt);
+}
+
+function onEntryNameKeydown(e) {
+  const count = suggestOptions.value.length;
+  if (e.key === "ArrowDown" && count) {
+    suggestOpen.value = true;
+    suggestHighlight.value = (suggestHighlight.value + 1) % count;
+    e.preventDefault();
+  } else if (e.key === "ArrowUp" && count) {
+    suggestHighlight.value = (suggestHighlight.value - 1 + count) % count;
+    e.preventDefault();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    if (suggestOpen.value && count) chooseOption(suggestOptions.value[suggestHighlight.value]);
+    else addEntry();
+  } else if (e.key === "Escape") {
+    suggestOpen.value = false;
+  }
+}
+
+watch(activeItemTab, () => {
+  suggestions.value = [];
+  entryRef.value = null;
+  addNew.value = null;
+});
+
+/* ---------- Add a service that isn't on the provider's contract yet ---------- */
+const addNew = ref(null); // { itemCode, item, category, price }
+const addNewReq = useApiRequest();
+
+function startAddNew() {
+  addNew.value = { itemCode: entryCode.value.trim(), item: entryName.value.trim(), category: "", price: entryPrice.value };
+  suggestOpen.value = false;
+}
+
+function saveNewService() {
+  const n = addNew.value;
+  if (!n || !n.item.trim() || !n.itemCode.trim() || !(Number(n.price) > 0)) {
+    toasted(false, "", "Enter the service code, name and price");
+    return;
+  }
+  const contract = providerContractUuid.value;
+  addNewReq.send(
+    () =>
+      addEligibleService(contract, {
+        itemCode: n.itemCode.trim(),
+        item: n.item.trim(),
+        category: n.category.trim() || undefined,
+        price: Number(n.price),
+        payerProviderContractUuid: contract,
+        status: "ACTIVE",
+      }),
+    (res) => {
+      if (!res?.success) {
+        toasted(false, "", res?.error || "Couldn't add the service to the contract");
+        return;
+      }
+      const created = res?.data?.data ?? res?.data ?? {};
+      entryName.value = created.item || n.item.trim();
+      entryCode.value = created.itemCode || n.itemCode.trim();
+      entryPrice.value = Number(created.price ?? n.price);
+      entryRef.value = {
+        kind: "SERVICE",
+        serviceId: created.serviceId || created.eligibleServiceUuid,
+        eligibleServiceUuid: created.eligibleServiceUuid,
+      };
+      addNew.value = null;
+      toasted(true, `Added to ${selectedProvider.value?.providerName || "the provider"}'s contract`);
+    }
+  );
 }
 
 function addEntry() {
   if (!canAddEntry.value) return;
   const existing = editingIndex.value !== null ? items.value[editingIndex.value] : null;
   const row = {
-    serviceId: existing?.serviceId || "",
+    serviceId: entryRef.value?.kind === "SERVICE" ? entryRef.value.serviceId || "" : existing?.serviceId || "",
     itemUuid: existing?.itemUuid || "",
     itemType: activeItemTab.value,
     serviceCode: entryCode.value.trim(),
@@ -449,6 +641,8 @@ function editItem(row) {
   activeItemTab.value = row.itemType;
   entryCode.value = row.serviceCode;
   entryName.value = row.serviceName;
+  editingOriginalName.value = row.serviceName;
+  entryRef.value = null;
   entryPrice.value = row.unitPrice;
   entryQty.value = row.qty;
   editingIndex.value = index;
@@ -934,7 +1128,7 @@ function startNextPerson() {
             <h3 :class="['mb-4 text-sm font-bold', activeItemTab === 'SERVICE' ? 'text-primary-hover' : 'text-error-strong']">
               {{ activeItemTab === "SERVICE" ? "📝 Service Entry" : "💊 Drug Entry" }}
             </h3>
-            <div class="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 lg:grid-cols-9">
+            <div class="grid grid-cols-1 gap-4 items-start sm:grid-cols-2 lg:grid-cols-9">
               <div class="lg:col-span-2">
                 <label class="block mb-2 text-xs font-semibold text-ink-muted">Code (optional)</label>
                 <input
@@ -943,15 +1137,83 @@ function startNextPerson() {
                   class="py-2 pl-2 w-full text-sm rounded border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary"
                 />
               </div>
-              <div class="lg:col-span-3">
-                <label class="block mb-2 text-xs font-semibold text-ink-muted">{{ activeItemTab === "SERVICE" ? "Service Name" : "Drug Name" }}</label>
-                <input
-                  id="entry-name"
-                  v-model="entryName"
-                  :placeholder="activeItemTab === 'SERVICE' ? 'e.g., Consultation' : 'e.g., Amoxicillin 500mg'"
-                  class="py-2 pl-2 w-full text-sm rounded border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary"
-                  @keyup.enter="addEntry"
-                />
+              <div class="relative lg:col-span-3">
+                <label for="entry-name" class="block mb-2 text-xs font-semibold text-ink-muted">
+                  {{ activeItemTab === "SERVICE" ? "Service Name" : "Drug Name" }}
+                </label>
+                <div class="relative">
+                  <svg class="absolute left-2.5 top-1/2 w-4 h-4 -translate-y-1/2 pointer-events-none text-ink-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                    <circle cx="9" cy="9" r="5.5" /><path d="m13.5 13.5 3 3" />
+                  </svg>
+                  <input
+                    id="entry-name"
+                    :value="entryName"
+                    role="combobox"
+                    autocomplete="off"
+                    aria-autocomplete="list"
+                    aria-controls="entry-suggestions"
+                    :aria-expanded="suggestOpen && !!suggestOptions.length"
+                    :disabled="activeItemTab === 'SERVICE' && !serviceSearchReady"
+                    :placeholder="
+                      activeItemTab === 'SERVICE'
+                        ? serviceSearchReady
+                          ? 'Search eligible services...'
+                          : 'Choose provider and package first'
+                        : 'Search drug library (2+ letters)...'
+                    "
+                    :class="[
+                      'py-2 pr-8 pl-8 w-full text-sm rounded border transition-all bg-surface focus:ring-2 focus:ring-primary disabled:bg-surface-muted disabled:cursor-not-allowed',
+                      entryNeedsPick ? 'border-warning' : 'border-line-strong',
+                    ]"
+                    @input="onEntryNameInput"
+                    @focus="suggestOpen = true"
+                    @blur="suggestOpen = false"
+                    @keydown="onEntryNameKeydown"
+                  />
+                  <svg v-if="suggestReq.pending.value" class="absolute right-2.5 top-1/2 w-4 h-4 -translate-y-1/2 animate-spin text-ink-subtle" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
+                    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                  </svg>
+                  <svg v-else-if="entryRef" class="absolute right-2.5 top-1/2 w-4 h-4 -translate-y-1/2 text-success" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Selected">
+                    <path d="m5 10.5 3 3 7-7" />
+                  </svg>
+                </div>
+                <ul
+                  v-if="suggestOpen && entryName.trim().length >= minChars && (suggestOptions.length || !suggestReq.pending.value)"
+                  id="entry-suggestions"
+                  role="listbox"
+                  class="overflow-y-auto absolute z-40 py-1 mt-1 w-full min-w-[18rem] max-h-72 rounded-lg border shadow-pop bg-surface border-line"
+                >
+                  <li
+                    v-for="(opt, i) in suggestOptions"
+                    :key="opt.key"
+                    role="option"
+                    :aria-selected="i === suggestHighlight"
+                    :class="[
+                      'px-3 py-2 cursor-pointer',
+                      i === suggestHighlight ? 'bg-primary/10' : '',
+                      opt.type === 'new' ? 'border-t border-line mt-1' : '',
+                    ]"
+                    @mousedown.prevent="chooseOption(opt)"
+                    @mouseenter="suggestHighlight = i"
+                  >
+                    <template v-if="opt.type === 'new'">
+                      <p class="text-sm font-semibold text-primary">+ Add “{{ opt.name }}” as a new service</p>
+                      <p class="text-xs text-ink-subtle">Not eligible yet — adds it to {{ selectedProvider?.providerName || "the provider" }}'s contract</p>
+                    </template>
+                    <template v-else>
+                      <div class="flex gap-3 justify-between items-baseline">
+                        <span class="text-sm font-medium truncate text-ink">{{ opt.name }}</span>
+                        <span v-if="opt.price" class="text-xs font-semibold whitespace-nowrap tabular-nums text-ink">{{ formatCurrency(opt.price) }}</span>
+                      </div>
+                      <p class="text-xs truncate text-ink-subtle">{{ [opt.code, opt.meta].filter(Boolean).join(" · ") }}</p>
+                    </template>
+                  </li>
+                  <li v-if="!suggestOptions.length && !suggestReq.pending.value" class="px-3 py-2 text-xs text-ink-subtle">
+                    {{ activeItemTab === "DRUG" ? "Not in the drug library — you can still add it as typed." : "No eligible services found." }}
+                  </li>
+                </ul>
+                <p v-if="entryNeedsPick" class="mt-1 text-[11px] text-warning-strong">Pick an eligible service from the list, or add it as new.</p>
               </div>
               <div class="lg:col-span-1">
                 <label class="block mb-2 text-xs font-semibold text-ink-muted">Price</label>
@@ -986,7 +1248,7 @@ function startNextPerson() {
                   class="py-2 pl-2 w-full text-sm font-bold rounded border cursor-not-allowed text-primary-hover bg-primary/10 border-primary/30"
                 />
               </div>
-              <div class="lg:col-span-1">
+              <div class="lg:col-span-1 lg:pt-6">
                 <button
                   type="button"
                   :disabled="!canAddEntry"
@@ -995,6 +1257,44 @@ function startNextPerson() {
                 >
                   {{ editingIndex !== null ? "✏️ Update" : "➕ Add" }}
                 </button>
+              </div>
+            </div>
+
+            <!-- Add a service that isn't on the provider's contract -->
+            <div v-if="addNew && activeItemTab === 'SERVICE'" class="p-3 mt-4 rounded-lg border bg-surface border-primary/30">
+              <p class="mb-3 text-sm font-semibold text-ink">
+                New service for {{ selectedProvider?.providerName || "this provider" }}'s contract
+              </p>
+              <div class="grid grid-cols-1 gap-3 items-end sm:grid-cols-2 lg:grid-cols-12">
+                <div class="lg:col-span-2">
+                  <label class="block mb-1 text-xs font-semibold text-ink-muted">Code<span class="text-error">*</span></label>
+                  <input v-model="addNew.itemCode" placeholder="e.g., SRV001" class="py-2 pl-2 w-full text-sm rounded border bg-surface border-line-strong focus:ring-2 focus:ring-primary" />
+                </div>
+                <div class="lg:col-span-4">
+                  <label class="block mb-1 text-xs font-semibold text-ink-muted">Service name<span class="text-error">*</span></label>
+                  <input v-model="addNew.item" class="py-2 pl-2 w-full text-sm rounded border bg-surface border-line-strong focus:ring-2 focus:ring-primary" />
+                </div>
+                <div class="lg:col-span-2">
+                  <label class="block mb-1 text-xs font-semibold text-ink-muted">Category</label>
+                  <input v-model="addNew.category" placeholder="Optional" class="py-2 pl-2 w-full text-sm rounded border bg-surface border-line-strong focus:ring-2 focus:ring-primary" />
+                </div>
+                <div class="lg:col-span-2">
+                  <label class="block mb-1 text-xs font-semibold text-ink-muted">Contract price<span class="text-error">*</span></label>
+                  <input v-model.number="addNew.price" type="number" min="0" step="0.01" placeholder="0.00" class="py-2 pl-2 w-full text-sm rounded border bg-surface border-line-strong focus:ring-2 focus:ring-primary" />
+                </div>
+                <div class="flex gap-2 lg:col-span-2">
+                  <button
+                    type="button"
+                    class="flex-1 py-2 text-sm font-semibold text-white rounded bg-primary hover:bg-primary-hover disabled:opacity-60"
+                    :disabled="addNewReq.pending.value"
+                    @click="saveNewService"
+                  >
+                    {{ addNewReq.pending.value ? "Adding..." : "Add to contract" }}
+                  </button>
+                  <button type="button" class="px-3 py-2 text-sm rounded border border-line-strong text-ink-muted hover:bg-surface-muted" @click="addNew = null">
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>

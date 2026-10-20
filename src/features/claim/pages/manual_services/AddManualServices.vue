@@ -13,7 +13,7 @@ import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmit
 import EligibilityCheck from "@/features/claim/components/cash_services/EligibilityCheck.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { getInstitutionContracts } from "@/features/underwriting/api/underwritingApi";
-import { getPackageDropdown } from "@/features/product_settings/api/coverageApi";
+import { getPackageDropdown, getEligiblePackage, addEligibleServices } from "@/features/product_settings/api/coverageApi";
 import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
 import { addEligibleService } from "@/features/provider_contracts/service/api/serviceApi";
 import { searchPackageServices, searchDrugLibrary } from "../../api/manualEntryApi";
@@ -595,7 +595,7 @@ watch(activeItemTab, () => {
 
 /* ---------- Add a service that isn't on the provider's contract yet ---------- */
 const addNew = ref(null); // { itemCode, item, category, price }
-const addNewReq = useApiRequest();
+const addNewPending = ref(false);
 
 function startAddNew() {
   addNew.value = {
@@ -607,41 +607,65 @@ function startAddNew() {
   suggestOpen.value = false;
 }
 
-function saveNewService() {
+// 1) add the service to the provider's contract, 2) make it eligible under the package
+//    (PUT package/addEligibleServices with the contract's existing package services + the new one).
+//    If step 2 fails, a retry reuses the service created in step 1.
+async function saveNewService() {
   const n = addNew.value;
   if (!n || !n.item.trim() || !n.itemCode.trim() || !(Number(n.price) > 0)) {
     toasted(false, "", "Enter the service code, name and price");
     return;
   }
   const contract = providerContractUuid.value;
-  addNewReq.send(
-    () =>
-      addEligibleService(contract, {
+  const packageUuid = pkg.value;
+  addNewPending.value = true;
+  try {
+    let created = n.created;
+    if (!created) {
+      const res = await addEligibleService(contract, {
         itemCode: n.itemCode.trim(),
         item: n.item.trim(),
         category: n.category.trim() || undefined,
         price: Number(n.price),
         payerProviderContractUuid: contract,
         status: "ACTIVE",
-      }),
-    (res) => {
+      });
       if (!res?.success) {
         toasted(false, "", res?.error || "Couldn't add the service to the contract");
         return;
       }
-      const created = res?.data?.data ?? res?.data ?? {};
-      entryName.value = created.item || n.item.trim();
-      entryCode.value = created.itemCode || n.itemCode.trim();
-      entryPrice.value = Number(created.price ?? n.price);
-      entryRef.value = {
-        kind: "SERVICE",
-        serviceId: created.serviceId || created.eligibleServiceUuid,
-        eligibleServiceUuid: created.eligibleServiceUuid,
-      };
-      addNew.value = null;
-      toasted(true, `Added to ${selectedProvider.value?.providerName || "the provider"}'s contract`);
+      created = res?.data?.data ?? res?.data ?? {};
+      if (!created.eligibleServiceUuid) {
+        toasted(false, "", "The service was added but no id came back; refresh and search for it");
+        return;
+      }
+      n.created = created;
     }
-  );
+
+    const existingRes = await getEligiblePackage(packageUuid, contract);
+    const existingIds = toRows(existingRes).map((sv) => sv?.eligibleServiceUuid).filter(Boolean);
+    const assignRes = await addEligibleServices(packageUuid, {
+      payerProviderContractUuid: contract,
+      eligibleServiceUuids: [...new Set([...existingIds, created.eligibleServiceUuid])],
+    });
+    if (assignRes?.success === false) {
+      toasted(false, "", assignRes?.error || "Added to the contract, but couldn't add it to the package. Try again.");
+      return;
+    }
+
+    entryName.value = created.item || n.item.trim();
+    entryCode.value = created.itemCode || n.itemCode.trim();
+    entryPrice.value = Number(created.price ?? n.price);
+    entryRef.value = {
+      kind: "SERVICE",
+      serviceId: created.serviceId || created.eligibleServiceUuid,
+      eligibleServiceUuid: created.eligibleServiceUuid,
+    };
+    addNew.value = null;
+    toasted(true, `Added to ${selectedProvider.value?.providerName || "the provider"}'s contract and the package`);
+  } finally {
+    addNewPending.value = false;
+  }
 }
 
 function addEntry() {
@@ -1377,10 +1401,10 @@ function startNextPerson() {
                   <button
                     type="button"
                     class="flex-1 py-2 text-sm font-semibold text-white rounded bg-primary hover:bg-primary-hover disabled:opacity-60"
-                    :disabled="addNewReq.pending.value"
+                    :disabled="addNewPending"
                     @click="saveNewService"
                   >
-                    {{ addNewReq.pending.value ? "Adding..." : "Add to contract" }}
+                    {{ addNewPending ? "Adding..." : addNew.created ? "Add to package" : "Add to contract" }}
                   </button>
                   <button type="button" class="px-3 py-2 text-sm rounded border border-line-strong text-ink-muted hover:bg-surface-muted" @click="addNew = null">
                     Cancel

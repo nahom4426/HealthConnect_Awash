@@ -214,6 +214,7 @@ const filteredProviderOptions = computed(() => {
   return other ? [...list, other] : list;
 });
 function openProviderList() {
+  if (providerLocked.value) return;
   providerQuery.value = "";
   providerHighlight.value = 0;
   providerOpen.value = true;
@@ -396,6 +397,8 @@ const headerGridClass = computed(() => {
 
 /* ---------- Items list ---------- */
 const items = ref([]);
+// Items are priced and checked against the chosen provider's contract: lock the provider while any exist
+const providerLocked = computed(() => items.value.length > 0);
 // Existing items removed while editing are sent back flagged deleted
 const removedItems = ref([]);
 const grandTotal = computed(() => items.value.reduce((sum, i) => sum + i.totalPrice, 0));
@@ -1105,7 +1108,13 @@ function startNextPerson() {
                   :aria-expanded="providerOpen"
                   :aria-activedescendant="providerOpen ? `provider-opt-${providerHighlight}` : undefined"
                   :placeholder="providerOpen ? 'Search provider...' : 'Search & select provider...'"
-                  class="pr-9 pl-9 w-full h-10 text-sm rounded-md border transition-all bg-surface border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
+                  :readonly="providerLocked"
+                  :aria-readonly="providerLocked"
+                  :title="providerLocked ? 'Remove the added services to change the provider' : undefined"
+                  :class="[
+                    'pr-9 pl-9 w-full h-10 text-sm rounded-md border transition-all border-line-strong focus:ring-2 focus:ring-primary focus:border-primary',
+                    providerLocked ? 'bg-surface-muted text-ink-muted cursor-not-allowed' : 'bg-surface',
+                  ]"
                   @focus="openProviderList"
                   @blur="closeProviderList"
                   @input="(e) => { providerQuery = e.target.value; providerOpen = true; }"
@@ -1115,7 +1124,10 @@ function startNextPerson() {
                   <circle cx="9" cy="9" r="5.5" /><path d="m13.5 13.5 3 3" />
                 </svg>
                 <span class="grid absolute inset-y-0 right-0 place-items-center w-9 pointer-events-none text-ink-subtle" aria-hidden="true">
-                  <svg v-if="providersReq.pending.value" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <svg v-if="providerLocked" class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                    <rect x="4.5" y="9" width="11" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" />
+                  </svg>
+                  <svg v-else-if="providersReq.pending.value" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
                     <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
                   </svg>
@@ -1152,6 +1164,7 @@ function startNextPerson() {
                   </li>
                 </ul>
               </div>
+              <p v-if="providerLocked" class="mt-1 text-[11px] text-ink-subtle">Remove the added services to change the provider.</p>
               <p
                 v-if="isEdit && pendingProvider && !providerUuid && !providersReq.pending.value && !findingContract"
                 class="mt-1 text-xs text-warning-strong"

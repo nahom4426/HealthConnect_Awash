@@ -129,18 +129,13 @@ async function handleSubmit() {
       await Promise.all(deselected.map(pkg => deleteBenefitContribution(pkg.benefitContributionUuid)));
     }
 
-    // Process additions/updates
-    if (payload.length > 0) {
-      const res = await updateBenefitContributions(contractUuid.value, payload);
-      if (res?.success || res?.status === 200 || !res?.error) {
-        toasted(true, "Success", "Benefit contributions updated successfully!");
-        closeModal();
-      } else {
-        toasted(false, "Error", res?.error || "Failed to update contributions");
-      }
-    } else {
+    // Process additions/updates — always sent, an empty list clears every contribution
+    const res = await updateBenefitContributions(contractUuid.value, payload);
+    if (res?.success || res?.status === 200 || !res?.error) {
       toasted(true, "Success", "Benefit contributions updated successfully!");
       closeModal();
+    } else {
+      toasted(false, "Error", res?.error || "Failed to update contributions");
     }
   } catch (err) {
     console.error('Submit error:', err);

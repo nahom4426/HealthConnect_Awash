@@ -90,7 +90,8 @@ function selectAll(checked, category) {
 </script>
 <template>
   <InputParent :validation="validation" :name="name" v-model="selected" v-slot="{ setRef, error }">
-    <div :ref="setRef" class="flex flex-col gap-4">
+    <!-- InputParent tags this with .custom-input, whose control height would squash the whole picker -->
+    <div :ref="setRef" class="flex flex-col gap-4 !h-auto">
       <!-- Header -->
       <div class="flex gap-2 justify-between items-center pb-3 border-b-2 border-line">
         <div class="flex gap-2 items-center">

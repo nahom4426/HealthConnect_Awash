@@ -39,7 +39,7 @@ const goBack = () => {
   <NewFormParent
     :is-modal="false"
     size="auto"
-    class="flex justify-center pb-6 h-full bg-white"
+    class="pb-2 bg-white"
     title="Add Role"
   >
     <PrivilegesDataProvider :pre-page="5000" v-slot="{ privileges, pending }">

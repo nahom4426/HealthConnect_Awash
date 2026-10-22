@@ -30,9 +30,16 @@ const props = defineProps({
 });
 </script>
 <template>
-  <div :class="[$style[size]]" class="overflow-hidden flex flex-col justify-between  bg-white rounded-md">
-   
-    <div class="flex flex-col gap-4 form-scrollbar flex-1 overflow-auto p-2 border-b border-text-secondary-clr/30">
+  <!-- As a modal the body scrolls inside the dialog; as a page it grows with the page
+       and the bottom actions stay pinned to the bottom of the screen -->
+  <div
+    :class="[$style[size], isModal ? 'overflow-hidden justify-between' : '']"
+    class="flex flex-col bg-white rounded-md"
+  >
+    <div
+      :class="isModal ? 'flex-1 overflow-auto form-scrollbar' : ''"
+      class="flex flex-col gap-4 p-2 border-b border-text-secondary-clr/30"
+    >
        <div class="flex justify-between border-b border-text-secondary-clr/30 items-center">
       <div class="flex items-center gap-4">
         <button @click="onGoBack" v-if="goBack"
@@ -51,7 +58,12 @@ const props = defineProps({
       <slot />
       <!-- / <ResponseError :error="error" /> -->
     </div>
-    <slot name="bottom" />
+    <div v-if="isModal">
+      <slot name="bottom" />
+    </div>
+    <div v-else class="flex sticky bottom-0 z-10 flex-col px-2 pb-2 bg-white">
+      <slot name="bottom" />
+    </div>
   </div>
 </template>
 

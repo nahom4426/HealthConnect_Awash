@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUpdated } from "vue";
+import { ref, watch, onMounted, onUpdated, onBeforeUnmount, nextTick } from "vue";
 import { vOnClickOutside, OnClickOutside } from "@vueuse/components";
 
 const props = defineProps({
@@ -53,12 +53,93 @@ function onKeydown(e) {
   }
 }
 
+/*
+ * Inside a scrolling box (e.g. a table), an absolutely positioned menu gets clipped.
+ * There the open menu is placed with position: fixed next to its trigger instead,
+ * flipping above it when there isn't room below.
+ */
+const floating = ref(false);
+
+function clippingAncestor(el) {
+  let node = el?.parentElement;
+  while (node && node !== document.body && node.tagName !== "MAIN") {
+    const cs = getComputedStyle(node);
+    if (/(auto|scroll|hidden|clip)/.test(cs.overflowY + cs.overflowX)) return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
+function placeFloating() {
+  const menu = dropdown.value;
+  const anchor = menu?.closest(".dropdown");
+  if (!menu || !anchor || !openDropdown.value) return;
+  const rect = anchor.getBoundingClientRect();
+  const menuW = menu.offsetWidth;
+  const menuH = menu.offsetHeight;
+  const gap = 4;
+  const margin = 8;
+
+  let top = rect.bottom + gap;
+  if (top + menuH > window.innerHeight - margin && rect.top - menuH - gap > margin) {
+    top = rect.top - menuH - gap; // not enough room below: open upwards
+  }
+  let left = rect.right - menuW; // right-aligned with the trigger
+  left = Math.max(margin, Math.min(left, window.innerWidth - menuW - margin));
+
+  Object.assign(menu.style, {
+    position: "fixed",
+    top: `${Math.round(top)}px`,
+    left: `${Math.round(left)}px`,
+    right: "auto",
+    bottom: "auto",
+    zIndex: "60",
+  });
+}
+
+function clearFloating() {
+  const menu = dropdown.value;
+  if (!menu) return;
+  ["top", "left", "right", "bottom"].forEach((k) => menu.style.removeProperty(k));
+  menu.style.position = "absolute";
+  menu.style.zIndex = 20;
+}
+
+function onViewportChange() {
+  if (floating.value) placeFloating();
+}
+
+function startFloating() {
+  floating.value = true;
+  nextTick(placeFloating);
+  window.addEventListener("scroll", onViewportChange, true);
+  window.addEventListener("resize", onViewportChange);
+}
+
+function stopFloating() {
+  if (!floating.value) return;
+  floating.value = false;
+  window.removeEventListener("scroll", onViewportChange, true);
+  window.removeEventListener("resize", onViewportChange);
+  clearFloating();
+}
+
 function setValue() {
-  if (!openDropdown.value) dropdown.value.style.display = "none";
-  else dropdown.value.style.removeProperty("display");
+  if (!openDropdown.value) {
+    dropdown.value.style.display = "none";
+    stopFloating();
+  } else {
+    dropdown.value.style.removeProperty("display");
+    if (clippingAncestor(dropdown.value.closest(".dropdown"))) startFloating();
+  }
 }
 
 function setStyle() {
+  if (!dropdown.value) return;
+  if (floating.value) {
+    placeFloating();
+    return;
+  }
   dropdown.value.style.position = "absolute";
   dropdown.value.style.zIndex = 20;
 
@@ -78,6 +159,7 @@ watch(openDropdown, setValue);
 watch(props, setStyle);
 
 onMounted(setStyle);
+onBeforeUnmount(stopFloating);
 </script>
 
 <template>

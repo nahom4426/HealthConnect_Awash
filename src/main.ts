@@ -12,8 +12,10 @@ import vPrivilage from '@/directives/vPrivilage'
 import vRipple from '@/directives/vRipple'
 import toast from '@/toast'
 import { initTheme } from '@/composables/useTheme'
+import { installFloatingMenus } from '@/utils/floatingMenus'
 
 initTheme()
+installFloatingMenus()
 
 
 const app = createApp(App)

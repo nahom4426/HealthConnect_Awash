@@ -21,7 +21,9 @@ const props = defineProps({
   onDelete: { type: Function, default: () => {} },
   onRowClick: { type: Function, default: () => {} },
   currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 25 }
+  perPage: { type: Number, default: 25 },
+  // GENERAL policies belong to an institution; INDIVIDUAL ones don't
+  policyType: { type: String, default: 'GENERAL' }
 });
 
 const router = useRouter();
@@ -49,6 +51,8 @@ function getDateRange(row) {
   if (!row.beginDate || !row.endDate) return '—';
   return `${formatDate(row.beginDate)} → ${formatDate(row.endDate)}`;
 }
+
+const hasInstitution = () => (props.policyType === 'INDIVIDUAL' ? 'false' : 'true');
 
 function navigateTo(path) {
   router.push(path);
@@ -123,7 +127,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
 
           <!-- Insured Persons -->
           <button
-            @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}/${row?.institutionName}?hasInstitution=false`)"
+            @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}/${row?.institutionName}?hasInstitution=${hasInstitution()}`)"
             class="inline-flex gap-1 items-center px-2 py-0.5 text-sm font-semibold text-primary bg-primary/5 rounded border border-primary/20 transition-all duration-200 hover:bg-primary/10"
             title="Persons"
           >
@@ -197,7 +201,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
 
         <!-- Insured Persons -->
         <button
-          @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}?hasInstitution=false&pageContext=membership`)"
+          @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}?hasInstitution=${hasInstitution()}&pageContext=membership`)"
           class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-primary bg-primary/5 rounded border border-primary/20 transition-all duration-200 hover:bg-primary/10"
           title="Persons"
         >

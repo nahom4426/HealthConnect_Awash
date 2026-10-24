@@ -225,6 +225,7 @@ onMounted(async () => {
             }"
             :rows="contracts"
             :rowCom="MembershipCategoryRow"
+            :rowComProps="{ policyType: activeTab }"
             :pagination="{
               currentPage,
               itemsPerPage,
@@ -250,6 +251,7 @@ onMounted(async () => {
                   'Actions',
                 ]"
                 :institutionUuid="route.params.id"
+                :policyType="activeTab"
                 :isMobile="isMobile"
                 :onRowClick="(row) => {}"
               />

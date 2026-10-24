@@ -110,8 +110,10 @@ function selectInstitutionAndOpenPolicyModal(institution) {
   closeInstitutionPicker();
 }
 
-// Fetch institution name on mount
+// Fetch institution name on mount (only when the page is opened for one institution;
+// /issued_policy lists every institution and has no :id)
 onMounted(async () => {
+  if (!route.params.id) return;
   try {
     const institution = await getInstitution(route.params.id);
     if (institution) {

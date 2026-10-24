@@ -89,7 +89,7 @@ export function importInsuredPersons(
   }).toString();
 
   return api.addAuthenticationHeader().post(
-    `${basePath}/import-insured-and-dependant`,
+    `${basePath}/import-insured-combined`,
     data,
     {
       ...config,

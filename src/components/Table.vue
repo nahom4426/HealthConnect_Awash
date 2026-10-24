@@ -260,32 +260,6 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
       </div>
     </div>
 
-    <!-- Mobile Card View -->
-    <div class="lg:hidden">
-      <slot name="mobile">
-        <div v-if="hasData && !pending" class="space-y-2 p-1">
-          <div
-            v-for="(row, idx) in rows"
-            :key="idx"
-            class="p-3.5 bg-white rounded-lg border border-line/80 transition-all duration-150 hover:shadow-soft active:scale-[0.99] cursor-pointer"
-            @click="emit('row', row)"
-          >
-            <div class="space-y-1.5">
-              <div v-for="(key, keyIdx) in spec.row" :key="keyIdx" class="flex justify-between items-start gap-3">
-                <span class="text-[11px] font-medium text-ink-subtle uppercase tracking-wide flex-shrink-0">{{ spec.head[keyIdx] }}</span>
-                <span class="text-sm text-right text-ink font-medium">{{ row[key] || '-' }}</span>
-              </div>
-
-              <!-- Mobile Actions -->
-              <div v-if="$slots.actions" class="flex gap-2 pt-2 mt-1.5 border-t border-line">
-                <slot name="actions" :row="row" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </slot>
-    </div>
-
     <!-- Pagination -->
     <div
       v-if="!pending && showPagination && hasData"

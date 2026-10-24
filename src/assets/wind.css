@@ -569,3 +569,19 @@ html.theme-switching *::after {
     scroll-behavior: auto !important;
   }
 }
+
+/* Narrow screens: keep a table's Actions column visible while the rest scrolls sideways */
+@media (max-width: 1023px) {
+  .table--sticky-actions > thead > tr > th:last-child,
+  .table--sticky-actions > tbody > tr > td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background-color: rgb(var(--surface));
+    box-shadow: -10px 0 10px -10px rgb(16 24 40 / 0.35);
+  }
+  .table--sticky-actions > thead > tr > th:last-child {
+    z-index: 11;
+    background-color: rgb(var(--surface-muted));
+  }
+}

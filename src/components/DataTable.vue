@@ -34,9 +34,9 @@ const totalPages = inject("totalPages", 1);
 <template>
   <div :class="$attrs.class">
     <!-- Desktop Table View -->
-    <div class="hidden lg:block overflow-x-auto rounded-lg border border-line/80 bg-white">
+    <div class="overflow-x-auto rounded-lg border border-line/80 bg-white">
       <div class="inline-block min-w-full align-middle">
-        <table class="min-w-full">
+        <table class="min-w-full" :class="{ 'table--sticky-actions': /^actions?$/i.test(String(headers?.[headers.length - 1] ?? '')) }">
           <thead>
             <tr class="border-b border-line bg-surface-muted/60">
               <!-- First column slot -->
@@ -71,10 +71,6 @@ const totalPages = inject("totalPages", 1);
       </div>
     </div>
 
-    <!-- Mobile Card View -->
-    <div class="space-y-2 lg:hidden">
-      <slot name="mobile" />
-    </div>
   </div>
 </template>
 

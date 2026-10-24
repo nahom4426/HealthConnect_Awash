@@ -128,7 +128,7 @@ function getCategoryColor(category) {
           </span>
 
           <!-- Hover Tooltip - Attractive design with animations -->
-          <div v-if="getPrivilegeList(row).length > 0" class="hidden absolute top-full left-1/2 z-[9999] p-5 mt-3 w-96 text-left bg-white rounded-2xl border border-line shadow-2xl transform -translate-x-1/2 group-hover:block pointer-events-auto backdrop-blur-sm">
+          <div v-if="getPrivilegeList(row).length > 0" data-float-popover class="hidden absolute top-full left-1/2 z-[9999] p-5 mt-3 w-96 text-left bg-white rounded-2xl border border-line shadow-2xl transform -translate-x-1/2 group-hover:block pointer-events-auto backdrop-blur-sm">
             <!-- Tooltip Header -->
             <div class="flex justify-between items-center pb-3 mb-4 border-b-2 border-line">
               <div class="flex gap-2 items-center">
@@ -170,7 +170,7 @@ function getCategoryColor(category) {
           </div>
           
           <!-- Empty State Tooltip -->
-          <div v-else class="hidden absolute top-full left-1/2 z-[9999] p-4 mt-3 w-80 text-left bg-white rounded-2xl border border-line shadow-2xl transform -translate-x-1/2 group-hover:block pointer-events-auto">
+          <div v-else data-float-popover class="hidden absolute top-full left-1/2 z-[9999] p-4 mt-3 w-80 text-left bg-white rounded-2xl border border-line shadow-2xl transform -translate-x-1/2 group-hover:block pointer-events-auto">
             <div class="py-4 text-center">
               <div class="flex justify-center items-center p-3 mx-auto mb-3 w-12 h-12 bg-surface-muted rounded-full">
                 <svg class="w-6 h-6 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">

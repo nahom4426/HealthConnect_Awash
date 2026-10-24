@@ -149,8 +149,9 @@ export function downloadInsuredTemplate() {
   return api.addAuthenticationHeader().get(`${basePath}/export-template`);
 }
 
-export function exportMemberTemplate() {
-  return api.addAuthenticationHeader().get(`${basePath}/export/insured-template`, {
+// Combined (members + dependants) import template for a policy
+export function exportMemberTemplate(policyUuid) {
+  return api.addAuthenticationHeader().get(`${basePath}/export/insured-combined-template/${policyUuid}`, {
     responseType: 'blob' // Important for file download
   });
 }

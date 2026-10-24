@@ -52,7 +52,12 @@ const downloadFile = (blob, filename) => {
 const downloadSample = async (type = "employee") => {
   try {
     if (type === "employee") {
-      const response = await exportMemberTemplate();
+      const policyUuid = route.params.id || route.params.payerInstitutionContractUuid;
+      if (!policyUuid) {
+        toasted(false, 'No policy selected for the template', '');
+        return;
+      }
+      const response = await exportMemberTemplate(policyUuid);
       downloadFile(response.data, 'member-template.xlsx');
       toasted(true, 'Member template downloaded successfully', '');
     } else {

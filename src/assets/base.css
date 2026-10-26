@@ -38,10 +38,10 @@
   --section-gap: 160px;
 
   /* ── Layout Design System ── */
-  --primary:       #7A1C21;
-  --primary-dark:  #541216;
-  --primary-light: #9E2A30;
-  --accent:        #D4AF37;
+  --primary:       #03396C;
+  --primary-dark:  #022B54;
+  --primary-light: #366497;
+  --accent:        #FE9312;
 
   --success: #10B981;
   --warning: #F59E0B;
@@ -57,7 +57,7 @@
   --shadow-sm:      0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md:      0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg:      0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-primary: 0 10px 15px -3px rgba(122, 28, 33, 0.25);
+  --shadow-primary: 0 10px 15px -3px rgba(3, 57, 108, 0.25);
 }
 
 /* Dark mode intentionally disabled - app uses its own light theme */

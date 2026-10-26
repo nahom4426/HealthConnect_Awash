@@ -205,7 +205,7 @@
           <div class="mpd-card">
             <div class="mpd-card-header">
               <svg class="mpd-header-icon-svg text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              <span>Customer Proposal Form Questionnaire Answers (Nyala PDF Standard)</span>
+              <span>Customer Proposal Form Questionnaire Answers (Standard Insurance PDF)</span>
             </div>
 
             <div class="p-5 space-y-4 text-xs">
@@ -404,7 +404,7 @@
                     <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     <div>
                       <div class="text-xs font-bold text-slate-900">{{ proposal.coverageType === 'OWN_DAMAGE' ? 'Standalone OD Policy Schedule' : 'Comprehensive Motor Policy Schedule' }}</div>
-                      <div class="text-[11px] text-slate-500">Official Nyala Contract Terms, Rates & Excesses</div>
+                      <div class="text-[11px] text-slate-500">Official Standard Contract Terms, Rates & Excesses</div>
                     </div>
                   </div>
                   <button type="button" @click="showScheduleModal = true" class="mpd-view-doc-btn whitespace-nowrap flex-shrink-0">
@@ -444,7 +444,7 @@
           </div>
         </div>
 
-        <!-- Certificate Header (FDRE Left, Nyala Right) -->
+        <!-- Certificate Header (FDRE Left, Standard Right) -->
         <div class="border-b-2 border-slate-800 pb-4 mb-4">
           <div class="flex items-start justify-between">
             <!-- Left: FDRE Transport Ministry Header -->
@@ -458,12 +458,12 @@
               <div class="font-extrabold underline text-xs pt-1.5 text-slate-950">የመድን ምስክር ወረቀት<br/>CERTIFICATE OF INSURANCE</div>
             </div>
 
-            <!-- Right: Nyala Insurance Logo & Header -->
+            <!-- Right: Standard Insurance Logo & Header -->
             <div class="text-right flex flex-col items-end">
-              <img src="/nyala_logo.png" alt="Nyala Insurance Logo" class="h-16 object-contain mb-1" />
-              <div class="text-lg font-black text-blue-950 tracking-tight">ኒያላ ኢንሹራንስ አ.ማ.</div>
-              <div class="text-xs font-bold text-blue-900">Nyala Insurance Company S.C.</div>
-              <div class="text-[11px] font-semibold italic text-amber-900 pt-0.5">"Protecting Your Future with Security & Trust!"</div>
+              <img src="/standard_logo.png" alt="Standard Insurance Logo" class="h-16 object-contain mb-1" />
+              <div class="text-lg font-black text-blue-950 tracking-tight">ስታንዳርድ ኢንሹራንስ አ.ማ.</div>
+              <div class="text-xs font-bold text-blue-900">Standard Insurance S.C.</div>
+              <div class="text-[11px] font-semibold italic text-amber-900 pt-0.5">"Your trust, our standard"</div>
               <div class="text-[10px] font-semibold text-slate-700">"የተሻለ ጥበቃ ለተሻለ ህይወት!"</div>
             </div>
           </div>
@@ -579,7 +579,7 @@
           <div class="grid grid-cols-3 gap-4 border-b border-slate-400 pb-2">
             <div class="col-span-2">
               <span class="text-slate-700 block text-[11px]">የመድኑ ሰጪው ስም / NAME OF INSURER:</span>
-              <span class="font-bold text-sm text-blue-950 underline">Nyala Insurance Company S.C.</span>
+              <span class="font-bold text-sm text-blue-950 underline">Standard Insurance S.C.</span>
             </div>
             <div>
               <span class="text-slate-700 block text-[11px]">የአረቦን መጠን / PREMIUM TARIF:</span>
@@ -598,10 +598,10 @@
               THE POLICY TO WHICH THE CERTIFICATE IS ISSUED COMPLIES WITH THE REQUIREMENTS OF PROCLAMATION No. 799/2013 & REGULATION No. 554/2024
             </div>
 
-            <!-- Official Nyala Digital Stamp Seal -->
+            <!-- Official Standard Digital Stamp Seal -->
             <div class="mt-4 flex flex-col items-center justify-center relative">
-              <img src="/nyala-sail.png" alt="Nyala Stamp Seal" class="w-36 h-36 object-contain transform -rotate-6 opacity-90 drop-shadow-md" />
-              <div class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL NYALA CORPORATE SEAL</div>
+              <img src="/standard-seal.png" alt="Standard Stamp Seal" class="w-36 h-36 object-contain transform -rotate-6 opacity-90 drop-shadow-md" />
+              <div class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL STANDARD CORPORATE SEAL</div>
             </div>
           </div>
         </div>
@@ -631,16 +631,16 @@
           </div>
         </div>
 
-        <!-- Schedule Header (Nyala Logo, Motto & Corporate Head Office Info) -->
+        <!-- Schedule Header (Standard Logo, Motto & Corporate Head Office Info) -->
         <div class="border-b-2 border-slate-900 pb-4 mb-6 print:mb-3 print:pb-2">
           <div class="flex items-start justify-between">
             <div class="flex items-center gap-3">
-              <img src="/nyala_logo.png" alt="Nyala Insurance Logo" class="h-16 object-contain" />
+              <img src="/standard_logo.png" alt="Standard Insurance Logo" class="h-16 object-contain" />
               <div>
-                <h1 class="text-xl font-black text-blue-950 tracking-tight">ኒያላ ኢንሹራንስ አ.ማ.</h1>
-                <h2 class="text-sm font-bold text-blue-900">NYALA INSURANCE COMPANY S.C.</h2>
-                <p class="text-xs font-bold text-amber-800 italic">"Protecting Your Future with Security & Trust!"</p>
-                <p class="text-[11px] text-slate-500 font-medium">Head Office: Protection House, Mickey Leland St., P.O.Box 12753, Addis Ababa</p>
+                <h1 class="text-xl font-black text-blue-950 tracking-tight">ስታንዳርድ ኢንሹራንስ አ.ማ.</h1>
+                <h2 class="text-sm font-bold text-blue-900">STANDARD INSURANCE S.C.</h2>
+                <p class="text-xs font-bold text-amber-800 italic">"Your trust, our standard"</p>
+                <p class="text-[11px] text-slate-500 font-medium">Head Office: Addis Ababa, Ethiopia</p>
               </div>
             </div>
             <div class="text-right">
@@ -763,7 +763,7 @@
               </thead>
               <tbody class="divide-y divide-slate-200 font-medium">
                 <tr>
-                  <td class="py-2.5 px-4 font-bold text-slate-900">1. Nyala Own Damage (OD) Premium</td>
+                  <td class="py-2.5 px-4 font-bold text-slate-900">1. Standard Own Damage (OD) Premium</td>
                   <td class="py-2.5 px-4">EthiSwitch National Gateway</td>
                   <td class="py-2.5 px-4 text-emerald-700 font-bold">PAID</td>
                   <td class="py-2.5 px-4 text-right font-mono font-bold">ETB {{ formatMoney(proposal.odPremiumAmount) }}</td>
@@ -796,7 +796,7 @@
           <!-- Section 5: Authorized Signatures & Seal -->
           <div class="pt-6 pb-4 print:pt-2 print:pb-0 flex items-end justify-between border-t border-slate-300">
             <div>
-              <p class="text-[11px] font-bold text-slate-800">Issued by Nyala Insurance Company S.C.</p>
+              <p class="text-[11px] font-bold text-slate-800">Issued by Standard Insurance S.C.</p>
               <p class="text-[10px] text-slate-500">Authorized Underwriter: Solomon Tadesse</p>
               <div class="mt-3 font-mono text-xs font-bold text-slate-950 border-b-2 border-slate-800 w-56 pb-1">
                 Solomon Tadesse (Underwriter)
@@ -804,8 +804,8 @@
             </div>
 
             <div class="flex flex-col items-center relative">
-              <img src="/nyala-sail.png" alt="Nyala Official Corporate Seal" class="w-32 h-32 print:w-20 print:h-20 object-contain transform -rotate-6 opacity-90 drop-shadow-md" />
-              <span class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL NYALA CORPORATE SEAL</span>
+              <img src="/standard-seal.png" alt="Standard Official Corporate Seal" class="w-32 h-32 print:w-20 print:h-20 object-contain transform -rotate-6 opacity-90 drop-shadow-md" />
+              <span class="text-[10px] font-extrabold text-blue-950 mt-1">OFFICIAL STANDARD CORPORATE SEAL</span>
             </div>
           </div>
         </div>
@@ -932,14 +932,14 @@ function libreLabel(key) {
 const ocrSourceBadge = computed(() => {
   const src = (proposal.value?.ocrSource || proposal.value?.libreData?.ocrSource || '').toUpperCase();
   if (src === 'ML_KIT') return { label: 'On-device OCR', cls: 'bg-emerald-100 text-emerald-700' };
-  if (src === 'TESSERACT') return { label: 'Nyala OCR', cls: 'bg-indigo-100 text-indigo-700' };
+  if (src === 'TESSERACT') return { label: 'Standard OCR', cls: 'bg-indigo-100 text-indigo-700' };
   if (src === 'MANUAL') return { label: 'Typed by customer', cls: 'bg-amber-100 text-amber-700' };
   return { label: 'Source unknown', cls: 'bg-slate-100 text-slate-600' };
 });
 
 // Role Permissions
 const normRole = computed(() => {
-  const roleFromStorage = localStorage.getItem('nyala_active_testing_role') || localStorage.getItem('user_role') || activeRole.value || '';
+  const roleFromStorage = localStorage.getItem('standard_active_testing_role') || localStorage.getItem('user_role') || activeRole.value || '';
   return roleFromStorage.toUpperCase().replace('ROLE_', '');
 });
 const isUnderwriter = computed(() => normRole.value === 'UNDERWRITER' || normRole.value === 'SUPER_ADMIN');
@@ -1042,11 +1042,11 @@ function handleKeyDown(e) {
 function printCertificate() {
   const originalTitle = document.title;
   if (showCertModal.value) {
-    document.title = `Nyala_Insurance_Motor_Sticker_Certificate_${proposal.value.proposalNumber || 'PROP_2026_001'}`;
+    document.title = `Standard_Insurance_Motor_Sticker_Certificate_${proposal.value.proposalNumber || 'PROP_2026_001'}`;
   } else if (showScheduleModal.value) {
-    document.title = `Nyala_Insurance_Motor_Policy_Schedule_${proposal.value.proposalNumber || 'PROP_2026_001'}`;
+    document.title = `Standard_Insurance_Motor_Policy_Schedule_${proposal.value.proposalNumber || 'PROP_2026_001'}`;
   } else {
-    document.title = `Nyala_Insurance_Motor_Document_${proposal.value.proposalNumber || 'PROP_2026_001'}`;
+    document.title = `Standard_Insurance_Motor_Document_${proposal.value.proposalNumber || 'PROP_2026_001'}`;
   }
   window.print();
   setTimeout(() => {

@@ -14,7 +14,7 @@
       <div class="logo-compact">
         <div class="logo-orb">
           <div class="logo-core">
-            <img src="/src/assets/img/nyala_logo.png" alt="Nyala Insurance" class="logo" />
+            <img src="/src/assets/img/standard_icon.png" alt="Standard Insurance" class="logo" />
           </div>
           <div class="ring-1 logo-ring"></div>
           <div class="ring-2 logo-ring"></div>
@@ -40,10 +40,10 @@
         <!-- Animated title -->
         <div class="title-compact">
           <h1 class="compact-title">
-            <span class="title-gradient">Nyala</span>
+            <span class="title-gradient">Standard</span>
             <span class="title-solid">Insurance</span>
           </h1>
-          <div class="motto-badge">Your Guarantee</div>
+          <div class="motto-badge">Your trust, our standard</div>
         </div>
         
         <!-- Status with dots -->
@@ -101,7 +101,7 @@
       
       <!-- Compact footer -->
       <div class="footer-compact">
-        <span class="footer-tag">Nyala Digital Channel</span>
+        <span class="footer-tag">Standard Digital Channel</span>
       </div>
     </div>
   </div>
@@ -362,7 +362,7 @@ defineExpose({
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.4));
+  filter: drop-shadow(0 4px 12px rgba(254, 147, 18, 0.4));
 }
 
 .logo-ring {
@@ -517,7 +517,7 @@ defineExpose({
 
 .title-gradient {
   display: block;
-  background: linear-gradient(90deg, #9E2A30, #D4AF37, #E53935);
+  background: linear-gradient(90deg, #366497, #FE9312, #E53935);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -537,14 +537,14 @@ defineExpose({
   margin-top: 0.5rem;
   padding: 0.25rem 0.85rem;
   border-radius: 9999px;
-  background: linear-gradient(135deg, rgba(122, 28, 33, 0.6), rgba(212, 175, 55, 0.25));
-  border: 1px solid rgba(212, 175, 55, 0.5);
-  color: #D4AF37;
+  background: linear-gradient(135deg, rgba(3, 57, 108, 0.6), rgba(254, 147, 18, 0.25));
+  border: 1px solid rgba(254, 147, 18, 0.5);
+  color: #FE9312;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 12px rgba(254, 147, 18, 0.2);
 }
 
 /* Status */

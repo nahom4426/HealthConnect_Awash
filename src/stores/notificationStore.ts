@@ -51,7 +51,7 @@ export const useNotificationStore = defineStore('notifications', () => {
 
   async function fetchNotifications() {
     try {
-      const role = localStorage.getItem('nyala_active_testing_role') || localStorage.getItem('user_role') || localStorage.getItem('role') || 'UNDERWRITER';
+      const role = localStorage.getItem('standard_active_testing_role') || localStorage.getItem('user_role') || localStorage.getItem('role') || 'UNDERWRITER';
       const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
       const baseUrl = import.meta.env.VITE_NOTIFICATION_HOST;
       const res = await axios.get(`${baseUrl}/api/payer/motor/digital-channel/notifications`, {

@@ -5,7 +5,7 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import icons from "@/utils/icons";
 import { toasted } from "@/utils/utils";
 import { stageExclusion, getActiveInsuredByContract } from "@/features/quotation/api/quotationApi";
-import { getIssuedContracts } from "@/features/Nyalaunderwriting/api/underwritingApi";
+import { getIssuedContracts } from "@/features/Standardunderwriting/api/underwritingApi";
 import IssuedContractsDataProvider from "@/features/underwriting/components/IssuedContractsDataProvider.vue";
 import Table from "@/components/Table.vue";
 import StageExclusionContractRow from "@/features/quotation/components/StageExclusionContractRow.vue";

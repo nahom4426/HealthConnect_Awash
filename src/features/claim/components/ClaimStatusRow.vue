@@ -66,7 +66,7 @@ function getInitials(name) {
 // Get initials background color deterministically
 function getAvatarBg(name) {
   const colors = [
-    'from-[#800020] to-[#500014]', // Nyala Maroon
+    'from-[#03396C] to-[#022B54]', // Standard Navy
     'from-slate-700 to-slate-900',
     'from-indigo-700 to-indigo-900',
     'from-teal-700 to-teal-900',
@@ -150,7 +150,7 @@ function handleView(row) {
           {{ getInitials(row.providerName || row.institutionName) }}
         </div>
         <div class="space-y-0.5">
-          <div class="font-bold text-slate-800 text-sm group-hover:text-[#800020] transition-colors">
+          <div class="font-bold text-slate-800 text-sm group-hover:text-[#03396C] transition-colors">
             {{ row.providerName || row.institutionName || 'Unspecified Provider' }}
           </div>
           <div class="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
@@ -165,7 +165,7 @@ function handleView(row) {
       <!-- Total Amount Column -->
       <div v-else-if="key === 'totalAmount'" class="flex flex-col">
         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/80 w-fit">
-          <span class="text-[10px] font-extrabold text-[#800020] tracking-wider uppercase">ETB</span>
+          <span class="text-[10px] font-extrabold text-[#03396C] tracking-wider uppercase">ETB</span>
           <span class="font-black text-slate-900 text-sm">
             {{ Number(row.totalAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
           </span>
@@ -206,7 +206,7 @@ function handleView(row) {
       <button 
         type="button"
         @click.stop="handleView(row)"
-        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#800020] hover:bg-[#600018] shadow-xs hover:shadow-md transition-all active:scale-95"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#03396C] hover:bg-[#600018] shadow-xs hover:shadow-md transition-all active:scale-95"
       >
         <span>Review Batch</span>
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>

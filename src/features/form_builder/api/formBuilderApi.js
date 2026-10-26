@@ -16,8 +16,8 @@ function getClient() {
 }
 
 // ── LocalStorage Helpers ──────────────────────────────────────────────────
-const LOCAL_FORMS_KEY = 'nyala_sdui_form_schemas';
-const LOCAL_RATES_KEY = 'nyala_sdui_rate_configs';
+const LOCAL_FORMS_KEY = 'standard_sdui_form_schemas';
+const LOCAL_RATES_KEY = 'standard_sdui_rate_configs';
 
 function getLocal(key) {
   try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }

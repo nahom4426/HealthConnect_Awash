@@ -59,11 +59,11 @@ function navigate(path) {
     <div class="sidebar-brand">
       <template v-if="!collapsed">
         <div class="brand-mark" @click="navigate('/module-select')" title="Switch module">
-          <img src="/src/assets/img/nyala_logo.png" alt="Nyala Logo" class="brand-logo-img" />
+          <img src="/src/assets/img/standard_icon.png" alt="Standard Logo" class="brand-logo-img" />
         </div>
         <div class="brand-text" @click="navigate('/module-select')">
-          <span class="brand-name">Nyala Insurance S.C.</span>
-          <span class="brand-sub">Your Guarantee</span>
+          <span class="brand-name">Standard Insurance S.C.</span>
+          <span class="brand-sub">Your trust, our standard</span>
         </div>
         <button class="collapse-btn" @click="toggleCollapse" title="Collapse sidebar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="collapse-icon">
@@ -75,7 +75,7 @@ function navigate(path) {
       <!-- Clean Single Centered Logo/Toggle in Collapsed Mode -->
       <template v-else>
         <button class="brand-collapsed-mark" @click="toggleCollapse" title="Expand sidebar">
-          <img src="/src/assets/img/nyala_logo.png" alt="Nyala Logo" class="brand-logo-img" />
+          <img src="/src/assets/img/standard_icon.png" alt="Standard Logo" class="brand-logo-img" />
           <div class="brand-expand-overlay" title="Expand sidebar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="expand-icon">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
@@ -173,7 +173,7 @@ function navigate(path) {
   width: 270px;
   flex-shrink: 0;
   height: 100vh;
-  background: #541216;
+  background: #022B54;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -187,7 +187,7 @@ function navigate(path) {
 }
 
 .sidebar-light {
-  background: #7A1C21;
+  background: #03396C;
   box-shadow: 4px 0 20px rgba(84,18,22,0.25);
 }
 .sidebar-collapsed { width: 72px; }
@@ -197,7 +197,7 @@ function navigate(path) {
 .sidebar-accent {
   height: 3px;
   flex-shrink: 0;
-  background: linear-gradient(90deg, #D4AF37 0%, #7A1C21 50%, #9E2A30 100%);
+  background: linear-gradient(90deg, #FE9312 0%, #03396C 50%, #366497 100%);
   background-size: 200% 100%;
   animation: accentShimmer 5s linear infinite;
 }
@@ -227,7 +227,7 @@ function navigate(path) {
   width: 2.5rem; height: 2.5rem;
   border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.95);
-  border: 1.5px solid rgba(212, 175, 55, 0.6);
+  border: 1.5px solid rgba(254, 147, 18, 0.6);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -238,7 +238,7 @@ function navigate(path) {
 .brand-mark:hover {
   transform: scale(1.06);
   background: #ffffff;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3), 0 0 16px rgba(212, 175, 55, 0.5);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3), 0 0 16px rgba(254, 147, 18, 0.5);
 }
 .brand-logo-img {
   width: 100%; height: 100%;
@@ -251,7 +251,7 @@ function navigate(path) {
   width: 2.5rem; height: 2.5rem;
   border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.95);
-  border: 1.5px solid rgba(212, 175, 55, 0.6);
+  border: 1.5px solid rgba(254, 147, 18, 0.6);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   display: flex; align-items: center; justify-content: center;
   padding: 3px;
@@ -260,15 +260,15 @@ function navigate(path) {
 }
 .brand-collapsed-mark:hover {
   transform: scale(1.08);
-  border-color: #D4AF37;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 18px rgba(212, 175, 55, 0.6);
+  border-color: #FE9312;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 18px rgba(254, 147, 18, 0.6);
 }
 .brand-expand-overlay {
   position: absolute;
   inset: 0;
   border-radius: 0.75rem;
-  background: rgba(122, 28, 33, 0.92);
-  color: #D4AF37;
+  background: rgba(3, 57, 108, 0.92);
+  color: #FE9312;
   display: flex; align-items: center; justify-content: center;
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -295,7 +295,7 @@ function navigate(path) {
 }
 .brand-sub {
   font-size: 0.625rem; font-weight: 800;
-  color: #D4AF37;
+  color: #FE9312;
   text-transform: uppercase; letter-spacing: 0.16em;
   white-space: nowrap; margin-top: 0.1rem;
 }
@@ -317,7 +317,7 @@ function navigate(path) {
 .collapse-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  border-color: rgba(212, 175, 55, 0.5);
+  border-color: rgba(254, 147, 18, 0.5);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   transform: scale(1.05);
 }
@@ -392,14 +392,14 @@ function navigate(path) {
 .nav-item-active {
   background: rgba(255,255,255,0.14) !important;
   color: #ffffff !important;
-  border-color: rgba(212, 175, 55, 0.4) !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15), 0 0 12px rgba(212, 175, 55, 0.2) !important;
+  border-color: rgba(254, 147, 18, 0.4) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15), 0 0 12px rgba(254, 147, 18, 0.2) !important;
   font-weight: 700;
 }
 .sidebar-collapsed .nav-item-active {
   background: rgba(255,255,255,0.18) !important;
-  border: 1.5px solid rgba(212, 175, 55, 0.7) !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25), 0 0 16px rgba(212, 175, 55, 0.4) !important;
+  border: 1.5px solid rgba(254, 147, 18, 0.7) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), 0 0 16px rgba(254, 147, 18, 0.4) !important;
   transform: none;
 }
 .nav-item-open { background: rgba(255,255,255,0.07); color: #ffffff; }
@@ -421,7 +421,7 @@ function navigate(path) {
   transition: transform 0.22s ease, color 0.15s;
   display: block !important;
 }
-.nav-chevron-open { transform: rotate(180deg); color: #D4AF37; }
+.nav-chevron-open { transform: rotate(180deg); color: #FE9312; }
 
 /* ── Sub-items ── */
 .nav-sub {
@@ -451,8 +451,8 @@ function navigate(path) {
 }
 .nav-sub-item-active {
   color: #ffffff !important;
-  background: rgba(212, 175, 55, 0.18) !important;
-  border-color: rgba(212, 175, 55, 0.4) !important;
+  background: rgba(254, 147, 18, 0.18) !important;
+  border-color: rgba(254, 147, 18, 0.4) !important;
   font-weight: 700;
 }
 .nav-sub-icon {
@@ -506,7 +506,7 @@ function navigate(path) {
   position: relative;
   width: 2.25rem; height: 2.25rem;
   border-radius: 50%; overflow: hidden; flex-shrink: 0;
-  border: 2px solid rgba(212,175,55,0.6);
+  border: 2px solid rgba(254, 147, 18,0.6);
   cursor: pointer;
 }
 .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -514,7 +514,7 @@ function navigate(path) {
   position: absolute; bottom: 1px; right: 1px;
   width: 0.5rem; height: 0.5rem; border-radius: 50%;
   background: #10B981;
-  border: 2px solid #541216;
+  border: 2px solid #022B54;
 }
 
 .profile-details { flex: 1; min-width: 0; display: flex; flex-direction: column; cursor: pointer; }
@@ -527,7 +527,7 @@ function navigate(path) {
 .profile-role {
   font-family: 'Outfit', sans-serif;
   font-size: 0.65rem; font-weight: 600;
-  color: #D4AF37;
+  color: #FE9312;
   text-transform: uppercase; letter-spacing: 0.07em;
   margin-top: 0.1rem;
 }

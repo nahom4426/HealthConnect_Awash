@@ -766,8 +766,8 @@ const activeSection = ref(0);
 .rf-btn-publish {
   display: flex; align-items: center; gap: 0.4rem;
   padding: 0.45rem 1.25rem; border-radius: 8px;
-  border: 1px solid var(--prod-accent, #D4AF37);
-  background: linear-gradient(135deg, var(--prod-from, #541216), var(--prod-to, #7A1C21));
+  border: 1px solid var(--prod-accent, #FE9312);
+  background: linear-gradient(135deg, var(--prod-from, #022B54), var(--prod-to, #03396C));
   font-size: 0.82rem; font-weight: 700; color: #ffffff;
   cursor: pointer; transition: all 0.2s ease;
   box-shadow: 0 2px 10px var(--prod-glow, rgba(84,18,22,0.25));
@@ -791,8 +791,8 @@ const activeSection = ref(0);
 .rf-header-main { display: flex; align-items: center; gap: 1rem; }
 .rf-header-icon {
   width: 3rem; height: 3rem; border-radius: 12px;
-  background: linear-gradient(135deg, var(--prod-from, #541216), var(--prod-to, #7A1C21));
-  border: 1.5px solid var(--prod-accent, #D4AF37);
+  background: linear-gradient(135deg, var(--prod-from, #022B54), var(--prod-to, #03396C));
+  border: 1.5px solid var(--prod-accent, #FE9312);
   color: #ffffff; display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; box-shadow: 0 4px 14px var(--prod-glow, rgba(84,18,22,0.2));
 }
@@ -856,7 +856,7 @@ const activeSection = ref(0);
 }
 .rf-sec-btn:hover { background: #f1f5f9; color: #0f172a; }
 .rf-sec-active {
-  background: linear-gradient(135deg, var(--prod-from, #541216), var(--prod-to, #7A1C21)) !important;
+  background: linear-gradient(135deg, var(--prod-from, #022B54), var(--prod-to, #03396C)) !important;
   color: #ffffff !important;
   border-color: transparent !important;
   font-weight: 700;
@@ -880,7 +880,7 @@ const activeSection = ref(0);
 }
 .rf-progress-fill {
   height: 100%; border-radius: 99px;
-  background: linear-gradient(90deg, var(--prod-from, #541216), var(--prod-to, #7A1C21));
+  background: linear-gradient(90deg, var(--prod-from, #022B54), var(--prod-to, #03396C));
   transition: width 0.3s ease;
 }
 
@@ -906,9 +906,9 @@ const activeSection = ref(0);
 }
 .rf-section-icon-badge {
   width: 2.25rem; height: 2.25rem; border-radius: 10px;
-  background: color-mix(in srgb, var(--prod-to, #541216) 12%, #ffffff);
-  color: var(--prod-to, #541216);
-  border: 1px solid color-mix(in srgb, var(--prod-to, #541216) 20%, transparent);
+  background: color-mix(in srgb, var(--prod-to, #022B54) 12%, #ffffff);
+  color: var(--prod-to, #022B54);
+  border: 1px solid color-mix(in srgb, var(--prod-to, #022B54) 20%, transparent);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -1038,7 +1038,7 @@ const activeSection = ref(0);
   height: 6px; border-radius: 99px;
   background: linear-gradient(
     to right,
-    var(--prod-to, #541216) var(--pct, 0%),
+    var(--prod-to, #022B54) var(--pct, 0%),
     #cbd5e1 var(--pct, 0%)
   );
   outline: none; cursor: pointer;
@@ -1046,14 +1046,14 @@ const activeSection = ref(0);
 .rf-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 18px; height: 18px; border-radius: 50%;
-  background: var(--prod-to, #541216);
+  background: var(--prod-to, #022B54);
   border: 2px solid #ffffff;
-  box-shadow: 0 0 0 2px var(--prod-to, #541216), 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 0 0 2px var(--prod-to, #022B54), 0 2px 6px rgba(0,0,0,0.15);
   cursor: pointer;
 }
 .rf-slider::-moz-range-thumb {
   width: 18px; height: 18px; border-radius: 50%;
-  background: var(--prod-to, #541216);
+  background: var(--prod-to, #022B54);
   border: 2px solid #ffffff;
   cursor: pointer;
 }
@@ -1063,7 +1063,7 @@ const activeSection = ref(0);
   min-width: 5.5rem;
   text-align: center;
   padding: 0.4rem 0.75rem;
-  border: 1.5px solid color-mix(in srgb, var(--prod-to, #541216) 35%, #cbd5e1);
+  border: 1.5px solid color-mix(in srgb, var(--prod-to, #022B54) 35%, #cbd5e1);
   border-radius: 8px;
   background: #ffffff;
   font-size: 0.95rem; font-weight: 800;
@@ -1141,7 +1141,7 @@ const activeSection = ref(0);
   display: flex; align-items: center; gap: 0.375rem;
   padding: 0.55rem 1.5rem; border-radius: 8px;
   border: none;
-  background: linear-gradient(135deg, var(--prod-from, #541216), var(--prod-to, #7A1C21));
+  background: linear-gradient(135deg, var(--prod-from, #022B54), var(--prod-to, #03396C));
   color: #ffffff;
   font-size: 0.82rem; font-weight: 700;
   cursor: pointer; transition: all 0.18s ease;

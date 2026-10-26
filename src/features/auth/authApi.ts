@@ -14,7 +14,7 @@ export function login(data: any) {
     const userObj = res?.data || res;
     const roleCode = userObj?.roleCode || userObj?.role || userObj?.roleName;
     if (roleCode) {
-      localStorage.setItem('nyala_active_testing_role', roleCode);
+      localStorage.setItem('standard_active_testing_role', roleCode);
       localStorage.setItem('awash_active_testing_role', roleCode);
     }
     return res;

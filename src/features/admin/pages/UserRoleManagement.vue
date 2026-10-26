@@ -142,7 +142,7 @@
             </div>
             <div class="urm-field full">
               <label>Email Address</label>
-              <input v-model="form.email" type="email" placeholder="user@nyalainsurance.com" />
+              <input v-model="form.email" type="email" placeholder="user@standardinsurance.com" />
             </div>
             <div class="urm-field">
               <label>System Role</label>

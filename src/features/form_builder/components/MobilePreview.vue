@@ -77,7 +77,7 @@
           </button>
           <div>
             <span class="text-xs font-bold block truncate max-w-[130px]">{{ schemaTitle || 'Proposal Form' }}</span>
-            <span class="text-[9px] text-emerald-100 block opacity-90 leading-tight">Nyala Digital Channel</span>
+            <span class="text-[9px] text-emerald-100 block opacity-90 leading-tight">Standard Digital Channel</span>
           </div>
         </div>
         <span class="text-[9px] bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full font-bold">Step {{ activeStepIndex + 1 }}/{{ steps.length }}</span>

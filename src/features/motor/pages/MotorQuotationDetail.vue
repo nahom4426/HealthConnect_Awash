@@ -350,7 +350,7 @@ function viewImage(title, src) {
                 <div class="qd-spec-row">
                   <span class="qd-spec-lbl">Insurance Policy</span>
                   <span class="qd-spec-val">
-                    <span class="qd-plan-chip">{{ q.insurance || 'Nyala Motor Comprehensive Policy' }}</span>
+                    <span class="qd-plan-chip">{{ q.insurance || 'Standard Motor Comprehensive Policy' }}</span>
                   </span>
                 </div>
                 <div v-if="q.accountNumber" class="qd-spec-row">

@@ -48,7 +48,7 @@ function loginUser({ values }) {
       if (userObj && userObj.data) userObj = userObj.data;
 
       if (userObj?.roleCode) {
-        localStorage.setItem('nyala_active_testing_role', userObj.roleCode);
+        localStorage.setItem('standard_active_testing_role', userObj.roleCode);
       }
       showSuccess.value = true;
       auth.setAuth(userObj);
@@ -147,7 +147,7 @@ function handleResetPassword() {
               validation="required"
               name="email"
               label="Username or Email Address"
-              :attributes="{ placeholder: 'adjustor@nyalainsurance.com or adjustor', autocomplete: 'email', type: 'text' }"
+              :attributes="{ placeholder: 'adjustor@standardinsurance.com or adjustor', autocomplete: 'email', type: 'text' }"
             />
 
             <InputPassword
@@ -351,7 +351,7 @@ function handleResetPassword() {
 .lf-loader-ring {
   position: absolute; inset: 0;
   border-radius: 50%;
-  border: 1.5px solid rgba(212, 175, 55, 0.25);
+  border: 1.5px solid rgba(254, 147, 18, 0.25);
   animation: ringBreath 1.8s ease-in-out infinite;
 }
 .lf-loader-ring::after {
@@ -359,8 +359,8 @@ function handleResetPassword() {
   position: absolute; inset: 6px;
   border-radius: 50%;
   border: 1.5px solid transparent;
-  border-top-color: #7A1C21;
-  border-right-color: #D4AF37;
+  border-top-color: #03396C;
+  border-right-color: #FE9312;
   animation: arcSpin 1.1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -384,7 +384,7 @@ function handleResetPassword() {
   overflow: visible;
 }
 .lf-check-path {
-  stroke: #D4AF37;
+  stroke: #FE9312;
   stroke-dasharray: 32;
   stroke-dashoffset: 32;
   animation: drawCheck 0.5s 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -398,13 +398,13 @@ function handleResetPassword() {
   position: absolute;
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: #7A1C21;
+  background: #03396C;
   animation: dotOrbit 1.8s ease-in-out infinite;
   transform-origin: 40px 40px;
 }
-.lf-dot-1 { background: #7A1C21; animation-delay: 0s;    top: -2px; left: calc(50% - 2.5px); }
-.lf-dot-2 { background: #D4AF37; animation-delay: 0.6s;  top: -2px; left: calc(50% - 2.5px); }
-.lf-dot-3 { background: #9E2A30; animation-delay: 1.2s;  top: -2px; left: calc(50% - 2.5px); }
+.lf-dot-1 { background: #03396C; animation-delay: 0s;    top: -2px; left: calc(50% - 2.5px); }
+.lf-dot-2 { background: #FE9312; animation-delay: 0.6s;  top: -2px; left: calc(50% - 2.5px); }
+.lf-dot-3 { background: #366497; animation-delay: 1.2s;  top: -2px; left: calc(50% - 2.5px); }
 
 @keyframes dotOrbit {
   0%   { opacity: 0.2; transform: rotate(0deg)   translateY(-38px) scale(0.7); }
@@ -427,7 +427,7 @@ function handleResetPassword() {
 }
 .lf-progress-bar {
   height: 100%; border-radius: 9999px;
-  background: linear-gradient(90deg, #7A1C21, #D4AF37, #9E2A30);
+  background: linear-gradient(90deg, #03396C, #FE9312, #366497);
   background-size: 200% 100%;
   animation: progress 1.1s ease-out forwards, shimmerBar 1.5s ease infinite;
 }
@@ -589,13 +589,13 @@ function handleResetPassword() {
   position: relative; width: 100%; overflow: hidden;
   box-sizing: border-box !important;
   max-width: 100% !important;
-  background: linear-gradient(135deg, #7A1C21, #9E2A30) !important;
+  background: linear-gradient(135deg, #03396C, #366497) !important;
   background-size: 200% 200% !important;
   border: none !important; border-radius: 0.875rem !important;
   padding: 0.875rem 1.5rem !important;
   cursor: pointer; font-size: 0.9rem;
   transition: background-position 0.4s ease, transform 0.15s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 24px rgba(122,28,33,0.35) !important;
+  box-shadow: 0 4px 24px rgba(3, 57, 108,0.35) !important;
   min-height: auto !important;
 }
 .lf-submit-btn:hover {

@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 
-const STORAGE_KEY = 'nyala_active_testing_role';
+const STORAGE_KEY = 'standard_active_testing_role';
 
 const ROLES = [
   { code: 'ROLE_UNDERWRITER', name: 'Solomon Tadesse (Underwriter)', badge: 'bg-blue-100 text-blue-800 border-blue-200' },

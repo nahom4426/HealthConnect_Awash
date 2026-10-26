@@ -130,7 +130,7 @@ export const useFormBuilderStore = defineStore('formBuilder', () => {
 
     const defaultSchemaJson = JSON.stringify({
       formId: `${productId}_proposal`,
-      title: isMotor ? 'Nyala Official Motor Insurance Proposal Form (PDF Standard)' : `${name || productId} Proposal Form`,
+      title: isMotor ? 'Standard Insurance Official Motor Proposal Form (PDF)' : `${name || productId} Proposal Form`,
       version: '1.0',
       steps: isMotor ? motorSteps : defaultSteps,
     }, null, 2);

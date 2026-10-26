@@ -91,7 +91,7 @@ const filteredNavs = computed(() => {
   const rawNavs = activeNavs.value || [];
   const user = authStore.auth?.user ?? authStore.auth ?? {};
   const roleName = user?.roleName || '';
-  const roleCode = user?.roleCode || user?.role || localStorage.getItem('nyala_active_testing_role') || '';
+  const roleCode = user?.roleCode || user?.role || localStorage.getItem('standard_active_testing_role') || '';
   
   // Auth admin / Super Admin see ALL navigation items (incl. motor Claims/Quotation/Proposals)
   if (hasFullSystemAccess(user) || hasFullSystemAccess({ roleName, roleCode })) {
@@ -297,7 +297,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   top: 0.35rem; right: 0.35rem;
   width: 0.45rem; height: 0.45rem;
   border-radius: 50%;
-  background: #D4AF37;
+  background: #FE9312;
   border: 1.5px solid #ffffff;
 }
 
@@ -326,7 +326,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   width: 2rem; height: 2rem;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #7A1C21;
+  border: 2px solid #03396C;
   flex-shrink: 0;
 }
 .tb-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -340,7 +340,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
 .tb-user-role {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #7A1C21;
+  color: #03396C;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

@@ -8,7 +8,7 @@ function getClient() {
   const auth = useAuthStore();
   const token = auth.auth?.token || auth.auth?.user?.token;
   const activeRole =
-    localStorage.getItem('nyala_active_testing_role') ||
+    localStorage.getItem('standard_active_testing_role') ||
     localStorage.getItem('awash_active_testing_role') ||
     'ROLE_UNDERWRITER';
   return axios.create({
@@ -35,12 +35,12 @@ export async function fetchUserRoles() {
   } catch (e) {
     console.warn('fetchUserRoles error, returning local fallback:', e.message);
     return [
-      { id: 1, username: 'admin_underwriter', fullName: 'Underwriter Solomon Tadesse', email: 'underwriter@nyalainsurance.com', role: 'ROLE_UNDERWRITER', status: 'ACTIVE' },
-      { id: 2, username: 'claim_manager', fullName: 'Claim Manager Tigist Worku', email: 'claim.manager@nyalainsurance.com', role: 'ROLE_CLAIM_MANAGER', status: 'ACTIVE' },
-      { id: 3, username: 'product_manager', fullName: 'Product Manager Abebe Kebede', email: 'product.manager@nyalainsurance.com', role: 'ROLE_PRODUCT_MANAGER', status: 'ACTIVE' },
-      { id: 4, username: 'adjustor_dawit', fullName: 'Adjustor Dawit Tesfaye', email: 'adjustor.dawit@nyalainsurance.com', role: 'ROLE_ADJUSTOR', status: 'ACTIVE' },
+      { id: 1, username: 'admin_underwriter', fullName: 'Underwriter Solomon Tadesse', email: 'underwriter@standardinsurance.com', role: 'ROLE_UNDERWRITER', status: 'ACTIVE' },
+      { id: 2, username: 'claim_manager', fullName: 'Claim Manager Tigist Worku', email: 'claim.manager@standardinsurance.com', role: 'ROLE_CLAIM_MANAGER', status: 'ACTIVE' },
+      { id: 3, username: 'product_manager', fullName: 'Product Manager Abebe Kebede', email: 'product.manager@standardinsurance.com', role: 'ROLE_PRODUCT_MANAGER', status: 'ACTIVE' },
+      { id: 4, username: 'adjustor_dawit', fullName: 'Adjustor Dawit Tesfaye', email: 'adjustor.dawit@standardinsurance.com', role: 'ROLE_ADJUSTOR', status: 'ACTIVE' },
       { id: 5, username: 'customer_biruk', fullName: 'Biruk Hagoss', email: 'biruk.hagos@gmail.com', role: 'ROLE_CUSTOMER', status: 'ACTIVE' },
-      { id: 6, username: 'super_admin', fullName: 'System Super Admin', email: 'admin@nyalainsurance.com', role: 'ROLE_SUPER_ADMIN', status: 'ACTIVE' }
+      { id: 6, username: 'super_admin', fullName: 'System Super Admin', email: 'admin@standardinsurance.com', role: 'ROLE_SUPER_ADMIN', status: 'ACTIVE' }
     ];
   }
 }
@@ -84,7 +84,7 @@ export async function fetchClaimByUuid(claimUuid) {
   } catch (e) {
     console.warn('fetchClaimByUuid error:', e.message);
   }
-  const local = JSON.parse(localStorage.getItem('nyala_claims') || '[]');
+  const local = JSON.parse(localStorage.getItem('standard_claims') || '[]');
   return local.find(c => c.claimUuid === claimUuid) || null;
 }
 
@@ -117,7 +117,7 @@ export async function fetchClaimsByModule(productModule) {
   } catch (e) {
     console.warn(`fetchClaimsByModule (${productModule}) error:`, e.message);
   }
-  const local = JSON.parse(localStorage.getItem('nyala_claims') || '[]');
+  const local = JSON.parse(localStorage.getItem('standard_claims') || '[]');
   const localFiltered = local.filter(c => c.productModule === productModule);
   return [...localFiltered, ...backendList];
 }
@@ -130,7 +130,7 @@ export async function fetchAllClaims() {
   } catch (e) {
     console.warn('fetchAllClaims error:', e.message);
   }
-  const local = JSON.parse(localStorage.getItem('nyala_claims') || '[]');
+  const local = JSON.parse(localStorage.getItem('standard_claims') || '[]');
   return [...local, ...backendList];
 }
 
@@ -223,7 +223,7 @@ export async function fetchMotorProposals({ page = 0, limit = 20, status = '' } 
   } catch (e) {
     console.warn('fetchMotorProposals error:', e.message);
   }
-  const local = JSON.parse(localStorage.getItem('nyala_motor_proposals') || '[]');
+  const local = JSON.parse(localStorage.getItem('standard_motor_proposals') || '[]');
   return local.length ? dedupeProposals(local) : dedupeProposals(SEEDED_MOTOR_PROPOSALS);
 }
 
@@ -234,7 +234,7 @@ export async function fetchMotorProposalDetail(proposalUuid) {
   } catch (e) {
     console.warn('fetchMotorProposalDetail error:', e.message);
   }
-  const local = JSON.parse(localStorage.getItem('nyala_motor_proposals') || '[]');
+  const local = JSON.parse(localStorage.getItem('standard_motor_proposals') || '[]');
   const found = local.find(p => p.proposalUuid === proposalUuid);
   return found || SEEDED_MOTOR_PROPOSALS.find(p => p.proposalUuid === proposalUuid) || SEEDED_MOTOR_PROPOSALS[0];
 }

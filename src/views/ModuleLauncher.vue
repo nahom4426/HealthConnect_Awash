@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useLanguageStore } from '@/stores/languageStore';
 import { computed, ref } from 'vue';
 import imageSrc from '@/assets/img/profile.png';
-import eicLogo from '@/assets/img/logo.png';
+import eicLogo from '@/assets/img/standard_icon.png';
 
 const router = useRouter();
 const moduleStore = useModuleStore();
@@ -104,10 +104,10 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
         
         <!-- Left: Brand Logo -->
         <div class="flex items-center gap-3 shrink-0">
-          <img :src="eicLogo" alt="Nyala Insurance S.C." class="h-9 w-auto object-contain shrink-0" />
+          <img :src="eicLogo" alt="Standard Insurance S.C." class="h-9 w-auto object-contain shrink-0" />
           <div class="flex flex-col text-left justify-center items-start shrink-0">
-            <h1 class="text-sm font-extrabold text-slate-900 leading-none whitespace-nowrap">Nyala Insurance S.C.</h1>
-            <p class="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mt-1 leading-none whitespace-nowrap pl-[7px]">YOUR GUARANTEE</p>
+            <h1 class="text-sm font-extrabold text-slate-900 leading-none whitespace-nowrap">Standard Insurance S.C.</h1>
+            <p class="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mt-1 leading-none whitespace-nowrap pl-[7px]">YOUR TRUST, OUR STANDARD</p>
           </div>
         </div>
 

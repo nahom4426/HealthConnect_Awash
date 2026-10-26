@@ -24,12 +24,12 @@ const profilePicture = computed(() => {
 
     <!-- ── Logo Header ── -->
     <div class="sidebar-logo flex items-center gap-3 px-4 py-3.5 flex-shrink-0">
-      <div class="logo-icon flex items-center justify-center w-10 h-10 rounded-xl bg-white/95 border border-[#D4AF37]/60 shadow-md p-1 flex-shrink-0">
-        <img src="/src/assets/img/nyala_logo.png" alt="Nyala" class="h-full w-full object-contain" />
+      <div class="logo-icon flex items-center justify-center w-10 h-10 rounded-xl bg-white/95 border border-[#FE9312]/60 shadow-md p-1 flex-shrink-0">
+        <img src="/src/assets/img/standard_icon.png" alt="Standard" class="h-full w-full object-contain" />
       </div>
       <div v-if="!collapsed" class="flex flex-col leading-tight overflow-hidden">
-        <span class="text-white font-extrabold text-sm tracking-tight whitespace-nowrap">Nyala Insurance S.C.</span>
-        <span class="text-[#D4AF37] text-[10px] font-bold uppercase tracking-widest mt-1">Your Guarantee</span>
+        <span class="text-white font-extrabold text-sm tracking-tight whitespace-nowrap">Standard Insurance S.C.</span>
+        <span class="text-[#FE9312] text-[10px] font-bold uppercase tracking-widest mt-1">Your trust, our standard</span>
       </div>
     </div>
 

@@ -2,7 +2,8 @@
 import { computed } from 'vue';
 import LoginForm from "./LoginForm.vue";
 import eicLogo from '../assets/img/logo.png';
-import nyalaLogo from '../assets/img/nyala_logo.png';
+import standardLogo from '../assets/img/standard_logo_tight.png';
+import standardIcon from '../assets/img/standard_icon.png';
 import { useDarkModeStore } from '../stores/darkMode';
 
 const darkStore = useDarkModeStore();
@@ -43,12 +44,12 @@ const isDark = computed(() => darkStore.isDark);
       <!-- Left side branding -->
       <div class="login-left">
         <div class="hero-logo-box">
-          <img :src="nyalaLogo" alt="Nyala Insurance" class="clean-nyala-logo" />
+          <img :src="standardLogo" alt="Standard Insurance" class="clean-standard-logo" />
         </div>
         <div class="hero-brand-block">
-          <span class="hero-motto">YOUR GUARANTEE — አለኝታዎ!</span>
-          <h1 class="hero-title">Nyala Insurance S.C.</h1>
-          <div class="hero-subtitle">ኒያላ ኢንሹራንስ አ.ማ.</div>
+          <span class="hero-motto">YOUR TRUST, OUR STANDARD</span>
+          <h1 class="hero-title">Standard Insurance S.C.</h1>
+          <div class="hero-subtitle">ስታንዳርድ ኢንሹራንስ አ.ማ.</div>
           <p class="hero-desc">
             One platform. Multiple insurance lines. Real-time policies, instant claims,  and enterprise analytics.
           </p>
@@ -59,7 +60,7 @@ const isDark = computed(() => darkStore.isDark);
       <div class="login-right">
         <div class="glass-card">
           <div class="card-logo-wrapper">
-            <img :src="nyalaLogo" alt="Nyala Logo" class="card-logo" />
+            <img :src="standardIcon" alt="Standard Logo" class="card-logo" />
           </div>
           
           <!-- The form from the existing component -->
@@ -71,7 +72,7 @@ const isDark = computed(() => darkStore.isDark);
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shield-icon">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
-          Protected by Nyala Secure Login
+          Protected by Standard Secure Login
         </div>
       </div>
     </div>
@@ -81,78 +82,78 @@ const isDark = computed(() => darkStore.isDark);
 <style scoped>
 /* ── CSS Variables for light/dark theming ── */
 .login-wrapper {
-  --bg-main: linear-gradient(180deg, #FDF8F8 0%, #f7eded 100%);
-  --wave-1: rgba(122,28,33,0.05);
-  --wave-2: rgba(122,28,33,0.03);
-  --wave-3: rgba(122,28,33,0.02);
-  --wave-4: rgba(122,28,33,0.08);
+  --bg-main: linear-gradient(180deg, #F0F5FA 0%, #E6EEF7 100%);
+  --wave-1: rgba(3, 57, 108,0.05);
+  --wave-2: rgba(3, 57, 108,0.03);
+  --wave-3: rgba(3, 57, 108,0.02);
+  --wave-4: rgba(3, 57, 108,0.08);
   --circle-bg: #ffffff;
-  --circle-shadow: 0 15px 35px rgba(122, 28, 33, 0.15);
-  --brand-color: #7A1C21;
-  --brand-motto: #D4AF37;
-  --brand-amharic: #9E2A30;
+  --circle-shadow: 0 15px 35px rgba(3, 57, 108, 0.15);
+  --brand-color: #03396C;
+  --brand-motto: #FE9312;
+  --brand-amharic: #366497;
   --brand-desc: #475569;
   --card-bg: rgba(255, 255, 255, 0.92);
-  --card-border: rgba(122, 28, 33, 0.12);
-  --card-shadow: 0 15px 35px rgba(122, 28, 33, 0.12);
-  --footer-color: #7A1C21;
-  --shield-color: #D4AF37;
+  --card-border: rgba(3, 57, 108, 0.12);
+  --card-shadow: 0 15px 35px rgba(3, 57, 108, 0.12);
+  --footer-color: #03396C;
+  --shield-color: #FE9312;
   --input-bg: #ffffff;
-  --input-border: rgba(122, 28, 33, 0.18);
+  --input-border: rgba(3, 57, 108, 0.18);
   --input-color: #0F172A;
-  --input-focus-border: #7A1C21;
-  --input-focus-shadow: 0 0 0 3px rgba(122, 28, 33, 0.2);
-  --label-color: #7A1C21;
+  --input-focus-border: #03396C;
+  --input-focus-shadow: 0 0 0 3px rgba(3, 57, 108, 0.2);
+  --label-color: #03396C;
   --subtitle-color: #64748B;
   --toggle-bg: rgba(255,255,255,0.85);
-  --toggle-border: rgba(122,28,33,0.15);
-  --toggle-color: #7A1C21;
-  --forgot-color: #7A1C21;
-  --forgot-hover: #9E2A30;
-  --btn-bg: linear-gradient(135deg, #7A1C21, #9E2A30);
+  --toggle-border: rgba(3, 57, 108,0.15);
+  --toggle-color: #03396C;
+  --forgot-color: #03396C;
+  --forgot-hover: #366497;
+  --btn-bg: linear-gradient(135deg, #03396C, #366497);
   --btn-color: #ffffff;
-  --btn-shadow: 0 4px 15px rgba(122, 28, 33, 0.35);
-  --btn-hover-bg: linear-gradient(135deg, #9E2A30, #541216);
-  --btn-hover-shadow: 0 6px 20px rgba(122, 28, 33, 0.45);
+  --btn-shadow: 0 4px 15px rgba(3, 57, 108, 0.35);
+  --btn-hover-bg: linear-gradient(135deg, #366497, #022B54);
+  --btn-hover-shadow: 0 6px 20px rgba(3, 57, 108, 0.45);
   --remember-color: #475569;
-  --remember-hover: #7A1C21;
-  --success-bg: rgba(122, 28, 33, 0.95);
+  --remember-hover: #03396C;
+  --success-bg: rgba(3, 57, 108, 0.95);
 }
 
 .login-wrapper.dark {
   --bg-main: linear-gradient(180deg, #120506 0%, #1c0a0c 100%);
-  --wave-1: rgba(122,28,33,0.12);
-  --wave-2: rgba(122,28,33,0.08);
-  --wave-3: rgba(122,28,33,0.05);
-  --wave-4: rgba(122,28,33,0.18);
+  --wave-1: rgba(3, 57, 108,0.12);
+  --wave-2: rgba(3, 57, 108,0.08);
+  --wave-3: rgba(3, 57, 108,0.05);
+  --wave-4: rgba(3, 57, 108,0.18);
   --circle-bg: rgba(255,255,255,0.06);
   --circle-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
   --brand-color: #f1f5f9;
-  --brand-motto: #D4AF37;
+  --brand-motto: #FE9312;
   --brand-amharic: #e57373;
   --brand-desc: rgba(255,255,255,0.7);
   --card-bg: rgba(255, 255, 255, 0.06);
-  --card-border: rgba(212, 175, 55, 0.2);
-  --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 60px rgba(122,28,33,0.2);
+  --card-border: rgba(254, 147, 18, 0.2);
+  --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 60px rgba(3, 57, 108,0.2);
   --footer-color: rgba(255,255,255,0.7);
-  --shield-color: #D4AF37;
+  --shield-color: #FE9312;
   --input-bg: rgba(255,255,255,0.06);
   --input-border: rgba(255,255,255,0.12);
   --input-color: #f1f5f9;
-  --input-focus-border: #9E2A30;
+  --input-focus-border: #366497;
   --input-focus-shadow: 0 0 0 3px rgba(158,42,48,0.3);
   --label-color: rgba(255,255,255,0.8);
   --subtitle-color: rgba(255,255,255,0.55);
   --toggle-bg: rgba(255,255,255,0.08);
   --toggle-border: rgba(255,255,255,0.15);
   --toggle-color: rgba(255,255,255,0.7);
-  --forgot-color: #D4AF37;
+  --forgot-color: #FE9312;
   --forgot-hover: #f1d471;
-  --btn-bg: linear-gradient(135deg, #7A1C21, #9E2A30);
+  --btn-bg: linear-gradient(135deg, #03396C, #366497);
   --btn-color: #ffffff;
-  --btn-shadow: 0 4px 20px rgba(122,28,33,0.5);
-  --btn-hover-bg: linear-gradient(135deg, #9E2A30, #b83238);
-  --btn-hover-shadow: 0 6px 28px rgba(122,28,33,0.7);
+  --btn-shadow: 0 4px 20px rgba(3, 57, 108,0.5);
+  --btn-hover-bg: linear-gradient(135deg, #366497, #b83238);
+  --btn-hover-shadow: 0 6px 28px rgba(3, 57, 108,0.7);
   --remember-color: rgba(255,255,255,0.55);
   --remember-hover: rgba(255,255,255,0.9);
   --success-bg: rgba(18, 5, 6, 0.95);
@@ -284,16 +285,16 @@ const isDark = computed(() => darkStore.isDark);
   justify-content: flex-start;
 }
 
-.clean-nyala-logo {
+.clean-standard-logo {
   max-width: 200px;
   width: 100%;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 8px 20px rgba(122, 28, 33, 0.12));
+  filter: drop-shadow(0 8px 20px rgba(3, 57, 108, 0.12));
   transition: transform 0.3s ease;
 }
 
-.clean-nyala-logo:hover {
+.clean-standard-logo:hover {
   transform: scale(1.02);
 }
 
@@ -310,14 +311,14 @@ const isDark = computed(() => darkStore.isDark);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: #7A1C21;
+  color: #03396C;
   margin: 0 0 0.6rem 0;
   line-height: 1.3;
   transition: color 0.4s ease;
 }
 
 .login-wrapper.dark .hero-motto {
-  color: #D4AF37;
+  color: #FE9312;
 }
 
 .hero-title {
@@ -325,7 +326,7 @@ const isDark = computed(() => darkStore.isDark);
   font-weight: 900;
   line-height: 1.1;
   margin: 0 0 0.5rem -2px;
-  color: #7A1C21;
+  color: #03396C;
   letter-spacing: 0;
   transition: color 0.4s ease;
 }
@@ -337,7 +338,7 @@ const isDark = computed(() => darkStore.isDark);
 .hero-subtitle {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #D4AF37;
+  color: #FE9312;
   margin: 0 0 1.1rem 0;
   line-height: 1.35;
   letter-spacing: 0;
@@ -401,7 +402,7 @@ const isDark = computed(() => darkStore.isDark);
   width: 46px;
   height: 46px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(122, 28, 33, 0.12));
+  filter: drop-shadow(0 4px 10px rgba(3, 57, 108, 0.12));
 }
 
 .login-footer {
@@ -512,7 +513,7 @@ const isDark = computed(() => darkStore.isDark);
   box-sizing: border-box !important;
   max-width: 100% !important;
   width: 100% !important;
-  background: linear-gradient(135deg, #7A1C21 0%, #9E2A30 100%) !important;
+  background: linear-gradient(135deg, #03396C 0%, #366497 100%) !important;
   color: #ffffff !important;
   border-radius: 12px !important;
   height: 48px !important;
@@ -520,7 +521,7 @@ const isDark = computed(() => darkStore.isDark);
   font-size: 0.95rem !important;
   font-weight: 700 !important;
   margin-top: 0.5rem !important;
-  box-shadow: 0 4px 18px rgba(122, 28, 33, 0.35) !important;
+  box-shadow: 0 4px 18px rgba(3, 57, 108, 0.35) !important;
   transition: background 0.4s ease, color 0.4s ease, box-shadow 0.3s ease, transform 0.15s ease !important;
   display: flex !important;
   align-items: center !important;
@@ -528,9 +529,9 @@ const isDark = computed(() => darkStore.isDark);
 }
 
 :deep(.lf-submit-btn:hover) {
-  background: linear-gradient(135deg, #9E2A30 0%, #541216 100%) !important;
+  background: linear-gradient(135deg, #366497 0%, #022B54 100%) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 22px rgba(122, 28, 33, 0.45) !important;
+  box-shadow: 0 6px 22px rgba(3, 57, 108, 0.45) !important;
 }
 
 :deep(.lf-btn-content) {

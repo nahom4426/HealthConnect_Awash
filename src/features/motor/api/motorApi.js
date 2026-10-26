@@ -543,7 +543,7 @@ function normalizeQuotation(q) {
     clientGrandFatherName: q.clientGrandFatherName || q.grandFatherName || '',
     clientPhoneNumber: q.clientPhoneNumber || q.mobilePhone || q.phone || '0963048258',
     clientEmail: q.clientEmail || q.email || 'abroid.et@gmail.com',
-    insurance: q.insurance || 'Nyala Motor Comprehensive Policy',
+    insurance: q.insurance || 'Standard Motor Comprehensive Policy',
     accountNumber: q.accountNumber || q.bankAccount || '',
     carName: q.carName || firstCar.carName || 'Sinotruk',
     carModel: q.carModel || firstCar.carModel || 'Howo 371 Dump Truck 6x4',
@@ -576,14 +576,14 @@ export async function fetchAllQuotations({ page = 1, limit = 25, search = '' } =
   } catch (e) {
     console.warn('fetchAllQuotations error:', e.message);
   }
-  const localList = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
+  const localList = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
   const all = [...localList.map(normalizeQuotation), ...remoteList.map(normalizeQuotation)];
   return all;
 }
 
 export async function fetchQuotationById(quotationUuid) {
   if (quotationUuid?.startsWith('QUO-')) {
-    const localList = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
+    const localList = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
     const found = localList.find(q => q.quotationUuid === quotationUuid);
     if (found) return normalizeQuotation(found);
   }
@@ -591,7 +591,7 @@ export async function fetchQuotationById(quotationUuid) {
     const { data } = await getCoreClient().get(`/quotation/getQuotation/${quotationUuid}`);
     return normalizeQuotation(data);
   } catch (e) {
-    const localList = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
+    const localList = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
     const found = localList.find(q => q.quotationUuid === quotationUuid);
     return found ? normalizeQuotation(found) : null;
   }
@@ -619,11 +619,11 @@ export async function fetchCarImageByUuid(imageUuid) {
 
 export async function saveInitialDeposit(quotationUuid) {
   if (quotationUuid?.startsWith('QUO-')) {
-    const localList = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
+    const localList = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
     const item = localList.find(q => q.quotationUuid === quotationUuid);
     if (item) {
       item.initialDepositStatus = 'DEPOSITED';
-      localStorage.setItem('nyala_motor_quotations', JSON.stringify(localList));
+      localStorage.setItem('standard_motor_quotations', JSON.stringify(localList));
       return normalizeQuotation(item);
     }
   }
@@ -637,13 +637,13 @@ export async function saveInitialDeposit(quotationUuid) {
 
 export async function updateInitialDepositStatus(quotationUuid, { initialDepositStatus, remark = '' } = {}) {
   if (quotationUuid?.startsWith('QUO-')) {
-    const localList = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
+    const localList = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
     const item = localList.find(q => q.quotationUuid === quotationUuid);
     if (item) {
       item.initialDepositStatus = initialDepositStatus;
       item.quotationStatus = initialDepositStatus;
       item.remark = remark;
-      localStorage.setItem('nyala_motor_quotations', JSON.stringify(localList));
+      localStorage.setItem('standard_motor_quotations', JSON.stringify(localList));
       return normalizeQuotation(item);
     }
   }
@@ -659,13 +659,13 @@ export async function updateInitialDepositStatus(quotationUuid, { initialDeposit
 
 export async function setQuotationAmounts(quotationUuid, { quotation, deposit, premium } = {}) {
   if (quotationUuid?.startsWith('QUO-')) {
-    const localList = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
+    const localList = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
     const item = localList.find(q => q.quotationUuid === quotationUuid);
     if (item) {
       item.quotationAmount = quotation;
       item.initialDeposit = deposit;
       item.monthlyPayment = premium;
-      localStorage.setItem('nyala_motor_quotations', JSON.stringify(localList));
+      localStorage.setItem('standard_motor_quotations', JSON.stringify(localList));
       return normalizeQuotation(item);
     }
   }
@@ -688,7 +688,7 @@ export async function registerClientsCar(payload) {
   }
 
   // Always save to localStorage for the UI until backend motor quotation DB is fully wired
-  const existing = JSON.parse(localStorage.getItem('nyala_motor_quotations') || '[]');
+  const existing = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
   const firstCar = payload.carRequests?.[0] || {};
   const buyingPrice = Number(firstCar.buyingPrice || 0);
   const computedQuotationAmount = buyingPrice ? Math.round(buyingPrice * 0.025) : 185000;
@@ -704,7 +704,7 @@ export async function registerClientsCar(payload) {
     clientGrandFatherName: payload.grandFatherName || '',
     clientPhoneNumber: payload.mobilePhone || '0963048258',
     clientEmail: payload.email || 'abroid.et@gmail.com',
-    insurance: 'Nyala Motor Comprehensive Policy',
+    insurance: 'Standard Motor Comprehensive Policy',
     accountNumber: payload.bankAccount || '',
     carName: firstCar.carName || 'Sinotruk',
     carModel: firstCar.carModel || 'Howo 371 Dump Truck 6x4',
@@ -729,7 +729,7 @@ export async function registerClientsCar(payload) {
   });
 
   existing.unshift(newQuotation);
-  localStorage.setItem('nyala_motor_quotations', JSON.stringify(existing));
+  localStorage.setItem('standard_motor_quotations', JSON.stringify(existing));
   return { success: true, quotationUuid: newQuotation.quotationUuid, quotation: newQuotation, backendData };
 }
 

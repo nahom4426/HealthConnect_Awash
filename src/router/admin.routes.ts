@@ -118,7 +118,7 @@ export default [
   },
   {
     path: '/admin/user-roles',
-    name: 'Nyala User & Privilege Control',
+    name: 'Standard User & Privilege Control',
     component: () => import('@/features/admin/pages/UserRoleManagement.vue'),
     meta: { requiresAuth: false }
   }

@@ -107,8 +107,8 @@ const pendingCount = computed(() => activeClaimsList.value.length);
     v-slot="{ claims, pending: dataPending, search: paginationSearch, send: refreshData }"
   >
     <div class="space-y-6 p-4 md:p-6 bg-slate-50/50 min-h-screen">
-      <!-- Nyala Backoffice Header Banner -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#5a0016] via-[#800020] to-[#3a000e] text-white shadow-xl p-6 md:p-8">
+      <!-- Standard Backoffice Header Banner -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#5a0016] via-[#03396C] to-[#3a000e] text-white shadow-xl p-6 md:p-8">
         <!-- Decorative Background Accents -->
         <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute right-40 -top-10 w-48 h-48 bg-rose-400/10 rounded-full blur-2xl pointer-events-none"></div>
@@ -117,13 +117,13 @@ const pendingCount = computed(() => activeClaimsList.value.length);
           <div class="space-y-2">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-300/30 text-amber-200 text-xs font-semibold tracking-wide uppercase">
               <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-              Nyala Insurance S.C. Backoffice Operations
+              Standard Insurance S.C. Backoffice Operations
             </div>
             <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
               Claims Adjudication Hub
             </h1>
             <p class="text-sm md:text-base text-rose-100/80 max-w-2xl">
-              Review, verify, and process incoming credit provider batches & reimbursable cash claims for Nyala Insurance policyholders.
+              Review, verify, and process incoming credit provider batches & reimbursable cash claims for Standard Insurance policyholders.
             </p>
           </div>
 
@@ -193,7 +193,7 @@ const pendingCount = computed(() => activeClaimsList.value.length);
                 :class="[
                   'flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200',
                   active === ServiceTypes.creditService
-                    ? 'bg-[#800020] text-white shadow-md'
+                    ? 'bg-[#03396C] text-white shadow-md'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 ]"
               >
@@ -207,7 +207,7 @@ const pendingCount = computed(() => activeClaimsList.value.length);
                 :class="[
                   'flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200',
                   active === ServiceTypes.cashService
-                    ? 'bg-[#800020] text-white shadow-md'
+                    ? 'bg-[#03396C] text-white shadow-md'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 ]"
               >
@@ -237,7 +237,7 @@ const pendingCount = computed(() => activeClaimsList.value.length);
                 v-if="ServiceTypes.cashService == active" 
                 type="primary" 
                 @click="navigateToCreateCashClaims"
-                class="bg-[#800020] hover:bg-[#600018] text-white shadow-md text-xs font-bold rounded-lg py-2.5 px-4"
+                class="bg-[#03396C] hover:bg-[#600018] text-white shadow-md text-xs font-bold rounded-lg py-2.5 px-4"
               >
                 <i class="mr-1.5">+</i>
                 Create Cash Claim

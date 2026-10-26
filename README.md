@@ -33,7 +33,7 @@ npm run dev
 npm run build
 ```
 =======
-# FrontNyala
+# FrontStandard
 
 
 

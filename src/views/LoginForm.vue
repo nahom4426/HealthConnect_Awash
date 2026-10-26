@@ -98,9 +98,9 @@ function submitResetPassword() {
   <div>
     <!-- Sign in -->
     <template v-if="view === 'login'">
-      <header class="mb-7 text-center">
-        <h1 id="login-title" class="!px-0 text-2xl font-bold tracking-tight sm:text-[1.75rem] text-ink">Health Connect</h1>
-        <p class="mt-1 text-sm text-ink-muted">Sign in to continue</p>
+      <header class="mb-7">
+        <h1 id="login-title" class="!px-0 text-2xl font-bold tracking-tight sm:text-[1.875rem] text-ink">Welcome back</h1>
+        <p class="mt-1.5 text-sm text-ink-muted">Sign in to your HealthConnect account to continue.</p>
       </header>
 
       <!--
@@ -142,7 +142,7 @@ function submitResetPassword() {
             type="primary"
             size="lg"
             html-type="submit"
-            class="w-full"
+            class="w-full login-submit"
             :pending="req.pending.value || signedIn"
             @click.prevent="submit(loginUser)"
           >

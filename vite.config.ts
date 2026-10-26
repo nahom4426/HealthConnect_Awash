@@ -14,7 +14,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://trainawash.medcoanalytics.com",
+        target: "https://trainnyala.medcoanalytics.com",
         changeOrigin: true,
         secure: true,
       },

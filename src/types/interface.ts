@@ -108,6 +108,7 @@ export interface AsyncResponse<T = any> {
   status?: number;
   success?: boolean;
   data?: T;
+  headers?: Record<string, any>;
   error?: string;
 }
 

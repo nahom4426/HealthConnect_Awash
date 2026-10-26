@@ -10,6 +10,7 @@ export async function responseHandler<T>(
     return {
       status: 200,
       data: res.data as T,
+      headers: res.headers,
       success: true,
       error: "",
     };

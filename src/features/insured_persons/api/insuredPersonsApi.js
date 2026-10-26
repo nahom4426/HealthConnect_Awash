@@ -78,21 +78,18 @@ export function getInsuredPersonById(uuid) {
   return api.addAuthenticationHeader().get(`${baseUrl}/claimconnect/insuredperson/${uuid}`);
 }
 
+// dryRun: validate and report without saving. merge: add missing dependants/benefits to existing members.
 export function importInsuredPersons(
-  { institutionUuid, payerInstitutionContractUuid } = {},
+  { dryRun = false, merge = false } = {},
   data,
   config = {}
 ) {
-  const queryString = new URLSearchParams({
-    institutionUuid,
-    payerInstitutionContractUuid
-  }).toString();
-
   return api.addAuthenticationHeader().post(
     `${basePath}/import-insured-combined`,
     data,
     {
       ...config,
+      params: { ...(config.params || {}), dryRun, merge },
       headers: {
         "Content-Type": "multipart/form-data",
       },

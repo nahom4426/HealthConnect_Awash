@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, onMounted, watch } from "vue";
+  import { ref, computed, onMounted, watch } from "vue";
   import Button from "@/components/Button.vue";
   import ModalParent from "@/components/ModalParent.vue";
   import NewFormParent from "@/components/NewFormParent.vue";
@@ -49,7 +49,48 @@
   
   // Capped To (multiple)
   const selectedPackages = ref([]);
-  
+
+  // Merge: add missing dependants and benefits to members that already exist
+  const mergeExisting = ref(false);
+  // Per-family report from the last check (dry run) or import
+  const report = ref(null);
+  const checking = ref(false);
+
+  const FAMILY_STATUS = {
+    CREATED: { label: "Created", checkLabel: "Will be created", classes: "bg-success-soft text-success-strong" },
+    MERGED: { label: "Merged", checkLabel: "Will be merged", classes: "bg-primary/10 text-primary" },
+    UNCHANGED: { label: "No changes", checkLabel: "No changes", classes: "bg-surface-muted text-ink-muted" },
+    FAILED: { label: "Failed", checkLabel: "Will fail", classes: "bg-error-soft text-error-strong" },
+  };
+
+  const statusLabel = (status) => {
+    const config = FAMILY_STATUS[status];
+    if (!config) return status;
+    return report.value?.dryRun ? config.checkLabel : config.label;
+  };
+
+  const statusClasses = (status) => FAMILY_STATUS[status]?.classes || "bg-surface-muted text-ink-muted";
+
+  const statusCounts = computed(() => {
+    const counts = { CREATED: 0, MERGED: 0, UNCHANGED: 0, FAILED: 0 };
+    (report.value?.families || []).forEach((family) => {
+      if (counts[family.status] !== undefined) counts[family.status]++;
+    });
+    return counts;
+  });
+
+  // Failed families first so problems are visible without scrolling
+  const reportFamilies = computed(() =>
+    [...(report.value?.families || [])].sort(
+      (a, b) => (b.status === "FAILED") - (a.status === "FAILED") || a.rowNumber - b.rowNumber
+    )
+  );
+
+  // A previous check no longer applies once the file or the merge option changes
+  watch(mergeExisting, () => {
+    report.value = null;
+  });
+
   const reset = () => {
     progress.value = 0;
     importing.value = false;
@@ -63,6 +104,9 @@
     showCappedOptions.value = false;
     selectedPackage.value = null;
     selectedPackages.value = [];
+    mergeExisting.value = false;
+    report.value = null;
+    checking.value = false;
     if (fileInput.value) fileInput.value.value = "";
   };
   
@@ -163,7 +207,8 @@
     });
   };
   
-  const importFile = () => {
+  // dryRun = true checks the file and reports per family without saving anything.
+  const importFile = (dryRun = false) => {
     if (!selectedFile.value) {
       message.value = { type: "error", text: "Please select a file first", isHtml: false };
       return;
@@ -183,8 +228,10 @@
     }
 
     importing.value = true;
+    checking.value = dryRun;
     progress.value = 0;
     message.value = { type: null, text: null, isHtml: false };
+    report.value = null;
 
     const fd = new FormData();
     fd.append("file", selectedFile.value);
@@ -206,11 +253,7 @@
     res.send(
       () =>
         importInsuredPersons(
-          {
-            institutionUuid: route.params.institutionUuid,
-            payerInstitutionContractUuid: route.params.id,
-            payerUuid: auth
-          },
+          { dryRun, merge: mergeExisting.value },
           fd,
           {
             onUploadProgress: (e) => {
@@ -220,9 +263,38 @@
         ),
     (response) => {
       importing.value = false;
-      
+      checking.value = false;
+
+      // The API layer resolves failed requests too, with success: false and the server's message
+      if (response?.success === false) {
+        message.value = {
+          type: "error",
+          text: response.error || "The import could not be processed. Please try again.",
+          isHtml: false
+        };
+        return;
+      }
+
       const data = response.data;
-      
+
+      // Per-family report
+      if (data && Array.isArray(data.families)) {
+        report.value = data;
+        if (data.dryRun) return;
+
+        wasSuccessful.value = data.successCount > 0;
+        if (data.successCount > 0) {
+          refreshStore.triggerRefresh();
+          if (data.errorCount === 0) {
+            setTimeout(() => {
+              closeModal('employeeImport');
+              reset();
+            }, 1500);
+          }
+        }
+        return;
+      }
+
       // Handle the response based on successCount and errorCount
       if (data && data.totalRows !== undefined) {
         // Remove duplicate rows from rowResults
@@ -433,27 +505,6 @@
           isHtml: true
         };
       }
-    },
-    (error) => {
-      importing.value = false;
-      message.value = {
-        type: "error",
-        text: `
-          <div class="p-4 bg-error-soft rounded-lg border border-error-soft">
-            <div class="flex items-start">
-              <svg class="mt-0.5 mr-2 w-5 h-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <h4 class="text-sm font-medium text-error-strong">Network Error</h4>
-                <p class="mt-1 text-sm text-error-strong">Failed to connect to server. Please try again.</p>
-              </div>
-            </div>
-          </div>
-        `,
-        isHtml: true
-      };
-      console.error('Import error:', error);
     }
     );
   };
@@ -489,6 +540,7 @@
     selectedFile.value = file;
     fileName.value = file.name;
     message.value = { type: null, text: null, isHtml: false };
+    report.value = null;
     parseFileForPreview(file);
   };
   
@@ -617,8 +669,36 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Merge Toggle -->
+                <div class="p-5 bg-white rounded-xl border border-line shadow-sm">
+                  <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-semibold text-ink">Merge with Existing Members</h3>
+                    <button
+                      @click="mergeExisting = !mergeExisting"
+                      type="button"
+                      role="switch"
+                      :aria-checked="mergeExisting"
+                      class="inline-flex relative flex-shrink-0 items-center w-11 h-6 rounded-full border-2 border-transparent transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                      :class="mergeExisting ? 'bg-primary' : 'bg-line'"
+                    >
+                      <span
+                        :class="mergeExisting ? 'translate-x-5' : 'translate-x-0'"
+                        class="inline-block w-5 h-5 bg-white rounded-full shadow transition duration-200 transform"
+                      />
+                    </button>
+                  </div>
+                  <p class="text-xs text-ink-subtle">
+                    Adds missing dependants and benefits to members that are already imported.
+                    The file must contain each member's full family.
+                  </p>
+                  <p v-if="mergeExisting" class="mt-2 text-xs text-ink-muted">
+                    A benefit's plan type can change when a dependant is added. That is only allowed while
+                    the benefit has no claims; otherwise the family is not imported.
+                  </p>
+                </div>
               </div>
-  
+
               <!-- Right Column: File Upload & Preview (unchanged) -->
               <div class="lg:col-span-2">
                 <div class="p-6 bg-white rounded-xl border border-line shadow-sm">
@@ -676,7 +756,7 @@
                   <!-- Import Progress -->
                   <div v-if="importing" class="mb-6">
                     <div class="flex justify-between mb-2 text-sm text-ink-muted">
-                      <span class="font-medium">Uploading...</span>
+                      <span class="font-medium">{{ checking ? 'Checking...' : 'Uploading...' }}</span>
                       <span class="font-semibold">{{ progress }}%</span>
                     </div>
                     <div class="overflow-hidden w-full h-2.5 bg-line rounded-full">
@@ -695,7 +775,7 @@
                     </div>
                   </div>
   
-                  <div v-if="showPreview && previewData.length > 0 && !message.type" class="mb-6">
+                  <div v-if="showPreview && previewData.length > 0 && !message.type && !report" class="mb-6">
                     <div class="flex justify-between items-center mb-3">
                       <h3 class="text-sm font-semibold text-ink">File Preview</h3>
                       <span class="text-xs text-ink-subtle">{{ previewData.length }} rows</span>
@@ -734,6 +814,72 @@
                     </div>
                   </div>
   
+                  <!-- Per-family report -->
+                  <div v-if="report" class="space-y-4 animate-fade-in">
+                    <div
+                      class="p-4 rounded-lg border"
+                      :class="report.dryRun ? 'bg-primary/5 border-primary/10' : (report.errorCount > 0 ? 'bg-warning-soft border-warning-soft' : 'bg-success-soft border-success-soft')"
+                    >
+                      <h4 class="text-sm font-semibold text-ink">
+                        {{ report.dryRun ? 'Check result: nothing was saved' : 'Import result' }}
+                        <span v-if="report.merge" class="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary">Merge</span>
+                      </h4>
+                      <p class="mt-1 text-sm text-ink-muted">
+                        {{ report.families.length }} families · {{ report.totalRows }} rows ·
+                        {{ report.successCount }} rows {{ report.dryRun ? 'ready' : 'imported' }} ·
+                        {{ report.errorCount }} rows {{ report.dryRun ? 'with problems' : 'failed' }}
+                      </p>
+                      <div class="flex flex-wrap gap-2 mt-3">
+                        <span
+                          v-for="(count, status) in statusCounts"
+                          v-show="count > 0"
+                          :key="status"
+                          class="px-2 py-0.5 text-xs font-medium rounded-full"
+                          :class="statusClasses(status)"
+                        >
+                          {{ statusLabel(status) }}: {{ count }}
+                        </span>
+                      </div>
+                      <p v-if="report.dryRun && report.errorCount === 0 && report.families.length > 0" class="mt-3 text-sm text-ink-muted">
+                        No problems found. Click Import Records to save.
+                      </p>
+                      <p v-else-if="report.dryRun && report.errorCount > 0" class="mt-3 text-sm text-ink-muted">
+                        Families that fail are not imported at all. Fix them in the file and check again, or import now to save only the others.
+                      </p>
+                      <p v-else-if="!report.dryRun && report.errorCount > 0" class="mt-3 text-sm text-ink-muted">
+                        Failed families were not saved. Fix them in the file and import again with Merge turned on.
+                      </p>
+                    </div>
+
+                    <ul class="overflow-y-auto space-y-2 max-h-80 custom-scrollbar">
+                      <li
+                        v-for="family in reportFamilies"
+                        :key="family.rowNumber"
+                        class="p-3 bg-white rounded-lg border"
+                        :class="family.status === 'FAILED' ? 'border-error-soft' : 'border-line'"
+                      >
+                        <div class="flex justify-between items-start gap-3">
+                          <div class="min-w-0">
+                            <p class="text-sm font-medium text-ink truncate">{{ family.insuredName || 'Unnamed member' }}</p>
+                            <p class="text-xs text-ink-subtle">Row {{ family.rowNumber }}<span v-if="family.policyNumber"> · {{ family.policyNumber }}</span></p>
+                          </div>
+                          <span class="flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full" :class="statusClasses(family.status)">
+                            {{ statusLabel(family.status) }}
+                          </span>
+                        </div>
+                        <ul v-if="family.errors?.length" class="mt-2 space-y-1 text-xs text-error-strong list-disc list-inside">
+                          <li v-for="(error, idx) in family.errors" :key="`e-${idx}`">{{ error }}</li>
+                        </ul>
+                        <ul v-if="family.actions?.length" class="mt-2 space-y-1 text-xs text-ink-muted list-disc list-inside">
+                          <li v-for="(action, idx) in family.actions" :key="`a-${idx}`">{{ action }}</li>
+                        </ul>
+                        <ul v-if="family.warnings?.length" class="mt-2 space-y-1 text-xs text-warning-strong list-disc list-inside">
+                          <li v-for="(warning, idx) in family.warnings" :key="`w-${idx}`">{{ warning }}</li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </div>
+
                   <!-- Messages -->
                   <div v-if="message.text" class="transition-all duration-300 animate-fade-in">
                     <div v-if="message.isHtml" v-html="message.text"></div>
@@ -754,7 +900,8 @@
             <div class="flex gap-3 justify-between items-center p-6 w-full bg-surface-muted border-t border-line">
               <Button
                 @click="closeModal('import-modal')"
-                class="px-6 text-ink-muted bg-white border border-line-strong transition-colors hover:bg-surface-muted hover:border-ink-subtle active:bg-surface-muted"
+                variant="outline"
+                class="px-6"
                 size="md"
               >
                 {{ wasSuccessful ? 'Close' : 'Cancel' }}
@@ -763,14 +910,25 @@
                 <Button
                   v-if="selectedFile && !importing && !wasSuccessful"
                   @click="reset"
-                  class="px-6 text-ink-muted bg-white border border-line-strong transition-colors hover:bg-surface-muted hover:border-ink-subtle active:bg-surface-muted"
+                  variant="outline"
+                  class="px-6"
                   size="md"
                 >
                   Reset
                 </Button>
                 <Button
                   v-if="selectedFile && !importing && !wasSuccessful"
-                  @click="importFile"
+                  @click="importFile(true)"
+                  variant="outline"
+                  class="px-6"
+                  size="md"
+                  title="Validate the file and see what would happen, without saving anything"
+                >
+                  Check File
+                </Button>
+                <Button
+                  v-if="selectedFile && !importing && !wasSuccessful"
+                  @click="importFile(false)"
                   class="px-6 text-white bg-gradient-to-r from-primary to-primary-hover transition-all duration-200 hover:from-primary-hover hover:to-primary-hover focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   size="md"
                   :disabled="importing"
@@ -780,7 +938,7 @@
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {{ importing ? 'Importing...' : 'Import Records' }}
+                    {{ importing ? 'Importing...' : (mergeExisting ? 'Import & Merge' : 'Import Records') }}
                   </span>
                 </Button>
               </div>

@@ -60,14 +60,30 @@ function onKeydown(e) {
  */
 const floating = ref(false);
 
+// An ancestor with transform/filter/backdrop-filter/etc. becomes the containing block
+// for position: fixed, so viewport coordinates would land in the wrong place.
+function trapsFixed(cs) {
+  return (
+    (cs.transform && cs.transform !== "none") ||
+    (cs.filter && cs.filter !== "none") ||
+    (cs.backdropFilter && cs.backdropFilter !== "none") ||
+    (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== "none") ||
+    (cs.perspective && cs.perspective !== "none") ||
+    /paint|layout|strict|content/.test(cs.contain || "") ||
+    /transform|filter|perspective/.test(cs.willChange || "")
+  );
+}
+
 function clippingAncestor(el) {
+  let clip = null;
   let node = el?.parentElement;
-  while (node && node !== document.body && node.tagName !== "MAIN") {
+  while (node && node !== document.documentElement) {
     const cs = getComputedStyle(node);
-    if (/(auto|scroll|hidden|clip)/.test(cs.overflowY + cs.overflowX)) return node;
+    if (trapsFixed(cs)) return null; // can't float reliably here; stay a normal dropdown
+    if (!clip && node !== document.body && node.tagName !== "MAIN" && /(auto|scroll|hidden|clip)/.test(cs.overflowY + cs.overflowX)) clip = node;
     node = node.parentElement;
   }
-  return null;
+  return clip;
 }
 
 function placeFloating() {

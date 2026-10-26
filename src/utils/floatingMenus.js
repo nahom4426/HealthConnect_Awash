@@ -16,14 +16,30 @@ function isOpen(menu) {
   return menu.isConnected && getComputedStyle(menu).display !== "none";
 }
 
+// An ancestor with transform/filter/backdrop-filter/etc. becomes the containing block
+// for position: fixed, so viewport coordinates would land in the wrong place.
+function trapsFixed(cs) {
+  return (
+    (cs.transform && cs.transform !== "none") ||
+    (cs.filter && cs.filter !== "none") ||
+    (cs.backdropFilter && cs.backdropFilter !== "none") ||
+    (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== "none") ||
+    (cs.perspective && cs.perspective !== "none") ||
+    /paint|layout|strict|content/.test(cs.contain || "") ||
+    /transform|filter|perspective/.test(cs.willChange || "")
+  );
+}
+
 function insideClippingBox(el) {
+  let clipped = false;
   let node = el.parentElement;
-  while (node && node !== document.body && node.tagName !== "MAIN") {
+  while (node && node !== document.documentElement) {
     const cs = getComputedStyle(node);
-    if (/(auto|scroll|hidden|clip)/.test(cs.overflowY + cs.overflowX)) return true;
+    if (trapsFixed(cs)) return false; // fixed positioning would be offset here
+    if (node !== document.body && node.tagName !== "MAIN" && /(auto|scroll|hidden|clip)/.test(cs.overflowY + cs.overflowX)) clipped = true;
     node = node.parentElement;
   }
-  return false;
+  return clipped;
 }
 
 // The button that opens the menu: a button next to it that isn't part of the menu

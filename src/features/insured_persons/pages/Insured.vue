@@ -48,6 +48,31 @@ const downloadFile = (blob, filename) => {
   window.URL.revokeObjectURL(url);
 };
 
+// File name from Content-Disposition (prefers the UTF-8 filename* form used for non-Latin names)
+const fileNameFromHeaders = (headers) => {
+  const disposition = headers?.["content-disposition"] || "";
+  const encoded = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded[1].trim());
+    } catch {
+      // fall through to the plain filename
+    }
+  }
+  const plain = disposition.match(/filename\s*=\s*"?([^";]+)"?/i);
+  return plain ? plain[1].trim() : null;
+};
+
+// Fallback when the server's file name isn't readable: name it after the policy holder
+const templateFileName = () => {
+  // Same 60-character cap as the server; Array.from counts whole letters (Amharic is 3 bytes each)
+  const holder = Array.from(String(route.params.institutionName || "").trim().replace(/[\\/:*?"<>|]+/g, "-"))
+    .slice(0, 60)
+    .join("")
+    .replace(/[ ._-]+$/, "");
+  return holder ? `${holder}_member_template.xlsx` : "member-template.xlsx";
+};
+
 // ✅ Updated function to download sample file from backend
 const downloadSample = async (type = "employee") => {
   try {
@@ -58,7 +83,9 @@ const downloadSample = async (type = "employee") => {
         return;
       }
       const response = await exportMemberTemplate(policyUuid);
-      downloadFile(response.data, 'member-template.xlsx');
+      // Failed requests resolve with success: false (the API layer already shows the error)
+      if (!response?.success) return;
+      downloadFile(response.data, fileNameFromHeaders(response.headers) || templateFileName());
       toasted(true, 'Member template downloaded successfully', '');
     } else {
       // Keep the existing behavior for coverage sample if needed

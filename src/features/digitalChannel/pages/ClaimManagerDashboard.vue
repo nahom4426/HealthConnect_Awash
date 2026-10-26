@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { fetchAllClaims } from '@/features/digitalChannel/api/digitalChannelApi';
+import RoleSwitcher from '@/components/RoleSwitcher.vue';
 import { useRouter } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';
 
@@ -80,10 +81,13 @@ onMounted(() => {
         <h1 class="cmd-title">Claim Manager Dashboard</h1>
         <p class="cmd-sub">{{ filteredClaims.length }} claim{{ filteredClaims.length !== 1 ? 's' : '' }} · Manage incoming claims and assign adjustors</p>
       </div>
-      <button @click="loadClaims" class="cmd-refresh-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        Refresh
-      </button>
+      <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
+        <RoleSwitcher />
+        <button @click="loadClaims" class="cmd-refresh-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+      </div>
     </div>
 
     <div v-if="!loading" class="cmd-kpi-grid">

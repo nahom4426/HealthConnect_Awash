@@ -46,6 +46,7 @@
         </div>
 
         <div class="mpd-header-actions">
+          <RoleSwitcher />
           <!-- SUBMITTED: underwriter decides -->
           <template v-if="uiStatus === 'SUBMITTED'">
             <button type="button" v-if="isUnderwriter" class="mpd-issue-btn" :disabled="isActing" @click="handleApprove">
@@ -840,6 +841,7 @@ import {
   issueProposalContract,
 } from '@/features/digitalChannel/api/digitalChannelApi';
 import { useRoleContext } from '../composables/useRoleContext';
+import RoleSwitcher from '@/components/RoleSwitcher.vue';
 import { listCarImages, fetchCarImageByUuid } from '@/features/motor/api/motorApi';
 import { revokeObjectUrls } from '@/utils/imageBlob';
 

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage, fetchClaimImage, fetchClaimDocuments, fetchClaimDocumentUrl } from '@/features/digitalChannel/api/digitalChannelApi';
+import RoleSwitcher from '@/components/RoleSwitcher.vue';
 import { revokeObjectUrls } from '@/utils/imageBlob';
 import { useAuthStore } from '@/stores/auth';
 import { useDarkModeStore } from '@/stores/darkMode';
@@ -31,7 +32,10 @@ const formatText = (text) => {
   return String(text).toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
-const myRole = computed(() => authStore.auth?.user?.roleCode || 'ROLE_CLAIM_MANAGER');
+const myRole = computed(() =>
+  localStorage.getItem('standard_active_testing_role') ||
+  authStore.auth?.user?.roleCode ||
+  'ROLE_CLAIM_MANAGER');
 
 const statusColors = {
   SUBMITTED: '#3b82f6', IN_PROCESS: '#8b5cf6', BID_ASSIGNED: '#f59e0b', BID_COMPLETED: '#f97316', 
@@ -145,6 +149,7 @@ onMounted(() => {
         </div>
       </div>
       <div class="cd-header-actions" v-if="claim">
+        <RoleSwitcher />
         <span class="cd-status-badge" :style="`background:${statusColors[claim.status] || '#94a3b8'}18;color:${statusColors[claim.status] || '#94a3b8'};border-color:${statusColors[claim.status] || '#94a3b8'}40`">
           {{ formatText(claim.status) }}
         </span>

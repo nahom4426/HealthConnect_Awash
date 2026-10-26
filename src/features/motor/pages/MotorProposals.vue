@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import DataTable from '@/components/DataTable.vue';
 import { fetchMotorProposals } from '@/features/digitalChannel/api/digitalChannelApi';
 import { useRoleContext } from '../composables/useRoleContext';
+import RoleSwitcher from '@/components/RoleSwitcher.vue';
 
 const router = useRouter();
 const { activeRole, setRole, ROLES } = useRoleContext();
@@ -173,6 +174,7 @@ function openDetail(uuid) {
         </div>
       </div>
       <div class="mp-header-actions">
+        <RoleSwitcher />
         <button class="mp-refresh-btn" @click="loadProposals" :disabled="loading" title="Refresh">
           <svg :class="{ 'mp-spin': loading }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
             <path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>

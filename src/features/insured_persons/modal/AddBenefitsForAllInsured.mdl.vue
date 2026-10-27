@@ -21,6 +21,8 @@ const props = defineProps({
 });
 
 function handleSubmit() {
+  if (apiRequest.pending.value) return;
+
   if (isReadOnly.value) {
     toasted(false, "", "Benefits are read-only on amend page");
     return;

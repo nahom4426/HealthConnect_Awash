@@ -231,17 +231,21 @@ function handleRemove(row) {
           <div class="pt-2 mt-2 border-t border-line">
             <div class="flex justify-between items-center text-xs">
               <span class="font-semibold text-ink-muted">Total Amount:</span>
-              <span class="font-bold text-primary-hover">ETB {{ formatCurrency(row.amount) }}</span>
+              <span class="font-bold text-primary-hover">ETB {{ formatCurrency(row.claimableAmount) }}</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Total Amount -->
-      <div v-else-if="key === 'amount'" class="text-right">
-        <span class="text-sm font-semibold text-ink">
-          ETB {{ formatCurrency(row.amount) }}
+      <div v-else-if="key === 'claimableAmount'" class="flex flex-col items-end gap-1">
+        <span class="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-lg border border-primary/20 bg-primary/5 whitespace-nowrap">
+          <span class="text-[11px] font-semibold text-primary-hover">ETB</span>
+          <span class="text-sm font-bold tabular-nums text-ink">{{ formatCurrency(row.claimableAmount) }}</span>
         </span>
+        <div v-if="Number(row.claimableAmount) !== Number(row.amount)" class="text-xs text-ink-subtle whitespace-nowrap">
+          Billed: <span class="font-medium tabular-nums">ETB {{ formatCurrency(row.amount) }}</span>
+        </div>
       </div>
 
       <!-- Extra Amount -->

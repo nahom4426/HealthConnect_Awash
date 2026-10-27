@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, onMounted, onUnmounted } from 'vue';
+import { computed, defineProps, onMounted, onUnmounted } from 'vue';
 import { canEditServiceProvided, editLockReason } from "../utils/serviceEditLock";
 import { claimStatusLabel, claimStatusTone } from "../utils/claimStatus";
 import Button from "@/components/Button.vue";
@@ -12,7 +12,9 @@ const props = defineProps({
   cells: { type: Object, default: () => ({}) },
   isMobile: { type: Boolean, default: false },
   currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 25 }
+  perPage: { type: Number, default: 25 },
+  // Append a row totalling the claimable amount under the 'amount' column
+  showTotal: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['row', 'remove']);
@@ -115,6 +117,29 @@ function getCoverageLabel(item) {
 function getRowTotalExcessUsed(row) {
   const items = Array.isArray(row?.providedItemResponses) ? row.providedItemResponses : [];
   return items.reduce((s, it) => s + (Number(it?.extraAmount) || 0), 0);
+}
+
+// claimableAmount is what the claim is validated against. service-provided/new returns it as null,
+// so fall back to the items' total (which matches the backend's figure), then to amount.
+function getClaimableAmount(row) {
+  if (row?.claimableAmount != null) return row.claimableAmount;
+  const items = Array.isArray(row?.providedItemResponses) ? row.providedItemResponses : [];
+  if (items.length) return items.reduce((s, it) => s + (Number(it?.totalPrice) || 0), 0);
+  return row?.amount;
+}
+
+const totalClaimable = computed(() =>
+  props.rowData.reduce((sum, row) => sum + (Number(getClaimableAmount(row)) || 0), 0)
+);
+const amountColIndex = computed(() => props.rowKeys.indexOf('amount'));
+// Columns after 'amount', plus the actions column when present
+const totalTrailingCols = computed(() =>
+  props.rowKeys.length - amountColIndex.value - 1 +
+  (props.headKeys.some((head) => head.toLowerCase() === 'actions') ? 1 : 0)
+);
+
+function hasBilledDifference(row) {
+  return Number(getClaimableAmount(row)) !== Number(row?.amount);
 }
 
 function getSourceIndicator(source) {
@@ -262,7 +287,7 @@ function getSourceIndicator(source) {
           <div class="pt-2 mt-2 border-t border-line">
             <div class="flex justify-between items-center text-xs">
               <span class="font-semibold text-ink-muted">Total Amount:</span>
-              <span class="font-bold text-primary-hover">ETB {{ formatCurrency(row.amount) }}</span>
+              <span class="font-bold text-primary-hover">ETB {{ formatCurrency(getClaimableAmount(row)) }}</span>
             </div>
           </div>
         </div>
@@ -270,9 +295,13 @@ function getSourceIndicator(source) {
 
       <!-- Total Amount -->
       <div v-else-if="key === 'amount'" class="text-right">
-        <div class="space-y-0.5">
-          <div class="text-sm font-semibold text-ink">
-            ETB {{ formatCurrency(row.amount) }}
+        <div class="flex flex-col items-end gap-1">
+          <span class="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-lg border border-primary/20 bg-primary/5 whitespace-nowrap">
+            <span class="text-[11px] font-semibold text-primary-hover">ETB</span>
+            <span class="text-sm font-bold tabular-nums text-ink">{{ formatCurrency(getClaimableAmount(row)) }}</span>
+          </span>
+          <div v-if="hasBilledDifference(row)" class="text-xs text-ink-subtle whitespace-nowrap">
+            Billed: <span class="font-medium tabular-nums">ETB {{ formatCurrency(row.amount) }}</span>
           </div>
           <div v-if="getRowTotalExcessUsed(row)" class="text-xs text-warning-strong">
             Extra Amount: <span class="font-semibold">ETB {{ formatCurrency(getRowTotalExcessUsed(row)) }}</span>
@@ -344,6 +373,24 @@ function getSourceIndicator(source) {
         </Button> -->
       </div>
     </td>
+  </tr>
+
+  <tr
+    v-if="showTotal && rowData.length && amountColIndex >= 0"
+    class="border-t-2 border-primary/20 bg-primary/5"
+  >
+    <!-- +1 for the index column -->
+    <td :colspan="amountColIndex + 1" class="px-4 py-3 text-right">
+      <span class="text-xs font-semibold tracking-wide uppercase text-primary-hover">Total Claimable</span>
+      <span class="ml-2 text-xs text-ink-subtle">({{ rowData.length }} services)</span>
+    </td>
+    <td class="p-4 text-right">
+      <span class="inline-flex items-baseline gap-1 px-3 py-1.5 rounded-lg shadow-sm bg-primary text-white whitespace-nowrap">
+        <span class="text-[11px] font-semibold opacity-80">ETB</span>
+        <span class="text-sm font-bold tabular-nums">{{ formatCurrency(totalClaimable) }}</span>
+      </span>
+    </td>
+    <td v-if="totalTrailingCols > 0" :colspan="totalTrailingCols"></td>
   </tr>
 </template>
 

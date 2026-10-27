@@ -7,7 +7,7 @@ import { Status } from "@/types/interface";
 import Button from "@/components/Button.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmitButton.vue";
-import { toasted } from "@/utils/utils";
+import { formatCurrency, toasted } from "@/utils/utils";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { requestCashClaim } from "@/features/claim/api/cashCreditApi";
 import SearchSelect from "@/components/SearchSelect.vue";
@@ -67,6 +67,11 @@ function handleProviderSelect(row) {
   providerName.value = row?.providerName || row?.contractName || "";
 }
 const isReadyToSubmit = computed(() => selectedClaims.value.length > 0);
+
+// Backend validates totalAmount against the sum of the services' claimableAmount
+const totalClaimable = computed(() =>
+  selectedClaims.value.reduce((sum, claim) => sum + (parseFloat(claim.claimableAmount) || 0), 0)
+);
 
 /* ----- selection handlers ----- */
 function handleInstitutionSelect(inst) {
@@ -138,17 +143,6 @@ const submitClaims = async () => {
   isSubmitting.value = true;
   try {
     
-    // Calculate total amount
-    const totalExtraAmount = selectedClaims.value.reduce((sum, claim) => {
-      const items = Array.isArray(claim?.providedItemResponses) ? claim.providedItemResponses : [];
-      const extra = items.reduce((s, it) => s + (parseFloat(it?.extraAmount) || 0), 0);
-      return sum + extra;
-    }, 0);
-
-    const totalAmount = selectedClaims.value.reduce((sum, claim) => {
-      return sum + (parseFloat(claim.amount) || 0);
-    }, 0) - totalExtraAmount;
-
     const first = selectedClaims.value?.[0] || {};
     const derivedContractUuid =
       contractUuid.value ||
@@ -178,7 +172,7 @@ const submitClaims = async () => {
       providerUuid: derivedProviderUuid,
       claimFromDate: fromDate.value || undefined,
       claimToDate: toDate.value || undefined,
-      totalAmount: totalAmount,
+      totalAmount: totalClaimable.value,
       serviceType: serviceType.value,
       serviceProvidedUuid: selectedClaims.value.map(claim => claim.serviceProvidedUuid)
     };
@@ -405,6 +399,15 @@ watch(selectedClaims, (newVal) => {
                 <p class="mt-1 text-sm text-ink-muted">{{ fromDate }} → {{ toDate }}</p>
                 <p class="mt-1 text-sm text-ink-subtle">{{ selectedClaims.length }} of {{ claims?.length || 0 }} claims selected</p>
               </div>
+              <div class="flex gap-3 items-center px-4 py-3 mt-2 rounded-xl border border-primary/20 bg-primary/5">
+                <span class="flex justify-center items-center w-10 h-10 text-white rounded-lg bg-primary shrink-0" aria-hidden="true">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-1m6-9a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h2" /></svg>
+                </span>
+                <div>
+                  <p class="text-xs font-semibold tracking-wide uppercase text-primary-hover">Total Claimable</p>
+                  <p class="text-xl font-bold tabular-nums text-ink">ETB {{ formatCurrency(totalClaimable) }}</p>
+                </div>
+              </div>
               <div class="flex gap-3 items-center mt-4 md:mt-0">
                 <Button type="secondary" @click="() => { hasGenerated = false; selectedClaims = []; }">Back to Filter</Button>
                 <ModalFormSubmitButton
@@ -456,7 +459,7 @@ watch(selectedClaims, (newVal) => {
                   'itemType',
                   'providedItems',
                   'extraAmount',
-                  'amount',
+                  'claimableAmount',
                   'status',
                   'providedDate',
                 ]
@@ -464,7 +467,7 @@ watch(selectedClaims, (newVal) => {
               :sortable="true"
               :sortBy="sortBy"
               :sortDirection="sortDirection"
-              :sortableColumns="['insuredName', 'providerName', 'itemType', 'amount', 'status', 'providedDate']"
+              :sortableColumns="['insuredName', 'providerName', 'itemType', 'claimableAmount', 'status', 'providedDate']"
               @sort="handleSort"
               :cells="{
                 onView: (row) => {

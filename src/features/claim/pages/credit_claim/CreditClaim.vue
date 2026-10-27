@@ -50,8 +50,7 @@ function handleInstitutionSelect(result) {
 const search = ref("");
 function handleContractSelect(result) {
   contractUuid.value = result?.payerProviderContractUuid || '';
-}
-</script>
+}</script>
 
 <template>
 <CreditClaimDataProvider 
@@ -145,6 +144,7 @@ function handleContractSelect(result) {
         v-if="!selectedRow"
         :pending="dataPending"
         :rowCom="CreditClaimTableRow"
+        :rowComProps="{ showTotal: true }"
         :headers="{
           head: [
             'Insured Name',

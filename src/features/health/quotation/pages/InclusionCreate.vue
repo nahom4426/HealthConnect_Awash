@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import DefaultPage from "@/components/DefaultPage.vue";
 import QuotationForm from "../form/QuotationForm.vue";
-import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
+import SingleInstitutionDataProvider from "@/features/health/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationCreationDataProvider from "../components/QuotationCreationDataProvider.vue";
 import { onMounted, ref, computed } from "vue";
-import { getQuotationById, createInclusionExclusionQuotation } from "@/features/quotation/api/quotationApi";
+import { getQuotationById, createInclusionExclusionQuotation } from "@/features/health/quotation/api/quotationApi";
 import { useRoute, useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 

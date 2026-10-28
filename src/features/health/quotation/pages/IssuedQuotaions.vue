@@ -3,8 +3,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
-import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
-import IssuedQuotationRowCom from "@/features/quotation/components/IssuedQuotationRow.vue";
+import QuotationDataProviderByStatus from "@/features/health/quotation/components/quotationDataProviderByStatus.vue";
+import IssuedQuotationRowCom from "@/features/health/quotation/components/IssuedQuotationRow.vue";
 import { savedIssueQuotation } from '../api/quotationApi';
 import { toasted } from "@/utils/utils";
 

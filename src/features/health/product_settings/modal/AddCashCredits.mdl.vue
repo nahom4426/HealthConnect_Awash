@@ -219,8 +219,8 @@ import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
 import { closeModal } from "@customizer/modal-x";
-import { getIssuedContracts } from "@/features/underwriting/api/underwritingApi";
-import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
+import { getIssuedContracts } from "@/features/health/underwriting/api/underwritingApi";
+import { getAlreadyMappedActiveProviders } from "@/features/health/providers/api/providerApi";
 import { getPackages } from "../api/coverageApi";
 import { useToast } from "@/toast/store/toast";
 

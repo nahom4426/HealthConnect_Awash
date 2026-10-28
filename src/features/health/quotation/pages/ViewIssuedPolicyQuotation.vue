@@ -3,8 +3,8 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import IssuedPolicyQuotationDataProvider from "@/features/quotation/components/IssuedPolicyQuotationDataProvider.vue";
-import IssuedPolicyQuotationRow from "@/features/quotation/components/IssuedPolicyQuotationRow.vue";
+import IssuedPolicyQuotationDataProvider from "@/features/health/quotation/components/IssuedPolicyQuotationDataProvider.vue";
+import IssuedPolicyQuotationRow from "@/features/health/quotation/components/IssuedPolicyQuotationRow.vue";
 
 const route = useRoute();
 const router = useRouter();

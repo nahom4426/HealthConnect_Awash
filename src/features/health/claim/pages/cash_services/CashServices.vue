@@ -3,11 +3,11 @@ import { ref, onMounted } from 'vue';
 import DefaultPage from '@/components/DefaultPage.vue';
 import Button from '@/components/Button.vue';
 import icons from '@/utils/icons';
-import EligibilityCheck from '@/features/claim/components/cash_services/EligibilityCheck.vue';
-import ServiceSelection from '@/features/claim/components/cash_services/ServiceSelection.vue';
+import EligibilityCheck from '@/features/health/claim/components/cash_services/EligibilityCheck.vue';
+import ServiceSelection from '@/features/health/claim/components/cash_services/ServiceSelection.vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useApiRequest } from '@/composables/useApiRequest';
-import { getServiceProvidedById } from '@/features/claim/api/claimApi';
+import { getServiceProvidedById } from '@/features/health/claim/api/claimApi';
 
 const router = useRouter();
 const route = useRoute();

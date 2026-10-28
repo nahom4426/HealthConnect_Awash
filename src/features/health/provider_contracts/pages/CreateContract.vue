@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from "@/toast/store/toast";
-import { getActiveProvidersForContract } from "@/features/providers/api/providerApi";
+import { getActiveProvidersForContract } from "@/features/health/providers/api/providerApi";
 import DefaultPage from "@/components/DefaultPage.vue";
 import icons from "@/utils/icons";
 import { toasted } from '@/utils/utils';

@@ -2,8 +2,8 @@
 import Button from "@/components/Button.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
-import InstitutionsByStatusDataProvider from "@/features/institutions/components/InstitutionsByStatusDataProvider.vue";
-import NewQuotationInstitutionRow from "@/features/quotation/components/NewQuotationInstitutionRow.vue";
+import InstitutionsByStatusDataProvider from "@/features/health/institutions/components/InstitutionsByStatusDataProvider.vue";
+import NewQuotationInstitutionRow from "@/features/health/quotation/components/NewQuotationInstitutionRow.vue";
 import icons from "@/utils/icons";
 const generateQuotationPath = (r: any) => `/new_quotation/generate/${r?.institutionUuid}`;
 </script>

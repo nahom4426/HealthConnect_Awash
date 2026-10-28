@@ -3,7 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useModuleStore, MODULES } from '@/stores/moduleStore';
 import { useRoute, useRouter } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';
-import { fetchClaimsByModule, updateClaimStatus } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchClaimsByModule, updateClaimStatus } from '@/features/motor/claims/api/digitalChannelApi';
 
 const route = useRoute();
 const router = useRouter();

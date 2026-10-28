@@ -5,7 +5,7 @@ import GroupDrug from "../components/GroupComponents/GroupDrug.vue";
 import { ref } from "vue";
 
 import NewFormParent from "@/components/NewFormParent.vue";
-// import ContractProvidersDataProvider from "@/features/providers/components/ContractProvidersDataProvider.vue";
+// import ContractProvidersDataProvider from "@/features/health/providers/components/ContractProvidersDataProvider.vue";
 
 const props = defineProps({
   data: String,

@@ -1,5 +1,5 @@
-import FormBuilderHome from '@/features/form_builder/pages/FormBuilderHome.vue';
-import FormBuilderEditor from '@/features/form_builder/pages/FormBuilderEditor.vue';
+import FormBuilderHome from '@/features/shared/form_builder/pages/FormBuilderHome.vue';
+import FormBuilderEditor from '@/features/shared/form_builder/pages/FormBuilderEditor.vue';
 
 export const formBuilderRoutes = [
   {

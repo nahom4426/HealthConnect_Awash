@@ -12,7 +12,7 @@ import {
   updateInitialDepositStatus,
   setQuotationAmounts,
 } from '../api/motorApi.js';
-import { submitMotorProposal } from '@/features/digitalChannel/api/digitalChannelApi';
+import { submitMotorProposal } from '@/features/motor/claims/api/digitalChannelApi';
 
 const route  = useRoute();
 const router = useRouter();

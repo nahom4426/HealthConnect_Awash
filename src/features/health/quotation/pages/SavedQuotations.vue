@@ -3,8 +3,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
-import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
-import SavedQuotationStatusRow from "@/features/quotation/components/SavedQuotationStatusRow.vue";
+import QuotationDataProviderByStatus from "@/features/health/quotation/components/quotationDataProviderByStatus.vue";
+import SavedQuotationStatusRow from "@/features/health/quotation/components/SavedQuotationStatusRow.vue";
 
 const router = useRouter()
 const search = ref("")

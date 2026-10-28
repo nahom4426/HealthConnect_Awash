@@ -4,13 +4,13 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { closeModal, openModal } from "@customizer/modal-x";
 import { useAuthStore } from "@/stores/auth";
 import { toasted } from "@/utils/utils";
- import { useDrugStore } from "@/features/provider_contracts/service/store/drugStore";
+ import { useDrugStore } from "@/features/health/provider_contracts/service/store/drugStore";
 // import DrugDataprovider from "@/features/service/components/DrugDataprovider.vue";
 import { useSelectedDrugStore } from "../../store/selectedDrugStore";
 import { computed, ref } from "vue";
 import Button from "@/components/Button.vue";
 import { addServiceToGroup } from "../../api/groupServiceApi";
-import DrugDataprovider from "@/features/provider_contracts/service/components/DrugDataprovider.vue";
+import DrugDataprovider from "@/features/health/provider_contracts/service/components/DrugDataprovider.vue";
 const api = useApiRequest();
 const props = defineProps({
   id: String,

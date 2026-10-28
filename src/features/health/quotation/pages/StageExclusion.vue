@@ -4,11 +4,11 @@ import { useRoute } from "vue-router";
 import DefaultPage from "@/components/DefaultPage.vue";
 import icons from "@/utils/icons";
 import { toasted } from "@/utils/utils";
-import { stageExclusion, getActiveInsuredByContract } from "@/features/quotation/api/quotationApi";
-import { getIssuedContracts } from "@/features/Standardunderwriting/api/underwritingApi";
-import IssuedContractsDataProvider from "@/features/underwriting/components/IssuedContractsDataProvider.vue";
+import { stageExclusion, getActiveInsuredByContract } from "@/features/health/quotation/api/quotationApi";
+import { getIssuedContracts } from "@/features/health/quotation_underwriting/api/underwritingApi";
+import IssuedContractsDataProvider from "@/features/health/underwriting/components/IssuedContractsDataProvider.vue";
 import Table from "@/components/Table.vue";
-import StageExclusionContractRow from "@/features/quotation/components/StageExclusionContractRow.vue";
+import StageExclusionContractRow from "@/features/health/quotation/components/StageExclusionContractRow.vue";
 
 const route = useRoute();
 

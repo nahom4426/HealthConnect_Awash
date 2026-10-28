@@ -8,8 +8,8 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { getAttachmentUrl, updateProvidedItemClaimStatus, updateServiceProvidedClaimStatus } from "../api/claimApi";
 import { useClaimByInstitutionBatch } from "../store/claimByInstitutionBatchStore";
 import { openModal } from "@customizer/modal-x";
-import { getPackages } from "@/features/product_settings/api/coverageApi";
-import { getAuthorization } from "@/features/authorization/api/authorizationApi";
+import { getPackages } from "@/features/health/product_settings/api/coverageApi";
+import { getAuthorization } from "@/features/health/authorization/api/authorizationApi";
 
 const props = defineProps({
   row: { type: Object, default: null },

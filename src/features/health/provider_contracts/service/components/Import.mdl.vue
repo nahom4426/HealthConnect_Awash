@@ -9,7 +9,7 @@ import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { importServices, getAllServices } from "../api/serviceApi";
 import { importDrug } from "../api/drugApi";
-import { importInstitutions } from "@/features/institutions/api/institutionApi";
+import { importInstitutions } from "@/features/health/institutions/api/institutionApi";
 import * as XLSX from 'xlsx';
 import { useRoute } from "vue-router";
 import { useServiceListStore } from "../store/serviceListStore";

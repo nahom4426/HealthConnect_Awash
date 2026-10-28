@@ -6,7 +6,7 @@ import IssuedPolicyDataProvider from "../components/IssuedPolicyDataProvider.vue
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
 import PolicyStatusRow from '../components/PolicyStatusRow.vue';
-import ActiveInstitutionDataProvider from '@/features/institutions/components/ActiveInstitutionDataProvider.vue';
+import ActiveInstitutionDataProvider from '@/features/health/institutions/components/ActiveInstitutionDataProvider.vue';
 
 const handleAmendPolicy = (id) => {
   openModal('AmendPolicy', { policyId: id });

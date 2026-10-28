@@ -6,8 +6,8 @@ import { onUnmounted } from 'vue';
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { toasted } from '@/utils/utils';
-import { approveContractStatus } from '@/features/provider_contracts/api/contractApi';
-import { usecontracts } from '@/features/provider_contracts/store/cotractStore';
+import { approveContractStatus } from '@/features/health/provider_contracts/api/contractApi';
+import { usecontracts } from '@/features/health/provider_contracts/store/cotractStore';
 import { useProcessClaimByInstitutionBatch } from '../store/processClaimByInstitutionBatchStore';
 
 const router = useRouter();

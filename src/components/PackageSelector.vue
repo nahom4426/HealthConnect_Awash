@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, shallowRef, watch, nextTick } from 'vue';
-import { getPackages, getPackageDropdown } from '@/features/product_settings/api/coverageApi';
+import { getPackages, getPackageDropdown } from '@/features/health/product_settings/api/coverageApi';
 import { useRoute } from 'vue-router';
 import { onUnmounted } from 'vue';
 

@@ -4,7 +4,7 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import { closeModal, openModal } from "@customizer/modal-x";
 import { ref } from "vue";
 import Table from "@/components/Table.vue";
-import CoverageDataProvider from "@/features/product_settings/components/CoverageDataProvider.vue";
+import CoverageDataProvider from "@/features/health/product_settings/components/CoverageDataProvider.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 
 const props = defineProps({

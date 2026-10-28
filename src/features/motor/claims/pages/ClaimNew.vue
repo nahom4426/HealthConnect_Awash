@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { useModuleStore, MODULES } from '@/stores/moduleStore';
 import { useRoute, useRouter } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';
-import { submitClaim, validatePolicyCoverage } from '@/features/digitalChannel/api/digitalChannelApi';
+import { submitClaim, validatePolicyCoverage } from '@/features/motor/claims/api/digitalChannelApi';
 
 const route = useRoute();
 const router = useRouter();

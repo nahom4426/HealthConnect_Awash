@@ -7,7 +7,7 @@ import Button from "@/components/Button.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from '@/toast/store/toast';
-import { getEligiblePackage, addEligibleServices } from '@/features/product_settings/api/coverageApi';
+import { getEligiblePackage, addEligibleServices } from '@/features/health/product_settings/api/coverageApi';
 import Spinner from "@/components/Spinner.vue";
 
 const props = defineProps({

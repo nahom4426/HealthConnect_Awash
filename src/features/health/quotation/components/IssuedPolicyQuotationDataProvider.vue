@@ -1,7 +1,7 @@
 <script setup>
 import { usePagination } from "@/composables/usePagination";
 import { watch, reactive } from "vue";
-import { issuedPolicyQuotation } from "@/features/quotation/api/quotationApi";
+import { issuedPolicyQuotation } from "@/features/health/quotation/api/quotationApi";
 
 const props = defineProps({
   auto: { type: Boolean, default: true },

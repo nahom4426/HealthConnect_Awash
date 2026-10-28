@@ -3,7 +3,7 @@ import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import { closeModal } from "@customizer/modal-x";
 import { computed, ref } from 'vue'
-import { createBenefitRange } from '@/features/product_settings/api/benefitRangeApi'
+import { createBenefitRange } from '@/features/health/product_settings/api/benefitRangeApi'
 import { Plan, allMemberTYpes } from '@/types/interface'
 import { useApiRequest } from '@/composables/useApiRequest'
 import Form from '@/components/new_form_builder/Form.vue'

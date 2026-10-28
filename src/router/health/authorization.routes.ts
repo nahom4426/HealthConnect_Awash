@@ -1,4 +1,4 @@
-import Authorization from "@/features/authorization/pages/Authorization.vue";
+import Authorization from "@/features/health/authorization/pages/Authorization.vue";
 
 export default [
   {

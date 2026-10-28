@@ -7,7 +7,7 @@
   import { useAuthStore } from "@/stores/auth";
   import { closeModal } from "@customizer/modal-x";
   import { importInsuredPersons } from "../api/insuredPersonsApi";
-  import { getPackages } from "@/features/product_settings/api/coverageApi";
+  import { getPackages } from "@/features/health/product_settings/api/coverageApi";
   import * as XLSX from 'xlsx';
   import { useRoute } from "vue-router";
   

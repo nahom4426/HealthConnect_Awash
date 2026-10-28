@@ -6,9 +6,9 @@ import icons from "@/utils/icons";
 import AuthorizationDataProvider from "../components/AuthorizationDataProvider.vue";
 import AuthorizationRow from "../components/AuthorizationRow.vue";
 import SearchSelect from "@/components/SearchSelect.vue";
-import { getActiveContract } from "@/features/provider_contracts/api/contractApi.js";
-import { getIssuedContracts } from "@/features/underwriting/api/underwritingApi.js";
-import { searchInsuredByInstitution } from "@/features/insured_persons/api1/insuredPersonsApi";
+import { getActiveContract } from "@/features/health/provider_contracts/api/contractApi.js";
+import { getIssuedContracts } from "@/features/health/underwriting/api/underwritingApi.js";
+import { searchInsuredByInstitution } from "@/features/health/insured_persons/api/insuredPersonSearchApi";
 
 const showFilters = ref(false);
 

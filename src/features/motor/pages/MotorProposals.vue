@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import DataTable from '@/components/DataTable.vue';
-import { fetchMotorProposals } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchMotorProposals } from '@/features/motor/claims/api/digitalChannelApi';
 import { useRoleContext } from '../composables/useRoleContext';
 import RoleSwitcher from '@/components/RoleSwitcher.vue';
 

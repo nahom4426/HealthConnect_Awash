@@ -1,6 +1,6 @@
 <script setup>
 import { useApiRequest } from '@/composables/useApiRequest';
-import { updateInstitutionById } from '@/features/institutions/api/institutionApi';
+import { updateInstitutionById } from '@/features/health/institutions/api/institutionApi';
 // import { useInstitution } from '../store/institutionStore';
 import { ref } from 'vue';
 import NewFormParent from '@/components/NewFormParent.vue';
@@ -10,7 +10,7 @@ import { useForm } from '@/components/new_form_builder/useForm';
 import { toasted } from '@/utils/utils';
 import ModalParent from '@/components/ModalParent.vue';
 import { closeModal } from "@customizer/modal-x";
-import { useInstitution } from '@/features/institutions/store/institutionStore';
+import { useInstitution } from '@/features/health/institutions/store/institutionStore';
 
 const props = defineProps({
   data: {

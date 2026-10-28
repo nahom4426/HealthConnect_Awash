@@ -362,7 +362,7 @@ const currentRateUuid = ref(null);
 const currentStatus = ref('DRAFT');
 const errors   = ref({});
 
-import { saveRateConfig, publishRateConfig, fetchRateConfigs } from '@/features/form_builder/api/formBuilderApi';
+import { saveRateConfig, publishRateConfig, fetchRateConfigs } from '@/features/shared/form_builder/api/formBuilderApi';
 import { onMounted } from 'vue';
 
 onMounted(async () => {

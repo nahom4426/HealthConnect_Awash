@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage, fetchClaimImage, fetchClaimDocuments, fetchClaimDocumentUrl } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage, fetchClaimImage, fetchClaimDocuments, fetchClaimDocumentUrl } from '@/features/motor/claims/api/digitalChannelApi';
 import RoleSwitcher from '@/components/RoleSwitcher.vue';
 import { revokeObjectUrls } from '@/utils/imageBlob';
 import { useAuthStore } from '@/stores/auth';

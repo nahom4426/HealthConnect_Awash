@@ -10,9 +10,9 @@ import Button from "@/components/Button.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from '@/toast/store/toast';
 import { toasted } from '@/utils/utils';
-import { getActiveContract } from '@/features/provider_contracts/api/contractApi';
-import { getAllServices } from '@/features/provider_contracts/service/api/serviceApi';
-import { addEligibleServices, getEligiblePackage } from '@/features/product_settings/api/coverageApi';
+import { getActiveContract } from '@/features/health/provider_contracts/api/contractApi';
+import { getAllServices } from '@/features/health/provider_contracts/service/api/serviceApi';
+import { addEligibleServices, getEligiblePackage } from '@/features/health/product_settings/api/coverageApi';
 import Spinner from "@/components/Spinner.vue";
 
 const props = defineProps({

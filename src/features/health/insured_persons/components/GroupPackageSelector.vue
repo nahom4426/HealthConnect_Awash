@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
-import { getPackages } from '@/features/product_settings/api/coverageApi';
+import { getPackages } from '@/features/health/product_settings/api/coverageApi';
 import { getServiceQuotedByUuid } from '../api/groupServiceApi';
 
 const props = defineProps({

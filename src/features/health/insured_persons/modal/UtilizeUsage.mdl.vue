@@ -7,8 +7,8 @@ import Button from "@/components/Button.vue";
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from '@/utils/utils';
 import { useApiRequest } from "@/composables/useApiRequest";
-import { getPackageDropdown } from '@/features/product_settings/api/coverageApi';
-import { createCreditServiceProvided, updateManualCreditServiceProvided } from '@/features/claim/api/claimApi';
+import { getPackageDropdown } from '@/features/health/product_settings/api/coverageApi';
+import { createCreditServiceProvided, updateManualCreditServiceProvided } from '@/features/health/claim/api/claimApi';
 
 const props = defineProps({
   data: Object,

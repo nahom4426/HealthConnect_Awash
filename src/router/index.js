@@ -4,36 +4,27 @@ import RateConfigHome from "@/views/RateConfig/RateConfigHome.vue";
 import RateConfigForm from "@/views/RateConfig/RateConfigForm.vue";
 import ModuleLauncher from "@/views/ModuleLauncher.vue";
 import ModuleDashboard from "@/views/ModuleDashboard.vue";
-import MotorVehicleCategories from "@/features/motor/pages/MotorVehicleCategories.vue";
-import MotorRateConfig from "@/features/motor/pages/MotorRateConfig.vue";
-import MotorCarConfig from "@/features/motor/pages/MotorCarConfig.vue";
-import MotorQuotation from "@/features/motor/pages/MotorQuotation.vue";
-import MotorQuotationDetail from "@/features/motor/pages/MotorQuotationDetail.vue";
-import MotorNewQuotation from "@/features/motor/pages/MotorNewQuotation.vue";
-import MotorProposals from "@/features/motor/pages/MotorProposals.vue";
-import MotorProposalDetail from "@/features/motor/pages/MotorProposalDetail.vue";
-import ClaimsProcess from "@/features/digitalChannel/pages/ClaimsProcess.vue";
-import ClaimNew from "@/features/digitalChannel/pages/ClaimNew.vue";
-import ClaimDetail from "@/features/digitalChannel/pages/ClaimDetail.vue";
-import ClaimManagerDashboard from "@/features/digitalChannel/pages/ClaimManagerDashboard.vue";
-import GarageDashboard from "@/features/digitalChannel/pages/GarageDashboard.vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
-import quotationRoutes from "./quotation.routes";
-import underwritingRoutes from "./underwriting.routes";
-import quotationUnderwritingRoutes from "./quotationunderwriting.routes";
-import claimRoutes from "./claim.routes";
-import financeRoutes from "./finance.routes";
-import provider_contractsRoutes from "./provider_contracts.routes";
-import providersRoutes from "./providers.routes";
-import product_settingsRoutes from "./product_settings.routes";
-import authorizationRoutes from "./authorization.routes";
+// Health (ClaimConnect)
+import quotationRoutes from "./health/quotation.routes";
+import underwritingRoutes from "./health/underwriting.routes";
+import quotationUnderwritingRoutes from "./health/quotationunderwriting.routes";
+import claimRoutes from "./health/claim.routes";
+import financeRoutes from "./health/finance.routes";
+import provider_contractsRoutes from "./health/provider_contracts.routes";
+import providersRoutes from "./health/providers.routes";
+import product_settingsRoutes from "./health/product_settings.routes";
+import authorizationRoutes from "./health/authorization.routes";
+// Motor
+import motorRoutes from "./motor/motor.routes";
+// Shared across products
+import adminRoutes from "./shared/admin.routes";
+import analyticsRoutes from "./shared/analytics.routes";
+import { formBuilderRoutes } from "./shared/form_builder.routes";
 import Login from "@/views/Login.vue";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useAuthStore } from "@/stores/auth";
-import adminRoutes from "./admin.routes";
-import analyticsRoutes from "./analytics.routes";
-import { formBuilderRoutes } from "./form_builder.routes";
-import Profile from "@/features/profile/pages/profile.vue";
+import Profile from "@/features/shared/profile/pages/profile.vue";
 
 function hasManagesQuotationPrivilege() {
   try {
@@ -206,98 +197,7 @@ const router = createRouter({
           component: ModuleDashboard,
           meta: { requiresAuth: true },
         },
-        // Claims process, new claim, detail, approved, and completed routes for all 8 modules
-        {
-          path: '/:module/claims/process',
-          name: 'module-claims-process',
-          component: ClaimsProcess,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/:module/claims/manager',
-          name: 'module-claims-manager',
-          component: ClaimManagerDashboard,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/:module/claims/garage',
-          name: 'module-claims-garage',
-          component: GarageDashboard,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/:module/claims/approved',
-          name: 'module-claims-approved',
-          component: ClaimsProcess,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/:module/claims/completed',
-          name: 'module-claims-completed',
-          component: ClaimsProcess,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/:module/claims/new',
-          name: 'module-claims-new',
-          component: ClaimNew,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/:module/claims/detail/:claimUuid',
-          name: 'module-claims-detail',
-          component: ClaimDetail,
-          meta: { requiresAuth: true },
-        },
-        // Motor module pages
-        {
-          path: '/motor/rate-config/categories',
-          name: 'motor-vehicle-categories',
-          component: MotorVehicleCategories,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/motor/rate-config/rates',
-          name: 'motor-rate-config',
-          component: MotorRateConfig,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/motor/car-config',
-          name: 'motor-car-config',
-          component: MotorCarConfig,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/motor/quotation',
-          name: 'motor-quotation',
-          component: MotorQuotation,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/motor/quotation/new',
-          name: 'motor-quotation-new',
-          component: MotorNewQuotation,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/motor/quotation/:quotationUuid',
-          name: 'motor-quotation-detail',
-          component: MotorQuotationDetail,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/motor/proposals',
-          name: 'motor-proposals',
-          component: MotorProposals,
-          meta: { requiresAuth: true },
-        },
-        {
-          path: '/motor/proposals/:proposalUuid',
-          name: 'motor-proposal-detail',
-          component: MotorProposalDetail,
-          meta: { requiresAuth: true },
-        },
+        ...motorRoutes,
         ...adminRoutes,
         ...analyticsRoutes,
         ...formBuilderRoutes,

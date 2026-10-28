@@ -1,24 +1,24 @@
 import type { RouteLocationNormalized } from 'vue-router';
-import Institution from "@/features/Standardunderwriting/pages/Institution.vue";
-import AddNewPolicy from "@/features/Standardunderwriting/pages/AddNewPolicy.vue";
-import AmendPolicy from "@/features/Standardunderwriting/pages/AmendPolicy.vue";
-import ImportPolicy from "@/features/Standardunderwriting/pages/importPolicy.vue";
-import InstitutionContractDetail from "@/features/Standardunderwriting/pages/InstitutionContractDetail.vue";
-import InstitutionContractIndex from "@/features/Standardunderwriting/pages/InstitutionContractIndex.vue";
-import InstitutionCoverage from "@/features/Standardunderwriting/pages/InstitutionCoverage.vue";
-import InstitutionsInsuredPersons from "@/features/Standardunderwriting/pages/InstitutionsInsuredPersons.vue";
-import IssuedPolicy from "@/features/Standardunderwriting/pages/IssuedPolicy.vue";
-import UnderwritingIndex from "@/features/Standardunderwriting/pages/UnderwritingIndex.vue";
-import InstitutionContracts from "@/features/Standardunderwriting/pages/InstitutionContracts.vue";
-import Insured from "@/features/insured_persons/pages/Insured.vue";
-import InsuredDetails from "@/features/insured_persons/pages/insuredDetails.vue";
-import Coverages from "@/features/product_settings/pages/Coverages.vue";
-import InstitutionContractswithIssued from "@/features/Standardunderwriting/pages/InstitutionContractswithIssued.vue";
-import AddProviderForInstitution from "@/features/providers/pages/AddProviderForInstitution.vue";
-import RemoveCatgorieServices from '@/features/providers/pages/removeCatgorieServices.vue';
-import AddInstitution from "@/features/institutions/pages/AddInstitution.vue";
-import QuotationInsured from '@/features/insured_persons/pages/quotationInsured.vue';
-import StageExclusion from '@/features/quotation/pages/StageExclusion.vue';
+import Institution from "@/features/health/quotation_underwriting/pages/Institution.vue";
+import AddNewPolicy from "@/features/health/quotation_underwriting/pages/AddNewPolicy.vue";
+import AmendPolicy from "@/features/health/quotation_underwriting/pages/AmendPolicy.vue";
+import ImportPolicy from "@/features/health/quotation_underwriting/pages/importPolicy.vue";
+import InstitutionContractDetail from "@/features/health/quotation_underwriting/pages/InstitutionContractDetail.vue";
+import InstitutionContractIndex from "@/features/health/quotation_underwriting/pages/InstitutionContractIndex.vue";
+import InstitutionCoverage from "@/features/health/quotation_underwriting/pages/InstitutionCoverage.vue";
+import InstitutionsInsuredPersons from "@/features/health/quotation_underwriting/pages/InstitutionsInsuredPersons.vue";
+import IssuedPolicy from "@/features/health/quotation_underwriting/pages/IssuedPolicy.vue";
+import UnderwritingIndex from "@/features/health/quotation_underwriting/pages/UnderwritingIndex.vue";
+import InstitutionContracts from "@/features/health/quotation_underwriting/pages/InstitutionContracts.vue";
+import Insured from "@/features/health/insured_persons/pages/Insured.vue";
+import InsuredDetails from "@/features/health/insured_persons/pages/insuredDetails.vue";
+import Coverages from "@/features/health/product_settings/pages/Coverages.vue";
+import InstitutionContractswithIssued from "@/features/health/quotation_underwriting/pages/InstitutionContractswithIssued.vue";
+import AddProviderForInstitution from "@/features/health/providers/pages/AddProviderForInstitution.vue";
+import RemoveCatgorieServices from '@/features/health/providers/pages/removeCatgorieServices.vue';
+import AddInstitution from "@/features/health/institutions/pages/AddInstitution.vue";
+import QuotationInsured from '@/features/health/insured_persons/pages/quotationInsured.vue';
+import StageExclusion from '@/features/health/quotation/pages/StageExclusion.vue';
 
 export default [
   {

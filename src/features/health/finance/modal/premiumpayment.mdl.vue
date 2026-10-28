@@ -7,7 +7,7 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { computed, reactive, watch, ref, onMounted, nextTick } from "vue";
-import { paypremium } from "@/features/finance/api/FinanceApi";
+import { paypremium } from "@/features/health/finance/api/FinanceApi";
 
 const props = defineProps({
   data: Object,

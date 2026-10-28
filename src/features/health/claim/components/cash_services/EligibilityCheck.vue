@@ -2,9 +2,9 @@
 import { ref, reactive, computed, watch } from 'vue';
 import Button from '@/components/Button.vue';
 import EmployeeTable from './EmployeeTable.vue';
-import { getActiveInstitutions } from '@/features/institutions/api/institutionApi';
-import { getInstitutionContracts } from '@/features/underwriting/api/underwritingApi';
-import { searchActiveInsuredByContract } from '@/features/insured_persons/api/insuredPersonsApi';
+import { getActiveInstitutions } from '@/features/health/institutions/api/institutionApi';
+import { getInstitutionContracts } from '@/features/health/underwriting/api/underwritingApi';
+import { searchActiveInsuredByContract } from '@/features/health/insured_persons/api/insuredPersonsApi';
 
 // Format profile image source to handle both URLs and base64
 const formatImageSource = (profile) => {

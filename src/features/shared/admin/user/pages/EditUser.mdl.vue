@@ -8,7 +8,7 @@ import { updateUserById, getUserById } from "../Api/UserApi";
 import { useUsers } from "../store/userStore";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from '@/toast/store/toast';
-import { institutions } from "../../../institutions/store/userInstitutionsStore";
+import { institutions } from "@/features/health/institutions/store/userInstitutionsStore";
 import { refreshPrivileges } from "@/scripts/privilegeRefresh";
 import { useAuthStore } from "@/stores/auth";
 

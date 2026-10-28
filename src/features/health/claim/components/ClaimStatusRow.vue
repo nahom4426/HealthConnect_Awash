@@ -5,7 +5,7 @@ import icons from "@/utils/icons";
 import { onUnmounted, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { toasted } from '@/utils/utils';
-import { approveContractStatus } from '@/features/provider_contracts/api/contractApi';
+import { approveContractStatus } from '@/features/health/provider_contracts/api/contractApi';
 import { useProcessClaimByInstitutionBatch } from '../store/processClaimByInstitutionBatchStore';
 
 const router = useRouter();

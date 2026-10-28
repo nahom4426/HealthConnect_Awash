@@ -7,12 +7,12 @@ import Table from "@/components/Table.vue";
 import datePicker from "@/components/datePicker.vue";
 import { usePagination } from "@/composables/usePagination";
 import icons from "@/utils/icons";
-import { getAlreadyMappedActiveProviders } from "@/features/providers/api/providerApi";
+import { getAlreadyMappedActiveProviders } from "@/features/health/providers/api/providerApi";
 import {
   getPackageDropdown,
   getEligiblePackage,
-} from "@/features/product_settings/api/coverageApi";
-import { createCashServiceProvided, updateServiceProvided } from "@/features/claim/api/claimApi";
+} from "@/features/health/product_settings/api/coverageApi";
+import { createCashServiceProvided, updateServiceProvided } from "@/features/health/claim/api/claimApi";
 import { formatCurrency, toasted } from "@/utils/utils";
 
 const emit = defineEmits(["submitted"]);

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
-import PremiumReceiptDataProvider from "@/features/finance/components/PremiumReceiptDataProvider.vue";
-import PremiumReceiptRow from "@/features/finance/components/PremiumReceiptRow.vue";
+import PremiumReceiptDataProvider from "@/features/health/finance/components/PremiumReceiptDataProvider.vue";
+import PremiumReceiptRow from "@/features/health/finance/components/PremiumReceiptRow.vue";
 import { openModal } from "@customizer/modal-x";
 import { ref } from "vue";
 

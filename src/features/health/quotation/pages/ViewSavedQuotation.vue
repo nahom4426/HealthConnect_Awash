@@ -3,10 +3,10 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import QuotationForm from "../form/QuotationForm.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import { onMounted, ref, computed } from "vue";
-import { getQuotationById, savedIssueQuotation, saveSavedQuotation, acceptQuotation } from "@/features/quotation/api/quotationApi";
+import { getQuotationById, savedIssueQuotation, saveSavedQuotation, acceptQuotation } from "@/features/health/quotation/api/quotationApi";
 import { useRoute, useRouter } from "vue-router";
-import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
-import QuotationCreationDataProvider from "@/features/quotation/components/QuotationCreationDataProvider.vue";
+import SingleInstitutionDataProvider from "@/features/health/institutions/components/SingleInstitutionDataProvider.vue";
+import QuotationCreationDataProvider from "@/features/health/quotation/components/QuotationCreationDataProvider.vue";
 import { toasted } from "@/utils/utils";
 
 const showInstitution = ref(false)

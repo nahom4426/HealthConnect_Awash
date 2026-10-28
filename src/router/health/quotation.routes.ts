@@ -1,16 +1,16 @@
-import AcceptedQuotations from "@/features/quotation/pages/AcceptedQuotations.vue";
-import CreateNewQuotaions from "@/features/quotation/pages/CreateNewQuotaions.vue";
-import IssuedQuotaions from "@/features/quotation/pages/IssuedQuotaions.vue";
-import NewQuotation from "@/features/quotation/pages/NewQuotation.vue";
-import QuotationIndex from "@/features/quotation/pages/QuotationIndex.vue";
-import SavedQuotations from "@/features/quotation/pages/SavedQuotations.vue";
-import EditQuotation from "@/features/quotation/pages/EditQuotation.vue";
-import ViewIssuedQuotation from "@/features/quotation/pages/ViewIssuedQuotation.vue";
-import ViewAcceptedQuotation from "@/features/quotation/pages/ViewAcceptedQuotation.vue";
-import ViewSavedQuotation from "@/features/quotation/pages/ViewSavedQuotation.vue";
-import PaidQuotations from "@/features/quotation/pages/PaidQuotations.vue";
-import InclusionCreate from "@/features/quotation/pages/InclusionCreate.vue";
-import Inclusion from "@/features/quotation/pages/Inclusion.vue";
+import AcceptedQuotations from "@/features/health/quotation/pages/AcceptedQuotations.vue";
+import CreateNewQuotaions from "@/features/health/quotation/pages/CreateNewQuotaions.vue";
+import IssuedQuotaions from "@/features/health/quotation/pages/IssuedQuotaions.vue";
+import NewQuotation from "@/features/health/quotation/pages/NewQuotation.vue";
+import QuotationIndex from "@/features/health/quotation/pages/QuotationIndex.vue";
+import SavedQuotations from "@/features/health/quotation/pages/SavedQuotations.vue";
+import EditQuotation from "@/features/health/quotation/pages/EditQuotation.vue";
+import ViewIssuedQuotation from "@/features/health/quotation/pages/ViewIssuedQuotation.vue";
+import ViewAcceptedQuotation from "@/features/health/quotation/pages/ViewAcceptedQuotation.vue";
+import ViewSavedQuotation from "@/features/health/quotation/pages/ViewSavedQuotation.vue";
+import PaidQuotations from "@/features/health/quotation/pages/PaidQuotations.vue";
+import InclusionCreate from "@/features/health/quotation/pages/InclusionCreate.vue";
+import Inclusion from "@/features/health/quotation/pages/Inclusion.vue";
 
 export default [
 	{

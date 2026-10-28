@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SingleInstitutionDataProvider from '@/features/institutions/components/SingleInstitutionDataProvider.vue';
+import SingleInstitutionDataProvider from '@/features/health/institutions/components/SingleInstitutionDataProvider.vue';
 import PageSkeleton from '@/skeleton/PageSkeleton.vue';
 
 </script>

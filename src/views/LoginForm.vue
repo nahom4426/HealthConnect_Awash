@@ -5,7 +5,7 @@ import { Form } from '@/components/new_form_builder';
 import Input from '@/components/new_form_elements/Input.vue';
 import InputPassword from '@/components/new_form_elements/InputPassword.vue';
 import { useApiRequest } from '@/composables/useApiRequest';
-import { login } from '@/features/auth/authApi';
+import { login } from '@/features/shared/auth/authApi';
 import { useAuthStore } from '@/stores/auth';
 import { toasted } from '@/utils/utils';
 

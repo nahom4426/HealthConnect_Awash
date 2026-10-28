@@ -10,7 +10,7 @@ import MembershipCategoryRow from '../components/MembershipCategoryRow.vue';
 import { useUnderwriting } from '../store/underwritingStore';
 import icons from '@/utils/icons';
 import { getInstitution } from '../api/underwritingApi';
-import ActiveInstitutionDataProvider from '@/features/institutions/components/ActiveInstitutionDataProvider.vue';
+import ActiveInstitutionDataProvider from '@/features/health/institutions/components/ActiveInstitutionDataProvider.vue';
 
 const router = useRouter();
 const route = useRoute();

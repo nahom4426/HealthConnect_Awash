@@ -9,11 +9,11 @@ import Input from "@/components/new_form_elements/Input.vue";
 import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmitButton.vue";
 import { toasted } from "@/utils/utils";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { requestCashClaim } from "@/features/claim/api/cashCreditApi";
+import { requestCashClaim } from "@/features/health/claim/api/cashCreditApi";
 import SearchSelect from "@/components/SearchSelect.vue";
-import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
-import GenerateCashCreditClaimDataProvider from "@/features/claim/components/GenerateCashCreditClaimDataProvider.vue";
-import { useRequestdClaims } from "@/features/claim/store/requestedCreditClaimStore";
+import { getInstitutionsPolicyByStatus } from "@/features/health/institutions/api/institutionApi";
+import GenerateCashCreditClaimDataProvider from "@/features/health/claim/components/GenerateCashCreditClaimDataProvider.vue";
+import { useRequestdClaims } from "@/features/health/claim/store/requestedCreditClaimStore";
 import CreateCashClaimTableRow from "../component/CreateCashClaimTableRow.vue";
 
 const router = useRouter();

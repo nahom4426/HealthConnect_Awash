@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { fetchAllClaims } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchAllClaims } from '@/features/motor/claims/api/digitalChannelApi';
 import RoleSwitcher from '@/components/RoleSwitcher.vue';
 import { useRouter } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';

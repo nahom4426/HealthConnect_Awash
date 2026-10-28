@@ -1,5 +1,5 @@
-import Coverages from "@/features/product_settings/pages/Coverages.vue";
-import ShowRates from "@/features/product_settings/pages/ShowRates.vue";
+import Coverages from "@/features/health/product_settings/pages/Coverages.vue";
+import ShowRates from "@/features/health/product_settings/pages/ShowRates.vue";
 
 export default [
 	{

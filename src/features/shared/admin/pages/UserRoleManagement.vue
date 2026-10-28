@@ -226,7 +226,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { fetchUserRoles, createUserRole, updateUserRole, deleteUserRole } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchUserRoles, createUserRole, updateUserRole, deleteUserRole } from '@/features/motor/claims/api/digitalChannelApi';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 

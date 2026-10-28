@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import DefaultPage from '@/components/DefaultPage.vue';
 import Table from '@/components/Table.vue';
-import InstitutionByStatusDataProvider from '@/features/institutions/components/InstitutionPolicyByStatusDataProvider.vue';
+import InstitutionByStatusDataProvider from '@/features/health/institutions/components/InstitutionPolicyByStatusDataProvider.vue';
 import { secondDateFormat } from '@/utils/utils';
 
 // Use string directly instead of enum

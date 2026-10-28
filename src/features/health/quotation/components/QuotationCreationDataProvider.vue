@@ -1,12 +1,12 @@
 <script setup lang="ts" >
 import { useApiRequest } from '@/composables/useApiRequest';
-import { getAllFamilyLevelPacakages } from '@/features/claim/api/packagesApi';
+import { getAllFamilyLevelPacakages } from '@/features/health/claim/api/packagesApi';
 import { allRequest } from '@/utils/utils';
 import { usePagination } from '@/composables/usePagination';
 import { removeUndefined } from '@/utils/utils';
 import { ref } from 'vue';
 import { watch } from 'vue';
-import { usePackages } from '@/features/claim/store/packagesStore';
+import { usePackages } from '@/features/health/claim/store/packagesStore';
 
 
 const props = defineProps({

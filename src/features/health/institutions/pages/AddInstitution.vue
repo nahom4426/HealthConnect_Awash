@@ -1,12 +1,12 @@
 <script setup>
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
-import InstitutionForm from "@/features/underwriting/form/InstitutionForm.vue";
+import InstitutionForm from "@/features/health/underwriting/form/InstitutionForm.vue";
 import { useForm } from "@/components/new_form_builder/useForm";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
-import { useInstitution } from "@/features/institutions/store/institutionStore";
-import { createInstitution } from "@/features/institutions/api/institutionApi";
+import { useInstitution } from "@/features/health/institutions/store/institutionStore";
+import { createInstitution } from "@/features/health/institutions/api/institutionApi";
 import { useRouter } from "vue-router";
 import { ref } from "vue";
 import { openModal } from "@customizer/modal-x";

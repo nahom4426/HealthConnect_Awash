@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useToast } from "@/toast/store/toast";
-import { getProviders } from "@/features/providers/api/providerApi";
+import { getProviders } from "@/features/health/providers/api/providerApi";
 import icons from "@/utils/icons";
 import { toasted } from '@/utils/utils';
 import ButtonSpinner from '@/components/buttonSpinner.vue';

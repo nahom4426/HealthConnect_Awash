@@ -839,7 +839,7 @@ import {
   rejectProposal,
   fetchProposalPayment,
   issueProposalContract,
-} from '@/features/digitalChannel/api/digitalChannelApi';
+} from '@/features/motor/claims/api/digitalChannelApi';
 import { useRoleContext } from '../composables/useRoleContext';
 import RoleSwitcher from '@/components/RoleSwitcher.vue';
 import { listCarImages, fetchCarImageByUuid } from '@/features/motor/api/motorApi';

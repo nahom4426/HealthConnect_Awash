@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import DefaultPage from "@/components/DefaultPage.vue";
 import { usePagination } from "@/composables/usePagination";
-import { getInstitutionsById } from "@/features/institutions/api/institutionApi";
+import { getInstitutionsById } from "@/features/health/institutions/api/institutionApi";
 import { allRequest, secondDateFormat } from "@/utils/utils";
 import { useRoute } from "vue-router";
 import { Status, type Pagination } from "@/types/interface";
-import { getInstitutionPolicyByStatus } from "@/features/institutions/api/payerInstitutionContractApi";
+import { getInstitutionPolicyByStatus } from "@/features/health/institutions/api/payerInstitutionContractApi";
 import Table from "@/components/Table.vue";
-import type { InstitutionContract } from "@/features/institutions/store/payerInstitutionContractStore";
+import type { InstitutionContract } from "@/features/health/institutions/store/payerInstitutionContractStore";
 import Button from "@/components/Button.vue";
 import icons from "@/utils/icons";
 import type { PropType } from "vue";
-import type { Institution } from "@/features/institutions/store/institutionsStore";
+import type { Institution } from "@/features/health/institutions/store/institutionsStore";
 
 const props = defineProps({
   instituton: {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
 import { useForm } from '@/components/new_form_builder/useForm';
-import InstitutionForm from '@/features/institutions/form/InstitutionForm.vue';
+import InstitutionForm from '@/features/health/institutions/form/InstitutionForm.vue';
 
 const { submit } = useForm('institution-form')
 </script>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePagination } from "@/composables/usePagination";
 import { watch, reactive } from "vue";
-import { getQuotationsByStatus } from "@/features/quotation/api/quotationApi";
+import { getQuotationsByStatus } from "@/features/health/quotation/api/quotationApi";
 
 const props = withDefaults(defineProps<{ auto?: boolean; status?: string; search?: string }>(), {
   auto: true,

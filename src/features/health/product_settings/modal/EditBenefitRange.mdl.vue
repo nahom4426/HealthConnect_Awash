@@ -10,7 +10,7 @@ import { ref } from 'vue';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { toasted } from '@/utils/utils';
 import { Plan, allMemberTYpes } from '@/types/interface';
-import { updateBenefitRange } from '@/features/product_settings/api/benefitRangeApi';
+import { updateBenefitRange } from '@/features/health/product_settings/api/benefitRangeApi';
 
 const props = defineProps({
   data: {

@@ -1,13 +1,13 @@
 
-import ActiveContracts from "@/features/provider_contracts/pages/ActiveContracts.vue";
-import ActiveProviderContractIndex from "@/features/provider_contracts/pages/ActiveProviderContractIndex.vue";
-import CreateContract from "@/features/provider_contracts/pages/CreateContract.vue";
-import EditContract from "@/features/provider_contracts/pages/EditContract.vue";
-import ExpiredContract from "@/features/provider_contracts/pages/ExpiredContracts.vue";
-import PendingContracts from "@/features/provider_contracts/pages/PendingContracts.vue";
-import ProviderContractIndex from "@/features/provider_contracts/pages/ProviderContractIndex.vue";
-import SuspendedContracts from "@/features/provider_contracts/pages/SuspendedContracts.vue";
-import service from "@/features/provider_contracts/service/pages/sevice.vue";
+import ActiveContracts from "@/features/health/provider_contracts/pages/ActiveContracts.vue";
+import ActiveProviderContractIndex from "@/features/health/provider_contracts/pages/ActiveProviderContractIndex.vue";
+import CreateContract from "@/features/health/provider_contracts/pages/CreateContract.vue";
+import EditContract from "@/features/health/provider_contracts/pages/EditContract.vue";
+import ExpiredContract from "@/features/health/provider_contracts/pages/ExpiredContracts.vue";
+import PendingContracts from "@/features/health/provider_contracts/pages/PendingContracts.vue";
+import ProviderContractIndex from "@/features/health/provider_contracts/pages/ProviderContractIndex.vue";
+import SuspendedContracts from "@/features/health/provider_contracts/pages/SuspendedContracts.vue";
+import service from "@/features/health/provider_contracts/service/pages/sevice.vue";
 export default [
 	{
 		path: '/create_contract',

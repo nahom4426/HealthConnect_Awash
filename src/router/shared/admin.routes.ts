@@ -1,16 +1,16 @@
 import { RouterView } from "vue-router";
-import Privileges from "@/features/admin/privilege/pages/Privileges.vue";
-import AddPrivilege from "@/features/admin/privilege/pages/AddPrivilege.vue";
-import EditPrivilege from "@/features/admin/privilege/pages/EditPrivilege.vue";
-import Role from "@/features/admin/role/pages/Role.vue";
-import AddRole from "@/features/admin/role/pages/AddRole.vue";
-import EditRole from "@/features/admin/role/pages/EditRole.vue";
-import RoleDetail from "@/features/admin/role/pages/RoleDetail.vue";
-import Users from "@/features/admin/user/pages/Users.vue";
-import AddUser from "@/features/admin/user/pages/AddUser.mdl.vue";
-import EditUser from "@/features/admin/user/pages/EditUser.vue";
-import UserDetail from "@/features/admin/user/pages/UserDetail.vue";
-import PrivilegeDetail from "@/features/admin/privilege/pages/PrivilegeDetail.vue";
+import Privileges from "@/features/shared/admin/privilege/pages/Privileges.vue";
+import AddPrivilege from "@/features/shared/admin/privilege/pages/AddPrivilege.vue";
+import EditPrivilege from "@/features/shared/admin/privilege/pages/EditPrivilege.vue";
+import Role from "@/features/shared/admin/role/pages/Role.vue";
+import AddRole from "@/features/shared/admin/role/pages/AddRole.vue";
+import EditRole from "@/features/shared/admin/role/pages/EditRole.vue";
+import RoleDetail from "@/features/shared/admin/role/pages/RoleDetail.vue";
+import Users from "@/features/shared/admin/user/pages/Users.vue";
+import AddUser from "@/features/shared/admin/user/pages/AddUser.mdl.vue";
+import EditUser from "@/features/shared/admin/user/pages/EditUser.vue";
+import UserDetail from "@/features/shared/admin/user/pages/UserDetail.vue";
+import PrivilegeDetail from "@/features/shared/admin/privilege/pages/PrivilegeDetail.vue";
 
 export default [
   // Privileges routes
@@ -105,7 +105,7 @@ export default [
   {
     path: '/user_detail/:userUuid',
     name: 'User Detail',
-    component: () => import('@/features/admin/user/pages/UserDetail.vue'),
+    component: () => import('@/features/shared/admin/user/pages/UserDetail.vue'),
     meta: { requiresAuth: true, permissions: ["read_user"] },
   },
   
@@ -119,7 +119,7 @@ export default [
   {
     path: '/admin/user-roles',
     name: 'Standard User & Privilege Control',
-    component: () => import('@/features/admin/pages/UserRoleManagement.vue'),
+    component: () => import('@/features/shared/admin/pages/UserRoleManagement.vue'),
     meta: { requiresAuth: false }
   }
 ];

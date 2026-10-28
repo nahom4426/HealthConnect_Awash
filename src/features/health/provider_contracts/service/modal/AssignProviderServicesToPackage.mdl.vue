@@ -9,8 +9,8 @@ import { ref, computed, watch } from "vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from "@/toast/store/toast";
 import { toasted } from "@/utils/utils";
-import { getAllServices } from "@/features/provider_contracts/service/api/serviceApi";
-import { addEligibleServices, getEligiblePackage } from "@/features/product_settings/api/coverageApi";
+import { getAllServices } from "@/features/health/provider_contracts/service/api/serviceApi";
+import { addEligibleServices, getEligiblePackage } from "@/features/health/product_settings/api/coverageApi";
 
 const props = defineProps({
   data: {

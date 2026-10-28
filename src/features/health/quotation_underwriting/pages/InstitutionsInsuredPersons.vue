@@ -5,13 +5,13 @@ import { allRequest, secondDateFormat } from "@/utils/utils";
 import { useRoute } from "vue-router";
 import  { Status, type InsuredPerson, type Pagination } from "@/types/interface";
 import Table from "@/components/Table.vue";
-import type { InstitutionContract } from "@/features/institutions/store/payerInstitutionContractStore";
+import type { InstitutionContract } from "@/features/health/institutions/store/payerInstitutionContractStore";
 import Button from "@/components/Button.vue";
 import icons from "@/utils/icons";
-import { institutionCoverage } from "@/features/insured_service/insuredServiceApi";
-import type { Institution } from "@/features/institutions/store/institutionsStore";
+import { institutionCoverage } from "@/features/health/insured_service/insuredServiceApi";
+import type { Institution } from "@/features/health/institutions/store/institutionsStore";
 import type { PropType } from "vue";
-import { getInsuredByContractId } from "@/features/insured_persons/api/insuredPersonsApi";
+import { getInsuredByContractId } from "@/features/health/insured_persons/api/insuredPersonsApi";
 import { openModal } from '@customizer/modal-x'
 
 const props = defineProps({

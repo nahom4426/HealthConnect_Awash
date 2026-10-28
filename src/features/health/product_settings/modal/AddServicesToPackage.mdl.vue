@@ -1,7 +1,7 @@
 <script setup>
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
-import ServiceListDataProvider from "@/features/provider_contracts/service/components/ServiceListDataProvider.vue";
+import ServiceListDataProvider from "@/features/health/provider_contracts/service/components/ServiceListDataProvider.vue";
 import { ref } from "vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { addEligibleServices } from "../api/coverageApi";

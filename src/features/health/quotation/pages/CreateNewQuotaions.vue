@@ -1,11 +1,11 @@
 <script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
-import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
+import SingleInstitutionDataProvider from "@/features/health/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationForm from "../form/QuotationForm.vue";
 import QuotationCreationDataProvider from "../components/QuotationCreationDataProvider.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import { ref, computed, watch } from "vue";
-import { saveQuotationDraft, issueQuotation } from "@/features/quotation/api/quotationApi";
+import { saveQuotationDraft, issueQuotation } from "@/features/health/quotation/api/quotationApi";
 import { useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 import { useApiRequest } from "@/composables/useApiRequest";

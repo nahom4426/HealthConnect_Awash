@@ -2,7 +2,7 @@
 import { defineProps, onMounted, onUnmounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { openModal } from '@customizer/modal-x';
-import { useProviders } from "@/features/providers/store/providersStore";
+import { useProviders } from "@/features/health/providers/store/providersStore";
 import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
 import { changeProviderStatus } from '../api/providerApi';

@@ -2,7 +2,7 @@
 import Button from '@/components/Button.vue';
 import DefaultPage from '@/components/DefaultPage.vue';
 import Table from '@/components/Table.vue';
-import InstitutionsDataProvider from '@/features/institutions/components/InstitutionContractStatusDataProvider.vue';
+import InstitutionsDataProvider from '@/features/health/institutions/components/InstitutionContractStatusDataProvider.vue';
 import { secondDateFormat } from '@/utils/utils';
 import { openModal } from '@customizer/modal-x'
 </script>

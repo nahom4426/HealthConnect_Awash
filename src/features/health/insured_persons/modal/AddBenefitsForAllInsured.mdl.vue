@@ -8,7 +8,7 @@ import Button from "@/components/Button.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import PackageSelector from "@/components/PackageSelector.vue";
 import { toasted } from '@/utils/utils';
-import { createBenefitsForAllInsured } from '@/features/product_settings/api/coverageApi';
+import { createBenefitsForAllInsured } from '@/features/health/product_settings/api/coverageApi';
 import { useRoute } from 'vue-router';
 
 const apiRequest = useApiRequest();

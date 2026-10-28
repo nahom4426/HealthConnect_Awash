@@ -5,12 +5,12 @@ import QuotationForm from "../form/QuotationForm.vue";
 import quotationDataProviderByStatus from "../components/quotationDataProviderByStatus.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import { computed, onMounted, ref } from "vue";
-import { getQuotationById, saveQuotationDraft, issueQuotation, saveSavedQuotation, acceptQuotation, savedIssueQuotation, downloadQuotationAttachment, viewQuotationAttachment } from "@/features/quotation/api/quotationApi";
+import { getQuotationById, saveQuotationDraft, issueQuotation, saveSavedQuotation, acceptQuotation, savedIssueQuotation, downloadQuotationAttachment, viewQuotationAttachment } from "@/features/health/quotation/api/quotationApi";
 import { useRoute, useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 import Button from "@/components/Button.vue";
-import SingleInstitutionDataProvider from "@/features/institutions/components/SingleInstitutionDataProvider.vue";
-import QuotationCreationDataProvider from "@/features/quotation/components/QuotationCreationDataProvider.vue";
+import SingleInstitutionDataProvider from "@/features/health/institutions/components/SingleInstitutionDataProvider.vue";
+import QuotationCreationDataProvider from "@/features/health/quotation/components/QuotationCreationDataProvider.vue";
 
 const showInstitution = ref(false)
 const showMore = ref(true)

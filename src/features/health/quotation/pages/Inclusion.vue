@@ -3,8 +3,8 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
-import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
-import InclusionRowCom from "@/features/quotation/components/InclusionRow.vue";
+import QuotationDataProviderByStatus from "@/features/health/quotation/components/quotationDataProviderByStatus.vue";
+import InclusionRowCom from "@/features/health/quotation/components/InclusionRow.vue";
 
 const router = useRouter()
 const search = ref("")

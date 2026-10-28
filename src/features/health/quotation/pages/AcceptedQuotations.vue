@@ -3,8 +3,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
-import QuotationDataProviderByStatus from "@/features/quotation/components/quotationDataProviderByStatus.vue";
-import AcceptedQuotationRowCom from "@/features/quotation/components/AcceptedQuotationRow.vue";
+import QuotationDataProviderByStatus from "@/features/health/quotation/components/quotationDataProviderByStatus.vue";
+import AcceptedQuotationRowCom from "@/features/health/quotation/components/AcceptedQuotationRow.vue";
 
 const router = useRouter()
 const search = ref("")

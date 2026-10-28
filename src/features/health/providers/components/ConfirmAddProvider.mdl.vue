@@ -5,7 +5,7 @@ import Button from "@/components/Button.vue";
 import { closeModal } from "@customizer/modal-x";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from '@/toast/store/toast';
-import { mapContracts } from '@/features/providers/api/providerApi'; // Adjust import path as needed
+import { mapContracts } from '@/features/health/providers/api/providerApi'; // Adjust import path as needed
 import icons from "@/utils/icons";
 import { toasted } from "@/utils/utils";
 

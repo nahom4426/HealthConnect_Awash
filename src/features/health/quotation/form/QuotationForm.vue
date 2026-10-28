@@ -7,8 +7,8 @@ import {
   Plan,
 } from "@/types/interface";
 import { formatCurrency, formatNumber, genId, generateUUID } from "@/utils/utils"; 
-import { getPackageRate } from "@/features/quotation/api/quotationApi";
-import { getPackageRatesPerCover } from "@/features/product_settings/api/benefitRangeApi";
+import { getPackageRate } from "@/features/health/quotation/api/quotationApi";
+import { getPackageRatesPerCover } from "@/features/health/product_settings/api/benefitRangeApi";
 
 // ── helpers ─────────────────────────────────────────────────────
 function localNormalizeDescription(raw) {

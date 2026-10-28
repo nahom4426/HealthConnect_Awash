@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/auth";
 
-import { getUserById } from "@/features/admin/user/Api/UserApi.js";
+import { getUserById } from "@/features/shared/admin/user/Api/UserApi.js";
 
 
 

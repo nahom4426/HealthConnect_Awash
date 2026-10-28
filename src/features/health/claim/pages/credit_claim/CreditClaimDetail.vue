@@ -4,8 +4,8 @@ import Button from '@/components/Button.vue';
 import { formatCurrency, secondDateFormat, toasted } from '@/utils/utils';
 import { getAttachmentUrl } from '../../api/claimApi';
 import { openModal } from '@customizer/modal-x';
-import { getPackages } from '@/features/product_settings/api/coverageApi';
-import { getAuthorization } from '@/features/authorization/api/authorizationApi';
+import { getPackages } from '@/features/health/product_settings/api/coverageApi';
+import { getAuthorization } from '@/features/health/authorization/api/authorizationApi';
 // import AttachmentViewer from '../../components/modals/AttachmentViewer.mdl.vue';
 
 // ✅ Accept row as a prop

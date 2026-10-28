@@ -4,7 +4,7 @@ import { useModuleStore, MODULES } from '@/stores/moduleStore';
 import { useRouter, useRoute } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';
 import { useLanguageStore } from '@/stores/languageStore';
-import { fetchClaimsByModule } from '@/features/digitalChannel/api/digitalChannelApi';
+import { fetchClaimsByModule } from '@/features/motor/claims/api/digitalChannelApi';
 
 const moduleStore = useModuleStore();
 const router = useRouter();

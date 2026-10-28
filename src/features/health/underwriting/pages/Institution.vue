@@ -6,7 +6,7 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
 import InstitutionStatusRow from '../components/InstitutionStatusRow.vue';
-import ActiveInstitutionDataProvider from '@/features/institutions/components/ActiveInstitutionDataProvider.vue';
+import ActiveInstitutionDataProvider from '@/features/health/institutions/components/ActiveInstitutionDataProvider.vue';
 
 const deleteLoading = ref(false);
 const institutionToDelete = ref("");

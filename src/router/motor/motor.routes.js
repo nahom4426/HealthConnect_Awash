@@ -1,16 +1,16 @@
-import MotorVehicleCategories from "@/features/motor/pages/MotorVehicleCategories.vue";
-import MotorRateConfig from "@/features/motor/pages/MotorRateConfig.vue";
-import MotorCarConfig from "@/features/motor/pages/MotorCarConfig.vue";
-import MotorQuotation from "@/features/motor/pages/MotorQuotation.vue";
-import MotorQuotationDetail from "@/features/motor/pages/MotorQuotationDetail.vue";
-import MotorNewQuotation from "@/features/motor/pages/MotorNewQuotation.vue";
-import MotorProposals from "@/features/motor/pages/MotorProposals.vue";
-import MotorProposalDetail from "@/features/motor/pages/MotorProposalDetail.vue";
-import ClaimsProcess from "@/features/motor/claims/pages/ClaimsProcess.vue";
-import ClaimNew from "@/features/motor/claims/pages/ClaimNew.vue";
-import ClaimDetail from "@/features/motor/claims/pages/ClaimDetail.vue";
-import ClaimManagerDashboard from "@/features/motor/claims/pages/ClaimManagerDashboard.vue";
-import GarageDashboard from "@/features/motor/claims/pages/GarageDashboard.vue";
+const MotorVehicleCategories = () => import("@/features/motor/pages/MotorVehicleCategories.vue");
+const MotorRateConfig = () => import("@/features/motor/pages/MotorRateConfig.vue");
+const MotorCarConfig = () => import("@/features/motor/pages/MotorCarConfig.vue");
+const MotorQuotation = () => import("@/features/motor/pages/MotorQuotation.vue");
+const MotorQuotationDetail = () => import("@/features/motor/pages/MotorQuotationDetail.vue");
+const MotorNewQuotation = () => import("@/features/motor/pages/MotorNewQuotation.vue");
+const MotorProposals = () => import("@/features/motor/pages/MotorProposals.vue");
+const MotorProposalDetail = () => import("@/features/motor/pages/MotorProposalDetail.vue");
+const ClaimsProcess = () => import("@/features/motor/claims/pages/ClaimsProcess.vue");
+const ClaimNew = () => import("@/features/motor/claims/pages/ClaimNew.vue");
+const ClaimDetail = () => import("@/features/motor/claims/pages/ClaimDetail.vue");
+const ClaimManagerDashboard = () => import("@/features/motor/claims/pages/ClaimManagerDashboard.vue");
+const GarageDashboard = () => import("@/features/motor/claims/pages/GarageDashboard.vue");
 
 // The digital-channel claims flow is keyed by :module so the same pages serve
 // every product's /<product>/claims/* nav entries; today only motor's service backs it.

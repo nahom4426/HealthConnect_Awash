@@ -1,10 +1,11 @@
 import MainLayout from "@/layouts/MainLayout.vue";
-import HomeView from "@/views/HomeView.vue";
-import RateConfigHome from "@/views/RateConfig/RateConfigHome.vue";
-import RateConfigForm from "@/views/RateConfig/RateConfigForm.vue";
-import ModuleLauncher from "@/views/ModuleLauncher.vue";
-import ModuleDashboard from "@/views/ModuleDashboard.vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
+// Pages load on demand so the first screen doesn't download the whole app
+const HomeView = () => import("@/views/HomeView.vue");
+const RateConfigHome = () => import("@/views/RateConfig/RateConfigHome.vue");
+const RateConfigForm = () => import("@/views/RateConfig/RateConfigForm.vue");
+const ModuleLauncher = () => import("@/views/ModuleLauncher.vue");
+const ModuleDashboard = () => import("@/views/ModuleDashboard.vue");
 // Health (ClaimConnect)
 import quotationRoutes from "./health/quotation.routes";
 import underwritingRoutes from "./health/underwriting.routes";
@@ -27,7 +28,7 @@ import { formBuilderRoutes } from "./shared/form_builder.routes";
 import Login from "@/views/Login.vue";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useAuthStore } from "@/stores/auth";
-import Profile from "@/features/shared/profile/pages/profile.vue";
+const Profile = () => import("@/features/shared/profile/pages/profile.vue");
 
 function hasManagesQuotationPrivilege() {
   try {
@@ -311,7 +312,6 @@ router.beforeEach((to, from, next) => {
   }
   const user = rawUser;
   const hasValidToken = !!(user?.token || user?.roleCode || user?.email);
-  console.log('Router Auth User state:', user, 'hasValidToken:', hasValidToken);
   const hasRolePrivilege = (privilegeName) => {
     if (!user) return false;
     const privileges = Array.isArray(user?.privileges) ? user.privileges : [];

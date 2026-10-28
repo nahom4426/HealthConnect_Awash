@@ -24,6 +24,52 @@ export default defineConfig(({ mode }) => {
         secure: backendHost.startsWith("https"),
       },
     },
+    // Compile the shell and pages in the background after startup, so the first
+    // visit to a page doesn't wait for Vite to transform it on demand.
+    warmup: {
+      clientFiles: [
+        "./src/layouts/*.vue",
+        "./src/components/**/*.vue",
+        "./src/views/**/*.vue",
+        "./src/features/**/*.vue",
+      ],
+    },
+  },
+  // Pre-bundle every library up front. Otherwise the first page that imports one makes
+  // Vite re-optimize and force a full page reload mid-navigation.
+  optimizeDeps: {
+    include: [
+      "@customizer/modal-x",
+      "@headlessui/vue",
+      "@iconify/vue",
+      "@jamescoyle/vue-icon",
+      "@mdi/js",
+      "@vueuse/components",
+      "axios",
+      "chart.js",
+      "exceljs",
+      "html2canvas",
+      "jspdf",
+      "jspdf-autotable",
+      "jszip",
+      "uuid",
+      "vee-validate",
+      "vue-toastification",
+      "xlsx",
+    ],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        // Long-lived vendor chunks: they change rarely, so browsers keep them cached across deploys
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (/node_modules\/(vue|@vue|vue-router|pinia)\//.test(id)) return "vendor-vue";
+          if (/node_modules\/(chart\.js|@kurkle)\//.test(id)) return "vendor-chart";
+          if (/node_modules\/(axios|@customizer)\//.test(id)) return "vendor-core";
+        },
+      },
+    },
   },
   resolve: {
     alias: {

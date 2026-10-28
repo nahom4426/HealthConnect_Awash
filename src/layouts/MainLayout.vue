@@ -1,6 +1,6 @@
 <script setup>
 import NavBar from "@/components/NavBar.vue";
-import HomeScreen from "@/components/HomeScreen.vue";
+import { prefetchRoutesIdle } from "@/router/prefetch";
 import NotificationCenter from "@/components/NotificationCenter.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
@@ -16,8 +16,11 @@ import liabilityNavs from "@/features/liability/navs.js";
 import burglaryNavs from "@/features/burglary/navs.js";
 import imageSrc from "@/assets/img/profile.png";
 
-import { computed, ref } from "vue";
+import { computed, defineAsyncComponent, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
+// Only shown on /home, so keep it out of the shell bundle
+const HomeScreen = defineAsyncComponent(() => import("@/components/HomeScreen.vue"));
 
 const authStore = useAuthStore();
 const moduleStore = useModuleStore();
@@ -138,6 +141,9 @@ const filteredNavs = computed(() => {
     return true;
   });
 });
+
+// Once the shell is idle, fetch the pages in this module's sidebar so clicking a nav item is instant
+watch(filteredNavs, (navs) => prefetchRoutesIdle(router, navs), { immediate: true });
 
 // Show HomeScreen launcher on /home
 const isHomePage = computed(() => route.path === "/home");
@@ -391,8 +397,12 @@ const isModuleSelect = computed(() => route.path === "/module-select");
 }
 
 /* Page transition */
-.page-fade-enter-active,
-.page-fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.page-fade-enter-from   { opacity: 0; transform: translateX(8px); }
-.page-fade-leave-to     { opacity: 0; transform: translateX(-4px); }
+/* out-in waits for the leave, so leave instantly and only animate the incoming page */
+.page-fade-enter-active { transition: opacity 0.14s ease-out, transform 0.14s ease-out; }
+.page-fade-leave-active { transition: none; }
+.page-fade-enter-from   { opacity: 0; transform: translateY(4px); }
+.page-fade-leave-to     { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .page-fade-enter-active { transition: none; }
+}
 </style>

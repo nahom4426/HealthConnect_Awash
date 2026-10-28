@@ -32,5 +32,13 @@ const lifeNavs = [
       { path: '/life/reinsurance/medical-tests', name: 'Medical Tests' },
     ],
   },
+  {
+    name: 'Underwriting',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><path d="M9 11h6M9 15h4"/></svg>`,
+    navs: [
+      { path: '/life/underwriting/questions', name: 'Questionnaire' },
+      { path: '/life/underwriting/answers', name: 'Answer Library' },
+    ],
+  },
 ];
 export default lifeNavs;

@@ -4,7 +4,7 @@
 import { PolicyStatus, RecordStatus } from "../constants/statuses";
 
 /**
- * @typedef {{ key: string, label: string, type: 'int'|'decimal'|'status', min?: number, statuses?: string[], hint?: string }} RateColumn
+ * @typedef {{ key: string, label: string, type: 'int'|'decimal'|'status'|'select'|'bool'|'text', min?: number, max?: number, maxLength?: number, optional?: boolean, statuses?: string[], hint?: string }} RateColumn
  * @typedef {{ id: string, title: string, idField: string, columns: RateColumn[], uniqueBy: (r: any) => string, uniqueLabel: string }} RateTableSpec
  */
 
@@ -76,6 +76,8 @@ export function normalizeRow(spec, row) {
   for (const c of spec.columns) {
     if (c.type === "status" || c.type === "select") continue;
     const v = row[c.key];
+    if (c.type === "bool") { out[c.key] = !!v; continue; }
+    if (c.type === "text") { out[c.key] = String(v ?? "").trim(); continue; }
     out[c.key] = isBlank(v) ? null : c.type === "int" ? Number.parseInt(v, 10) : Number(v);
   }
   return out;
@@ -101,6 +103,12 @@ export function validateRateRows(spec, rows) {
       }
       if (c.type === "select") {
         if (!c.options.some((o) => o.value === raw[c.key])) set(raw._key, c.key, "Required");
+        continue;
+      }
+      if (c.type === "bool") continue;
+      if (c.type === "text") {
+        if (!r[c.key] && !c.optional) set(raw._key, c.key, "Required");
+        else if (c.maxLength && r[c.key].length > c.maxLength) set(raw._key, c.key, `At most ${c.maxLength} characters`);
         continue;
       }
       const v = r[c.key];

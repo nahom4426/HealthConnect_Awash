@@ -9,6 +9,9 @@ const TreatyWizard = () => import("@/features/life/pages/reinsurance/TreatyWizar
 const TreatyDetail = () => import("@/features/life/pages/reinsurance/TreatyDetail.vue");
 const ReinsurersList = () => import("@/features/life/pages/reinsurance/ReinsurersList.vue");
 const MedicalTests = () => import("@/features/life/pages/reinsurance/MedicalTests.vue");
+const QuestionsList = () => import("@/features/life/pages/underwriting/QuestionsList.vue");
+const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
+const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
 
 const lifeRoutes = [
   {
@@ -64,6 +67,30 @@ const lifeRoutes = [
     name: "life-medical-tests",
     component: MedicalTests,
     meta: { requiresAuth: true, title: "Medical tests" },
+  },
+  {
+    path: "/life/underwriting/questions",
+    name: "life-questions",
+    component: QuestionsList,
+    meta: { requiresAuth: true, title: "Underwriting questionnaire" },
+  },
+  {
+    path: "/life/underwriting/questions/new",
+    name: "life-question-new",
+    component: QuestionEditor,
+    meta: { requiresAuth: true, title: "New question" },
+  },
+  {
+    path: "/life/underwriting/questions/:questionUuid",
+    name: "life-question-edit",
+    component: QuestionEditor,
+    meta: { requiresAuth: true, title: "Edit question" },
+  },
+  {
+    path: "/life/underwriting/answers",
+    name: "life-answer-library",
+    component: AnswerLibrary,
+    meta: { requiresAuth: true, title: "Answer library" },
   },
 ];
 

@@ -57,6 +57,7 @@ const visibleRows = computed(() => {
 
 function cellText(row, c) {
   if (c.type === "select") return c.options.find((o) => o.value === row[c.key])?.label ?? "";
+  if (c.type === "bool") return row[c.key] ? "Yes" : "—";
   return String(row[c.key] ?? "");
 }
 
@@ -67,7 +68,7 @@ const errorFor = (row, key) => (showErrors.value ? validation.value.fieldErrors[
 
 function addRow() {
   const blank = { _key: `n${seq++}` };
-  for (const c of props.spec.columns) blank[c.key] = c.type === "status" ? props.defaultStatus : c.type === "select" ? (c.default ?? "") : "";
+  for (const c of props.spec.columns) blank[c.key] = c.type === "status" ? props.defaultStatus : c.type === "select" ? (c.default ?? "") : c.type === "bool" ? false : "";
   editRows.value.push(blank);
   filter.value = "";
 }
@@ -91,7 +92,8 @@ function collect() {
   showErrors.value = true;
   return { valid: validation.value.valid, rows: toSavePayload(props.spec, editRows.value, [], props.extra, { all: true }) };
 }
-defineExpose({ collect });
+// editRows lets a parent show a live preview of what is being typed
+defineExpose({ collect, editRows });
 
 function pickFile() {
   fileInput.value?.click();
@@ -113,7 +115,7 @@ function onFile(e) {
           <svg class="absolute left-2.5 top-1/2 w-4 h-4 -translate-y-1/2 text-ink-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5L17 17" stroke-linecap="round" /></svg>
           <input
             v-model="filter"
-            :inputmode="spec.columns[0].type === 'select' ? 'text' : 'numeric'"
+            :inputmode="['select', 'text'].includes(spec.columns[0].type) ? 'text' : 'numeric'"
             :placeholder="`Find ${spec.columns[0].label.toLowerCase()}`"
             class="pl-8 pr-3 w-44 h-9 text-sm rounded-lg border outline-none bg-surface-muted border-line focus:border-primary focus:ring-2 focus:ring-primary/15 text-ink"
           />
@@ -168,7 +170,7 @@ function onFile(e) {
           </template>
           <tr v-else-if="!visibleRows.length">
             <td :colspan="spec.columns.length + 1" class="px-6 py-12 text-center">
-              <p class="text-sm font-semibold text-ink">{{ filter ? "No matching rows" : "No rates yet" }}</p>
+              <p class="text-sm font-semibold text-ink">{{ filter ? "No matching rows" : spec.emptyTitle || "No rates yet" }}</p>
               <p v-if="!filter && !readonly" class="mt-1 text-sm text-ink-muted">{{ emptyHint || `Add rows by hand${importable ? " or import an Excel sheet" : ""}.` }}</p>
             </td>
           </tr>
@@ -192,6 +194,22 @@ function onFile(e) {
                   <option value="" disabled>Select…</option>
                   <option v-for="o in c.options" :key="o.value" :value="o.value">{{ o.label }}</option>
                 </select>
+                <p v-if="errorFor(row, c.key)" class="mt-0.5 text-xs text-error">{{ errorFor(row, c.key) }}</p>
+              </div>
+              <label v-else-if="c.type === 'bool'" class="inline-flex gap-2 items-center px-1 h-8 text-sm cursor-pointer text-ink-muted">
+                <input v-model="row[c.key]" type="checkbox" :aria-label="c.label" class="w-4 h-4 rounded accent-primary" />
+                <span class="sr-only">{{ c.label }}</span>
+              </label>
+              <div v-else-if="c.type === 'text'">
+                <input
+                  v-model="row[c.key]"
+                  type="text"
+                  :maxlength="c.maxLength"
+                  :aria-label="c.label"
+                  :aria-invalid="!!errorFor(row, c.key)"
+                  :placeholder="c.optional ? 'Optional' : ''"
+                  :class="['h-8 px-2 text-sm rounded-md border bg-surface text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15', c.wide ? 'w-64' : 'w-40', errorFor(row, c.key) ? 'border-error' : 'border-line']"
+                />
                 <p v-if="errorFor(row, c.key)" class="mt-0.5 text-xs text-error">{{ errorFor(row, c.key) }}</p>
               </div>
               <select

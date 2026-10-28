@@ -180,6 +180,17 @@ underwriting decisions, reinsurance cession bordereau) with Excel export.
     range's existing medical requirements.
 11. New rider rate rows: confirm the intended default status (the UI uses ACTIVE) and whether pricing reads only
     ACTIVE rows.
+12. Questionnaire: document `PossibleAnswerBriefRequest.cascadedQuestion`. The UI treats it as optional follow-up
+    question text shown when that answer is chosen (≤ 250 characters); if it is meant to be another question's UUID,
+    say so and the editor will offer a question picker instead.
+13. Questionnaire: document how `weight` and `critical` are used (how the score is totalled, the threshold that
+    refers a proposal, and whether one critical answer always refers it). The UI only stores them.
+14. Questionnaire: there is no status-only endpoint for questions, so activating or disabling sends the whole
+    `QuestionRequest` back through `PUT /question/{uuid}`. Confirm that `PUT` replaces the question's answer options
+    and ranges with the lists sent (the UI sends the full lists), or add `PUT /question/{uuid}/status`.
+15. Questionnaire: `GET /question` requires `status`, so there is no "all questions" view; and `GET /possible-answer/active`
+    is unpaged (fine for a small library). Say whether deleting a library answer that questions still offer is
+    allowed, and what happens to those questions.
 
 ### G10 · Privileges
 

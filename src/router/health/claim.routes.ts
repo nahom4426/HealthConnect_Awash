@@ -1,43 +1,45 @@
-import CashClaim from "@/features/health/claim/pages/CashClaim.vue";
-import CashServices from "@/features/health/claim/pages/cash_services/CashServices.vue";
-import CompletedClaimss from "@/features/health/claim/pages/completed_claims/CompletedClaims.vue";
-import CreditClaimsIndex from "@/features/health/claim/pages/CreditClaimIndex.vue";
-import ProcessClaims from "@/features/health/claim/pages/process_claim/ProcessClaim.vue";
-import ProcessClaimIndex from "@/features/health/claim/pages/ProcessClaimIndex.vue";
-import CreditClaim from "@/features/health/claim/pages/credit_claim/CreditClaim.vue";
-import CreditClaimDetail from "@/features/health/claim/pages/credit_claim/CreditClaimDetail.vue";
-import ProcessClaimDetail from "@/features/health/claim/pages/process_claim/ProcessClaimDetail.vue";
-import ProcessClaimIndividualDetail from "@/features/health/claim/pages/process_claim/ProcessClaimIndividualDetail.vue";
-import ProcessClaimDetailIndex from "@/features/health/claim/pages/process_claim/ProcessClaimDetailIndex.vue";
-import ProcessCashClaimDetail from "@/features/health/claim/pages/process_claim/ProcessCashClaimDetail.vue";
+const CashClaim = () => import("@/features/health/claim/pages/CashClaim.vue");
+const AddManualServices = () => import("@/features/health/claim/pages/manual_services/AddManualServices.vue");
+const CashServices = () => import("@/features/health/claim/pages/cash_services/CashServices.vue");
+const CompletedClaimss = () => import("@/features/health/claim/pages/completed_claims/CompletedClaims.vue");
+const CreditClaimsIndex = () => import("@/features/health/claim/pages/CreditClaimIndex.vue");
+const ProcessClaims = () => import("@/features/health/claim/pages/process_claim/ProcessClaim.vue");
+const ProcessClaimIndex = () => import("@/features/health/claim/pages/ProcessClaimIndex.vue");
+const CreditClaim = () => import("@/features/health/claim/pages/credit_claim/CreditClaim.vue");
+const CreditClaimDetail = () => import("@/features/health/claim/pages/credit_claim/CreditClaimDetail.vue");
+const ProcessClaimDetail = () => import("@/features/health/claim/pages/process_claim/ProcessClaimDetail.vue");
+const ProcessClaimIndividualDetail = () => import("@/features/health/claim/pages/process_claim/ProcessClaimIndividualDetail.vue");
+const ProcessClaimDetailIndex = () => import("@/features/health/claim/pages/process_claim/ProcessClaimDetailIndex.vue");
+const ProcessCashClaimDetail = () => import("@/features/health/claim/pages/process_claim/ProcessCashClaimDetail.vue");
 // import verifyClaimDetail from "@/features/health/claim/pages/process_claim/verifyClaimDetail.vue";
 // import verifyClaimIndividualDetail from "@/features/health/claim/pages/process_claim/verifyClaimIndividualDetail.vue";
 // import verifyClaimDetailIndex from "@/features/health/claim/pages/process_claim/verifyClaimDetailIndex.vue";
 // import verifyCashClaimDetail from "@/features/health/claim/pages/process_claim/verifyCashClaimDetail.vue";
-import ApproveLevel1ClaimIndex from "@/features/health/claim/pages/VerifyClaimIndex.vue";
-import ApproveLevel1Claim from "@/features/health/claim/pages/verify_claim/VerifyClaim.vue";
-import ApproveLevel1ClaimDetail from "@/features/health/claim/pages/verify_claim/VerifyClaimDeail.vue";
-import ApproveLevel1ClaimIndividualDetail from "@/features/health/claim/pages/verify_claim/VerifyClaimIndividualDetail.vue";
+const ApproveLevel1ClaimIndex = () => import("@/features/health/claim/pages/VerifyClaimIndex.vue");
+const ApproveLevel1Claim = () => import("@/features/health/claim/pages/verify_claim/VerifyClaim.vue");
+const ApproveLevel1ClaimDetail = () => import("@/features/health/claim/pages/verify_claim/VerifyClaimDeail.vue");
+const ApproveLevel1ClaimIndividualDetail = () => import("@/features/health/claim/pages/verify_claim/VerifyClaimIndividualDetail.vue");
 import { RouterView } from "vue-router";
-import ApproveClaims from "@/features/health/claim/pages/approve_claim/ApproveClaims.vue";
-import ApproveClaimDetail from "@/features/health/claim/pages/approve_claim/ApproveClaimDetail.vue";
-import ApproveClaimIndividualDetail from "@/features/health/claim/pages/approve_claim/ApproveClaimIndividualDetail.vue";
-import AuthorizeClaims from "@/features/health/claim/pages/authorize_claims/AuthorizeClaims.vue";
-import AuthorizeClaimsDetail from "@/features/health/claim/pages/authorize_claims/AuthorizeClaimsDetail.vue";
-import AuthorizeClaimIndividualDetail from "@/features/health/claim/pages/authorize_claims/AuthorizeClaimIndividualDetail.vue";
-import CompletedClaimsDetail from "@/features/health/claim/pages/completed_claims/CompletedClaimsDetail.vue";
-import CompletedClaimsIndividualDetail from "@/features/health/claim/pages/completed_claims/CompletedClaimsIndividualDetail.vue";
-import ClaimLevelLimits from "@/features/health/claim/pages/ClaimLevelLimits.vue";
-import CreateCashClaims from "@/features/health/claim/pages/create_cash_claim/pages/createCashClaims.vue";
-import RejectClaimDetailIndex from "@/features/health/claim/pages/reject_claim/RejectClaimDetailIndex.vue";
-import RejectClaimDetail from "@/features/health/claim/pages/reject_claim/RejectClaimDetail.vue";
-import RejectClaimIndividualDetail from "@/features/health/claim/pages/reject_claim/RejectClaimIndividualDetail.vue";
-import RejectClaim from "@/features/health/claim/pages/reject_claim/RejectClaim.vue";
-import verifyClaimDetailIndex from "@/features/health/claim/pages/Verify Claim/VerifyClaimDetailIndex.vue";
-import verifyClaimDetail from "@/features/health/claim/pages/Verify Claim/VerifyClaimDetail.vue";
-import verifyClaimIndividualDetail from "@/features/health/claim/pages/Verify Claim/VerifyClaimIndividualDetail.vue";
-import verifyClaim from "@/features/health/claim/pages/Verify Claim/VerifyClaim.vue";
-import FieldUpdateLogs from "@/features/health/claim/pages/FieldUpdateLogs.vue";
+const ApproveClaims = () => import("@/features/health/claim/pages/approve_claim/ApproveClaims.vue");
+const ApproveClaimDetail = () => import("@/features/health/claim/pages/approve_claim/ApproveClaimDetail.vue");
+const ApproveClaimIndividualDetail = () => import("@/features/health/claim/pages/approve_claim/ApproveClaimIndividualDetail.vue");
+const AuthorizeClaims = () => import("@/features/health/claim/pages/authorize_claims/AuthorizeClaims.vue");
+const AuthorizeClaimsDetail = () => import("@/features/health/claim/pages/authorize_claims/AuthorizeClaimsDetail.vue");
+const AuthorizeClaimIndividualDetail = () => import("@/features/health/claim/pages/authorize_claims/AuthorizeClaimIndividualDetail.vue");
+const CompletedClaimsDetail = () => import("@/features/health/claim/pages/completed_claims/CompletedClaimsDetail.vue");
+const CompletedClaimsIndividualDetail = () => import("@/features/health/claim/pages/completed_claims/CompletedClaimsIndividualDetail.vue");
+const ClaimLevelLimits = () => import("@/features/health/claim/pages/ClaimLevelLimits.vue");
+const CreateCashClaims = () => import("@/features/health/claim/pages/create_cash_claim/pages/createCashClaims.vue");
+const RejectClaimDetailIndex = () => import("@/features/health/claim/pages/reject_claim/RejectClaimDetailIndex.vue");
+const RejectClaimDetail = () => import("@/features/health/claim/pages/reject_claim/RejectClaimDetail.vue");
+const RejectClaimIndividualDetail = () => import("@/features/health/claim/pages/reject_claim/RejectClaimIndividualDetail.vue");
+const RejectClaim = () => import("@/features/health/claim/pages/reject_claim/RejectClaim.vue");
+const verifyClaimDetailIndex = () => import("@/features/health/claim/pages/Verify Claim/VerifyClaimDetailIndex.vue");
+const verifyClaimDetail = () => import("@/features/health/claim/pages/Verify Claim/VerifyClaimDetail.vue");
+const verifyClaimIndividualDetail = () => import("@/features/health/claim/pages/Verify Claim/VerifyClaimIndividualDetail.vue");
+const verifyClaim = () => import("@/features/health/claim/pages/Verify Claim/VerifyClaim.vue");
+const FieldUpdateLogs = () => import("@/features/health/claim/pages/FieldUpdateLogs.vue");
+const PaidClaims = () => import("@/features/health/claim/pages/completed_claims/PaidClaims.vue");
 
 export default [
   {
@@ -47,10 +49,22 @@ export default [
     meta: { requiresAuth: true, permissions: ["Cash Services"] },
   },
   {
+    path: "/cash_claims/manual",
+    name: "Add Services Manually",
+    component: AddManualServices,
+    meta: { requiresAuth: true, permissions: ["Cash Services"] },
+  },
+  {
     path: "/create_cash_claims",
     name: "Create Cash Claims",
     component: CreateCashClaims,
     meta: { requiresAuth: true, permissions: ["Create Cash Claims"] },
+  },
+  {
+    path: "/create_credit_claims",
+    name: "Create Credit Claims",
+    component: CreateCashClaims,
+    meta: { requiresAuth: true, permissions: ["Credit Services"], serviceType: "CREDIT" },
   },
   {
     path: "/cash_services",
@@ -65,8 +79,14 @@ export default [
     children: [
       {
         path: "",
-        name: "Credit claims", // Moved name to child with empty path
+        name: "Credit claims",
         component: CreditClaim,
+      },
+      {
+        path: "manual",
+        name: "Add Credit Services",
+        component: AddManualServices,
+        meta: { serviceType: "CREDIT" },
       },
       {
         path: "detail/:claimUuid",
@@ -82,7 +102,7 @@ export default [
     children: [
       {
         path: "",
-        name: "Process Claims", // Moved name to child with empty path
+        name: "Process Claims",
         component: ProcessClaims,
       },
       {
@@ -91,7 +111,7 @@ export default [
         children: [
           {
             path: "",
-            name: "Process Claim Batch Detail", // Moved name to child with empty path
+            name: "Process Claim Batch Detail",
             component: ProcessClaimDetail,
           },
           {
@@ -107,26 +127,26 @@ export default [
         children: [
           {
             path: "",
-            name: "Process Cash Claim Batch Detail", // Moved name to child with empty path
+            name: "Process Cash Claim Batch Detail",
             component: ProcessCashClaimDetail,
           },
           {
             path: "individual/:claimUuids",
-            name: "Process Cash individual Detail",
+            name: "Process Cash Individual Detail",
             component: ProcessClaimIndividualDetail,
           },
         ],
       },
     ],
   },
-   {
+  {
     path: "/verify_claims",
     component: verifyClaimDetailIndex,
     meta: { requiresAuth: true, permissions: ["Read_claims"] },
     children: [
       {
         path: "",
-        name: "Verify Claims", // Moved name to child with empty path
+        name: "Verify Claims",
         component: verifyClaim,
       },
       {
@@ -135,7 +155,7 @@ export default [
         children: [
           {
             path: "",
-            name: "Verify Claim Batch Detail", // Moved name to child with empty path
+            name: "Verify Claim Batch Detail",
             component: verifyClaimDetail,
           },
           {
@@ -151,26 +171,26 @@ export default [
         children: [
           {
             path: "",
-            name: "Process Cash Claim Batch Detail", // Moved name to child with empty path
+            name: "Verify Cash Claim Batch Detail",
             component: ProcessCashClaimDetail,
           },
           {
             path: "individual/:claimUuids",
-            name: "Process Cash Individual Detail",
+            name: "Verify Cash Individual Detail",
             component: ProcessClaimIndividualDetail,
           },
         ],
       },
     ],
   },
-    {
+  {
     path: "/reject_claims",
     component: RejectClaimDetailIndex,
     meta: { requiresAuth: true, permissions: ["Read_claims"] },
     children: [
       {
         path: "",
-        name: "Rejected Claims", // Moved name to child with empty path
+        name: "Rejected Claims",
         component: RejectClaim,
       },
       {
@@ -179,7 +199,7 @@ export default [
         children: [
           {
             path: "",
-            name: "Reject Claim Batch Detail", // Moved name to child with empty path
+            name: "Reject Claim Batch Detail",
             component: RejectClaimDetail,
           },
           {
@@ -195,12 +215,12 @@ export default [
         children: [
           {
             path: "",
-            name: "Process Cash Claim Batch Detail", // Moved name to child with empty path
+            name: "Reject Cash Claim Batch Detail",
             component: ProcessCashClaimDetail,
           },
           {
             path: "individual/:claimUuids",
-            name: "Process Cash Individual Detail",
+            name: "Reject Cash Individual Detail",
             component: ProcessClaimIndividualDetail,
           },
         ],
@@ -214,7 +234,7 @@ export default [
     children: [
       {
         path: "",
-        name: "Approve Level 1 claims", // Moved name to child with empty path
+        name: "Approve Level 1 claims",
         component: ApproveLevel1Claim,
       },
       {
@@ -223,7 +243,7 @@ export default [
         children: [
           {
             path: "",
-            name: "Approve Level 1 Claim Batch Detail", // Moved name to child with empty path
+            name: "Approve Level 1 Claim Batch Detail",
             component: ApproveLevel1ClaimDetail,
           },
           {
@@ -242,7 +262,7 @@ export default [
     children: [
       {
         path: "",
-        name: "Approve Claims", // Moved name to child with empty path
+        name: "Approve Claims",
         component: ApproveClaims,
       },
       {
@@ -251,7 +271,7 @@ export default [
         children: [
           {
             path: "",
-            name: "Approve Claim Batch Detail", // Moved name to child with empty path
+            name: "Approve Claim Batch Detail",
             component: ApproveClaimDetail,
           },
           {
@@ -270,7 +290,7 @@ export default [
     children: [
       {
         path: "",
-        name: "Authorize Claims", // Moved name to child with empty path
+        name: "Authorize Claims",
         component: AuthorizeClaims,
       },
       {
@@ -279,7 +299,7 @@ export default [
         children: [
           {
             path: "",
-            name: "Authorized Claim Batch Detail", // Moved name to child with empty path
+            name: "Authorized Claim Batch Detail",
             component: AuthorizeClaimsDetail
           },
           {
@@ -292,13 +312,25 @@ export default [
     ],
   },
   {
+    path: "/paid_claims",
+    component: RouterView,
+    meta: { requiresAuth: true, permissions: ["Paid Claims"] },
+    children: [
+      {
+        path: "",
+        name: "Paid Claims", // Moved name to child with empty path
+        component: PaidClaims,
+      }
+    ],
+  },
+  {
     path: "/completed_claims",
     component: RouterView,
     meta: { requiresAuth: true, permissions: ["Read_claims"] },
     children: [
       {
         path: '',
-        name: "Completed Claims", // Moved name to child with empty path
+        name: "Completed Claims",
         component: CompletedClaimss
       },
       {
@@ -307,7 +339,7 @@ export default [
         children: [
           {
             path: '',
-            name: "Completed Claim Batch Detail", // Moved name to child with empty path
+            name: "Completed Claim Batch Detail",
             component: CompletedClaimsDetail
           },
           {

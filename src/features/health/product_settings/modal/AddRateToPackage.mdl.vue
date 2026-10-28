@@ -168,7 +168,7 @@ function handleSubmit() {
       <Form id="add-rate-to-package" class="p-4" @submit.prevent="handleSubmit">
         <div class="flex justify-between items-center pb-4">
           <div>
-            <p class="text-sm text-gray-600">Add all rates then save once.</p>
+            <p class="text-sm text-ink-muted">Add all rates then save once.</p>
           </div>
           <Button type="secondary" size="sm" @click.prevent="addRateRow">
             + Add
@@ -179,7 +179,7 @@ function handleSubmit() {
           <div
             v-for="(row, idx) in rateRows"
             :key="row.familyBenefitRangeUuid || `${row.planType}-${row.familySize}-${idx}`"
-            class="p-4 bg-gray-50 rounded-lg border border-gray-200"
+            class="p-4 bg-surface-muted rounded-lg border border-line"
           >
             <div class="grid grid-cols-2 gap-4">
               <Select
@@ -246,7 +246,7 @@ function handleSubmit() {
             <div v-if="row._isNew" class="flex justify-end pt-3">
               <button
                 type="button"
-                class="text-sm text-red-600 hover:text-red-700"
+                class="text-sm text-error hover:text-error-strong"
                 @click.prevent="removeNewRow(idx)"
               >
                 Remove

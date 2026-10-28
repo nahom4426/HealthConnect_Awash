@@ -1,6 +1,6 @@
 import { onMounted, provide, ref, watch } from "vue";
 
-export function useTablePagination(responseLimit = 25) {
+export function useTablePagination(responseLimit = 100) {
   const page = ref(0);
   const search = ref('');
   const totalPages = ref(1);

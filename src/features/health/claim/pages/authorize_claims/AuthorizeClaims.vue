@@ -1,3 +1,4 @@
+<!-- AuthorizeClaimsIndex.vue - Updated with institution name handling -->
 <script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import ClaimByBatchDataProvider from "../../components/ClaimByBatchDataProvider.vue";
@@ -13,17 +14,20 @@ import { ServiceTypes, Status, PaymentStatus, ClaimLevel } from "@/types/interfa
 import Toogle from "@/components/Toogle.vue";
 import { useAuthorizeClaimByInstitutionBatch } from "../../store/authorizeClaimByInstitutionBatchStore";
 import AuthorizeClaimRow from "../../components/AuthorizeClaimRow.vue";
-const serviceType= ref("CREDIT");
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const serviceType = ref("CREDIT");
 const active = ref(ServiceTypes.creditService);
+
 watch(active, (newActive) => {
   if (newActive === ServiceTypes.creditService) {
     serviceType.value = "CREDIT";
-    console.log('🔄 Switched to CREDIT service');
   } else if (newActive === ServiceTypes.cashService) {
     serviceType.value = "CASH";
-    console.log('🔄 Switched to CASH service');
   }
 });
+
 const institutionUuid = ref();
 const contractUuid = ref();
 const store = useAuthorizeClaimByInstitutionBatch();
@@ -41,6 +45,17 @@ const tableHeaders = computed(() => {
     row: tableRowKeys.value,
   };
 });
+
+function navigateToDetailPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/authorize_claims/detail/${row.claimUuid}`,
+      state: { institutionName },
+      query: { institutionName }
+    });
+  }
+}
 </script>
 
 <template>
@@ -48,7 +63,7 @@ const tableHeaders = computed(() => {
     :store="store"
     :creditService="active == ServiceTypes.creditService"
     :status="PaymentStatus.APPROVED"
-   :params="{
+    :params="{
       providerUuid: contractUuid,
       institutionUuid: institutionUuid,
       serviceType
@@ -88,7 +103,18 @@ const tableHeaders = computed(() => {
         :rows="claims"
         :rowCom="AuthorizeClaimRow"
         placeholder="No claims to authorize"
-      />
+        @row-click="navigateToDetailPage"
+      >
+        <template #row>
+          <AuthorizeClaimRow
+            :rowData="claims"
+            :rowKeys="tableRowKeys"
+            :currentPage="1"
+            :perPage="25"
+            :onRowClick="navigateToDetailPage"
+          />
+        </template>
+      </Table>
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

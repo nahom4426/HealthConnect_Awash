@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { closeModal } from "@customizer/modal-x";
-import Button from "./Button.vue";
-import icons from "@/utils/icons";
 
-const props = defineProps({
+defineProps({
   size: {
     type: String,
     default: "md",
@@ -23,8 +21,6 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-
-  // ✅ ADD THIS
   isEdit: {
     type: Boolean,
     default: false,
@@ -33,35 +29,40 @@ const props = defineProps({
 </script>
 
 <template>
-  <div
-    :class="[$style[size]]"
-    class="flex flex-col justify-between bg-white rounded-md"
-  >
-    <div
-      class="flex justify-between items-center p-2 pr-4 border-b border-text-secondary-clr/30"
-    >
-      <div class="flex gap-4 items-center">
+  <div :class="[$style[size]]" class="flex overflow-hidden flex-col justify-between max-w-full bg-surface">
+    <header class="flex gap-3 justify-between items-center py-3 pr-3 pl-5 border-b border-line shrink-0">
+      <div class="flex gap-2 items-center min-w-0">
         <button
-          @click="() => onGoBack && onGoBack()"
           v-if="goBack"
-          class="grid place-items-center rounded-md border border-text-clr"
+          type="button"
+          class="grid place-items-center -ml-2 w-8 h-8 rounded-lg text-ink-muted hover:bg-surface-muted hover:text-ink"
+          aria-label="Go back"
+          @click="() => onGoBack && onGoBack()"
         >
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 10H4m0 0 5-5m-5 5 5 5" />
+          </svg>
         </button>
-        <p class="p-3 px-4 text-base font-semibold">{{ title }}</p>
+        <h2 class="!px-0 text-base font-semibold truncate text-ink">{{ title }}</h2>
       </div>
-      <div class="flex gap-4 items-center">
-        <slot name="right-actions"></slot>
-        <button v-if="showCloseModal" class="rounded-full border" @click.prevent="closeModal()">
-          <i v-html="icons.close" />
+      <div class="flex gap-2 items-center shrink-0">
+        <slot name="right-actions" />
+        <button
+          v-if="showCloseModal"
+          type="button"
+          class="grid place-items-center w-8 h-8 rounded-lg text-ink-subtle hover:bg-surface-muted hover:text-ink"
+          aria-label="Close"
+          @click.prevent="closeModal()"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="m5 5 10 10M15 5 5 15" />
+          </svg>
         </button>
       </div>
-    </div>
-    <div
-      class="flex overflow-y-auto flex-col flex-1 gap-4 p-4 border-b form-scrollbar border-text-secondary-clr/30"
-      style="max-height: calc(100vh - 6rem);"
-    >
+    </header>
+
+    <div class="flex overflow-y-auto flex-col flex-1 gap-4 p-4 form-scrollbar sm:p-5" style="max-height: calc(100dvh - 6rem)">
       <slot />
-      <!--<ResponseError :error="error" />-->
     </div>
     <slot name="bottom" />
   </div>
@@ -70,59 +71,31 @@ const props = defineProps({
 <style module>
 .md {
   width: 35rem;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
 }
-
 .mdd {
   width: 55rem;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
 }
-
 .lg {
   width: 60rem;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
 }
 .xmd {
   width: 75rem;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
 }
 .xl {
   width: 100%;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
 }
-
 .xs {
   max-width: 80%;
-  max-height: auto;
 }
 </style>
 
 <style>
 .form-layout {
   display: grid;
-}
-
-.form-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #4b5563 #f1f5f9;
-}
-
-.form-scrollbar::-webkit-scrollbar {
-  display: block;
-  width: 6px;
-}
-
-.form-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-.form-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #4b5563;
-  border-radius: 50px;
-}
-
-.form-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #1f2937;
 }
 </style>

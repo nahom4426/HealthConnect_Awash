@@ -1,8 +1,10 @@
+<!-- ClaimStatusRow.vue - Updated with improved institution name handling -->
 <script setup>
 import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
-import { onUnmounted, onMounted } from 'vue';
+import { onUnmounted } from 'vue';
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { toasted } from '@/utils/utils';
 import { approveContractStatus } from '@/features/health/provider_contracts/api/contractApi';
@@ -10,7 +12,6 @@ import { useProcessClaimByInstitutionBatch } from '../store/processClaimByInstit
 
 const router = useRouter();
 const claims = useProcessClaimByInstitutionBatch();
-
 const props = defineProps({
   rowData: {
     type: Array,
@@ -33,14 +34,16 @@ const props = defineProps({
     default: () => {}
   },
   currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 25 }
+  perPage: { type: Number, default: 25 },
+  serviceType: { type: String, default: 'CREDIT' }
 });
 
 const { addToast } = useToast();
 
-// Format date to "Mon DD, YYYY"
+// Format date to "Mon DD YYYY" format
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
+  
   try {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -49,168 +52,287 @@ function formatDate(dateString) {
       year: 'numeric'
     });
   } catch (error) {
-    return 'N/A';
+    console.error('Error formatting date:', error);
+    return 'Invalid Date';
   }
 }
 
-// Generate provider or institution initials for avatar
-function getInitials(name) {
-  if (!name) return 'NY';
-  const parts = name.trim().split(' ');
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-  return name.substring(0, 2).toUpperCase();
-}
+// Enhanced status styling with icons
+function getStatusStyle(status) {
+  const base = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 shadow-sm";
 
-// Get initials background color deterministically
-function getAvatarBg(name) {
-  const colors = [
-    'from-[#03396C] to-[#022B54]', // Standard Navy
-    'from-slate-700 to-slate-900',
-    'from-indigo-700 to-indigo-900',
-    'from-teal-700 to-teal-900',
-    'from-amber-700 to-amber-900'
-  ];
-  if (!name) return colors[0];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % colors.length;
-  return colors[index];
-}
-
-// Status style styling
-function getStatusBadgeClass(status) {
-  const s = status?.toUpperCase();
-  switch (s) {
-    case 'ACTIVE':
-    case 'APPROVED':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200/80 ring-emerald-500/10';
-    case 'PENDING':
-      return 'bg-amber-50 text-amber-800 border-amber-300/80 ring-amber-500/20';
-    case 'REJECTED':
-    case 'SUSPENDED':
-      return 'bg-rose-50 text-rose-700 border-rose-200/80 ring-rose-500/10';
-    case 'COMPLETED':
-      return 'bg-purple-50 text-purple-700 border-purple-200/80 ring-purple-500/10';
+  switch (status?.toUpperCase()) {
+    case "ACTIVE":
+      return `${base} bg-success-soft text-success-strong border border-success/20`;
+    case "PENDING":
+      return `${base} bg-warning-soft text-warning-strong border border-warning/20`;
+    case "PROCESSED":
+      return `${base} bg-purple-50 text-purple-700 border border-purple-200`;
+    case "VERIFIED":
+      return `${base} bg-primary/5 text-primary-hover border border-primary/20`;
+    case "APPROVED":
+      return `${base} bg-sky-50 text-sky-700 border border-sky-200`;
+    case "REJECTED":
+      return `${base} bg-error-soft text-error-strong border border-error/20`;
+    case "COMPLETED":
+      return `${base} bg-primary/5 text-primary-hover border border-primary/20`;
     default:
-      return 'bg-slate-50 text-slate-700 border-slate-200 ring-slate-500/10';
+      return `${base} bg-surface-muted text-ink-muted border border-line`;
   }
 }
 
-function getStatusDotClass(status) {
-  const s = status?.toUpperCase();
-  switch (s) {
-    case 'ACTIVE':
-    case 'APPROVED':
-      return 'bg-emerald-500';
-    case 'PENDING':
-      return 'bg-amber-500 animate-pulse';
-    case 'REJECTED':
-    case 'SUSPENDED':
-      return 'bg-rose-500';
-    case 'COMPLETED':
-      return 'bg-purple-500';
+// Get status icon
+function getStatusIcon(status) {
+  switch (status?.toUpperCase()) {
+    case "ACTIVE":
+      return "✓";
+    case "PENDING":
+      return "⏳";
+    case "PROCESSED":
+      return "🔄";
+    case "VERIFIED":
+      return "✅";
+    case "APPROVED":
+      return "⭐";
+    case "REJECTED":
+      return "❌";
+    case "COMPLETED":
+      return "🎯";
     default:
-      return 'bg-slate-400';
+      return "●";
   }
 }
 
-function handleView(row) {
-  if (props.onView) {
-    props.onView(row);
-  } else {
-    const targetId = row.claimUuid || row.batchCode || '';
-    router.push(`/process_claims/detail/${targetId}`);
-  }
+// Dropdown functions
+function toggleDropdown(event, rowId) {
+  event.stopPropagation();
+  closeAllDropdowns();
+  const dropdown = document.getElementById(`dropdown-${rowId}`);
+  if (dropdown) dropdown.classList.toggle('hidden');
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-menu').forEach(el => {
+    el.classList.add('hidden');
+  });
+}
+
+// Wrapper functions with dropdown close
+function handleViewWithClose(row) {
+  closeAllDropdowns();
+  props.onView(row);
+}
+
+function handleServicesWithClose(row) {
+  closeAllDropdowns();
+  router.push(`/active_contract/services/${row.payerProviderContractUuid}/${row.providerUuid}`);
+}
+
+onMounted(() => {
+  window.addEventListener('click', closeAllDropdowns);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeAllDropdowns);
+});
+
+function handleActivateWithClose(payerProviderContractUuid) {
+  closeAllDropdowns();
+
+  return approveContractStatus(payerProviderContractUuid)
+    .then((res) => {
+      if (res.success) {
+        claims.update(payerProviderContractUuid, { status: 'ACTIVE' });
+        toasted(res.success, 'Contract Activated Successfully', res.error);
+        return true;
+      }
+      return false;
+    })
+    .catch(() => false);
+}
+
+// Get institution name with fallback
+function getInstitutionName(row) {
+  return row.institutionName || row.payerInstitutionName || row.insuredInstitutionName || 'N/A';
 }
 </script>
 
 <template>
   <tr 
     v-for="(row, idx) in rowData" 
-    :key="row.claimUuid || row.batchCode || idx"
-    @click="handleView(row)" 
-    class="bg-white border-b border-slate-100 transition-all duration-150 ease-in-out hover:bg-amber-50/30 cursor-pointer group"
+    :key="idx"
+    @click.self="onRowClick(row)" 
+    class="bg-white border-b transition-all duration-200 ease-in-out hover:bg-surface-muted/80 hover:shadow-sm group"
   >
     <!-- Index -->
-    <td class="p-4 font-semibold text-slate-400 text-xs text-center w-12">
-      {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
-    </td>
-
+    <td class="p-4 font-medium text-ink-subtle text-sm">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+    
     <!-- Dynamic Columns -->
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
-      <!-- Provider / Institution Name Column -->
-      <div v-if="key === 'providerName' || key === 'institutionName'" class="flex items-center gap-3">
-        <div 
-          :class="['w-9 h-9 rounded-xl bg-gradient-to-br text-white font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0', getAvatarBg(row.providerName || row.institutionName)]"
-        >
-          {{ getInitials(row.providerName || row.institutionName) }}
-        </div>
-        <div class="space-y-0.5">
-          <div class="font-bold text-slate-800 text-sm group-hover:text-[#03396C] transition-colors">
-            {{ row.providerName || row.institutionName || 'Unspecified Provider' }}
-          </div>
-          <div class="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
-            <span class="inline-flex items-center gap-1">
-              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" /></svg>
-              Batch: <span class="font-mono text-slate-600 font-semibold">{{ row.batchCode || row.claimCode || 'CLM-BATCH' }}</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Total Amount Column -->
-      <div v-else-if="key === 'totalAmount'" class="flex flex-col">
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/80 w-fit">
-          <span class="text-[10px] font-extrabold text-[#03396C] tracking-wider uppercase">ETB</span>
-          <span class="font-black text-slate-900 text-sm">
-            {{ Number(row.totalAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Contract Period Column -->
-      <div v-else-if="key === 'period'" class="space-y-1 text-slate-600 text-xs">
-        <div class="flex items-center gap-1.5 text-slate-700 font-medium">
-          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-          <span>{{ formatDate(row.claimFromDate || row.beginDate) }}</span>
-          <span class="text-slate-300">→</span>
-          <span>{{ formatDate(row.claimToDate || row.endDate) }}</span>
-        </div>
-      </div>
-
       <!-- Status Column -->
-      <div v-else-if="key === 'claimStatus'" class="flex items-center">
-        <span 
-          :class="[
-            'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border shadow-2xs transition-all ring-1',
-            getStatusBadgeClass(row.claimStatus)
-          ]"
-        >
-          <span :class="['w-2 h-2 rounded-full', getStatusDotClass(row.claimStatus)]"></span>
-          {{ row.claimStatus || 'PENDING' }}
+      <div v-if="key === 'claimStatus'" class="truncate">
+        <span :class="getStatusStyle(row.claimStatus)" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full">
+          <span class="text-xs">{{ getStatusIcon(row.claimStatus) }}</span>
+          {{ row.claimStatus || 'Unknown' }}
         </span>
       </div>
-
-      <!-- General fallback -->
-      <span v-else class="text-xs text-slate-700 font-medium">
-        {{ row[key] || '-' }}
+      
+      <!-- Period Column -->
+      <div v-else-if="key === 'period'" class="space-y-1 text-ink-muted">
+        <div class="flex gap-1.5 items-center text-sm">
+          <span class="text-xs text-ink-subtle">From:</span>
+          <span class="font-medium">{{ formatDate(row.claimFromDate) }}</span>
+        </div>
+        <div class="flex gap-1.5 items-center text-sm">
+          <span class="text-xs text-ink-subtle">To:</span>
+          <span class="font-medium">{{ formatDate(row.claimToDate) }}</span>
+        </div>
+      </div>
+      
+      <!-- Date Columns -->
+      <div v-else-if="key.includes('Date')" class="text-ink-muted text-sm">
+        {{ formatDate(row[key]) }}
+      </div>
+      
+      <!-- Institution Name Column - Enhanced with icon and tooltip -->
+      <div v-else-if="key === 'institutionName'" class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+          {{ getInstitutionName(row).charAt(0) || 'I' }}
+        </div>
+        <div class="flex flex-col">
+          <span class="text-sm font-medium text-ink">{{ getInstitutionName(row) }}</span>
+          <span class="text-xs text-ink-subtle">Institution</span>
+        </div>
+      </div>
+      
+      <!-- Provider Name Column -->
+      <div v-else-if="key === 'providerName'" class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-success to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+          {{ row.providerName?.charAt(0) || 'P' }}
+        </div>
+        <div class="flex flex-col">
+          <span class="text-sm font-medium text-ink">{{ row.providerName || 'N/A' }}</span>
+          <span class="text-xs text-ink-subtle">Provider</span>
+        </div>
+      </div>
+      
+      <!-- Total Amount Column -->
+      <div v-else-if="key === 'totalAmount'" class="flex flex-col">
+        <span class="text-sm font-bold text-ink">${{ row.totalAmount?.toLocaleString() || '0.00' }}</span>
+        <span class="text-xs text-ink-subtle">Total Claim</span>
+      </div>
+      
+      <!-- Default Column -->
+      <span v-else class="text-sm text-ink-muted">
+        {{ row[key] || 'N/A' }}
       </span>
     </td>
-
+    
     <!-- Actions Column -->
-    <td class="p-3 py-4 text-right">
-      <button 
-        type="button"
-        @click.stop="handleView(row)"
-        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#03396C] hover:bg-[#600018] shadow-xs hover:shadow-md transition-all active:scale-95"
-      >
-        <span>Review Batch</span>
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-      </button>
+    <td class="p-3">
+      <div class="flex items-center gap-2">
+        <Button 
+          size="xs" 
+          type="elevated" 
+          class="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-primary to-primary-hover rounded-lg hover:from-primary-hover hover:to-primary-hover transition-all duration-200 shadow-md hover:shadow-lg"
+        >
+          <RouterLink 
+            :to="{
+              path: `/process_claims/detail/${row.claimUuid || ''}`,
+              state: { institutionName: getInstitutionName(row) },
+              query: { institutionName: getInstitutionName(row) }
+            }" 
+            class="flex items-center gap-1.5"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            View Details
+          </RouterLink>
+        </Button>
+        
+        <!-- Batch Code Badge -->
+        <div v-if="row.batchCode" class="px-2 py-1 bg-surface-muted rounded-md text-xs text-ink-muted font-mono border border-line">
+          {{ row.batchCode }}
+        </div>
+      </div>
     </td>
   </tr>
 </template>
+
+<style scoped>
+/* Modern Table Row Styles */
+tr {
+  transition: all 0.2s ease-in-out;
+}
+
+tr:hover {
+  background-color: rgb(var(--surface-muted));
+  transform: scale(1.001);
+}
+
+/* Status Badge Animations */
+.status-badge {
+  transition: all 0.3s ease;
+}
+
+.status-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient Avatars */
+.avatar-gradient {
+  background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-hover)) 100%);
+}
+
+/* Dropdown Styles */
+.dropdown-container {
+  min-width: 80px;
+}
+
+.dropdown-menu {
+  min-width: 150%;
+  transition: all 0.2s ease-out;
+  transform-origin: top right;
+}
+
+.dropdown-menu.hidden {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.dropdown-menu:not(.hidden) {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--surface-muted));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c7cd;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a7ae;
+}
+
+/* Print Styles */
+@media print {
+  tr {
+    break-inside: avoid;
+  }
+}
+</style>

@@ -1,16 +1,18 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
+import { useRoute } from "vue-router";
 import Table from "@/components/Table.vue";
 import InsuredPersonsDataProvider from "../components/InsuredPersonsDataProvider.vue";
 import StatusRow from "../components/InsuredPersonStatusRow.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useInsuredPersonsRefreshStore } from "../store/insuredPersonsRefreshStore";
 
+const route = useRoute();
 const props = defineProps({
   search: String,
   pageContext: {
     type: String,
-    default: 'insured', // 'insured', 'membership', 'amend'
+    default: 'insured',
   },
   showActionButtons: {
     type: Boolean,
@@ -23,7 +25,10 @@ const auth = useAuthStore();
 const institutionId = ref(auth.auth?.user?.payerUuid || "");
 const refreshStore = useInsuredPersonsRefreshStore();
 
-// Listen for refresh triggers
+const hasInstitution = computed(() => {
+  return route.query.hasInstitution || 'true';
+});
+
 watch(() => refreshStore.refreshTrigger, () => {
   if (dataProvider.value) {
     dataProvider.value.refresh();
@@ -42,6 +47,7 @@ const loadMore = () => {
     ref="dataProvider"
     :institutionId="institutionId"
     :search="props.search"
+    :hasInstitution="hasInstitution"
     v-slot="{ insuredMembers, pending, currentPage, itemsPerPage, totalPages, loadingMore, hasMore }"
   >
     <Table
@@ -79,6 +85,7 @@ const loadMore = () => {
           ]"
           :pageContext="props.pageContext"
           :showActionButtons="props.showActionButtons"
+          :hasInstitution="hasInstitution"
         />
       </template>
     </Table>

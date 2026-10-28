@@ -32,8 +32,8 @@ function formatPlanType(planType) {
 function statusClass(status) {
   const base = 'px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full';
   return String(status || '').toUpperCase() === 'ACTIVE'
-    ? `${base} bg-green-100 text-green-800`
-    : `${base} bg-red-100 text-red-800`;
+    ? `${base} bg-success-soft text-success-strong`
+    : `${base} bg-error-soft text-error-strong`;
 }
 
 function handleEdit(row) {
@@ -50,29 +50,29 @@ function handleEdit(row) {
   <tr
     v-for="(row, idx) in rowData"
     :key="row?.familyBenefitRangeUuid || idx"
-    class="hover:bg-gray-50"
+    class="hover:bg-surface-muted"
   >
-    <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+    <td class="px-6 py-4 text-sm font-medium text-ink whitespace-nowrap">
       {{ formatPlanType(row.planType) }}
     </td>
 
-    <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+    <td class="px-6 py-4 text-sm text-ink whitespace-nowrap">
       {{ row.familySize ?? 'N/A' }}
     </td>
 
-    <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+    <td class="px-6 py-4 text-sm text-ink whitespace-nowrap">
       {{ row.minLimit?.toLocaleString?.() || row.minLimit || 'N/A' }}
     </td>
 
-    <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+    <td class="px-6 py-4 text-sm text-ink whitespace-nowrap">
       {{ row.maxLimit?.toLocaleString?.() || row.maxLimit || 'N/A' }}
     </td>
 
-    <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+    <td class="px-6 py-4 text-sm font-medium text-ink whitespace-nowrap">
       {{ row.rate?.toLocaleString?.() || row.rate || 'N/A' }}
     </td>
 
-    <td class="px-6 py-4 text-sm text-gray-900">
+    <td class="px-6 py-4 text-sm text-ink">
       <div class="max-w-xs truncate" :title="row.description">
         {{ row.description || 'N/A' }}
       </div>
@@ -85,7 +85,7 @@ function handleEdit(row) {
     </td>
 
     <td class="px-6 py-4 whitespace-nowrap">
-      <button class="text-blue-600 hover:text-blue-800" type="button" @click.stop="handleEdit(row)">
+      <button class="text-primary hover:text-primary-hover" type="button" @click.stop="handleEdit(row)">
         <i v-html="icons.edit" class="w-5 h-5"></i>
       </button>
     </td>

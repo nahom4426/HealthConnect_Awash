@@ -38,15 +38,15 @@ onMounted(() => {
             refresh: refreshData
           }"
         >
-          <div v-if="error" class="p-2 text-red-600">{{ error }}</div>
+          <div v-if="error" class="p-2 text-error">{{ error }}</div>
           <div v-if="categories.length > 0" class="overflow-x-auto">
             <table class="w-full">
-              <thead class="bg-gray-100 border-b">
+              <thead class="bg-surface-muted border-b">
                 <tr>
-                  <th class="p-4 text-left text-sm font-semibold text-gray-700">#</th>
-                  <th class="p-4 text-left text-sm font-semibold text-gray-700">Category Name</th>
-                  <th class="p-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th class="p-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  <th class="p-4 text-left text-sm font-semibold text-ink-muted">#</th>
+                  <th class="p-4 text-left text-sm font-semibold text-ink-muted">Category Name</th>
+                  <th class="p-4 text-left text-sm font-semibold text-ink-muted">Status</th>
+                  <th class="p-4 text-left text-sm font-semibold text-ink-muted">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -62,11 +62,11 @@ onMounted(() => {
               </tbody>
             </table>
           </div>
-          <div v-else-if="!loading" class="p-8 text-center text-gray-500">
+          <div v-else-if="!loading" class="p-8 text-center text-ink-subtle">
             No categories found
           </div>
           <div v-else class="p-8 text-center">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </CategoryDataProvider>
       </template>

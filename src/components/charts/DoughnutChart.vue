@@ -1,8 +1,10 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { Chart, registerables } from "chart.js";
+import { applyChartDefaults } from "@/config/chartPalette";
 
 Chart.register(...registerables);
+applyChartDefaults();
 
 // Props
 const props = defineProps({
@@ -19,6 +21,12 @@ let chart = null;
 
 onMounted(() => {
   createChart();
+});
+
+// Release the chart.js instance (and its listeners/animation frames) on unmount
+onBeforeUnmount(() => {
+  chart?.destroy();
+  chart = null;
 });
 
 watch(
@@ -41,12 +49,6 @@ function createChart() {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: {
-          padding: 15,
-          font: {
-            size: 12,
-          }
-        }
       }
     }
   };

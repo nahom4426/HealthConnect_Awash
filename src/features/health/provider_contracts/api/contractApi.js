@@ -122,3 +122,33 @@ export function changeContractStatus(providerId, status) {
 export const updatePayerContract = (id, data) => {
   return api.addAuthenticationHeader().put(`${basePath}/${id}`, data);
 };
+
+/**
+ * Get policies (institution contracts) available to be mapped to a provider contract.
+ * GET /claimconnect/payer-institution-contract/policies
+ */
+export const getPolicies = (query = {}) => {
+  return api.addAuthenticationHeader().get('/claimconnect/payer-institution-contract/policies', {
+    params: query,
+  });
+};
+
+export const getInstitutionsForMappingContracts = (payerProviderContractUuid, query = {}) => {
+  return api.addAuthenticationHeader().get('/claimconnect/map_contract/institutions-for-mapping-contracts', {
+    params: {
+      payerProviderContractUuid,
+      ...query
+    },
+  });
+};
+
+/**
+ * Get institutions already mapped to a specific provider contract.
+ * GET /claimconnect/map_contract/institutions-mapped-to-contracts/:payerProviderContractUuid
+ */
+export const getMappedInstitutionsForContract = (payerProviderContractUuid, query = {}) => {
+  return api.addAuthenticationHeader().get(
+    `/claimconnect/map_contract/institutions-mapped-to-contracts/${payerProviderContractUuid}`,
+    { params: query }
+  );
+};

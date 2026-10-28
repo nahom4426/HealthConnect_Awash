@@ -130,7 +130,7 @@ const comments = computed<Comments>(() => {
       <h2 class="col-span-2 font-semibold text-base border-b pb-2">Comments</h2>
       <div :key="key" v-for="key in Object.keys(comments)">
         <p>{{ comments[key].name }}</p>
-        <p class="quote p-2 bg-gray-100 font-base italic">
+        <p class="quote p-2 bg-surface-muted font-base italic">
           {{ comments[key].value }}
         </p>
       </div>

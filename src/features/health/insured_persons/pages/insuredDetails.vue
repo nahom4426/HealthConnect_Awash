@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+  <div class="p-6 min-h-screen bg-gradient-to-br from-surface-muted to-surface-muted">
     <!-- Loading state -->
     <div v-if="loading && !refreshing" class="flex justify-center items-center py-20">
       <div class="w-12 h-12 rounded-full border-4 animate-spin border-primary border-t-primary"></div>
@@ -7,14 +7,14 @@
 
     <!-- Error state -->
     <div v-else-if="error" class="mx-auto max-w-10xl">
-      <div class="p-8 text-center bg-red-50 rounded-2xl border border-red-200">
-        <svg class="mx-auto mb-4 w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="p-8 text-center bg-error-soft rounded-2xl border border-error/20">
+        <svg class="mx-auto mb-4 w-16 h-16 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p class="mb-4 text-lg font-semibold text-red-800">{{ error }}</p>
+        <p class="mb-4 text-lg font-semibold text-error-strong">{{ error }}</p>
         <button
           @click="fetchInsuredData"
-          class="px-6 py-2 font-semibold text-white bg-red-600 rounded-lg transition-colors hover:bg-red-700"
+          class="px-6 py-2 font-semibold text-white bg-error rounded-lg transition-colors hover:bg-error-strong"
         >
           Retry
         </button>
@@ -26,18 +26,18 @@
     <div v-else class="mx-auto max-w-10xl">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-4xl font-bold text-gray-900">Insured Person Details</h1>
-        <p class="mt-2 text-gray-600">Manage insured person and dependent information</p>
+        <h1 class="text-4xl font-bold text-ink">Insured Person Details</h1>
+        <p class="mt-2 text-ink-muted">Manage insured person and dependent information</p>
       </div>
 
       <!-- Tab Navigation -->
-      <div class="flex gap-2 p-1 mb-8 bg-white rounded-2xl border border-gray-100 shadow-lg">
+      <div class="flex gap-2 p-1 mb-8 bg-white rounded-2xl border border-line shadow-lg">
         <button
           @click="activeTab = 'details'"
           :class="`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all ${
             activeTab === 'details'
-              ? 'bg-gradient-to-r from-primary to-blue-700 text-white shadow-lg'
-              : 'text-gray-700 hover:bg-gray-100'
+              ? 'bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg'
+              : 'text-ink-muted hover:bg-surface-muted'
           }`"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,8 +49,8 @@
           @click="activeTab = 'dependents'"
           :class="`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold transition-all ${
             activeTab === 'dependents'
-              ? 'bg-gradient-to-r from-primary to-blue-700 text-white shadow-lg'
-              : 'text-gray-700 hover:bg-gray-100'
+              ? 'bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg'
+              : 'text-ink-muted hover:bg-surface-muted'
           }`"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,7 +61,7 @@
       </div>
 
       <!-- Tab Content -->
-      <div class="p-8 bg-white rounded-2xl border border-gray-100 shadow-lg">
+      <div class="p-8 bg-white rounded-2xl border border-line shadow-lg">
         <!-- Insured Details Tab -->
         <div v-if="activeTab === 'details'" class="animate-fadeIn">
           <InsuredDetailsTab :insuredData="insuredData" />
@@ -115,7 +115,6 @@ async function fetchInsuredData() {
 
   try {
     const response = await getInsuredById(insuredPersonUuid);
-    console.log('API Response:', response);
 
     if (response) {
       insuredData.value = response;

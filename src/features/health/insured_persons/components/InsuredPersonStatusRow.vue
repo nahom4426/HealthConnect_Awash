@@ -48,46 +48,12 @@
              class="flex gap-3 items-center"
              :class="getTextStatusClass(row)"
         >
-          <!-- Profile Image with fallbacks -->
-          <img 
-            v-if="row?.profile" 
-            :src="row.profile" 
-            alt="Profile" 
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
-            :class="getImageBorderClass(row)"
-            @error="handleImageError"
-          />
-          <img 
-            v-else-if="row?.photoBase64" 
-            :src="row.photoBase64" 
-            alt="Profile" 
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
-            :class="getImageBorderClass(row)"
-            @error="handleImageError"
-          />
-          <img 
-            v-else-if="row?.photoUrl" 
-            :src="row.photoUrl" 
-            alt="Profile" 
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
-            :class="getImageBorderClass(row)"
-            @error="handleImageError"
-          />
-          <img 
-            v-else-if="row?.photoPath" 
-            :src="`${getBaseUrl()}/insured/photo/${row.photoPath}`" 
-            alt="Profile" 
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
-            :class="getImageBorderClass(row)"
-            @error="handleImageError"
-          />
-          <img 
-            v-else
-            :src="genderFallbackUrl(row?.gender)"
+          <PersonAvatar
+            :photo="row?.profile || row?.photoBase64 || row?.photoUrl || (row?.photoPath ? `${getBaseUrl()}/insured/photo/${row.photoPath}` : '')"
+            :gender="row?.gender"
             alt="Profile"
-            class="object-cover w-10 h-10 rounded-full border-2 transition-all duration-200"
+            class="w-10 h-10 rounded-full border-2 transition-all duration-200 shrink-0"
             :class="getImageBorderClass(row)"
-            @error="(e) => (e.target.src = '/src/assets/img/profile.png')"
           />
           
           <div class="leading-tight truncate">
@@ -139,9 +105,9 @@
 
       <!-- Actions Column -->
       <td class="p-3 text-left">
-        <!-- Dropdown Button (only if NOT on amend page and showActionButtons is true) -->
+        <!-- Dropdown Button - Only show for institution policies (hasInstitution=true) -->
         <button 
-          v-if="showActionButtons && actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history'"
+          v-if="hasInstitution === 'true' && showActionButtons && actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history'"
           @click.stop="toggleDropdown($event, getRowId(row))"
           aria-label="Actions"
           class="inline-flex items-center p-2 text-sm font-medium rounded-lg transition-colors focus:outline-none"
@@ -154,7 +120,7 @@
         </button>
 
         <!-- Fixed Dropdown Portal (rendered at body level via teleport) -->
-        <Teleport to="body" v-if="actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history' && showActionButtons">
+        <Teleport to="body" v-if="hasInstitution === 'true' && actionPage !== 'amend' && actionPage !== 'utilization' && actionPage !== 'history' && showActionButtons">
           <div 
             :id="`dropdown-${getRowId(row)}`"
             class="hidden fixed z-[9999] w-48 bg-white rounded-lg ring-1 ring-black ring-opacity-5 shadow-xl dropdown-menu focus:outline-none"
@@ -163,14 +129,14 @@
             <div class="py-1" role="none">
               <button 
                 @click.stop="handleEditWithClose(row)"
-                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                class="flex gap-3 items-center px-4 py-2 w-full text-ink-muted rounded-md transition-colors hover:bg-primary/5 hover:text-primary-hover"
               >
                 <i v-html="icons.edits || '✏️'" class="w-5 h-5" />
                 Edit
               </button>
 
               <button
-                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                class="flex gap-3 items-center px-4 py-2 w-full text-ink-muted rounded-md transition-colors hover:bg-primary/5 hover:text-primary-hover"
                 @click.stop="openModal('AddPackages', {
                   payerInstitutionContractUuid: route.params.id || row?.payerInstitutionContractUuid,
                   insuredUuid: row?.insuredUuid,
@@ -184,7 +150,7 @@
 
               <button 
                 @click.stop="$router.push(`/insured_list/detail/${getRowId(row)}`)"
-                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                class="flex gap-3 items-center px-4 py-2 w-full text-ink-muted rounded-md transition-colors hover:bg-primary/5 hover:text-primary-hover"
               >
                 <i v-html="icons.Dependants || '👥'" class="w-5 h-5" />
                 Dependents
@@ -192,9 +158,9 @@
               
               <button
                 @click.stop="handleHistoryWithClose(row)"
-                class="flex gap-3 items-center px-4 py-2 w-full text-gray-700 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-700"
+                class="flex gap-3 items-center px-4 py-2 w-full text-ink-muted rounded-md transition-colors hover:bg-primary/5 hover:text-primary-hover"
               >
-                <i v-html="icons.historys || '🕘'" class="w-4 h-4 text-gray-700" />
+                <i v-html="icons.historys || '🕘'" class="w-4 h-4 text-ink-muted" />
                 History
               </button>
             </div>
@@ -230,28 +196,26 @@
         <!-- AMEND PAGE: Status Toggle and Actions -->
         <div v-if="actionPage === 'amend'" class="flex flex-row gap-2 items-center">
           <!-- Status Toggle Switch (only for amend page) -->
-        
-            <!-- Toggle Switch -->
-            <button
-              v-if="canToggleStatus(row)"
-              @click.stop="toggleStatus(row)"
-              class="inline-flex relative items-center w-12 h-7 rounded-full shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2"
-              :class="getToggleClass(row)"
-              :title="getToggleTitle(row)"
+          <button
+            v-if="canToggleStatus(row)"
+            @click.stop="toggleStatus(row)"
+            class="inline-flex relative items-center w-12 h-7 rounded-full shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            :class="getToggleClass(row)"
+            :title="getToggleTitle(row)"
+          >
+            <span
+              class="inline-block flex absolute left-0.5 justify-center items-center w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out transform"
+              :class="getTogglePositionClass(row)"
             >
-              <span
-                class="inline-block flex absolute left-0.5 justify-center items-center w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out transform"
-                :class="getTogglePositionClass(row)"
-              >
-                <!-- Icon inside toggle -->
-                <svg v-if="isActive(row)" class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-                <svg v-else class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                </svg>
-              </span>
-            </button>
+              <!-- Icon inside toggle -->
+              <svg v-if="isActive(row)" class="w-3 h-3 text-success" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              <svg v-else class="w-3 h-3 text-error" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+            </span>
+          </button>
         
           <!-- Action Buttons for Amend Page -->
           <button
@@ -315,6 +279,7 @@
 </template>
 
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
 import { defineProps, onMounted, onUnmounted, ref } from 'vue';
 import { openModal } from '@customizer/modal-x';
 import { insuredMembers } from "../store/insuredPersonsStore";
@@ -341,6 +306,7 @@ const props = defineProps({
   pageContext: { type: String, default: 'insured' },
   currentPage: { type: Number, default: 1 },
   perPage: { type: Number, default: 25 },
+  hasInstitution: { type: String, default: 'true' },
 });
 
 const route = useRoute();
@@ -363,7 +329,7 @@ function getRowStatusClass(row) {
   const baseClasses = 'bg-white border-b transition-all duration-200 cursor-pointer';
   
   if (isInactive(row)) {
-    return `${baseClasses} bg-red-100 hover:bg-red-200 border-red-300`;
+    return `${baseClasses} bg-error-soft hover:bg-error/20 border-error/40`;
   }
   
   if (isSuspended(row)) {
@@ -371,172 +337,143 @@ function getRowStatusClass(row) {
   }
   
   if (isPending(row)) {
-    return `${baseClasses} bg-yellow-50 hover:bg-yellow-100 border-yellow-200`;
+    return `${baseClasses} bg-warning-soft hover:bg-warning-soft border-warning/20`;
   }
   
   if (isActive(row)) {
-    return `${baseClasses} hover:bg-green-50 border-green-200`;
+    return `${baseClasses} hover:bg-success-soft border-success/20`;
   }
   
-  return `${baseClasses} hover:bg-gray-50 border-gray-200`;
+  return `${baseClasses} hover:bg-surface-muted border-line`;
 }
 
 // Status dot colors
 function getStatusDotClass(row) {
-  if (isInactive(row)) return 'bg-red-500';
+  if (isInactive(row)) return 'bg-error';
   if (isSuspended(row)) return 'bg-orange-500';
-  if (isPending(row)) return 'bg-yellow-500';
-  if (isActive(row)) return 'bg-green-500';
-  return 'bg-gray-400';
+  if (isPending(row)) return 'bg-warning';
+  if (isActive(row)) return 'bg-success';
+  return 'bg-ink-subtle';
 }
 
 // Status ping animation
 function getStatusPingClass(row) {
-  if (isInactive(row)) return 'bg-red-400';
+  if (isInactive(row)) return 'bg-error';
   if (isSuspended(row)) return 'bg-orange-400';
-  if (isPending(row)) return 'bg-yellow-400';
-  if (isActive(row)) return 'bg-green-400';
-  return 'bg-gray-400';
+  if (isPending(row)) return 'bg-warning';
+  if (isActive(row)) return 'bg-success';
+  return 'bg-ink-subtle';
 }
 
 // Text color based on status
 function getTextStatusClass(row) {
-  if (isInactive(row)) return 'text-red-800';
+  if (isInactive(row)) return 'text-error-strong';
   if (isSuspended(row)) return 'text-orange-800';
-  if (isPending(row)) return 'text-yellow-800';
-  if (isActive(row)) return 'text-gray-900';
-  return 'text-gray-700';
+  if (isPending(row)) return 'text-warning-strong';
+  if (isActive(row)) return 'text-ink';
+  return 'text-ink-muted';
 }
 
 // Muted text color
 function getMutedTextStatusClass(row) {
-  if (isInactive(row)) return 'text-red-600/70';
+  if (isInactive(row)) return 'text-error/70';
   if (isSuspended(row)) return 'text-orange-600/70';
-  if (isPending(row)) return 'text-yellow-600/70';
-  return 'text-gray-500';
+  if (isPending(row)) return 'text-warning/70';
+  return 'text-ink-subtle';
 }
 
 // Status badge class
 function getStatusBadgeClass(row) {
   const base = "px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm inline-flex items-center gap-1.5";
   
-  if (isInactive(row)) return `${base} bg-red-200 text-red-800 border border-red-300`;
+  if (isInactive(row)) return `${base} bg-error/20 text-error-strong border border-error/40`;
   if (isSuspended(row)) return `${base} bg-orange-200 text-orange-800 border border-orange-300`;
-  if (isPending(row)) return `${base} bg-yellow-200 text-yellow-800 border border-yellow-300`;
-  if (isActive(row)) return `${base} bg-green-200 text-green-800 border border-green-300`;
+  if (isPending(row)) return `${base} bg-warning/20 text-warning-strong border border-warning/40`;
+  if (isActive(row)) return `${base} bg-success/20 text-success-strong border border-success/40`;
   
-  return `${base} bg-gray-200 text-gray-800 border border-gray-300`;
+  return `${base} bg-line text-ink border border-line-strong`;
 }
 
 // Inner dot for status badge
 function getStatusInnerDotClass(row) {
-  if (isInactive(row)) return 'bg-red-600';
+  if (isInactive(row)) return 'bg-error';
   if (isSuspended(row)) return 'bg-orange-600';
-  if (isPending(row)) return 'bg-yellow-600';
-  if (isActive(row)) return 'bg-green-600';
-  return 'bg-gray-600';
+  if (isPending(row)) return 'bg-warning';
+  if (isActive(row)) return 'bg-success';
+  return 'bg-ink-muted';
 }
 
 // Status text for toggle
 function getStatusTextClass(row) {
-  if (isInactive(row)) return 'text-red-700';
+  if (isInactive(row)) return 'text-error-strong';
   if (isSuspended(row)) return 'text-orange-700';
-  if (isPending(row)) return 'text-yellow-700';
-  if (isActive(row)) return 'text-green-700';
-  return 'text-gray-700';
+  if (isPending(row)) return 'text-warning-strong';
+  if (isActive(row)) return 'text-success-strong';
+  return 'text-ink-muted';
 }
 
 // Image border class
 function getImageBorderClass(row) {
-  if (isInactive(row)) return 'border-red-300';
+  if (isInactive(row)) return 'border-error/40';
   if (isSuspended(row)) return 'border-orange-300';
-  if (isPending(row)) return 'border-yellow-300';
-  if (isActive(row)) return 'border-green-300';
-  return 'border-gray-200';
-}
-
-// Avatar placeholder class
-function getAvatarPlaceholderClass(row) {
-  if (isInactive(row)) return 'bg-red-200';
-  if (isSuspended(row)) return 'bg-orange-200';
-  if (isPending(row)) return 'bg-yellow-200';
-  if (isActive(row)) return 'bg-green-200';
-  return 'bg-gray-200';
-}
-
-// Avatar text class
-function getAvatarTextClass(row) {
-  if (isInactive(row)) return 'text-red-700';
-  if (isSuspended(row)) return 'text-orange-700';
-  if (isPending(row)) return 'text-yellow-700';
-  if (isActive(row)) return 'text-green-700';
-  return 'text-gray-700';
+  if (isPending(row)) return 'border-warning/40';
+  if (isActive(row)) return 'border-success/40';
+  return 'border-line';
 }
 
 // Dependents button class
 function getDependantsButtonClass(row, isExpanded) {
   if (isExpanded) {
-    return 'bg-blue-600 text-white hover:bg-blue-700';
+    return 'bg-primary text-white hover:bg-primary-hover';
   }
   
   if (isInactive(row)) {
-    return 'bg-red-200 text-red-800 hover:bg-red-300 border border-red-300';
+    return 'bg-error/20 text-error-strong hover:bg-error/40 border border-error/40';
   }
   
   if (isSuspended(row)) {
     return 'bg-orange-200 text-orange-800 hover:bg-orange-300 border border-orange-300';
   }
   
-  return 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200';
+  return 'bg-primary/10 text-primary-hover hover:bg-primary/20 border border-primary/20';
 }
 
 // No dependents class
 function getNoDependantsClass(row) {
   if (isInactive(row)) {
-    return 'bg-red-100 text-red-600 border border-red-200';
+    return 'bg-error-soft text-error border border-error/20';
   }
   if (isSuspended(row)) {
     return 'bg-orange-100 text-orange-600 border border-orange-200';
   }
-  return 'bg-gray-100 text-gray-600 border border-gray-200';
+  return 'bg-surface-muted text-ink-muted border border-line';
 }
 
 // Action button class
 function getActionButtonClass(row) {
   if (isInactive(row)) {
-    return 'text-red-600 hover:text-red-800 hover:bg-red-200';
+    return 'text-error hover:text-error-strong hover:bg-error/20';
   }
   if (isSuspended(row)) {
     return 'text-orange-600 hover:text-orange-800 hover:bg-orange-200';
   }
-  return 'text-gray-500 hover:text-gray-800 hover:bg-gray-100';
+  return 'text-ink-subtle hover:text-ink hover:bg-surface-muted';
 }
 
 // Dropdown menu class
 function getDropdownMenuClass(row) {
   if (isInactive(row)) {
-    return 'border border-red-200';
+    return 'border border-error/20';
   }
   return '';
-}
-
-// Toggle container class
-function getToggleContainerClass(row) {
-  if (isInactive(row)) {
-    return 'bg-red-100/50 border border-red-200';
-  }
-  if (isSuspended(row)) {
-    return 'bg-orange-100/50 border border-orange-200';
-  }
-  return 'bg-white border border-gray-200 hover:border-gray-300';
 }
 
 // Toggle class
 function getToggleClass(row) {
   if (isActive(row)) {
-    return 'bg-green-500 hover:bg-green-600 focus:ring-green-500';
+    return 'bg-success hover:bg-success focus:ring-success';
   }
-  return 'bg-red-400 hover:bg-red-500 focus:ring-red-500';
+  return 'bg-error hover:bg-error focus:ring-error';
 }
 
 // Toggle position class
@@ -554,55 +491,40 @@ function canToggleStatus(row) {
   return isActive(row) || isInactive(row) || isSuspended(row);
 }
 
-// Get display text for status
-function getStatusDisplayText(row) {
-  if (isActive(row)) return 'Active';
-  if (isInactive(row)) return 'Inactive';
-  if (isSuspended(row)) return 'Suspended';
-  return row?.status || 'Unknown';
-}
-
 // Secondary button class for amend page
 function getSecondaryButtonClass(row) {
   if (isInactive(row)) {
-    return 'text-red-700 bg-red-100 hover:bg-red-200 border border-red-200';
+    return 'text-error-strong bg-error-soft hover:bg-error/20 border border-error/20';
   }
   if (isSuspended(row)) {
     return 'text-orange-700 bg-orange-100 hover:bg-orange-200 border border-orange-200';
   }
-  return 'text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-200';
+  return 'text-ink-muted bg-surface-muted hover:bg-line border border-line';
 }
 
 // Expanded row class
 function getExpandedRowClass(row) {
   if (isInactive(row)) {
-    return 'bg-red-50 border-red-200';
+    return 'bg-error-soft border-error/20';
   }
   if (isSuspended(row)) {
     return 'bg-orange-50 border-orange-200';
   }
-  return 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200';
+  return 'bg-gradient-to-r from-primary/5 to-primary/5 border-primary/20';
 }
 
 // Expanded header icon class
 function getExpandedHeaderIconClass(row) {
-  if (isInactive(row)) return 'text-red-600';
+  if (isInactive(row)) return 'text-error';
   if (isSuspended(row)) return 'text-orange-600';
-  return 'text-blue-600';
+  return 'text-primary';
 }
 
 // Expanded header text class
 function getExpandedHeaderTextClass(row) {
-  if (isInactive(row)) return 'text-red-900';
+  if (isInactive(row)) return 'text-error-strong';
   if (isSuspended(row)) return 'text-orange-900';
-  return 'text-gray-900';
-}
-
-// Get initials for avatar
-function getInitials(row) {
-  const first = row?.firstName?.charAt(0) || '';
-  const last = row?.fatherName?.charAt(0) || '';
-  return (first + last).toUpperCase() || '?';
+  return 'text-ink';
 }
 
 // Toggle status function
@@ -616,7 +538,6 @@ async function toggleStatus(row) {
   }
 }
 
-// Your existing functions remain the same...
 function formatPhoneNumber(phone) {
   if (!phone) return '';
   const digits = phone.replace(/\D/g, '');
@@ -628,18 +549,6 @@ function formatPhoneNumber(phone) {
 
 function getBaseUrl() {
   return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-}
-
-function genderFallbackUrl(gender) {
-  const g = String(gender || '').trim().toLowerCase();
-  if (g.includes('female')) return '/src/assets/img/female.png';
-  if (g.includes('male')) return '/src/assets/img/male.png';
-  return '/src/assets/img/profile.png';
-}
-
-function handleImageError(event) {
-  const row = event.target.__vueParentComponent?.ctx?.row;
-  event.target.src = row ? genderFallbackUrl(row.gender) : '/src/assets/img/profile.png';
 }
 
 function handleEdit(row) {
@@ -687,11 +596,10 @@ function toggleDropdown(event, rowId) {
 
   const btn = event.currentTarget;
   const rect = btn.getBoundingClientRect();
-  const dropdownHeight = 180; // approx height of menu
+  const dropdownHeight = 180;
   const spaceBelow = window.innerHeight - rect.bottom;
   const openUpward = spaceBelow < dropdownHeight + 8;
 
-  // Position horizontally: align right edge of dropdown to right edge of button
   const right = window.innerWidth - rect.right;
   dropdown.style.right = `${right}px`;
   dropdown.style.left = 'auto';
@@ -722,11 +630,6 @@ onUnmounted(() => {
 function handleEditWithClose(row) {
   closeAllDropdowns();
   handleEdit(row);
-}
-
-function handleViewWithClose(rowId) {
-  closeAllDropdowns();
-  props.onView(rowId);
 }
 
 async function handleActivateWithClose(insuredId) {
@@ -786,16 +689,16 @@ tr {
 }
 
 /* Hover effects for status rows */
-tr.bg-red-100:hover {
-  background-color: #fee2e2 !important; /* red-200 */
+tr.bg-error-soft:hover {
+  background-color: rgb(var(--error-soft)) !important;
 }
 
 tr.bg-orange-100:hover {
-  background-color: #fed7aa !important; /* orange-200 */
+  background-color: rgb(var(--warning) / 0.3) !important;
 }
 
-tr.bg-yellow-50:hover {
-  background-color: #fef9c3 !important; /* yellow-100 */
+tr.bg-warning-soft:hover {
+  background-color: rgb(var(--warning-soft)) !important;
 }
 
 /* Dropdown menu styles */
@@ -828,15 +731,14 @@ tr.bg-yellow-50:hover {
   border: none;
 }
 
-/* Hover */
 .dropdown-menu button:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: rgb(var(--primary) / 0.05);
+  color: rgb(var(--primary-hover));
 }
 
-.dropdown-menu button.text-red-600:hover {
-  background-color: #fef2f2;
-  color: #dc2626;
+.dropdown-menu button.text-error:hover {
+  background-color: rgb(var(--error-soft));
+  color: rgb(var(--error));
 }
 
 /* Pulse animation for status dots */
@@ -865,7 +767,7 @@ button:focus-visible {
 /* Custom scrollbar for expanded sections */
 .grid {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: rgb(var(--line-strong)) rgb(var(--surface-muted));
 }
 
 .grid::-webkit-scrollbar {
@@ -874,16 +776,16 @@ button:focus-visible {
 }
 
 .grid::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: rgb(var(--surface-muted));
   border-radius: 3px;
 }
 
 .grid::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgb(var(--line-strong));
   border-radius: 3px;
 }
 
 .grid::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgb(var(--ink-subtle));
 }
 </style>

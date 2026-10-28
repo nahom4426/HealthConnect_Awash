@@ -453,13 +453,13 @@ onMounted(async () => {
         <!-- Search and Selection Header -->
         <div class="flex flex-col gap-4 justify-between items-start md:flex-row md:items-center">
           <div class="flex gap-2 items-center">
-            <span class="text-sm font-medium text-gray-700">
+            <span class="text-sm font-medium text-ink-muted">
               Showing {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems) }}-
               {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }}
             </span>
             <span
               v-if="selected.length + selectedDependants.length > 0"
-              class="px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full"
+              class="px-2 py-1 text-xs font-medium text-primary-hover bg-primary/10 rounded-full"
             >
               {{ selected.length + selectedDependants.length }} selected
             </span>
@@ -471,10 +471,10 @@ onMounted(async () => {
                 v-model="search"
                 @input="handleSearch"
                 placeholder="Search members by name, ID or phone..."
-                class="py-2 pr-4 pl-10 w-full rounded-lg border border-gray-300 transition focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
+                class="py-2 pr-4 pl-10 w-full rounded-lg border border-line-strong transition focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 type="text"
               />
-              <div class="absolute top-2.5 left-3 text-gray-400">
+              <div class="absolute top-2.5 left-3 text-ink-subtle">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="w-5 h-5"
@@ -495,7 +495,7 @@ onMounted(async () => {
             <select
               v-model="itemsPerPage"
               @change="handleItemsPerPageChange(Number($event.target.value))"
-              class="px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              class="px-3 py-2 rounded-md border border-line-strong focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option v-for="option in itemsPerPageOptions" :key="option" :value="option">
                 {{ option }} per page
@@ -510,36 +510,36 @@ onMounted(async () => {
         </div>
 
         <!-- Members Table -->
-        <div v-else class="overflow-hidden rounded-lg border border-gray-200">
-          <div class="flex flex-wrap gap-4 items-center p-3 bg-gray-50 border-b border-gray-200">
-            <label class="flex gap-2 items-center text-sm text-gray-700">
+        <div v-else class="overflow-hidden rounded-lg border border-line">
+          <div class="flex flex-wrap gap-4 items-center p-3 bg-surface-muted border-b border-line">
+            <label class="flex gap-2 items-center text-sm text-ink-muted">
               <input
                 type="checkbox"
                 :checked="allInsuredSelected"
                 @change="handleSelectAllInsuredsGlobal($event.target.checked)"
-                class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                class="w-4 h-4 text-primary rounded border-line-strong focus:ring-primary"
               />
               Select all insureds
             </label>
 
-            <label class="flex gap-2 items-center text-sm text-gray-700">
+            <label class="flex gap-2 items-center text-sm text-ink-muted">
               <input
                 type="checkbox"
                 :checked="allDependantsSelected"
                 @change="handleSelectAllDependantsGlobal($event.target.checked)"
-                class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                class="w-4 h-4 text-primary rounded border-line-strong focus:ring-primary"
               />
               Select all dependants
             </label>
 
-            <span class="text-xs text-gray-500">(Already mapped items are disabled)</span>
+            <span class="text-xs text-ink-subtle">(Already mapped items are disabled)</span>
           </div>
 
-          <div v-if="mappedBenefit" class="p-3 bg-white border-b border-gray-200">
+          <div v-if="mappedBenefit" class="p-3 bg-white border-b border-line">
             <div class="flex flex-wrap gap-3 justify-between items-center">
               <div class="flex flex-wrap gap-2 items-center">
-                <span class="text-sm font-medium text-gray-800">Already mapped</span>
-                <span class="px-2 py-0.5 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">
+                <span class="text-sm font-medium text-ink">Already mapped</span>
+                <span class="px-2 py-0.5 text-xs font-semibold text-primary-hover bg-primary/10 rounded-full">
                   Insured: {{ mappedInsuredCount }}
                 </span>
                 <span class="px-2 py-0.5 text-xs font-semibold text-purple-800 bg-purple-100 rounded-full">
@@ -547,7 +547,7 @@ onMounted(async () => {
                 </span>
                 <span
                   v-if="removedInsuredCount + removedDependantCount > 0"
-                  class="px-2 py-0.5 text-xs font-semibold text-red-800 bg-red-100 rounded-full"
+                  class="px-2 py-0.5 text-xs font-semibold text-error-strong bg-error-soft rounded-full"
                 >
                   Removed: {{ removedInsuredCount + removedDependantCount }}
                 </span>
@@ -555,7 +555,7 @@ onMounted(async () => {
 
               <Button
                 type="danger"
-                class="text-white bg-red-500 hover:bg-red-600"
+                class="text-white bg-error hover:bg-error"
                 :disabled="mappedInsuredCount + mappedDependantCount === 0"
                 @click="removeAllExisting"
               >
@@ -573,13 +573,13 @@ onMounted(async () => {
               row: ['fullName', 'idNumber', 'phone', 'dependants', 'status'],
             }"
             :cells="{}"
-            class="min-w-full divide-y divide-gray-200"
+            class="min-w-full divide-y divide-line"
           >
             <template #headerFirst>
               <input
                 :checked="allSelectedOnPage"
                 @change="handleSelectAll($event.target.checked)"
-                class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                class="w-4 h-4 text-primary rounded border-line-strong focus:ring-primary"
                 type="checkbox"
               />
             </template>
@@ -592,7 +592,7 @@ onMounted(async () => {
                   ? !removedInsuredUuids.includes(row?.insuredUuid)
                   : selected.includes(row?.insuredUuid)"
                 @change="selectService(row?.insuredUuid)"
-                class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                class="w-4 h-4 text-primary rounded border-line-strong focus:ring-primary"
               />
             </template>
 
@@ -622,7 +622,7 @@ onMounted(async () => {
 
             <template #dependants="{ row }">
               <div class="space-y-1">
-                <div v-if="(row?.dependantResponses || []).length === 0" class="text-xs text-gray-500">No dependants</div>
+                <div v-if="(row?.dependantResponses || []).length === 0" class="text-xs text-ink-subtle">No dependants</div>
                 <div
                   v-for="dep in (row?.dependantResponses || [])"
                   :key="dep.dependantUuid"
@@ -636,18 +636,18 @@ onMounted(async () => {
                       ? !removedDependantUuids.includes(dep.dependantUuid)
                       : selectedDependants.includes(dep.dependantUuid)"
                     @change="toggleDependant(dep.dependantUuid)"
-                    class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    class="w-4 h-4 text-primary rounded border-line-strong focus:ring-primary"
                   />
 
-                  <span class="text-xs text-gray-700">
+                  <span class="text-xs text-ink-muted">
                     {{ dep?.firstName }} {{ dep?.fatherName }}
-                    <span class="text-gray-500">({{ dep?.relationship }})</span>
+                    <span class="text-ink-subtle">({{ dep?.relationship }})</span>
                   </span>
 
                   <button
                     v-if="mappedDependantUuidSet.has(dep.dependantUuid)"
                     type="button"
-                    class="p-1.5 ml-auto text-red-600 rounded-md hover:bg-red-50"
+                    class="p-1.5 ml-auto text-error rounded-md hover:bg-error-soft"
                     @click="removeExistingDependant(dep.dependantUuid)"
                     :title="removedDependantUuids.includes(dep.dependantUuid) ? 'Undo remove dependant' : 'Remove dependant'"
                   >
@@ -667,7 +667,7 @@ onMounted(async () => {
                 <button
                   v-if="mappedInsuredUuidSet.has(row?.insuredUuid)"
                   type="button"
-                  class="p-1.5 text-red-600 rounded-md hover:bg-red-50"
+                  class="p-1.5 text-error rounded-md hover:bg-error-soft"
                   @click="removeExistingInsured(row?.insuredUuid)"
                   :title="removedInsuredUuids.includes(row?.insuredUuid) ? 'Undo remove insured' : 'Remove insured'"
                 >
@@ -702,11 +702,11 @@ onMounted(async () => {
         />
 
         <!-- Action Buttons -->
-        <div class="flex gap-4 justify-end pt-4 border-t border-gray-200">
+        <div class="flex gap-4 justify-end pt-4 border-t border-line">
           <Button
             @click="closeModal()"
             variant="outline"
-            class="px-6 py-2 text-gray-700 rounded-md border border-gray-300 hover:bg-gray-50"
+            class="px-6 py-2 text-ink-muted rounded-md border border-line-strong hover:bg-surface-muted"
           >
             Cancel
           </Button>
@@ -715,13 +715,13 @@ onMounted(async () => {
             :pending="api.pending.value"
             :disabled="!hasPendingChanges"
             @click="handleAddMembersToGroup"
-            class="px-6 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-6 py-2 text-white bg-primary rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save Changes
-            <span v-if="selected.length + selectedDependants.length > 0" class="px-2 py-0.5 text-xs font-semibold bg-blue-800 rounded-full">
+            <span v-if="selected.length + selectedDependants.length > 0" class="px-2 py-0.5 text-xs font-semibold bg-primary-hover rounded-full">
               +{{ selected.length + selectedDependants.length }}
             </span>
-            <span v-if="removedInsuredCount + removedDependantCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-red-600 rounded-full">
+            <span v-if="removedInsuredCount + removedDependantCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-error rounded-full">
               -{{ removedInsuredCount + removedDependantCount }}
             </span>
           </Button>
@@ -741,20 +741,20 @@ input[type="checkbox"] {
 }
 
 .table-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--surface-muted));
   border-radius: 3px;
 }
 
 .table-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: rgb(var(--line-strong));
   border-radius: 3px;
 }
 
 .table-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgb(var(--line-strong));
 }
 
 tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: rgb(var(--surface-muted));
 }
 </style>

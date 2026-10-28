@@ -9,7 +9,6 @@ const props = defineProps({
     Required: false,
   },
 });
-console.log(props.drugs);
 </script>
 <template>
   <Form class="grid grid-cols-3 gap-4" :inner="false" id="drugForm" v-slot="{}">

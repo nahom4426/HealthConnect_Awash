@@ -55,7 +55,6 @@ export const institutions = defineStore("institutionsStore", () => {
   }
 
   function set(data: Payer[]): void {
-    console.log("Setting institutions in store:", data);
     
     if (!Array.isArray(data)) {
       console.error("Invalid data format for institutions:", data);

@@ -9,7 +9,6 @@ export const useFamily = defineStore("familyStore", () => {
   }
 
 function set(data) {
-  console.log("Setting family benefits in store:", data);
 
   const dataArray = Array.isArray(data)
     ? data
@@ -38,23 +37,19 @@ function set(data) {
     };
   });
 
-  console.log("Mapped family benefits data:", mappedData);
   family.value = mappedData;
 }
 
 
   function setFamilyBenefits(data) {
-    console.log("Setting family benefits with setFamilyBenefits:", data);
     set(data);
   }
 
   function setAll(data) {
-    console.log("Setting family benefits with setAll:", data);
     set(data);
   }
 
 function add(data) {
-  console.log("Adding family benefit to store:", data);
 
   const mappedItem = {
     serviceQuotedUuid: data.serviceQuotedUuid || crypto.randomUUID(),
@@ -75,13 +70,11 @@ function add(data) {
 }
 
 function update(id, data) {
-  console.log(`Updating family benefit with UUID: ${id}`, data);
 
   const idx = family.value.findIndex((el) => el.serviceQuotedUuid === id);
   if (idx === -1) {
     console.warn(`[Family Store] No family benefit found with UUID: ${id}`);
     if (data.serviceQuotedUuid) {
-      console.log("Family benefit not found for update, adding instead:", data);
       add(data);
     }
     return;
@@ -105,7 +98,6 @@ function update(id, data) {
   };
 
   family.value.splice(idx, 1, updatedItem);
-  console.log("Family benefit updated successfully");
 }
 
   function remove(id) {
@@ -119,7 +111,6 @@ function update(id, data) {
   }
 
   function updateStatus(id, status) {
-    console.log(`Updating status for family benefit with UUID: ${id} to ${status}`);
     update(id, { status });
   }
 

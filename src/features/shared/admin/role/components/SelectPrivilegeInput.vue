@@ -90,19 +90,20 @@ function selectAll(checked, category) {
 </script>
 <template>
   <InputParent :validation="validation" :name="name" v-model="selected" v-slot="{ setRef, error }">
-    <div :ref="setRef" class="flex flex-col gap-4">
+    <!-- InputParent tags this with .custom-input, whose control height would squash the whole picker -->
+    <div :ref="setRef" class="flex flex-col gap-4 !h-auto">
       <!-- Header -->
-      <div class="flex gap-2 justify-between items-center pb-3 border-b-2 border-gray-200">
+      <div class="flex gap-2 justify-between items-center pb-3 border-b-2 border-line">
         <div class="flex gap-2 items-center">
           <span 
             :data-required="`${validation}`.includes('required') ? 'true' : 'false'" 
             :title="label" 
-            class="text-sm font-semibold text-gray-900 capitalize truncate sm:text-base" 
+            class="text-sm font-semibold text-ink capitalize truncate sm:text-base" 
             v-if="label"
           >
             {{ label }}
           </span>
-          <span class="px-2 py-1 text-xs font-bold text-indigo-600 bg-indigo-100 rounded-full">
+          <span class="px-2 py-1 text-xs font-bold text-primary bg-primary/10 rounded-full">
             {{ selected.length }} selected
           </span>
         </div>
@@ -114,10 +115,10 @@ function selectAll(checked, category) {
         <div 
           v-for="category in Object.keys(group)" 
           :key="category"
-          class="overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-gray-200 transition-all duration-200 hover:border-indigo-300"
+          class="overflow-hidden bg-gradient-to-br from-surface-muted to-surface-muted rounded-lg border-2 border-line transition-all duration-200 hover:border-primary/30"
         >
           <!-- Category Header -->
-          <div class="flex gap-3 items-center p-3 bg-gradient-to-r from-indigo-500 to-purple-600 sm:p-4">
+          <div class="flex gap-3 items-center p-3 bg-gradient-to-r from-primary to-purple-600 sm:p-4">
             <input 
               :checked="isAllChecked(category)" 
               @click="(ev) => selectAll(ev.target.checked, category)"
@@ -142,14 +143,14 @@ function selectAll(checked, category) {
               <input 
                 :checked="isChecked(privilege.privilegeUuid)" 
                 @click.stop="toggle(privilege.privilegeUuid)" 
-                class="flex-shrink-0 mt-0.5 w-4 h-4 rounded cursor-pointer accent-indigo-600"
+                class="flex-shrink-0 mt-0.5 w-4 h-4 rounded cursor-pointer accent-primary"
                 type="checkbox" 
               />
               <div class="flex-1 min-w-0">
-                <p class="text-xs font-semibold text-gray-900 truncate transition-colors sm:text-sm group-hover/item:text-indigo-600">
+                <p class="text-xs font-semibold text-ink truncate transition-colors sm:text-sm group-hover/item:text-primary">
                   {{ privilege.privilegeName }}
                 </p>
-                <p class="mt-0.5 text-xs text-gray-600 line-clamp-2">
+                <p class="mt-0.5 text-xs text-ink-muted line-clamp-2">
                   {{ privilege.privilegeDescription }}
                 </p>
               </div>
@@ -159,8 +160,8 @@ function selectAll(checked, category) {
       </div>
 
       <!-- Summary -->
-      <div v-if="selected.length > 0" class="p-3 bg-indigo-50 rounded border-l-4 border-indigo-500 sm:p-4">
-        <p class="text-xs font-semibold text-indigo-900 sm:text-sm">
+      <div v-if="selected.length > 0" class="p-3 bg-primary/5 rounded border-l-4 border-primary sm:p-4">
+        <p class="text-xs font-semibold text-primary-hover sm:text-sm">
           ✓ {{ selected.length }} privilege{{ selected.length !== 1 ? 's' : '' }} selected
         </p>
       </div>

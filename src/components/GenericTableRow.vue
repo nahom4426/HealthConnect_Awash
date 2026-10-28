@@ -62,7 +62,7 @@ const formatCellValue = (value: any): string => {
     <tr
       @click="emit('row', row)"
       :class="[
-        'group cursor-pointer transition-colors duration-100 hover:bg-gray-50/80',
+        'group cursor-pointer transition-colors duration-100 hover:bg-surface-muted/80',
         typeof props.rowClass === 'function' ? props.rowClass(row) : props.rowClass,
       ]"
     >
@@ -72,7 +72,7 @@ const formatCellValue = (value: any): string => {
       </td>
 
       <!-- Index column -->
-      <td v-if="!hideIndex" class="px-4 py-2.5 text-xs font-medium text-gray-400 whitespace-nowrap tabular-nums w-12">
+      <td v-if="!hideIndex" class="px-4 py-2.5 text-xs font-medium text-ink-subtle whitespace-nowrap tabular-nums w-12">
         {{ index + 1 }}
       </td>
 
@@ -80,7 +80,7 @@ const formatCellValue = (value: any): string => {
       <td
         v-for="key in rowKeys"
         :key="key"
-        class="px-4 py-2.5 max-w-[200px] text-sm text-gray-700 truncate"
+        class="px-4 py-2.5 max-w-[200px] text-sm text-ink-muted truncate"
       >
         <slot v-if="$slots[key]" :name="key" :row="row" />
         <slot v-else-if="$slots[`cell(${key})`]" :name="`cell(${key})`" :row="row" :value="getNestedValue(row, key)" />

@@ -154,6 +154,16 @@ export function formatCurrency(currencyValue) {
   }).format(parseInt(currencyValue));
   return currencyFormat;
 }
+
+export function formatMoney(val?: any): string {
+  if (val === null || val === undefined || val === "") return "-";
+  const num = Number(val);
+  if (isNaN(num)) return "-";
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 export function getColumnValue(key, row) {
   return key.split(".").reduce((all, el) => {
     return all?.[el];
@@ -237,7 +247,6 @@ export function addYear(date, year) {
   const modifiedDate = new Date(givenDate);
   modifiedDate.setFullYear(modifiedDate.getFullYear() + year);
 
-  console.log(modifiedDate);
   return modifiedDate;
 }
 

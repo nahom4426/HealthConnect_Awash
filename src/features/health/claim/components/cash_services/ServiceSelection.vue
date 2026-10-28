@@ -344,11 +344,43 @@ function getCartTotalForPackage(packageUuid: string, excludeIndex: number | null
 }
 
 function getRemainingForPackage(packageUuid: string, excludeIndex: number | null = null): number {
-  const p = ((packagesReq.data.value as any[]) || []).find((x: any) => x?.packageUuid === packageUuid);
+  const list = (packagesReq.data.value as any[]) || [];
+  const p = list.find((x: any) => x?.packageUuid === packageUuid);
+  if (!p) return 0;
+  
   const limit = getPackageLimit(p);
   const used = getPackageUsed(p);
   const cart = getCartTotalForPackage(packageUuid, excludeIndex);
-  return limit - used - cart;
+  const ownRemaining = limit - used - cart;
+
+  // Check cup relation
+  let cupUuid = p.cupPackageUuid || null;
+  if (!cupUuid) {
+    const isCupPackage = list.some((x: any) => x?.cupPackageUuid === p.packageUuid);
+    if (isCupPackage) {
+      cupUuid = p.packageUuid;
+    }
+  }
+
+  if (cupUuid) {
+    const cupPkg = list.find((x: any) => x?.packageUuid === cupUuid);
+    if (cupPkg) {
+      const cupLimit = getPackageLimit(cupPkg);
+      const cuppedPkgs = list.filter(
+        (x: any) => x?.cupPackageUuid === cupUuid || x?.packageUuid === cupUuid
+      );
+      
+      const totalUsedInCup = cuppedPkgs.reduce((sum, x) => sum + getPackageUsed(x), 0);
+      const totalCartInCup = cuppedPkgs.reduce(
+        (sum, x) => sum + getCartTotalForPackage(x.packageUuid, excludeIndex),
+        0
+      );
+      const cupRemaining = cupLimit - totalUsedInCup - totalCartInCup;
+      return Math.min(ownRemaining, cupRemaining);
+    }
+  }
+
+  return ownRemaining;
 }
 
 const selectedPackageBalance = computed(() => {
@@ -364,7 +396,7 @@ const selectedPackageBalance = computed(() => {
   const limit = getPackageLimit(p);
   const used = getPackageUsed(p);
   const cart = getCartTotalForPackage(p.packageUuid);
-  const remaining = limit - used - cart;
+  const remaining = getRemainingForPackage(p.packageUuid);
   return { limit, used, cart, remaining };
 });
 
@@ -705,18 +737,50 @@ const itemsWithCoverage = computed(() => {
   const list = items.value || [];
   const pkgs: any[] = (packagesReq.data.value as any[]) || [];
   const remainingMap = new Map<string, number>();
+  const cupRemainingMap = new Map<string, number>();
 
   return list.map((it) => {
     const key = it.packageUuid;
+    const p = pkgs.find((x: any) => x?.packageUuid === key);
+
     if (!remainingMap.has(key)) {
-      const p = pkgs.find((x: any) => x?.packageUuid === key);
       const start = getPackageLimit(p) - getPackageUsed(p);
       remainingMap.set(key, start);
     }
 
-    const before = remainingMap.get(key) || 0;
-    const after = before - Number(it.totalPrice || 0);
-    remainingMap.set(key, after);
+    let cupUuid: string | null = null;
+    if (p) {
+      cupUuid = p.cupPackageUuid || null;
+      if (!cupUuid) {
+        const isCupPackage = pkgs.some((x: any) => x?.cupPackageUuid === p.packageUuid);
+        if (isCupPackage) {
+          cupUuid = p.packageUuid;
+        }
+      }
+    }
+
+    if (cupUuid && !cupRemainingMap.has(cupUuid)) {
+      const cupPkg = pkgs.find((x: any) => x?.packageUuid === cupUuid);
+      const cupLimit = getPackageLimit(cupPkg);
+      const cuppedPkgs = pkgs.filter(
+        (x: any) => x?.cupPackageUuid === cupUuid || x?.packageUuid === cupUuid
+      );
+      const totalUsedInCup = cuppedPkgs.reduce((sum, x) => sum + getPackageUsed(x), 0);
+      cupRemainingMap.set(cupUuid, cupLimit - totalUsedInCup);
+    }
+
+    const beforeOwn = remainingMap.get(key) || 0;
+    const afterOwn = beforeOwn - Number(it.totalPrice || 0);
+    remainingMap.set(key, afterOwn);
+
+    let afterCup = afterOwn;
+    if (cupUuid) {
+      const beforeCup = cupRemainingMap.get(cupUuid) || 0;
+      afterCup = beforeCup - Number(it.totalPrice || 0);
+      cupRemainingMap.set(cupUuid, afterCup);
+    }
+
+    const after = cupUuid ? Math.min(afterOwn, afterCup) : afterOwn;
 
     return {
       ...it,
@@ -819,7 +883,6 @@ async function submit(action: "add" | "generate" = "add") {
 
     files.value.forEach((f) => form.append("attachment", f));
 
-    console.log('📤 Submitting service provided request...');
     const res = isEditMode.value
       ? await updateServiceProvided(props.editServiceProvided?.serviceProvidedUuid || props.editServiceProvided?.id || '', (() => {
           const updateForm = new FormData();
@@ -834,7 +897,6 @@ async function submit(action: "add" | "generate" = "add") {
           form.append("serviceProvidedRequest ", JSON.stringify(body));
           return form;
         })());
-    console.log('✅ Response:', res);
     if (res?.success) {
       toasted(true,"Cash service submitted");
       items.value = [];
@@ -858,7 +920,7 @@ async function submit(action: "add" | "generate" = "add") {
 <template>
   <div class="mx-auto space-y-6 w-full max-w-2xl xl:max-w-4xl 2xl:max-w-[80rem] ">
     <!-- Provider, Package, Date & Reference (Same Line) -->
-    <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
       <div
         :class="[
           'grid grid-cols-1 gap-4',
@@ -866,26 +928,26 @@ async function submit(action: "add" | "generate" = "add") {
         ]"
       >
         <div>
-          <label class="block mb-2 text-sm font-semibold text-gray-700">🏥 Provider<span class="text-red-500">*</span></label>
+          <label class="block mb-2 text-sm font-semibold text-ink-muted">🏥 Provider<span class="text-error">*</span></label>
           <CustomSelect
             v-model="provider"
             placeholder="Choose provider..."
             :options="providerOptions"
             class="w-full"
           />
-          <p v-if="submitted && !provider" class="mt-1 text-xs text-red-600">Provider is required.</p>
+          <p v-if="submitted && !provider" class="mt-1 text-xs text-error">Provider is required.</p>
         </div>
         <div v-if="isOtherProvider">
-          <label class="block mb-2 text-sm font-semibold text-gray-700">🏢 Provider Name<span class="text-red-500">*</span></label>
+          <label class="block mb-2 text-sm font-semibold text-ink-muted">🏢 Provider Name<span class="text-error">*</span></label>
           <input
             v-model="otherProviderName"
             placeholder="Enter provider name..."
-            class="pl-2 w-full h-10 text-sm bg-white rounded-md border border-gray-300 transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="pl-2 w-full h-10 text-sm bg-white rounded-md border border-line-strong transition-all focus:ring-2 focus:ring-primary focus:border-primary"
           />
-          <p v-if="submitted && isOtherProvider && !otherProviderName" class="mt-1 text-xs text-red-600">Provider name is required.</p>
+          <p v-if="submitted && isOtherProvider && !otherProviderName" class="mt-1 text-xs text-error">Provider name is required.</p>
         </div>
         <div>
-          <label class="block mb-2 text-sm font-semibold text-gray-700">📦 Package<span class="text-red-500">*</span></label>
+          <label class="block mb-2 text-sm font-semibold text-ink-muted">📦 Package<span class="text-error">*</span></label>
           <CustomSelect
             v-model="pkg"
             placeholder="Choose package..."
@@ -893,30 +955,30 @@ async function submit(action: "add" | "generate" = "add") {
             :disabled="!provider"
             class="w-full"
           />
-          <div v-if="pkg && selectedPackageRow" class="mt-1 text-xs text-gray-600">
+          <div v-if="pkg && selectedPackageRow" class="mt-1 text-xs text-ink-muted">
             <div class="flex gap-3 items-center">
-              <span class="font-semibold text-gray-700">Limit:</span>
+              <span class="font-semibold text-ink-muted">Limit:</span>
               <span>{{ formatCurrency(selectedPackageBalance.limit) }}</span>
-              <span class="font-semibold text-gray-700">Used:</span>
+              <span class="font-semibold text-ink-muted">Used:</span>
               <span>{{ formatCurrency(selectedPackageBalance.used) }}</span>
-              <span class="font-semibold text-gray-700">Cart:</span>
+              <span class="font-semibold text-ink-muted">Cart:</span>
               <span>{{ formatCurrency(selectedPackageBalance.cart) }}</span>
             </div>
             <div class="mt-0.5">
-              <span class="font-semibold text-gray-700">Remaining:</span>
-              <span :class="selectedPackageBalance.remaining < 0 ? 'text-red-700 font-bold' : 'text-green-700 font-bold'">
+              <span class="font-semibold text-ink-muted">Remaining:</span>
+              <span :class="selectedPackageBalance.remaining < 0 ? 'text-error-strong font-bold' : 'text-success-strong font-bold'">
                 {{ formatCurrency(selectedPackageBalance.remaining) }}
               </span>
-              <span v-if="selectedPackageBalance.remaining < 0" class="ml-2 font-semibold text-red-700">
+              <span v-if="selectedPackageBalance.remaining < 0" class="ml-2 font-semibold text-error-strong">
                 (Over limit by {{ formatCurrency(Math.abs(selectedPackageBalance.remaining)) }})
               </span>
-              <span v-if="isDependent" class="ml-2 text-gray-500">(Dependent)</span>
+              <span v-if="isDependent" class="ml-2 text-ink-subtle">(Dependent)</span>
             </div>
           </div>
-          <p v-if="submitted && !pkg" class="mt-1 text-xs text-red-600">Package is required.</p>
+          <p v-if="submitted && !pkg" class="mt-1 text-xs text-error">Package is required.</p>
         </div>
         <div>
-          <label class="block mb-2 text-sm font-semibold text-gray-700">📅 Dispensing Date<span class="text-red-500">*</span></label>
+          <label class="block mb-2 text-sm font-semibold text-ink-muted">📅 Dispensing Date<span class="text-error">*</span></label>
           <datePicker
             label=""
             required
@@ -930,25 +992,25 @@ async function submit(action: "add" | "generate" = "add") {
                 : ''
             "
           />
-          <p v-if="submitted && !dispensingDate" class="mt-1 text-xs text-red-600">Dispensing date is required.</p>
-          <p v-else-if="submitted && isDispensingDateOutOfRange" class="mt-1 text-xs text-red-600">
+          <p v-if="submitted && !dispensingDate" class="mt-1 text-xs text-error">Dispensing date is required.</p>
+          <p v-else-if="submitted && isDispensingDateOutOfRange" class="mt-1 text-xs text-error">
             Dispensing date must be between {{ minDispensingDate }} and {{ maxDispensingDate }}.
           </p>
         </div>
         <div>
-          <label class="block mb-2 text-sm font-semibold text-gray-700">🔢 Reference Number<span class="text-red-500">*</span></label>
+          <label class="block mb-2 text-sm font-semibold text-ink-muted">🔢 Reference Number<span class="text-error">*</span></label>
           <input
             v-model="referenceNumber"
             placeholder="e.g., CR-002"
-            class="pl-2 w-full h-10 text-sm bg-white rounded-md border border-gray-300 transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="pl-2 w-full h-10 text-sm bg-white rounded-md border border-line-strong transition-all focus:ring-2 focus:ring-primary focus:border-primary"
           />
-          <p v-if="submitted && !referenceNumber" class="mt-1 text-xs text-red-600">Reference number is required.</p>
+          <p v-if="submitted && !referenceNumber" class="mt-1 text-xs text-error">Reference number is required.</p>
         </div>
       </div>
     </div>
 
     <!-- Manual Service Entry (for "Other" Provider) -->
-    <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
       <div class="flex gap-2 items-center mb-4">
         <button
           type="button"
@@ -956,8 +1018,8 @@ async function submit(action: "add" | "generate" = "add") {
           :class="[
             'px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors',
             activeItemTab === 'SERVICE'
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              ? 'bg-primary text-white border-primary'
+              : 'bg-white text-ink-muted border-line-strong hover:bg-surface-muted'
           ]"
         >
           Service
@@ -968,8 +1030,8 @@ async function submit(action: "add" | "generate" = "add") {
           :class="[
             'px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors',
             activeItemTab === 'DRUG'
-              ? 'bg-red-600 text-white border-red-600'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              ? 'bg-error text-white border-error'
+              : 'bg-white text-ink-muted border-line-strong hover:bg-surface-muted'
           ]"
         >
           Drug
@@ -978,57 +1040,57 @@ async function submit(action: "add" | "generate" = "add") {
 
       <div v-if="activeItemTab === 'SERVICE'">
         <!-- Manual Service Entry (for "Other" Provider) -->
-        <div v-if="isOtherProvider" class="p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm">
-          <h3 class="mb-4 text-sm font-bold text-blue-900">📝 Manual Service Entry</h3>
+        <div v-if="isOtherProvider" class="p-4 bg-primary/5 rounded-lg border border-primary/20 shadow-sm">
+          <h3 class="mb-4 text-sm font-bold text-primary-hover">📝 Manual Service Entry</h3>
           <div class="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 lg:grid-cols-9">
         <!-- Service Code (2 cols) -->
         <div class="lg:col-span-2">
-          <label class="block mb-2 text-xs font-semibold text-gray-700">Code (optional)</label>
+          <label class="block mb-2 text-xs font-semibold text-ink-muted">Code (optional)</label>
           <input
             v-model="manualServiceCode"
             placeholder="e.g., SRV001"
-            class="py-2 pl-2 w-full text-sm bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-blue-500"
+            class="py-2 pl-2 w-full text-sm bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-primary"
           />
         </div>
 
         <!-- Service Name (3 cols) -->
         <div class="lg:col-span-3">
-          <label class="block mb-2 text-xs font-semibold text-gray-700">Service Name</label>
+          <label class="block mb-2 text-xs font-semibold text-ink-muted">Service Name</label>
           <input
             v-model="manualServiceName"
             placeholder="e.g., Consultation"
-            class="py-2 pl-2 w-full text-sm bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-blue-500"
+            class="py-2 pl-2 w-full text-sm bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-primary"
           />
         </div>
 
         <!-- Price (1 col) -->
         <div class="lg:col-span-1">
-          <label class="block mb-2 text-xs font-semibold text-gray-700">Price</label>
+          <label class="block mb-2 text-xs font-semibold text-ink-muted">Price</label>
           <input
             v-model.number="manualServicePrice"
             type="number"
             placeholder="0.00"
             min="0"
             step="0.01"
-            class="py-2 pl-2 w-full text-sm bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-blue-500"
+            class="py-2 pl-2 w-full text-sm bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-primary"
           />
         </div>
 
         <!-- Qty (1 col) -->
         <div class="lg:col-span-1">
-          <label class="block mb-2 text-xs font-semibold text-gray-700">Qty</label>
+          <label class="block mb-2 text-xs font-semibold text-ink-muted">Qty</label>
           <input
             v-model.number="manualServiceQty"
             type="number"
             placeholder="1"
             min="1"
-            class="py-2 pl-2 w-full text-sm text-center bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-blue-500"
+            class="py-2 pl-2 w-full text-sm text-center bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-primary"
           />
         </div>
 
         <!-- Total (1 col) -->
         <div class="lg:col-span-1">
-          <label class="block mb-2 text-xs font-semibold text-gray-700">Total</label>
+          <label class="block mb-2 text-xs font-semibold text-ink-muted">Total</label>
           <input
             :value="
               manualServicePrice && manualServiceQty
@@ -1036,7 +1098,7 @@ async function submit(action: "add" | "generate" = "add") {
                 : '0.00'
             "
             readonly
-            class="py-2 pl-2 w-full text-sm font-bold text-blue-900 bg-blue-100 rounded border border-blue-300 cursor-not-allowed"
+            class="py-2 pl-2 w-full text-sm font-bold text-primary-hover bg-primary/10 rounded border border-primary/30 cursor-not-allowed"
           />
         </div>
 
@@ -1045,7 +1107,7 @@ async function submit(action: "add" | "generate" = "add") {
           <button
             @click="addManualService"
             :disabled="!pkg || !manualServiceName || !manualServicePrice || !manualServiceQty"
-            class="py-2 pl-2 w-full text-sm font-bold text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            class="py-2 pl-2 w-full text-sm font-bold text-white bg-primary rounded hover:bg-primary-hover disabled:bg-line-strong disabled:cursor-not-allowed"
           >
             {{ editingIndex !== null && editingItemType === 'SERVICE' && !editingIsEligible ? '✏️ Update' : '➕ Add' }}
           </button>
@@ -1054,11 +1116,11 @@ async function submit(action: "add" | "generate" = "add") {
         </div>
 
         <!-- Service Selection (9-Column Grid Layout) -->
-        <div v-else class="p-4 bg-green-50 rounded-lg border border-gray-200 shadow-sm">
+        <div v-else class="p-4 bg-success-soft rounded-lg border border-line shadow-sm">
           <div class="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 lg:grid-cols-9">
         <!-- Service Code (2 cols) -->
         <div class="relative lg:col-span-2">
-          <label class="block mb-2 text-xs font-semibold text-gray-700"
+          <label class="block mb-2 text-xs font-semibold text-ink-muted"
             >Code</label
           >
           <input
@@ -1067,28 +1129,28 @@ async function submit(action: "add" | "generate" = "add") {
             @focus="handleCodeFocus"
             @blur="handleCodeBlur"
             :disabled="!pkg"
-            class="py-2 pl-2 w-full text-sm bg-white rounded border border-gray-300 transition-all px- focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            class="py-2 pl-2 w-full text-sm bg-white rounded border border-line-strong transition-all px- focus:ring-2 focus:ring-primary disabled:bg-surface-muted disabled:cursor-not-allowed"
           />
           <!-- Code Dropdown -->
           <div
             v-if="showCodeDropdown && filteredServices.length > 0"
-            class="overflow-auto absolute z-50 mt-1 w-full max-h-48 bg-white rounded border border-gray-200 shadow-lg"
+            class="overflow-auto absolute z-50 mt-1 w-full max-h-48 bg-white rounded border border-line shadow-lg"
           >
             <div
               v-for="item in filteredServices"
               :key="item.eligibleServiceUuid"
-              class="px-2 py-1.5 text-xs text-gray-700 border-b border-gray-100 cursor-pointer hover:bg-blue-50 last:border-b-0"
+              class="px-2 py-1.5 text-xs text-ink-muted border-b border-line cursor-pointer hover:bg-primary/5 last:border-b-0"
               @mousedown.prevent="selectFromDropdown(item, 'code')"
             >
-              <div class="font-semibold text-gray-900">{{ item.itemCode }}</div>
-              <div class="text-xs text-gray-500">{{ item.item }}</div>
+              <div class="font-semibold text-ink">{{ item.itemCode }}</div>
+              <div class="text-xs text-ink-subtle">{{ item.item }}</div>
             </div>
           </div>
         </div>
 
         <!-- Service Name (3 cols) -->
         <div class="relative lg:col-span-3">
-          <label class="block mb-2 text-xs font-semibold text-gray-700"
+          <label class="block mb-2 text-xs font-semibold text-ink-muted"
             >Service Name</label
           >
           <input
@@ -1097,53 +1159,53 @@ async function submit(action: "add" | "generate" = "add") {
             @focus="handleNameFocus"
             @blur="handleNameBlur"
             :disabled="!pkg"
-            class="py-2 pl-2 w-full text-sm bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            class="py-2 pl-2 w-full text-sm bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-primary disabled:bg-surface-muted disabled:cursor-not-allowed"
           />
           <!-- Name Dropdown -->
           <div
             v-if="showNameDropdown && filteredServices.length > 0"
-            class="overflow-auto absolute z-50 mt-1 w-full max-h-48 bg-white rounded border border-gray-200 shadow-lg"
+            class="overflow-auto absolute z-50 mt-1 w-full max-h-48 bg-white rounded border border-line shadow-lg"
           >
             <div
               v-for="item in filteredServices"
               :key="item.eligibleServiceUuid"
-              class="px-2 py-1.5 text-xs text-gray-700 border-b border-gray-100 cursor-pointer hover:bg-blue-50 last:border-b-0"
+              class="px-2 py-1.5 text-xs text-ink-muted border-b border-line cursor-pointer hover:bg-primary/5 last:border-b-0"
               @mousedown.prevent="selectFromDropdown(item, 'name')"
             >
-              <div class="font-semibold text-gray-900">{{ item.item }}</div>
-              <div class="text-xs text-gray-500">{{ item.itemCode }}</div>
+              <div class="font-semibold text-ink">{{ item.item }}</div>
+              <div class="text-xs text-ink-subtle">{{ item.itemCode }}</div>
             </div>
           </div>
         </div>
 
         <!-- Price (1 col) -->
         <div class="lg:col-span-1">
-          <label class="block mb-2 text-xs font-semibold text-gray-700"
+          <label class="block mb-2 text-xs font-semibold text-ink-muted"
             >Price</label
           >
           <input
             :value="selectedPrice ? formatCurrency(selectedPrice) : '0.00'"
             readonly
-            class="py-2 pl-2 w-full text-sm font-semibold text-gray-900 bg-gray-50 rounded border border-gray-300 cursor-not-allowed"
+            class="py-2 pl-2 w-full text-sm font-semibold text-ink bg-surface-muted rounded border border-line-strong cursor-not-allowed"
           />
         </div>
 
         <!-- Qty (1 col) -->
         <div class="lg:col-span-1">
-          <label class="block mb-2 text-xs font-semibold text-gray-700"
+          <label class="block mb-2 text-xs font-semibold text-ink-muted"
             >Qty</label
           >
           <input
             v-model.number="qty"
             type="number"
             min="1"
-            class="py-2 pl-2 w-full text-sm text-center bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-blue-500"
+            class="py-2 pl-2 w-full text-sm text-center bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-primary"
           />
         </div>
 
         <!-- Total (1 col) -->
         <div class="lg:col-span-1">
-          <label class="block mb-2 text-xs font-semibold text-gray-700"
+          <label class="block mb-2 text-xs font-semibold text-ink-muted"
             >Total</label
           >
           <input
@@ -1153,7 +1215,7 @@ async function submit(action: "add" | "generate" = "add") {
                 : '0.00'
             "
             readonly
-            class="py-2 pl-2 w-full text-sm font-bold text-blue-900 bg-blue-50 rounded border border-blue-300 cursor-not-allowed"
+            class="py-2 pl-2 w-full text-sm font-bold text-primary-hover bg-primary/5 rounded border border-primary/30 cursor-not-allowed"
           />
         </div>
 
@@ -1162,7 +1224,7 @@ async function submit(action: "add" | "generate" = "add") {
           <button
             @click="addService"
             :disabled="!searchCode || !searchName || !selectedPrice"
-            class="py-2 pl-2 w-full text-sm font-bold text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            class="py-2 pl-2 w-full text-sm font-bold text-white bg-primary rounded hover:bg-primary-hover disabled:bg-line-strong disabled:cursor-not-allowed"
           >
             {{ editingIndex !== null && editingItemType === 'SERVICE' && editingIsEligible ? '✏️ Update' : '➕ Add' }}
           </button>
@@ -1171,52 +1233,52 @@ async function submit(action: "add" | "generate" = "add") {
         </div>
       </div>
 
-      <div v-else class="p-4 bg-yellow-50 rounded-lg border border-red-200 shadow-sm">
-        <h3 class="mb-4 text-sm font-bold text-red-900">💊 Manual Drug Entry</h3>
+      <div v-else class="p-4 bg-warning-soft rounded-lg border border-error/20 shadow-sm">
+        <h3 class="mb-4 text-sm font-bold text-error-strong">💊 Manual Drug Entry</h3>
         <div class="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 lg:grid-cols-9">
           <div class="lg:col-span-2">
-            <label class="block mb-2 text-xs font-semibold text-gray-700">Code (optional)</label>
+            <label class="block mb-2 text-xs font-semibold text-ink-muted">Code (optional)</label>
             <input
               v-model="manualDrugCode"
               placeholder="e.g., DR001"
-              class="py-2 pl-2 w-full text-sm bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-red-500"
+              class="py-2 pl-2 w-full text-sm bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-error"
             />
           </div>
 
           <div class="lg:col-span-3">
-            <label class="block mb-2 text-xs font-semibold text-gray-700">Drug Name</label>
+            <label class="block mb-2 text-xs font-semibold text-ink-muted">Drug Name</label>
             <input
               v-model="manualDrugName"
               placeholder="e.g., Amoxicillin"
-              class="py-2 pl-2 w-full text-sm bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-red-500"
+              class="py-2 pl-2 w-full text-sm bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-error"
             />
           </div>
 
           <div class="lg:col-span-1">
-            <label class="block mb-2 text-xs font-semibold text-gray-700">Price</label>
+            <label class="block mb-2 text-xs font-semibold text-ink-muted">Price</label>
             <input
               v-model.number="manualDrugPrice"
               type="number"
               placeholder="0.00"
               min="0"
               step="0.01"
-              class="py-2 pl-2 w-full text-sm bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-red-500"
+              class="py-2 pl-2 w-full text-sm bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-error"
             />
           </div>
 
           <div class="lg:col-span-1">
-            <label class="block mb-2 text-xs font-semibold text-gray-700">Qty</label>
+            <label class="block mb-2 text-xs font-semibold text-ink-muted">Qty</label>
             <input
               v-model.number="manualDrugQty"
               type="number"
               placeholder="1"
               min="1"
-              class="py-2 pl-2 w-full text-sm text-center bg-white rounded border border-gray-300 transition-all focus:ring-2 focus:ring-red-500"
+              class="py-2 pl-2 w-full text-sm text-center bg-white rounded border border-line-strong transition-all focus:ring-2 focus:ring-error"
             />
           </div>
 
           <div class="lg:col-span-1">
-            <label class="block mb-2 text-xs font-semibold text-gray-700">Total</label>
+            <label class="block mb-2 text-xs font-semibold text-ink-muted">Total</label>
             <input
               :value="
                 manualDrugPrice && manualDrugQty
@@ -1224,7 +1286,7 @@ async function submit(action: "add" | "generate" = "add") {
                   : '0.00'
               "
               readonly
-              class="py-2 pl-2 w-full text-sm font-bold text-red-900 bg-red-100 rounded border border-red-300 cursor-not-allowed"
+              class="py-2 pl-2 w-full text-sm font-bold text-error-strong bg-error-soft rounded border border-error/40 cursor-not-allowed"
             />
           </div>
 
@@ -1232,7 +1294,7 @@ async function submit(action: "add" | "generate" = "add") {
             <button
               @click="addManualDrug"
               :disabled="!pkg || !manualDrugName || !manualDrugPrice || !manualDrugQty"
-              class="py-2 pl-2 w-full text-sm font-bold text-white bg-red-600 rounded hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              class="py-2 pl-2 w-full text-sm font-bold text-white bg-error rounded hover:bg-error-strong disabled:bg-line-strong disabled:cursor-not-allowed"
             >
               {{ editingIndex !== null && editingItemType === 'DRUG' ? '✏️ Update' : '➕ Add' }}
             </button>
@@ -1245,20 +1307,20 @@ async function submit(action: "add" | "generate" = "add") {
     <div class="grid grid-cols-1 gap-6">
       <!-- Cart Section - Table Format -->
       <div
-        class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm"
+        class="overflow-hidden bg-white rounded-xl border border-line shadow-sm"
       >
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h3 class="text-lg font-bold text-gray-900">📋 Services List</h3>
-          <p class="text-sm text-gray-600">{{ items.length }} item(s)</p>
+        <div class="px-6 py-4 bg-surface-muted border-b border-line">
+          <h3 class="text-lg font-bold text-ink">📋 Services List</h3>
+          <p class="text-sm text-ink-muted">{{ items.length }} item(s)</p>
         </div>
         <div class="p-6">
-          <p v-if="submitted && !items.length" class="mb-3 text-xs text-red-600">Please add at least one item.</p>
+          <p v-if="submitted && !items.length" class="mb-3 text-xs text-error">Please add at least one item.</p>
           <div v-if="!items.length" class="py-8 text-center">
             <div
-              class="inline-flex justify-center items-center mb-4 w-16 h-16 bg-gray-100 rounded-full"
+              class="inline-flex justify-center items-center mb-4 w-16 h-16 bg-surface-muted rounded-full"
             >
               <svg
-                class="w-8 h-8 text-gray-400"
+                class="w-8 h-8 text-ink-subtle"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1271,8 +1333,8 @@ async function submit(action: "add" | "generate" = "add") {
                 />
               </svg>
             </div>
-            <p class="font-medium text-gray-500">Cart is empty</p>
-            <p class="mt-1 text-xs text-gray-400">Add services from the list</p>
+            <p class="font-medium text-ink-subtle">Cart is empty</p>
+            <p class="mt-1 text-xs text-ink-subtle">Add services from the list</p>
           </div>
           <div v-else class="overflow-x-auto">
             <div class="min-w-[980px]">
@@ -1292,7 +1354,7 @@ async function submit(action: "add" | "generate" = "add") {
                 <template #serviceCode="{ row }">
                   <div
                     class="max-w-[140px] truncate"
-                    :class="row?.deleted ? 'text-red-700 line-through' : ''"
+                    :class="row?.deleted ? 'text-error-strong line-through' : ''"
                     :title="row?.serviceCode || ''"
                   >
                     {{ row?.serviceCode }}
@@ -1302,7 +1364,7 @@ async function submit(action: "add" | "generate" = "add") {
                 <template #serviceName="{ row }">
                   <div
                     class="max-w-[260px] truncate"
-                    :class="row?.deleted ? 'text-red-700 line-through' : ''"
+                    :class="row?.deleted ? 'text-error-strong line-through' : ''"
                     :title="row?.serviceName || ''"
                   >
                     {{ row?.serviceName }}
@@ -1311,10 +1373,10 @@ async function submit(action: "add" | "generate" = "add") {
 
                 <template #remainingAfter="{ row }">
                   <div class="flex flex-col">
-                    <span :class="row?.isOverLimit ? 'text-red-700 font-bold' : 'text-green-700 font-semibold'">
+                    <span :class="row?.isOverLimit ? 'text-error-strong font-bold' : 'text-success-strong font-semibold'">
                       {{ formatCurrency(row?.remainingAfter || 0) }}
                     </span>
-                    <span v-if="row?.isOverLimit" class="text-[11px] text-red-700">
+                    <span v-if="row?.isOverLimit" class="text-[11px] text-error-strong">
                       Over by {{ formatCurrency(row?.overBy || 0) }}
                     </span>
                   </div>
@@ -1326,7 +1388,7 @@ async function submit(action: "add" | "generate" = "add") {
                       type="button"
                       @click="editItemByRow(row)"
                       :disabled="row?.deleted"
-                      class="p-1 text-blue-600 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="p-1 text-primary rounded hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Edit"
                     >
                       <span class="inline-flex w-4 h-4" v-html="icons.edit"></span>
@@ -1335,7 +1397,7 @@ async function submit(action: "add" | "generate" = "add") {
                       v-if="!row?.deleted"
                       type="button"
                       @click="removeItemByRow(row)"
-                      class="p-1 text-red-600 rounded hover:bg-red-50"
+                      class="p-1 text-error rounded hover:bg-error-soft"
                       title="Remove"
                     >
                       <span class="inline-flex w-5 h-5" v-html="icons.delete"></span>
@@ -1344,7 +1406,7 @@ async function submit(action: "add" | "generate" = "add") {
                       v-else
                       type="button"
                       @click="restoreItemByRow(row)"
-                      class="p-1 text-emerald-600 rounded hover:bg-emerald-50"
+                      class="p-1 text-success rounded hover:bg-success-soft"
                       title="Restore"
                     >
                       Restore
@@ -1354,10 +1416,10 @@ async function submit(action: "add" | "generate" = "add") {
               </Table>
             </div>
           </div>
-          <div v-if="items.length" class="p-3 mt-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div v-if="items.length" class="p-3 mt-4 bg-primary/5 rounded-lg border border-primary/20">
             <div class="flex justify-between items-center">
-              <span class="font-bold text-gray-900">Grand Total</span>
-              <span class="text-lg font-bold text-blue-600">{{
+              <span class="font-bold text-ink">Grand Total</span>
+              <span class="text-lg font-bold text-primary">{{
                 formatCurrency(grandTotal)
               }}</span>
             </div>
@@ -1367,17 +1429,17 @@ async function submit(action: "add" | "generate" = "add") {
 
       <!-- Details Section -->
       <div
-        class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm"
+        class="overflow-hidden bg-white rounded-xl border border-line shadow-sm"
       >
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h3 class="text-lg font-bold text-gray-900">📝 Request Details</h3>
+        <div class="px-6 py-4 bg-surface-muted border-b border-line">
+          <h3 class="text-lg font-bold text-ink">📝 Request Details</h3>
         </div>
         <div class="p-6 space-y-4">
           <!-- File Upload -->
           <div>
-            <label class="block mb-2 text-sm font-semibold text-gray-700">📎 Medical Files <span class="text-xs font-normal text-gray-500">(optional)</span></label>
+            <label class="block mb-2 text-sm font-semibold text-ink-muted">📎 Medical Files <span class="text-xs font-normal text-ink-subtle">(optional)</span></label>
             <div
-              class="p-4 text-center bg-gray-50 rounded-lg border border-gray-300 border-dashed transition-colors cursor-pointer hover:bg-gray-100"
+              class="p-4 text-center bg-surface-muted rounded-lg border border-line-strong border-dashed transition-colors cursor-pointer hover:bg-surface-muted"
             >
               <input
                 type="file"
@@ -1389,7 +1451,7 @@ async function submit(action: "add" | "generate" = "add") {
               />
               <label for="file-input" class="cursor-pointer">
                 <svg
-                  class="mx-auto mb-2 w-8 h-8 text-gray-400"
+                  class="mx-auto mb-2 w-8 h-8 text-ink-subtle"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1401,8 +1463,8 @@ async function submit(action: "add" | "generate" = "add") {
                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                   />
                 </svg>
-                <p class="text-sm font-medium text-gray-700">Click to upload</p>
-                <p class="mt-1 text-xs text-gray-500">
+                <p class="text-sm font-medium text-ink-muted">Click to upload</p>
+                <p class="mt-1 text-xs text-ink-subtle">
                   Images or PDF (max 20 files)
                 </p>
               </label>
@@ -1411,10 +1473,10 @@ async function submit(action: "add" | "generate" = "add") {
               <li
                 v-for="(f, i) in files"
                 :key="i"
-                class="flex gap-2 justify-between items-center p-2 bg-green-50 rounded border border-green-200"
+                class="flex gap-2 justify-between items-center p-2 bg-success-soft rounded border border-success/20"
               >
                 <div
-                  class="flex flex-1 gap-2 items-center min-w-0 text-green-700"
+                  class="flex flex-1 gap-2 items-center min-w-0 text-success-strong"
                 >
                   <svg
                     class="flex-shrink-0 w-4 h-4"
@@ -1434,7 +1496,7 @@ async function submit(action: "add" | "generate" = "add") {
                 <button
                   @click="removeFile(i)"
                   type="button"
-                  class="flex-shrink-0 font-bold text-red-500 hover:text-red-700"
+                  class="flex-shrink-0 font-bold text-error hover:text-error-strong"
                 >
                   ✕
                 </button>
@@ -1446,9 +1508,9 @@ async function submit(action: "add" | "generate" = "add") {
     </div>
 
     <!-- Submit Button - Bottom of Page -->
-    <div v-if="submitted && missingRequiredFields.length" class="p-3 mb-3 bg-red-50 rounded-lg border border-red-200">
-      <p class="text-sm font-semibold text-red-800">Please fill the required fields:</p>
-      <ul class="mt-1 ml-5 text-sm list-disc text-red-700">
+    <div v-if="submitted && missingRequiredFields.length" class="p-3 mb-3 bg-error-soft rounded-lg border border-error/20">
+      <p class="text-sm font-semibold text-error-strong">Please fill the required fields:</p>
+      <ul class="mt-1 ml-5 text-sm list-disc text-error-strong">
         <li v-for="(f, i) in missingRequiredFields" :key="i">{{ f }}</li>
       </ul>
     </div>

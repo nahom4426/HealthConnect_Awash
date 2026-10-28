@@ -118,7 +118,7 @@ function handlePerPageChange(newPerPage) {
    <DefaultPage  placeholder="Search Roles">
   <!-- <template #filter>
       <button
-        class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary"
+        class="flex gap-2 justify-center items-center px-6 py-4 bg-surface-muted rounded-md text-primary"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
@@ -159,14 +159,14 @@ function handlePerPageChange(newPerPage) {
         />
 
         <!-- Pagination Section -->
-        <div v-if="roles && roles.length > 0" class="flex flex-col gap-3 p-3 bg-gray-50 rounded-b-xl border-t border-gray-100">
+        <div v-if="roles && roles.length > 0" class="flex flex-col gap-3 p-3 bg-surface-muted rounded-b-xl border-t border-line">
           <!-- Mobile-first layout -->
           <div class="flex flex-col gap-3 justify-between items-center sm:flex-row">
-            <div class="flex gap-2 items-center text-xs text-gray-600 sm:text-sm">
+            <div class="flex gap-2 items-center text-xs text-ink-muted sm:text-sm">
               <span>Show</span>
               <select
                 @change="handlePerPageChange($event.target.value)"
-                class="px-2 py-1 text-xs bg-white rounded-md border border-gray-300 transition-all sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="px-2 py-1 text-xs bg-white rounded-md border border-line-strong transition-all sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 :value="itemsPerPage"
               >
                 <option value="25">25</option>
@@ -177,7 +177,7 @@ function handlePerPageChange(newPerPage) {
               <span>entries</span>
             </div>
             
-            <div v-if="totalElements > 0" class="text-xs text-center text-gray-600 sm:text-sm sm:text-left">
+            <div v-if="totalElements > 0" class="text-xs text-center text-ink-muted sm:text-sm sm:text-left">
               Showing {{ ((currentPage - 1) * itemsPerPage + 1) }} to {{ Math.min(currentPage * itemsPerPage, totalElements) }} of {{ totalElements }} records
             </div>
           </div>
@@ -231,9 +231,9 @@ function handlePerPageChange(newPerPage) {
   padding: 0 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: rgb(var(--ink-muted));
   background-color: white;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgb(var(--line-strong));
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -243,8 +243,8 @@ function handlePerPageChange(newPerPage) {
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: rgb(var(--surface-muted));
+  border-color: rgb(var(--ink-subtle));
 }
 
 .pagination-btn:disabled {
@@ -253,14 +253,14 @@ function handlePerPageChange(newPerPage) {
 }
 
 .pagination-btn-active {
-  background-color: #2563eb;
+  background-color: rgb(var(--primary));
   color: white;
-  border-color: #2563eb;
+  border-color: rgb(var(--primary));
 }
 
 .pagination-btn-active:hover {
-  background-color: #1d4ed8;
-  border-color: #1d4ed8;
+  background-color: rgb(var(--primary-hover));
+  border-color: rgb(var(--primary-hover));
 }
 
 @media (max-width: 640px) {

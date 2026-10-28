@@ -22,9 +22,7 @@ const notEligibleError = ref("");
 const pagination = usePagination({
   store,
   cb: async (data) => {
-    console.log('[CategoryDataProvider] Fetching eligible categories...');
     const response = await getAllServiceCategories(contractUuid, data);
-    console.log('[CategoryDataProvider] Eligible categories response:', response);
     return response;
   },
 });
@@ -34,7 +32,6 @@ async function loadNotEligible() {
     notEligiblePending.value = true;
     notEligibleError.value = "";
     
-    console.log('[CategoryDataProvider] Fetching not-eligible categories...');
     const res = await getNotEligibleCategories(contractUuid, policyUuid);
     
     // Handle both array and object responses for not-eligible
@@ -47,7 +44,6 @@ async function loadNotEligible() {
       notEligibleList = res.content;
     }
     
-    console.log('[CategoryDataProvider] Raw not-eligible list:', notEligibleList);
     
     // Create a map of not-eligible categories by categoryUuid
     const notEligibleMap = {};
@@ -57,7 +53,6 @@ async function loadNotEligible() {
       }
     });
     
-    console.log('[CategoryDataProvider] Processed not-eligible map:', notEligibleMap);
     notEligibleByCategory.value = notEligibleMap;
   } catch (e) {
     console.error('[CategoryDataProvider] Error loading not-eligible categories:', e);
@@ -70,26 +65,21 @@ async function loadNotEligible() {
 watch(
   () => props.search,
   () => {
-    console.log('[CategoryDataProvider] Search changed, refreshing...');
     pagination.send();
   },
   { immediate: false }
 );
 
 function refresh() {
-  console.log('[CategoryDataProvider] refresh() called');
   pagination.send();
   loadNotEligible();
 }
 
 onMounted(() => {
-  console.log('[CategoryDataProvider] onMounted - auto:', props.auto);
   if (props.auto) {
-    console.log('[CategoryDataProvider] Auto-refreshing...');
     refresh();
   } else {
     // Even if auto is false, we need to load not-eligible categories
-    console.log('[CategoryDataProvider] Auto is false, but loading not-eligible categories...');
     loadNotEligible();
   }
 });

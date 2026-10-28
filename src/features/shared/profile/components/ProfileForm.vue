@@ -8,10 +8,11 @@ const authStore = useAuthStore();
 
 <template>
   <div>
-    <Form class="space-y-6" id="ProfileForm" :inner="false">
-      <div
-        class="border border-base-clr/20 grid grid-cols-2 gap-6 rounded-md p-5"
-      >
+    <Form class="space-y-8" id="ProfileForm" :inner="false">
+      <fieldset>
+        <legend class="mb-1 text-sm font-semibold text-ink">Personal information</legend>
+        <p class="mb-4 text-sm text-ink-muted">Your name as it appears across Health Connect.</p>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Input
           label="First Name"
           validation="required"
@@ -49,10 +50,13 @@ const authStore = useAuthStore();
           }"
           :value="authStore.auth?.user?.gender"
         />
-      </div>
-      <div
-        class="border border-base-clr/20 grid grid-cols-2 gap-6 rounded-md p-5"
-      >
+        </div>
+      </fieldset>
+      <fieldset class="pt-6 border-t border-line">
+        <legend class="sr-only">Contact information</legend>
+        <p class="mb-1 text-sm font-semibold text-ink" aria-hidden="true">Contact information</p>
+        <p class="mb-4 text-sm text-ink-muted">How we reach you about your account.</p>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Input
           label="Phone Number"
           :value="authStore.auth?.user?.mobilePhone"
@@ -71,7 +75,8 @@ const authStore = useAuthStore();
             placeholder: 'Enter your email',
           }"
         />
-      </div>
+        </div>
+      </fieldset>
     </Form>
   </div>
 </template>

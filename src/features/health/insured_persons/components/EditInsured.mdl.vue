@@ -46,20 +46,16 @@ function normalizePayload(payload) {
 }
 
 onMounted(() => {
-  console.log('EditInsured modal mounted with data prop:', props.data);
   
   if (props.data) {
     insuredUuid.value = props.data.insuredUuid || '';
     insuredData.value = props.data.insured || {};
     
-    console.log('Extracted insured UUID:', insuredUuid.value);
-    console.log('Extracted insured data:', insuredData.value);
   }
 });
 
 watch(() => props.data, (newData) => {
   if (newData) {
-    console.log('Data prop updated:', newData);
     insuredUuid.value = newData.insuredUuid || '';
     insuredData.value = newData.insured || {};
   }
@@ -86,11 +82,25 @@ async function handleSubmit(formValues) {
       return;
     }
 
+    const targetInstitutionUuid = formValues.institutionUuid || insuredData.value?.institutionUuid || route.params.institutionUuid || null;
+    const targetPayerContractUuid = 
+      insuredData.value?.payerInstitutionContractUuid || 
+      insuredData.value?.payerInstitutionContractUUID || 
+      insuredData.value?.payerUuid || 
+      formValues.payerInstitutionContractUuid || 
+      formValues.payerUuid || 
+      route.params.payerInstitutionContractUuid || 
+      route.params.id || 
+      null;
+
     // Prepare the insured data according to backend expectations (same as add component)
     const insuredPayload = normalizePayload({
       email: formValues.email,
-      institutionUuid: formValues.institutionUuid || route.params.institutionUuid || null,
-      payerInstitutionContractUuid: formValues.payerUuid || route.params.id || null,
+      institutionUuid: targetInstitutionUuid,
+      payerInstitutionContractUuid: targetPayerContractUuid,
+      hasInstitution: Boolean(targetInstitutionUuid),
+      hasGroup: Boolean(targetInstitutionUuid),
+      group: Boolean(targetInstitutionUuid),
       premium: 0,
       title: "string",
       firstName: formValues.firstName,
@@ -119,14 +129,9 @@ async function handleSubmit(formValues) {
     }
 
     // Debug: log what we are sending
-    console.log('EditInsured submit -> insuredUuid:', insuredUuid.value);
-    console.log('EditInsured submit -> insuredPayload:', insuredPayload);
-    console.log('EditInsured submit -> FormData entries:');
     for (const [k, v] of formData.entries()) {
       if (v instanceof File || v instanceof Blob) {
-        console.log(`  - ${k}:`, `${v.constructor.name} type=${v.type || 'n/a'} size=${v.size}`);
       } else {
-        console.log(`  - ${k}:`, v);
       }
     }
 
@@ -181,11 +186,11 @@ async function handleSubmit(formValues) {
       subtitle="To update employee information, please modify the fields below."
     >
       <div class="bg-white rounded-lg">
-        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        <div v-if="error" class="p-4 mb-4 text-sm text-error-strong bg-error-soft rounded-lg">
           {{ error }}
         </div>
 
-        <div v-if="!insuredUuid || Object.keys(insuredData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
+        <div v-if="!insuredUuid || Object.keys(insuredData).length === 0" class="p-4 mb-4 text-sm text-warning-strong bg-warning-soft rounded-lg">
           Loading employee data...
         </div>
 
@@ -193,7 +198,7 @@ async function handleSubmit(formValues) {
           v-else
           :initial-data="insuredData"
           :is-edit="true"
-          :institutionId="insuredData.payerUuid"
+          :institutionId="insuredData.payerInstitutionContractUuid || insuredData.payerInstitutionContractUUID || insuredData.payerUuid || ''"
           :pending="pending"
           :onSubmit="handleSubmit"
           :onCancel="() => closeModal()"

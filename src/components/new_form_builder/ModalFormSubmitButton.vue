@@ -1,6 +1,5 @@
 <script setup>
-import { inject, watch } from "vue";
-import { Icon } from "@iconify/vue";
+import { inject } from "vue";
 import Button from "../Button.vue";
 
 defineProps({
@@ -13,20 +12,21 @@ defineProps({
   },
   size: {
     type: String,
+    default: "md",
   },
 });
 
+// Refs are unwrapped in the template, so this works for a provided ref or boolean
 const pendingRequest = inject("pending", false);
 </script>
+
 <template>
   <Button
+    type="primary"
     :size="size"
-    :pending="pending || pendingRequest"
-    :disabled="pending || pendingRequest"
+    :pending="pending || !!pendingRequest"
     html-type="submit"
-    class=" text-sm  bg-primary text-white rounded-lg"
   >
-    <span v-if="!pending && !pendingRequest">{{ btnText }}</span>
-    <Icon icon="svg-spinners:3-dots-scale" class="text-2xl" v-else />
+    {{ btnText }}
   </Button>
 </template>

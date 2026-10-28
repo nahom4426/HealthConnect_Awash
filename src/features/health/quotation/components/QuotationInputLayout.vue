@@ -8,13 +8,13 @@ const props = defineProps(["label", "error"]);
 <template>
   <div class="flex flex-col items-stretch w-full">
     <div class="flex flex-col w-full">
-      <span v-if="label" class="text-xs font-semibold mb-1 text-slate-500">{{ label }}</span>
+      <span v-if="label" class="text-xs font-semibold mb-1 text-ink-subtle">{{ label }}</span>
       <div
         :class="`${attrs?.class || ''} flex items-center w-full relative`"
       >
         <slot></slot>
       </div>
     </div>
-    <span v-if="error" class="mt-[2px] text-xs text-red-500">{{ error }}</span>
+    <span v-if="error" class="mt-[2px] text-xs text-error">{{ error }}</span>
   </div>
 </template>

@@ -21,7 +21,9 @@ const props = defineProps({
   onDelete: { type: Function, default: () => {} },
   onRowClick: { type: Function, default: () => {} },
   currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 25 }
+  perPage: { type: Number, default: 25 },
+  // GENERAL policies belong to an institution; INDIVIDUAL ones don't
+  policyType: { type: String, default: 'GENERAL' }
 });
 
 const router = useRouter();
@@ -30,13 +32,13 @@ function getStatusStyle(status) {
   const base = "inline-flex justify-center items-center px-3 py-1 rounded-full text-xs font-semibold";
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
     case "PENDING":
-      return `${base} bg-amber-100 text-amber-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
     case "CLOSED":
-      return `${base} bg-red-100 text-red-800`;
+      return `${base} bg-error-soft text-error-strong`;
     default:
-      return `${base} bg-gray-100 text-gray-800`;
+      return `${base} bg-surface-muted text-ink`;
   }
 }
 
@@ -49,6 +51,8 @@ function getDateRange(row) {
   if (!row.beginDate || !row.endDate) return '—';
   return `${formatDate(row.beginDate)} → ${formatDate(row.endDate)}`;
 }
+
+const hasInstitution = () => (props.policyType === 'INDIVIDUAL' ? 'false' : 'true');
 
 function navigateTo(path) {
   router.push(path);
@@ -76,27 +80,27 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     <tr
       v-for="(row, idx) in rowData.filter(r => r !== null)"
       :key="row.payerInstitutionContractUuid || idx"
-      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+      class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted"
     >
       <!-- Index -->
-      <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+      <td class="p-4 font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
       <td class="p-4">
         <div class="flex flex-col">
-          <span class="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-md shadow-sm w-fit">
+          <span class="px-3 py-1 text-sm font-medium text-primary-hover bg-primary/5 rounded-md shadow-sm w-fit">
             {{ row.institutionName || '—' }}
           </span>
-          <span class="mt-1 font-mono text-xs text-gray-500">{{ row.policyNumber || '—' }}</span>
+          <span class="mt-1 font-mono text-xs text-ink-subtle">{{ row.policyNumber || '—' }}</span>
         </div>
       </td>
 
       <!-- Category Name -->
       <td class="p-4">
         <div class="flex flex-col">
-          <span class="font-semibold text-gray-900">{{ row.contractName }}</span>
-          <span class="mt-1 text-xs text-gray-500">{{ getDateRange(row) }}</span>
+          <span class="font-semibold text-ink">{{ row.contractName }}</span>
+          <span class="mt-1 text-xs text-ink-subtle">{{ getDateRange(row) }}</span>
         </div>
       </td>
- <!-- <td class="p-4 font-mono text-sm text-gray-700">{{ row.contractCode || '—' }}</td> -->
+ <!-- <td class="p-4 font-mono text-sm text-ink-muted">{{ row.contractCode || '—' }}</td> -->
       <!-- Code -->
 
       <!-- Status -->
@@ -123,8 +127,8 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
 
           <!-- Insured Persons -->
           <button
-            @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}/${row?.institutionName}`)"
-            class="inline-flex gap-1 items-center px-2 py-0.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded border border-blue-200 transition-all duration-200 hover:bg-blue-100"
+            @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}/${row?.institutionName}?hasInstitution=${hasInstitution()}`)"
+            class="inline-flex gap-1 items-center px-2 py-0.5 text-sm font-semibold text-primary bg-primary/5 rounded border border-primary/20 transition-all duration-200 hover:bg-primary/10"
             title="Persons"
           >
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +140,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           <!-- Add Providers -->
           <button
             @click.stop="navigateTo(`/addInstitution/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}`)"
-            class="inline-flex gap-1 items-center px-2 py-0.5 text-sm font-semibold text-green-600 bg-green-50 rounded border border-green-200 transition-all duration-200 hover:bg-green-100"
+            class="inline-flex gap-1 items-center px-2 py-0.5 text-sm font-semibold text-success bg-success-soft rounded border border-success/20 transition-all duration-200 hover:bg-success-soft"
             title="Providers"
           >
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,16 +158,16 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     <div
       v-for="(row, idx) in rowData.filter(r => r !== null)"
       :key="row.payerInstitutionContractUuid || idx"
-      class="overflow-hidden p-2 mx-1 mb-3 bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md"
+      class="overflow-hidden p-2 mx-1 mb-3 bg-white rounded-lg border border-line shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md"
     >
       <!-- Header with name and status -->
       <div class="flex flex-col mb-2 space-y-1">
         <div class="flex gap-2 justify-between items-start">
           <div class="flex-1 min-w-0">
-            <h3 class="text-xs font-semibold text-gray-900 truncate">
+            <h3 class="text-xs font-semibold text-ink truncate">
               {{ row.contractName }}
             </h3>
-            <p class="text-xs text-gray-500 truncate">{{ row.contractCode }}</p>
+            <p class="text-xs text-ink-subtle truncate">{{ row.contractCode }}</p>
           </div>
           <div class="flex-shrink-0">
             <span :class="getStatusStyle(row.status)" class="text-xs">
@@ -174,15 +178,15 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
       </div>
 
       <!-- Category Details -->
-      <div class="py-2 mb-2 space-y-1 border-t border-gray-100">
-        <div class="text-xs text-gray-600">
-          <span class="font-medium text-gray-500">Dates: </span>
-          <span class="text-gray-900">{{ getDateRange(row) }}</span>
+      <div class="py-2 mb-2 space-y-1 border-t border-line">
+        <div class="text-xs text-ink-muted">
+          <span class="font-medium text-ink-subtle">Dates: </span>
+          <span class="text-ink">{{ getDateRange(row) }}</span>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-2 pt-2 border-t border-gray-100">
+      <div class="flex gap-2 pt-2 border-t border-line">
         <!-- Product Packages -->
         <!-- <button
           @click.stop="navigateTo(`/packages/${row?.payerInstitutionContractUuid}`)"
@@ -197,8 +201,8 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
 
         <!-- Insured Persons -->
         <button
-          @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}?pageContext=membership`)"
-          class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-blue-600 bg-blue-50 rounded border border-blue-200 transition-all duration-200 hover:bg-blue-100"
+          @click.stop="navigateTo(`/insured_persons/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}?hasInstitution=${hasInstitution()}&pageContext=membership`)"
+          class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-primary bg-primary/5 rounded border border-primary/20 transition-all duration-200 hover:bg-primary/10"
           title="Persons"
         >
           <svg class="flex-shrink-0 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,7 +214,7 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
         <!-- Add Providers -->
         <button
           @click.stop="navigateTo(`/addInstitution/${row?.payerInstitutionContractUuid}/${row?.institutionUuid}`)"
-          class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-green-600 bg-green-50 rounded border border-green-200 transition-all duration-200 hover:bg-green-100"
+          class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-success bg-success-soft rounded border border-success/20 transition-all duration-200 hover:bg-success-soft"
           title="Providers"
         >
           <svg class="flex-shrink-0 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,10 +237,10 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   display: inline-block;
   text-transform: capitalize;
 }
-.bg-green-100 { background-color: #d1fae5; color: #065f46; }
-.bg-yellow-100 { background-color: #fef3c7; color: #92400e; }
-.bg-red-100 { background-color: #fee2e2; color: #991b1b; }
-.bg-gray-100 { background-color: #f3f4f6; color: #374151; }
+.bg-success-soft { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
+.bg-warning-soft { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
+.bg-error-soft { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
+.bg-surface-muted { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
 
 /* Dropdown Animation */
 .dropdown-menu {
@@ -261,11 +265,11 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .dropdown-item:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: rgb(var(--primary) / 0.05);
+  color: rgb(var(--primary-hover));
 }
-.dropdown-item.text-red-600:hover {
-  background-color: #fef2f2;
-  color: #dc2626;
+.dropdown-item.text-error:hover {
+  background-color: rgb(var(--error-soft));
+  color: rgb(var(--error));
 }
 </style>

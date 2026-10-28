@@ -5,9 +5,9 @@ One folder per insurance product (the eight entries in `src/stores/moduleStore.j
 ```
 features/
   shared/        auth, profile, admin (users/roles/privileges), settings, analytics, form_builder
-  health/        the ClaimConnect app: claim, underwriting, quotation, quotation_underwriting,
+  health/        the HealthConnect app: claim, underwriting, quotation, quotation_underwriting,
                  institutions, insured_persons, insured_service, providers, provider_contracts,
-                 product_settings, authorization, finance
+                 product_settings, authorization, finance, broker_management, reports
   motor/         rate config, quotations, proposals, and claims/ (the digital-channel claims flow)
   fire/          }
   marine/        }

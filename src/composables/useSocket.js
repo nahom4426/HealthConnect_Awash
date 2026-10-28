@@ -2,20 +2,19 @@ const base = import.meta.env?.v_BASE_SOCKET_URL;
 const socket = new SockJS(`${base}/socket`);
 
 const client = Stomp.over(socket);
-console.log(client);
 
 export const useSocket = () => {
 
   function subscribe(name, cb) {
     if (!client.connected) {
-      return console.log('You are Disconnected');
+      console.warn('[socket] subscribe skipped: not connected');
+      return;
     }
 
     client.subscribe(name, cb);
   }
 
   function send(name, message) {
-    console.log("%cmessage", "color:green");
     client.send(name, {}, message);
   }
 
@@ -34,13 +33,11 @@ export const useSocket = () => {
         return res({ client });
       }
 
-      console.log('connecting', client.connected);  // Initially false
 
       client.connect(
         {}, // Optional headers if needed
         function (frame) {
           // Connection was successful
-          console.log('connected ', client.connected);  // True after successful connection
           res({ client, frame });
 
           // Do something after the connection is made

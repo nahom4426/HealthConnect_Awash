@@ -55,11 +55,16 @@ async function handleSubmit(formValues) {
       return; // Exit early if validation fails
     }
 
+    const targetInstitutionUuid = formValues.institutionUuid || institutionUuid || null;
+
     // Prepare the insured data according to backend expectations
     const insuredPayload = normalizePayload({
       email: formValues.email,
-      institutionUuid: formValues.institutionUuid || institutionUuid || null, // Add if required
+      institutionUuid: targetInstitutionUuid, // Add if required
       payerInstitutionContractUuid: payerInstitutionContractUuid || null, // Assuming this is the correct mapping
+      hasInstitution: Boolean(targetInstitutionUuid),
+      hasGroup: Boolean(targetInstitutionUuid),
+      group: Boolean(targetInstitutionUuid),
       premium: 0, // Default value as per backend
       title: "string", // Default or from formValues if available
       firstName: formValues.firstName,
@@ -88,13 +93,9 @@ async function handleSubmit(formValues) {
     }
 
     // Debug: log what we are sending
-    console.log('AddInsured submit -> insuredPayload:', insuredPayload);
-    console.log('AddInsured submit -> FormData entries:');
     for (const [k, v] of formData.entries()) {
       if (v instanceof File || v instanceof Blob) {
-        console.log(`  - ${k}:`, `${v.constructor.name} type=${v.type || 'n/a'} size=${v.size}`);
       } else {
-        console.log(`  - ${k}:`, v);
       }
     }
 

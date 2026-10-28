@@ -1,4 +1,4 @@
-import Authorization from "@/features/health/authorization/pages/Authorization.vue";
+const Authorization = () => import("@/features/health/authorization/pages/Authorization.vue");
 
 export default [
   {

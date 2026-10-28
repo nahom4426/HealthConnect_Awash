@@ -43,15 +43,15 @@ function getStatusStyle(status: any) {
     case "ACTIVE":
     case "APPROVED":
     case "ACCEPTED":
-      return `${base} bg-emerald-50 text-emerald-700 ring-emerald-200`;
+      return `${base} bg-success-soft text-success-strong ring-success/20`;
     case "PENDING":
     case "SUBMITTED":
-      return `${base} bg-amber-50 text-amber-700 ring-amber-200`;
+      return `${base} bg-warning-soft text-warning-strong ring-warning/20`;
     case "INACTIVE":
     case "REJECTED":
-      return `${base} bg-rose-50 text-rose-700 ring-rose-200`;
+      return `${base} bg-error-soft text-error-strong ring-error/20`;
     default:
-      return `${base} bg-slate-50 text-slate-700 ring-slate-200`;
+      return `${base} bg-surface-muted text-ink-muted ring-line`;
   }
 }
 
@@ -78,9 +78,9 @@ const hasActions = computed(() =>
     v-for="(row, idx) in (rowData || []).filter((r: any) => r !== null)"
     :key="row?.institutionUuid || row?.id || idx"
     @click.self="(onRowClick(row), emit('row', row))"
-    class="bg-white border-b transition-colors duration-150 hover:bg-gray-50"
+    class="bg-white border-b transition-colors duration-150 hover:bg-surface-muted"
   >
-    <td class="p-4 font-medium text-gray-500">
+    <td class="p-4 font-medium text-ink-subtle">
       {{ (props.currentPage - 1) * props.perPage + idx + 1 }}
     </td>
 
@@ -91,7 +91,7 @@ const hasActions = computed(() =>
         </span>
       </div>
 
-      <span v-else class="text-gray-700">
+      <span v-else class="text-ink-muted">
         {{ formatCellValue(key as any, row) }}
       </span>
     </td>

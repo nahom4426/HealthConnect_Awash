@@ -19,11 +19,9 @@ const institutionUuid = ref(
 
 // Handle form submission
 function handleSubmit(register, data) {
-  console.log('Form submitted with data:', data);
   
   register(data)
     .then((res) => {
-      console.log('Registration successful:', res);
       router.push('/insured_list');
     })
     .catch(error => {

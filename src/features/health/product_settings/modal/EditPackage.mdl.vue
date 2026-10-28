@@ -29,7 +29,6 @@ import { toasted } from "@/utils/utils";
     }
   });
 
-  console.log('EditPackage props:', props);
 
   // Extract values from nested data prop
   const packageData = computed(() => props.data?.data || props.data);
@@ -40,9 +39,6 @@ import { toasted } from "@/utils/utils";
   const coverageStore = useCoverage();
 const pending = ref(false);
 function handleUpdate({ values }) {
-    console.log('Form values received:', values);
-  console.log('allServices value:', values.allServices);
-  console.log('allServices type:', typeof values.allServices);
   if (!packageUuid.value) {
     toasted(false, '', 'Package UUID is missing');
     return;
@@ -100,12 +96,12 @@ function handleUpdate({ values }) {
         />
 
         <template #bottom>
-          <div class="flex gap-3 justify-end p-4 w-full border-t border-gray-200">
+          <div class="flex gap-3 justify-end p-4 w-full border-t border-line">
             <Button
               @click="closeModal"
               type="secondary"
               size="lg"
-              class="border border-gray-300 hover:bg-gray-50"
+              class="border border-line-strong hover:bg-surface-muted"
             >
               Cancel
             </Button>
@@ -114,7 +110,7 @@ function handleUpdate({ values }) {
               @click.prevent="submit(handleUpdate)"
               type="primary"
               size="lg"
-              class="text-white bg-blue-600 hover:bg-blue-700"
+              class="text-white bg-primary hover:bg-primary-hover"
             >
               Update Package
             </Button>

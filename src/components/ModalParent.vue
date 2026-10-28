@@ -1,7 +1,7 @@
 <script setup>
 import { closeModal } from "@customizer/modal-x";
 import { useModal } from "../../node_modules/@customizer/modal-x/store/modal";
-import { watch, ref, getCurrentInstance, onMounted, onUnmounted } from "vue";
+import { watch, ref, getCurrentInstance, onMounted, onUnmounted, nextTick } from "vue";
 
 const props = defineProps({
   autoClose: {
@@ -14,63 +14,74 @@ const props = defineProps({
   },
 });
 
+const CLOSE_ANIMATION_MS = 160;
+
 const { modals, getModal } = useModal();
+const instance = getCurrentInstance();
 const name =
   props.name ||
-  (getCurrentInstance().parent?.type?.__name
-    ? getCurrentInstance().parent.type.__name.split(".")[0]
-    : props.name);
+  (instance.parent?.type?.__name ? instance.parent.type.__name.split(".")[0] : props.name);
 
 const modal = ref();
 const isClosing = ref(false);
+const contentEl = ref(null);
+let previouslyFocused = null;
 
 watch(
   modals,
-  (modals) => {
+  () => {
+    const wasActive = modal.value?.active;
     modal.value = getModal(name);
-    // Reset closing state when modal becomes active
     if (modal.value?.active) {
       isClosing.value = false;
+      if (!wasActive) focusDialog();
     }
   },
   { immediate: true }
 );
 
+// Move focus into the dialog unless something inside already took it (v-focus inputs)
+function focusDialog() {
+  previouslyFocused = document.activeElement;
+  nextTick(() => {
+    if (contentEl.value && !contentEl.value.contains(document.activeElement)) {
+      contentEl.value.focus({ preventScroll: true });
+    }
+  });
+}
+
 function escListener(e) {
-  if (e.key === "Escape" && modals?.length && props.autoClose) {
+  if (e.key === "Escape" && modals?.length && props.autoClose && modal.value?.active) {
     handleClose();
   }
 }
 
 function handleClose() {
   if (isClosing.value) return;
-
   isClosing.value = true;
-  // Wait for the animation to complete before actually closing
   setTimeout(() => {
     closeModal();
     isClosing.value = false;
-  }, 500); // Match this duration with your CSS animation duration
+    previouslyFocused?.focus?.({ preventScroll: true });
+  }, CLOSE_ANIMATION_MS);
 }
 
-onMounted(() => {
-  document.addEventListener("keydown", escListener);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("keydown", escListener);
-});
+onMounted(() => document.addEventListener("keydown", escListener));
+onUnmounted(() => document.removeEventListener("keydown", escListener));
 </script>
 
 <template>
   <div
-    :class="[
-      !modal?.active ? '__inactive' : '__active',
-      isClosing ? '__closing' : ''
-    ]"
-    class="modal-parent p-4 grid place-items-center min-h-full bg-[#292A36]/60"
+    :class="[!modal?.active ? '__inactive' : '__active', isClosing ? '__closing' : '']"
+    class="grid place-items-center p-3 min-h-full modal-parent sm:p-6"
   >
-    <div class="modal-content animate-fade-in-scale">
+    <div
+      ref="contentEl"
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+    >
       <slot v-bind="modal || {}"></slot>
     </div>
   </div>
@@ -79,97 +90,56 @@ onUnmounted(() => {
 <style scoped>
 .modal-parent {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 9999;
   overflow: hidden;
-  transition: background-color 0.5s ease;
-  backdrop-filter: blur(4px);
+  background-color: rgb(15 23 42 / 0.45);
+  transition: background-color 160ms ease;
 }
 
 .modal-parent.__closing {
   background-color: transparent;
-  backdrop-filter: none;
 }
 
 .modal-content {
-  animation: slideDown 0.5s ease-out forwards, fadeIn 0.5s ease-out forwards;
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  transform-origin: top center;
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: #4b5563 #f1f5f9;
+  max-width: 100%;
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+  background: rgb(var(--surface));
+  border-radius: 0.75rem;
+  box-shadow: 0 24px 48px -12px rgb(16 24 40 / 0.25);
+  transform-origin: center;
+  animation: modal-in 180ms var(--ease-out) both;
 }
 
-.modal-content::-webkit-scrollbar {
-  width: 6px;
+.modal-content:focus {
+  outline: none;
 }
 
-.modal-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 0 1rem 1rem 0;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-  background-color: #4b5563;
-  border-radius: 3px;
-}
-
-.modal-content::-webkit-scrollbar-thumb:hover {
-  background-color: #1f2937;
-}
-
-.__active .modal-content {
-  animation: slideDown 0.5s ease-out forwards, fadeIn 0.5s ease-out forwards;
+/* Children with fixed widths still fit small screens */
+.modal-content > :deep(*) {
+  max-width: 100%;
 }
 
 .__closing .modal-content {
-  animation: slideUp 0.5s ease-in forwards, fadeOut 0.5s ease-in forwards;
+  animation: modal-out 160ms ease-in both;
 }
 
-@keyframes slideDown {
-  from {
-    transform: translateY(-30px) scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(-30px) scale(0.95);
-    opacity: 0;
-  }
-}
-
-@keyframes fadeIn {
+@keyframes modal-in {
   from {
     opacity: 0;
+    transform: translateY(8px) scale(0.98);
   }
   to {
     opacity: 1;
+    transform: none;
   }
 }
 
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
+@keyframes modal-out {
   to {
     opacity: 0;
+    transform: translateY(4px) scale(0.98);
   }
 }
 </style>

@@ -142,15 +142,15 @@ onMounted(() => {
     </template>
 
     <!-- Contract selection table when no contract chosen -->
-    <div v-if="!contractUuid" class="flex flex-col gap-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm">
+    <div v-if="!contractUuid" class="flex flex-col gap-4 p-5 bg-white rounded-xl border border-line shadow-sm">
       <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-semibold text-gray-700">Select a Policy/Contract</h2>
+          <h2 class="text-sm font-semibold text-ink-muted">Select a Policy/Contract</h2>
           <div class="flex gap-2 items-center">
             <input
               v-model="contractSearch"
               placeholder="Search contracts..."
-              class="px-3 py-2 text-sm bg-white rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-w-[260px]"
+              class="px-3 py-2 text-sm bg-white rounded-lg border border-line-strong focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary min-w-[260px]"
             />
           </div>
         </div>
@@ -190,17 +190,17 @@ onMounted(() => {
     <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
       <!-- LEFT: Active Insured Search -->
-      <div class="flex flex-col gap-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div class="flex flex-col gap-4 p-5 bg-white rounded-xl border border-line shadow-sm">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-semibold text-gray-700">Active Insured Persons</h2>
-          <span class="px-2 py-0.5 text-xs text-blue-700 bg-blue-50 rounded-full border border-blue-200">
+          <h2 class="text-sm font-semibold text-ink-muted">Active Insured Persons</h2>
+          <span class="px-2 py-0.5 text-xs text-primary-hover bg-primary/5 rounded-full border border-primary/20">
             {{ totalItems }} total
           </span>
         </div>
 
         <!-- Search -->
-        <div class="flex gap-2 items-center px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-100">
-          <i v-html="icons.search" class="text-gray-400 shrink-0" />
+        <div class="flex gap-2 items-center px-3 py-2 bg-surface-muted rounded-lg border border-line focus-within:border-primary/70 focus-within:ring-1 focus-within:ring-primary/10">
+          <i v-html="icons.search" class="text-ink-subtle shrink-0" />
           <input
             v-model="search"
             @input="onSearchInput"
@@ -210,29 +210,29 @@ onMounted(() => {
         </div>
 
         <!-- List -->
-        <div class="overflow-y-auto max-h-96 divide-y divide-gray-100">
-          <div v-if="loading" class="py-8 text-sm text-center text-gray-400">
+        <div class="overflow-y-auto max-h-96 divide-y divide-line">
+          <div v-if="loading" class="py-8 text-sm text-center text-ink-subtle">
             Loading...
           </div>
-          <div v-else-if="insuredList.length === 0" class="py-8 text-sm text-center text-gray-400">
+          <div v-else-if="insuredList.length === 0" class="py-8 text-sm text-center text-ink-subtle">
             No insured persons found
           </div>
           <div
             v-for="insured in insuredList"
             :key="insured?.insuredUuid || insured?.id"
-            class="flex justify-between items-center px-2 py-2.5 transition-colors hover:bg-gray-50"
+            class="flex justify-between items-center px-2 py-2.5 transition-colors hover:bg-surface-muted"
           >
             <div class="flex flex-col">
-              <span class="text-sm font-medium text-gray-800">{{ getFullName(insured) || '—' }}</span>
-              <span class="text-xs text-gray-400">{{ insured?.idNumber || insured?.insuredUuid }}</span>
+              <span class="text-sm font-medium text-ink">{{ getFullName(insured) || '—' }}</span>
+              <span class="text-xs text-ink-subtle">{{ insured?.idNumber || insured?.insuredUuid }}</span>
             </div>
             <button
               @click="addInsuredAsExclusion(insured)"
               :disabled="exclusions.includes(insured?.insuredUuid || insured?.id)"
               class="flex gap-1 items-center px-2.5 py-1 text-xs font-medium rounded-lg transition-colors"
               :class="exclusions.includes(insured?.insuredUuid || insured?.id)
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'"
+                ? 'bg-surface-muted text-ink-subtle cursor-not-allowed'
+                : 'bg-error-soft text-error hover:bg-error-soft border border-error/20'"
             >
               <span v-if="exclusions.includes(insured?.insuredUuid || insured?.id)">Added</span>
               <span v-else>+ Exclude</span>
@@ -241,19 +241,19 @@ onMounted(() => {
         </div>
 
         <!-- Pagination -->
-        <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+        <div class="flex justify-between items-center pt-2 border-t border-line">
           <button
             :disabled="page <= 1"
             @click="page--; fetchInsured()"
-            class="px-3 py-1.5 text-xs rounded-lg border disabled:opacity-40 hover:bg-gray-50 disabled:cursor-not-allowed"
+            class="px-3 py-1.5 text-xs rounded-lg border disabled:opacity-40 hover:bg-surface-muted disabled:cursor-not-allowed"
           >
             Prev
           </button>
-          <span class="text-xs text-gray-500">Page {{ page }}</span>
+          <span class="text-xs text-ink-subtle">Page {{ page }}</span>
           <button
             :disabled="insuredList.length < limit"
             @click="page++; fetchInsured()"
-            class="px-3 py-1.5 text-xs rounded-lg border disabled:opacity-40 hover:bg-gray-50 disabled:cursor-not-allowed"
+            class="px-3 py-1.5 text-xs rounded-lg border disabled:opacity-40 hover:bg-surface-muted disabled:cursor-not-allowed"
           >
             Next
           </button>
@@ -261,36 +261,36 @@ onMounted(() => {
       </div>
 
       <!-- RIGHT: Exclusion List -->
-      <div class="flex flex-col gap-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div class="flex flex-col gap-4 p-5 bg-white rounded-xl border border-line shadow-sm">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-semibold text-gray-700">Exclusion List</h2>
+          <h2 class="text-sm font-semibold text-ink-muted">Exclusion List</h2>
           <span class="px-2 py-0.5 text-xs rounded-full border"
-            :class="exclusions.length > 0 ? 'text-red-700 bg-red-50 border-red-200' : 'text-gray-500 bg-gray-50 border-gray-200'">
+            :class="exclusions.length > 0 ? 'text-error-strong bg-error-soft border-error/20' : 'text-ink-subtle bg-surface-muted border-line'">
             {{ exclusions.length }} item{{ exclusions.length !== 1 ? 's' : '' }}
           </span>
         </div>
 
         <!-- Exclusion items (only from selected insured persons) -->
         <div class="overflow-y-auto flex-1 space-y-2 max-h-80">
-          <div v-if="exclusions.length === 0" class="py-8 text-sm text-center text-gray-400">
+          <div v-if="exclusions.length === 0" class="py-8 text-sm text-center text-ink-subtle">
             No exclusions added yet.<br />
             <span class="text-xs">Select insured persons from the left to build the exclusion list.</span>
           </div>
           <div
             v-for="(ex, idx) in exclusions"
             :key="idx"
-            class="flex justify-between items-center px-3 py-2.5 rounded-xl border border-red-100 bg-red-50/70 shadow-xs"
+            class="flex justify-between items-center px-3 py-2.5 rounded-xl border border-error-soft bg-error-soft/70 shadow-xs"
           >
             <div class="flex flex-col max-w-[80%]">
-              <span class="text-sm font-medium text-red-700 truncate">{{ getFullName(ex) || ex?.insuredUuid || ex }}</span>
-              <span class="text-[11px] text-red-500/80" v-if="ex?.idNumber || ex?.insuredUuid">
+              <span class="text-sm font-medium text-error-strong truncate">{{ getFullName(ex) || ex?.insuredUuid || ex }}</span>
+              <span class="text-[11px] text-error/80" v-if="ex?.idNumber || ex?.insuredUuid">
                 {{ ex?.idNumber || ex?.insuredUuid }}
               </span>
             </div>
             <button
               @click="removeExclusion(idx)
               "
-              class="inline-flex justify-center items-center w-7 h-7 text-red-500 rounded-full transition-colors hover:bg-red-100 hover:text-red-700"
+              class="inline-flex justify-center items-center w-7 h-7 text-error rounded-full transition-colors hover:bg-error-soft hover:text-error-strong"
               title="Remove from exclusions"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,7 +305,7 @@ onMounted(() => {
           @click="handleSubmit"
           :disabled="submitting || exclusions.length === 0"
           class="flex gap-2 justify-center items-center px-4 py-2.5 w-full text-sm font-semibold text-white rounded-xl shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          :class="exclusions.length > 0 ? 'bg-primary hover:bg-primary/90' : 'bg-gray-400'"
+          :class="exclusions.length > 0 ? 'bg-primary hover:bg-primary/90' : 'bg-ink-subtle'"
         >
           <svg v-if="submitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>

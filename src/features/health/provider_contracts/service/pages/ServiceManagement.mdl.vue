@@ -16,7 +16,6 @@ import { closeModal } from "@customizer/modal-x";
 const props = defineProps({
   data: Object,
 });
-console.log(props.data)
 
 const route = useRoute();
 const { submit } = useForm("serviceForm");
@@ -87,8 +86,8 @@ function updateServiceHandler({ values }) {
     >
       <template #header>
         <div class="px-6 pt-6">
-          <h2 class="text-2xl font-bold text-gray-800">Update Service</h2>
-          <p class="text-sm text-gray-500 mt-1">
+          <h2 class="text-2xl font-bold text-ink">Update Service</h2>
+          <p class="text-sm text-ink-subtle mt-1">
             Review and modify the service information
           </p>
         </div>
@@ -99,17 +98,17 @@ function updateServiceHandler({ values }) {
       </div>
 
       <template #bottom>
-        <div class="flex justify-end gap-4 p-6 bg-gray-50 rounded-b-xl">
+        <div class="flex justify-end gap-4 p-6 bg-surface-muted rounded-b-xl">
           <Button
             type="secondary"
-            class="px-6 py-2 border border-gray-300 rounded-lg"
+            class="px-6 py-2 border border-line-strong rounded-lg"
             :disabled="req.pending.value"
           >
             Cancel
           </Button>
           
           <Button
-            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
             :pending="req.pending.value"
             @click.prevent="submit(updateServiceHandler)"
           >

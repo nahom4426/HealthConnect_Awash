@@ -13,8 +13,8 @@
         />
 
         <!-- Validation Error -->
-        <div v-if="validationError" class="flex items-start gap-3 p-4 text-sm text-red-800 bg-red-50 rounded-lg border-l-4 border-red-500 shadow-sm">
-          <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <div v-if="validationError" class="flex items-start gap-3 p-4 text-sm text-error-strong bg-error-soft rounded-lg border-l-4 border-error shadow-sm">
+          <svg class="w-5 h-5 text-error flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
           </svg>
           <span class="font-medium">{{ validationError }}</span>
@@ -23,12 +23,12 @@
 
       <!-- Footer -->
       <template #bottom>
-        <div class="flex gap-3 justify-end w-full p-4 border-t border-gray-200">
+        <div class="flex gap-3 justify-end w-full p-4 border-t border-line">
           <Button 
             @click="closeModal" 
             type="secondary"
             size="lg"
-            class="border border-gray-300 hover:bg-gray-50"
+            class="border border-line-strong hover:bg-surface-muted"
           >
             Cancel
           </Button>
@@ -37,7 +37,7 @@
             @click.prevent="submit(handleUpdate)"
             type="primary"
             size="lg"
-            class="bg-gradient-to-r from-[#02676B] to-[#01585B] hover:from-[#01585B] hover:to-[#014850] text-white shadow-lg hover:shadow-xl"
+            class="bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary-hover text-white shadow-lg hover:shadow-xl"
           >
             <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -144,6 +144,7 @@ function handleUpdate({ values }) {
         });
         
         toasted(true, "Success", "Contract has been reactivated successfully");
+        
         
         // Close modal and trigger parent refresh
         closeModal({ success: true, updatedContract: { ...contractData.value, ...payload, status: 'ACTIVE' } });

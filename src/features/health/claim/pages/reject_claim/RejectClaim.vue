@@ -1,3 +1,4 @@
+<!-- RejectClaimIndex.vue - Updated with institution name handling -->
 <script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import ClaimByBatchDataProvider from "../../components/ClaimByBatchDataProvider.vue";
@@ -14,7 +15,8 @@ import Toogle from "@/components/Toogle.vue";
 import { useProcessClaimByInstitutionBatch } from "../../store/processClaimByInstitutionBatchStore";
 import RejectClaimStatusRow from "../../components/RejectClaimStatusRow.vue";
 import { useRouter } from "vue-router";
-const serviceType= ref("CREDIT");
+
+const serviceType = ref("CREDIT");
 const institutionUuid = ref(null);
 const contractUuid = ref(null);
 const active = ref(ServiceTypes.creditService);
@@ -39,12 +41,11 @@ const tableHeaders = computed(() => {
 watch(active, (newActive) => {
   if (newActive === ServiceTypes.creditService) {
     serviceType.value = "CREDIT";
-    console.log('🔄 Switched to CREDIT service');
   } else if (newActive === ServiceTypes.cashService) {
     serviceType.value = "CASH";
-    console.log('🔄 Switched to CASH service');
   }
 });
+
 function formatDate(date) {
   if (!date) return "-";
   return new Date(date).toLocaleDateString("en-GB", {
@@ -53,13 +54,42 @@ function formatDate(date) {
     day: "numeric",
   });
 }
+
 function navigateToCreateCashClaims() {
   router.push('/create_cash_claims');
 }
+
 function formatContractPeriod(row) {
   return row.beginDate || row.endDate
     ? `${formatDate(row.beginDate)} - ${formatDate(row.endDate)}`
     : "-";
+}
+
+function handleInstitutionSelect(result) {
+  if (result) {
+    institutionUuid.value = result.institutionUuid;
+  } else {
+    institutionUuid.value = null;
+  }
+}
+
+function handleContractSelect(result) {
+  if (result) {
+    contractUuid.value = result.contractUuid || result.providerUuid;
+  } else {
+    contractUuid.value = null;
+  }
+}
+
+function navigateToServicesPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/reject_claims/detail/${row.claimUuid}`,
+      state: { institutionName },
+      query: { institutionName } // Also pass as query param for fallback
+    });
+  }
 }
 </script>
 
@@ -89,18 +119,14 @@ function formatContractPeriod(row) {
           <SearchSelect
             placeholder="Filter by Institution"
             :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
-            :selectCb="(result) => { 
-              institutionUuid.value = result?.institutionUuid || '12';
-            }"
+            :selectCb="handleInstitutionSelect"
             :option="{ label: 'institutionName', value: 'institutionUuid' }"
           />
           <SearchSelect
             v-if="ServiceTypes.creditService == active"
             placeholder="Filter by a Provider / Contract"
             :searchCb="(data) => getProviders({ ...data, status: Status.ACTIVE })"
-            :selectCb="(result) => { 
-              contractUuid.value = result?.contractUuid || result?.providerUuid || null;
-            }"
+            :selectCb="handleContractSelect"
             :option="{ label: 'providerName', value: 'providerUuid' }"
           />
           <Button v-if="ServiceTypes.cashService == active" type="primary" @click="navigateToCreateCashClaims">
@@ -119,17 +145,19 @@ function formatContractPeriod(row) {
         :headers="tableHeaders"
         :rows="claims"
         :rowCom="RejectClaimStatusRow"
-         @row-click="navigateToServicesPage"
+        @row-click="navigateToServicesPage"
       >
-      <template #row>
+        <template #row>
           <RejectClaimStatusRow
-            :rowData="filteredContracts"
+            :rowData="claims"
             :rowKeys="tableRowKeys"
+            :serviceType="active"
             :onView="navigateToServicesPage"
             :onRowClick="navigateToServicesPage"
+            :currentPage="1"
+            :perPage="25"
           />
         </template>
-
       </Table>
     </DefaultPage>
   </ClaimByBatchDataProvider>

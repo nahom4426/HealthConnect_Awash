@@ -62,9 +62,9 @@ function getSharedFromLabel(row) {
 function getStatusStyle(status) {
   const base = "px-3 py-1 rounded-full text-xs font-medium";
   switch (status?.toUpperCase()) {
-    case "ACTIVE": return `${base} bg-green-100 text-green-800`;
-    case "SUSPENDED": return `${base} bg-red-100 text-red-800`;
-    default: return `${base} bg-gray-100 text-gray-800`;
+    case "ACTIVE": return `${base} bg-success-soft text-success-strong`;
+    case "SUSPENDED": return `${base} bg-error-soft text-error-strong`;
+    default: return `${base} bg-surface-muted text-ink`;
   }
 }
 
@@ -72,12 +72,12 @@ function getAllServicesStyle(allServices) {
   const base = "px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1";
   return allServices 
     ? `${base} bg-purple-100 text-purple-800`
-    : `${base} bg-gray-100 text-gray-600`;
+    : `${base} bg-surface-muted text-ink-muted`;
 }
 
 function getBooleanBadgeStyle(value) {
   const base = "px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1";
-  return value ? `${base} bg-emerald-100 text-emerald-800` : `${base} bg-gray-100 text-gray-600`;
+  return value ? `${base} bg-success-soft text-success-strong` : `${base} bg-surface-muted text-ink-muted`;
 }
 
 function formatCurrency(amount) {
@@ -159,11 +159,11 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
   <tr
     v-for="(row, idx) in rowData"
     :key="row.packageUuid"
-    class="bg-white border-b border-gray-200 transition-all duration-200 ease-in-out hover:bg-blue-50 hover:shadow-sm"
+    class="bg-white border-b border-line transition-all duration-200 ease-in-out hover:bg-primary/5 hover:shadow-sm"
     @click="props.onRowClick(row)"
   >
-    <td class="p-4 w-12 font-semibold text-gray-400 text-start">
-      <span class="inline-flex justify-center items-center w-6 h-6 text-xs font-bold text-black bg-gradient-to-br from-white to-gray-200 rounded-full">
+    <td class="p-4 w-12 font-semibold text-ink-subtle text-start">
+      <span class="inline-flex justify-center items-center w-6 h-6 text-xs font-bold text-black bg-gradient-to-br from-white to-line rounded-full">
         {{ idx + 1 }}
       </span>
     </td>
@@ -186,8 +186,8 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
         :class="[
           'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
           row[key] 
-            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/50' 
-            : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200/50'
+            ? 'bg-success-soft text-success-strong ring-1 ring-success/10' 
+            : 'bg-surface-muted text-ink-muted ring-1 ring-line/50'
         ]"
       >
         <!-- Animated icon -->
@@ -235,15 +235,15 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
       class="flex items-center gap-1.5 text-[11px]"
     >
       <!-- Decorative line/arrow -->
-      <div class="flex items-center text-gray-300">
+      <div class="flex items-center text-line-strong">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
         </svg>
       </div>
       
       <!-- Source badge with modern styling -->
-      <span class="text-gray-500">Shares from:</span>
-      <div class="inline-flex gap-1 items-center px-2 py-0.5 text-indigo-700 bg-indigo-50 rounded-md ring-1 ring-indigo-200/50">
+      <span class="text-ink-subtle">Shares from:</span>
+      <div class="inline-flex gap-1 items-center px-2 py-0.5 text-primary-hover bg-primary/5 rounded-md ring-1 ring-primary/10">
         <!-- Small package icon -->
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -256,7 +256,7 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
       
       <!-- Gender Badge -->
       <div v-else-if="key === 'gender'">
-        <span class="px-3 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
+        <span class="px-3 py-1 text-xs font-medium text-primary-hover bg-primary/10 rounded-full">
           {{ row[key] }}
         </span>
       </div>
@@ -276,7 +276,7 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
       
       <!-- Package Services Count -->
       <div v-else-if="key === 'packageEligibleServices'">
-        <span class="inline-flex gap-2 items-center px-3 py-1 text-xs font-medium text-indigo-800 bg-indigo-100 rounded-full">
+        <span class="inline-flex gap-2 items-center px-3 py-1 text-xs font-medium text-primary-hover bg-primary/10 rounded-full">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
             <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H3a1 1 0 00-1 1v10a1 1 0 001 1h14a1 1 0 001-1V6a1 1 0 00-1-1h-3a1 1 0 000-2 2 2 0 00-2-2H4zm9.6 5.2a1 1 0 00-1.4-1.4L9 10.4l-1.2-1.2a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd" />
@@ -286,7 +286,7 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
       </div>
       
       <!-- Default Text -->
-      <div v-else class="text-gray-700">
+      <div v-else class="text-ink-muted">
         {{ row[key] }}
       </div>
     </td>
@@ -296,11 +296,11 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
     <!-- Services Button -->
     <button
       @click.stop="handleAddServices(row)"
-      class="relative p-2 text-blue-600 bg-blue-50 rounded-lg transition-all duration-200 group hover:bg-blue-100 hover:text-blue-700 hover:scale-105 hover:shadow-md"
+      class="relative p-2 text-primary bg-primary/5 rounded-lg transition-all duration-200 group hover:bg-primary/10 hover:text-primary-hover hover:scale-105 hover:shadow-md"
       title="Manage Services"
     >
       <i v-html="icons.briefcase || '💼'" class="w-4 h-4"></i>
-      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-ink rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
         Services
       </span>
     </button>
@@ -308,11 +308,11 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
     <!-- Show Rate Button (if canManageQuotation) -->
     <button
       @click.stop="handleShowRate(row)"
-      class="relative p-2 text-indigo-600 bg-indigo-50 rounded-lg transition-all duration-200 group hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+      class="relative p-2 text-primary bg-primary/5 rounded-lg transition-all duration-200 group hover:bg-primary/10 hover:text-primary-hover hover:scale-105 hover:shadow-md"
       title="Show Rate"
     >
       <i v-html="icons.dollar || icons.coins || '💰'" class="w-4 h-4"></i>
-      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-ink rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
         Show Rate
       </span>
     </button>
@@ -320,11 +320,11 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
     <!-- Edit Button -->
     <button
       @click.stop="handleEdit(row)"
-      class="relative p-2 text-amber-600 bg-amber-50 rounded-lg transition-all duration-200 group hover:bg-amber-100 hover:text-amber-700 hover:scale-105 hover:shadow-md"
+      class="relative p-2 text-warning bg-warning-soft rounded-lg transition-all duration-200 group hover:bg-warning-soft hover:text-warning-strong hover:scale-105 hover:shadow-md"
       title="Edit Package"
     >
       <i v-html="icons.edit || '✏️'" class="w-4 h-4"></i>
-      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-ink rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
         Edit
       </span>
     </button>
@@ -335,13 +335,13 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
       class="relative p-2 rounded-lg transition-all duration-200 group hover:scale-105 hover:shadow-md"
       :class="
         row.status === 'ACTIVE' 
-          ? 'bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700' 
-          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700'
+          ? 'bg-error-soft hover:bg-error-soft text-error hover:text-error-strong' 
+          : 'bg-success-soft hover:bg-success-soft text-success hover:text-success-strong'
       "
       :title="row.status === 'ACTIVE' ? 'Deactivate Package' : 'Activate Package'"
     >
       <i v-html="row.status === 'ACTIVE' ? (icons.ban || '🚫') : (icons.check_circle || '✅')" class="w-4 h-4"></i>
-      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+      <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-ink rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
         {{ row.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
       </span>
     </button>
@@ -350,13 +350,13 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
     <div v-if="hasMoreActions" class="relative">
       <button
         @click.stop="toggleDropdown($event, row.packageUuid)"
-        class="relative p-2 text-gray-600 bg-gray-50 rounded-lg transition-all duration-200 group hover:bg-gray-100 hover:text-gray-700 hover:scale-105 hover:shadow-md"
+        class="relative p-2 text-ink-muted bg-surface-muted rounded-lg transition-all duration-200 group hover:bg-surface-muted hover:text-ink-muted hover:scale-105 hover:shadow-md"
         title="More options"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
         </svg>
-        <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-gray-900 rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+        <span class="absolute -top-8 left-1/2 px-2 py-1 text-xs font-medium text-white whitespace-nowrap bg-ink rounded-md opacity-0 transition-opacity -translate-x-1/2 pointer-events-none group-hover:opacity-100">
           More
         </span>
       </button>
@@ -364,22 +364,22 @@ onUnmounted(() => window.removeEventListener('click', closeAllDropdowns));
       <!-- Dropdown Menu for extra options -->
       <div 
         :id="`dropdown-${row.packageUuid}`" 
-        class="hidden overflow-hidden absolute right-0 z-30 mt-2 w-48 bg-white rounded-xl border border-gray-100 ring-1 ring-black ring-opacity-5 shadow-xl dropdown-menu"
+        class="hidden overflow-hidden absolute right-0 z-30 mt-2 w-48 bg-white rounded-xl border border-line ring-1 ring-black ring-opacity-5 shadow-xl dropdown-menu"
       >
         <div class="py-1">
           <!-- Additional actions can go here -->
           <button
             @click.stop="handleDuplicate(row)"
-            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 transition-colors hover:bg-gray-50"
+            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-ink-muted transition-colors hover:bg-surface-muted"
           >
-            <i v-html="icons.copy || '📋'" class="w-4 h-4 text-gray-500"></i>
+            <i v-html="icons.copy || '📋'" class="w-4 h-4 text-ink-subtle"></i>
             <span>Duplicate</span>
           </button>
           <button
             @click.stop="handleExport(row)"
-            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-gray-700 transition-colors hover:bg-gray-50"
+            class="flex gap-3 items-center px-4 py-2.5 w-full text-sm text-ink-muted transition-colors hover:bg-surface-muted"
           >
-            <i v-html="icons.download || '⬇️'" class="w-4 h-4 text-gray-500"></i>
+            <i v-html="icons.download || '⬇️'" class="w-4 h-4 text-ink-subtle"></i>
             <span>Export</span>
           </button>
         </div>

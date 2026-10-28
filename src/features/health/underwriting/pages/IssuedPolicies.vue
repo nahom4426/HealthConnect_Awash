@@ -13,7 +13,6 @@ const handleAmendPolicy = (id) => {
 };
 
 const viewDetails = (id) => {
-  console.log("View policy details:", id);
 };
 
 const showInstitutionPicker = ref(false);
@@ -48,7 +47,7 @@ function selectInstitutionAndOpenPolicyModal(institution) {
 <template>
   <DefaultPage placeholder="Search Issued Policies">
     <!-- <template #filter>
-      <button class="flex gap-2 justify-center items-center px-6 py-4 bg-gray-100 rounded-md text-primary">
+      <button class="flex gap-2 justify-center items-center px-6 py-4 bg-surface-muted rounded-md text-primary">
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
@@ -75,10 +74,10 @@ function selectInstitutionAndOpenPolicyModal(institution) {
     </template>
 
     <template #default="{ search }">
-      <div v-if="showInstitutionPicker" class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div v-if="showInstitutionPicker" class="p-4 bg-surface-muted rounded-lg border border-line">
         <div class="flex gap-3 items-center">
           <div class="flex-1">
-            <div class="flex overflow-hidden items-center w-full h-10 bg-white rounded-lg border border-gray-200 focus-within:border-primary">
+            <div class="flex overflow-hidden items-center w-full h-10 bg-white rounded-lg border border-line focus-within:border-primary">
               <span class="grid place-items-center w-10 h-10 text-base border-r text-base-clr" v-html='icons.search' />
               <input
                 v-model="institutionSearch"
@@ -89,7 +88,7 @@ function selectInstitutionAndOpenPolicyModal(institution) {
           </div>
           <button
             type="button"
-            class="px-4 py-2 bg-white rounded-md border border-gray-300"
+            class="px-4 py-2 bg-white rounded-md border border-line-strong"
             @click="closeInstitutionPicker"
           >
             Cancel
@@ -142,8 +141,8 @@ function selectInstitutionAndOpenPolicyModal(institution) {
             <div class="py-12 text-center">
               <div class="flex flex-col justify-center items-center">
                 <i v-html="icons.document"></i>
-                <p class="text-gray-500">No issued policies found</p>
-                <p v-if="search" class="mt-1 text-sm text-gray-400">
+                <p class="text-ink-subtle">No issued policies found</p>
+                <p v-if="search" class="mt-1 text-sm text-ink-subtle">
                   No results match your search criteria
                 </p>
               </div>

@@ -6,7 +6,7 @@ export function usePagination(options) {
   const paginationOptions = ref({
     store: null,
     auto: true,
-    perPage: 25,
+    perPage: 100,
     cache: false,
     watch: [],
     ...(options || {}),

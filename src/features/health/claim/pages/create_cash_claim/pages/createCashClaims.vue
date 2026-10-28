@@ -7,17 +7,21 @@ import { Status } from "@/types/interface";
 import Button from "@/components/Button.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmitButton.vue";
-import { toasted } from "@/utils/utils";
+import { formatCurrency, toasted } from "@/utils/utils";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { requestCashClaim } from "@/features/health/claim/api/cashCreditApi";
 import SearchSelect from "@/components/SearchSelect.vue";
 import { getInstitutionsPolicyByStatus } from "@/features/health/institutions/api/institutionApi";
+import { getActiveContracts } from "@/features/health/provider_contracts/api/contractApi";
 import GenerateCashCreditClaimDataProvider from "@/features/health/claim/components/GenerateCashCreditClaimDataProvider.vue";
 import { useRequestdClaims } from "@/features/health/claim/store/requestedCreditClaimStore";
 import CreateCashClaimTableRow from "../component/CreateCashClaimTableRow.vue";
 
 const router = useRouter();
 const route = useRoute();
+
+// Cash claims are created per institution; credit claims (/create_credit_claims) per provider
+const isCredit = computed(() => route.meta?.serviceType === "CREDIT");
 
 const dataProvider = ref(null);
 
@@ -27,8 +31,8 @@ const providerUuid = ref(null);
 const providerName = ref("");
 const institutionUuid = ref("");
 const institutionName = ref("");
-const itemType = ref("SERVICE");
-const serviceType = ref("CASH");
+const itemType = computed(() => (isCredit.value ? "" : "SERVICE")); // credit: services and drugs
+const serviceType = computed(() => (isCredit.value ? "CREDIT" : "CASH"));
 const isGenerating = ref(false);
 const isSubmitting = ref(false);
 const hasGenerated = ref(false);
@@ -48,8 +52,26 @@ const toDate = ref(new Date().toISOString().split("T")[0]);
 const requestClaimReq = useApiRequest();
 
 /* computed guards */
-const isReadyToGenerate = computed(() => !!institutionUuid.value);
+const isReadyToGenerate = computed(() => (isCredit.value ? !!contractUuid.value : !!institutionUuid.value));
+
+// Query for the not-claimed services: by provider contract (credit) or institution (cash)
+const queryParams = computed(() =>
+  isCredit.value
+    ? { contractUuid: contractUuid.value, providerUuid: providerUuid.value, itemType: itemType.value, serviceType: serviceType.value, fromDate: fromDate.value, toDate: toDate.value }
+    : { institutionUuid: institutionUuid.value, itemType: itemType.value, serviceType: serviceType.value, fromDate: fromDate.value, toDate: toDate.value }
+);
+
+function handleProviderSelect(row) {
+  contractUuid.value = row?.payerProviderContractUuid || null;
+  providerUuid.value = row?.providerUuid || null;
+  providerName.value = row?.providerName || row?.contractName || "";
+}
 const isReadyToSubmit = computed(() => selectedClaims.value.length > 0);
+
+// Backend validates totalAmount against the sum of the services' claimableAmount
+const totalClaimable = computed(() =>
+  selectedClaims.value.reduce((sum, claim) => sum + (parseFloat(claim.claimableAmount) || 0), 0)
+);
 
 /* ----- selection handlers ----- */
 function handleInstitutionSelect(inst) {
@@ -88,25 +110,19 @@ const generateClaimsFromProvider = async () => {
 };
 
 const generateClaims = async (send) => {
-  console.log('🚀 generateClaims called');
   if (!isReadyToGenerate.value) return;
   isGenerating.value = true;
   try {
     // Call send to fetch data from API (it updates the store)
     await send();
-    console.log('✅ API call completed');
     // wait for data provider watcher to map pagination.data -> store
     await nextTick();
     
     // Get claims from the store (where send() puts them)
     const claimsData = claimStore.requestedClaims || [];
-    console.log('📋 Extracted claims from store:', claimsData.length);
-    console.log('📋 claimStore.requestedClaims:', claimStore.requestedClaims);
     
     if (claimsData.length > 0) {
       selectedClaims.value = [...claimsData];
-      console.log('✅ Loaded', selectedClaims.value.length, 'claims into selectedClaims');
-      console.log('✅ selectedClaims.value:', selectedClaims.value);
     } else {
       console.warn('⚠️ No claims found in store');
     }
@@ -120,31 +136,13 @@ const generateClaims = async (send) => {
 };
 
 const submitClaims = async () => {
-  console.log('🔥 SUBMIT BUTTON CLICKED');
-  console.log('📊 selectedClaims.value at submit START:', selectedClaims.value);
-  console.log('📊 selectedClaims.value.length:', selectedClaims.value.length);
-  console.log('📊 claimStore.requestedClaims:', claimStore.requestedClaims);
   
   if (!isReadyToSubmit.value || isSubmitting.value) {
-    console.log('❌ Not ready to submit. isReadyToSubmit:', isReadyToSubmit.value, 'isSubmitting:', isSubmitting.value);
     return;
   }
   isSubmitting.value = true;
   try {
-    console.log('📊 selectedClaims.value at submit (after guard):', selectedClaims.value);
-    console.log('📊 selectedClaims.value.length:', selectedClaims.value.length);
     
-    // Calculate total amount
-    const totalExtraAmount = selectedClaims.value.reduce((sum, claim) => {
-      const items = Array.isArray(claim?.providedItemResponses) ? claim.providedItemResponses : [];
-      const extra = items.reduce((s, it) => s + (parseFloat(it?.extraAmount) || 0), 0);
-      return sum + extra;
-    }, 0);
-
-    const totalAmount = selectedClaims.value.reduce((sum, claim) => {
-      return sum + (parseFloat(claim.amount) || 0);
-    }, 0) - totalExtraAmount;
-
     const first = selectedClaims.value?.[0] || {};
     const derivedContractUuid =
       contractUuid.value ||
@@ -158,11 +156,14 @@ const submitClaims = async () => {
       first?.providerUUID ||
       first?.providerId;
 
-    const derivedInstitutionUuid =
-      institutionUuid.value ||
-      first?.institutionUuid ||
-      first?.institutionUUID ||
-      first?.institutionId;
+    // Credit claims are per provider and can span institutions: only send one when they all share it
+    const rowInstitutions = [...new Set(selectedClaims.value.map((c) => c?.institutionUuid).filter(Boolean))];
+    const derivedInstitutionUuid = isCredit.value
+      ? (rowInstitutions.length === 1 ? rowInstitutions[0] : undefined)
+      : institutionUuid.value ||
+        first?.institutionUuid ||
+        first?.institutionUUID ||
+        first?.institutionId;
 
     // Build the payload with correct structure
     const payload = {
@@ -171,7 +172,8 @@ const submitClaims = async () => {
       providerUuid: derivedProviderUuid,
       claimFromDate: fromDate.value || undefined,
       claimToDate: toDate.value || undefined,
-      totalAmount: totalAmount,
+      totalAmount: totalClaimable.value,
+      serviceType: serviceType.value,
       serviceProvidedUuid: selectedClaims.value.map(claim => claim.serviceProvidedUuid)
     };
 
@@ -179,8 +181,6 @@ const submitClaims = async () => {
       if (payload[k] === undefined) delete payload[k];
     });
 
-    console.log('📤 Submitting payload:', payload);
-    console.log('🔍 serviceProvidedUuid array:', payload.serviceProvidedUuid);
 
     await requestClaimReq.send(
       () => requestCashClaim(payload),
@@ -210,43 +210,29 @@ const submitClaims = async () => {
 
 /* remove claim */
 const removeClaim = (claimUuid) => {
-  console.log('🗑️ removeClaim called with UUID:', claimUuid);
-  console.log('📋 Current selectedClaims before removal:', selectedClaims.value);
-  console.log('📊 Total claims before:', selectedClaims.value.length);
   
   const beforeLength = selectedClaims.value.length;
   
   // Log each claim's serviceProvidedUuid to debug
-  console.log('🔍 Checking each claim:');
   selectedClaims.value.forEach((c, idx) => {
-    console.log(`  [${idx}] serviceProvidedUuid: ${c.serviceProvidedUuid}, matches: ${c.serviceProvidedUuid === claimUuid}`);
   });
   
   // Filter out the claim
   selectedClaims.value = selectedClaims.value.filter(c => {
     const keep = c.serviceProvidedUuid !== claimUuid;
-    console.log(`  Keeping ${c.serviceProvidedUuid}? ${keep}`);
     return keep;
   });
   
   const afterLength = selectedClaims.value.length;
-  console.log('✂️ After filter - Before:', beforeLength, 'After:', afterLength);
-  console.log('📋 selectedClaims after removal:', selectedClaims.value);
   
   // Force Vue to detect the change
   selectedClaims.value = [...selectedClaims.value];
-  console.log('✅ Vue reactivity triggered. Final count:', selectedClaims.value.length);
-  console.log('🔄 filteredAndSortedClaims will now recompute:', filteredAndSortedClaims.value.length);
 };
 
 /* filtered and sorted claims */
 const filteredAndSortedClaims = computed(() => {
-  console.log('🔄 Computing filteredAndSortedClaims');
-  console.log('📊 selectedClaims.value.length:', selectedClaims.value.length);
-  console.log('🔍 searchTerm.value:', searchTerm.value);
   
   if (!selectedClaims.value || selectedClaims.value.length === 0) {
-    console.log('ℹ️ No claims to filter');
     return [];
   }
   
@@ -255,7 +241,6 @@ const filteredAndSortedClaims = computed(() => {
   // Apply search filter
   if (searchTerm.value && searchTerm.value.trim()) {
     const search = searchTerm.value.toLowerCase().trim();
-    console.log('🔎 Searching for:', search);
     
     filtered = filtered.filter(claim => {
       const insuredMatch = claim.insuredName?.toLowerCase().includes(search);
@@ -266,11 +251,9 @@ const filteredAndSortedClaims = computed(() => {
       const matches = insuredMatch || dependantMatch || providerMatch || institutionMatch;
       
       if (matches) {
-        console.log('  ✅ Match found:', claim.insuredName || claim.dependantName);
       }
       return matches;
     });
-    console.log('📊 After search filter:', filtered.length, 'of', selectedClaims.value.length);
   }
   
   // Apply sorting
@@ -289,7 +272,6 @@ const filteredAndSortedClaims = computed(() => {
       : aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
   });
   
-  console.log('✅ Final sorted claims:', sorted.length);
   return sorted;
 });
 
@@ -307,6 +289,12 @@ onMounted(() => {
   if (typeof route.query?.institutionName === 'string' && route.query.institutionName) {
     institutionName.value = route.query.institutionName;
   }
+  // Credit: provider pre-selected by the manual entry page's "Submit & Create Claims"
+  if (isCredit.value && typeof route.query?.contractUuid === 'string' && route.query.contractUuid) {
+    contractUuid.value = route.query.contractUuid;
+    providerUuid.value = typeof route.query.providerUuid === 'string' ? route.query.providerUuid || null : null;
+    providerName.value = typeof route.query.providerName === 'string' ? route.query.providerName : "";
+  }
 
   if (route.query?.autoGenerate === '1') {
     nextTick(() => {
@@ -319,26 +307,36 @@ onMounted(() => {
 
 /* watch selectedClaims for debugging */
 watch(selectedClaims, (newVal) => {
-  console.log('🔄 selectedClaims changed to:', newVal.length, 'items');
-  console.log('🔄 selectedClaims.value:', newVal);
 }, { deep: true });
 </script>
 
 <template>
   <GenerateCashCreditClaimDataProvider 
   ref="dataProvider"
-    :params="{ institutionUuid, itemType, serviceType, fromDate, toDate }"
+    :params="queryParams"
     :auto="false"
   >
     <template #default="{ claims, pending, search, send }">
       <DefaultPage :hideSearch="true">
         <!-- FILTER HEADER -->
         <template #header v-if="!hasGenerated">
-          <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
             <div class="flex flex-col gap-4 md:flex-row md:items-end">
-              <!-- Institution -->
-              <div class="flex-1 min-w-0">
-                <label class="block mb-2 text-sm font-medium text-gray-700">Institution</label>
+              <!-- Provider (credit claims) -->
+              <div v-if="isCredit" class="flex-1 min-w-0">
+                <label class="block mb-2 text-sm font-medium text-ink-muted">Provider</label>
+                <SearchSelect
+                  v-model="providerName"
+                  placeholder="Search provider..."
+                  :searchCb="(data) => getActiveContracts({ ...data, status: Status.ACTIVE })"
+                  :selectCb="handleProviderSelect"
+                  :option="{ label: 'providerName', value: 'payerProviderContractUuid' }"
+                />
+              </div>
+
+              <!-- Institution (cash claims) -->
+              <div v-else class="flex-1 min-w-0">
+                <label class="block mb-2 text-sm font-medium text-ink-muted">Institution</label>
                 <SearchSelect
                   v-model="institutionName"
                   placeholder="Search institution..."
@@ -374,7 +372,7 @@ watch(selectedClaims, (newVal) => {
                   :pending="isGenerating"
                   btn-text="Generate Claims"
                   :disabled="!isReadyToGenerate"
-                  :title="!isReadyToGenerate ? 'Please select institution' : ''"
+                  :title="!isReadyToGenerate ? (isCredit ? 'Please select provider' : 'Please select institution') : ''"
                   @click="generateClaims(send)"
                   class="w-full md:w-auto"
                 />
@@ -386,17 +384,29 @@ watch(selectedClaims, (newVal) => {
         <!-- RESULTS -->
         <div v-if="hasGenerated" class="space-y-6">
           <!-- summary -->
-          <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
             <div class="gap-4 md:flex md:items-center md:justify-between">
               <div>
-                <h3 class="text-lg font-semibold text-gray-900">Cash Claims</h3>
-                <div v-if="institutionName" class="p-2 mt-2 bg-blue-50 rounded border border-blue-200">
-                  <p class="text-sm text-blue-900"><strong>Institution:</strong> {{ institutionName }}</p>
+                <h3 class="text-lg font-semibold text-ink">{{ isCredit ? "Credit Claims" : "Cash Claims" }}</h3>
+                <div v-if="isCredit && providerName" class="p-2 mt-2 rounded border bg-primary/5 border-primary/20">
+                  <p class="text-sm text-primary-hover"><strong>Provider:</strong> {{ providerName }}</p>
+                </div>
+                <div v-if="!isCredit && institutionName" class="p-2 mt-2 bg-primary/5 rounded border border-primary/20">
+                  <p class="text-sm text-primary-hover"><strong>Institution:</strong> {{ institutionName }}</p>
                 </div>
               </div>
-              <div class="p-2 mt-2 rounded border border-blue-200 bg-primary-50">
-                <p class="mt-1 text-sm text-gray-600">{{ fromDate }} → {{ toDate }}</p>
-                <p class="mt-1 text-sm text-gray-500">{{ selectedClaims.length }} of {{ claims?.length || 0 }} claims selected</p>
+              <div class="p-2 mt-2 rounded border border-primary/20 bg-primary-50">
+                <p class="mt-1 text-sm text-ink-muted">{{ fromDate }} → {{ toDate }}</p>
+                <p class="mt-1 text-sm text-ink-subtle">{{ selectedClaims.length }} of {{ claims?.length || 0 }} claims selected</p>
+              </div>
+              <div class="flex gap-3 items-center px-4 py-3 mt-2 rounded-xl border border-primary/20 bg-primary/5">
+                <span class="flex justify-center items-center w-10 h-10 text-white rounded-lg bg-primary shrink-0" aria-hidden="true">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-1m6-9a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h2" /></svg>
+                </span>
+                <div>
+                  <p class="text-xs font-semibold tracking-wide uppercase text-primary-hover">Total Claimable</p>
+                  <p class="text-xl font-bold tabular-nums text-ink">ETB {{ formatCurrency(totalClaimable) }}</p>
+                </div>
               </div>
               <div class="flex gap-3 items-center mt-4 md:mt-0">
                 <Button type="secondary" @click="() => { hasGenerated = false; selectedClaims = []; }">Back to Filter</Button>
@@ -412,7 +422,7 @@ watch(selectedClaims, (newVal) => {
           </div>
 
           <!-- table -->
-          <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div class="p-4 bg-white rounded-lg border border-line shadow-sm">
             <div class="mb-4">
               <Input
                 v-model="searchTerm"
@@ -449,7 +459,7 @@ watch(selectedClaims, (newVal) => {
                   'itemType',
                   'providedItems',
                   'extraAmount',
-                  'amount',
+                  'claimableAmount',
                   'status',
                   'providedDate',
                 ]
@@ -457,11 +467,10 @@ watch(selectedClaims, (newVal) => {
               :sortable="true"
               :sortBy="sortBy"
               :sortDirection="sortDirection"
-              :sortableColumns="['insuredName', 'providerName', 'itemType', 'amount', 'status', 'providedDate']"
+              :sortableColumns="['insuredName', 'providerName', 'itemType', 'claimableAmount', 'status', 'providedDate']"
               @sort="handleSort"
               :cells="{
                 onView: (row) => {
-                  console.log('👁️ View Details clicked for:', row.insuredName);
                   // Just log for now - all claims are auto-selected
                 }
               }"
@@ -472,15 +481,15 @@ watch(selectedClaims, (newVal) => {
         </div>
 
         <!-- EMPTY / PROMPT -->
-        <div v-else class="flex flex-col gap-4 justify-center items-center p-12 bg-white rounded-lg border border-gray-200 border-dashed">
-          <div class="flex justify-center items-center w-16 h-16 bg-gray-50 rounded-full">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else class="flex flex-col gap-4 justify-center items-center p-12 bg-white rounded-lg border border-line border-dashed">
+          <div class="flex justify-center items-center w-16 h-16 bg-surface-muted rounded-full">
+            <svg class="w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0 0h6"></path>
             </svg>
           </div>
           <div class="text-center">
-            <p class="text-lg font-medium text-gray-700">Select Institution</p>
-            <p class="mt-1 text-sm text-gray-500">Choose an institution to generate cash claims</p>
+            <p class="text-lg font-medium text-ink-muted">Select Institution</p>
+            <p class="mt-1 text-sm text-ink-subtle">Choose an institution to generate cash claims</p>
           </div>
         </div>
       </DefaultPage>

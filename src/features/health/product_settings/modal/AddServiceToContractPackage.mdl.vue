@@ -53,6 +53,7 @@ const selectAll = ref(false);
 const selectedCategories = ref([]);
 const selectedCategoryFilter = ref([]);
 const showCategoryFilter = ref(false);
+const isSubmitting = ref(false); // Local loading state for the button
 
 const page = ref(1);
 const limit = ref(50);
@@ -111,6 +112,7 @@ async function fetchServices() {
     const existingUuids = (existingResponse?.data?.packageEligibleServices || [])
       .map((s) => s?.eligibleServiceUuid)
       .filter(Boolean);
+
 
     existingEligibleServiceUuids.value = existingUuids;
     removedExistingEligibleServiceUuids.value = [];
@@ -230,6 +232,7 @@ async function toggleSelectAll() {
       if (isLastPage) break;
       currentPage += 1;
     }
+
 
     selectAllEligibleServiceUuids.value = uuids;
     selectedEligibleServiceUuids.value = [];
@@ -436,8 +439,15 @@ function previousStep() {
   }
 }
 
+const isSaveDisabled = computed(() => {
+  return totalSelectedCount.value === 0 || isSubmitting.value;
+});
+
 // Submit selected services
 async function submitServices() {
+  // Set local loading state
+  isSubmitting.value = true;
+  
   try {
     if (!packageUuid.value) {
       addToast({
@@ -465,6 +475,7 @@ async function submitServices() {
 
     const allSelectedUuidsArray = Array.from(allSelectedUuids);
 
+
     if (allSelectedUuidsArray.length === 0) {
       addToast({
         type: 'info',
@@ -479,19 +490,32 @@ async function submitServices() {
       eligibleServiceUuids: allSelectedUuidsArray
     };
 
-    const response = await addEligibleServices(packageUuid.value, payload);
 
-    if (response?.success !== false) {
-      const newServicesCount = allSelectedUuidsArray.filter((uuid) => !existingEligibleUuidSet.value.has(uuid)).length;
-      addToast({
-        type: 'success',
-        title: 'Success',
-        message: `${allSelectedUuidsArray.length} service(s) updated for package (${newServicesCount} new services added)`
-      });
-      closeModal(true);
-    } else {
-      throw new Error(response?.message || 'Failed to update services');
-    }
+    // Use a Promise to handle the api.send callback
+    await new Promise((resolve, reject) => {
+      api.send(
+        () => addEligibleServices(packageUuid.value, payload),
+        (response) => {
+          if (response?.success !== false) {
+            const newServicesCount = allSelectedUuidsArray.filter((uuid) => !existingEligibleUuidSet.value.has(uuid)).length;
+            addToast({
+              type: 'success',
+              title: 'Success',
+              message: `${allSelectedUuidsArray.length} service(s) updated for package (${newServicesCount} new services added)`
+            });
+            closeModal(true);
+            resolve();
+          } else {
+            reject(new Error(response?.message || 'Failed to update services'));
+          }
+        },
+        (error) => {
+          console.error('Error updating services:', error);
+          reject(error);
+        }
+      );
+    });
+
   } catch (error) {
     console.error('Error updating services:', error);
     addToast({
@@ -499,6 +523,9 @@ async function submitServices() {
       title: 'Error',
       message: error.message || 'Failed to update services for package'
     });
+  } finally {
+    // Reset local loading state
+    isSubmitting.value = false;
   }
 }
 
@@ -526,409 +553,436 @@ onMounted(() => {
   fetchProviders();
 });
 </script>
+
 <template>
   <ModalParent>
     <NewFormParent
-      size="lg"
+      size="xmd"
       :title="`Add Services to ${packageName}`"
       subtitle="Select a provider and choose services to add to this package"
     >
-      <div class="space-y-6">
-        <!-- Step Indicator -->
-        <div class="flex justify-center items-center mb-8 space-x-8">
-          <div
-            v-for="step in steps"
-            :key="step.number"
-            class="flex items-center"
-          >
+      <div class="modal-content-wrapper">
+        <!-- Scrollable Content Area -->
+        <div class="scrollable-content">
+          <!-- Step Indicator -->
+          <div class="flex justify-center items-center mb-8 space-x-8">
             <div
-              :class="[
-                'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200',
-                currentStep >= step.number
-                  ? 'bg-blue-500 border-blue-500 text-white'
-                  : 'border-gray-300 text-gray-500'
-              ]"
+              v-for="step in steps"
+              :key="step.number"
+              class="flex items-center"
             >
-              <span class="text-sm font-medium">{{ step.number }}</span>
-            </div>
-            <div class="ml-3">
-              <p
+              <div
                 :class="[
-                  'text-sm font-medium',
-                  currentStep >= step.number ? 'text-blue-600' : 'text-gray-500'
+                  'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200',
+                  currentStep >= step.number
+                    ? 'bg-primary border-primary text-white'
+                    : 'border-line-strong text-ink-subtle'
                 ]"
               >
-                {{ step.title }}
-              </p>
-              <p class="text-xs text-gray-400">{{ step.description }}</p>
-            </div>
-            <div
-              v-if="step.number < steps.length"
-              :class="[
-                'w-16 h-0.5 ml-8 transition-all duration-200',
-                currentStep > step.number ? 'bg-blue-500' : 'bg-gray-300'
-              ]"
-            ></div>
-          </div>
-        </div>
-
-        <!-- Step 1: Provider Selection -->
-        <div v-if="currentStep === 1" class="space-y-4">
-          <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-            <div class="flex gap-3 items-center mb-4">
-              <div class="flex justify-center items-center w-10 h-10 bg-blue-500 rounded-lg">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
+                <span class="text-sm font-medium">{{ step.number }}</span>
               </div>
-              <div>
-                <h3 class="text-xl font-bold text-gray-800">Select Provider</h3>
-                <p class="text-sm text-gray-600">Choose a provider to view their available services</p>
-              </div>
-            </div>
-
-            <div v-if="loadingProviders" class="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
-
-            <div v-else>
-              <select
-                v-model="selectedpayerProviderContractUuid"
-                @change="onProviderChange($event.target.value)"
-                class="px-4 py-2 w-full bg-white rounded-lg border border-blue-200 transition duration-200 focus:border-blue-400 focus:ring focus:ring-blue-100"
-              >
-                <option value="" disabled selected>Select a provider...</option>
-                <option 
-                  v-for="provider in providers" 
-                  :key="provider.payerProviderContractUuid" 
-                  :value="provider.payerProviderContractUuid"
+              <div class="ml-3">
+                <p
+                  :class="[
+                    'text-sm font-medium',
+                    currentStep >= step.number ? 'text-primary' : 'text-ink-subtle'
+                  ]"
                 >
-                  {{ provider.providerName }}
-                </option>
-              </select>
-
-              <div v-if="selectedProvider" class="p-4 mt-4 bg-white rounded-lg border border-blue-200">
-                <h4 class="mb-2 font-medium text-gray-800">Selected Provider Details:</h4>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span class="text-gray-500">Name:</span>
-                    <span class="ml-2 font-medium">{{ selectedProvider.providerName }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Category:</span>
-                    <span class="ml-2 font-medium">{{ selectedProvider.category }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Phone:</span>
-                    <span class="ml-2 font-medium">{{ selectedProvider.telephone }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Location:</span>
-                    <span class="ml-2 font-medium">{{ selectedProvider.address1 }}, {{ selectedProvider.state }}</span>
-                  </div>
-                </div>
+                  {{ step.title }}
+                </p>
+                <p class="text-xs text-ink-subtle">{{ step.description }}</p>
               </div>
+              <div
+                v-if="step.number < steps.length"
+                :class="[
+                  'w-16 h-0.5 ml-8 transition-all duration-200',
+                  currentStep > step.number ? 'bg-primary' : 'bg-line-strong'
+                ]"
+              ></div>
             </div>
           </div>
-        </div>
 
-        <!-- Step 2: Service Selection -->
-        <div v-if="currentStep === 2" class="space-y-4">
-          <div class="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
-            <div class="flex gap-3 items-center mb-4">
-              <div class="flex w-10 h-10 bg-green-500 rounded-lg">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                </svg>
-              </div>
-              <div>
-                <h3 class="text-xl font-bold text-gray-800">Select Services</h3>
-                <p class="flex text-sm text-gray-600">Choose services from <p class="px-2 font-bold">{{ selectedProvider?.providerName }}</p> to add to  {{  props.data?.packageName }} Benefit </p>
-              </div>
-            </div>
-
-            <!-- Search and Category Selection -->
-            <div class="flex flex-col gap-4 mb-4 md:flex-row md:items-start">
-              <!-- Search -->
-              <div class="relative flex-1">
-                <Input
-                  v-model="searchTerm"
-                  placeholder="Search services by name, code, or category..."
-                  :attributes="{
-                    class: 'pl-10 h-9 w-full bg-white border-green-200 focus:border-green-400'
-                  }"
-                />
-                <div class="absolute top-2.5 left-3 text-gray-400">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          <!-- Step 1: Provider Selection -->
+          <div v-if="currentStep === 1" class="space-y-4">
+            <div class="p-6 bg-gradient-to-r from-primary/5 to-primary/5 rounded-xl border border-primary/10">
+              <div class="flex gap-3 items-center mb-4">
+                <div class="flex justify-center items-center w-10 h-10 bg-primary rounded-lg">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                   </svg>
                 </div>
+                <div>
+                  <h3 class="text-xl font-bold text-ink">Select Provider</h3>
+                  <p class="text-sm text-ink-muted">Choose a provider to view their available services</p>
+                </div>
               </div>
-              
-              <!-- Category Selection -->
-              <div class="flex-1">
-                <div class="flex flex-col gap-2">
-                  <button
-                    @click="showCategoryFilter = !showCategoryFilter"
-                    class="flex justify-between items-center px-4 h-10 text-sm font-medium text-gray-700 bg-white rounded-lg border border-green-200 transition-colors duration-200 hover:bg-green-50"
+
+              <div v-if="loadingProviders" class="flex justify-center py-8">
+                <Spinner size="lg" />
+              </div>
+
+              <div v-else>
+                <select
+                  v-model="selectedpayerProviderContractUuid"
+                  @change="onProviderChange($event.target.value)"
+                  class="px-4 py-2 w-full bg-white rounded-lg border border-primary/20 transition duration-200 focus:border-primary/70 focus:ring focus:ring-primary/10"
+                >
+                  <option value="" disabled selected>Select a provider...</option>
+                  <option 
+                    v-for="provider in providers" 
+                    :key="provider.payerProviderContractUuid" 
+                    :value="provider.payerProviderContractUuid"
                   >
-                    <span class="flex gap-2 items-center">
-                      <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-                      </svg>
-                      Filter by Categories
-                      <span v-if="selectedCategoryFilter.length > 0" class="px-2 py-0.5 text-xs font-semibold text-white bg-green-600 rounded-full">
-                        {{ selectedCategoryFilter.length }}
-                      </span>
-                    </span>
-                    <svg 
-                      class="w-5 h-5 text-gray-400 transition-transform duration-200"
-                      :class="{ 'rotate-180': showCategoryFilter }"
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                  </button>
-                  
-                  <!-- Dropdown Content with Animation -->
-                  <transition
-                    enter-active-class="transition duration-200 ease-out"
-                    enter-from-class="opacity-0 transform scale-95"
-                    enter-to-class="opacity-100 transform scale-100"
-                    leave-active-class="transition duration-150 ease-in"
-                    leave-from-class="opacity-100 transform scale-100"
-                    leave-to-class="opacity-0 transform scale-95"
-                  >
-                    <div v-if="showCategoryFilter" class="flex flex-wrap gap-3 p-3 bg-white border border-green-200 rounded-lg shadow-lg max-h-[120px] overflow-y-auto">
-                      <label 
-                        v-for="category in uniqueCategories" 
-                        :key="category"
-                        class="flex gap-2 items-center px-3 py-1.5 bg-gray-50 rounded-md transition-colors duration-200 cursor-pointer hover:bg-green-50"
-                      >
-                        <input
-                          type="checkbox"
-                          :value="category"
-                          v-model="selectedCategoryFilter"
-                          class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                        />
-                        <span class="text-sm text-gray-700">
-                          {{ category || 'Uncategorized' }}
-                        </span>
-                      </label>
+                    {{ provider.providerName }}
+                  </option>
+                </select>
+
+                <div v-if="selectedProvider" class="p-4 mt-4 bg-white rounded-lg border border-primary/20">
+                  <h4 class="mb-2 font-medium text-ink">Selected Provider Details:</h4>
+                  <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span class="text-ink-subtle">Name:</span>
+                      <span class="ml-2 font-medium">{{ selectedProvider.providerName }}</span>
                     </div>
-                  </transition>
+                    <div>
+                      <span class="text-ink-subtle">Category:</span>
+                      <span class="ml-2 font-medium">{{ selectedProvider.category }}</span>
+                    </div>
+                    <div>
+                      <span class="text-ink-subtle">Phone:</span>
+                      <span class="ml-2 font-medium">{{ selectedProvider.telephone }}</span>
+                    </div>
+                    <div>
+                      <span class="text-ink-subtle">Location:</span>
+                      <span class="ml-2 font-medium">{{ selectedProvider.address1 }}, {{ selectedProvider.state }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Select All -->
-            <div class="flex justify-between items-center mb-4">
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="selectAll"
-                  v-model="selectAll"
-                  @change="toggleSelectAll"
-                  class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                />
-                <label for="selectAll" class="ml-2 text-sm font-medium text-gray-700">
-                  Select All Available Services
-                </label>
+          <!-- Step 2: Service Selection -->
+          <div v-if="currentStep === 2" class="space-y-4">
+            <div class="p-6 bg-gradient-to-r from-success-soft to-success-soft rounded-xl border border-success-soft">
+              <div class="flex gap-3 items-center mb-4">
+                <div class="flex w-10 h-10 bg-success rounded-lg">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-ink">Select Services</h3>
+                  <p class="flex text-sm text-ink-muted">Choose services from <span class="px-2 font-bold">{{ selectedProvider?.providerName }}</span> to add to {{ props.data?.packageName }} Benefit</p>
+                </div>
               </div>
-              <div class="text-sm text-gray-500">
-                {{ newServicesCount }} new services selected
-              </div>
-            </div>
 
-            <div class="flex flex-col gap-3 justify-between items-start mb-4 sm:flex-row sm:items-center">
-              <div class="text-sm text-gray-600">
-                Page {{ page }} of {{ totalPages }}
-                <span v-if="totalElements" class="ml-2 text-gray-400">({{ totalElements }} total)</span>
-              </div>
-              <div class="flex gap-2 items-center">
-                <button
-                  class="px-3 py-1 text-sm bg-white rounded border border-green-200 disabled:opacity-50"
-                  :disabled="page === 1 || loadingServices"
-                  @click="goToPage(page - 1)"
-                >
-                  Prev
-                </button>
-                <button
-                  class="px-3 py-1 text-sm bg-white rounded border border-green-200 disabled:opacity-50"
-                  :disabled="page >= totalPages || loadingServices"
-                  @click="goToPage(page + 1)"
-                >
-                  Next
-                </button>
-                <select
-                  class="px-2 py-1 text-sm bg-white rounded border border-green-200"
-                  :value="limit"
-                  @change="changeLimit($event.target.value)"
-                >
-                  <option :value="25">25</option>
-                  <option :value="50">50</option>
-                  <option :value="100">100</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Services Table -->
-            <div v-if="loadingServices" class="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
-
-            <div v-else class="overflow-y-auto max-h-96 rounded-lg border border-green-200">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="sticky top-0 bg-gray-50">
-                  <tr>
-                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Select
-                    </th>
-                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Service Code
-                    </th>
-                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Service Name
-                    </th>
-                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Category
-                    </th>
-                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Price (ETB)
-                    </th>
-                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr
-                    v-for="service in filteredServices"
-                    :key="service.eligibleServiceUuid"
-                    :class="{
-                      'bg-green-50': isServiceSelected(service) && service.isExisting,
-                      'hover:bg-gray-50': true
+              <!-- Search and Category Selection -->
+              <div class="flex flex-col gap-4 mb-4 md:flex-row md:items-start">
+                <!-- Search -->
+                <div class="relative flex-1">
+                  <Input
+                    v-model="searchTerm"
+                    placeholder="Search services by name, code, or category..."
+                    :attributes="{
+                      class: 'pl-10 h-9 w-full bg-white border-success/20 focus:border-success'
                     }"
-                  >
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        :checked="isServiceSelected(service)"
-                        @change="toggleServiceSelection(service)"
-                        :disabled="service.isExisting"
-                        class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                      />
-                    </td>
-                    <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
-                      {{ service.itemCode || 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                      {{ service.item || 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                      {{ service.category || 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                      {{ service.price?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm whitespace-nowrap">
-                      <div class="flex gap-2 justify-between items-center">
-                        <span
-                          v-if="service.isExisting && isServiceSelected(service)"
-                          class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full"
-                        >
-                          Already in package
+                  />
+                  <div class="absolute top-2.5 left-3 text-ink-subtle">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                  </div>
+                </div>
+                
+                <!-- Category Selection -->
+                <div class="flex-1">
+                  <div class="flex flex-col gap-2">
+                    <button
+                      @click="showCategoryFilter = !showCategoryFilter"
+                      class="flex justify-between items-center px-4 h-10 text-sm font-medium text-ink-muted bg-white rounded-lg border border-success/20 transition-colors duration-200 hover:bg-success-soft"
+                    >
+                      <span class="flex gap-2 items-center">
+                        <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        Filter by Categories
+                        <span v-if="selectedCategoryFilter.length > 0" class="px-2 py-0.5 text-xs font-semibold text-white bg-success rounded-full">
+                          {{ selectedCategoryFilter.length }}
                         </span>
-                        <span
-                          v-else-if="service.isExisting && !isServiceSelected(service)"
-                          class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full"
+                      </span>
+                      <svg 
+                        class="w-5 h-5 text-ink-subtle transition-transform duration-200"
+                        :class="{ 'rotate-180': showCategoryFilter }"
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </button>
+                    
+                    <!-- Dropdown Content with Animation -->
+                    <transition
+                      enter-active-class="transition duration-200 ease-out"
+                      enter-from-class="opacity-0 transform scale-95"
+                      enter-to-class="opacity-100 transform scale-100"
+                      leave-active-class="transition duration-150 ease-in"
+                      leave-from-class="opacity-100 transform scale-100"
+                      leave-to-class="opacity-0 transform scale-95"
+                    >
+                      <div v-if="showCategoryFilter" class="flex flex-wrap gap-3 p-3 bg-white border border-success/20 rounded-lg shadow-lg max-h-[120px] overflow-y-auto">
+                        <label 
+                          v-for="category in uniqueCategories" 
+                          :key="category"
+                          class="flex gap-2 items-center px-3 py-1.5 bg-surface-muted rounded-md transition-colors duration-200 cursor-pointer hover:bg-success-soft"
                         >
-                          Marked for removal
-                        </span>
-                        <span
-                          v-else
-                          class="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full"
-                        >
-                          Available
-                        </span>
-                        
-                        <!-- Remove button for existing services that are selected -->
-                        <button
-                          v-if="service.isExisting"
-                          @click="removeExistingService(service)"
-                          class="p-1.5 text-red-600 rounded-lg transition-colors duration-200 hover:text-red-800 hover:bg-red-50"
-                          :title="isServiceSelected(service) ? 'Remove from package' : 'Undo removal'"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                          </svg>
-                        </button>
+                          <input
+                            type="checkbox"
+                            :value="category"
+                            v-model="selectedCategoryFilter"
+                            class="w-4 h-4 text-success rounded border-line-strong focus:ring-success"
+                          />
+                          <span class="text-sm text-ink-muted">
+                            {{ category || 'Uncategorized' }}
+                          </span>
+                        </label>
                       </div>
-                    </td>
-                  </tr>
-                  <tr v-if="filteredServices.length === 0">
-                    <td colspan="6" class="px-6 py-8 text-sm text-center text-gray-500">
-                      No services found matching your search
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </transition>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Select All -->
+              <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="selectAll"
+                    v-model="selectAll"
+                    @change="toggleSelectAll"
+                    class="w-4 h-4 text-success rounded border-line-strong focus:ring-success"
+                  />
+                  <label for="selectAll" class="ml-2 text-sm font-medium text-ink-muted">
+                    Select All Available Services
+                  </label>
+                </div>
+                <div class="text-sm text-ink-subtle">
+                  {{ newServicesCount }} new services selected
+                </div>
+              </div>
+
+              <!-- Pagination -->
+              <div class="flex flex-col gap-3 justify-between items-start mb-4 sm:flex-row sm:items-center">
+                <div class="text-sm text-ink-muted">
+                  Page {{ page }} of {{ totalPages }}
+                  <span v-if="totalElements" class="ml-2 text-ink-subtle">({{ totalElements }} total)</span>
+                </div>
+                <div class="flex gap-2 items-center">
+                  <button
+                    class="px-3 py-1 text-sm bg-white rounded border border-success/20 disabled:opacity-50 hover:bg-surface-muted"
+                    :disabled="page === 1 || loadingServices"
+                    @click="goToPage(page - 1)"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    class="px-3 py-1 text-sm bg-white rounded border border-success/20 disabled:opacity-50 hover:bg-surface-muted"
+                    :disabled="page >= totalPages || loadingServices"
+                    @click="goToPage(page + 1)"
+                  >
+                    Next
+                  </button>
+                  <select
+                    class="px-2 py-1 text-sm bg-white rounded border border-success/20"
+                    :value="limit"
+                    @change="changeLimit($event.target.value)"
+                  >
+                    <option :value="25">25</option>
+                    <option :value="50">50</option>
+                    <option :value="100">100</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Services Table -->
+              <div v-if="loadingServices" class="flex justify-center py-8">
+                <Spinner size="lg" />
+              </div>
+
+              <div v-else class="table-container">
+                <table class="services-table">
+                  <thead>
+                    <tr>
+                      <th class="col-select">Select</th>
+                      <th class="col-code">Code</th>
+                      <th class="col-name">Service Name & Category</th>
+                      <th class="col-price">Price (ETB)</th>
+                      <th class="col-status">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="service in filteredServices"
+                      :key="service.eligibleServiceUuid"
+                      :class="{
+                        'bg-success-soft': isServiceSelected(service) && service.isExisting,
+                        'hover:bg-surface-muted': true
+                      }"
+                    >
+                      <td class="col-select">
+                        <input
+                          type="checkbox"
+                          :checked="isServiceSelected(service)"
+                          @change="toggleServiceSelection(service)"
+                          :disabled="service.isExisting"
+                          class="w-4 h-4 text-success rounded border-line-strong focus:ring-success"
+                        />
+                      </td>
+                      <td class="col-code">
+                        <span class="text-sm font-medium text-ink">
+                          {{ service.itemCode || 'N/A' }}
+                        </span>
+                      </td>
+                      <td class="col-name">
+                        <div class="service-name">
+                          {{ service.item || 'N/A' }}
+                        </div>
+                        <div class="service-category">
+                          {{ service.category || 'N/A' }}
+                        </div>
+                      </td>
+                      <td class="col-price">
+                        <span class="text-sm text-ink-subtle">
+                          {{ service.price?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00' }}
+                        </span>
+                      </td>
+                      <td class="col-status">
+                        <div class="status-wrapper">
+                          <span
+                            v-if="service.isExisting && isServiceSelected(service)"
+                            class="status-badge status-existing"
+                          >
+                            Already in package
+                          </span>
+                          <span
+                            v-else-if="service.isExisting && !isServiceSelected(service)"
+                            class="status-badge status-removed"
+                          >
+                            Marked for removal
+                          </span>
+                          <span
+                            v-else
+                            class="status-badge status-available"
+                          >
+                            Available
+                          </span>
+                          
+                          <button
+                            v-if="service.isExisting"
+                            @click="removeExistingService(service)"
+                            class="remove-btn"
+                            :title="isServiceSelected(service) ? 'Remove from package' : 'Undo removal'"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="filteredServices.length === 0">
+                      <td colspan="6" class="empty-state">
+                        No services found matching your search
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="flex justify-between pt-6 border-t border-gray-200">
-          <div>
-            <Button
-              v-if="currentStep === 2"
-              @click="previousStep"
-              variant="outline"
-              class="flex gap-2 items-center"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-              Back to Provider Selection
-            </Button>
-          </div>
+        <!-- Fixed Action Buttons -->
+        <div class="action-buttons">
+          <div class="flex justify-between items-center">
+            <div>
+              <Button
+                v-if="currentStep === 2"
+                @click="previousStep"
+                variant="outline"
+                class="flex gap-2 items-center"
+                :disabled="isSubmitting"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to Provider Selection
+              </Button>
+            </div>
 
-          <div class="flex gap-4">
-            <Button @click="closeModal" variant="outline">
-              Cancel
-            </Button>
+            <div class="flex gap-4">
+              <Button 
+                @click="closeModal" 
+                variant="outline"
+                :disabled="isSubmitting"
+              >
+                Cancel
+              </Button>
 
-            <Button
-              v-if="currentStep === 1"
-              @click="nextStep"
-              :disabled="!selectedProvider"
-              class="flex gap-2 items-center text-white bg-blue-500 hover:bg-blue-600"
-            >
-              Continue to Services
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </Button>
+              <Button
+                v-if="currentStep === 1"
+                @click="nextStep"
+                :disabled="!selectedProvider"
+                class="flex gap-2 items-center text-white bg-primary hover:bg-primary"
+              >
+                Continue to Services
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </Button>
 
-            <Button
-              v-if="currentStep === 2"
-              @click="submitServices"
-              :pending="api.pending.value"
-              :disabled="totalSelectedCount === 0"
-              class="text-white bg-green-500 hover:bg-green-600"
-            >
-              <span class="flex gap-2 items-center">
-                Save Changes
-                <span v-if="newServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-blue-600 rounded-full">
-                  +{{ newServicesCount }}
+              <Button
+                v-if="currentStep === 2"
+                @click="submitServices"
+                :pending="isSubmitting || api.pending.value"
+                :disabled="isSaveDisabled"
+                class="text-white bg-success hover:bg-success"
+              >
+                <span class="flex gap-2 items-center">
+                  <!-- Show spinner when submitting -->
+                  <svg
+                    v-if="isSubmitting || api.pending.value"
+                    class="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span v-if="isSubmitting || api.pending.value">Saving...</span>
+                  <span v-else>Save Changes</span>
+                  <span v-if="!(isSubmitting || api.pending.value) && newServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-primary rounded-full">
+                    +{{ newServicesCount }}
+                  </span>
+                  <span v-if="!(isSubmitting || api.pending.value) && removedServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-error rounded-full">
+                    -{{ removedServicesCount }}
+                  </span>
                 </span>
-                <span v-if="removedServicesCount > 0" class="px-2 py-0.5 text-xs font-semibold bg-red-600 rounded-full">
-                  -{{ removedServicesCount }}
-                </span>
-              </span>
-            </Button>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -937,38 +991,342 @@ onMounted(() => {
 </template>
 
 <style scoped>
-table {
-  border-collapse: separate;
-  border-spacing: 0;
+/* Modal max width constraint */
+:deep(.modal-content) {
+  max-width: 75rem !important;
+  width: 100%;
 }
 
-th {
+/* Content wrapper with scroll */
+.modal-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: calc(90vh - 100px);
+}
+
+/* Scrollable content */
+.scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  margin-bottom: 1rem;
+}
+
+/* Scrollbar styles for scrollable-content */
+.scrollable-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-content::-webkit-scrollbar-track {
+  background: rgb(var(--surface-muted));
+  border-radius: 4px;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb {
+  background: rgb(var(--line-strong));
+  border-radius: 4px;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--line-strong));
+}
+
+.scrollable-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line-strong)) rgb(var(--surface-muted));
+}
+
+/* Fixed Action Buttons */
+.action-buttons {
+  flex-shrink: 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(var(--line));
+  background: white;
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+
+/* Table container */
+.table-container {
+  overflow: auto;
+  max-height: 450px;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(var(--line-strong));
+  background: white;
+}
+
+/* Table container scrollbar */
+.table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: rgb(var(--surface-muted));
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: rgb(var(--line-strong));
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--line-strong));
+}
+
+.table-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line-strong)) rgb(var(--surface-muted));
+}
+
+/* Table styles */
+.services-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 750px;
+}
+
+/* Column definitions */
+.col-select {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  padding: 1rem 0.5rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.col-code {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+.col-name {
+  width: 250px;
+  min-width: 250px;
+  max-width: 250px;
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+.col-price {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+.col-status {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+/* Header styles */
+.services-table thead {
   position: sticky;
   top: 0;
   z-index: 10;
+  background: rgb(var(--surface-muted));
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+.services-table thead th {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(var(--ink-muted));
+  border-bottom: 2px solid rgb(var(--line));
+  text-align: left;
+  background: rgb(var(--surface-muted));
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+/* Service name styles */
+.service-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(var(--ink));
+  word-break: break-word;
+  line-height: 1.25;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+.service-category {
+  font-size: 0.75rem;
+  color: rgb(var(--ink-muted));
+  margin-top: 0.125rem;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+/* Status badge styles */
+.status-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* Smooth transitions */
-* {
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-existing {
+  background-color: rgb(var(--success-soft));
+  color: rgb(var(--success-strong));
+}
+
+.status-removed {
+  background-color: rgb(var(--error-soft));
+  color: rgb(var(--error-strong));
+}
+
+.status-available {
+  background-color: rgb(var(--primary) / 0.1);
+  color: rgb(var(--primary-hover));
+}
+
+/* Remove button */
+.remove-btn {
+  padding: 0.375rem;
+  color: rgb(var(--error));
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-btn:hover {
+  color: rgb(var(--error-strong));
+  background-color: rgb(var(--error-soft));
+}
+
+.remove-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--error));
+}
+
+.remove-btn:active {
+  transform: scale(0.95);
+}
+
+/* Checkbox styles */
+.col-select input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.col-select input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: rgb(var(--ink-muted));
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Row hover effect */
+.services-table tbody tr:hover {
+  background-color: rgb(var(--surface-muted));
+}
+
+.services-table tbody tr.bg-success-soft:hover {
+  background-color: rgb(var(--success-soft));
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .col-select {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .col-code {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .col-name {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .col-price {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .col-status {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .services-table {
+    min-width: 510px;
+  }
+  
+  .table-container {
+    max-height: 300px;
+  }
+}
+
+/* Transitions */
+.transition-all {
   transition: all 0.2s ease-in-out;
+}
+
+.transition-colors {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
 }
 </style>

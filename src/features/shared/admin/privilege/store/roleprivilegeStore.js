@@ -26,7 +26,6 @@ export const useRolePrivilege = defineStore("roleprivilegeStore", () => {
     privilege.value.splice(idx, 1);
   }
   function add(data) {
-    console.log(data);
     
     privilege.value.push(data);
   }

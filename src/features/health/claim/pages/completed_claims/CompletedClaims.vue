@@ -1,3 +1,4 @@
+<!-- CompletedClaimsIndex.vue - Updated with institution name handling -->
 <script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import ClaimByBatchDataProvider from "../../components/ClaimByBatchDataProvider.vue";
@@ -13,17 +14,20 @@ import { PaymentStatus, ServiceTypes, Status } from "@/types/interface";
 import Toogle from "@/components/Toogle.vue";
 import { useCompletedClaimByInstitutionBatch } from "../../store/completedClaimByInstitutionBatchStore";
 import CompletedClaimRow from "../../components/CompletedClaimRow.vue";
-const serviceType= ref("CREDIT");
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const serviceType = ref("CREDIT");
 const active = ref(ServiceTypes.creditService);
+
 watch(active, (newActive) => {
   if (newActive === ServiceTypes.creditService) {
     serviceType.value = "CREDIT";
-    console.log('🔄 Switched to CREDIT service');
   } else if (newActive === ServiceTypes.cashService) {
     serviceType.value = "CASH";
-    console.log('🔄 Switched to CASH service');
   }
 });
+
 const institutionUuid = ref();
 const providerUuid = ref();
 const search = ref("");
@@ -42,6 +46,17 @@ const tableHeaders = computed(() => {
     row: tableRowKeys.value,
   };
 });
+
+function navigateToDetailPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: `/completed_claims/detail/${row.claimUuid}`,
+      state: { institutionName },
+      query: { institutionName }
+    });
+  }
+}
 </script>
 
 <template>
@@ -102,7 +117,18 @@ const tableHeaders = computed(() => {
         :rows="claims"
         :rowCom="CompletedClaimRow"
         placeholder="No completed claims found"
-      />
+        @row-click="navigateToDetailPage"
+      >
+        <template #row>
+          <CompletedClaimRow
+            :rowData="claims"
+            :rowKeys="tableRowKeys"
+            :currentPage="1"
+            :perPage="25"
+            :onRowClick="navigateToDetailPage"
+          />
+        </template>
+      </Table>
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

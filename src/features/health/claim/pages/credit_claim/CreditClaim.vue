@@ -2,6 +2,7 @@
 import Table from "@/components/Table.vue";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import DefaultPage from "@/components/DefaultPage.vue";
 import { getActiveContracts } from "@/features/health/provider_contracts/api/contractApi";
 import { getInstitutionsPolicyByStatus } from "@/features/health/institutions/api/institutionApi";
@@ -24,6 +25,8 @@ const fromDate = ref("");
 const toDate = ref("");
 const showFilters = ref(false);
 
+const router = useRouter();
+
 // 👇 selected row state
 const selectedRow = ref(null);
 
@@ -31,17 +34,10 @@ function viewDetail(row) {
   selectedRow.value = row;
 }
 
+// Manual credit services are edited on the full manual-entry page
 function editManual(row) {
-  openModal('UtilizeUsage', {
-    mode: 'edit_manual_credit',
-    serviceProvidedUuid: row?.serviceProvidedUuid,
-    sourceRow: row,
-    contractUuid: row?.contractUuid,
-    providerName: row?.providerName,
-    providedDate: row?.providedDate,
-    insuredUuid: row?.insuredPersonUuid,
-    dependantUuid: row?.dependantUuid,
-  });
+  if (!row?.serviceProvidedUuid) return;
+  router.push({ path: "/credit_claims/manual", query: { edit: String(row.serviceProvidedUuid) } });
 }
 
 function goBack() {
@@ -54,8 +50,7 @@ function handleInstitutionSelect(result) {
 const search = ref("");
 function handleContractSelect(result) {
   contractUuid.value = result?.payerProviderContractUuid || '';
-}
-</script>
+}</script>
 
 <template>
 <CreditClaimDataProvider 
@@ -91,12 +86,17 @@ function handleContractSelect(result) {
       </template>
 
       <template #more v-if="!selectedRow">
+        <Button type="secondary" @click="router.push('/create_credit_claims')">Create Claims</Button>
+        <Button type="primary" @click="router.push('/credit_claims/manual')">
+          <svg class="mr-1.5 w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+          Add
+        </Button>
         <button 
           @click="showFilters = !showFilters" 
-          class="flex gap-2 items-center px-4 h-10 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 shadow-sm transition-colors hover:bg-gray-100"
+          class="flex gap-2 items-center px-4 h-10 text-sm font-medium text-ink-muted bg-surface-muted rounded-lg border border-line shadow-sm transition-colors hover:bg-surface-muted"
           title="Toggle Date and Type Filters"
         >
-          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 5.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
           Filters
@@ -104,13 +104,13 @@ function handleContractSelect(result) {
       </template>
 
       <!-- Collapsible Additional Filters -->
-      <div v-if="showFilters && !selectedRow" class="grid grid-cols-1 gap-4 p-4 mb-4 bg-gray-50 rounded-xl border border-gray-100 transition-all md:grid-cols-3">
+      <div v-if="showFilters && !selectedRow" class="grid grid-cols-1 gap-4 p-4 mb-4 bg-surface-muted rounded-xl border border-line transition-all md:grid-cols-3">
         <!-- Service Type Filter -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-gray-500">Service Type</label>
+          <label class="text-xs font-semibold text-ink-subtle">Service Type</label>
           <select 
             v-model="itemType" 
-            class="px-3 h-10 text-sm bg-white rounded-lg border border-gray-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="px-3 h-10 text-sm bg-white rounded-lg border border-line cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">All Types</option>
             <option value="SERVICE">SERVICE</option>
@@ -120,21 +120,21 @@ function handleContractSelect(result) {
 
         <!-- From Date Filter -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-gray-500">From Date</label>
+          <label class="text-xs font-semibold text-ink-subtle">From Date</label>
           <input 
             type="date" 
             v-model="fromDate" 
-            class="px-3 h-10 text-sm bg-white rounded-lg border border-gray-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="px-3 h-10 text-sm bg-white rounded-lg border border-line cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
         <!-- To Date Filter -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-gray-500">To Date</label>
+          <label class="text-xs font-semibold text-ink-subtle">To Date</label>
           <input 
             type="date" 
             v-model="toDate" 
-            class="px-3 h-10 text-sm bg-white rounded-lg border border-gray-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="px-3 h-10 text-sm bg-white rounded-lg border border-line cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
       </div>
@@ -144,12 +144,13 @@ function handleContractSelect(result) {
         v-if="!selectedRow"
         :pending="dataPending"
         :rowCom="CreditClaimTableRow"
+        :rowComProps="{ showTotal: true }"
         :headers="{
           head: [
             'Insured Name',
             'Provider Name',
             'Institution',
-            'Service Type',
+            'Record No.',
             'Services',
             'Total Amount',
             'Status',
@@ -160,7 +161,7 @@ function handleContractSelect(result) {
             'fullname',
             'providerName',
             'institutionName',
-            'itemType',
+            'recordNumber',
             'providedItems',
             'amount',
             'status',

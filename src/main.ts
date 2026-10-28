@@ -1,4 +1,5 @@
 import './assets/wind.css'
+import './assets/theme-dark.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -10,7 +11,10 @@ import vFocus from '@/directives/vFocus'
 import vPrivilage from '@/directives/vPrivilage'
 import vRipple from '@/directives/vRipple'
 import toast from '@/toast'
+import { installFloatingMenus } from '@/utils/floatingMenus'
 
+// Row action menus render above tables instead of being clipped by them
+installFloatingMenus()
 
 const app = createApp(App)
 

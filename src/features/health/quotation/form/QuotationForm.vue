@@ -1,3 +1,917 @@
+<template>
+  <div class="qb-wrap">
+    <!-- Header -->
+    <div class="qb-header">
+      <div>
+        <h3 class="qb-title">Benefit Configuration</h3>
+        <p class="qb-subtitle">{{ individualMode ? 'Configure coverage packages and sum assured for the individual.' : 'Configure plan types, descriptions, and coverages for each benefit group.' }}</p>
+      </div>
+      <button v-if="!readOnlyRows && !inclusionMode" type="button" @click="addGroupRow" class="btn btn-primary">
+        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add Benefit Group
+      </button>
+    </div>
+
+    <!-- Groups -->
+    <div class="qb-groups">
+      <div v-for="(row, rowIndex) in groupRows" :key="row.id" class="qb-card">
+
+        <!-- Card Header row: packages / actions -->
+        <div class="qb-card-header">
+          <div class="qb-field-group-header">
+            <div class="qb-header-inputs">
+              <!-- Packages multi-select dropdown -->
+              <div
+                class="qb-field package-dropdown-wrapper"
+                :data-rowid="row.id"
+                :style="{ zIndex: openDropdownRowId === row.id ? 50 : 1 }"
+              >
+                <label class="qb-label">
+                  Benefits / Packages
+                  <span v-if="row.selectedPackageUuuids.length === 1 && row.description" class="qb-header-limit">
+                    (Limit: {{ getRangeDisplayForPackage(row.selectedPackageUuuids[0], getGroupPlanTypeForDescOptions(row), row.description) }})
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  :ref="el => { if (el) pkgBtnRefs[row.id] = el }"
+                  :disabled="readOnlyRows || inclusionMode"
+                  @click="toggleDropdown(row.id)"
+                  class="qb-pkg-btn"
+                  :class="{ 'qb-pkg-btn--open': openDropdownRowId === row.id }"
+                >
+                  <span class="qb-pkg-btn__text">{{ getSelectedPackagesLabel(row.selectedPackageUuuids) }}</span>
+                  <svg class="qb-pkg-btn__chevron" :class="{ rotated: openDropdownRowId === row.id }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                <!-- Teleported dropdown with search -->
+                <Teleport to="body">
+                  <div
+                    v-if="openDropdownRowId === row.id"
+                    class="qb-pkg-dropdown"
+                    :style="getDropdownStyle(row.id)"
+                    @click.stop
+                    @mousedown.stop
+                  >
+                    <!-- Search input -->
+                    <div class="qb-pkg-search-wrapper">
+                      <svg class="qb-pkg-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                      </svg>
+                      <input
+                        type="text"
+                        :value="getSearchQuery(row.id)"
+                        @input="(e) => setSearchQuery(row.id, e.target.value)"
+                        placeholder="Search packages..."
+                        class="qb-pkg-search-input"
+                        @click.stop
+                        @mousedown.stop
+                        @keydown.stop
+                      />
+                    </div>
+                    
+                    <!-- Package list -->
+                    <div class="qb-pkg-options-list" @click.stop @mousedown.stop>
+                      <div
+                        v-for="pkg in filteredPackages(row.id)"
+                        :key="pkg.packageUuid"
+                        class="qb-pkg-option"
+                        :class="{ 'qb-pkg-option--checked': row.selectedPackageUuuids.includes(pkg.packageUuid) }"
+                        @click.stop="togglePackageInRow(row, pkg.packageUuid)"
+                      >
+                        <span class="qb-pkg-checkbox">
+                          <svg v-if="row.selectedPackageUuuids.includes(pkg.packageUuid)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                          </svg>
+                        </span>
+                        <div>
+                          <p class="qb-pkg-name">{{ pkg.packageName }}</p>
+                          <p class="qb-pkg-cat">{{ pkg.packageCategory }} <span v-if="pkg.gender && pkg.gender !== 'BOTH'" class="qb-gender-badge">{{ pkg.gender }}</span></p>
+                        </div>
+                      </div>
+                      <div v-if="filteredPackages(row.id).length === 0" class="qb-pkg-no-results">
+                        No packages found matching your search.
+                      </div>
+                    </div>
+
+                    <!-- Bulk actions -->
+                    <div v-if="filteredPackages(row.id).length > 0" class="qb-pkg-bulk-actions" @click.stop @mousedown.stop>
+                      <button 
+                        type="button" 
+                        @click.stop="selectAllFiltered(row)"
+                        class="qb-pkg-bulk-btn"
+                      >
+                        Select All
+                      </button>
+                      <button 
+                        type="button" 
+                        @click.stop="clearAllFiltered(row)"
+                        class="qb-pkg-bulk-btn"
+                      >
+                        Clear All
+                      </button>
+                      <span class="qb-pkg-bulk-count">
+                        {{ filteredPackages(row.id).length }} package{{ filteredPackages(row.id).length > 1 ? 's' : '' }}
+                      </span>
+                    </div>
+                  </div>
+                </Teleport>
+              </div>
+
+              <!-- Description -->
+              <div class="qb-field">
+                <label class="qb-label">Description</label>
+                <select
+                  v-model="row.description"
+                  :disabled="readOnlyRows || !row.selectedPackageUuuids.length"
+                  class="qb-select"
+                  :class="{ 'qb-select--error': getDescriptionError(row) && (row.descriptionTouched || attemptedSubmit) }"
+                  @change="() => { row.descriptionTouched = true; handleRowChange(row); }"
+                >
+                  <option value="" disabled>Select description</option>
+                  <option
+                    v-for="opt in getDescriptionOptionsForPackages(row.selectedPackageUuuids, getGroupPlanTypeForDescOptions(row))"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >{{ opt.label }}</option>
+                </select>
+                <div v-if="getDescriptionError(row) && (row.descriptionTouched || attemptedSubmit)" class="qb-error-hint">
+                  {{ getDescriptionError(row) }}
+                </div>
+              </div>
+
+              <!-- Number of Employees — hidden in individual mode (always 1) -->
+              <div v-if="!individualMode" class="qb-field">
+                <label class="qb-label">Number of Employees</label>
+                <input
+                  v-model="row.numberOfInsured"
+                  type="number"
+                  min="0"
+                  :disabled="readOnlyRows || !row.description"
+                  class="qb-input qb-input--center"
+                  :class="{ 'qb-input--error': getEmployeesError(row) && (row.employeesTouched || attemptedSubmit) }"
+                  placeholder="0"
+                  @input="() => { row.employeesTouched = true; handleRowChange(row); }"
+                />
+                <div v-if="getEmployeesError(row) && (row.employeesTouched || attemptedSubmit)" class="qb-error-hint">
+                  {{ getEmployeesError(row) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Row Actions -->
+            <div class="qb-row-actions">
+              <button
+                v-if="!readOnlyRows && groupRows.length > 1"
+                @click="removeGroupRow(rowIndex)"
+                class="qb-action-btn qb-action-btn--danger"
+                title="Remove Group"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+              <button
+                v-if="!readOnlyRows && !inclusionMode"
+                @click="duplicateGroupRow(row)"
+                class="qb-action-btn qb-action-btn--primary"
+                title="Duplicate Group"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                </svg>
+              </button>
+            </div>
+
+          </div><!-- /.qb-field-group-header -->
+        </div><!-- /.qb-card-header -->
+
+        <!-- Package detail rows -->
+        <div class="qb-pkg-list">
+          <div v-if="row.selectedPackageUuuids.length === 0" class="qb-empty">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 12H4"/>
+            </svg>
+            <p>No packages selected. Use the dropdown above to add packages.</p>
+          </div>
+
+          <div
+            v-for="pkgUuid in row.selectedPackageUuuids"
+            :key="pkgUuid"
+            class="qb-pkg-row"
+          >
+            <!-- Package name & Plan Type column -->
+            <div class="qb-pkg-info-col">
+              <div class="qb-pkg-info">
+                <span class="qb-pkg-bar"></span>
+                <div>
+                  <p class="qb-pkg-row-name">{{ getPackageName(pkgUuid) }}</p>
+                  <p v-if="row.selectedPackageUuuids.length >= 2" class="qb-pkg-row-hint">
+                    Sum Insured Limit: {{ getRangeDisplayForPackage(pkgUuid, row.packageConfigs[pkgUuid].planType, row.description) }}
+                    <span v-if="getPackageGender(pkgUuid) !== 'BOTH'" class="qb-gender-badge">{{ getPackageGender(pkgUuid) }}</span>
+                  </p>
+                </div>
+              </div>
+              
+              <!-- Plan Type Select -->
+              <div class="qb-pkg-field qb-plan-type-field">
+                <label class="qb-label">Plan Type</label>
+                <select
+                  v-model="row.packageConfigs[pkgUuid].planType"
+                  :disabled="readOnlyRows || inclusionMode"
+                  class="qb-select"
+                  :class="{ 'qb-select--error': getPlanTypeError(row, pkgUuid) && (row.packageConfigs[pkgUuid].planTypeTouched || attemptedSubmit) }"
+                  @change="() => { 
+                    row.packageConfigs[pkgUuid].planTypeTouched = true;
+                    handlePackagePlanTypeChange(row, pkgUuid); 
+                  }"
+                >
+                  <option value="" disabled>Select plan type</option>
+                  <option
+                    v-for="opt in getPlanOptionsForPackages([pkgUuid])"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >{{ opt.label }}</option>
+                </select>
+                <div v-if="getPlanTypeError(row, pkgUuid) && (row.packageConfigs[pkgUuid].planTypeTouched || attemptedSubmit)" class="qb-error-hint">
+                  {{ getPlanTypeError(row, pkgUuid) }}
+                </div>
+              </div>
+
+              <!-- Gender-specific input (below Plan Type) -->
+              <div v-if="getPackageGender(pkgUuid) !== 'BOTH'" class="qb-pkg-field">
+                <label class="qb-label qb-label--colored">
+                  {{ getPackageGender(pkgUuid) === 'FEMALE' ? 'Number of Adult Females' : 'Number of Adult Males' }}
+                </label>
+                <input
+                  :value="getGenderCountForPackage(row, pkgUuid)"
+                  @input="(e) => handleGenderCountInput(row, pkgUuid, e.target.value)"
+                  type="number"
+                  min="0"
+                  :max="row.numberOfInsured"
+                  :disabled="readOnlyRows || !row.description"
+                  class="qb-input qb-input--center"
+                  :class="{ 'qb-input--error': getGenderError(row, pkgUuid) && (getGenderTouchedForPackage(row, pkgUuid) || attemptedSubmit) }"
+                  placeholder="0"
+                />
+                <p class="qb-input-hint">{{ getPackageGender(pkgUuid) === 'FEMALE' ? 'Female' : 'Male' }} employees covered</p>
+                <div v-if="getGenderError(row, pkgUuid) && (getGenderTouchedForPackage(row, pkgUuid) || attemptedSubmit)" class="qb-error-hint">
+                  {{ getGenderError(row, pkgUuid) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Cascade Coverage List Column -->
+            <div class="qb-pkg-cascade-col">
+              <!-- INDIVIDUAL PLAN -->
+              <template v-if="isIndividualPlan(row.packageConfigs[pkgUuid].planType)">
+                <!-- Same Sum Assured toggle -->
+                <div class="qb-same-sa-toggle">
+                  <label class="qb-toggle-wrap">
+                    <input
+                      type="checkbox"
+                      v-model="row.packageConfigs[pkgUuid].sameSumAssured"
+                      :disabled="readOnlyRows"
+                      @change="handleSameSumAssuredToggle(row, pkgUuid)"
+                      class="qb-toggle-checkbox"
+                    />
+                    <span class="qb-toggle-slider"></span>
+                    <span class="qb-toggle-text">Same Sum Assured for all members</span>
+                  </label>
+                </div>
+
+                <!-- Employee Sum Assured Row -->
+                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].sumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].sumAssuredTouched = true;
+                        handleSameSumAssuredSync(row, pkgUuid);
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'employee') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Spouse Sum Assured Row (Member+1 or more) -->
+                <div
+                  v-if="!isMemberOnly(row.description)"
+                  class="qb-cascade-row"
+                  :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit) }"
+                >
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Spouse Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].spouseSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured || row.packageConfigs[pkgUuid].sameSumAssured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit), 'qb-input--muted': row.packageConfigs[pkgUuid].sameSumAssured }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].spouseSumAssuredTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'spouse', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'spouse') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].spouseRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].spousePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Dependent Sum Assured Row (Member+2 or more) -->
+                <div
+                  v-if="!isMemberOnly(row.description) && !isMemberPlusOne(row.description)"
+                  class="qb-cascade-row"
+                  :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }"
+                >
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured || row.packageConfigs[pkgUuid].sameSumAssured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit), 'qb-input--muted': row.packageConfigs[pkgUuid].sameSumAssured }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].depSumAssuredTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+              </template>
+
+              <!-- DUAL PREMIUM DEPENDENT SHARED -->
+              <template v-else-if="isDualPremiumPlan(row.packageConfigs[pkgUuid].planType)">
+                <!-- Employee Sum Assured Row -->
+                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].sumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].sumAssuredTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'employee') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Spouse Sum Assured Row -->
+                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit) }">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Spouse Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].spouseSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit) }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].spouseSumAssuredTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'spouse', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'spouse') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].spouseRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].spousePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Dependent Sum Assured Row -->
+                <div v-if="!isMemberPlusOne(row.description)" class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].depSumAssuredTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+              </template>
+
+              <!-- DEPENDENT SHARED PLAN -->
+              <template v-else-if="isDependentSharedPlan(row.packageConfigs[pkgUuid].planType)">
+                <!-- Employee Sum Assured Row -->
+                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].sumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].sumAssuredTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'employee') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+
+                <!-- Dependent Sum Assured Row -->
+                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].depSumAssuredTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
+                    <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+              </template>
+
+              <!-- FAMILY SHARED OR OTHER -->
+              <template v-else>
+                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getCoverageError(row, pkgUuid) && (row.packageConfigs[pkgUuid].coverageTouched || attemptedSubmit) }">
+                  <div class="qb-pkg-field">
+                    <label class="qb-label qb-label--colored">Coverage Amount</label>
+                    <input
+                      v-model="row.packageConfigs[pkgUuid].coverage"
+                      type="number" min="0"
+                      :disabled="readOnlyRows || !row.numberOfInsured"
+                      class="qb-input qb-input--right"
+                      :class="{ 'qb-input--error': getCoverageError(row, pkgUuid) && (row.packageConfigs[pkgUuid].coverageTouched || attemptedSubmit) }"
+                      placeholder="Enter amount"
+                      @input="() => { 
+                        row.packageConfigs[pkgUuid].coverageTouched = true;
+                        recalculateRowPackage(row, pkgUuid); 
+                      }"
+                    />
+                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid, row.packageConfigs[pkgUuid].planType, row.description) }}</p>
+                    <div v-if="getCoverageError(row, pkgUuid) && (row.packageConfigs[pkgUuid].coverageTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
+                      {{ getCoverageError(row, pkgUuid) }}
+                    </div>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Rate</label>
+                    <input
+                      :value="formatRate(row.packageConfigs[pkgUuid].rate) + '%'"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--muted"
+                    />
+                    <p class="qb-input-hint">Applied rate</p>
+                  </div>
+                  <div class="qb-pkg-field qb-meta-field">
+                    <label class="qb-label">Premium</label>
+                    <input
+                      :value="formatCurrency(row.packageConfigs[pkgUuid].premium)"
+                      type="text" disabled
+                      class="qb-input qb-input--right qb-input--premium"
+                    />
+                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Total Premium Badge Column -->
+            <div class="qb-pkg-total-col">
+              <div class="qb-pkg-field">
+                <label class="qb-label">Premium</label>
+                <div class="qb-pkg-total-badge">
+                  {{ formatCurrency(row.packageConfigs[pkgUuid].premium) }}
+                </div>
+                <p class="qb-pkg-total-hint">
+                  Calculated premium
+                  <span v-if="activeDiscountMap[pkgUuid] > 0" class="qb-discount-note">
+                    ({{ activeDiscountMap[pkgUuid] }}% discount applied)
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div><!-- /.qb-pkg-row -->
+        </div><!-- /.qb-pkg-list -->
+
+      </div><!-- /.qb-card -->
+    </div><!-- /.qb-groups -->
+
+    <!-- Discount Panel -->
+    <div v-if="!readOnlyRows" class="qb-discount-panel">
+      <button type="button" class="qb-discount-toggle-btn" @click="discountPanelOpen = !discountPanelOpen">
+        <svg class="qb-discount-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
+        </svg>
+        <span>Discount Configuration</span>
+        <span v-if="Object.values(activeDiscountMap).some(d => d > 0)" class="qb-discount-active-badge">Active</span>
+        <svg class="qb-pkg-btn__chevron" :class="{ rotated: discountPanelOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+
+      <div v-if="discountPanelOpen && allSelectedPackageUuids.length > 0" class="qb-discount-body">
+        <p class="qb-discount-hint">Set discount percentage per package. Discounts apply across all benefit groups using the same package.</p>
+        <div class="qb-discount-list">
+          <div v-for="pkgUuid in allSelectedPackageUuids" :key="pkgUuid" class="qb-discount-item">
+            <div class="qb-discount-item-info">
+              <span class="qb-pkg-bar"></span>
+              <span class="qb-discount-pkg-name">{{ getPackageName(pkgUuid) }}</span>
+            </div>
+            <div class="qb-discount-controls">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.5"
+                :data-pkg="pkgUuid"
+                :style="{ '--val': activeDiscountMap[pkgUuid] || 0 }"
+                :value="activeDiscountMap[pkgUuid] || 0"
+                @input="(e) => setDiscount(pkgUuid, e.target.value)"
+                class="qb-discount-slider"
+              />
+              <div class="qb-discount-input-wrap">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  :value="activeDiscountMap[pkgUuid] || 0"
+                  @input="(e) => setDiscount(pkgUuid, e.target.value)"
+                  class="qb-input qb-input--center qb-discount-number"
+                />
+                <span class="qb-discount-pct">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="discountPanelOpen && allSelectedPackageUuids.length === 0" class="qb-discount-body qb-discount-empty">
+        <p>No packages selected yet. Add packages to benefit groups first.</p>
+      </div>
+    </div>
+
+    <!-- Validation Summary (only shown after attempted submit) -->
+    <div v-if="attemptedSubmit && validationErrors.length > 0" class="qb-validation-summary">
+      <div class="qb-validation-summary__header">
+        <svg class="qb-validation-summary__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>Please fix the following issues before proceeding:</span>
+      </div>
+      <ul class="qb-validation-summary__list">
+        <li v-for="(error, idx) in validationErrors" :key="idx">
+          {{ error }}
+        </li>
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <div v-if="!hideFooterActions" class="qb-footer">
+      <div class="qb-footer-summary">
+        <p class="qb-footer-count">{{ groupRows.length }} benefit group{{ groupRows.length > 1 ? 's' : '' }} configured</p>
+        <p class="qb-footer-total">
+          Total Premium:
+          <span class="qb-footer-amount">{{ formatCurrency(totalPremium) }}</span>
+        </p>
+      </div>
+
+      <div class="qb-footer-actions">
+        <!-- Inclusion-specific footer buttons -->
+        <template v-if="inclusionMode">
+          <button
+            type="button"
+            :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
+            @click="submitAction('save')"
+            class="btn btn-outline"
+          >
+            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing…
+            </span>
+            <span v-else>Save Inclusion</span>
+          </button>
+          
+          <button
+            type="button"
+            :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
+            @click="submitAction('issue')"
+            class="btn btn-primary"
+          >
+            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing…
+            </span>
+            <span v-else>Create Inclusion</span>
+          </button>
+        </template>
+
+        <!-- Amend button -->
+        <button
+          v-else-if="showAmendButton"
+          type="button"
+          :disabled="!!pendingAction"
+          @click="$emit('amend')"
+          class="btn btn-outline"
+        >
+          <span v-if="pendingAction === 'amend'" class="flex gap-2 items-center">
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing…
+          </span>
+          <span v-else>Amend Quotation</span>
+        </button>
+
+        <!-- Issue premium advice button -->
+        <button
+          v-else-if="showIssuePremiumAdvice"
+          type="button"
+          :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
+          @click.prevent="submitAction('issuePremiumAdvice')"
+          class="btn btn-purple"
+        >
+          <span v-if="pendingAction === 'issuePremiumAdvice'" class="flex gap-2 items-center">
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing…
+          </span>
+          <span v-else>Issue Premium Advice</span>
+        </button>
+
+        <!-- Issue mode buttons (accept/reject) -->
+        <template v-else-if="issueMode">
+          <button type="button" :disabled="!!pendingAction || !formIsValid" @click="submitAction('accept')" class="btn btn-green">
+            <span v-if="pendingAction === 'accept'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing…
+            </span>
+            <span v-else>{{ acceptLabel }}</span>
+          </button>
+        </template>
+
+        <!-- Normal mode (create quotation) save/issue buttons -->
+        <template v-else-if="!acceptMode">
+          <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('save')" class="btn btn-outline">
+            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving…
+            </span>
+            <span v-else>Save Draft</span>
+          </button>
+          
+          <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('issue')" class="btn btn-primary">
+            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Issuing…
+            </span>
+            <span v-else>Issue Quotation</span>
+          </button>
+        </template>
+
+        <!-- Accept mode save/issue buttons -->
+        <template v-else>
+          <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('save')" class="btn btn-soft">
+            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving…
+            </span>
+            <span v-else>Save Changes</span>
+          </button>
+          
+          <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('issue')" class="btn btn-primary">
+            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Issuing…
+            </span>
+            <span v-else>Issue Saved</span>
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script>
 import {
   allMemberTYpes,
@@ -77,6 +991,9 @@ export default {
     showIssuePremiumAdvice: { type: Boolean, default: false },
     showAmendButton:        { type: Boolean, default: false },
     inclusionMode:        { type: Boolean, default: false },
+    /** When true, this quotation is for a single individual (not an institution).
+     *  numberOfInsured is hidden and forced to 1 internally. */
+    individualMode:       { type: Boolean, default: false },
     beginDate:            { type: String, default: "" },
     endDate:              { type: String, default: "" },
     discountMap:          { type: Object, default: () => ({}) },
@@ -84,7 +1001,7 @@ export default {
 
   emits: ["amend", "submit"],
 
-data() {
+  data() {
     return {
       groupRows: [],
       openDropdownRowId: null,
@@ -99,8 +1016,10 @@ data() {
       attemptedSubmit: false,
       discountPanelOpen: false,
       internalDiscountMap: {},
+      packageSearchQuery: {},
     };
   },
+
   computed: {
     allPackages() { return this.packages; },
 
@@ -112,8 +1031,7 @@ data() {
       return Array.from(seen);
     },
   
-     activeDiscountMap() {
-      // Merge prop discounts with any local changes
+    activeDiscountMap() {
       return { ...this.discountMap, ...this.internalDiscountMap };
     },
     
@@ -130,8 +1048,9 @@ data() {
           continue;
         }
 
-        const insured = Number(this.normalizeValue(row.numberOfInsured));
-        if (!Number.isFinite(insured) || insured <= 0) {
+        // In individual mode numberOfInsured is always 1 — skip validation
+        const insured = this.individualMode ? 1 : Number(this.normalizeValue(row.numberOfInsured));
+        if (!this.individualMode && (!Number.isFinite(insured) || insured <= 0)) {
           errors.push(`Benefit group: Number of employees must be greater than 0.`);
         }
         
@@ -161,7 +1080,6 @@ data() {
           const planType = this.normalizeValue(config.planType);
           const description = this.normalizeValue(row.description);
           
-          // Get limits based on plan type
           let empMinLimit, empMaxLimit, spouseMinLimit, spouseMaxLimit, depMinLimit, depMaxLimit;
           
           if (this.isIndividualPlan(planType)) {
@@ -311,11 +1229,23 @@ data() {
 
   mounted() {
     this.clickOutsideHandler = (e) => {
-      if (this.openDropdownRowId && !e.target.closest(".package-dropdown-wrapper") && !e.target.closest(".qb-pkg-dropdown")) {
+      const isInsideDropdown = e.target.closest(".qb-pkg-dropdown");
+      const isInsideButton = e.target.closest(".qb-pkg-btn");
+      const isInsideWrapper = e.target.closest(".package-dropdown-wrapper");
+      
+      if (this.openDropdownRowId && !isInsideDropdown && !isInsideButton && !isInsideWrapper) {
+        const rowId = this.openDropdownRowId;
         this.openDropdownRowId = null;
+        this.packageSearchQuery[rowId] = '';
       }
     };
-    this.scrollHandler = () => { if (this.openDropdownRowId) this.openDropdownRowId = null; };
+    this.scrollHandler = () => { 
+      if (this.openDropdownRowId) {
+        const rowId = this.openDropdownRowId;
+        this.openDropdownRowId = null;
+        this.packageSearchQuery[rowId] = '';
+      }
+    };
     document.addEventListener("click", this.clickOutsideHandler);
     window.addEventListener("scroll", this.scrollHandler, true);
   },
@@ -326,7 +1256,95 @@ data() {
   },
 
   methods: {
-    // ── Same Sum Assured methods ────────────────────
+    // ── Format Rate as Percentage ─────────────────────────────
+   formatRate(rate) { 
+  if (!rate && rate !== 0) return "0.0000";
+  
+  // Convert to percentage
+  const percentage = Number(rate) * 100;
+  
+  // Use toFixed with 10 decimal places to handle floating point precision
+  let formatted = percentage.toFixed(10);
+  
+  // Remove trailing zeros but keep at least 4 decimal places
+  let parts = formatted.split('.');
+  let decimalPart = parts[1];
+  
+  // Find where significant digits end
+  let significantEnd = decimalPart.length;
+  for (let i = decimalPart.length - 1; i >= 4; i--) {
+    if (decimalPart[i] !== '0') {
+      significantEnd = i + 1;
+      break;
+    }
+  }
+  
+  // Keep at least 4 decimal places
+  if (significantEnd < 4) significantEnd = 4;
+  
+  decimalPart = decimalPart.substring(0, significantEnd);
+  formatted = parts[0] + '.' + decimalPart;
+  
+  // If all decimal places are zeros, remove the decimal point
+  if (decimalPart.replace(/0/g, '').length === 0) {
+    formatted = parts[0];
+  }
+  
+  return formatted;
+},
+
+    // ── Search methods ──────────────────────────────────────
+    getSearchQuery(rowId) {
+      return this.packageSearchQuery[rowId] || '';
+    },
+
+    setSearchQuery(rowId, value) {
+      this.packageSearchQuery = { ...this.packageSearchQuery, [rowId]: value };
+    },
+
+    filteredPackages(rowId) {
+      const query = this.getSearchQuery(rowId);
+      if (!query.trim()) return this.allPackages;
+      
+      const lowerQuery = query.toLowerCase().trim();
+      return this.allPackages.filter(pkg => 
+        pkg.packageName.toLowerCase().includes(lowerQuery) ||
+        pkg.packageCategory.toLowerCase().includes(lowerQuery)
+      );
+    },
+
+    selectAllFiltered(row) {
+      const filtered = this.filteredPackages(row.id);
+      filtered.forEach(pkg => {
+        if (!row.selectedPackageUuuids.includes(pkg.packageUuid)) {
+          row.selectedPackageUuuids.push(pkg.packageUuid);
+          const newConfig = emptyConfig();
+          newConfig.genderCount = 0;
+          newConfig.genderTouched = false;
+          row.packageConfigs = { ...row.packageConfigs, [pkg.packageUuid]: newConfig };
+          this.ensureRatesLoaded(pkg.packageUuid);
+        }
+      });
+      row.selectedPackageUuuids.forEach(pkgUuid => {
+        this.setRateFromCacheForPackage(row, pkgUuid);
+        this._calcPremium(row, pkgUuid);
+      });
+      this.handleRowChange(row);
+    },
+
+    clearAllFiltered(row) {
+      const filtered = this.filteredPackages(row.id);
+      filtered.forEach(pkg => {
+        const idx = row.selectedPackageUuuids.indexOf(pkg.packageUuid);
+        if (idx > -1) {
+          row.selectedPackageUuuids.splice(idx, 1);
+          delete row.packageConfigs[pkg.packageUuid];
+        }
+      });
+      this.handleRowChange(row);
+    },
+
+    // ── Same Sum Assured methods ────────────────────────────────
     handleSameSumAssuredToggle(row, pkgUuid) {
       const config = row.packageConfigs[pkgUuid];
       if (!config) return;
@@ -347,23 +1365,24 @@ data() {
         config.depSumAssured    = config.sumAssured;
       }
     },
-setDiscount(pkgUuid, value) {
-  const v = Math.min(100, Math.max(0, Number(value) || 0));
-  // Create new object to trigger Vue 3 reactivity on internalDiscountMap
-  this.internalDiscountMap = { ...this.internalDiscountMap, [pkgUuid]: v };
-  
-  this.$nextTick(() => {
-    document.querySelectorAll('.qb-discount-slider').forEach(el => {
-      el.style.setProperty('--val', String(this.activeDiscountMap[el.dataset.pkg] || 0));
-    });
-  });
-  this.groupRows.forEach(row => {
-    if (row.selectedPackageUuuids.includes(pkgUuid)) {
-      this.setRateFromCacheForPackage(row, pkgUuid);
-      this._calcPremium(row, pkgUuid);
-    }
-  });
-},
+
+    setDiscount(pkgUuid, value) {
+      const v = Math.min(100, Math.max(0, Number(value) || 0));
+      this.internalDiscountMap = { ...this.internalDiscountMap, [pkgUuid]: v };
+      
+      this.$nextTick(() => {
+        document.querySelectorAll('.qb-discount-slider').forEach(el => {
+          el.style.setProperty('--val', String(this.activeDiscountMap[el.dataset.pkg] || 0));
+        });
+      });
+      this.groupRows.forEach(row => {
+        if (row.selectedPackageUuuids.includes(pkgUuid)) {
+          this.setRateFromCacheForPackage(row, pkgUuid);
+          this._calcPremium(row, pkgUuid);
+        }
+      });
+    },
+
     // ── Gender-related methods ───────────────────────────────
     getPackageGender(packageUuid) {
       const pkg = this.packages.find(p => p.packageUuid === packageUuid);
@@ -587,7 +1606,17 @@ setDiscount(pkgUuid, value) {
 
     // ── Dropdown ──────────────────────────────────────────────
     toggleDropdown(rowId) {
-      if (this.openDropdownRowId === rowId) { this.openDropdownRowId = null; return; }
+      if (this.openDropdownRowId === rowId) { 
+        this.openDropdownRowId = null;
+        this.packageSearchQuery[rowId] = '';
+        return; 
+      }
+      
+      if (this.openDropdownRowId) {
+        const oldRowId = this.openDropdownRowId;
+        this.packageSearchQuery[oldRowId] = '';
+      }
+      
       const btn = this.pkgBtnRefs[rowId];
       if (btn) {
         const rect = btn.getBoundingClientRect();
@@ -598,6 +1627,7 @@ setDiscount(pkgUuid, value) {
         };
       }
       this.openDropdownRowId = rowId;
+      this.packageSearchQuery = { ...this.packageSearchQuery, [rowId]: '' };
     },
 
     getDropdownStyle(rowId) {
@@ -978,7 +2008,8 @@ setDiscount(pkgUuid, value) {
       if (!config) return;
       
       const planType = this.normalizeValue(config.planType);
-      const insured = Number(row.numberOfInsured) || 0;
+      // In individual mode always use 1 as the insured count
+      const insured = this.individualMode ? 1 : (Number(row.numberOfInsured) || 0);
       const description = this.normalizeValue(row.description);
       const pkgGender = this.getPackageGender(packageUuid);
       
@@ -1448,7 +2479,7 @@ setDiscount(pkgUuid, value) {
       this.groupRows = [{ 
         id: genId.next().value, 
         benefitGroupCode: generateUUID(),
-        numberOfInsured: "", 
+        numberOfInsured: this.individualMode ? 1 : "", 
         employeesTouched: false,
         description: "",
         descriptionTouched: false,
@@ -1461,7 +2492,7 @@ setDiscount(pkgUuid, value) {
       this.groupRows.push({ 
         id: genId.next().value, 
         benefitGroupCode: generateUUID(),
-        numberOfInsured: "", 
+        numberOfInsured: this.individualMode ? 1 : "", 
         employeesTouched: false,
         description: "",
         descriptionTouched: false,
@@ -1540,7 +2571,7 @@ setDiscount(pkgUuid, value) {
           servicesList.push({
             packageUuid,
             benefitGroupCode: row.benefitGroupCode,
-            numberOfInsured: Number(row.numberOfInsured) || 0,
+            numberOfInsured: this.individualMode ? 1 : (Number(row.numberOfInsured) || 0),
             numberOfAdultFemale,
             numberOfAdultMale,
             description: localNormalizeDescription(description),
@@ -1574,8 +2605,6 @@ setDiscount(pkgUuid, value) {
         packageUuid: uuid, 
         services: servicesList.filter(s => s.packageUuid === uuid) 
       }));
-      
-      console.log("QuotationForm buildPayload built:", JSON.parse(JSON.stringify(payload)));
       
       return payload;
     },
@@ -1642,880 +2671,10 @@ setDiscount(pkgUuid, value) {
 
     formatCurrency,
     formatNumber,
-    formatRate(rate) { 
-      return (!rate && rate !== 0) ? "0.0000" : Number(rate).toFixed(4); 
-    },
   },
 };
-
 </script>
-<template>
-  <div class="qb-wrap">
-    <!-- Header -->
-    <div class="qb-header">
-      <div>
-        <h3 class="qb-title">Benefit Configuration</h3>
-        <p class="qb-subtitle">Configure plan types, descriptions, and coverages for each benefit group.</p>
-      </div>
-      <button v-if="!readOnlyRows && !inclusionMode" type="button" @click="addGroupRow" class="btn btn-primary">
-        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Add Benefit Group
-      </button>
-    </div>
 
-    <!-- Groups -->
-    <div class="qb-groups">
-      <div v-for="(row, rowIndex) in groupRows" :key="row.id" class="qb-card">
-
-        <!-- Card Header row: packages / actions -->
-        <div class="qb-card-header">
-          <div class="qb-field-group-header">
-            <div class="qb-header-inputs">
-              <!-- Packages multi-select dropdown -->
-              <div
-                class="qb-field package-dropdown-wrapper"
-                :data-rowid="row.id"
-                :style="{ zIndex: openDropdownRowId === row.id ? 50 : 1 }"
-              >
-                <label class="qb-label">
-                  Benefits / Packages
-                  <span v-if="row.selectedPackageUuuids.length === 1 && row.description" class="qb-header-limit">
-                    (Limit: {{ getRangeDisplayForPackage(row.selectedPackageUuuids[0], getGroupPlanTypeForDescOptions(row), row.description) }})
-                  </span>
-                </label>
-                <button
-                  type="button"
-                  :ref="el => { if (el) pkgBtnRefs[row.id] = el }"
-                  :disabled="readOnlyRows || inclusionMode"
-                  @click="toggleDropdown(row.id)"
-                  class="qb-pkg-btn"
-                  :class="{ 'qb-pkg-btn--open': openDropdownRowId === row.id }"
-                >
-                  <span class="qb-pkg-btn__text">{{ getSelectedPackagesLabel(row.selectedPackageUuuids) }}</span>
-                  <svg class="qb-pkg-btn__chevron" :class="{ rotated: openDropdownRowId === row.id }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
-                <!-- Teleported dropdown -->
-                <Teleport to="body">
-                  <div
-                    v-if="openDropdownRowId === row.id"
-                    class="qb-pkg-dropdown"
-                    :style="getDropdownStyle(row.id)"
-                  >
-                    <div
-                      v-for="pkg in allPackages"
-                      :key="pkg.packageUuid"
-                      class="qb-pkg-option"
-                      :class="{ 'qb-pkg-option--checked': row.selectedPackageUuuids.includes(pkg.packageUuid) }"
-                      @click="togglePackageInRow(row, pkg.packageUuid)"
-                    >
-                      <span class="qb-pkg-checkbox">
-                        <svg v-if="row.selectedPackageUuuids.includes(pkg.packageUuid)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                        </svg>
-                      </span>
-                      <div>
-                        <p class="qb-pkg-name">{{ pkg.packageName }}</p>
-                        <p class="qb-pkg-cat">{{ pkg.packageCategory }} <span v-if="pkg.gender && pkg.gender !== 'BOTH'" class="qb-gender-badge">{{ pkg.gender }}</span></p>
-                      </div>
-                    </div>
-                  </div>
-                </Teleport>
-              </div>
-
-              <!-- Description -->
-              <div class="qb-field">
-                <label class="qb-label">Description</label>
-                <select
-                  v-model="row.description"
-                  :disabled="readOnlyRows || !row.selectedPackageUuuids.length"
-                  class="qb-select"
-                  :class="{ 'qb-select--error': getDescriptionError(row) && (row.descriptionTouched || attemptedSubmit) }"
-                  @change="() => { row.descriptionTouched = true; handleRowChange(row); }"
-                >
-                  <option value="" disabled>Select description</option>
-                  <option
-                    v-for="opt in getDescriptionOptionsForPackages(row.selectedPackageUuuids, getGroupPlanTypeForDescOptions(row))"
-                    :key="opt.value"
-                    :value="opt.value"
-                  >{{ opt.label }}</option>
-                </select>
-                <div v-if="getDescriptionError(row) && (row.descriptionTouched || attemptedSubmit)" class="qb-error-hint">
-                  {{ getDescriptionError(row) }}
-                </div>
-              </div>
-
-              <!-- Number of Employees -->
-              <div class="qb-field">
-                <label class="qb-label">Number of Employees</label>
-                <input
-                  v-model="row.numberOfInsured"
-                  type="number"
-                  min="0"
-                  :disabled="readOnlyRows || !row.description"
-                  class="qb-input qb-input--center"
-                  :class="{ 'qb-input--error': getEmployeesError(row) && (row.employeesTouched || attemptedSubmit) }"
-                  placeholder="0"
-                  @input="() => { row.employeesTouched = true; handleRowChange(row); }"
-                />
-                <div v-if="getEmployeesError(row) && (row.employeesTouched || attemptedSubmit)" class="qb-error-hint">
-                  {{ getEmployeesError(row) }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Row Actions -->
-            <div class="qb-row-actions">
-              <button
-                v-if="!readOnlyRows && groupRows.length > 1"
-                @click="removeGroupRow(rowIndex)"
-                class="qb-action-btn qb-action-btn--danger"
-                title="Remove Group"
-              >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-              </button>
-              <button
-                v-if="!readOnlyRows && !inclusionMode"
-                @click="duplicateGroupRow(row)"
-                class="qb-action-btn qb-action-btn--primary"
-                title="Duplicate Group"
-              >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
-                </svg>
-              </button>
-            </div>
-
-          </div><!-- /.qb-field-group-header -->
-        </div><!-- /.qb-card-header -->
-
-        <!-- Package detail rows -->
-        <div class="qb-pkg-list">
-          <div v-if="row.selectedPackageUuuids.length === 0" class="qb-empty">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 12H4"/>
-            </svg>
-            <p>No packages selected. Use the dropdown above to add packages.</p>
-          </div>
-
-          <div
-            v-for="pkgUuid in row.selectedPackageUuuids"
-            :key="pkgUuid"
-            class="qb-pkg-row"
-          >
-            <!-- Package name & Plan Type column -->
-            <div class="qb-pkg-info-col">
-              <div class="qb-pkg-info">
-                <span class="qb-pkg-bar"></span>
-                <div>
-                  <p class="qb-pkg-row-name">{{ getPackageName(pkgUuid) }}</p>
-                  <p v-if="row.selectedPackageUuuids.length >= 2" class="qb-pkg-row-hint">
-                    Sum Insured Limit: {{ getRangeDisplayForPackage(pkgUuid, row.packageConfigs[pkgUuid].planType, row.description) }}
-                    <span v-if="getPackageGender(pkgUuid) !== 'BOTH'" class="qb-gender-badge">{{ getPackageGender(pkgUuid) }}</span>
-                  </p>
-                </div>
-              </div>
-              
-              <!-- Plan Type Select -->
-              <div class="qb-pkg-field qb-plan-type-field">
-                <label class="qb-label">Plan Type</label>
-                <select
-                  v-model="row.packageConfigs[pkgUuid].planType"
-                  :disabled="readOnlyRows || inclusionMode"
-                  class="qb-select"
-                  :class="{ 'qb-select--error': getPlanTypeError(row, pkgUuid) && (row.packageConfigs[pkgUuid].planTypeTouched || attemptedSubmit) }"
-                  @change="() => { 
-                    row.packageConfigs[pkgUuid].planTypeTouched = true;
-                    handlePackagePlanTypeChange(row, pkgUuid); 
-                  }"
-                >
-                  <option value="" disabled>Select plan type</option>
-                  <option
-                    v-for="opt in getPlanOptionsForPackages([pkgUuid])"
-                    :key="opt.value"
-                    :value="opt.value"
-                  >{{ opt.label }}</option>
-                </select>
-                <div v-if="getPlanTypeError(row, pkgUuid) && (row.packageConfigs[pkgUuid].planTypeTouched || attemptedSubmit)" class="qb-error-hint">
-                  {{ getPlanTypeError(row, pkgUuid) }}
-                </div>
-              </div>
-
-              <!-- Gender-specific input (below Plan Type) -->
-              <div v-if="getPackageGender(pkgUuid) !== 'BOTH'" class="qb-pkg-field">
-                <label class="qb-label qb-label--colored">
-                  {{ getPackageGender(pkgUuid) === 'FEMALE' ? 'Number of Adult Females' : 'Number of Adult Males' }}
-                </label>
-                <input
-                  :value="getGenderCountForPackage(row, pkgUuid)"
-                  @input="(e) => handleGenderCountInput(row, pkgUuid, e.target.value)"
-                  type="number"
-                  min="0"
-                  :max="row.numberOfInsured"
-                  :disabled="readOnlyRows || !row.description"
-                  class="qb-input qb-input--center"
-                  :class="{ 'qb-input--error': getGenderError(row, pkgUuid) && (getGenderTouchedForPackage(row, pkgUuid) || attemptedSubmit) }"
-                  placeholder="0"
-                />
-                <p class="qb-input-hint">{{ getPackageGender(pkgUuid) === 'FEMALE' ? 'Female' : 'Male' }} employees covered</p>
-                <div v-if="getGenderError(row, pkgUuid) && (getGenderTouchedForPackage(row, pkgUuid) || attemptedSubmit)" class="qb-error-hint">
-                  {{ getGenderError(row, pkgUuid) }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Cascade Coverage List Column -->
-            <div class="qb-pkg-cascade-col">
-              <!-- INDIVIDUAL PLAN -->
-              <template v-if="isIndividualPlan(row.packageConfigs[pkgUuid].planType)">
-                <!-- Same Sum Assured toggle -->
-                <div class="qb-same-sa-toggle">
-                  <label class="qb-toggle-wrap">
-                    <input
-                      type="checkbox"
-                      v-model="row.packageConfigs[pkgUuid].sameSumAssured"
-                      :disabled="readOnlyRows"
-                      @change="handleSameSumAssuredToggle(row, pkgUuid)"
-                      class="qb-toggle-checkbox"
-                    />
-                    <span class="qb-toggle-slider"></span>
-                    <span class="qb-toggle-text">Same Sum Assured for all members</span>
-                  </label>
-                </div>
-
-                <!-- Employee Sum Assured Row -->
-                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }">
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].sumAssured"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].sumAssuredTouched = true;
-                        handleSameSumAssuredSync(row, pkgUuid);
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
-                    <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getSumAssuredError(row, pkgUuid, 'employee') }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-
-                <!-- Spouse Sum Assured Row (Member+1 or more) -->
-                <div
-                  v-if="!isMemberOnly(row.description)"
-                  class="qb-cascade-row"
-                  :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit) }"
-                >
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Spouse Sum Assured</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].spouseSumAssured"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured || row.packageConfigs[pkgUuid].sameSumAssured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit), 'qb-input--muted': row.packageConfigs[pkgUuid].sameSumAssured }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].spouseSumAssuredTouched = true;
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'spouse', row.description) }}</p>
-                    <div v-if="getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getSumAssuredError(row, pkgUuid, 'spouse') }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].spouseRate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].spousePremium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-
-                <!-- Dependent Sum Assured Row (Member+2 or more) -->
-                <div
-                  v-if="!isMemberOnly(row.description) && !isMemberPlusOne(row.description)"
-                  class="qb-cascade-row"
-                  :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }"
-                >
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured || row.packageConfigs[pkgUuid].sameSumAssured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit), 'qb-input--muted': row.packageConfigs[pkgUuid].sameSumAssured }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].depSumAssuredTouched = true;
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
-                    <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-              </template>
-
-              <!-- DUAL PREMIUM DEPENDENT SHARED -->
-              <template v-else-if="isDualPremiumPlan(row.packageConfigs[pkgUuid].planType)">
-                <!-- Employee Sum Assured Row -->
-                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }">
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].sumAssured"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].sumAssuredTouched = true;
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
-                    <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getSumAssuredError(row, pkgUuid, 'employee') }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-
-                <!-- Spouse Sum Assured Row -->
-                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit) }">
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Spouse Sum Assured</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].spouseSumAssured"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit) }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].spouseSumAssuredTouched = true;
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'spouse', row.description) }}</p>
-                    <div v-if="getSumAssuredError(row, pkgUuid, 'spouse') && (row.packageConfigs[pkgUuid].spouseSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getSumAssuredError(row, pkgUuid, 'spouse') }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].spouseRate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].spousePremium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-
-                <!-- Dependent Sum Assured Row -->
-                <div v-if="!isMemberPlusOne(row.description)" class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }">
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].depSumAssuredTouched = true;
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
-                    <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-              </template>
-
-              <!-- DEPENDENT SHARED PLAN -->
-              <template v-else-if="isDependentSharedPlan(row.packageConfigs[pkgUuid].planType)">
-                <!-- Employee Sum Assured Row -->
-                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }">
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Employee Sum Assured</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].sumAssured"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit) }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].sumAssuredTouched = true;
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'employee', row.description) }}</p>
-                    <div v-if="getSumAssuredError(row, pkgUuid, 'employee') && (row.packageConfigs[pkgUuid].sumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getSumAssuredError(row, pkgUuid, 'employee') }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].employeeRate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].employeePremium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-
-                <!-- Dependent Sum Assured Row -->
-                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }">
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Dependent Sum Assured</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].depSumAssured"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit) }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].depSumAssuredTouched = true;
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">{{ getLimitDisplayForMember(pkgUuid, row.packageConfigs[pkgUuid].planType, 'dependent', row.description) }}</p>
-                    <div v-if="getSumAssuredError(row, pkgUuid, 'dependent') && (row.packageConfigs[pkgUuid].depSumAssuredTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getSumAssuredError(row, pkgUuid, 'dependent') }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].dependentRate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].dependentPremium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-              </template>
-
-              <!-- FAMILY SHARED OR OTHER -->
-              <template v-else>
-                <div class="qb-cascade-row" :class="{ 'qb-cascade-row--error': getCoverageError(row, pkgUuid) && (row.packageConfigs[pkgUuid].coverageTouched || attemptedSubmit) }">
-                  <div class="qb-pkg-field">
-                    <label class="qb-label qb-label--colored">Coverage Amount</label>
-                    <input
-                      v-model="row.packageConfigs[pkgUuid].coverage"
-                      type="number" min="0"
-                      :disabled="readOnlyRows || !row.numberOfInsured"
-                      class="qb-input qb-input--right"
-                      :class="{ 'qb-input--error': getCoverageError(row, pkgUuid) && (row.packageConfigs[pkgUuid].coverageTouched || attemptedSubmit) }"
-                      placeholder="Enter amount"
-                      @input="() => { 
-                        row.packageConfigs[pkgUuid].coverageTouched = true;
-                        recalculateRowPackage(row, pkgUuid); 
-                      }"
-                    />
-                    <p class="qb-input-hint">Limit: {{ getRangeDisplayForPackage(pkgUuid, row.packageConfigs[pkgUuid].planType, row.description) }}</p>
-                    <div v-if="getCoverageError(row, pkgUuid) && (row.packageConfigs[pkgUuid].coverageTouched || attemptedSubmit)" class="qb-error-hint qb-error-hint--inline">
-                      {{ getCoverageError(row, pkgUuid) }}
-                    </div>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Rate</label>
-                    <input
-                      :value="formatRate(row.packageConfigs[pkgUuid].rate)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--muted"
-                    />
-                    <p class="qb-input-hint">Applied rate</p>
-                  </div>
-                  <div class="qb-pkg-field qb-meta-field">
-                    <label class="qb-label">Premium</label>
-                    <input
-                      :value="formatCurrency(row.packageConfigs[pkgUuid].premium)"
-                      type="text" disabled
-                      class="qb-input qb-input--right qb-input--premium"
-                    />
-                    <p class="qb-input-hint qb-input-hint--green">Calculated premium</p>
-                  </div>
-                </div>
-              </template>
-            </div>
-
-            <!-- Total Premium Badge Column -->
-            <div class="qb-pkg-total-col">
-              <div class="qb-pkg-field">
-                <label class="qb-label">Premium</label>
-                <div class="qb-pkg-total-badge">
-                  {{ formatCurrency(row.packageConfigs[pkgUuid].premium) }}
-                </div>
-                <p class="qb-pkg-total-hint">
-                  Calculated premium
-                  <span v-if="activeDiscountMap[pkgUuid] > 0" class="qb-discount-note">
-                    ({{ activeDiscountMap[pkgUuid] }}% discount applied)
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div><!-- /.qb-pkg-row -->
-        </div><!-- /.qb-pkg-list -->
-
-      </div><!-- /.qb-card -->
-    </div><!-- /.qb-groups -->
-
-    <!-- Discount Panel -->
-    <div v-if="!readOnlyRows" class="qb-discount-panel">
-      <button type="button" class="qb-discount-toggle-btn" @click="discountPanelOpen = !discountPanelOpen">
-        <svg class="qb-discount-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M17 17h.01M6.5 17.5l11-11M9 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 6a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/>
-        </svg>
-        <span>Discount Configuration</span>
-        <span v-if="Object.values(activeDiscountMap).some(d => d > 0)" class="qb-discount-active-badge">Active</span>
-        <svg class="qb-pkg-btn__chevron" :class="{ rotated: discountPanelOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-        </svg>
-      </button>
-
-      <div v-if="discountPanelOpen && allSelectedPackageUuids.length > 0" class="qb-discount-body">
-        <p class="qb-discount-hint">Set discount percentage per package. Discounts apply across all benefit groups using the same package.</p>
-        <div class="qb-discount-list">
-          <div v-for="pkgUuid in allSelectedPackageUuids" :key="pkgUuid" class="qb-discount-item">
-            <div class="qb-discount-item-info">
-              <span class="qb-pkg-bar"></span>
-              <span class="qb-discount-pkg-name">{{ getPackageName(pkgUuid) }}</span>
-            </div>
-            <div class="qb-discount-controls">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="0.5"
-                :data-pkg="pkgUuid"
-                :style="{ '--val': activeDiscountMap[pkgUuid] || 0 }"
-                :value="activeDiscountMap[pkgUuid] || 0"
-                @input="(e) => setDiscount(pkgUuid, e.target.value)"
-                class="qb-discount-slider"
-              />
-              <div class="qb-discount-input-wrap">
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  :value="activeDiscountMap[pkgUuid] || 0"
-                  @input="(e) => setDiscount(pkgUuid, e.target.value)"
-                  class="qb-input qb-input--center qb-discount-number"
-                />
-                <span class="qb-discount-pct">%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div v-else-if="discountPanelOpen && allSelectedPackageUuids.length === 0" class="qb-discount-body qb-discount-empty">
-        <p>No packages selected yet. Add packages to benefit groups first.</p>
-      </div>
-    </div>
-
-    <!-- Validation Summary (only shown after attempted submit) -->
-    <div v-if="attemptedSubmit && validationErrors.length > 0" class="qb-validation-summary">
-      <div class="qb-validation-summary__header">
-        <svg class="qb-validation-summary__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <span>Please fix the following issues before proceeding:</span>
-      </div>
-      <ul class="qb-validation-summary__list">
-        <li v-for="(error, idx) in validationErrors" :key="idx">
-          {{ error }}
-        </li>
-      </ul>
-    </div>
-
-    <!-- Footer -->
-    <div v-if="!hideFooterActions" class="qb-footer">
-      <div class="qb-footer-summary">
-        <p class="qb-footer-count">{{ groupRows.length }} benefit group{{ groupRows.length > 1 ? 's' : '' }} configured</p>
-        <p class="qb-footer-total">
-          Total Premium:
-          <span class="qb-footer-amount">{{ formatCurrency(totalPremium) }}</span>
-        </p>
-      </div>
-
-      <div class="qb-footer-actions">
-        <!-- Inclusion-specific footer buttons -->
-        <template v-if="inclusionMode">
-          <button
-            type="button"
-            :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
-            @click="submitAction('save')"
-            class="btn btn-outline"
-          >
-            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing…
-            </span>
-            <span v-else>Save Inclusion</span>
-          </button>
-          
-          <button
-            type="button"
-            :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
-            @click="submitAction('issue')"
-            class="btn btn-primary"
-          >
-            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing…
-            </span>
-            <span v-else>Create Inclusion</span>
-          </button>
-        </template>
-
-        <!-- Amend button -->
-        <button
-          v-else-if="showAmendButton"
-          type="button"
-          :disabled="!!pendingAction"
-          @click="$emit('amend')"
-          class="btn btn-outline"
-        >
-          <span v-if="pendingAction === 'amend'" class="flex gap-2 items-center">
-            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Processing…
-          </span>
-          <span v-else>Amend Quotation</span>
-        </button>
-
-        <!-- Issue premium advice button -->
-        <button
-          v-else-if="showIssuePremiumAdvice"
-          type="button"
-          :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)"
-          @click.prevent="submitAction('issuePremiumAdvice')"
-          class="btn btn-purple"
-        >
-          <span v-if="pendingAction === 'issuePremiumAdvice'" class="flex gap-2 items-center">
-            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Processing…
-          </span>
-          <span v-else>Issue Premium Advice</span>
-        </button>
-
-        <!-- Issue mode buttons (accept/reject) -->
-        <template v-else-if="issueMode">
-          <button type="button" :disabled="!!pendingAction || !formIsValid" @click="submitAction('accept')" class="btn btn-green">
-            <span v-if="pendingAction === 'accept'" class="flex gap-2 items-center">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing…
-            </span>
-            <span v-else>{{ acceptLabel }}</span>
-          </button>
-        </template>
-
-        <!-- Normal mode (create quotation) save/issue buttons -->
-        <template v-else-if="!acceptMode">
-          <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('save')" class="btn btn-outline">
-            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Saving…
-            </span>
-            <span v-else>Save Draft</span>
-          </button>
-          
-          <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('issue')" class="btn btn-primary">
-            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Issuing…
-            </span>
-            <span v-else>Issue Quotation</span>
-          </button>
-        </template>
-
-        <!-- Accept mode save/issue buttons -->
-        <template v-else>
-          <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('save')" class="btn btn-soft">
-            <span v-if="pendingAction === 'save'" class="flex gap-2 items-center">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Saving…
-            </span>
-            <span v-else>Save Changes</span>
-          </button>
-          
-          <button type="button" :disabled="!!pendingAction || (!formIsValid && !readOnlyRows)" @click="submitAction('issue')" class="btn btn-primary">
-            <span v-if="pendingAction === 'issue'" class="flex gap-2 items-center">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Issuing…
-            </span>
-            <span v-else>Issue Saved</span>
-          </button>
-        </template>
-      </div>
-    </div>
-  </div>
-</template>
 <style scoped>
 /* ── Wrapper ─────────────────────────────────────────────────── */
 .qb-wrap {
@@ -2535,10 +2694,10 @@ setDiscount(pkgUuid, value) {
   justify-content: space-between;
   gap: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgb(var(--line));
 }
-.qb-title    { font-size: 1.125rem; font-weight: 700; color: #1e293b; margin: 0 0 .15rem; }
-.qb-subtitle { font-size: 0.75rem;  color: #94a3b8; margin: 0; }
+.qb-title    { font-size: 1.125rem; font-weight: 700; color: rgb(var(--ink)); margin: 0 0 .15rem; }
+.qb-subtitle { font-size: 0.75rem;  color: rgb(var(--ink-subtle)); margin: 0; }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
 .btn {
@@ -2557,20 +2716,20 @@ setDiscount(pkgUuid, value) {
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn-icon { width: 1rem; height: 1rem; }
 
-.btn-primary  { background: var(--color-primary, #6366f1); color: #fff; }
-.btn-primary:not(:disabled):hover { background: color-mix(in srgb, var(--color-primary,#6366f1) 85%, #000); box-shadow: 0 2px 8px rgba(99,102,241,.25); }
+.btn-primary  { background: var(--color-primary, rgb(var(--primary))); color: #fff; }
+.btn-primary:not(:disabled):hover { background: color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 85%, #000); box-shadow: 0 2px 8px rgb(var(--primary) / .25); }
 
-.btn-green    { background: #16a34a; color: #fff; }
-.btn-green:not(:disabled):hover   { background: #15803d; }
+.btn-green    { background: rgb(var(--success)); color: #fff; }
+.btn-green:not(:disabled):hover   { background: rgb(var(--success-strong)); }
 
 .btn-purple   { background: #9333ea; color: #fff; }
 .btn-purple:not(:disabled):hover  { background: #7e22ce; }
 
-.btn-outline  { background: #fff; color: #475569; border-color: #cbd5e1; }
-.btn-outline:not(:disabled):hover { background: #f8fafc; }
+.btn-outline  { background: #fff; color: rgb(var(--ink-muted)); border-color: rgb(var(--line-strong)); }
+.btn-outline:not(:disabled):hover { background: rgb(var(--surface-muted)); }
 
-.btn-soft     { background: color-mix(in srgb, var(--color-primary,#6366f1) 10%, transparent); color: var(--color-primary,#6366f1); }
-.btn-soft:not(:disabled):hover    { background: color-mix(in srgb, var(--color-primary,#6366f1) 18%, transparent); }
+.btn-soft     { background: color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 10%, transparent); color: var(--color-primary,rgb(var(--primary))); }
+.btn-soft:not(:disabled):hover    { background: color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 18%, transparent); }
 
 /* ── Gender badge ───────────────────────────────────────────── */
 .qb-gender-badge {
@@ -2579,8 +2738,8 @@ setDiscount(pkgUuid, value) {
   font-size: 0.625rem;
   font-weight: 700;
   border-radius: 0.25rem;
-  background: #f1f5f9;
-  color: #64748b;
+  background: rgb(var(--surface-muted));
+  color: rgb(var(--ink-muted));
   margin-left: 0.375rem;
   text-transform: uppercase;
 }
@@ -2588,7 +2747,7 @@ setDiscount(pkgUuid, value) {
 /* ── Card ────────────────────────────────────────────────────── */
 .qb-card {
   background: #fff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgb(var(--line));
   border-radius: 1.25rem;
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
   overflow: visible;
@@ -2598,8 +2757,8 @@ setDiscount(pkgUuid, value) {
 
 .qb-card-header {
   padding: 1.25rem 1.5rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #f1f5f9;
+  background: rgb(var(--surface-muted));
+  border-bottom: 1px solid rgb(var(--surface-muted));
   border-radius: 1.25rem 1.25rem 0 0;
 }
 
@@ -2620,9 +2779,9 @@ setDiscount(pkgUuid, value) {
   font-weight: 700;
   letter-spacing: .05em;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: rgb(var(--ink-subtle));
 }
-.qb-label--colored { color: color-mix(in srgb, var(--color-primary,#6366f1) 70%, #64748b); }
+.qb-label--colored { color: color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 70%, rgb(var(--ink-muted))); }
 
 /* ── Select ──────────────────────────────────────────────────── */
 .qb-select {
@@ -2631,9 +2790,9 @@ setDiscount(pkgUuid, value) {
   padding: 0 2.5rem 0 .875rem;
   font-size: .875rem;
   font-weight: 500;
-  color: #334155;
+  color: rgb(var(--ink-muted));
   background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right .75rem center / 1rem;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid rgb(var(--line));
   border-radius: .75rem;
   appearance: none;
   -webkit-appearance: none;
@@ -2645,19 +2804,19 @@ setDiscount(pkgUuid, value) {
   z-index: 1;
 }
 .qb-select:focus {
-  border-color: var(--color-primary, #6366f1);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,#6366f1) 15%, transparent);
+  border-color: var(--color-primary, rgb(var(--primary)));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 15%, transparent);
   z-index: 2;
 }
 .qb-select:disabled {
-  background-color: #f8fafc;
-  color: #94a3b8;
+  background-color: rgb(var(--surface-muted));
+  color: rgb(var(--ink-subtle));
   cursor: not-allowed;
-  border-color: #e2e8f0;
+  border-color: rgb(var(--line));
 }
 .qb-select--error {
-  border-color: #ef4444;
-  background-color: #fef2f2;
+  border-color: rgb(var(--error));
+  background-color: rgb(var(--error-soft));
 }
 
 /* ── Input ───────────────────────────────────────────────────── */
@@ -2667,38 +2826,38 @@ setDiscount(pkgUuid, value) {
   padding: 0 .875rem;
   font-size: .875rem;
   font-weight: 500;
-  color: #334155;
+  color: rgb(var(--ink-muted));
   background: #fff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid rgb(var(--line));
   border-radius: .75rem;
   outline: none;
   transition: border-color .15s, box-shadow .15s;
   box-sizing: border-box;
 }
 .qb-input:focus {
-  border-color: var(--color-primary, #6366f1);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,#6366f1) 15%, transparent);
+  border-color: var(--color-primary, rgb(var(--primary)));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 15%, transparent);
 }
-.qb-input:disabled       { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+.qb-input:disabled       { background: rgb(var(--surface-muted)); color: rgb(var(--ink-subtle)); cursor: not-allowed; }
 .qb-input--center        { text-align: center; font-weight: 700; }
 .qb-input--right         { text-align: right; }
-.qb-input--muted         { background: #f8fafc !important; color: #64748b !important; font-weight: 600; }
-.qb-input--premium       { background: #f0fdf4 !important; border-color: #bbf7d0 !important; color: #15803d !important; font-weight: 700; }
+.qb-input--muted         { background: rgb(var(--surface-muted)) !important; color: rgb(var(--ink-muted)) !important; font-weight: 600; }
+.qb-input--premium       { background: rgb(var(--success-soft)) !important; border-color: rgb(var(--success) / 0.3) !important; color: rgb(var(--success-strong)) !important; font-weight: 700; }
 .qb-input--error {
-  border-color: #ef4444;
-  background-color: #fef2f2;
+  border-color: rgb(var(--error));
+  background-color: rgb(var(--error-soft));
 }
 .qb-input[type="number"]::-webkit-inner-spin-button,
 .qb-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 .qb-input[type="number"] { -moz-appearance: textfield; }
 
-.qb-input-hint            { font-size: .6875rem; color: #94a3b8; text-align: right; margin-top: .2rem; }
-.qb-input-hint--green     { color: #16a34a; font-weight: 600; }
+.qb-input-hint            { font-size: .6875rem; color: rgb(var(--ink-subtle)); text-align: right; margin-top: .2rem; }
+.qb-input-hint--green     { color: rgb(var(--success)); font-weight: 600; }
 
 /* ── Error hints ─────────────────────────────────────────────── */
 .qb-error-hint {
   font-size: 0.6875rem;
-  color: #ef4444;
+  color: rgb(var(--error));
   margin-top: 0.2rem;
   font-weight: 500;
 }
@@ -2706,14 +2865,14 @@ setDiscount(pkgUuid, value) {
   margin-top: 0.25rem;
 }
 .qb-cascade-row--error {
-  border-color: #ef4444;
-  background-color: #fef2f2;
+  border-color: rgb(var(--error));
+  background-color: rgb(var(--error-soft));
 }
 
 /* ── Validation Summary ─────────────────────────────────────── */
 .qb-validation-summary {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: rgb(var(--error-soft));
+  border: 1px solid rgb(var(--error) / 0.3);
   border-radius: 0.75rem;
   padding: 1rem;
   margin: 0.5rem 0;
@@ -2724,7 +2883,7 @@ setDiscount(pkgUuid, value) {
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #b91c1c;
+  color: rgb(var(--error-strong));
   margin-bottom: 0.75rem;
 }
 .qb-validation-summary__icon {
@@ -2734,7 +2893,7 @@ setDiscount(pkgUuid, value) {
 .qb-validation-summary__list {
   margin: 0;
   padding-left: 1.75rem;
-  color: #991b1b;
+  color: rgb(var(--error-strong));
   font-size: 0.8125rem;
 }
 .qb-validation-summary__list li {
@@ -2753,9 +2912,9 @@ setDiscount(pkgUuid, value) {
   padding: 0 .875rem;
   font-size: .875rem;
   font-weight: 500;
-  color: #334155;
+  color: rgb(var(--ink-muted));
   background: #fff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid rgb(var(--line));
   border-radius: .75rem;
   cursor: pointer;
   text-align: left;
@@ -2764,26 +2923,108 @@ setDiscount(pkgUuid, value) {
   position: relative;
   z-index: 1;
 }
-.qb-pkg-btn:hover              { border-color: #cbd5e1; }
+.qb-pkg-btn:hover              { border-color: rgb(var(--line-strong)); }
 .qb-pkg-btn--open,
-.qb-pkg-btn:focus              { border-color: var(--color-primary,#6366f1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,#6366f1) 15%, transparent); outline: none; z-index: 2; }
-.qb-pkg-btn:disabled           { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+.qb-pkg-btn:focus              { border-color: var(--color-primary,rgb(var(--primary))); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 15%, transparent); outline: none; z-index: 2; }
+.qb-pkg-btn:disabled           { background: rgb(var(--surface-muted)); color: rgb(var(--ink-subtle)); cursor: not-allowed; }
 .qb-pkg-btn__text              { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qb-pkg-btn__chevron           { flex-shrink: 0; width: 1rem; height: 1rem; color: #94a3b8; margin-left: .5rem; transition: transform .2s; }
+.qb-pkg-btn__chevron           { flex-shrink: 0; width: 1rem; height: 1rem; color: rgb(var(--ink-subtle)); margin-left: .5rem; transition: transform .2s; }
 .qb-pkg-btn__chevron.rotated   { transform: rotate(180deg); }
 
 /* ── Teleported dropdown ─────────────────────────────────────── */
 .qb-pkg-dropdown {
   position: absolute;
   background: #fff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid rgb(var(--line));
   border-radius: 1rem;
   box-shadow: 0 8px 40px rgba(0,0,0,.15);
-  max-height: 18rem;
-  overflow-y: auto;
-  padding: .4rem;
+  max-height: 22rem;
+  overflow: hidden;
   min-width: 280px;
+  display: flex;
+  flex-direction: column;
 }
+
+/* ── Package dropdown search ─────────────────────────────────── */
+.qb-pkg-search-wrapper {
+  position: relative;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgb(var(--line));
+  flex-shrink: 0;
+}
+
+.qb-pkg-search-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: rgb(var(--ink-subtle));
+  pointer-events: none;
+}
+
+.qb-pkg-search-input {
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 0.875rem 0 2.25rem;
+  font-size: 0.875rem;
+  color: rgb(var(--ink-muted));
+  background: rgb(var(--surface-muted));
+  border: 1.5px solid rgb(var(--line));
+  border-radius: 0.625rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+.qb-pkg-search-input:focus {
+  border-color: var(--color-primary, rgb(var(--primary)));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, rgb(var(--primary))) 15%, transparent);
+}
+
+.qb-pkg-search-input::placeholder {
+  color: rgb(var(--ink-subtle));
+}
+
+/* ── Package options list with scrollbar ────────────────────── */
+.qb-pkg-options-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.25rem 0.5rem;
+  max-height: 14rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line-strong)) transparent;
+}
+
+/* WebKit scrollbar styles */
+.qb-pkg-options-list::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.qb-pkg-options-list::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.qb-pkg-options-list::-webkit-scrollbar-thumb {
+  background: rgb(var(--line-strong));
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.qb-pkg-options-list::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--ink-subtle));
+}
+
+/* Firefox scrollbar */
+.qb-pkg-options-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line-strong)) transparent;
+}
+
+/* ── Package option items ────────────────────────────────────── */
 .qb-pkg-option {
   display: flex;
   align-items: center;
@@ -2794,13 +3035,20 @@ setDiscount(pkgUuid, value) {
   transition: background .1s;
   user-select: none;
 }
-.qb-pkg-option:hover             { background: #f8fafc; }
-.qb-pkg-option--checked          { background: color-mix(in srgb, var(--color-primary,#6366f1) 6%, transparent); }
+
+.qb-pkg-option:hover { 
+  background: rgb(var(--surface-muted)); 
+}
+
+.qb-pkg-option--checked { 
+  background: color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 6%, transparent); 
+}
+
 .qb-pkg-checkbox {
   width: 1.125rem;
   height: 1.125rem;
   border-radius: .3rem;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid rgb(var(--line-strong));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2808,13 +3056,72 @@ setDiscount(pkgUuid, value) {
   background: #fff;
   transition: background .1s, border-color .1s;
 }
+
 .qb-pkg-option--checked .qb-pkg-checkbox {
-  background: var(--color-primary, #6366f1);
-  border-color: var(--color-primary, #6366f1);
+  background: var(--color-primary, rgb(var(--primary)));
+  border-color: var(--color-primary, rgb(var(--primary)));
 }
-.qb-pkg-checkbox svg { width: .7rem; height: .7rem; stroke: #fff; }
-.qb-pkg-name { font-size: .8125rem; font-weight: 600; color: #1e293b; }
-.qb-pkg-cat  { font-size: .6875rem; color: #94a3b8; margin-top: .1rem; }
+
+.qb-pkg-checkbox svg { 
+  width: .7rem; 
+  height: .7rem; 
+  stroke: #fff; 
+}
+
+.qb-pkg-name { 
+  font-size: .8125rem; 
+  font-weight: 600; 
+  color: rgb(var(--ink)); 
+}
+
+.qb-pkg-cat { 
+  font-size: .6875rem; 
+  color: rgb(var(--ink-subtle)); 
+  margin-top: .1rem; 
+}
+
+.qb-pkg-no-results {
+  padding: 1.5rem 0.75rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: rgb(var(--ink-subtle));
+  font-weight: 500;
+}
+
+/* ── Bulk actions ────────────────────────────────────────────── */
+.qb-pkg-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-top: 1px solid rgb(var(--line));
+  background: rgb(var(--surface-muted));
+  border-radius: 0 0 1rem 1rem;
+  flex-shrink: 0;
+}
+
+.qb-pkg-bulk-btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary, rgb(var(--primary)));
+  background: transparent;
+  border: 1px solid rgb(var(--line));
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.qb-pkg-bulk-btn:hover {
+  background: color-mix(in srgb, var(--color-primary, rgb(var(--primary))) 8%, transparent);
+}
+
+.qb-pkg-bulk-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: rgb(var(--ink-subtle));
+  font-weight: 500;
+}
 
 /* ── Row action buttons ──────────────────────────────────────── */
 .qb-row-actions { display: flex; gap: .25rem; align-items: center; justify-content: flex-end; padding-bottom: .1rem; }
@@ -2831,10 +3138,10 @@ setDiscount(pkgUuid, value) {
   background: transparent;
 }
 .qb-action-btn svg            { width: 1.125rem; height: 1.125rem; }
-.qb-action-btn--danger        { color: #ef4444; }
-.qb-action-btn--danger:hover  { background: #fef2f2; color: #dc2626; }
-.qb-action-btn--primary       { color: var(--color-primary, #6366f1); }
-.qb-action-btn--primary:hover { background: color-mix(in srgb, var(--color-primary,#6366f1) 10%, transparent); }
+.qb-action-btn--danger        { color: rgb(var(--error)); }
+.qb-action-btn--danger:hover  { background: rgb(var(--error-soft)); color: rgb(var(--error)); }
+.qb-action-btn--primary       { color: var(--color-primary, rgb(var(--primary))); }
+.qb-action-btn--primary:hover { background: color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 10%, transparent); }
 
 /* ── Package list ────────────────────────────────────────────── */
 .qb-pkg-list { padding: 0 1.5rem; }
@@ -2846,8 +3153,8 @@ setDiscount(pkgUuid, value) {
   padding: 2rem 0;
   gap: .5rem;
 }
-.qb-empty svg { width: 2.25rem; height: 2.25rem; color: #cbd5e1; }
-.qb-empty p   { font-size: .8125rem; color: #94a3b8; font-weight: 500; text-align: center; margin: 0; }
+.qb-empty svg { width: 2.25rem; height: 2.25rem; color: rgb(var(--line-strong)); }
+.qb-empty p   { font-size: .8125rem; color: rgb(var(--ink-subtle)); font-weight: 500; text-align: center; margin: 0; }
 
 .qb-header-inputs {
   display: grid;
@@ -2861,7 +3168,7 @@ setDiscount(pkgUuid, value) {
   }
 }
 .qb-header-limit {
-  color: var(--color-primary, #6366f1);
+  color: var(--color-primary, rgb(var(--primary)));
   font-weight: 600;
   text-transform: none;
   margin-left: 0.25rem;
@@ -2872,7 +3179,7 @@ setDiscount(pkgUuid, value) {
   grid-template-columns: 1fr;
   gap: 1.5rem;
   padding: 1.5rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid rgb(var(--surface-muted));
 }
 .qb-pkg-row:last-child { border-bottom: none; }
 
@@ -2893,9 +3200,9 @@ setDiscount(pkgUuid, value) {
   grid-template-columns: 1fr;
   gap: 1rem;
   padding: 0.75rem;
-  background: #f8fafc;
+  background: rgb(var(--surface-muted));
   border-radius: 0.75rem;
-  border: 1px dashed #e2e8f0;
+  border: 1px dashed rgb(var(--line));
   transition: all 0.2s ease;
 }
 
@@ -2918,10 +3225,10 @@ setDiscount(pkgUuid, value) {
   justify-content: center;
   height: 2.75rem;
   padding: 0 1rem;
-  background: #f0fdf4;
-  border: 1.5px solid #bbf7d0;
+  background: rgb(var(--success-soft));
+  border: 1.5px solid rgb(var(--success) / 0.3);
   border-radius: 0.75rem;
-  color: #15803d;
+  color: rgb(var(--success-strong));
   font-size: 1rem;
   font-weight: 800;
   text-align: center;
@@ -2929,7 +3236,7 @@ setDiscount(pkgUuid, value) {
 
 .qb-pkg-total-hint {
   font-size: 0.6875rem;
-  color: #16a34a;
+  color: rgb(var(--success));
   text-align: center;
   margin-top: 0.25rem;
   font-weight: 600;
@@ -2948,9 +3255,9 @@ setDiscount(pkgUuid, value) {
 }
 
 .qb-pkg-info     { display: flex; align-items: center; gap: .625rem; padding-top: .25rem; }
-.qb-pkg-bar      { width: .25rem; height: 1.75rem; border-radius: .25rem; background: var(--color-primary,#6366f1); flex-shrink: 0; }
-.qb-pkg-row-name { font-size: .875rem; font-weight: 700; color: #1e293b; }
-.qb-pkg-row-hint { font-size: .6875rem; color: #94a3b8; margin-top: .1rem; }
+.qb-pkg-bar      { width: .25rem; height: 1.75rem; border-radius: .25rem; background: var(--color-primary,rgb(var(--primary))); flex-shrink: 0; }
+.qb-pkg-row-name { font-size: .875rem; font-weight: 700; color: rgb(var(--ink)); }
+.qb-pkg-row-hint { font-size: .6875rem; color: rgb(var(--ink-subtle)); margin-top: .1rem; }
 
 .qb-pkg-field { display: flex; flex-direction: column; gap: .3rem; }
 
@@ -2962,12 +3269,12 @@ setDiscount(pkgUuid, value) {
   justify-content: space-between;
   gap: 1.25rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid rgb(var(--line));
 }
 .qb-footer-summary { display: flex; flex-direction: column; gap: .25rem; }
-.qb-footer-count   { font-size: .875rem; font-weight: 600; color: #64748b; margin: 0; }
-.qb-footer-total   { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0; }
-.qb-footer-amount  { font-size: 1.25rem; font-weight: 800; color: #16a34a; }
+.qb-footer-count   { font-size: .875rem; font-weight: 600; color: rgb(var(--ink-muted)); margin: 0; }
+.qb-footer-total   { font-size: 1rem; font-weight: 700; color: rgb(var(--ink)); margin: 0; }
+.qb-footer-amount  { font-size: 1.25rem; font-weight: 800; color: rgb(var(--success)); }
 .qb-footer-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
 
 /* ── Same Sum Assured toggle ─────────────────────────────────── */
@@ -2986,7 +3293,7 @@ setDiscount(pkgUuid, value) {
   position: relative;
   width: 2.25rem;
   height: 1.25rem;
-  background: #cbd5e1;
+  background: rgb(var(--line-strong));
   border-radius: 9999px;
   transition: background 0.2s;
   flex-shrink: 0;
@@ -3004,7 +3311,7 @@ setDiscount(pkgUuid, value) {
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 .qb-toggle-checkbox:checked + .qb-toggle-slider {
-  background: var(--color-primary, #6366f1);
+  background: var(--color-primary, rgb(var(--primary)));
 }
 .qb-toggle-checkbox:checked + .qb-toggle-slider::after {
   transform: translateX(1rem);
@@ -3012,12 +3319,12 @@ setDiscount(pkgUuid, value) {
 .qb-toggle-text {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #475569;
+  color: rgb(var(--ink-muted));
 }
 
 /* ── Discount panel ──────────────────────────────────────────── */
 .qb-discount-panel {
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid rgb(var(--line));
   border-radius: 1.25rem;
   overflow: hidden;
   background: #fff;
@@ -3028,38 +3335,38 @@ setDiscount(pkgUuid, value) {
   align-items: center;
   gap: 0.625rem;
   padding: 1rem 1.25rem;
-  background: #f8fafc;
+  background: rgb(var(--surface-muted));
   border: none;
   cursor: pointer;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #334155;
+  color: rgb(var(--ink-muted));
   text-align: left;
   transition: background 0.15s;
 }
-.qb-discount-toggle-btn:hover { background: #f1f5f9; }
-.qb-discount-icon { width: 1.25rem; height: 1.25rem; color: #6366f1; flex-shrink: 0; }
+.qb-discount-toggle-btn:hover { background: rgb(var(--surface-muted)); }
+.qb-discount-icon { width: 1.25rem; height: 1.25rem; color: rgb(var(--primary)); flex-shrink: 0; }
 .qb-discount-active-badge {
   margin-left: 0.25rem;
   padding: 0.125rem 0.5rem;
-  background: #fef9c3;
-  color: #92400e;
+  background: rgb(var(--warning-soft));
+  color: rgb(var(--warning-strong));
   font-size: 0.6875rem;
   font-weight: 700;
   border-radius: 9999px;
-  border: 1px solid #fde68a;
+  border: 1px solid rgb(var(--warning) / 0.3);
 }
 .qb-discount-body {
   padding: 1.25rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid rgb(var(--surface-muted));
 }
 .qb-discount-hint {
   font-size: 0.8125rem;
-  color: #94a3b8;
+  color: rgb(var(--ink-subtle));
   margin: 0 0 1rem;
 }
 .qb-discount-empty {
-  color: #94a3b8;
+  color: rgb(var(--ink-subtle));
   font-size: 0.8125rem;
   font-style: italic;
 }
@@ -3074,9 +3381,9 @@ setDiscount(pkgUuid, value) {
   align-items: center;
   gap: 1rem;
   padding: 0.875rem 1rem;
-  background: #f8fafc;
+  background: rgb(var(--surface-muted));
   border-radius: 0.875rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgb(var(--line));
 }
 @media (min-width: 640px) {
   .qb-discount-item {
@@ -3092,7 +3399,7 @@ setDiscount(pkgUuid, value) {
 .qb-discount-pkg-name {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #1e293b;
+  color: rgb(var(--ink));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3110,10 +3417,10 @@ setDiscount(pkgUuid, value) {
   appearance: none;
   background: linear-gradient(
     to right,
-    var(--color-primary, #6366f1) 0%,
-    var(--color-primary, #6366f1) calc(var(--val, 0) * 1%),
-    #e2e8f0 calc(var(--val, 0) * 1%),
-    #e2e8f0 100%
+    var(--color-primary, rgb(var(--primary))) 0%,
+    var(--color-primary, rgb(var(--primary))) calc(var(--val, 0) * 1%),
+    rgb(var(--line)) calc(var(--val, 0) * 1%),
+    rgb(var(--line)) 100%
   );
   border-radius: 9999px;
   outline: none;
@@ -3124,18 +3431,18 @@ setDiscount(pkgUuid, value) {
   width: 1.125rem;
   height: 1.125rem;
   border-radius: 50%;
-  background: var(--color-primary, #6366f1);
+  background: var(--color-primary, rgb(var(--primary)));
   border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(99,102,241,0.4);
+  box-shadow: 0 1px 4px rgb(var(--primary) / 0.4);
   cursor: pointer;
 }
 .qb-discount-slider::-moz-range-thumb {
   width: 1.125rem;
   height: 1.125rem;
   border-radius: 50%;
-  background: var(--color-primary, #6366f1);
+  background: var(--color-primary, rgb(var(--primary)));
   border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(99,102,241,0.4);
+  box-shadow: 0 1px 4px rgb(var(--primary) / 0.4);
   cursor: pointer;
 }
 .qb-discount-input-wrap {
@@ -3151,7 +3458,7 @@ setDiscount(pkgUuid, value) {
 .qb-discount-pct {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #64748b;
+  color: rgb(var(--ink-muted));
 }
 
 /* ── Animations ───────────────────────────────────────────────── */

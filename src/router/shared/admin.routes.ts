@@ -1,16 +1,16 @@
 import { RouterView } from "vue-router";
-import Privileges from "@/features/shared/admin/privilege/pages/Privileges.vue";
-import AddPrivilege from "@/features/shared/admin/privilege/pages/AddPrivilege.vue";
-import EditPrivilege from "@/features/shared/admin/privilege/pages/EditPrivilege.vue";
-import Role from "@/features/shared/admin/role/pages/Role.vue";
-import AddRole from "@/features/shared/admin/role/pages/AddRole.vue";
-import EditRole from "@/features/shared/admin/role/pages/EditRole.vue";
-import RoleDetail from "@/features/shared/admin/role/pages/RoleDetail.vue";
-import Users from "@/features/shared/admin/user/pages/Users.vue";
-import AddUser from "@/features/shared/admin/user/pages/AddUser.mdl.vue";
-import EditUser from "@/features/shared/admin/user/pages/EditUser.vue";
-import UserDetail from "@/features/shared/admin/user/pages/UserDetail.vue";
-import PrivilegeDetail from "@/features/shared/admin/privilege/pages/PrivilegeDetail.vue";
+const Privileges = () => import("@/features/shared/admin/privilege/pages/Privileges.vue");
+const AddPrivilege = () => import("@/features/shared/admin/privilege/pages/AddPrivilege.vue");
+const EditPrivilege = () => import("@/features/shared/admin/privilege/pages/EditPrivilege.vue");
+const Role = () => import("@/features/shared/admin/role/pages/Role.vue");
+const AddRole = () => import("@/features/shared/admin/role/pages/AddRole.vue");
+const EditRole = () => import("@/features/shared/admin/role/pages/EditRole.vue");
+const RoleDetail = () => import("@/features/shared/admin/role/pages/RoleDetail.vue");
+const Users = () => import("@/features/shared/admin/user/pages/Users.vue");
+const AddUser = () => import("@/features/shared/admin/user/pages/AddUser.mdl.vue");
+const EditUser = () => import("@/features/shared/admin/user/pages/EditUser.vue");
+const UserDetail = () => import("@/features/shared/admin/user/pages/UserDetail.vue");
+const PrivilegeDetail = () => import("@/features/shared/admin/privilege/pages/PrivilegeDetail.vue");
 
 export default [
   // Privileges routes

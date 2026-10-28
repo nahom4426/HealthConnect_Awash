@@ -1,3 +1,4 @@
+<!-- ApproveLevel1ClaimIndex.vue - Updated with institution name handling -->
 <script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import ClaimByBatchDataProvider from "../../components/ClaimByBatchDataProvider.vue";
@@ -13,7 +14,10 @@ import { ClaimLevel, PaymentStatus, ServiceTypes, Status } from "@/types/interfa
 import Toogle from "@/components/Toogle.vue";
 import { useVerifyClaimByInstitutionBatch } from "../../store/verifyClaimByInstitutionBatchStore";
 import VerifyClaimRow from "../../components/VerifyClaimRow.vue";
-const serviceType= ref("CREDIT");
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const serviceType = ref("CREDIT");
 const institutionUuid = ref();
 const providerUuid = ref();
 const search = ref("");
@@ -37,12 +41,23 @@ const tableHeaders = computed(() => {
 watch(active, (newActive) => {
   if (newActive === ServiceTypes.creditService) {
     serviceType.value = "CREDIT";
-    console.log('🔄 Switched to CREDIT service');
   } else if (newActive === ServiceTypes.cashService) {
     serviceType.value = "CASH";
-    console.log('🔄 Switched to CASH service');
   }
 });
+
+function navigateToDetailPage(row) {
+  if (row && row.claimUuid) {
+    const institutionName = row.institutionName || row.payerInstitutionName || 'N/A';
+    router.push({
+      path: active.value === ServiceTypes.creditService 
+        ? `/approveL1_claims/detail/${row.claimUuid}` 
+        : `/approveL1_claims/cash_detail/${row.batchCode}`,
+      state: { institutionName },
+      query: { institutionName }
+    });
+  }
+}
 </script>
 
 <template>
@@ -106,10 +121,22 @@ watch(active, (newActive) => {
         :headers="tableHeaders"
         :rows="claims"
         :rowCom="VerifyClaimRow"
-        :detailRoute="active == ServiceTypes.creditService ? '/verify_claims/detail' : '/verify_claims/cash_detail'"
+        :detailRoute="active == ServiceTypes.creditService ? '/approveL1_claims/detail' : '/approveL1_claims/cash_detail'"
         :serviceType="active == ServiceTypes.creditService ? 'credit' : 'cash'"
         placeholder="No claims to verify"
-      />
+        @row-click="navigateToDetailPage"
+      >
+        <template #row>
+          <VerifyClaimRow
+            :rowData="claims"
+            :rowKeys="tableRowKeys"
+            :serviceType="active == ServiceTypes.creditService ? 'credit' : 'cash'"
+            :currentPage="1"
+            :perPage="25"
+            :onRowClick="navigateToDetailPage"
+          />
+        </template>
+      </Table>
     </DefaultPage>
   </ClaimByBatchDataProvider>
 </template>

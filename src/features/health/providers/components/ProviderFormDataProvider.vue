@@ -17,7 +17,6 @@ const downloadReq = useApiRequest();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 function register(formData) {
-  console.log('Registration form data received:', formData);
   
   // Check if required fields are present
   const providerJson = formData.get('provider');
@@ -58,14 +57,12 @@ function register(formData) {
 }
 
 function sendRegistrationRequest(formData) {
-  console.log('Sending registration request with form data');
   
   return new Promise((resolve, reject) => {
     registerReq.send(
       () => createProvider(formData), // Make sure your API function accepts FormData
       (response) => {
         if (response.success) {
-          console.log('Registration successful:', response.data);
           toasted(true, 'Provider registered successfully');
           resolve(response);
         } else {

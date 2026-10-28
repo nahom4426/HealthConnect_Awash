@@ -82,7 +82,6 @@ onMounted(() => {
       fetchLogoFromUrl(props.initialData.logoUrl);
     }
     
-    console.log('Initial data loaded with logo:', !!previewImage.value);
   }
 });
 
@@ -123,7 +122,6 @@ async function fetchLogoFromUrl(url) {
     const response = await fetch(url);
     const blob = await response.blob();
     providerLogo.value = new File([blob], 'logo.png ', { type: blob.type });
-    console.log('Logo fetched from URL and converted to file');
   } catch (error) {
     console.error('Error fetching logo from URL:', error);
   }
@@ -136,7 +134,6 @@ const categoryOptions = [
 ];
 
 function handleSubmit() {
-  console.log('=== FORM SUBMISSION START ===');
   
   // Create the providerRequest object as expected by the backend
   const providerRequest = {
@@ -169,7 +166,6 @@ function handleSubmit() {
     providerRequest.providerUuid = providerUuid.value;
   }
 
-  console.log('Provider Request:', providerRequest);
 
   // Prepare the final payload structure
   const formData = new FormData();
@@ -179,19 +175,14 @@ function handleSubmit() {
   
   // ALWAYS append logo if it exists - don't check for changes
   if (providerLogo.value) {
-    console.log('Adding file to FormData with parameter name "file":', providerLogo.value);
     formData.append('logo', providerLogo.value);
   } else {
-    console.log('WARNING: No logo file available for submission');
   }
 
   // Debug: Log FormData contents
-  console.log('FormData contents:');
   for (let [key, value] of formData.entries()) {
-    console.log(`- ${key}:`, value);
   }
 
-  console.log('=== FORM SUBMISSION END ===');
 
   props.onSubmit(formData);
 }
@@ -201,50 +192,50 @@ function handleSubmit() {
 <template>
   <form @submit.prevent="handleSubmit" class="bg-white rounded-xl shadow-sm">
     <!-- Provider Information Section -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100 mb-6">
+    <div class="bg-gradient-to-r from-primary/5 to-primary/5 rounded-xl p-6 border border-primary/10 mb-6">
       <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
           </svg>
         </div>
         <div>
-          <h3 class="text-xl font-bold text-gray-800">Provider Information</h3>
-          <p class="text-sm text-gray-600">Basic details about the healthcare provider</p>
+          <h3 class="text-xl font-bold text-ink">Provider Information</h3>
+          <p class="text-sm text-ink-muted">Basic details about the healthcare provider</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Provider Logo - READONLY -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             Provider logo
           </label>
           <div class="flex items-center gap-4">
             <div v-if="previewImage" class="relative">
-              <img :src="previewImage" alt="Logo preview" class="h-20 w-20 object-cover rounded-lg border-2 border-gray-200" />
+              <img :src="previewImage" alt="Logo preview" class="h-20 w-20 object-cover rounded-lg border-2 border-line" />
             </div>
-            <div v-else class="h-20 w-20 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-else class="h-20 w-20 bg-surface-muted rounded-lg border-2 border-dashed border-line-strong flex items-center justify-center">
+              <svg class="w-8 h-8 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
             </div>
             <div class="flex-1">
-              <p class="text-sm text-gray-500">Logo from external system</p>
+              <p class="text-sm text-ink-subtle">Logo from external system</p>
             </div>
           </div>
         </div>
         
         <!-- Provider Name and Acronym -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Provider Name <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Provider Name <span class="text-error">*</span>
           </label>
           <div class="flex w-full gap-2">
             <input
               v-model="threeDigitAcronym"
               placeholder="ABC"
-              class="w-20 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="w-20 p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               maxlength="3"
               pattern="^[A-Z]{3}$"
               title="Three-digit acronym must be uppercase letters"
@@ -254,7 +245,7 @@ function handleSubmit() {
             <input
               v-model="providerName"
               placeholder="Provider legal name"
-              class="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="flex-1 p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               required
               readonly
             />
@@ -265,12 +256,12 @@ function handleSubmit() {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
         <!-- Category -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Category <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Category <span class="text-error">*</span>
           </label>
           <select
             v-model="category"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             required
             disabled
           >
@@ -283,13 +274,13 @@ function handleSubmit() {
         
         <!-- Phone Number -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            Phone Number <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            Phone Number <span class="text-error">*</span>
           </label>
           <div class="flex w-full gap-2">
             <select
               v-model="countryCode"
-              class="w-20 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="w-20 p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               required
               disabled
             >
@@ -298,7 +289,7 @@ function handleSubmit() {
             <input
               v-model="telephone"
               placeholder="Phone number"
-              class="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="flex-1 p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
               required
               readonly
             />
@@ -308,29 +299,29 @@ function handleSubmit() {
     </div>
 
     <!-- Address Information Section -->
-    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100 mb-6">
+    <div class="bg-gradient-to-r from-success-soft to-success-soft rounded-xl p-6 border border-success-soft mb-6">
       <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+        <div class="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
           </svg>
         </div>
         <div>
-          <h3 class="text-xl font-bold text-gray-800">Address Information</h3>
-          <p class="text-sm text-gray-600">Location details of the provider</p>
+          <h3 class="text-xl font-bold text-ink">Address Information</h3>
+          <p class="text-sm text-ink-muted">Location details of the provider</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- State/Region -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             State/Region 
           </label>
           <select
             v-model="state"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             disabled
           >
             <option value="">Select State/Region</option>
@@ -342,13 +333,13 @@ function handleSubmit() {
         
         <!-- City -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             City 
           </label>
           <select
             v-if="availableCities.length > 0"
             v-model="address3"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             disabled
           >
             <option value="">Select City</option>
@@ -360,20 +351,20 @@ function handleSubmit() {
             v-else
             v-model="address3"
             placeholder="Enter City"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             readonly
           />
         </div>
         
         <!-- Sub City -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             Sub City 
           </label>
           <select
             v-if="isAddisAbaba && availableSubCities.length > 0"
             v-model="address2"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             disabled
           >
             <option value="">Select Sub City</option>
@@ -385,20 +376,20 @@ function handleSubmit() {
             v-else
             v-model="address2"
             placeholder="Enter Sub City"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             readonly
           />
         </div>
         
         <!-- Woreda -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             Woreda 
           </label>
           <input
             v-model="address1"
             placeholder="Enter Woreda"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             readonly
           />
         </div>
@@ -414,21 +405,21 @@ function handleSubmit() {
           </svg>
         </div>
         <div>
-          <h3 class="text-xl font-bold text-gray-800">Additional Information</h3>
-          <p class="text-sm text-gray-600">Tax and contact details</p>
+          <h3 class="text-xl font-bold text-ink">Additional Information</h3>
+          <p class="text-sm text-ink-muted">Tax and contact details</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- TIN -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
-            TIN <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-muted">
+            TIN <span class="text-error">*</span>
           </label>
           <input
             v-model="tin"
             placeholder="Tax Identification Number"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             required
             readonly
           />
@@ -436,14 +427,14 @@ function handleSubmit() {
         
         <!-- Email -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             Provider's Email 
           </label>
           <input
             v-model="email"
             type="email"
             placeholder="provider@example.com"
-            class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
             required
             readonly
           />
@@ -452,25 +443,25 @@ function handleSubmit() {
       
       <!-- Description -->
       <div class="space-y-2 mt-4">
-        <label class="block text-sm font-medium text-gray-700">
+        <label class="block text-sm font-medium text-ink-muted">
           Description
         </label>
         <textarea
           v-model="memo"
           placeholder="Provider description"
           rows="3"
-          class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          class="w-full p-3 bg-surface-muted border-2 border-line rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
           readonly
         ></textarea>
       </div>
     </div>
     
     <!-- Form Actions -->
-    <div class="pt-4 px-6 border-t border-gray-200 flex justify-end space-x-4">
+    <div class="pt-4 px-6 border-t border-line flex justify-end space-x-4">
       <button
         type="button"
         @click="props.onCancel"
-        class="text-gray-700 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+        class="text-ink-muted px-6 py-3 border border-line-strong rounded-lg hover:bg-surface-muted transition-colors duration-200"
         :disabled="pending"
       >
         Back
@@ -479,7 +470,7 @@ function handleSubmit() {
        <ModalFormSubmitButton
         :pending="pending"
         :btn-text="isEdit ? 'Add Provider' : 'Add Provider'"
-        class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
+        class="bg-primary hover:bg-primary-hover text-white px-6 py-3 border-primary hover:border-primary-hover"
       />
     </div>
   </form>
@@ -487,7 +478,7 @@ function handleSubmit() {
 
 <style scoped>
 input[readonly], select[disabled], textarea[readonly] {
-  @apply bg-gray-100 cursor-not-allowed;
+  @apply bg-surface-muted cursor-not-allowed;
 }
 
 /* Enhanced select dropdown styling */

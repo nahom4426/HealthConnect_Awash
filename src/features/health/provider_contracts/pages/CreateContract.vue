@@ -35,7 +35,6 @@ const fetchError = ref(null);
 // Fetch providers with retry option
 const fetchProviders = async () => {
   try {
-    console.log('Fetching providers...');
     isFetchingProviders.value = true;
     fetchError.value = null;
     const response = await getActiveProvidersForContract({
@@ -46,7 +45,6 @@ const fetchProviders = async () => {
     });
     
     if (response && response.data) {
-      console.log('Providers fetched successfully:', response.data);
       providers.value = response.data;
     } else {
       throw new Error('Invalid response format from server');
@@ -60,11 +58,9 @@ const fetchProviders = async () => {
     } else {
       fetchError.value = "Failed to load providers. Please try again.";
     }
-    console.log('fetchError set to:', fetchError.value);
     toast.error(fetchError.value);
   } finally {
     isFetchingProviders.value = false;
-    console.log('isFetchingProviders set to false');
   }
 };
 
@@ -85,7 +81,6 @@ onMounted(async () => {
 
 // Retry function
 const retryFetchProviders = async () => {
-  console.log('Retrying provider fetch...');
   await fetchProviders();
 };
 
@@ -113,7 +108,7 @@ const generateContractCode = (providerName) => {
 const generateContractName = (providerName) => {
   const providerPrefix = providerName.substring(0, 5).toUpperCase();
   const randomNumber = Math.floor(10 + Math.random() * 90);
-  return `${providerPrefix}-Awash-${randomNumber}`;
+  return `${providerPrefix}-Standard-${randomNumber}`;
 };
 
 // Watch for provider selection changes
@@ -217,44 +212,44 @@ const debugState = computed(() => {
 <template>
   <div class="p-8 space-y-8 bg-white rounded-xl shadow-lg">
     <!-- Debug info (remove in production) -->
-    <div class="p-4 text-xs bg-yellow-50 rounded-lg border border-yellow-200" v-if="false">
+    <div class="p-4 text-xs bg-warning-soft rounded-lg border border-warning/20" v-if="false">
       <pre>{{ debugState }}</pre>
     </div>
     
     <!-- Provider Information Section -->
     <div class="space-y-6">
       <div class="flex items-center">
-        <div class="w-10 h-10 rounded-full bg-[#e6f7f8] flex items-center justify-center mr-3">
-          <span v-html="icons.provider" class="w-5 h-5 text-[#02676B]"></span>
+        <div class="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center mr-3">
+          <span v-html="icons.provider" class="w-5 h-5 text-primary"></span>
         </div>
-        <h3 class="text-lg font-semibold text-[#02676B]">Provider Information</h3>
+        <h3 class="text-lg font-semibold text-primary">Provider Information</h3>
       </div>
       
       <div class="grid gap-6 pl-12 md:grid-cols-2">
         <div>
-          <label class="block flex items-center mb-2 text-sm font-medium text-gray-700">
+          <label class="block flex items-center mb-2 text-sm font-medium text-ink-muted">
             Provider
-            <span class="ml-1 text-red-500">*</span>
+            <span class="ml-1 text-error">*</span>
           </label>
           
           <!-- Loading State -->
-          <div v-if="isFetchingProviders" class="flex items-center p-3 space-x-2 rounded-lg border border-gray-300">
-            <ButtonSpinner class="h-4 w-4 text-[#02676B]" />
-            <span class="text-sm text-gray-500">Loading providers...</span>
+          <div v-if="isFetchingProviders" class="flex items-center p-3 space-x-2 rounded-lg border border-line-strong">
+            <ButtonSpinner class="h-4 w-4 text-primary" />
+            <span class="text-sm text-ink-subtle">Loading providers...</span>
           </div>
           
           <!-- Error State with Retry -->
           <div v-else-if="fetchError" class="space-y-3">
-            <div class="p-3 text-sm text-red-500 bg-red-50 rounded-lg border border-red-200">
+            <div class="p-3 text-sm text-error bg-error-soft rounded-lg border border-error/20">
               <strong>Error loading providers:</strong> {{ fetchError }}
             </div>
             <button
               @click="retryFetchProviders"
-              class="flex gap-2 justify-center items-center py-2 w-full text-sm font-medium text-red-700 bg-red-100 rounded-lg transition-all duration-200 hover:bg-red-200"
+              class="flex gap-2 justify-center items-center py-2 w-full text-sm font-medium text-error-strong bg-error-soft rounded-lg transition-all duration-200 hover:bg-error/20"
               :disabled="isFetchingProviders"
             >
               <span v-html="icons.refresh" class="w-4 h-4" v-if="!isFetchingProviders"></span>
-              <ButtonSpinner v-if="isFetchingProviders" class="justify-center w-3 h-4 text-red-700" />
+              <ButtonSpinner v-if="isFetchingProviders" class="justify-center w-3 h-4 text-error-strong" />
               {{ isFetchingProviders ? 'Retrying...' : 'Retry Loading Providers' }}
             </button>
           </div>
@@ -263,8 +258,8 @@ const debugState = computed(() => {
           <div v-else-if="hasProviders">
             <select
               v-model="formData.providerUuid"
-              class="w-full py-3 px-1 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzk5OTk5OSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem] bg-[length:16px_16px] pr-10"
-              :class="{ 'border-red-500': submitAttempted && !formData.providerUuid }"
+              class="w-full py-3 px-1 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzk5OTk5OSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+')] bg-no-repeat bg-[center_right_1rem] bg-[length:16px_16px] pr-10"
+              :class="{ 'border-error': submitAttempted && !formData.providerUuid }"
               required
             >
               <option value="" disabled selected>Select a provider</option>
@@ -276,13 +271,13 @@ const debugState = computed(() => {
                 {{ provider.providerName }}
               </option>
             </select>
-            <p v-if="submitAttempted && !formData.providerUuid" class="mt-1 ml-1 text-xs text-red-500">
+            <p v-if="submitAttempted && !formData.providerUuid" class="mt-1 ml-1 text-xs text-error">
               Provider is required
             </p>
           </div>
           
           <!-- No providers state (empty but no error) -->
-          <div v-else class="p-3 text-sm text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+          <div v-else class="p-3 text-sm text-ink-subtle bg-surface-muted rounded-lg border border-line">
             No providers available
           </div>
         </div>
@@ -293,82 +288,82 @@ const debugState = computed(() => {
     <div class="grid gap-8 md:grid-cols-2">
       <div class="space-y-6">
         <div class="flex items-center">
-          <div class="w-10 h-10 rounded-full bg-[#e6f7f8] flex items-center justify-center mr-3">
-            <span v-html="icons.document" class="w-5 h-5 text-[#02676B]"></span>
+          <div class="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center mr-3">
+            <span v-html="icons.document" class="w-5 h-5 text-primary"></span>
           </div>
-          <h3 class="text-lg font-semibold text-[#02676B]">Contract Information</h3>
+          <h3 class="text-lg font-semibold text-primary">Contract Information</h3>
         </div>
         
         <div class="pl-12 space-y-5">
           <!-- Contract Code Field with Generate Button -->
           <div>
-            <label class="block flex items-center mb-2 text-sm font-medium text-gray-700">
+            <label class="block flex items-center mb-2 text-sm font-medium text-ink-muted">
               Contract Code
-              <span class="ml-1 text-red-500">*</span>
+              <span class="ml-1 text-error">*</span>
             </label>
             <div class="relative">
               <input
                 v-model="formData.contractCode"
                 placeholder="e.g. PVD-ABC123"
-                class="w-full p-3  border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm"
-                :class="{ 'border-red-500': submitAttempted && !formData.contractCode }"
+                class="w-full p-3  border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm"
+                :class="{ 'border-error': submitAttempted && !formData.contractCode }"
                 required
               />
               <button
                 @click="regenerateContractCode"
                 type="button"
-                class="absolute right-1 top-1 px-3 py-2 text-xs font-medium text-[#02676B] bg-[#e6f7f8] rounded-md transition-all duration-200 hover:bg-[#02676B] hover:text-white flex items-center gap-1"
+                class="absolute right-1 top-1 px-3 py-2 text-xs font-medium text-primary bg-primary/5 rounded-md transition-all duration-200 hover:bg-primary hover:text-white flex items-center gap-1"
                 :disabled="!formData.providerUuid"
               >
                 <span v-html="icons.refresh" class="w-3 h-3"></span>
                 Generate
               </button>
             </div>
-            <p v-if="submitAttempted && !formData.contractCode" class="mt-1 ml-1 text-xs text-red-500">
+            <p v-if="submitAttempted && !formData.contractCode" class="mt-1 ml-1 text-xs text-error">
               Contract code is required
             </p>
-            <p class="mt-1 ml-1 text-xs text-gray-500">
+            <p class="mt-1 ml-1 text-xs text-ink-subtle">
               Unique identifier for the contract
             </p>
           </div>
 
           <!-- Contract Name Field with Generate Button -->
           <div>
-            <label class="block flex items-center mb-2 text-sm font-medium text-gray-700">
+            <label class="block flex items-center mb-2 text-sm font-medium text-ink-muted">
               Contract Name
-              <span class="ml-1 text-red-500">*</span>
+              <span class="ml-1 text-error">*</span>
             </label>
             <div class="relative">
               <input
                 v-model="formData.contractName"
                 placeholder="e.g. Annual Service Contract"
-                class="w-full p-3  border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm"
-                :class="{ 'border-red-500': submitAttempted && !formData.contractName }"
+                class="w-full p-3  border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm"
+                :class="{ 'border-error': submitAttempted && !formData.contractName }"
                 required
               />
               <button
                 @click="regenerateContractName"
                 type="button"
-                class="absolute right-1 top-1 px-3 py-2 text-xs font-medium text-[#02676B] bg-[#e6f7f8] rounded-md transition-all duration-200 hover:bg-[#02676B] hover:text-white flex items-center gap-1"
+                class="absolute right-1 top-1 px-3 py-2 text-xs font-medium text-primary bg-primary/5 rounded-md transition-all duration-200 hover:bg-primary hover:text-white flex items-center gap-1"
                 :disabled="!formData.providerUuid"
               >
                 <span v-html="icons.refresh" class="w-3 h-3"></span>
                 Generate
               </button>
             </div>
-            <p v-if="submitAttempted && !formData.contractName" class="mt-1 ml-1 text-xs text-red-500">
+            <p v-if="submitAttempted && !formData.contractName" class="mt-1 ml-1 text-xs text-error">
               Contract name is required
             </p>
           </div>
 
           <div>
-            <label class="block flex items-center mb-2 text-sm font-medium text-gray-700">
+            <label class="block flex items-center mb-2 text-sm font-medium text-ink-muted">
               Description
             </label>
             <textarea
               v-model="formData.description"
               rows="4"
-              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#02676B] focus:border-[#02676B] transition-all shadow-sm"
+              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm"
               placeholder="Describe the contract terms and conditions..."
             ></textarea>
           </div>
@@ -378,10 +373,10 @@ const debugState = computed(() => {
       <!-- Dates Section -->
       <div class="space-y-6">
         <div class="flex items-center">
-          <div class="w-10 h-10 rounded-full bg-[#e6f7f8] flex items-center justify-center mr-3">
-            <span v-html="icons.calendar" class="w-5 h-5 text-[#02676B]"></span>
+          <div class="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center mr-3">
+            <span v-html="icons.calendar" class="w-5 h-5 text-primary"></span>
           </div>
-          <h3 class="text-lg font-semibold text-[#02676B]">Contract Period</h3>
+          <h3 class="text-lg font-semibold text-primary">Contract Period</h3>
         </div>
         
         <div class="grid gap-5 pl-12 md:grid-cols-2">
@@ -425,7 +420,7 @@ const debugState = computed(() => {
     <div class="flex justify-end pt-8 space-x-4 border-t">
       <button
         @click="router.push('/create_contract')"
-        class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 rounded-lg border border-gray-300 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md"
+        class="flex items-center px-6 py-3 text-sm font-medium text-ink-muted rounded-lg border border-line-strong shadow-sm transition-all duration-200 hover:bg-surface-muted hover:shadow-md"
         :disabled="isLoading"
       >
         <span v-html="icons.cancel" class="mr-2 w-4 h-4"></span>
@@ -434,7 +429,7 @@ const debugState = computed(() => {
       
       <button
         @click="handleCreateContract"
-        class="px-6 py-3 bg-gradient-to-r from-[#02676B] to-[#02494D] text-white rounded-lg text-sm font-medium hover:from-[#02494D] hover:to-[#013436] transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+        class="px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-white rounded-lg text-sm font-medium hover:from-primary-hover hover:to-primary-hover transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
         :disabled="isLoading || isFetchingProviders || fetchError"
       >
         <ButtonSpinner v-if="isLoading" class="w-4 h-4 text-white" />
@@ -448,23 +443,23 @@ const debugState = computed(() => {
 <style scoped>
 /* Enhanced form styling */
 input, select, textarea {
-  @apply border-gray-300;
+  @apply border-line-strong;
 }
 
 input:focus, select:focus, textarea:focus {
-  @apply border-[#02676B] ring-2 ring-[#02676B] ring-opacity-20 outline-none;
+  @apply border-primary ring-2 ring-primary ring-opacity-20 outline-none;
 }
 
 .required-field {
-  @apply border-l-2 border-[#02676B];
+  @apply border-l-2 border-primary;
 }
 
 .error-field {
-  @apply border-red-500 ring-2 ring-red-500 ring-opacity-20;
+  @apply border-error ring-2 ring-error ring-opacity-20;
 }
 
 .error-message {
-  @apply text-red-500 text-xs mt-1;
+  @apply text-error text-xs mt-1;
 }
 
 button:disabled {
@@ -473,7 +468,7 @@ button:disabled {
 
 /* Make date inputs required visually */
 input[type="date"]:required {
-  border-left: 2px solid #02676B;
+  border-left: 2px solid rgb(var(--primary));
 }
 
 /* Animation classes */
@@ -483,7 +478,7 @@ input[type="date"]:required {
 
 @keyframes highlight {
   0% { background-color: transparent; }
-  50% { background-color: rgba(251, 191, 36, 0.3); }
+  50% { background-color: rgb(var(--warning) / 0.3); }
   100% { background-color: transparent; }
 }
 

@@ -166,12 +166,12 @@ function goBack() {
 </script>
 
 <template>
-  <div class="p-6 space-y-8 min-h-screen bg-gray-50">
+  <div class="p-6 space-y-8 min-h-screen bg-surface-muted">
     <!-- Header -->
     <div class="flex justify-between items-start p-5 bg-white rounded-xl shadow-sm">
       <div>
-        <h2 class="text-2xl font-bold text-gray-800">Service Provided Detail</h2>
-        <p class="text-sm text-gray-500">Review the provided services and attachment.</p>
+        <h2 class="text-2xl font-bold text-ink">Service Provided Detail</h2>
+        <p class="text-sm text-ink-subtle">Review the provided services and attachment.</p>
       </div>
       <div class="flex gap-2">
         <Button type="link" @click="goBack">Back</Button>
@@ -192,39 +192,39 @@ function goBack() {
     <!-- Info Grid -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
       <div class="p-4 bg-white rounded-lg border shadow-sm">
-        <p class="text-xs text-gray-500">Institution</p>
-        <p class="text-sm font-medium text-gray-800">{{ props.row?.institutionName || '-' }}</p>
+        <p class="text-xs text-ink-subtle">Institution</p>
+        <p class="text-sm font-medium text-ink">{{ props.row?.institutionName || '-' }}</p>
       </div>
       <div class="p-4 bg-white rounded-lg border shadow-sm">
-        <p class="text-xs text-gray-500">Insured</p>
-        <p class="text-sm font-medium text-gray-800">{{ props.row?.insuredName || props.row?.dependantName || '-' }}</p>
+        <p class="text-xs text-ink-subtle">Insured</p>
+        <p class="text-sm font-medium text-ink">{{ props.row?.insuredName || props.row?.dependantName || '-' }}</p>
       </div>
       <div class="p-4 bg-white rounded-lg border shadow-sm">
-        <p class="text-xs text-gray-500">Amount</p>
+        <p class="text-xs text-ink-subtle">Amount</p>
         <div class="space-y-1">
-          <p class="text-sm font-semibold text-green-600">{{ formatCurrency(props.row?.amount) }}</p>
-          <div v-if="totalExtraAmount" class="text-xs text-red-600">
+          <p class="text-sm font-semibold text-success">{{ formatCurrency(props.row?.amount) }}</p>
+          <div v-if="totalExtraAmount" class="text-xs text-error">
             Extra Amount: <span class="font-semibold">{{ formatCurrency(totalExtraAmount) }}</span>
           </div>
         </div>
       </div>
       <div class="p-4 bg-white rounded-lg border shadow-sm">
-        <p class="text-xs text-gray-500">Provided Date</p>
-        <p class="text-sm font-medium text-gray-800">{{ providedDate }}</p>
+        <p class="text-xs text-ink-subtle">Provided Date</p>
+        <p class="text-sm font-medium text-ink">{{ providedDate }}</p>
       </div>
     </div>
 
     <!-- Items Table -->
     <div class="overflow-hidden bg-white rounded-xl border shadow-sm">
       <div class="flex justify-between items-center px-5 py-4 border-b">
-        <h3 class="font-semibold text-gray-800">Provided Items</h3>
-        <div class="text-sm text-gray-600">
-          Total: <span class="font-bold text-gray-900">{{ formatCurrency(total) }}</span>
+        <h3 class="font-semibold text-ink">Provided Items</h3>
+        <div class="text-sm text-ink-muted">
+          Total: <span class="font-bold text-ink">{{ formatCurrency(total) }}</span>
         </div>
       </div>
       <div class="overflow-auto">
         <table class="min-w-full text-sm">
-          <thead class="text-xs text-gray-600 uppercase bg-gray-100">
+          <thead class="text-xs text-ink-muted uppercase bg-surface-muted">
             <tr>
               <th class="px-4 py-3 text-left">#</th>
               <th class="px-4 py-3 text-left">Item ID</th>
@@ -240,64 +240,64 @@ function goBack() {
               <th class="px-4 py-3 text-right">Action</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
+          <tbody class="divide-y divide-line">
             <tr v-if="!items.length">
-              <td :colspan="itemsTableColspan" class="py-10 text-center text-gray-500">No items available</td>
+              <td :colspan="itemsTableColspan" class="py-10 text-center text-ink-subtle">No items available</td>
             </tr>
             <tr
               v-for="(it, i) in items"
               :key="it.providedItemUuid || i"
-              class="transition hover:bg-gray-50"
+              class="transition hover:bg-surface-muted"
             >
-              <td class="px-4 py-3 text-gray-600">{{ i + 1 }}</td>
-              <td class="px-4 py-3 text-gray-700">{{ it.itemId || '-' }}</td>
-              <td class="px-4 py-3 text-gray-700">{{ it.itemCode || '-' }}</td>
-              <td class="px-4 py-3 text-gray-700">{{ it.itemName || '-' }}</td>
-              <td class="px-4 py-3 text-gray-700">
-                <span v-if="loadingPackages" class="text-xs text-gray-400">Loading...</span>
+              <td class="px-4 py-3 text-ink-muted">{{ i + 1 }}</td>
+              <td class="px-4 py-3 text-ink-muted">{{ it.itemId || '-' }}</td>
+              <td class="px-4 py-3 text-ink-muted">{{ it.itemCode || '-' }}</td>
+              <td class="px-4 py-3 text-ink-muted">{{ it.itemName || '-' }}</td>
+              <td class="px-4 py-3 text-ink-muted">
+                <span v-if="loadingPackages" class="text-xs text-ink-subtle">Loading...</span>
                 <span v-else>{{ getPackageName(it.packageUuid) }}</span>
               </td>
-              <td v-if="hasCoverageColumn" class="px-4 py-3 text-gray-700">
+              <td v-if="hasCoverageColumn" class="px-4 py-3 text-ink-muted">
                 <span
                   class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
-                  :class="getCoverageLabel(it) === 'AUTHORIZED' ? 'bg-green-100 text-green-700' : (getCoverageLabel(it) === 'EXCESS' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600')"
+                  :class="getCoverageLabel(it) === 'AUTHORIZED' ? 'bg-success-soft text-success-strong' : (getCoverageLabel(it) === 'EXCESS' ? 'bg-warning-soft text-warning-strong' : 'bg-surface-muted text-ink-muted')"
                 >
                   {{ getCoverageLabel(it) }}
                 </span>
               </td>
-              <td v-if="hasAuthorizationColumn" class="px-4 py-3 text-gray-700">
+              <td v-if="hasAuthorizationColumn" class="px-4 py-3 text-ink-muted">
                 <span class="font-mono text-xs">{{ it.authorizationUuid || '-' }}</span>
               </td>
-              <td class="px-4 py-3 text-right text-gray-700">{{ formatCurrency(it.excessUsed) }}</td>
-              <td class="px-4 py-3 text-right text-gray-700">{{ it.quantity ?? '-' }}</td>
-              <td class="px-4 py-3 text-right text-gray-700">{{ formatCurrency(it.unitPrice) }}</td>
+              <td class="px-4 py-3 text-right text-ink-muted">{{ formatCurrency(it.excessUsed) }}</td>
+              <td class="px-4 py-3 text-right text-ink-muted">{{ it.quantity ?? '-' }}</td>
+              <td class="px-4 py-3 text-right text-ink-muted">{{ formatCurrency(it.unitPrice) }}</td>
               <td class="px-4 py-3 text-right">
-                <div class="font-semibold text-gray-900">{{ formatCurrency(it.totalPrice) }}</div>
-                <div v-if="Number(it.extraAmount)" class="text-xs text-red-600">+{{ formatCurrency(it.extraAmount) }}</div>
+                <div class="font-semibold text-ink">{{ formatCurrency(it.totalPrice) }}</div>
+                <div v-if="Number(it.extraAmount)" class="text-xs text-error">+{{ formatCurrency(it.extraAmount) }}</div>
               </td>
               <td class="px-4 py-3 text-right">
                 <Button
                   v-if="it.authorizationUuid"
                   type="link"
-                  class="!text-blue-600 hover:!text-blue-800"
+                  class="!text-primary hover:!text-primary-hover"
                   @click.stop="openAuthorizationDetails(it.authorizationUuid)"
                 >
                   Authorization Details
                 </Button>
-                <span v-else class="text-xs text-gray-400">-</span>
+                <span v-else class="text-xs text-ink-subtle">-</span>
               </td>
             </tr>
           </tbody>
-          <tfoot v-if="items.length" class="bg-gray-100">
+          <tfoot v-if="items.length" class="bg-surface-muted">
             <tr>
-              <td :colspan="itemsTableColspan - 2" class="px-4 py-3 text-sm text-right text-gray-600">Total</td>
-              <td class="px-4 py-3 font-bold text-right text-gray-900">{{ formatCurrency(total) }}</td>
+              <td :colspan="itemsTableColspan - 2" class="px-4 py-3 text-sm text-right text-ink-muted">Total</td>
+              <td class="px-4 py-3 font-bold text-right text-ink">{{ formatCurrency(total) }}</td>
               <td class="px-4 py-3"></td>
             </tr>
           </tfoot>
         </table>
       </div>
-      <!-- <div class="flex gap-2 justify-end items-center px-5 py-4 bg-gray-50 border-t">
+      <!-- <div class="flex gap-2 justify-end items-center px-5 py-4 bg-surface-muted border-t">
         <Button type="link" @click="goBack">Back</Button>
         <Button type="primary" @click="openAttachment" :disabled="loadingAttachment">
           <span v-if="loadingAttachment">Loading...</span>
@@ -310,17 +310,17 @@ function goBack() {
       <div class="overflow-hidden w-full max-w-2xl bg-white rounded-lg shadow-xl">
         <div class="flex justify-between items-start px-6 py-4 border-b">
           <div>
-            <h3 class="text-lg font-semibold text-gray-800">Authorization Details</h3>
-            <p class="text-sm text-gray-500">View authorization information for this item.</p>
+            <h3 class="text-lg font-semibold text-ink">Authorization Details</h3>
+            <p class="text-sm text-ink-subtle">View authorization information for this item.</p>
           </div>
           <Button size="sm" type="link" @click="showAuthorizationModal = false">Close</Button>
         </div>
 
         <div class="p-6">
-          <div v-if="authorizationLoading" class="text-sm text-gray-600">Loading...</div>
-          <div v-else-if="authorizationError" class="text-sm text-red-600">{{ authorizationError }}</div>
+          <div v-if="authorizationLoading" class="text-sm text-ink-muted">Loading...</div>
+          <div v-else-if="authorizationError" class="text-sm text-error">{{ authorizationError }}</div>
           <div v-else class="text-sm">
-            <pre class="overflow-auto p-4 text-xs bg-gray-50 rounded border">{{ authorizationDetails }}</pre>
+            <pre class="overflow-auto p-4 text-xs bg-surface-muted rounded border">{{ authorizationDetails }}</pre>
           </div>
         </div>
       </div>

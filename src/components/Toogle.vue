@@ -1,27 +1,33 @@
-<script setup lang="ts" >
-import { ref, watch, type PropType } from 'vue';
+<script setup lang="ts">
+// Two-option segmented control. (File name kept for existing imports.)
+import { ref, watch, type PropType } from "vue";
 
-	const props = defineProps({
-		modelVale: String,
-		items: {
-			type: Array as PropType<{name: string}[]>,
-			required: true
-		}
-	})
-	const emit = defineEmits(['update:modelValue'])
-	const active = ref(props.items[0].name)
-	const activeIndex = ref(0)
+const props = defineProps({
+  modelVale: String,
+  items: {
+    type: Array as PropType<{ name: string }[]>,
+    required: true,
+  },
+});
+const emit = defineEmits(["update:modelValue"]);
+const active = ref(props.items[0].name);
 
-	watch(active, () => {
-		activeIndex.value = props.items.findIndex(el => el.name == active.value)
-		emit('update:modelValue', active.value)
-	})
+watch(active, () => emit("update:modelValue", active.value));
 </script>
+
 <template>
-	<div v-ripple class="isolate cursor-pointer relative flex w-64 h-10 bg-black/10 shadow-md rounded-full" >
-		<div @click="active = item.name" :key="item.name" v-for="item in items" :class="[active == item.name ? 'text-base-clr4' : 'text-text-clr']" class="w-1/2 transition-all duration-200 ease-linear h-full flex items-center justify-center" >
-			{{ item.name }}
-		</div>
-		<div :class="[activeIndex == 0 ? 'translate-x-0' : 'translate-x-full']" class="transition-all duration-75 ease-in -z-20 absolute w-1/2 h-full rounded-full bg-dark" ></div>
-	</div>
+  <div class="inline-flex p-1 w-64 rounded-lg bg-surface-muted ring-1 ring-inset ring-line" role="radiogroup">
+    <button
+      v-for="item in items"
+      :key="item.name"
+      type="button"
+      role="radio"
+      :aria-checked="active === item.name"
+      class="flex-1 h-8 text-sm font-medium rounded-md transition-colors"
+      :class="active === item.name ? 'bg-surface text-ink shadow-card ring-1 ring-line' : 'text-ink-muted hover:text-ink'"
+      @click="active = item.name"
+    >
+      {{ item.name }}
+    </button>
+  </div>
 </template>

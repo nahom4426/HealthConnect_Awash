@@ -62,7 +62,6 @@ const pagination = usePagination({
       delete params.insuredPersonUuid;
     }
 
-    console.log('[cash_claims] getNotClaimed params:', params);
     return getNotClaimed(params);
   },
 });
@@ -84,9 +83,7 @@ watch(
     const list = Array.isArray(rows)
       ? rows
       : (Array.isArray(rows?.content) ? rows.content : []);
-    console.log('[cash_claims] provider rows -> store set:', list.length);
     if (list.length) {
-      console.log('[cash_claims] first row keys:', Object.keys(list[0] || {}));
     }
     claimStore.set(list.map(normalizeRow));
   },
@@ -99,7 +96,6 @@ watch(
   (newParams) => {
     if (!props.auto) return;
     // Clear the store when params change to avoid mixing old and new data
-    console.log('[cash_claims] params changed (auto), clearing store and fetching:', newParams);
     claimStore.set([]);
     pagination.send();
   },

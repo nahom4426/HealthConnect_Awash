@@ -17,11 +17,16 @@ const route = useRoute()
 const batchCode = route.params.batchCode
 
 const pagination = usePagination({
-	cb: (data: any) => getRequestedCashClaimByBatchDetail({
-		...data,
-		status: PaymentStatus.REQUESTED,
-		batchCode: decodeURIComponent(batchCode as string)
-	})
+	perPage: 1000,
+	cb: (data: any) => {
+		const query = {
+			...data,
+			limit: 1000,
+			status: PaymentStatus.REQUESTED,
+			batchCode: decodeURIComponent(batchCode as string)
+		};
+		return getRequestedCashClaimByBatchDetail(query);
+	}
 }) 
 
 const checked = ref([])
@@ -63,6 +68,7 @@ function batchProcessed() {
 			v-model="checked"
 			toBeSelected="claimUuid"
 			:pending="pagination.pending.value"
+			:show-pagination="false"
 			:headers="{
 				head: ['Claim Number', 'Insurance ID', 'Institution', 'Fullname', 'Relationship', 'Claim Amount', 'actions'],
 				row: ['claimCode', 'insuranceId', 'institutionName', 'fullname', 'relationship', 'totalAmount']

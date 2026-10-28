@@ -1,13 +1,14 @@
 
-import ActiveContracts from "@/features/health/provider_contracts/pages/ActiveContracts.vue";
-import ActiveProviderContractIndex from "@/features/health/provider_contracts/pages/ActiveProviderContractIndex.vue";
-import CreateContract from "@/features/health/provider_contracts/pages/CreateContract.vue";
-import EditContract from "@/features/health/provider_contracts/pages/EditContract.vue";
-import ExpiredContract from "@/features/health/provider_contracts/pages/ExpiredContracts.vue";
-import PendingContracts from "@/features/health/provider_contracts/pages/PendingContracts.vue";
-import ProviderContractIndex from "@/features/health/provider_contracts/pages/ProviderContractIndex.vue";
-import SuspendedContracts from "@/features/health/provider_contracts/pages/SuspendedContracts.vue";
-import service from "@/features/health/provider_contracts/service/pages/sevice.vue";
+const ActiveContracts = () => import("@/features/health/provider_contracts/pages/ActiveContracts.vue");
+const ActiveProviderContractIndex = () => import("@/features/health/provider_contracts/pages/ActiveProviderContractIndex.vue");
+const CreateContract = () => import("@/features/health/provider_contracts/pages/CreateContract.vue");
+const EditContract = () => import("@/features/health/provider_contracts/pages/EditContract.vue");
+const ExpiredContract = () => import("@/features/health/provider_contracts/pages/ExpiredContracts.vue");
+const PendingContracts = () => import("@/features/health/provider_contracts/pages/PendingContracts.vue");
+const ProviderContractIndex = () => import("@/features/health/provider_contracts/pages/ProviderContractIndex.vue");
+const SuspendedContracts = () => import("@/features/health/provider_contracts/pages/SuspendedContracts.vue");
+const service = () => import("@/features/health/provider_contracts/service/pages/sevice.vue");
+const AddInstitutionsForContract = () => import("@/features/health/provider_contracts/pages/AddInstitutionsForContract.vue");
 export default [
 	{
 		path: '/create_contract',
@@ -48,6 +49,12 @@ export default [
 				path: 'services/:id/:providerUuid/:providerName',
 				name: 'Provider Contract Services',
 				component: service,
+				props: true,
+			},
+			{
+				path: 'institutions/:payerProviderContractUuid/:contractName',
+				name: 'contractInstitutions',
+				component: AddInstitutionsForContract,
 				props: true,
 			}
 		]

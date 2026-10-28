@@ -84,7 +84,7 @@ watch(city, (newCity) => {
 
 onMounted(() => {
   if (props.initialData && Object.keys(props.initialData).length > 0) {
-    payerId.value = props.initialData.payerUuid || "";
+    payerId.value = props.initialData.payerInstitutionContractUuid || props.initialData.payerInstitutionContractUUID || props.initialData.payerUuid || props.institutionId || "";
     allowedUuid.value = props.initialData.allowedUuid || ""; // 💡 NEW
     firstName.value = props.initialData.firstName || "";
     fatherName.value = props.initialData.fatherName || "";
@@ -164,9 +164,12 @@ function normalizePayload(payload) {
 }
 
 function handleSubmit() {
+  const currentPayerContractUuid = props.initialData?.payerInstitutionContractUuid || props.initialData?.payerInstitutionContractUUID || props.initialData?.payerUuid || payerId.value || props.institutionId || institutionId.value || "";
+
   const formData = {
     firstName: firstName.value,
-    payerUuid: institutionId.value || payerId.value,
+    payerUuid: currentPayerContractUuid,
+    payerInstitutionContractUuid: currentPayerContractUuid,
     allowedUuid: allowedUuid.value, // 💡 Include selected group
     fatherName: fatherName.value,
     grandFatherName: grandFatherName.value,
@@ -224,7 +227,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
             class="bg-white p-5 border border-[#75778B33] rounded-lg flex flex-col items-center justify-center h-full"
           >
             <div
-              class="w-56 h-52 bg-[#F6F7FA] rounded-lg flex items-center justify-center mb-4 overflow-hidden"
+              class="w-56 h-52 bg-surface-muted rounded-lg flex items-center justify-center mb-4 overflow-hidden"
             >
               <img
                 v-if="previewImage"
@@ -235,7 +238,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
               <svg
                 v-else
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-24 h-24 text-gray-300"
+                class="w-24 h-24 text-line-strong"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -281,8 +284,8 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
         >
           <!-- First Name -->
           <div>
-            <label class="block mb-1 text-sm font-medium text-gray-700">
-              First Name <span class="text-red-500">*</span>
+            <label class="block mb-1 text-sm font-medium text-ink-muted">
+              First Name <span class="text-error">*</span>
             </label>
             <Input
               v-model="firstName"
@@ -297,8 +300,8 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
           <!-- Father's Name -->
           <div>
-            <label class="block mb-1 text-sm font-medium text-gray-700">
-              Father's Name <span class="text-red-500">*</span>
+            <label class="block mb-1 text-sm font-medium text-ink-muted">
+              Father's Name <span class="text-error">*</span>
             </label>
             <Input
               v-model="fatherName"
@@ -339,13 +342,13 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
                   // required: true
                 }"
               />
-              <p v-if="error" class="mt-2 text-sm text-red-600">{{ error }}</p>
+              <p v-if="error" class="mt-2 text-sm text-error">{{ error }}</p>
             </FamilyDataProvider>
           </div> -->
 
 
           <div>
-            <label class="block mb-1 text-sm font-medium text-gray-700">
+            <label class="block mb-1 text-sm font-medium text-ink-muted">
               Gender 
             </label>
             <Select
@@ -362,7 +365,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
           <!-- Date of Birth -->
           <div>
-            <label class="block mb-1 text-sm font-medium text-gray-700">
+            <label class="block mb-1 text-sm font-medium text-ink-muted">
               Date of Birth
             </label>
             <Input
@@ -386,7 +389,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       >
         <!-- Employee ID -->
         <div class="pb-1">
-          <label class="block mb-2 text-sm font-medium text-gray-700">
+          <label class="block mb-2 text-sm font-medium text-ink-muted">
             Insurance ID
           </label>
           <Input
@@ -402,7 +405,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
         <!-- Phone Number -->
         <div class="py-1">
-          <label class="block mb-1 text-sm font-medium text-gray-700">
+          <label class="block mb-1 text-sm font-medium text-ink-muted">
             Phone Number
           </label>
           <div class="flex gap-2 w-full">
@@ -420,7 +423,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
         <!-- Email -->
         <div class="py-1">
-          <label class="block mb-1 text-sm font-medium text-gray-700">
+          <label class="block mb-1 text-sm font-medium text-ink-muted">
             Email
           </label>
           <InputEmail
@@ -436,11 +439,11 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
       <!-- Address Information -->
       <div class="border border-[#75778B33] p-5">
-        <h3 class="text-md font-medium text-[#75778B] mb-4">Address Information</h3>
+        <h3 class="text-md font-medium text-ink-muted mb-4">Address Information</h3>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <!-- State/Region -->
           <div>
-            <label class="block text-sm font-medium text-[#75778B] mb-1">
+            <label class="block text-sm font-medium text-ink-muted mb-1">
               State/Region 
             </label>
             <Select
@@ -455,7 +458,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           
           <!-- City -->
           <div>
-            <label class="block text-sm font-medium text-[#75778B] mb-1">
+            <label class="block text-sm font-medium text-ink-muted mb-1">
               City 
             </label>
             <Select
@@ -479,7 +482,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           
           <!-- Sub City -->
           <div>
-            <label class="block text-sm font-medium text-[#75778B] mb-1">
+            <label class="block text-sm font-medium text-ink-muted mb-1">
               Sub City 
             </label>
             <Select
@@ -503,7 +506,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           
           <!-- Woreda -->
           <div>
-            <label class="block text-sm font-medium text-[#75778B] mb-1">
+            <label class="block text-sm font-medium text-ink-muted mb-1">
               Woreda 
             </label>
             <Input
@@ -521,7 +524,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
     <div class="flex gap-6 mt-6">
   <!-- Status Selection -->
   <div class="border border-[#75778B33] rounded-lg w-[33%] p-5 bg-white shadow-sm">
-    <label class="block mb-3 text-sm font-medium text-gray-700">
+    <label class="block mb-3 text-sm font-medium text-ink-muted">
       Insurance Status
     </label>
     <div class="flex space-x-4">
@@ -529,15 +532,15 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       <label
         class="inline-flex items-center p-3 rounded-md transition-all cursor-pointer"
         :class="{ 
-          'text-[#02676B] bg-[#DFF1F1] border-2 border-[#02676B]': status === 'ACTIVE',
-          'border border-gray-200 hover:bg-gray-50': status !== 'ACTIVE'
+          'text-primary bg-primary/10 border-2 border-primary': status === 'ACTIVE',
+          'border border-line hover:bg-surface-muted': status !== 'ACTIVE'
         }"
       >
         <input
           type="radio"
           v-model="status"
           value="ACTIVE"
-          class="form-radio h-5 w-5 text-[#02676B] focus:ring-[#DFF1F1]"
+          class="form-radio h-5 w-5 text-primary focus:ring-primary/10"
         />
         <span class="ml-2 font-medium">Active</span>
       </label>
@@ -546,15 +549,15 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       <label
         class="inline-flex items-center p-3 rounded-md transition-all cursor-pointer"
         :class="{ 
-          'text-[#D92D20] bg-[#FEE4E2] border-2 border-[#D92D20]': status === 'INACTIVE',
-          'border border-gray-200 hover:bg-gray-50': status !== 'INACTIVE'
+          'text-error bg-error-soft border-2 border-error': status === 'INACTIVE',
+          'border border-line hover:bg-surface-muted': status !== 'INACTIVE'
         }"
       >
         <input
           type="radio"
           v-model="status"
           value="INACTIVE"
-          class="form-radio h-5 w-5 text-[#D92D20] focus:ring-[#FEE4E2]"
+          class="form-radio h-5 w-5 text-error focus:ring-error-soft"
           @change="hasInactiveDate = 'no'"
         />
         <span class="ml-2 font-medium">Inactive</span>
@@ -569,37 +572,37 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
   >
     <!-- Inactive Date Question -->
     <div class="mb-4">
-      <label class="block mb-2 text-sm font-medium text-gray-700">
+      <label class="block mb-2 text-sm font-medium text-ink-muted">
         Does this Employee have an inactive date?
       </label>
       <div class="flex space-x-4">
         <label 
           class="inline-flex items-center p-2 px-3 rounded-md cursor-pointer"
           :class="{
-            'bg-[#DFF1F1] border border-[#02676B]': hasInactiveDate === 'yes',
-            'border border-gray-200 hover:bg-gray-50': hasInactiveDate !== 'yes'
+            'bg-primary/10 border border-primary': hasInactiveDate === 'yes',
+            'border border-line hover:bg-surface-muted': hasInactiveDate !== 'yes'
           }"
         >
           <input
             type="radio"
             v-model="hasInactiveDate"
             value="yes"
-            class="form-radio h-4 w-4 text-[#02676B]"
+            class="form-radio h-4 w-4 text-primary"
           />
           <span class="ml-2">Yes</span>
         </label>
         <label 
           class="inline-flex items-center p-2 px-3 rounded-md cursor-pointer"
           :class="{
-            'bg-gray-100 border border-gray-400': hasInactiveDate === 'no',
-            'border border-gray-200 hover:bg-gray-50': hasInactiveDate !== 'no'
+            'bg-surface-muted border border-ink-subtle': hasInactiveDate === 'no',
+            'border border-line hover:bg-surface-muted': hasInactiveDate !== 'no'
           }"
         >
           <input
             type="radio"
             v-model="hasInactiveDate"
             value="no"
-            class="w-4 h-4 text-gray-600 form-radio"
+            class="w-4 h-4 text-ink-muted form-radio"
           />
           <span class="ml-2">No</span>
         </label>
@@ -612,7 +615,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
   <div v-if="hasInactiveDate === 'yes'"
     class="border border-[#75778B33] rounded-lg w-[33%] p-5 bg-white shadow-sm transition-all"
   >
-      <label class="block mb-2 text-sm font-medium text-gray-700">
+      <label class="block mb-2 text-sm font-medium text-ink-muted">
         Future Inactive Date
       </label>
       <Input
@@ -620,13 +623,13 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
         name="inactiveDate"
         type="date"
         :attributes="{
-          class: 'w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#02676B]',
+          class: 'w-full p-2 border border-line-strong rounded-md focus:ring-2 focus:ring-primary',
           min: new Date().toISOString().split('T')[0]
         }"
         @input="validateFutureDate(inactiveDate)"
       />
-      <p v-if="dateError" class="mt-1 text-xs text-red-500">{{ dateError }}</p>
-      <p v-else class="mt-1 text-xs text-gray-500">Must be a future date</p>
+      <p v-if="dateError" class="mt-1 text-xs text-error">{{ dateError }}</p>
+      <p v-else class="mt-1 text-xs text-ink-subtle">Must be a future date</p>
     </div>
 </div>
     </div>
@@ -634,12 +637,12 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
     <!-- Form Actions -->
     <div
-      class="flex justify-end px-6 py-4 space-x-4 bg-white rounded-b-lg border-t border-gray-200"
+      class="flex justify-end px-6 py-4 space-x-4 bg-white rounded-b-lg border-t border-line"
     >
       <Button
         type="button"
         @click="props.onCancel"
-        class="px-6 py-2 text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50"
+        class="px-6 py-2 text-ink-muted bg-error rounded-md border border-line-strong hover:bg-surface-muted"
         :disabled="pending"
       >
         Cancel
@@ -654,7 +657,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       <ModalFormSubmitButton
         :pending="pending"
         :btn-text="isEdit ? 'Update Employee' : 'Add Employee'"
-        class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
+        class="bg-primary hover:bg-primary-hover text-white px-6 py-3 border-primary hover:border-primary-hover"
       />
     </div>
   </Form>
@@ -663,14 +666,14 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 <style scoped lang="postcss">
 /* Additional styling for the form */
 :deep(.form-control) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
+  @apply bg-surface-muted border border-line-strong text-ink text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
 }
 
 :deep(.form-select) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
+  @apply bg-surface-muted border border-line-strong text-ink text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
 }
 
 :deep(.form-textarea) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
+  @apply bg-surface-muted border border-line-strong text-ink text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
 }
 </style>

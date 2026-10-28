@@ -1,69 +1,41 @@
 <script setup lang="ts">
-import type { Component } from 'vue';
-
-defineProps<{
-  title?: string;
-  value?: string;
-  change?: string;
-  trend?: string; // 'up' or 'down'
-  icon?: Component;
-  iconBg?: string;  // tailwind bg class for the icon circle
-  iconColor?: string; // tailwind text class for the icon
-}>();
+// KPI tile matching the dashboard's: tinted icon, label, value, optional change.
+defineProps({
+  title: String,
+  value: String,
+  /** e.g. "+4.2%". Omit when no real comparison is available — nothing is shown. */
+  change: { type: String, default: null },
+  trend: String, // 'up' | 'down'
+  /** SVG path data for a 24×24 stroke icon */
+  icon: String,
+  /** "good" | "bad" | "neutral" — colour of the change, independent of direction */
+  sentiment: { type: String, default: "neutral" },
+});
 </script>
 
 <template>
-  <div class="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-6 overflow-hidden">
-    <!-- Gradient background accent -->
-    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
-    
-    <!-- Content -->
-    <div class="relative z-10">
-      <!-- Header with icon -->
-      <div class="flex items-start justify-between mb-4">
-        <div>
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{{ title }}</p>
-          <h3 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">{{ value }}</h3>
-        </div>
-
-        <!-- Lucide icon in a styled circle -->
-        <div
-          :class="[
-            'flex items-center justify-center w-14 h-14 rounded-2xl shadow-md group-hover:scale-110 transition-transform duration-300',
-            iconBg || 'bg-gradient-to-br from-blue-100 to-indigo-100'
-          ]"
-        >
-          <component
-            :is="icon"
-            :class="['w-7 h-7', iconColor || 'text-blue-600']"
-            :stroke-width="1.75"
-          />
-        </div>
-      </div>
-
-      <!-- Change indicator -->
-      <div class="flex items-center gap-2 pt-2">
+  <div class="flex gap-4 items-start p-4 card sm:p-5">
+    <span
+      v-if="icon"
+      class="grid place-items-center w-10 h-10 rounded-lg shrink-0 bg-primary/[0.07] text-primary"
+      aria-hidden="true"
+    >
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path :d="icon" />
+      </svg>
+    </span>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm leading-snug line-clamp-2 text-ink-muted" :title="title">{{ title }}</p>
+      <p class="mt-1 text-2xl font-semibold tracking-tight tabular-nums truncate text-ink" :title="value">{{ value }}</p>
+      <p v-if="change" class="flex gap-1 items-center mt-1 text-xs">
         <span
-          :class="[
-            'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold transition-all',
-            trend === 'up'
-              ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700'
-              : 'bg-gradient-to-r from-red-100 to-red-200 text-red-700 border border-red-200'
-          ]"
+          class="font-medium tabular-nums"
+          :class="sentiment === 'good' ? 'text-success' : sentiment === 'bad' ? 'text-error' : 'text-ink-muted'"
         >
-          <svg v-if="trend === 'up'" class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414-1.414L13.586 7H12z" clip-rule="evenodd" />
-          </svg>
-          <svg v-else class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M12 13a1 1 0 110 2H7a1 1 0 01-1-1V9a1 1 0 112 0v3.586l4.293-4.293a1 1 0 011.414 1.414L9.414 13H12z" clip-rule="evenodd" />
-          </svg>
-          {{ change }}
+          {{ trend === "down" ? "▼" : "▲" }} {{ change.replace(/^[+-]/, "") }}
         </span>
-        <span class="text-xs text-gray-400 font-medium">vs last period</span>
-      </div>
+        <span class="text-ink-subtle">vs last period</span>
+      </p>
     </div>
   </div>
 </template>
-
-<style scoped>
-</style>

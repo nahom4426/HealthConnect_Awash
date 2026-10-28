@@ -21,6 +21,8 @@ const props = defineProps({
 });
 
 function handleSubmit() {
+  if (apiRequest.pending.value) return;
+
   if (isReadOnly.value) {
     toasted(false, "", "Benefits are read-only on amend page");
     return;
@@ -44,9 +46,9 @@ function handleSubmit() {
     return;
   }
 
-  const institutionUuid = route.params.institutionUuid;
-  if (!institutionUuid) {
-    toasted(false, "", "Missing institutionUuid");
+  const payerInstitutionContractUuid = props.data?.payerInstitutionContractUuid || route.params.payerInstitutionContractUuid || route.params.id;
+  if (!payerInstitutionContractUuid) {
+    toasted(false, "", "Missing contract association");
     return;
   }
 
@@ -88,7 +90,7 @@ function handleSubmit() {
         return basePayload;
       });
 
-      return createBenefitsForAllInsured(institutionUuid, payload);
+      return createBenefitsForAllInsured(payerInstitutionContractUuid, payload);
     },
     (res) => {
       if (res.success) {
@@ -138,6 +140,7 @@ function handleSubmit() {
               type="primary"
               html-type="submit"
               v-if="!isReadOnly"
+              :pending="apiRequest.pending.value"
               class="p-2 pt-4 text-white bg-primary"
             >
               Save Packages

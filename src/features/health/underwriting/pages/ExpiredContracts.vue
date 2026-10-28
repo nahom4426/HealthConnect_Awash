@@ -11,7 +11,7 @@ const route = useRoute();
 const dataProvider = ref();
 const institutionName = ref('');
 const status = ref('EXPIRED');
-const statusOptions = ['EXPIRED', 'RENEWED'];
+const statusOptions = ['EXPIRED', 'RENEWED',"RENEWAL_IN_PROGRESS","RENEWAL_SCHEDULED"];
 
 function refreshData() {
   if (dataProvider.value) {
@@ -44,11 +44,11 @@ const handleRefetch = () => {
   <DefaultPage :title="`${institutionName} Expired Contracts`" placeholder="Search contracts...">
     <template #filter>
       <div class="flex gap-2 items-center">
-        <label class="text-sm text-gray-600">Status</label>
+        <label class="text-sm text-ink-muted">Status</label>
         <select
           :value="status"
           @change="handleStatusChange($event.target.value)"
-          class="px-3 py-2 text-sm bg-white rounded-lg border border-gray-200"
+          class="px-3 py-2 text-sm bg-white rounded-lg border border-line"
         >
           <option v-for="opt in statusOptions" :key="opt" :value="opt">
             {{ opt }}

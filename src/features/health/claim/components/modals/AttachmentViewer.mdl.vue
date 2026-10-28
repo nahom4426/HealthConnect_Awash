@@ -9,8 +9,8 @@
         <!-- Header -->
         <div class="flex justify-between items-center p-4 border-b">
           <div class="flex gap-4 items-center">
-            <h3 class="text-lg font-semibold text-gray-900">{{ modalTitle }}</h3>
-            <span v-if="attachments.length > 1" class="text-sm text-gray-500">
+            <h3 class="text-lg font-semibold text-ink">{{ modalTitle }}</h3>
+            <span v-if="attachments.length > 1" class="text-sm text-ink-subtle">
               {{ currentIndex + 1 }} of {{ attachments.length }}
             </span>
           </div>
@@ -19,7 +19,7 @@
               v-if="attachments.length > 1"
               @click="prevAttachment" 
               :disabled="currentIndex === 0"
-              class="p-1 text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-50"
+              class="p-1 text-ink-subtle transition-colors hover:text-ink-muted disabled:opacity-50"
               aria-label="Previous"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,7 +30,7 @@
               v-if="attachments.length > 1"
               @click="nextAttachment"
               :disabled="currentIndex === attachments.length - 1"
-              class="p-1 text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-50"
+              class="p-1 text-ink-subtle transition-colors hover:text-ink-muted disabled:opacity-50"
               aria-label="Next"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@
             </button>
             <button 
               @click="closeModal()" 
-              class="p-1 text-gray-400 transition-colors hover:text-gray-600"
+              class="p-1 text-ink-subtle transition-colors hover:text-ink-muted"
               aria-label="Close"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,22 +51,22 @@
         
         <!-- Loading State -->
         <div v-if="isLoading" class="flex flex-col justify-center items-center p-8 h-96">
-          <div class="mb-4 w-12 h-12 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin"></div>
-          <p class="text-gray-600">Loading attachment...</p>
+          <div class="mb-4 w-12 h-12 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
+          <p class="text-ink-muted">Loading attachment...</p>
         </div>
         
         <!-- Error State -->
         <div v-else-if="error" class="flex flex-col justify-center items-center p-8 h-96 text-center">
-          <div class="p-4 mb-4 bg-red-50 rounded-full">
-            <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-4 mb-4 bg-error-soft rounded-full">
+            <svg class="w-10 h-10 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h4 class="mb-2 text-lg font-medium text-gray-900">Unable to load attachment</h4>
-          <p class="mb-6 text-gray-600">{{ error }}</p>
+          <h4 class="mb-2 text-lg font-medium text-ink">Unable to load attachment</h4>
+          <p class="mb-6 text-ink-muted">{{ error }}</p>
           <button 
             @click="closeModal()" 
-            class="px-4 py-2 text-white bg-blue-600 rounded-md transition-colors hover:bg-blue-700"
+            class="px-4 py-2 text-white bg-primary rounded-md transition-colors hover:bg-primary-hover"
           >
             Close
           </button>
@@ -75,7 +75,7 @@
         <!-- Content -->
         <div v-else class="flex flex-col h-[80vh]">
           <!-- Image Viewer -->
-          <div class="flex overflow-auto flex-1 justify-center items-center p-4 bg-gray-100">
+          <div class="flex overflow-auto flex-1 justify-center items-center p-4 bg-surface-muted">
             <img 
               v-if="currentAttachment && canPreviewImage(currentAttachment)" 
               :src="getImageSource(currentAttachment)" 
@@ -96,16 +96,16 @@
             
             <!-- Unsupported file type -->
             <div v-else class="p-8 text-center">
-              <div class="inline-block p-4 mb-4 bg-gray-100 rounded-full">
-                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="inline-block p-4 mb-4 bg-surface-muted rounded-full">
+                <svg class="w-12 h-12 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h4 class="text-lg font-medium text-gray-900">Unsupported File Type</h4>
-              <p class="mb-6 text-gray-600">This file type cannot be previewed.</p>
+              <h4 class="text-lg font-medium text-ink">Unsupported File Type</h4>
+              <p class="mb-6 text-ink-muted">This file type cannot be previewed.</p>
               <button 
                 @click="downloadCurrentAttachment" 
-                class="px-4 py-2 text-white bg-blue-600 rounded-md transition-colors hover:bg-blue-700"
+                class="px-4 py-2 text-white bg-primary rounded-md transition-colors hover:bg-primary-hover"
               >
                 Download File
               </button>
@@ -114,13 +114,13 @@
           
           <!-- Footer -->
           <div class="flex justify-between items-center p-4 border-t">
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-ink-subtle">
               {{ getFileName(currentAttachment) }}
             </div>
             <div class="flex gap-2">
               <button 
                 @click="downloadCurrentAttachment" 
-                class="flex gap-2 items-center px-3 py-1.5 text-sm text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50"
+                class="flex gap-2 items-center px-3 py-1.5 text-sm text-ink-muted bg-white rounded-md border border-line-strong hover:bg-surface-muted"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -147,10 +147,6 @@ const props = defineProps({
 });
 
 // Debug logging
-console.log('Props data:', props.data);
-console.log('Data attachments:', props.data?.attachments);
-console.log('First attachment data:', props.data?.attachments?.[0]);
-console.log('First attachment base64 preview:', props.data?.attachments?.[0]?.attachment?.substring(0, 100) + '...');
 
 // Get modal title
 const modalTitle = computed(() => {
@@ -237,13 +233,10 @@ const getFileName = (attachment) => {
 const getImageSource = (attachment) => {
   if (!attachment) return '';
   
-  console.log('Processing attachment:', attachment);
   
   // Always use the base64 data from attachment property
   if (attachment.attachment && typeof attachment.attachment === 'string') {
     const base64Str = attachment.attachment.trim();
-    console.log('Base64 string length:', base64Str.length);
-    console.log('Base64 preview (first 100 chars):', base64Str.substring(0, 100));
     
     if (!base64Str || base64Str === 'undefined' || base64Str === 'null') {
       console.error('Empty or invalid base64 string');
@@ -252,7 +245,6 @@ const getImageSource = (attachment) => {
     
     // If it already has data: prefix, return as is
     if (base64Str.startsWith('data:')) {
-      console.log('Already a data URL');
       return base64Str;
     }
     
@@ -262,22 +254,16 @@ const getImageSource = (attachment) => {
     // Check base64 signatures
     if (base64Str.startsWith('iVBOR')) {
       mimeType = 'image/png';
-      console.log('Detected PNG from base64 signature');
     } else if (base64Str.startsWith('/9j/')) {
       mimeType = 'image/jpeg';
-      console.log('Detected JPEG from base64 signature');
     } else if (base64Str.startsWith('R0lGOD') || base64Str.startsWith('GIF8')) {
       mimeType = 'image/gif';
-      console.log('Detected GIF from base64 signature');
     } else if (base64Str.startsWith('JVBER') || base64Str.startsWith('%PDF')) {
       mimeType = 'application/pdf';
-      console.log('Detected PDF from base64 signature');
     } else if (base64Str.startsWith('UEs')) {
       mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      console.log('Detected DOCX from base64 signature');
     } else if (base64Str.startsWith('0M8R')) {
       mimeType = 'application/vnd.ms-excel';
-      console.log('Detected XLS from base64 signature');
     } else {
       // Fallback: check file extension
       if (attachment.attachmentName) {
@@ -285,35 +271,27 @@ const getImageSource = (attachment) => {
         switch (ext) {
           case 'png':
             mimeType = 'image/png';
-            console.log('Detected PNG from file extension');
             break;
           case 'jpg':
           case 'jpeg':
             mimeType = 'image/jpeg';
-            console.log('Detected JPEG from file extension');
             break;
           case 'gif':
             mimeType = 'image/gif';
-            console.log('Detected GIF from file extension');
             break;
           case 'pdf':
             mimeType = 'application/pdf';
-            console.log('Detected PDF from file extension');
             break;
           case 'webp':
             mimeType = 'image/webp';
-            console.log('Detected WebP from file extension');
             break;
           case 'bmp':
             mimeType = 'image/bmp';
-            console.log('Detected BMP from file extension');
             break;
           case 'svg':
             mimeType = 'image/svg+xml';
-            console.log('Detected SVG from file extension');
             break;
           default:
-            console.log('Unknown file extension:', ext, 'using octet-stream');
         }
       }
     }
@@ -321,8 +299,6 @@ const getImageSource = (attachment) => {
     // Create data URL
     try {
       const dataUrl = `data:${mimeType};base64,${base64Str}`;
-      console.log('Created data URL with mime type:', mimeType);
-      console.log('Data URL preview (first 150 chars):', dataUrl.substring(0, 150) + '...');
       return dataUrl;
     } catch (err) {
       console.error('Error creating data URL:', err);
@@ -380,7 +356,6 @@ const nextAttachment = () => {
 };
 
 const handleImageLoad = () => {
-  console.log('Image loaded successfully');
   isLoading.value = false;
   error.value = null;
 };
@@ -421,23 +396,11 @@ const loadCurrentAttachment = () => {
     return;
   }
   
-  console.log('=== Loading Attachment ===');
-  console.log('Attachment object:', currentAttachment.value);
-  console.log('Attachment name:', currentAttachment.value.attachmentName);
-  console.log('Has attachment property:', !!currentAttachment.value.attachment);
-  console.log('Attachment property type:', typeof currentAttachment.value.attachment);
   
   if (currentAttachment.value.attachment) {
     const base64Str = currentAttachment.value.attachment.trim();
-    console.log('Base64 string length:', base64Str.length);
-    console.log('Base64 first 50 chars:', base64Str.substring(0, 50));
-    console.log('Base64 last 50 chars:', base64Str.substring(base64Str.length - 50));
-    console.log('Base64 validation:', validateBase64(base64Str));
   }
   
-  console.log('Can preview as image?', canPreviewImage(currentAttachment.value));
-  console.log('Is PDF?', isPdf(currentAttachment.value));
-  console.log('Image source:', getImageSource(currentAttachment.value));
   
   isLoading.value = true;
   error.value = null;
@@ -445,7 +408,6 @@ const loadCurrentAttachment = () => {
   // Give it a moment to load
   setTimeout(() => {
     if (isLoading.value) {
-      console.log('Loading timeout reached');
       const source = getImageSource(currentAttachment.value);
       if (!source) {
         error.value = 'No valid source found for attachment';
@@ -456,9 +418,6 @@ const loadCurrentAttachment = () => {
 };
 
 onMounted(() => {
-  console.log('=== Component Mounted ===');
-  console.log('Attachments count:', attachments.value.length);
-  console.log('All attachments:', attachments.value);
   
   if (attachments.value.length === 0) {
     error.value = 'No attachments provided';

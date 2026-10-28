@@ -17,20 +17,20 @@
               :class="[
                 'w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm',
                 currentStep > idx
-                  ? 'bg-green-100 text-green-800'
+                  ? 'bg-success-soft text-success-strong'
                   : currentStep === idx
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 text-gray-600',
+                  : 'bg-line text-ink-muted',
               ]"
             >
               {{ idx + 1 }}
             </div>
-            <span class="ml-2 text-sm font-medium text-gray-700">{{ step }}</span>
+            <span class="ml-2 text-sm font-medium text-ink-muted">{{ step }}</span>
             <div
               v-if="idx < steps.length - 1"
               :class="[
                 'w-12 h-1 mx-2',
-                currentStep > idx ? 'bg-green-100' : 'bg-gray-200',
+                currentStep > idx ? 'bg-success-soft' : 'bg-line',
               ]"
             ></div>
           </div>
@@ -38,13 +38,13 @@
 
         <!-- Step 1: Select Institution -->
         <div v-if="currentStep === 0" class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             Select Institution
           </label>
           <select
             v-model="selectedInstitution"
             @change="onInstitutionChange"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full px-4 py-2 border border-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">-- Choose Institution --</option>
             <option
@@ -55,7 +55,7 @@
               {{ contract.contractName }} ({{ contract.contractCode }})
             </option>
           </select>
-          <p v-if="selectedInstitution" class="text-sm text-gray-600">
+          <p v-if="selectedInstitution" class="text-sm text-ink-muted">
             Benefit: {{ selectedInstitutionData?.benefit || 0 }} | Premium:
             {{ selectedInstitutionData?.premium || 0 }}
           </p>
@@ -63,17 +63,17 @@
 
         <!-- Step 2: Select Contract -->
         <div v-if="currentStep === 1" class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             Selected Contract
           </label>
-          <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p class="font-medium text-gray-900">
+          <div class="p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <p class="font-medium text-ink">
               {{ selectedInstitutionData?.contractName }}
             </p>
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-ink-muted">
               Code: {{ selectedInstitutionData?.contractCode }}
             </p>
-            <p class="text-sm text-gray-600 mt-2">
+            <p class="text-sm text-ink-muted mt-2">
               Period:
               {{ formatDate(selectedInstitutionData?.beginDate) }} -
               {{ formatDate(selectedInstitutionData?.endDate) }}
@@ -83,17 +83,17 @@
 
         <!-- Step 3: Select Provider -->
         <div v-if="currentStep === 2" class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             Select Provider
           </label>
           <div v-if="loadingProviders" class="text-center py-4">
-            <p class="text-gray-600">Loading providers...</p>
+            <p class="text-ink-muted">Loading providers...</p>
           </div>
           <select
             v-else
             v-model="selectedProvider"
             @change="onProviderChange"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full px-4 py-2 border border-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">-- Choose Provider --</option>
             <option
@@ -104,43 +104,43 @@
               {{ provider.providerName }} ({{ provider.payerProviderContractCode }})
             </option>
           </select>
-          <p v-if="providers.length === 0" class="text-sm text-red-600">
+          <p v-if="providers.length === 0" class="text-sm text-error">
             No providers available for this contract
           </p>
         </div>
 
         <!-- Step 4: Select Cash Services -->
         <div v-if="currentStep === 3" class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700">
+          <label class="block text-sm font-medium text-ink-muted">
             Select Cash Services
           </label>
           <div v-if="loadingPackages" class="text-center py-4">
-            <p class="text-gray-600">Loading services...</p>
+            <p class="text-ink-muted">Loading services...</p>
           </div>
           <div v-else class="space-y-3 max-h-96 overflow-y-auto">
             <div
               v-for="pkg in packages"
               :key="pkg.packageUuid"
-              class="flex items-start p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+              class="flex items-start p-3 border border-line rounded-lg hover:bg-surface-muted cursor-pointer"
               @click="togglePackage(pkg.packageUuid)"
             >
               <input
                 type="checkbox"
                 :checked="selectedPackages.includes(pkg.packageUuid)"
-                class="mt-1 w-4 h-4 rounded border-gray-300"
+                class="mt-1 w-4 h-4 rounded border-line-strong"
               />
               <div class="ml-3 flex-1">
-                <p class="font-medium text-gray-900">{{ pkg.packageName }}</p>
-                <p class="text-sm text-gray-600">
+                <p class="font-medium text-ink">{{ pkg.packageName }}</p>
+                <p class="text-sm text-ink-muted">
                   {{ pkg.packageCategory }} - {{ pkg.packageDescription }}
                 </p>
-                <p class="text-sm text-gray-500 mt-1">
+                <p class="text-sm text-ink-subtle mt-1">
                   Limit: {{ pkg.minLimit }} - {{ pkg.maxLimit }}
                 </p>
               </div>
             </div>
           </div>
-          <p v-if="packages.length === 0" class="text-sm text-red-600">
+          <p v-if="packages.length === 0" class="text-sm text-error">
             No services available
           </p>
         </div>
@@ -148,10 +148,10 @@
         <!-- Error Message -->
         <div
           v-if="errorMessage"
-          class="flex items-start gap-3 p-4 text-sm text-red-800 bg-red-50 rounded-lg border-l-4 border-red-500"
+          class="flex items-start gap-3 p-4 text-sm text-error-strong bg-error-soft rounded-lg border-l-4 border-error"
         >
           <svg
-            class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
+            class="w-5 h-5 text-error flex-shrink-0 mt-0.5"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -167,13 +167,13 @@
 
       <!-- Footer -->
       <template #bottom>
-        <div class="flex gap-3 justify-between w-full p-4 border-t border-gray-200">
+        <div class="flex gap-3 justify-between w-full p-4 border-t border-line">
           <Button
             v-if="currentStep > 0"
             @click="previousStep"
             type="secondary"
             size="lg"
-            class="border border-gray-300 hover:bg-gray-50"
+            class="border border-line-strong hover:bg-surface-muted"
           >
             Previous
           </Button>
@@ -182,7 +182,7 @@
               @click="closeModal"
               type="secondary"
               size="lg"
-              class="border border-gray-300 hover:bg-gray-50"
+              class="border border-line-strong hover:bg-surface-muted"
             >
               Cancel
             </Button>
@@ -202,7 +202,7 @@
               :pending="submitting"
               type="primary"
               size="lg"
-              class="bg-green-600 hover:bg-green-700"
+              class="bg-success hover:bg-success-strong"
             >
               Add Cash Credits
             </Button>
@@ -369,7 +369,6 @@ async function submitCashCredits() {
       packageUuids: selectedPackages.value,
     };
 
-    console.log("Submitting cash credits:", payload);
 
     // TODO: Call API to create cash credits
     // const response = await createCashCredits(payload);

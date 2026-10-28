@@ -13,9 +13,9 @@ export function getInsuredByContractId(id, query = {}) {
 }
 
 export function getInsuredServiceProvidedHistory(query = {}) {
-	return api.addAuthenticationHeader().get('/claimconnect/service-provided/new', {
-		params: query,
-	});
+  return api.addAuthenticationHeader().get('/claimconnect/service-provided/new', {
+    params: query,
+  });
 }
 
 export function searchInsuredByInstitution(id, query = {}, config = {}) {
@@ -23,7 +23,6 @@ export function searchInsuredByInstitution(id, query = {}, config = {}) {
     params: query,
     ...config
   }).then(response => {
-    console.log("API raw response:", response);
     return response.data;
   }).catch(error => {
     console.error("API error:", error);
@@ -44,12 +43,22 @@ export function searchActiveInsuredByContract(payerInstitutionContractUuid, quer
     throw error;
   });
 }
+
+export function searchActiveInsured(query = {}, config = {}) {
+  return api.addAuthenticationHeader().get(`${path}/active/search`, {
+    params: query,
+    ...config
+  }).then(response => {
+    return response.data;
+  }).catch(error => {
+    throw error;
+  });
+}
 export function getInsuredById(id, query = {}, config = {}) {
   return api.addAuthenticationHeader().get(`${path}/${id}`, {
     params: query,
     ...config
   }).then(response => {
-    console.log("API raw response:", response);
     return response.data;
   }).catch(error => {
     console.error("API error:", error);
@@ -58,32 +67,29 @@ export function getInsuredById(id, query = {}, config = {}) {
 }
 
 export function createInsuredPerson(data) {
-  return api.addAuthenticationHeader().post(`${baseUrl}/insuredperson`, data);
+  return api.addAuthenticationHeader().post(`${baseUrl}/claimconnect/insuredperson`, data);
 }
 
 export function updateInsuredPerson(uuid, data) {
-  return api.addAuthenticationHeader().put(`${baseUrl}/insuredperson/${uuid}`, data);
+  return api.addAuthenticationHeader().put(`${baseUrl}/claimconnect/insuredperson/${uuid}`, data);
 }
 
 export function getInsuredPersonById(uuid) {
-  return api.addAuthenticationHeader().get(`${baseUrl}/insuredperson/${uuid}`);
+  return api.addAuthenticationHeader().get(`${baseUrl}/claimconnect/insuredperson/${uuid}`);
 }
 
+// dryRun: validate and report without saving. merge: add missing dependants/benefits to existing members.
 export function importInsuredPersons(
-  {institutionUuid, payerInstitutionContractUuid} = {},
+  { dryRun = false, merge = false } = {},
   data,
   config = {}
 ) {
-  const queryString = new URLSearchParams({
-    institutionUuid,
-    payerInstitutionContractUuid
-  }).toString();
-
   return api.addAuthenticationHeader().post(
-    `${basePath}/import-insured-and-dependant`,
+    `${basePath}/import-insured-combined`,
     data,
     {
       ...config,
+      params: { ...(config.params || {}), dryRun, merge },
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -129,7 +135,7 @@ export function deleteInsured(id) {
 export function importInsuredMembers(file) {
   const formData = new FormData();
   formData.append('file', file);
-  
+
   return api.addAuthenticationHeader().post(`${basePath}/import`, formData, {
     headers: {
     }
@@ -140,8 +146,9 @@ export function downloadInsuredTemplate() {
   return api.addAuthenticationHeader().get(`${basePath}/export-template`);
 }
 
-export function exportMemberTemplate() {
-  return api.addAuthenticationHeader().get(`${basePath}/export/insured-template`, {
+// Combined (members + dependants) import template for a policy
+export function exportMemberTemplate(policyUuid) {
+  return api.addAuthenticationHeader().get(`${basePath}/export/insured-combined-template/${policyUuid}`, {
     responseType: 'blob' // Important for file download
   });
 }

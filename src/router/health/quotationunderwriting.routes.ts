@@ -1,26 +1,37 @@
 import type { RouteLocationNormalized } from 'vue-router';
-import Institution from "@/features/health/quotation_underwriting/pages/Institution.vue";
-import AddNewPolicy from "@/features/health/quotation_underwriting/pages/AddNewPolicy.vue";
-import AmendPolicy from "@/features/health/quotation_underwriting/pages/AmendPolicy.vue";
-import ImportPolicy from "@/features/health/quotation_underwriting/pages/importPolicy.vue";
-import InstitutionContractDetail from "@/features/health/quotation_underwriting/pages/InstitutionContractDetail.vue";
-import InstitutionContractIndex from "@/features/health/quotation_underwriting/pages/InstitutionContractIndex.vue";
-import InstitutionCoverage from "@/features/health/quotation_underwriting/pages/InstitutionCoverage.vue";
-import InstitutionsInsuredPersons from "@/features/health/quotation_underwriting/pages/InstitutionsInsuredPersons.vue";
-import IssuedPolicy from "@/features/health/quotation_underwriting/pages/IssuedPolicy.vue";
-import UnderwritingIndex from "@/features/health/quotation_underwriting/pages/UnderwritingIndex.vue";
-import InstitutionContracts from "@/features/health/quotation_underwriting/pages/InstitutionContracts.vue";
-import Insured from "@/features/health/insured_persons/pages/Insured.vue";
-import InsuredDetails from "@/features/health/insured_persons/pages/insuredDetails.vue";
-import Coverages from "@/features/health/product_settings/pages/Coverages.vue";
-import InstitutionContractswithIssued from "@/features/health/quotation_underwriting/pages/InstitutionContractswithIssued.vue";
-import AddProviderForInstitution from "@/features/health/providers/pages/AddProviderForInstitution.vue";
-import RemoveCatgorieServices from '@/features/health/providers/pages/removeCatgorieServices.vue';
-import AddInstitution from "@/features/health/institutions/pages/AddInstitution.vue";
-import QuotationInsured from '@/features/health/insured_persons/pages/quotationInsured.vue';
-import StageExclusion from '@/features/health/quotation/pages/StageExclusion.vue';
+const Institution = () => import("@/features/health/quotation_underwriting/pages/Institution.vue");
+const AddNewPolicy = () => import("@/features/health/quotation_underwriting/pages/AddNewPolicy.vue");
+const AmendPolicy = () => import("@/features/health/quotation_underwriting/pages/AmendPolicy.vue");
+const ImportPolicy = () => import("@/features/health/quotation_underwriting/pages/importPolicy.vue");
+const InstitutionContractDetail = () => import("@/features/health/quotation_underwriting/pages/InstitutionContractDetail.vue");
+const InstitutionContractIndex = () => import("@/features/health/quotation_underwriting/pages/InstitutionContractIndex.vue");
+const InstitutionCoverage = () => import("@/features/health/quotation_underwriting/pages/InstitutionCoverage.vue");
+const InstitutionsInsuredPersons = () => import("@/features/health/quotation_underwriting/pages/InstitutionsInsuredPersons.vue");
+const IssuedPolicy = () => import("@/features/health/quotation_underwriting/pages/IssuedPolicy.vue");
+const UnderwritingIndex = () => import("@/features/health/quotation_underwriting/pages/UnderwritingIndex.vue");
+const InstitutionContracts = () => import("@/features/health/quotation_underwriting/pages/InstitutionContracts.vue");
+const Insured = () => import("@/features/health/insured_persons/pages/Insured.vue");
+const InsuredDetails = () => import("@/features/health/insured_persons/pages/insuredDetails.vue");
+const Coverages = () => import("@/features/health/product_settings/pages/Coverages.vue");
+const InstitutionContractswithIssued = () => import("@/features/health/quotation_underwriting/pages/InstitutionContractswithIssued.vue");
+const AddProviderForInstitution = () => import("@/features/health/providers/pages/AddProviderForInstitution.vue");
+const RemoveCatgorieServices = () => import('@/features/health/providers/pages/removeCatgorieServices.vue');
+const AddInstitution = () => import("@/features/health/institutions/pages/AddInstitution.vue");
+const QuotationInsured = () => import('@/features/health/insured_persons/pages/quotationInsured.vue');
+const ImportInsuredsPage = () => import('@/features/health/insured_persons/pages/ImportInsuredsPage.vue');
+const StageExclusion = () => import('@/features/health/quotation/pages/StageExclusion.vue');
+const ExpiredContracts = () => import('@/features/health/quotation_underwriting/pages/ExpiredContracts.vue');
+const PendingRenewalContracts = () => import('@/features/health/quotation_underwriting/pages/PendingRenewalContracts.vue');
+const Utilization = () => import('@/features/health/underwriting/pages/Utilization.vue');
+const EditPendingRenewalQuotation = () => import('@/features/health/quotation_underwriting/pages/EditPendingRenewalQuotation.vue');
+
 
 export default [
+  {
+    path: '/utilization',
+    name: 'Utilization',
+    component: Utilization,
+  },
   {
     path: '/add_new_policy',
     name: 'QuotationUnderwritingMain',
@@ -98,13 +109,21 @@ export default [
     },
   },
   {
-    path: '/insured_persons/:id/:institutionUuid/:quotationUuid/:institutionName',
+    path: '/insured_persons/:payerInstitutionContractUuid/:institutionUuid/:quotationUuid?/:institutionName?',
     name: 'Insured Persons',
     component: QuotationInsured,
     meta: {
       permissions: ['View_Issued_Policy'],
       showActionButtons: true
     }
+  },
+  {
+    path: '/import-insureds/:payerInstitutionContractUuid',
+    name: 'Import Insureds',
+    component: ImportInsuredsPage,
+    meta: {
+      permissions: ['View_Issued_Policy'],
+    },
   },
   {
     path: '/addInstitution/:id/:institutionUuid',
@@ -170,5 +189,29 @@ export default [
     meta: {
       permissions: ['Manage_Exclusion'],
     },
-  }
+  },
+  {
+    path: '/expired_contracts',
+    name: 'Expired Contracts',
+    component: ExpiredContracts,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
+  },
+   {
+    path: '/pending_renewal_contracts',
+    name: 'Pending Renewal Contracts',
+    component: PendingRenewalContracts,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
+  },
+  {
+    path: '/pending_renewal_contracts/edit/:contractUuid',
+    name: 'EditPendingRenewalQuotation',
+    component: EditPendingRenewalQuotation,
+    meta: {
+      permissions: ['Amend Policy'],
+    },
+  },
 ]

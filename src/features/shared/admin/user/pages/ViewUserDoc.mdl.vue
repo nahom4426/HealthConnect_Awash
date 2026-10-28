@@ -39,7 +39,7 @@ req.send(
             ]
         }" :pending="req.pending.value" :rows="req.response.value">
             <template #actions="{ row }">
-                <button class="rounded-lg bg-primary text-white px-3 py-2 border-gray-300"
+                <button class="rounded-lg bg-primary text-white px-3 py-2 border-line-strong"
                     @click='openModal("ViewUserDOcView", { fileName: row?.fileName })'>View</button>
 
 

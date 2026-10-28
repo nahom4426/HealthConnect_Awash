@@ -6,11 +6,12 @@ export const useDarkModeStore = defineStore('darkMode', () => {
 
   watch(isDark, (val) => {
     localStorage.setItem('eic-dark-mode', String(val));
-    if (val) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    // Both hooks: `.dark` for the module/login screens, data-theme for the
+    // design tokens in assets/wind.css and theme-dark.css.
+    const root = document.documentElement;
+    root.classList.toggle('dark', val);
+    root.dataset.theme = val ? 'dark' : 'light';
+    root.style.colorScheme = val ? 'dark' : 'light';
   }, { immediate: true });
 
   function toggle() {

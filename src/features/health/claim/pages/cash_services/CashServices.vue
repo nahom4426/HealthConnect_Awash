@@ -1,4 +1,5 @@
 <script setup>
+import PersonAvatar from "@/components/PersonAvatar.vue";
 import { ref, onMounted } from 'vue';
 import DefaultPage from '@/components/DefaultPage.vue';
 import Button from '@/components/Button.vue';
@@ -8,21 +9,14 @@ import ServiceSelection from '@/features/health/claim/components/cash_services/S
 import { useRouter, useRoute } from 'vue-router';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { getServiceProvidedById } from '@/features/health/claim/api/claimApi';
+import { canEditServiceProvided, editLockReason } from '@/features/health/claim/utils/serviceEditLock';
+import { toasted } from '@/utils/utils';
 
 const router = useRouter();
 const route = useRoute();
 
 const editReq = useApiRequest();
 const editServiceProvided = ref(null);
-
-// Format profile image source to handle both URLs and base64
-const formatImageSource = (profile) => {
-  if (!profile) return '';
-  // Check if it's a base64 string (starts with iVBOR for PNG or /9j/ for JPEG)
-  const isBase64 = profile.startsWith('iVBOR') || profile.startsWith('/9j/');
-  // If it's base64, add the data URL prefix, otherwise return as is
-  return isBase64 ? `data:image/png;base64,${profile}` : profile;
-};
 
 const active = ref(0);
 
@@ -47,6 +41,11 @@ async function loadEditServiceProvided() {
     (res) => {
       if (!res?.success) return;
       const data = res?.data ?? res;
+      if (!canEditServiceProvided(data)) {
+        toasted(false, '', editLockReason(data));
+        router.replace({ path: '/cash_claims' });
+        return;
+      }
       editServiceProvided.value = data;
 
       selection.value = {
@@ -72,12 +71,10 @@ async function loadEditServiceProvided() {
 
 function handleEligibilityComplete(payload) {
   selection.value = { ...selection.value, ...payload };
-  console.log('[cash_services] eligibility complete -> selection:', selection.value);
   active.value = 1;
 }
 
 function handleCashServiceSubmitted(action = 'add') {
-  console.log('[cash_services] service submitted action:', action, 'current selection:', selection.value);
   editServiceProvided.value = null;
   if (route.query?.editServiceProvidedUuid) {
     router.replace({ path: '/cash_services' });
@@ -141,10 +138,10 @@ onMounted(() => {
               :class="[
                 'px-4 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2',
                 active === i
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-primary to-primary text-white shadow-lg'
                   : i === 0 || selection.person
-                  ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  : 'text-gray-400'
+                  ? 'text-ink-muted hover:text-ink hover:bg-surface-muted'
+                  : 'text-ink-subtle'
               ]"
             >
               <span v-if="i === 0">✓</span>
@@ -154,7 +151,7 @@ onMounted(() => {
             <!-- Underline Animation -->
             <div
               v-if="active === i"
-              class="absolute right-0 bottom-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
+              class="absolute right-0 bottom-0 left-0 h-1 bg-gradient-to-r from-primary to-primary rounded-full"
             ></div>
           </div>
         </div>
@@ -173,19 +170,19 @@ onMounted(() => {
         <Transition name="slide-left">
           <div
             v-if="selection.person"
-            class="flex gap-3 items-center px-4 py-2 mx-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border border-blue-200"
+            class="flex gap-3 items-center px-4 py-2 mx-4 bg-gradient-to-r from-primary/5 to-primary/5 rounded-lg border border-primary/20"
           >
             <div class="relative">
-              <div v-if="selection.person.profile" class="flex overflow-hidden justify-center items-center w-8 h-8 rounded-full border-2 border-white shadow-sm">
-                <img :src="formatImageSource(selection.person.profile)" class="object-cover w-full h-full" alt="Profile" />
-              </div>
-              <div v-else class="flex justify-center items-center w-8 h-8 text-sm font-bold text-white bg-gradient-to-br from-blue-400 to-blue-600 rounded-full shadow-sm">
-                {{ selection.person.firstName?.charAt(0)?.toUpperCase() || selection.person?.name?.charAt(0)?.toUpperCase() }}
-              </div>
+              <PersonAvatar
+                :photo="selection.person.profile"
+                :gender="selection.person.gender"
+                alt="Profile"
+                class="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+              />
             </div>
             <div class="min-w-0">
-              <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase truncate">Current Person</p>
-              <p class="text-sm font-bold text-gray-900 truncate">{{ selection.person?.name }}</p>
+              <p class="text-xs font-semibold tracking-wide text-ink-subtle uppercase truncate">Current Person</p>
+              <p class="text-sm font-bold text-ink truncate">{{ selection.person?.name }}</p>
             </div>
           </div>
         </Transition>

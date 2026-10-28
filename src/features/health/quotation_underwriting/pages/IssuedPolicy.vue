@@ -25,7 +25,7 @@ const status = ref('ACTIVE');
       <InstitutionByStatusDataProvider
         :status="status"
         :search="search"
-        v-slot="{ institutions, pending }"
+        v-slot="{ institutions, pending }"  
       >
         <Table
           :pending="pending"

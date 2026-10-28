@@ -1,16 +1,18 @@
-import AcceptedQuotations from "@/features/health/quotation/pages/AcceptedQuotations.vue";
-import CreateNewQuotaions from "@/features/health/quotation/pages/CreateNewQuotaions.vue";
-import IssuedQuotaions from "@/features/health/quotation/pages/IssuedQuotaions.vue";
-import NewQuotation from "@/features/health/quotation/pages/NewQuotation.vue";
-import QuotationIndex from "@/features/health/quotation/pages/QuotationIndex.vue";
-import SavedQuotations from "@/features/health/quotation/pages/SavedQuotations.vue";
-import EditQuotation from "@/features/health/quotation/pages/EditQuotation.vue";
-import ViewIssuedQuotation from "@/features/health/quotation/pages/ViewIssuedQuotation.vue";
-import ViewAcceptedQuotation from "@/features/health/quotation/pages/ViewAcceptedQuotation.vue";
-import ViewSavedQuotation from "@/features/health/quotation/pages/ViewSavedQuotation.vue";
-import PaidQuotations from "@/features/health/quotation/pages/PaidQuotations.vue";
-import InclusionCreate from "@/features/health/quotation/pages/InclusionCreate.vue";
-import Inclusion from "@/features/health/quotation/pages/Inclusion.vue";
+const AcceptedQuotations = () => import("@/features/health/quotation/pages/AcceptedQuotations.vue");
+const CreateNewQuotaions = () => import("@/features/health/quotation/pages/CreateNewQuotaions.vue");
+const IssuedQuotaions = () => import("@/features/health/quotation/pages/IssuedQuotaions.vue");
+const NewQuotation = () => import("@/features/health/quotation/pages/NewQuotation.vue");
+const QuotationIndex = () => import("@/features/health/quotation/pages/QuotationIndex.vue");
+const SavedQuotations = () => import("@/features/health/quotation/pages/SavedQuotations.vue");
+const EditQuotation = () => import("@/features/health/quotation/pages/EditQuotation.vue");
+const ViewIssuedQuotation = () => import("@/features/health/quotation/pages/ViewIssuedQuotation.vue");
+const ViewAcceptedQuotation = () => import("@/features/health/quotation/pages/ViewAcceptedQuotation.vue");
+const ViewSavedQuotation = () => import("@/features/health/quotation/pages/ViewSavedQuotation.vue");
+const PaidQuotations = () => import("@/features/health/quotation/pages/PaidQuotations.vue");
+const InclusionCreate = () => import("@/features/health/quotation/pages/InclusionCreate.vue");
+const Inclusion = () => import("@/features/health/quotation/pages/Inclusion.vue");
+
+const CreateIndividualQuotation = () => import("@/features/health/quotation/pages/CreateIndividualQuotation.vue");
 
 export default [
 	{
@@ -29,6 +31,12 @@ export default [
 				path: 'generate/:institutionUuid',
 				name: 'Generate Quotaion',
 				component: CreateNewQuotaions,
+				//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
+			},
+			{
+				path: 'individual/:insuredUuid',
+				name: 'Generate Individual Quotation',
+				component: CreateIndividualQuotation,
 				//  meta: { requiresAuth: true, permissions: ["Manages_Quotation"] },
 			}
 		]

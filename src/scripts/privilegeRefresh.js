@@ -44,9 +44,7 @@ export async function refreshPrivileges(userId) {
 
   try {
 
-    console.log('🔄 [PrivilegeRefresh] Starting privilege refresh for user:', userId);
 
-    console.log('[PrivilegeRefresh] userDetail BEFORE refresh:', localStorage.getItem('userDetail'));
 
     
 
@@ -66,17 +64,8 @@ export async function refreshPrivileges(userId) {
 
 
 
-    console.log('[PrivilegeRefresh] currentUser.userUuid:', currentUser?.userUuid);
 
-    console.log('[PrivilegeRefresh] currentUser.roleUuid:', currentUser?.roleUuid);
 
-    console.log(
-
-      '[PrivilegeRefresh] currentUser privileges length:',
-
-      Array.isArray(currentUser?.privileges) ? currentUser.privileges.length : 'not-array'
-
-    );
 
 
 
@@ -84,7 +73,6 @@ export async function refreshPrivileges(userId) {
 
     const response = await getUserById(userId);
 
-    console.log('📥 [PrivilegeRefresh] API response:', response);
 
 
 
@@ -142,11 +130,8 @@ export async function refreshPrivileges(userId) {
 
 
 
-    console.log('[PrivilegeRefresh] updatedUser keys:', Object.keys(updatedUser || {}));
 
-    console.log('[PrivilegeRefresh] updatedUser.role exists?', !!updatedUser?.role);
 
-    console.log('[PrivilegeRefresh] updatedUser.role.privilegeList length:', Array.isArray(updatedUser?.role?.privilegeList) ? updatedUser.role.privilegeList.length : 'not-array');
 
 
 
@@ -206,7 +191,6 @@ export async function refreshPrivileges(userId) {
 
         .filter(Boolean);
 
-      console.log('🔧 [PrivilegeRefresh] Rebuilt privileges from role privilegeList:', mergedUser.privileges);
 
     } else if (updatedUser.privileges) {
 
@@ -216,7 +200,6 @@ export async function refreshPrivileges(userId) {
 
         .filter(Boolean);
 
-      console.log('✅ [PrivilegeRefresh] Using privileges from API response:', mergedUser.privileges);
 
     } else {
 
@@ -224,7 +207,6 @@ export async function refreshPrivileges(userId) {
 
       mergedUser.privileges = currentUser.privileges || [];
 
-      console.log('⚠️ [PrivilegeRefresh] No privileges in response, keeping current:', mergedUser.privileges);
 
     }
 
@@ -238,13 +220,6 @@ export async function refreshPrivileges(userId) {
 
       mergedUser.roleUuid = updatedUser.role.roleUuid || updatedUser.role.uuid;
 
-      console.log('👑 [PrivilegeRefresh] Updated role info:', {
-
-        roleName: mergedUser.roleName,
-
-        roleUuid: mergedUser.roleUuid
-
-      });
 
     }
 
@@ -252,13 +227,11 @@ export async function refreshPrivileges(userId) {
 
     // Update auth store with merged user data
 
-    console.log('[PrivilegeRefresh] mergedUser (will be passed to setAuth):', mergedUser);
 
     authStore.setAuth(mergedUser);
 
 
 
-    console.log('[PrivilegeRefresh] userDetail AFTER refresh:', localStorage.getItem('userDetail'));
 
     
 
@@ -282,17 +255,6 @@ export async function refreshPrivileges(userId) {
 
 
 
-    console.log('✅ [PrivilegeRefresh] Privileges refreshed successfully:', {
-
-      userId,
-
-      privilegesCount: mergedUser.privileges.length,
-
-      roleName: mergedUser.roleName,
-
-      privileges: mergedUser.privileges
-
-    });
 
 
 
@@ -428,7 +390,6 @@ export function onPrivilegesUpdated(callback) {
 
   const handler = (event) => {
 
-    console.log('🎯 [PrivilegeRefresh] Privileges updated event received:', event.detail);
 
     callback(event.detail);
 

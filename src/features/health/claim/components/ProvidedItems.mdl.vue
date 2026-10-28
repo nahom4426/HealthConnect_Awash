@@ -330,18 +330,18 @@ async function performAction(action) {
           </div>
           <div>
             <h3 class="text-lg font-semibold">{{ title }}</h3>
-            <p class="text-sm text-gray-500">
+            <p class="text-sm text-ink-subtle">
               {{ localItems.length }} item{{ localItems.length !== 1 ? "s" : "" }} •
               total: <span class="font-medium">{{ formatCurrency(total) }}</span>
             </p>
             <!-- Status badges -->
-            <span v-if="isServiceClaimRejected" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
+            <span v-if="isServiceClaimRejected" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-error-strong bg-error-soft rounded-full">
               ⛔ Claim Rejected
             </span>
-            <span v-else-if="isServiceClaimProcessed" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+            <span v-else-if="isServiceClaimProcessed" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-success-strong bg-success-soft rounded-full">
               ✓ Claim Processed
             </span>
-            <span v-else-if="isServiceClaimCompleted" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+            <span v-else-if="isServiceClaimCompleted" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-primary-hover bg-primary/10 rounded-full">
               ✓ Claim Completed
             </span>
           </div>
@@ -358,7 +358,7 @@ async function performAction(action) {
             :pending="false"
             :showPagination="false"
             class="w-full"
-            :rowClass="(r) => (isRejectedItem(r) ? 'bg-red-50 text-red-800 hover:bg-red-50 line-through' : '')"
+            :rowClass="(r) => (isRejectedItem(r) ? 'bg-error-soft text-error-strong hover:bg-error-soft line-through' : '')"
             :headers="{
               head: tableHeaders,
               row: tableRowFields
@@ -366,14 +366,14 @@ async function performAction(action) {
             :rows="localItems"
           >
             <template #placeholder>
-              <div class="py-8 text-center text-gray-500">
+              <div class="py-8 text-center text-ink-subtle">
                 <div v-html="icons.no_data" class="mx-auto mb-3 w-16 h-16"></div>
                 No items available
               </div>
             </template>
 
             <template #itemName="{ row }">
-              <span :class="isRejectedItem(row) ? 'text-red-700 font-medium' : 'text-gray-800'">
+              <span :class="isRejectedItem(row) ? 'text-error-strong font-medium' : 'text-ink'">
                 {{ row?.itemName || '-' }}
               </span>
             </template>
@@ -381,14 +381,14 @@ async function performAction(action) {
             <template #type="{ row }">
               <span
                 class="inline-block px-2 py-0.5 text-xs font-medium rounded-full"
-                :class="detectType(row) === 'Drug' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'"
+                :class="detectType(row) === 'Drug' ? 'bg-error-soft text-error-strong' : 'bg-primary/10 text-primary-hover'"
               >
                 {{ detectType(row) }}
               </span>
             </template>
 
             <template #packageUuid="{ row }">
-              <span v-if="loadingPackages" class="text-xs text-gray-400">Loading...</span>
+              <span v-if="loadingPackages" class="text-xs text-ink-subtle">Loading...</span>
               <span v-else>{{ getPackageName(row.packageUuid) }}</span>
             </template>
 
@@ -396,7 +396,7 @@ async function performAction(action) {
             <template v-if="showCoverageColumn" #coverage="{ row }">
               <span
                 class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
-                :class="getCoverageLabel(row) === 'AUTHORIZED' ? 'bg-green-100 text-green-700' : (getCoverageLabel(row) === 'EXCESS' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600')"
+                :class="getCoverageLabel(row) === 'AUTHORIZED' ? 'bg-success-soft text-success-strong' : (getCoverageLabel(row) === 'EXCESS' ? 'bg-warning-soft text-warning-strong' : 'bg-surface-muted text-ink-muted')"
               >
                 {{ getCoverageLabel(row) }}
               </span>
@@ -431,16 +431,16 @@ async function performAction(action) {
             <template #itemClaimStatus="{ row }">
               <span
                 v-if="isRejectedItem(row)"
-                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full border border-red-200"
+                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-error-strong bg-error-soft rounded-full border border-error/20"
               >
-                <span class="mr-1.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                <span class="mr-1.5 w-1.5 h-1.5 bg-error rounded-full"></span>
                 REJECTED
               </span>
               <span
                 v-else
-                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full border border-amber-200"
+                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-warning-strong bg-warning-soft rounded-full border border-warning/20"
               >
-                <span class="mr-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                <span class="mr-1.5 w-1.5 h-1.5 bg-warning rounded-full"></span>
                 {{ row?.itemClaimStatus || 'PENDING' }}
               </span>
             </template>
@@ -450,7 +450,7 @@ async function performAction(action) {
                 <Button
                   v-if="row.authorizationUuid"
                   type="link"
-                  class="!text-blue-600 hover:!text-blue-800"
+                  class="!text-primary hover:!text-primary-hover"
                   @click.stop="openAuthorizationDetails(row.authorizationUuid)"
                 >
                   Auth Details
@@ -460,12 +460,12 @@ async function performAction(action) {
                   v-if="!isRejectedItem(row) && !isServiceClaimRejected && !isServiceClaimProcessed && !isServiceClaimCompleted"
                   type="danger"
                   size="sm"
-                  class="border border-red-200 !bg-red-50 !text-red-700 hover:!bg-red-100"
+                  class="border border-error/20 !bg-error-soft !text-error-strong hover:!bg-error-soft"
                   @click.stop="openRejectItemModal(row)"
                 >
                   Reject
                 </Button>
-                <span v-else-if="isRejectedItem(row)" class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded-lg border border-red-100">
+                <span v-else-if="isRejectedItem(row)" class="inline-flex items-center px-2 py-1 text-xs font-medium text-error-strong bg-error-soft rounded-lg border border-error-soft">
                   <svg class="mr-1 w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                   </svg>
@@ -475,8 +475,8 @@ async function performAction(action) {
             </template>
           </Table>
 
-          <div v-if="localItems.length" class="flex justify-end px-4 py-3 mt-2 text-sm bg-gray-50 rounded-lg border border-gray-100">
-            <div class="text-gray-600">Total</div>
+          <div v-if="localItems.length" class="flex justify-end px-4 py-3 mt-2 text-sm bg-surface-muted rounded-lg border border-line">
+            <div class="text-ink-muted">Total</div>
             <div class="ml-8 font-semibold">{{ formatCurrency(total) }}</div>
           </div>
         </div>
@@ -484,25 +484,25 @@ async function performAction(action) {
         <!-- Hide remark and resubmit options if service claim is rejected, processed, or completed -->
         <div v-if="!isServiceClaimRejected && !isServiceClaimProcessed && !isServiceClaimCompleted">
           <div class="mt-4">
-            <label class="block mb-2 text-sm text-gray-600">Remark (optional)</label>
+            <label class="block mb-2 text-sm text-ink-muted">Remark (optional)</label>
             <textarea v-model="remark" rows="2" class="p-2 w-full text-sm rounded border" placeholder="Add a remark (optional)"></textarea>
           </div>
 
           <div class="mt-4">
-            <label class="flex gap-3 items-center text-sm text-gray-700">
+            <label class="flex gap-3 items-center text-sm text-ink-muted">
               <input v-model="canResubmit" type="checkbox" class="w-4 h-4" />
               <span>Allow resubmission after rejection</span>
             </label>
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="mt-1 text-xs text-ink-subtle">
               If enabled, the provider can fix the issue and resubmit.
             </p>
           </div>
         </div>
       </div>
 
-      <div class="flex justify-between items-center px-6 py-4 bg-gray-50 border-t">
+      <div class="flex justify-between items-center px-6 py-4 bg-surface-muted border-t">
         <div class="flex gap-3 items-center">
-          <div class="text-sm text-gray-600">Items: <span class="font-medium">{{ localItems.length }}</span></div>
+          <div class="text-sm text-ink-muted">Items: <span class="font-medium">{{ localItems.length }}</span></div>
           <Button
             type="primary"
             class="!bg-purple-600 hover:!bg-purple-700"
@@ -518,14 +518,14 @@ async function performAction(action) {
         
         <!-- If rejected - show view only message (no buttons) -->
         <div v-if="isServiceClaimRejected" class="flex gap-3 items-center">
-          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg border border-red-200">
+          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-error-strong bg-error-soft rounded-lg border border-error/20">
             <span class="mr-2">⛔</span> This claim has been rejected - View Only
           </span>
         </div>
         
         <!-- If processed or completed - show status message and Process button only (no Reject) -->
         <div v-else-if="isServiceClaimProcessed || isServiceClaimCompleted" class="flex gap-3 items-center">
-          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-lg border border-green-200">
+          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-success-strong bg-success-soft rounded-lg border border-success/20">
             <span class="mr-2">✓</span> This claim is {{ isServiceClaimProcessed ? 'processed' : 'completed' }}
           </span>
           <Button type="primary" @click="rejectMode = false; performAction('PROCESSED')" :pending="req.pending.value">Process</Button>
@@ -545,17 +545,17 @@ async function performAction(action) {
     <div class="overflow-hidden w-full max-w-2xl bg-white rounded-lg shadow-xl">
       <div class="flex justify-between items-start px-6 py-4 border-b">
         <div>
-          <h3 class="text-lg font-semibold text-gray-800">Authorization Details</h3>
-          <p class="text-sm text-gray-500">View authorization information for this item.</p>
+          <h3 class="text-lg font-semibold text-ink">Authorization Details</h3>
+          <p class="text-sm text-ink-subtle">View authorization information for this item.</p>
         </div>
         <Button size="sm" type="link" @click="showAuthorizationModal = false">Close</Button>
       </div>
 
       <div class="p-6">
-        <div v-if="authorizationLoading" class="text-sm text-gray-600">Loading...</div>
-        <div v-else-if="authorizationError" class="text-sm text-red-600">{{ authorizationError }}</div>
+        <div v-if="authorizationLoading" class="text-sm text-ink-muted">Loading...</div>
+        <div v-else-if="authorizationError" class="text-sm text-error">{{ authorizationError }}</div>
         <div v-else class="text-sm">
-          <pre class="overflow-auto p-4 text-xs bg-gray-50 rounded border">{{ authorizationDetails }}</pre>
+          <pre class="overflow-auto p-4 text-xs bg-surface-muted rounded border">{{ authorizationDetails }}</pre>
         </div>
       </div>
     </div>
@@ -566,37 +566,37 @@ async function performAction(action) {
     <div class="overflow-hidden w-full max-w-xl bg-white rounded-lg shadow-xl">
       <div class="flex justify-between items-start px-6 py-4 border-b">
         <div>
-          <h3 class="text-lg font-semibold text-gray-800">Reject Provided Service</h3>
-          <p class="text-sm text-gray-500">Add a reason and reject this single item.</p>
+          <h3 class="text-lg font-semibold text-ink">Reject Provided Service</h3>
+          <p class="text-sm text-ink-subtle">Add a reason and reject this single item.</p>
         </div>
         <Button size="sm" type="link" @click="closeRejectItemModal">Close</Button>
       </div>
 
       <div class="p-6">
-        <div class="p-4 bg-gray-50 rounded-lg border">
-          <div class="text-sm font-medium text-gray-800">{{ rejectTargetItem?.itemName || '-' }}</div>
-          <div class="mt-1 text-xs text-gray-500">Item ID: {{ rejectTargetItem?.itemId || '-' }}</div>
+        <div class="p-4 bg-surface-muted rounded-lg border">
+          <div class="text-sm font-medium text-ink">{{ rejectTargetItem?.itemName || '-' }}</div>
+          <div class="mt-1 text-xs text-ink-subtle">Item ID: {{ rejectTargetItem?.itemId || '-' }}</div>
         </div>
 
         <div class="mt-4">
-          <label class="block mb-2 text-sm text-gray-600">Remark</label>
+          <label class="block mb-2 text-sm text-ink-muted">Remark</label>
           <textarea
             v-model="rejectItemRemark"
             rows="3"
-            class="p-3 w-full text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-200"
+            class="p-3 w-full text-sm rounded-lg border border-line focus:outline-none focus:ring-2 focus:ring-error/20"
             placeholder="Explain why you are rejecting this item..."
           ></textarea>
         </div>
 
         <div class="mt-4">
-          <label class="flex gap-3 items-center text-sm text-gray-700">
+          <label class="flex gap-3 items-center text-sm text-ink-muted">
             <input v-model="rejectItemCanResubmit" type="checkbox" class="w-4 h-4" />
             <span>Allow resubmission after rejection</span>
           </label>
         </div>
       </div>
 
-      <div class="flex gap-3 justify-end px-6 py-4 bg-gray-50 border-t">
+      <div class="flex gap-3 justify-end px-6 py-4 bg-surface-muted border-t">
         <Button type="secondary" @click="closeRejectItemModal">Cancel</Button>
         <Button
           type="danger"
@@ -619,22 +619,22 @@ async function performAction(action) {
 }
 
 /* Additional modern styling for rejected items */
-:deep(.bg-red-50) {
+:deep(.bg-error-soft) {
   --tw-bg-opacity: 0.5;
 }
 
-:deep(.bg-red-50 td) {
+:deep(.bg-error-soft td) {
   position: relative;
 }
 
-:deep(.bg-red-50 td::before) {
+:deep(.bg-error-soft td::before) {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 3px;
-  background: #ef4444;
+  background: rgb(var(--error));
   border-radius: 2px;
 }
 </style>

@@ -8,12 +8,15 @@ const props = defineProps({
   rowData: { type: Array, required: true },
   rowKeys: { type: Array, required: true },
   headKeys: { type: Array, required: true },
-  payerInstitutionContractUuid: { type: String, required: true },
+  payerInstitutionContractUuid: { type: String, required: false, default: '' },
   institutionUuid: { type: String, default: '' },
   onView: { type: Function, default: () => {} },
   onEdit: { type: Function, default: () => {} },
   onDelete: { type: Function, default: () => {} },
   onRowClick: { type: Function, default: () => {} },
+  onRefetch: { type: Function, default: () => {} },
+  cells: { type: [Object, Array], default: () => ({}) },
+  hideIndex: { type: Boolean, default: false },
 });
 
 const router = useRouter();
@@ -22,13 +25,13 @@ function getStatusStyle(status) {
   const base = "px-3 py-0.5 rounded-full text-center";
   switch (status?.toUpperCase()) {
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-600`;
+      return `${base} bg-success-soft text-success`;
     case "PENDING":
-      return `${base} bg-yellow-100 text-yellow-600`;
+      return `${base} bg-warning-soft text-warning`;
     case "CLOSED":
-      return `${base} bg-red-100 text-red-600`;
+      return `${base} bg-error-soft text-error`;
     default:
-      return `${base} bg-gray-100 text-gray-600`;
+      return `${base} bg-surface-muted text-ink-muted`;
   }
 }
 function formatCurrency(val) {
@@ -40,8 +43,6 @@ function formatDate(date) {
 
 // Debug function to see what data is available
 function navigateToAmendInsuredPersons(row) {
-  console.log("Row data:", row);
-  console.log("Props:", props);
   
   // Try to get the correct values from the row
   const routeParams = {
@@ -51,21 +52,29 @@ function navigateToAmendInsuredPersons(row) {
     institutionName: row.institutionName || 'IFDC'
   };
   
-  console.log("Route params:", routeParams);
   
   // Use path-based navigation instead of name-based
   const path = `/insured_persons/${routeParams.id}/${routeParams.institutionUuid}/${routeParams.quotationUuid}/${encodeURIComponent(routeParams.institutionName)}?pageContext=amend`;
   
-  console.log("Navigating to:", path);
   
   router.push(path);
 }
 
 function openEditModal(row) {
   openModal('EditInstitutionContract', {
-    payerInstitutionContractUuid: row.payerInstitutionContractUuid,
+    payerInstitutionContractUuid: row.payerInstitutionContractUuid || props.payerInstitutionContractUuid,
     contract: row,
-    payerInstitutionContractUuid: props.payerInstitutionContractUuid
+    onRefetch: props.onRefetch
+  });
+}
+
+function openRenewModal(row) {
+  openModal('RenewContract', {
+    contractUuid: row.payerInstitutionContractUuid || props.payerInstitutionContractUuid,
+    contract: row,
+    policyNumber: row.policyNumber || '',
+    previousEndDate: row.endDate || '',
+    onRefetch: props.onRefetch
   });
 }
 
@@ -97,21 +106,21 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     v-for="(row, idx) in rowData"
     :key="row.payerInstitutionContractUuid || idx"
     @click.self="props.onRowClick(row)"
-    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-blue-50 group"
+    class="bg-white rounded-lg border-b transition-all duration-200 cursor-pointer hover:shadow-md hover:bg-primary/5 group"
   >
     <!-- Index -->
-    <td class="p-4 text-sm font-semibold text-gray-400 select-none">
+    <td class="p-4 text-sm font-semibold text-ink-subtle select-none">
       {{ idx + 1 }}
     </td>
 
     <!-- Contract Name -->
-    <td class="p-4 font-medium text-gray-800">
+    <td class="p-4 font-medium text-ink">
       {{ row.contractName }}
-      <div class="text-xs text-gray-500">Code: {{ row.contractCode }}</div>
+      <div class="text-xs text-ink-subtle">Code: {{ row.contractCode }}</div>
     </td>
 
     <!-- Date Range -->
-    <td class="p-4 text-gray-600">
+    <td class="p-4 text-ink-muted">
       {{ formatDate(row.beginDate) }} <span class="text-orange-500">→</span> {{ formatDate(row.endDate) }}
     </td>
 
@@ -125,10 +134,10 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
     <!-- Dropdown Actions -->
     <td class="flex gap-3 items-center py-4">
       <!-- Edit Policy Button -->
-      <div class="flex gap-2 pt-2 border-gray-100">
+      <div class="flex gap-2 pt-2 border-line">
         <button
           @click.stop="openEditModal(row)"
-          class="flex p-2 text-blue-600 bg-blue-50 rounded-lg rounded-full transition-colors hover:bg-blue-100 hover:text-blue-700"
+          class="flex p-2 text-primary bg-primary/5 rounded-lg rounded-full transition-colors hover:bg-primary/10 hover:text-primary-hover"
         >
           <svg xmlns="http://www.w3.org/2000/svg"
                class="w-5 h-5"
@@ -138,10 +147,23 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
           </svg>
           <span class="text-sm font-medium">Edit Policy</span>
         </button>
+
+        <button
+          @click.stop="openRenewModal(row)"
+          class="flex p-2 text-success bg-success-soft rounded-lg rounded-full transition-colors hover:bg-success-soft hover:text-success-strong"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg"
+               class="w-5 h-5"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+          </svg>
+          <span class="text-sm font-medium">Renew</span>
+        </button>
         
         <button
           @click.stop="navigateToAmendInsuredPersons(row)"
-          class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-red-600 bg-red-50 rounded border border-red-200 transition-all duration-200 hover:bg-red-100"
+          class="inline-flex flex-1 gap-0.5 justify-center items-center px-1 py-1 min-w-0 text-xs font-medium text-error bg-error-soft rounded border border-error/20 transition-all duration-200 hover:bg-error-soft"
           title="Persons"
         >
           <svg class="flex-shrink-0 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,10 +186,10 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   display: inline-block;
   text-transform: capitalize;
 }
-.bg-green-100 { background-color: #d1fae5; color: #065f46; }
-.bg-yellow-100 { background-color: #fef3c7; color: #92400e; }
-.bg-red-100 { background-color: #fee2e2; color: #991b1b; }
-.bg-gray-100 { background-color: #f3f4f6; color: #374151; }
+.bg-success-soft { background-color: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
+.bg-warning-soft { background-color: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
+.bg-error-soft { background-color: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
+.bg-surface-muted { background-color: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
 
 /* Dropdown Animation */
 .dropdown-menu {
@@ -192,11 +214,11 @@ onUnmounted(() => window.removeEventListener("click", closeAllDropdowns));
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .dropdown-item:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: rgb(var(--primary) / 0.05);
+  color: rgb(var(--primary-hover));
 }
-.dropdown-item.text-red-600:hover {
-  background-color: #fef2f2;
-  color: #dc2626;
+.dropdown-item.text-error:hover {
+  background-color: rgb(var(--error-soft));
+  color: rgb(var(--error));
 }
 </style>

@@ -25,8 +25,8 @@ const serviceListStore = useServiceListStore();
 function priceClass(price) {
   const p = Number(price || 0);
   const base = 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold';
-  if (p < 200) return `${base} bg-green-50 text-green-700 border border-green-200`;
-  if (p < 500) return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
+  if (p < 200) return `${base} bg-success-soft text-success-strong border border-success/20`;
+  if (p < 500) return `${base} bg-warning-soft text-warning-strong border border-warning/20`;
   return `${base} bg-purple-50 text-purple-700 border border-purple-200`;
 }
 
@@ -43,14 +43,14 @@ function formatUsageLimit(row) {
   if (!row.limitedPerYear) {
     return {
       text: 'Unlimited',
-      class: 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200'
+      class: 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface-muted text-ink-muted border border-line'
     };
   }
   
   const limit = row.limitedNumber || 0;
   return {
     text: `${limit}/year`,
-    class: 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-100 text-amber-700 border border-amber-200'
+    class: 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-warning-soft text-warning-strong border border-warning/20'
   };
 }
 
@@ -126,10 +126,10 @@ function handleReactivate(row) {
   <tr
     v-for="(row, idx) in rowData"
     :key="row?.eligibleServiceUuid || idx"
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50"
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted"
     :class="isInactive(row) ? 'opacity-80' : ''"
   >
-    <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+    <td class="px-4 py-3 text-sm font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
 
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">
       <template v-if="key === 'status'">
@@ -138,7 +138,7 @@ function handleReactivate(row) {
          <template v-else-if="key === 'item'">
         <div class="max-w-[220px]">
           <div
-            class="text-sm font-medium text-gray-800 truncate"
+            class="text-sm font-medium text-ink truncate"
             :title="safeText(row?.item || row?.serviceitem || '')"
           >
             {{ row?.item || row?.serviceitem || '—' }}
@@ -147,7 +147,7 @@ function handleReactivate(row) {
       </template>
       <template v-else-if="key === 'itemCode'">
         <div class="flex flex-col gap-1">
-          <div class="text-sm font-semibold" :class="isInactive(row) ? 'text-rose-700' : 'text-slate-800'">
+          <div class="text-sm font-semibold" :class="isInactive(row) ? 'text-error-strong' : 'text-ink'">
             {{ row?.itemCode ?? 'N/A' }}
           </div>
           <div>
@@ -161,13 +161,13 @@ function handleReactivate(row) {
       <template v-else-if="key === 'category'">
         <div class="max-w-[220px]">
           <div
-            class="text-sm font-medium text-gray-800 truncate"
+            class="text-sm font-medium text-ink truncate"
             :title="safeText(row?.category || row?.serviceCategory || '')"
           >
             {{ row?.category || row?.serviceCategory || '—' }}
           </div>
           <div
-            class="text-xs text-gray-500 truncate"
+            class="text-xs text-ink-subtle truncate"
             :title="safeText(row?.subCategory || row?.serviceSubCategory || '')"
           >
             {{ row?.subCategory || row?.serviceSubCategory || '—' }}
@@ -176,7 +176,7 @@ function handleReactivate(row) {
       </template>
       
       <template v-else>
-        <span class="text-gray-700">{{ row?.[key] ?? 'N/A' }}</span>
+        <span class="text-ink-muted">{{ row?.[key] ?? 'N/A' }}</span>
       </template>
     </td>
 
@@ -184,9 +184,9 @@ function handleReactivate(row) {
       <div class="flex flex-wrap gap-2 justify-start items-center">
         <button
           @click="openModal('ServiceManagement', row?.eligibleServiceUuid)"
-          class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:shadow-sm"
+          class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 rounded-xl border border-primary/20 transition-all duration-200 hover:bg-primary/10 hover:shadow-sm"
         >
-          <i v-html="icons.edit" class="text-blue-500" />
+          <i v-html="icons.edit" class="text-primary" />
           <span>Edit</span>
         </button>
         
@@ -202,18 +202,18 @@ function handleReactivate(row) {
         <button
           v-if="!isInactive(row)"
           @click="handleRemove(row?.eligibleServiceUuid)"
-          class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-rose-700 bg-rose-50 rounded-xl border border-rose-200 transition-all duration-200 hover:bg-rose-100 hover:shadow-sm"
+          class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-error-strong bg-error-soft rounded-xl border border-error/20 transition-all duration-200 hover:bg-error-soft hover:shadow-sm"
         >
-          <i v-html="icons.deactivate|| '🚫'"  class="text-red-500" />
+          <i v-html="icons.deactivate|| '🚫'"  class="text-error" />
           <span>Deactivate</span>
         </button>
 
         <button
           v-else
           @click="handleReactivate(row)"
-          class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-xl border border-emerald-200 transition-all duration-200 hover:bg-emerald-100 hover:shadow-sm"
+          class="flex gap-2 items-center px-3 py-1.5 text-sm font-semibold text-success-strong bg-success-soft rounded-xl border border-success/20 transition-all duration-200 hover:bg-success-soft hover:shadow-sm"
         >
-          <i v-html="icons.activate || '✅'" class="text-emerald-600" />
+          <i v-html="icons.activate || '✅'" class="text-success" />
           <span>Reactivate</span>
         </button>
       </div>

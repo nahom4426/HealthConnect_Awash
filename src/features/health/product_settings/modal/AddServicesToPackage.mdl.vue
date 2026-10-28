@@ -51,7 +51,7 @@ function handleSave() {
     >
       <div class="flex flex-col gap-6">
         <!-- Content Area -->
-        <div class="bg-gray-50 p-6 rounded-lg min-h-[400px]">
+        <div class="bg-surface-muted p-6 rounded-lg min-h-[400px]">
           <ServiceListDataProvider v-slot="{ services, pending }">
             <div v-if="pending" class="flex justify-center py-8">
               <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -60,7 +60,7 @@ function handleSave() {
               <div 
                 v-for="service in services" 
                 :key="service.serviceUuid"
-                class="flex items-center p-3 bg-white rounded border hover:bg-gray-50"
+                class="flex items-center p-3 bg-white rounded border hover:bg-surface-muted"
               >
                 <input
                   type="checkbox"
@@ -70,7 +70,7 @@ function handleSave() {
                 />
                 <div class="flex-1">
                   <h4 class="font-medium">{{ service.serviceName }}</h4>
-                  <p class="text-sm text-gray-600">{{ service.serviceDescription }}</p>
+                  <p class="text-sm text-ink-muted">{{ service.serviceDescription }}</p>
                 </div>
               </div>
             </div>
@@ -81,7 +81,7 @@ function handleSave() {
         <div class="flex justify-end gap-3 pt-4 border-t">
           <button
             @click="closeModal"
-            class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            class="px-6 py-2 border border-line-strong rounded-lg hover:bg-surface-muted"
           >
             Cancel
           </button>

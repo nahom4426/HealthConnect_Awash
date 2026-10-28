@@ -48,11 +48,11 @@ function create({ values }) {
     </div>
 
     <template #bottom>
-      <div class="flex gap-4 justify-end p-6 border-t border-gray-200 bg-gray-50">
+      <div class="flex gap-4 justify-end p-6 border-t border-line bg-surface-muted">
         <Button 
           type="button"
           @click="closeModal" 
-          class="px-6 py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200 font-medium"
+          class="px-6 py-3 border-2 border-line-strong text-ink-muted hover:bg-surface-muted rounded-lg transition-colors duration-200 font-medium"
         >
           Cancel
         </Button>
@@ -60,7 +60,7 @@ function create({ values }) {
           type="button"
           :pending="req.pending.value" 
           @click="submit(create)" 
-          class="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2"
+          class="px-8 py-3 bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary-hover text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2"
         >
           <svg v-if="!req.pending.value" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -80,16 +80,16 @@ function create({ values }) {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--surface-muted));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: rgb(var(--line-strong));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgb(var(--line-strong));
 }
 </style>

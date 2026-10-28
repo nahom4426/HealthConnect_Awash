@@ -93,8 +93,6 @@ function handleFormSubmit(e: any) {
   const action = e.action; // 'save' or 'issue'
   const data = e.data || {};
   
-  console.log('=== FORM SUBMISSION STARTED ===');
-  console.log('Action:', action);
   
   // Validate required fields
   if (!payerInstitutionContractUuid.value) {
@@ -139,19 +137,13 @@ function handleFormSubmit(e: any) {
     })),
   };
 
-  console.log('📤 Full Payload:', JSON.stringify(payload, null, 2));
 
   createInclusionExclusionQuotation(payload)
     .then((response: any) => {
-      console.log('📥 FULL RESPONSE OBJECT:', response);
-      console.log('📥 response.data:', response?.data);
-      console.log('📥 response.status:', response?.status);
-      console.log('📥 response.statusText:', response?.statusText);
       
       // The API might wrap the response differently
       // Check all possible response structures
       const responseData = response?.data || response;
-      console.log('📥 Parsed responseData:', responseData);
       
       // Check for success indicators
       const isSuccess = 
@@ -167,8 +159,6 @@ function handleFormSubmit(e: any) {
         responseData?.success === false ||
         responseData?.error;
       
-      console.log('📥 isSuccess:', isSuccess);
-      console.log('📥 isError:', isError);
       
       if (isError) {
         // Handle error response
@@ -187,7 +177,6 @@ function handleFormSubmit(e: any) {
       
       if (isSuccess) {
         // Handle success
-        console.log('✅ Success!');
         toasted(true, "Inclusion created successfully");
         
         // Reset form state
@@ -196,7 +185,6 @@ function handleFormSubmit(e: any) {
         
         // Navigate after short delay
         setTimeout(() => {
-          console.log('🚀 Redirecting to /inclusion');
           router.push("/inclusion");
         }, 1500);
       } else {
@@ -275,13 +263,6 @@ onMounted(async () => {
       description.value = quotationData.description;
     }
     
-    console.log('Quotation loaded successfully:', {
-      quotationUuid: quotationUuid.value,
-      payerInstitutionContractUuid: payerInstitutionContractUuid.value,
-      willBeSentAsPolicyUuid: payerInstitutionContractUuid.value,
-      institutionUuid: institutionUuidForProvider.value,
-      servicesCount: quotationData.quoatedServices?.length || 0
-    });
     
   } catch (e: any) {
     console.error("Failed to load quotation:", e);
@@ -297,8 +278,8 @@ onMounted(async () => {
     <template #header>
       <div class="flex justify-between items-center">
         <div>
-          <h1 class="text-2xl font-bold text-slate-800">Create Inclusion</h1>
-          <p class="mt-1 text-sm text-slate-500">Edit existing benefit groups and create an inclusion quotation</p>
+          <h1 class="text-2xl font-bold text-ink">Create Inclusion</h1>
+          <p class="mt-1 text-sm text-ink-subtle">Edit existing benefit groups and create an inclusion quotation</p>
         </div>
       </div>
     </template>
@@ -306,24 +287,24 @@ onMounted(async () => {
     <!-- Loading State -->
     <div v-if="loading" class="p-8">
       <div class="flex flex-col justify-center items-center py-12">
-        <div class="mb-4 w-12 h-12 rounded-full border-b-2 border-blue-600 animate-spin"></div>
-        <p class="text-slate-600">Loading quotation details...</p>
+        <div class="mb-4 w-12 h-12 rounded-full border-b-2 border-primary animate-spin"></div>
+        <p class="text-ink-muted">Loading quotation details...</p>
       </div>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="p-8">
-      <div class="p-6 bg-red-50 rounded-xl border border-red-200">
+      <div class="p-6 bg-error-soft rounded-xl border border-error/20">
         <div class="flex gap-3 items-start">
-          <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-6 h-6 text-error flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
           </svg>
           <div>
-            <h3 class="font-semibold text-red-900">Error Loading Quotation</h3>
-            <p class="mt-1 text-red-700 text-sm">{{ error }}</p>
+            <h3 class="font-semibold text-error-strong">Error Loading Quotation</h3>
+            <p class="mt-1 text-error-strong text-sm">{{ error }}</p>
             <button 
               @click="router.back()" 
-              class="mt-3 px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
+              class="mt-3 px-4 py-2 text-sm font-medium text-error-strong bg-error-soft rounded-lg hover:bg-error/20 transition-colors"
             >
               Go Back
             </button>
@@ -341,13 +322,13 @@ onMounted(async () => {
       <div class="mx-auto space-y-6 w-full max-w-7xl">
         
         <!-- Header Info Card -->
-        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-slate-200">
-          <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100/50 border-b border-slate-200">
+        <div class="overflow-hidden bg-white rounded-xl border shadow-sm border-line">
+          <div class="px-6 py-4 bg-gradient-to-r from-primary/5 to-primary/5 border-b border-line">
             <div class="flex gap-3 items-center">
-              <div class="w-2 h-8 bg-blue-600 rounded"></div>
+              <div class="w-2 h-8 bg-primary rounded"></div>
               <div>
-                <h2 class="text-lg font-semibold text-slate-800">Quotation Details</h2>
-                <p class="text-sm text-slate-600">Original quotation information</p>
+                <h2 class="text-lg font-semibold text-ink">Quotation Details</h2>
+                <p class="text-sm text-ink-muted">Original quotation information</p>
               </div>
             </div>
           </div>
@@ -356,34 +337,34 @@ onMounted(async () => {
             <!-- Info Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Institution</p>
-                <p class="mt-1 text-sm font-semibold text-slate-900">
+                <p class="text-xs font-semibold text-ink-subtle uppercase tracking-wider">Institution</p>
+                <p class="mt-1 text-sm font-semibold text-ink">
                   {{ institutionPending ? 'Loading...' : (instituton?.institutionName || "—") }}
                 </p>
               </div>
               <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Policy UUID (from Contract)</p>
-                <p class="mt-1 text-sm font-mono text-slate-600">
+                <p class="text-xs font-semibold text-ink-subtle uppercase tracking-wider">Policy UUID (from Contract)</p>
+                <p class="mt-1 text-sm font-mono text-ink-muted">
                   {{ payerInstitutionContractUuid?.slice(0, 12) || "—" }}...
                 </p>
-                <p class="mt-0.5 text-xs text-slate-400">Payer Institution Contract UUID</p>
+                <p class="mt-0.5 text-xs text-ink-subtle">Payer Institution Contract UUID</p>
               </div>
               <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Quotation Code</p>
-                <p class="mt-1 text-sm font-semibold text-slate-900">
+                <p class="text-xs font-semibold text-ink-subtle uppercase tracking-wider">Quotation Code</p>
+                <p class="mt-1 text-sm font-semibold text-ink">
                   {{ quotation?.quotationCode || "—" }}
                 </p>
               </div>
               <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</p>
+                <p class="text-xs font-semibold text-ink-subtle uppercase tracking-wider">Status</p>
                 <p class="mt-1">
                   <span 
                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                     :class="{
-                      'bg-green-100 text-green-800': quotation?.status === 'PAID',
-                      'bg-yellow-100 text-yellow-800': quotation?.status === 'PENDING',
-                      'bg-blue-100 text-blue-800': quotation?.status === 'ISSUED',
-                      'bg-gray-100 text-gray-800': !quotation?.status
+                      'bg-success-soft text-success-strong': quotation?.status === 'PAID',
+                      'bg-warning-soft text-warning-strong': quotation?.status === 'PENDING',
+                      'bg-primary/10 text-primary-hover': quotation?.status === 'ISSUED',
+                      'bg-surface-muted text-ink': !quotation?.status
                     }"
                   >
                     {{ quotation?.status || "UNKNOWN" }}
@@ -391,45 +372,45 @@ onMounted(async () => {
                 </p>
               </div>
               <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Original Policy UUID</p>
-                <p class="mt-1 text-sm font-mono text-slate-600">
+                <p class="text-xs font-semibold text-ink-subtle uppercase tracking-wider">Original Policy UUID</p>
+                <p class="mt-1 text-sm font-mono text-ink-muted">
                   {{ quotation?.policyUuid?.slice(0, 12) || "—" }}...
                 </p>
               </div>
               <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Quotation Type</p>
-                <p class="mt-1 text-sm text-slate-900">
+                <p class="text-xs font-semibold text-ink-subtle uppercase tracking-wider">Quotation Type</p>
+                <p class="mt-1 text-sm text-ink">
                   {{ quotation?.quotationType || "QUOTATION" }}
                 </p>
               </div>
             </div>
 
             <!-- Start Date and Description Fields -->
-            <div class="pt-4 border-t border-slate-200">
+            <div class="pt-4 border-t border-line">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">
-                    Start Date <span class="text-red-500">*</span>
+                  <label class="block text-sm font-semibold text-ink-muted mb-2">
+                    Start Date <span class="text-error">*</span>
                   </label>
                   <input
                     v-model="startDate"
                     type="date"
                     required
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                    class="w-full px-3 py-2 border border-line-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
                   />
-                  <p class="mt-1 text-xs text-slate-500">When should the inclusion take effect?</p>
+                  <p class="mt-1 text-xs text-ink-subtle">When should the inclusion take effect?</p>
                 </div>
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">
+                  <label class="block text-sm font-semibold text-ink-muted mb-2">
                     Inclusion Description
                   </label>
                   <input
                     v-model="description"
                     type="text"
                     placeholder="e.g., Adding maternity coverage for new employees"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                    class="w-full px-3 py-2 border border-line-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
                   />
-                  <p class="mt-1 text-xs text-slate-500">Optional description for this inclusion</p>
+                  <p class="mt-1 text-xs text-ink-subtle">Optional description for this inclusion</p>
                 </div>
               </div>
             </div>
@@ -437,13 +418,13 @@ onMounted(async () => {
         </div>
 
         <!-- Benefit Groups Section -->
-        <div class="bg-white rounded-xl border shadow-sm border-slate-200 overflow-hidden">
-          <div class="px-6 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100/50 border-b border-slate-200">
+        <div class="bg-white rounded-xl border shadow-sm border-line overflow-hidden">
+          <div class="px-6 py-4 bg-gradient-to-r from-success-soft to-success-soft/50 border-b border-line">
             <div class="flex gap-3 items-center">
-              <div class="w-2 h-8 bg-emerald-600 rounded"></div>
+              <div class="w-2 h-8 bg-success rounded"></div>
               <div>
-                <h2 class="text-lg font-semibold text-slate-800">Benefit Groups</h2>
-                <p class="text-sm text-slate-600">
+                <h2 class="text-lg font-semibold text-ink">Benefit Groups</h2>
+                <p class="text-sm text-ink-muted">
                   Edit employee counts, descriptions, and coverage amounts for existing packages
                 </p>
               </div>
@@ -454,15 +435,15 @@ onMounted(async () => {
             <QuotationCreationDataProvider v-slot="{ packages, pending: packagesPending }">
               <!-- Loading packages -->
               <div v-if="packagesPending" class="flex justify-center items-center py-12">
-                <div class="w-10 h-10 rounded-full border-b-2 border-emerald-600 animate-spin"></div>
+                <div class="w-10 h-10 rounded-full border-b-2 border-success animate-spin"></div>
               </div>
               
               <!-- No packages available -->
               <div v-else-if="!packages || packages.length === 0" class="text-center py-8">
-                <svg class="mx-auto w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="mx-auto w-12 h-12 text-line-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                 </svg>
-                <p class="mt-2 text-sm text-slate-500">No packages available</p>
+                <p class="mt-2 text-sm text-ink-subtle">No packages available</p>
               </div>
               
               <!-- Quotation Form in Inclusion Mode -->
@@ -482,13 +463,13 @@ onMounted(async () => {
         </div>
 
         <!-- Info Banner -->
-        <div class="flex gap-3 items-start p-4 bg-blue-50 rounded-xl border border-blue-200">
-          <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <div class="flex gap-3 items-start p-4 bg-primary/5 rounded-xl border border-primary/20">
+          <svg class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
           </svg>
           <div>
-            <p class="text-sm font-medium text-blue-800">About Inclusions</p>
-            <p class="mt-1 text-sm text-blue-700">
+            <p class="text-sm font-medium text-primary-hover">About Inclusions</p>
+            <p class="mt-1 text-sm text-primary-hover">
               In this view, you can edit the number of employees, descriptions, and coverage amounts for existing benefit groups. 
               Plan types and package selections are locked. To add new benefit groups, create a new quotation instead.
             </p>
@@ -499,19 +480,19 @@ onMounted(async () => {
 
     <!-- No Institution Found -->
     <div v-else-if="!loading && !error && !institutionUuidForProvider" class="p-8">
-      <div class="p-6 bg-yellow-50 rounded-xl border border-yellow-200">
+      <div class="p-6 bg-warning-soft rounded-xl border border-warning/20">
         <div class="flex gap-3 items-start">
-          <svg class="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-6 h-6 text-warning flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
           </svg>
           <div>
-            <h3 class="font-semibold text-yellow-900">No Institution Found</h3>
-            <p class="mt-1 text-yellow-700 text-sm">
+            <h3 class="font-semibold text-warning-strong">No Institution Found</h3>
+            <p class="mt-1 text-warning-strong text-sm">
               The quotation does not have an associated institution. This may indicate corrupted data.
             </p>
             <button 
               @click="router.back()" 
-              class="mt-3 px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition-colors"
+              class="mt-3 px-4 py-2 text-sm font-medium text-warning-strong bg-warning-soft rounded-lg hover:bg-warning/20 transition-colors"
             >
               Go Back
             </button>

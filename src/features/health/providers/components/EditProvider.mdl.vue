@@ -183,11 +183,11 @@ function base64ToBlob(base64) {
       subtitle="Add this provider to the system"
     >
       <div class="bg-white rounded-lg">
-        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        <div v-if="error" class="p-4 mb-4 text-sm text-error-strong bg-error-soft rounded-lg">
           {{ error }}
         </div>
         
-        <div v-if="!providerUuid || Object.keys(providerData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
+        <div v-if="!providerUuid || Object.keys(providerData).length === 0" class="p-4 mb-4 text-sm text-warning-strong bg-warning-soft rounded-lg">
           Loading provider data...
         </div>
         

@@ -5,7 +5,6 @@ export const useService = defineStore("serviceStore", () => {
   const services = ref([]);
 
   function set(data) {
-    console.log(data);
 
     services.value = data;
   }

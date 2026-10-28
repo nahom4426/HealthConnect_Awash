@@ -1,7 +1,7 @@
-import ActiveProviders from "@/features/health/providers/pages/ActiveProviders.vue";
-import AddProvider from "@/features/health/providers/pages/AddProvider.vue";
-import InactiveProviders from "@/features/health/providers/pages/InactiveProviders.vue";
-import ViewIssuedPolicyQuotation from "@/features/health/quotation/pages/ViewIssuedPolicyQuotation.vue";
+const ActiveProviders = () => import("@/features/health/providers/pages/ActiveProviders.vue");
+const AddProvider = () => import("@/features/health/providers/pages/AddProvider.vue");
+const InactiveProviders = () => import("@/features/health/providers/pages/InactiveProviders.vue");
+const ViewIssuedPolicyQuotation = () => import("@/features/health/quotation/pages/ViewIssuedPolicyQuotation.vue");
 export default [
 	{
 		path: '/add_provider',

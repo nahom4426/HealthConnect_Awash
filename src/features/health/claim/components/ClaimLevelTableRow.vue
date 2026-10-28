@@ -18,13 +18,13 @@ const emit = defineEmits(["edit", "delete"]);
 
 function getLevelBadgeColor(level) {
   const colors = {
-    LEVEL1: "bg-blue-100 text-blue-700 border-blue-200",
-    LEVEL2: "bg-green-100 text-green-700 border-green-200",
-    LEVEL3: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    LEVEL1: "bg-primary/10 text-primary-hover border-primary/20",
+    LEVEL2: "bg-success-soft text-success-strong border-success/20",
+    LEVEL3: "bg-warning-soft text-warning-strong border-warning/20",
     LEVEL4: "bg-orange-100 text-orange-700 border-orange-200",
-    LEVEL5: "bg-red-100 text-red-700 border-red-200",
+    LEVEL5: "bg-error-soft text-error-strong border-error/20",
   };
-  return colors[level] || "bg-gray-100 text-gray-700 border-gray-200";
+  return colors[level] || "bg-surface-muted text-ink-muted border-line";
 }
 
 function formatLevel(level) {
@@ -48,14 +48,14 @@ function handleDelete(row) {
   <tr
     v-for="(row, idx) in rowData"
     :key="row.claimLevelUuid"
-    class="bg-white border-b transition-all duration-200 ease-in-out hover:bg-gradient-to-r hover:from-gray-50 hover:to-white hover:shadow-sm"
+    class="bg-white border-b transition-all duration-200 ease-in-out hover:bg-gradient-to-r hover:from-surface-muted hover:to-white hover:shadow-sm"
   >
     <!-- Index -->
-    <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
+    <td class="px-4 py-3 text-sm font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>
     <!-- Claim Level -->
     <td class="p-4 py-5">
       <div class="flex items-center gap-3">
-        <div class="flex justify-center items-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
+        <div class="flex justify-center items-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary shadow-md">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
@@ -72,14 +72,14 @@ function handleDelete(row) {
     <!-- Minimum Amount -->
     <td class="p-4 py-5">
       <div class="flex items-center gap-3">
-        <div class="flex justify-center items-center w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 shadow-md">
+        <div class="flex justify-center items-center w-10 h-10 rounded-lg bg-gradient-to-br from-success to-success shadow-md">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
           </svg>
         </div>
         <div>
-          <p class="text-xs text-gray-500 font-medium">Minimum</p>
-          <p class="text-base font-bold text-gray-900">
+          <p class="text-xs text-ink-subtle font-medium">Minimum</p>
+          <p class="text-base font-bold text-ink">
             ETB {{ formatCurrency(row.minAmount) }}
           </p>
         </div>
@@ -95,8 +95,8 @@ function handleDelete(row) {
           </svg>
         </div>
         <div>
-          <p class="text-xs text-gray-500 font-medium">Maximum</p>
-          <p class="text-base font-bold text-gray-900">
+          <p class="text-xs text-ink-subtle font-medium">Maximum</p>
+          <p class="text-base font-bold text-ink">
             ETB {{ formatCurrency(row.maxAmount) }}
           </p>
         </div>
@@ -112,7 +112,7 @@ function handleDelete(row) {
           </svg>
         </div>
         <div>
-          <p class="text-xs text-gray-500 font-medium">Range</p>
+          <p class="text-xs text-ink-subtle font-medium">Range</p>
           <p class="text-base font-bold text-orange-600">
             ETB {{ formatCurrency(row.maxAmount - row.minAmount) }}
           </p>
@@ -125,7 +125,7 @@ function handleDelete(row) {
       <div class="flex items-center gap-2 justify-start">
         <button
           @click.stop="handleEdit(row)"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors duration-150 group"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 text-primary-hover hover:bg-primary/10 transition-colors duration-150 group"
           type="button"
         >
           <i v-html="icons.edit" class="w-4 h-4"></i>
@@ -133,7 +133,7 @@ function handleDelete(row) {
         </button>
         <button
           @click.stop="handleDelete(row)"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors duration-150 group"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-error-soft text-error-strong hover:bg-error-soft transition-colors duration-150 group"
           type="button"
         >
           <i v-html="icons.delete" class="w-4 h-4"></i>

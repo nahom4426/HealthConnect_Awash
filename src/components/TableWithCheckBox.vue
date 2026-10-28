@@ -36,6 +36,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  showPagination: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 // Emit event for model update
@@ -43,14 +47,25 @@ const emit = defineEmits(['update:modelValue']);
 
 // Helper to get value from row using dot-notation path
 function getNestedValue(obj, path) {
+  if (!path || !obj) return undefined;
   return path.split(".").reduce((state, name) => state?.[name], obj);
 }
+
+// Claims that are already paid can't be selected again (ported from Awash "Pagination")
+const selectableRows = computed(() =>
+  (props.rows || []).filter((r) => {
+    const status = String(r?.serviceClaimStatus || "").toUpperCase();
+    return status !== "PAYED" && status !== "PAID";
+  })
+);
 
 // Function to toggle selection of all rows
 function toggleSelectAll(ev) {
   const target = ev.target;
   if (target.checked) {
-    const allVals = props.rows.map((el) => getNestedValue(el, props.toBeSelected));
+    const allVals = selectableRows.value
+      .map((el) => getNestedValue(el, props.toBeSelected))
+      .filter(Boolean);
     emit('update:modelValue', allVals);
   } else {
     emit('update:modelValue', []);
@@ -59,6 +74,7 @@ function toggleSelectAll(ev) {
 
 // Function to toggle individual data selection
 function toggleData(data) {
+  if (!data) return;
   const current = props.modelValue ? [...props.modelValue] : [];
   const idx = current.findIndex((el) => el === data);
   if (idx === -1) {
@@ -76,22 +92,27 @@ function isSelected(row) {
 }
 
 // Computed property to check if all rows are selected
+const selectableIds = computed(() =>
+  selectableRows.value.map((r) => getNestedValue(r, props.toBeSelected)).filter(Boolean)
+);
+
 const allSelected = computed(() => {
   const modelVal = props.modelValue || [];
-  return props.rows.length > 0 && modelVal.length === props.rows.length;
+  return selectableIds.value.length > 0 && selectableIds.value.every((id) => modelVal.includes(id));
 });
 
 // Computed: some but not all selected (for indeterminate state)
 const someSelected = computed(() => {
   const modelVal = props.modelValue || [];
-  return modelVal.length > 0 && modelVal.length < props.rows.length;
+  return !allSelected.value && selectableIds.value.some((id) => modelVal.includes(id));
 });
 
 // When rows change (e.g. after refetch), clean up stale selections
-watch(() => props.rows, (newRows) => {
-  if (newRows.length === 0) {
-    emit('update:modelValue', []);
-  }
+// Rows can disappear (e.g. rejected services are removed): drop their ids too
+watch(selectableIds, (ids) => {
+  const modelVal = props.modelValue || [];
+  const kept = modelVal.filter((id) => ids.includes(id));
+  if (kept.length !== modelVal.length) emit('update:modelValue', kept);
 });
 
 // Expose for parent components
@@ -106,6 +127,7 @@ defineExpose({ selected, toggleSelectAll, toggleData, isSelected, allSelected })
     :cells="cells"
     :rows="rows"
     :pending="pending"
+    :show-pagination="showPagination"
     :rowCom="rowCom"
     :rowComProps="{
       ...rowComProps,
@@ -121,7 +143,7 @@ defineExpose({ selected, toggleSelectAll, toggleData, isSelected, allSelected })
           :indeterminate="someSelected"
           @change="toggleSelectAll"
           type="checkbox"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          class="w-4 h-4 rounded border-line-strong text-primary focus:ring-primary cursor-pointer"
         />
       </div>
     </template>
@@ -131,7 +153,7 @@ defineExpose({ selected, toggleSelectAll, toggleData, isSelected, allSelected })
           :checked="isSelected(row)"
           @change="() => toggleData(getNestedValue(row, toBeSelected))"
           type="checkbox"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          class="w-4 h-4 rounded border-line-strong text-primary focus:ring-primary cursor-pointer"
         />
       </div>
     </template>

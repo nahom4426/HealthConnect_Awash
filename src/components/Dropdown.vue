@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import {
+  onBeforeUnmount,
   onMounted,
   onUpdated,
   ref,
   watch,
-  watchEffect,
   type PropType,
 } from "vue";
 
@@ -30,26 +30,29 @@ function setRef(el: any) {
   dropdownWrapper.value = el;
 }
 
+function closeDropdown() {
+  openDropdown.value = false;
+}
+
+function onWindowFocus(ev: FocusEvent) {
+  if (ev.target != dropdownWrapper.value) closeDropdown();
+}
+
+function onKeydown(ev: KeyboardEvent) {
+  if (ev.key == "Escape") closeDropdown();
+}
+
 onMounted(() => {
-  function clieckHandler() {
-    openDropdown.value = false;
-  }
+  window.addEventListener("focus", onWindowFocus);
+  document.addEventListener(props.event, closeDropdown);
+  document.addEventListener("keydown", onKeydown);
+});
 
-  function ifEscClicked(ev: KeyboardEvent) {
-    if (ev.key == "Escape") {
-      openDropdown.value = false;
-    }
-  }
-
-  window.addEventListener("focus", (ev) => {
-    const target = ev.target as HTMLElement;
-    if (target != dropdownWrapper.value) {
-      clieckHandler();
-    }
-  });
-
-  document.addEventListener(props.event, clieckHandler);
-  document.addEventListener("keydown", ifEscClicked);
+// Previously these listeners were never removed and accumulated per mount
+onBeforeUnmount(() => {
+  window.removeEventListener("focus", onWindowFocus);
+  document.removeEventListener(props.event, closeDropdown);
+  document.removeEventListener("keydown", onKeydown);
 });
 
 function toggle(value?: boolean) {

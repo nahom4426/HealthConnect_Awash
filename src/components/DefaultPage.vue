@@ -1,6 +1,5 @@
-<!-- DefaultPage.vue -->
+<!-- DefaultPage.vue — standard page surface: optional toolbar (search + actions) and content -->
 <script setup>
-import icons from "@/utils/icons";
 import { ref, watch } from "vue";
 
 const props = defineProps({
@@ -14,7 +13,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  button: { type: String, default: "" }
+  button: { type: String, default: "" },
 });
 const emit = defineEmits(["update:modelValue"]);
 
@@ -26,31 +25,40 @@ watch(search, () => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 p-3 h-full bg-white rounded-2xl sm:p-4 lg:p-6 sm:gap-4 lg:gap-6">
+  <div class="flex flex-col gap-4 p-3 max-w-full card sm:p-5">
     <div
-      class="flex flex-col gap-3 justify-between items-start md:flex-row md:items-center sm:gap-4 lg:gap-8"
+      v-if="(!props.hideSearch && props.first) || $slots.first || $slots.header || $slots.filter || $slots['add-action'] || $slots.more"
+      class="flex flex-col flex-shrink-0 gap-3 justify-between items-stretch md:flex-row md:items-center md:gap-6"
     >
-      <!-- Search Bar -->
+      <!-- Search -->
       <div
         v-if="props.first && !props.hideSearch"
-        tabindex="0"
-        class="w-full md:max-w-[28rem] bg-white h-10 sm:h-12 lg:h-[3.5rem] focus-within:border-primary flex items-center rounded-lg overflow-hidden border border-gray-200"
+        role="search"
+        class="flex overflow-hidden items-center w-full rounded-lg border transition-shadow md:max-w-sm h-control border-line-strong bg-surface focus-within:border-primary focus-within:shadow-focus"
       >
-     	<span class="grid place-items-center w-8 h-8 text-sm border-r sm:w-10 sm:h-10 text-base-clr sm:text-base" v-html='icons.search' />
-				<input v-model="search" :placeholder="placeholder || 'Search...'" class="!shadow-none flex-1 px-2 sm:px-3 h-full text-sm sm:text-base" />
-          <button v-if="button" class="px-3 h-full border-l">
-            {{ button }}
-          </button>
+        <span class="grid place-items-center pl-3 text-ink-subtle" aria-hidden="true">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+        </span>
+        <input
+          v-model="search"
+          type="search"
+          :placeholder="placeholder || 'Search…'"
+          :aria-label="placeholder || 'Search'"
+          class="flex-1 px-2.5 h-full min-w-0 text-base bg-transparent sm:text-sm placeholder:text-ink-subtle/80 focus-visible:outline-none"
+        />
+        <button v-if="button" type="button" class="px-3 h-full text-sm font-medium border-l border-line text-ink-muted hover:bg-surface-muted">
+          {{ button }}
+        </button>
       </div>
-      <slot v-else name="first"> </slot>
+      <slot v-else name="first" />
 
-      <div class="flex flex-col gap-2 justify-end items-stretch w-full sm:flex-row sm:items-center sm:gap-3 lg:gap-5 md:w-auto">
-        <slot name="header"> </slot>
-        
-        <slot name="filter"> </slot>
-
-        <slot name="add-action"> </slot>
-
+      <div class="flex flex-col flex-wrap gap-2 justify-end items-stretch w-full sm:flex-row sm:items-center sm:gap-3 md:w-auto">
+        <slot name="header" />
+        <slot name="filter" />
+        <slot name="add-action" />
         <slot name="more" />
       </div>
     </div>

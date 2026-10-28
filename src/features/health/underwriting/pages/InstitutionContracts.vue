@@ -55,16 +55,13 @@ async function checkAllStatuses() {
     hasAnyContracts.value = false;
     checkStatusesError.value = false;
 
-    console.log('🔍 Checking all statuses:', ALL_STATUSES);
 
     for (const stat of ALL_STATUSES) {
       try {
         const response = await getInstitutionContracts(route.params.id, { status: stat });
-        console.log(`📊 Status [${stat}] Response:`, response);
         
         // Handle array response
         if (Array.isArray(response) && response.length > 0) {
-          console.log(`✅ Found ${response.length} contracts for status: ${stat}`);
           hasAnyContracts.value = true;
           status.value = stat; // Switch to this status - watcher will fetch data
           break;
@@ -72,20 +69,17 @@ async function checkAllStatuses() {
         
         // Handle object response with data property
         if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-          console.log(`✅ Found ${response.data.length} contracts for status: ${stat}`);
           hasAnyContracts.value = true;
           status.value = stat; // Switch to this status - watcher will fetch data
           break;
         }
         
-        console.log(`❌ No contracts found for status: ${stat}`);
       } catch (err) {
-        console.log(`⚠️ Error checking status [${stat}]:`, err.message);
+        console.warn(`⚠️ Error checking status [${stat}]:`, err.message);
         checkStatusesError.value = true; // Mark that an error occurred
       }
     }
     
-    console.log('✨ All statuses checked. hasAnyContracts:', hasAnyContracts.value, 'Current status:', status.value);
   } catch (err) {
     console.error('Error checking all statuses:', err);
     checkStatusesError.value = true;
@@ -103,7 +97,6 @@ async function retryCheckStatuses() {
 }
 
 function refreshData() {
-  console.log("Refreshing contract data");
   if (dataProvider.value) {
     dataProvider.value.refresh();
   }
@@ -128,7 +121,6 @@ const handleRefetch = () => {
 onMounted(async () => {
   // Reset store data when page mounts to ensure fresh data
   underwritingStore.reset();
-  console.log('🔄 Store reset on page mount');
   
   // Fetch institution name
   try {
@@ -152,7 +144,7 @@ onMounted(async () => {
       >
         <span class="w-2.5 h-2.5 rounded-full shadow bg-base-clr"></span>
         <div class="flex flex-col leading-tight">
-          <span class="text-[11px] font-medium text-gray-500">Institution</span>
+          <span class="text-[11px] font-medium text-ink-subtle">Institution</span>
           <span class="max-w-[16rem] text-sm font-semibold tracking-tight truncate md:text-base text-base-clr">
             {{ institutionName }}
           </span>
@@ -176,14 +168,14 @@ onMounted(async () => {
       <!-- Error State - Show if all APIs failed -->
       <div v-if="checkStatusesError && allStatusesChecked && !hasAnyContracts" class="py-12 text-center">
         <div class="flex flex-col justify-center items-center">
-          <svg class="mb-4 w-20 h-20 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="mb-4 w-20 h-20 text-error/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p class="text-lg font-semibold text-gray-600">Failed to Load Contracts</p>
-          <p class="mt-2 text-sm text-gray-400">There was an error fetching your contracts</p>
+          <p class="text-lg font-semibold text-ink-muted">Failed to Load Contracts</p>
+          <p class="mt-2 text-sm text-ink-subtle">There was an error fetching your contracts</p>
           <button
             @click="retryCheckStatuses"
-            class="flex gap-2 justify-center items-center px-6 py-3 mt-6 font-semibold text-white bg-red-600 rounded-lg transition-colors hover:bg-red-700"
+            class="flex gap-2 justify-center items-center px-6 py-3 mt-6 font-semibold text-white bg-error rounded-lg transition-colors hover:bg-error-strong"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -281,11 +273,11 @@ onMounted(async () => {
             <template #placeholder>
               <div class="py-12 text-center">
                 <div class="flex flex-col justify-center items-center">
-                  <svg class="mb-4 w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="mb-4 w-20 h-20 text-line-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <p class="text-lg font-semibold text-gray-600">No Contracts Found</p>
-                  <p class="mt-2 text-sm text-gray-400">Start by adding your first policy contract</p>
+                  <p class="text-lg font-semibold text-ink-muted">No Contracts Found</p>
+                  <p class="mt-2 text-sm text-ink-subtle">Start by adding your first policy contract</p>
                   <button
                     @click="openModal('CreateInstitutionContract', { institutionUuid: route.params.id, onRefetch: handleRefetch })"
                     class="flex gap-2 justify-center items-center px-6 py-3 mt-6 font-semibold text-white rounded-lg transition-colors bg-primary hover:bg-primary/90"

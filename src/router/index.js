@@ -15,8 +15,11 @@ import provider_contractsRoutes from "./health/provider_contracts.routes";
 import providersRoutes from "./health/providers.routes";
 import product_settingsRoutes from "./health/product_settings.routes";
 import authorizationRoutes from "./health/authorization.routes";
+import reportsRoutes from "./health/reports.routes";
+import brokerRoutes from "./health/broker.routes";
 // Motor
 import motorRoutes from "./motor/motor.routes";
+import { installRouteLoading } from "./loading";
 // Shared across products
 import adminRoutes from "./shared/admin.routes";
 import analyticsRoutes from "./shared/analytics.routes";
@@ -200,6 +203,8 @@ const router = createRouter({
         ...motorRoutes,
         ...adminRoutes,
         ...analyticsRoutes,
+        ...reportsRoutes,
+        ...brokerRoutes,
         ...formBuilderRoutes,
         ...quotationRoutes,
         ...selectedUnderwritingRoutes,
@@ -238,6 +243,9 @@ const router = createRouter({
     },
   ]),
 });
+
+// Navigation loading indicator (registered first so it starts before the auth guard)
+installRouteLoading(router);
 
 // Consolidated beforeEach with proper authentication check
 router.beforeEach((to, from, next) => {

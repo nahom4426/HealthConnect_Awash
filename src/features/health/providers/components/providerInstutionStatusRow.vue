@@ -43,36 +43,25 @@ const props = defineProps({
     type: Function,
     default: () => {}
   },
-  currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 25 },
-  // Checkbox selection props (from TableWithCheckBox)
-  selectedItems: {
-    type: Array,
-    default: null,
+  // Multi-select support
+  selectedUuids: {
+    type: Set,
+    default: () => new Set()
   },
-  toBeSelected: {
+  selectionKey: {
     type: String,
-    default: '',
+    default: 'payerProviderContractUuid'
   },
-  onToggleSelect: {
-    type: Function,
-    default: null,
-  },
-  showActions: {
-    type: Boolean,
-    default: true,
-  },
-  cells: {
-    type: Object,
-    default: () => ({}),
-  },
-  hideIndex: {
-    type: Boolean,
-    default: false,
-  },
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 25 }
 });
 
-const emit = defineEmits(['row', 'remove']);
+const emit = defineEmits(['toggle-selection']);
+
+function toggleRow(row) {
+  const key = row[props.selectionKey] || row.providerUuid;
+  emit('toggle-selection', key);
+}
 
 const { addToast } = useToast();
 const route = useRoute();
@@ -95,26 +84,26 @@ function getStatusStyle(status) {
 
   switch (status?.toUpperCase()) {
     case "APPROVED":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
       case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return `${base} bg-success-soft text-success-strong`;
       case "SUBMITTED":
-      return `${base} bg-yellow-100 text-yellow-800`;
+      return `${base} bg-warning-soft text-warning-strong`;
         // Light green for active
     case "INACTIVE":
-      return `${base} bg-red-100 text-red-800`;    // Light gray for inactive
+      return `${base} bg-error-soft text-error-strong`;    // Light gray for inactive
     case "PENDING":
-      return `${base} bg-yellow-100 text-yellow-800`; // Light yellow for pending
+      return `${base} bg-warning-soft text-warning-strong`; // Light yellow for pending
     case "ACCEPTED":
-      return `${base} bg-blue-100 text-blue-800`;     // Light blue for accepted
+      return `${base} bg-primary/10 text-primary-hover`;     // Light blue for accepted
     case "REJECTED":
-      return `${base} bg-red-100 text-red-800`;       // Light red for rejected
+      return `${base} bg-error-soft text-error-strong`;       // Light red for rejected
     case "RESUBMITTED":
       return `${base} bg-purple-100 text-purple-800`;
     case "SUSPENDED":
-      return `${base} bg-yellow-100 text-yellow-800`; // Light yellow for suspended
+      return `${base} bg-warning-soft text-warning-strong`; // Light yellow for suspended
     default:
-      return `${base} bg-gray-100 text-gray-800`;    // Default light gray
+      return `${base} bg-surface-muted text-ink`;    // Default light gray
   }
 }
 
@@ -123,7 +112,7 @@ function getBaseUrl() {
 }
 
 function handleImageError(event) {
-  event.target.src = '/assets/placeholder-logo.png ';
+  event.target.src = '/assets/placeholder-logo.png';
 }
 function handleEdit(row) {
   openModal('EditProvider', { 
@@ -172,21 +161,6 @@ function handleDocumentClick(event) {
   closeAllDropdowns();
 }
 
-// Checkbox helpers
-const hasCheckbox = computed(() => props.selectedItems !== null && props.onToggleSelect !== null);
-
-function isRowSelected(row) {
-  if (!hasCheckbox.value || !props.toBeSelected) return false;
-  const val = props.toBeSelected.split('.').reduce((s, k) => s?.[k], row);
-  return props.selectedItems.includes(val);
-}
-
-function handleToggleRow(row) {
-  if (!props.onToggleSelect || !props.toBeSelected) return;
-  const val = props.toBeSelected.split('.').reduce((s, k) => s?.[k], row);
-  props.onToggleSelect(val);
-}
-
 </script>
 
 <template>
@@ -194,12 +168,22 @@ function handleToggleRow(row) {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click.self="onRowClick(row)" 
-    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-gray-50" 
+    class="bg-white border-b transition-colors duration-150 ease-in-out hover:bg-surface-muted"
+    :class="{ 'bg-primary/5': selectedUuids.has(row[selectionKey] || row.providerUuid) }"
   >  
-    <td class="p-4 font-medium text-gray-500">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
+    <!-- Checkbox -->
+    <td class="px-4 py-3" @click.stop>
+      <input
+        type="checkbox"
+        :checked="selectedUuids.has(row[selectionKey] || row.providerUuid)"
+        @change="toggleRow(row)"
+        class="w-4 h-4 text-primary rounded border-line-strong cursor-pointer focus:ring-primary"
+      />
+    </td>
+    <td class="p-4 font-medium text-ink-subtle">{{ (props.currentPage - 1) * props.perPage + idx + 1 }}</td>  
 
     <!-- Debug row for specific provider -->
-    <!-- <td v-if="row.providerName === 'Addis Hiwot'" class="p-2 text-xs bg-yellow-50 debug-info">
+    <!-- <td v-if="row.providerName === 'Addis Hiwot'" class="p-2 text-xs bg-warning-soft debug-info">
       <div class="font-bold">Debug Info for {{ row.providerName }}:</div>
       <div>Has users property: {{ 'users' in row }}</div>
       <div>Users is array: {{ Array.isArray(row.users) }}</div>
@@ -221,51 +205,51 @@ function handleToggleRow(row) {
         </span>
       </div>
       <div v-else-if="key === 'totalContracts'" class="truncate">  
-        <span class="text-gray-700">
+        <span class="text-ink-muted">
           {{ row.totalContracts || 0 }}
         </span>
       </div>
       
-      <div v-else-if="key === 'providerName'" class="flex gap-2.5 items-center text-gray-700">
+      <div v-else-if="key === 'providerName'" class="flex gap-2.5 items-center text-ink-muted">
         <div class="flex justify-center items-center">
           <img 
             v-if="row.logoBase64" 
             :src="row.logoBase64" 
             alt="Provider Logo" 
-            class="object-contain w-10 h-10 rounded-full border border-gray-200"
+            class="object-contain w-10 h-10 rounded-full border border-line"
           />
           <img 
             v-else-if="row.logoUrl" 
             :src="row.logoUrl" 
             alt="Provider Logo" 
-            class="object-contain w-10 h-10 rounded-full border border-gray-200"
+            class="object-contain w-10 h-10 rounded-full border border-line"
             @error="handleImageError"
           />
           <img 
             v-else-if="row.logoPath" 
             :src="`${getBaseUrl()}/provider/logo/${row.logoPath}`" 
             alt="Provider Logo" 
-            class="object-contain w-10 h-10 rounded-full border border-gray-200"
+            class="object-contain w-10 h-10 rounded-full border border-line"
             @error="handleImageError"
           />
-          <div v-else class="flex justify-center items-center w-10 h-10 text-center bg-gray-200 rounded-full">
-            <span class="text-xs text-gray-500">No Logo</span>
+          <div v-else class="flex justify-center items-center w-10 h-10 text-center bg-line rounded-full">
+            <span class="text-xs text-ink-subtle">No Logo</span>
           </div>
         </div>
         <div>{{ row.providerName }}</div>
       </div>
       
-      <span v-else class="text-gray-700">
+      <span v-else class="text-ink-muted">
         {{ row[key] }}
       </span>
     </td>  
 
-    <!-- Actions Column (only when showActions is true and no checkbox mode) -->
-    <td v-if="showActions && !hasCheckbox" class="p-3">  
+    <!-- Actions Column -->
+    <td class="p-3">  
       <div class="relative dropdown-container">
         <button 
           @click.stop="toggleDropdown($event, row.providerUuid || row.id)"
-          class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 rounded-lg hover:text-gray-800 hover:bg-gray-100 focus:outline-none"
+          class="inline-flex items-center p-2 text-sm font-medium text-center text-ink-subtle rounded-lg hover:text-ink hover:bg-surface-muted focus:outline-none"
           type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
@@ -280,7 +264,7 @@ function handleToggleRow(row) {
           <div class="py-1" role="none">
             <button 
               @click.stop="handleAddWithClose(row)"
-              class="block py-2 w-full text-sm text-center text-gray-700 hover:bg-gray-100"
+              class="block py-2 w-full text-sm text-center text-ink-muted hover:bg-surface-muted"
             >
               <div class="flex gap-4 justify-start items-center pl-4">
                 <i v-html="icons.edit" />
@@ -289,19 +273,6 @@ function handleToggleRow(row) {
             </button>
           </div>
         </div>
-      </div>
-    </td>
-
-    <!-- Checkbox Column (when in checkbox/selection mode) -->
-    <td v-if="hasCheckbox" class="p-3">
-      <div class="flex items-center justify-center">
-        <input
-          :checked="isRowSelected(row)"
-          @change="handleToggleRow(row)"
-          @click.stop
-          type="checkbox"
-          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-        />
       </div>
     </td>
   </tr>

@@ -48,12 +48,44 @@ const downloadFile = (blob, filename) => {
   window.URL.revokeObjectURL(url);
 };
 
+// File name from Content-Disposition (prefers the UTF-8 filename* form used for non-Latin names)
+const fileNameFromHeaders = (headers) => {
+  const disposition = headers?.["content-disposition"] || "";
+  const encoded = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded[1].trim());
+    } catch {
+      // fall through to the plain filename
+    }
+  }
+  const plain = disposition.match(/filename\s*=\s*"?([^";]+)"?/i);
+  return plain ? plain[1].trim() : null;
+};
+
+// Fallback when the server's file name isn't readable: name it after the policy holder
+const templateFileName = () => {
+  // Same 60-character cap as the server; Array.from counts whole letters (Amharic is 3 bytes each)
+  const holder = Array.from(String(route.params.institutionName || "").trim().replace(/[\\/:*?"<>|]+/g, "-"))
+    .slice(0, 60)
+    .join("")
+    .replace(/[ ._-]+$/, "");
+  return holder ? `${holder}_member_template.xlsx` : "member-template.xlsx";
+};
+
 // ✅ Updated function to download sample file from backend
 const downloadSample = async (type = "employee") => {
   try {
     if (type === "employee") {
-      const response = await exportMemberTemplate();
-      downloadFile(response.data, 'member-template.xlsx');
+      const policyUuid = route.params.id || route.params.payerInstitutionContractUuid;
+      if (!policyUuid) {
+        toasted(false, 'No policy selected for the template', '');
+        return;
+      }
+      const response = await exportMemberTemplate(policyUuid);
+      // Failed requests resolve with success: false (the API layer already shows the error)
+      if (!response?.success) return;
+      downloadFile(response.data, fileNameFromHeaders(response.headers) || templateFileName());
       toasted(true, 'Member template downloaded successfully', '');
     } else {
       // Keep the existing behavior for coverage sample if needed
@@ -82,7 +114,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 p-6 bg-white rounded-lg">
+  <div class="flex flex-col gap-6 p-6 bg-white rounded-lg min-h-[calc(100vh-6.5rem)] flex-1">
     <div class="flex justify-between items-center">
       <!-- Tabs -->
     <div
@@ -103,7 +135,7 @@ onMounted(() => {
           ? index === 0
             ? 'bg-base-clr text-white font-medium rounded-l-lg shadow-sm'
             : 'bg-base-clr text-white font-medium rounded-r-lg shadow-sm'
-          : 'text-gray-500 hover:text-base-clr hover:bg-base-clr/10',
+          : 'text-ink-subtle hover:text-base-clr hover:bg-base-clr/10',
       ]"
     >
       {{ item.name }}
@@ -135,7 +167,7 @@ onMounted(() => {
         <!-- Search input -->
         <div
           tabindex="0"
-          class="flex items-center pr-10 w-full bg-gray-100 rounded-lg overfow-hidden md:m focus-within:border-primary"
+          class="flex items-center pr-10 w-full bg-surface-muted rounded-lg overfow-hidden md:m focus-within:border-primary"
         >
           <span
             class="grid place-items-center w-10 h-full text-base-clr"
@@ -161,7 +193,7 @@ onMounted(() => {
 
           <button
             v-if="actionPage === 'amend'"
-            class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 rounded-md border border-gray-400 shadow-md transition-all hover:from-gray-800 hover:to-gray-600"
+            class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-ink-muted via-ink-muted to-ink-subtle rounded-md border border-ink-subtle shadow-md transition-all hover:from-ink hover:to-ink-muted"
             @click="openModal('AddBenefitsForAllInsured', { payerInstitutionContractUuid: route.params.id })"
           >
             <i v-html="icons.Benefits || icons.plus_circle"></i>
@@ -171,7 +203,7 @@ onMounted(() => {
           <!-- Sample button - larger and more visible -->
           <button
           v-if="actionPage !== 'amend' && actionPage !== 'history'"
-            class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 rounded-md border border-gray-400 shadow-md transition-all hover:from-gray-800 hover:to-gray-600"
+            class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-ink-muted via-ink-muted to-ink-subtle rounded-md border border-ink-subtle shadow-md transition-all hover:from-ink hover:to-ink-muted"
             @click="downloadSample('employee')"
             title="Download sample Excel file"
           >
@@ -203,7 +235,7 @@ onMounted(() => {
           <!-- Sample button - large and clear -->
           <!-- <button
        v-if="actionPage !== 'amend'"
-            class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 rounded-md border border-gray-400 shadow-md transition-all hover:from-gray-800 hover:to-gray-600"
+            class="flex gap-2 items-center px-6 py-4 font-semibold text-white whitespace-nowrap bg-gradient-to-r from-ink-muted via-ink-muted to-ink-subtle rounded-md border border-ink-subtle shadow-md transition-all hover:from-ink hover:to-ink-muted"
             @click="downloadSample('coverage')"
             title="Download sample Excel file"
           >

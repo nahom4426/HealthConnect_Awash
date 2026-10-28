@@ -41,7 +41,6 @@ const pagination = usePagination({
   },
   cb: async (params) => {
     loading.value = true; // Set loading to true before request
-    console.log('🌐 API CALL - Status:', props.status, 'Params:', params);
     try {
       const response = await getInstitutionContracts(
         props.institutionUuid,
@@ -52,12 +51,10 @@ const pagination = usePagination({
         })
       );
       
-      console.log('✅ API Response for status [' + props.status + ']:', response);
       
       // Handle array response (direct array from API)
       if (Array.isArray(response)) {
         // For array responses, set pagination to defaults
-        console.log('📦 Array response - Setting pagination');
         institutionContractStore.setPagination({
           currentPage: 1,
           itemsPerPage: 10,
@@ -69,7 +66,6 @@ const pagination = usePagination({
       
       // Handle object response with data property
       if (response?.data) {
-        console.log('📦 Object response with data property');
         // Set pagination with defaults if data is an array
         if (Array.isArray(response.data)) {
           institutionContractStore.setPagination({
@@ -85,7 +81,6 @@ const pagination = usePagination({
       }
       
       // Handle object response directly
-      console.log('📦 Direct object response');
       institutionContractStore.setPagination(response);
       return response;
     } finally {
@@ -102,7 +97,6 @@ watch(
   (newVal) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-      console.log('🔍 Search changed, fetching:', newVal);
       pagination.send();
     }, 300);
   }
@@ -111,7 +105,6 @@ watch(
 watch(
   () => props.status,
   (newStatus) => {
-    console.log('📊 Status changed to:', newStatus, '- Fetching data');
     pagination.send();
   },
   { immediate: false } // Changed to false - don't fetch on initial mount

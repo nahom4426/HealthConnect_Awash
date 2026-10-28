@@ -1,19 +1,16 @@
 <script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
-import { usePagination } from "@/composables/usePagination";
 import { computed, ref, watch } from "vue";
 import { requestCashClaim } from "../api/cashCreditApi";
 import Table from "@/components/Table.vue";
 import { formatCurrency, toasted } from "@/utils/utils";
 import { searchInsuredByInstitution } from "@/features/health/insured_persons/api/insuredPersonsApi";
 import { getInstitutionsPolicyByStatus } from "@/features/health/institutions/api/institutionApi";
-import Dropdown from "@/components/Dropdown.vue";
 import icons from "@/utils/icons";
 import Button from "@/components/Button.vue";
 import { openModal } from "@customizer/modal-x";
 import { useSearchedCashCreditInsuredByInstitutionStore } from "../store/searchCashCreditInsuredInstitutionStore";
 import { useApiRequest } from "@/composables/useApiRequest";
-import InsuredInformationCard from "../components/InsuredInformationCard.vue";
 import TableWithCheckBox from "@/components/TableWithCheckBox.vue";
 import { useRouter } from 'vue-router';
 import CreditClaimDataProvider from "../components/CreditClaimDataProvider.vue";
@@ -44,23 +41,72 @@ function editSubmittedService(row) {
 
 const cashCreditInsuredStore = useSearchedCashCreditInsuredByInstitutionStore();
 
-// Initialize searchInsured composable
-const searchInsured = usePagination(
-  (params) => searchInsuredByInstitution(institutionUuid.value, params),
-  { pageSize: 10 }
-);
+// Insured search (used to add services manually for a patient)
+const insuredQuery = ref("");
+const insuredResults = ref([]);
+const insuredSearchOpen = ref(false);
+const insuredSearchReq = useApiRequest();
+let insuredSearchTimer;
+
+function runInsuredSearch() {
+  const query = insuredQuery.value.trim();
+  if (!institutionUuid.value || !query) {
+    insuredResults.value = [];
+    return;
+  }
+  insuredSearchReq.send(
+    () => searchInsuredByInstitution(institutionUuid.value, { search: query, page: 1, limit: 10 }),
+    (res) => {
+      const raw = res?.data ?? res;
+      insuredResults.value = Array.isArray(raw) ? raw : raw?.content || raw?.data?.content || raw?.data || [];
+    }
+  );
+}
+
+watch(insuredQuery, () => {
+  clearTimeout(insuredSearchTimer);
+  insuredSearchTimer = setTimeout(runInsuredSearch, 300);
+});
+
 function handleInstitutionSelect(result) {
   institutionUuid.value = result?.institutionUuid || '';
-  send();
 }
-// Watch for institution changes and reset search
-watch(institutionUuid, (newInstitutionUuid) => {
-  if (newInstitutionUuid) {
-    // Reset search when institution changes
-    searchInsured.search.value = '';
-    searchInsured.data.value = [];
-  }
+// A different institution means a different set of insured
+watch(institutionUuid, () => {
+  insuredQuery.value = '';
+  insuredResults.value = [];
+  clearSelected();
 });
+
+function pickInsured(insured, dependant = null) {
+  selected.value = {
+    insuredPersonUuid: insured.insuredUuid,
+    dependantUuid: dependant?.dependantUuid || null,
+    name: dependant ? dependant.dependantFullName : insured.insuredFullName,
+  };
+  insuredQuery.value = '';
+  insuredResults.value = [];
+  insuredSearchOpen.value = false;
+}
+
+function clearSelected() {
+  selected.value = { insuredPersonUuid: "", dependantUuid: null, name: "" };
+}
+
+function openManualServices() {
+  const p = selected.value;
+  router.push({
+    path: '/cash_claims/manual',
+    query: p.insuredPersonUuid
+      ? {
+          institutionUuid: institutionUuid.value,
+          insuredPersonUuid: p.insuredPersonUuid,
+          dependantUuid: p.dependantUuid || undefined,
+          name: p.name,
+        }
+      : {},
+  });
+}
 
 function goBack() {
   selectedRow.value = null;
@@ -95,23 +141,9 @@ function requestClaim() {
     }
   });
 }
-// Insured detail structure
-const focusedInsured = ref({});
-let timeout;
-
-function assignUser(value) {
-  if (timeout) clearTimeout(timeout);
-  timeout = setTimeout(() => {
-    focusedInsured.value = value;
-  }, 100);
-}
-
 const checked = ref([]);
 const search = ref("");
 
-watch(checked, () => {
-  console.log('checked', checked.value);
-});
 </script>
 <template>
   <CreditClaimDataProvider 
@@ -137,100 +169,50 @@ watch(checked, () => {
           />
 </FilterOnDetector>
         
-          <!-- <Dropdown v-slot="{ setRef, toggle }">
+          <!-- Patient search: pick an insured to add services manually -->
+          <div v-if="institutionUuid" class="relative w-full sm:w-72">
+            <input
+              v-model="insuredQuery"
+              type="search"
+              class="px-3 w-full h-10 text-sm bg-white rounded-md border border-line-strong focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+              placeholder="Search patient to add services..."
+              aria-label="Search patient"
+              @focus="insuredSearchOpen = true"
+              @blur="insuredSearchOpen = false"
+            />
+            <i
+              v-if="insuredSearchReq.pending.value"
+              class="absolute right-3 top-3 animate-spin text-ink-subtle *:size-4"
+              v-html="icons.spinner"
+            />
             <div
-              class="focus-within:sys-focus !pr-0 input-style flex"
-              v-if="institutionUuid"
+              v-if="insuredSearchOpen && insuredQuery.trim()"
+              class="overflow-y-auto absolute z-50 mt-1 w-full max-h-80 bg-white rounded-lg border shadow-pop border-line"
             >
-              <input
-                @focus="toggle(true)"
-                class="flex-1 focus:shadow-none"
-                v-model="searchInsured.search.value"
-                placeholder="Search for a Patient"
-              />
-              <div class="grid place-items-center size-10">
-                <i
-                  v-if="searchInsured.pending.value"
-                  class="animate-spin"
-                  v-html="icons.spinner"
-                />
-              </div>
-            </div>
-       <div :ref="setRef">
-              <div
-                tabindex="0"
-                class="group w-80 h-max max-h-[20rem] show-scrollbar border flex flex-col gap-2 rounded bg-base-clr4 shadow-lg !p-2"
-              >
-                <template v-if="!searchInsured.data.value?.length">
-                  <div class="m-auto text-sm">
-                    {{
-                      searchInsured.dirty.value
-                        ? "Search For Another Insured"
-                        : "Search For Insured"
-                    }}
-                  </div>
-                </template>
-                <InsuredInformationCard
-                  :key="focusedInsured.insuredName"
-                  :focusedInsured="focusedInsured"
-                />
-                <div
-                  v-for="insured in searchInsured.data.value"
-                  :key="insured.insuredUuid"
-                  class="grid gap-x-2 items-center w-full insured-grid"
+              <p v-if="!insuredSearchReq.pending.value && !insuredResults.length" class="p-3 text-sm text-ink-muted">
+                No insured found.
+              </p>
+              <div v-for="insured in insuredResults" :key="insured.insuredUuid" class="border-b border-line last:border-b-0">
+                <button
+                  type="button"
+                  class="flex flex-col items-start px-3 py-2 w-full text-left hover:bg-surface-muted"
+                  @mousedown.prevent="pickInsured(insured)"
                 >
-                  <div class="grid place-items-center size-8">
-                    <i class="*:size-4" v-html="icons.insured" />
-                  </div>
-                  <b
-                    @mouseover="assignUser({
-                      insuranceId: insured.insuranceId,
-                      insuredName: insured.insuredFullName,
-                      phone: insured.phone
-                    })"
-                    v-ripple
-                    @click="
-                      () => {
-                        selected.insuredPersonUuid = insured.insuredUuid;
-                        selected.dependantUuid = null;
-                        selected.name = insured.insuredFullName;
-                      }
-                    "
-                    class="cursor-pointer"
-                    >{{ insured.insuredFullName }}</b
-                  >
-                  <div class="dependants-area">
-                    <p class="text-[9px] font-semibold">dependants</p>
-                    <div class="flex flex-col gap-2">
-                      <div
-                        @mouseover="assignUser({
-                          insuranceId: insured.insuranceId,
-                          insuredName: dep.dependantFullName,
-                          phone: insured.phone
-                        })"
-                        v-ripple
-                        @click="
-                          () => {
-                            selected.insuredPersonUuid = insured.insuredUuid;
-                            selected.dependantUuid = dep.dependantUuid;
-                            selected.name = dep.dependantFullName;
-                          }
-                        "
-                        class="cursor-pointer"
-                        :key="dep.dependantUuid"
-                        v-for="dep in insured.dependants"
-                      >
-                        {{ dep?.dependantFullName }} (<span
-                          class="font-semibold text-xxs"
-                          >{{ dep.relationship }}</span
-                        >)
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  <span class="text-sm font-medium text-ink">{{ insured.insuredFullName }}</span>
+                  <span class="text-xs text-ink-muted">{{ insured.insuranceId }}<template v-if="insured.phone"> · {{ insured.phone }}</template></span>
+                </button>
+                <button
+                  v-for="dep in insured.dependants || []"
+                  :key="dep.dependantUuid"
+                  type="button"
+                  class="flex gap-1 items-center py-1.5 pr-3 pl-7 w-full text-xs text-left text-ink-muted hover:bg-surface-muted"
+                  @mousedown.prevent="pickInsured(insured, dep)"
+                >
+                  {{ dep.dependantFullName }} <span class="text-ink-subtle">({{ dep.relationship }})</span>
+                </button>
               </div>
             </div>
-          </Dropdown> -->
+          </div>
     
         <div
           class="flex flex-1 gap-2 justify-end items-center px-3 font-semibold"
@@ -238,21 +220,22 @@ watch(checked, () => {
           <Button type="secondary" @click="router.push('/cash_services')">
             Add Cash Services
           </Button>
-          <!-- <span class="px-3 py-1 rounded shadow-md bg-primary/10">{{
-            selected.name
-          }}</span> -->
-          <Button
+          <span
             v-if="selected.insuredPersonUuid"
-            @click="
-              openModal('AddClaimServices', {
-                insuredPersonUuid: selected.insuredPersonUuid,
-                dependantUuid: selected.dependantUuid,
-                institutionUuid: institution,
-              })
-            "
-            type="primary"
+            class="inline-flex gap-1.5 items-center pr-1 pl-3 h-9 text-sm whitespace-nowrap rounded-full bg-primary/10 text-primary"
           >
-            Add Service
+            {{ selected.name }}
+            <button
+              type="button"
+              class="grid place-items-center w-6 h-6 rounded-full hover:bg-primary/15"
+              aria-label="Clear selected patient"
+              @click="clearSelected"
+            >
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+          </span>
+          <Button type="primary" @click="openManualServices">
+            Add Services Manually
           </Button>
         </div>
         <Button v-if="checked.length" @click="requestClaim" type="primary">
@@ -268,7 +251,7 @@ watch(checked, () => {
                 'Insured Name',
                 'Provider Name',
                 'Institution',
-                'Service Type',
+                'Record No.',
                 'Services',
                 'Total Amount',
                 'Status',
@@ -279,7 +262,7 @@ watch(checked, () => {
                 'fullname',
                 'providerName',
                 'institutionName',
-                'itemType',
+                'recordNumber',
                 'providedItems',
                 'amount',
                 'status',
@@ -310,17 +293,4 @@ watch(checked, () => {
   </CreditClaimDataProvider>
 </template>
 
-<style>
-.insured-grid {
-  grid-template-columns: 2rem 1fr;
-  grid-template-rows: minmax(2rem, max-content) max-content;
-  grid-template-areas:
-    "l m"
-    "e d";
-}
-
-.dependants-area {
-  grid-area: d;
-}
-</style>
  

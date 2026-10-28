@@ -34,13 +34,10 @@ function exportToExcel() {
     return
   }
 
-  console.log('📤 Starting export with', props.data.length, 'rows')
 
   const wb = utils.book_new()
   const headers = props.columns?.map(c => c.header) || Object.keys(props.data[0] || {})
   
-  console.log('🏷️ Headers:', headers)
-  console.log('🗺️ Columns config:', props.columns)
   
   // Build export data
   const exportData = props.data.map((row, idx) => {
@@ -48,7 +45,6 @@ function exportToExcel() {
     props.columns?.forEach(col => {
       newRow[col.header] = row[col.key] ?? ''
     })
-    console.log(`  Row ${idx}:`, newRow)
     return newRow
   })
 
@@ -72,7 +68,6 @@ function exportToExcel() {
         const range = `${colLetter}2:${colLetter}${lastRow}`
         const formula = `"${options.join(',')}"`
         
-        console.log(`  Adding dropdown for ${header} (${colLetter}): ${formula}`)
         
         // BIFF8 data validation format
         if (!ws['!dataValidation']) ws['!dataValidation'] = []
@@ -110,12 +105,10 @@ function exportToExcel() {
         const parentColLetter = utils.encode_col(parentColIndex)
         const depColLetter = utils.encode_col(depColIndex)
         
-        console.log(`  Cascading: ${parentHeader} (col ${parentColLetter}) -> ${depHeader} (col ${depColLetter})`)
         
         // For each parent value, create a hidden sheet and named range
         Object.entries(dependentConfig[depHeader] || {}).forEach(([parentValue, childOptions]: [string, any]) => {
           const safeName = parentValue.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 31)
-          console.log(`    Creating named range "${safeName}" for "${parentValue}":`, childOptions)
           
           // Create hidden sheet with options
           const optionsArray = Array.isArray(childOptions) ? childOptions : []
@@ -175,11 +168,9 @@ function exportToExcel() {
   let filename = props.filename || `rates_export_${new Date().toISOString().split('T')[0]}`
   if (!filename.endsWith('.xls')) filename += '.xls'
   
-  console.log('💾 Saving as:', filename)
   
   try {
     writeFile(wb, filename, { bookType: 'biff8', type: 'binary' })
-    console.log('✅ Export successful')
     emit('export')
   } catch (error: any) {
     console.error('❌ Export failed:', error)

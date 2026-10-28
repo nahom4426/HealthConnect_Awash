@@ -66,20 +66,20 @@ function remove(id) {
             >
               <button
                 @click="openModal('EditDrug', row?.drugUuid)"
-                class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+                class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-surface-muted"
               >
                 <i v-html="icons.edits" />
                 <span>Edit</span>
               </button>
               <button
-                class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+                class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-surface-muted"
               >
                 <i v-html="icons.details" />
                 <span>Detail</span>
               </button>
               <button
                 @click="remove(row?.drugUuid)"
-                class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
+                class="p-2 flex items-center text-error gap-2 rounded-lg hover:bg-surface-muted"
               >
                 <i v-html="icons.deactivate" />
                 <span>Mark as unavailable</span>

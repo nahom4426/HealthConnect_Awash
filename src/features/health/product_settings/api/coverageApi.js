@@ -67,11 +67,11 @@ export function addPackages(query, payload) {
     );
 }
 
-export function createBenefitsForAllInsured(institutionUuid, payload) {
+export function createBenefitsForAllInsured(payerInstitutionContractUuid, payload) {
   return api
     .addAuthenticationHeader()
     .post(
-      `/claimconnect/benefit/createBenefitsForAllInsured/${institutionUuid}`,
+      `/claimconnect/benefit/createBenefitsForAllInsured/${payerInstitutionContractUuid}`,
       payload
     );
 }

@@ -7,8 +7,9 @@ import { insuredMembers } from "../store/insuredPersonsStore";
 import { ref, watch, onMounted, computed } from "vue";
 import { removeUndefined } from "@/utils/utils";
 import { useRoute } from "vue-router";
+
 const route = useRoute();
-// Props
+
 const props = defineProps({
   auto: {
     type: Boolean,
@@ -20,11 +21,14 @@ const props = defineProps({
   },
   status: {
     type: String as PropType<Status>,
-    // default: Status.ACTIVE,
   },
   search: {
     type: String,
     default: "",
+  },
+  hasInstitution: {
+    type: String,
+    default: 'true',
   },
 });
 
@@ -34,16 +38,18 @@ const itemsPerPage = ref(25);
 const totalPages = ref(1);
 const totalItems = ref(0);
 
-// ✅ Pagination setup without useApiRequest
 const pagination = usePagination({
   auto: false,
   cb: async (data: any) => {
+    const targetId = route.params.payerInstitutionContractUuid || route.params.id || props.institutionId;
+    
     const response = await searchInsuredByInstitution(
-      route.params.id,
+      targetId,
       removeUndefined({
         ...data,
         status: props.status,
         search: props.search,
+        hasInstitution: props.hasInstitution,
       })
     );
 
@@ -65,14 +71,18 @@ const pagination = usePagination({
 
 watch(
   () => props.search,
-  (newSearch) => {
-    console.log("hhh");
-
+  () => {
     pagination.send();
   }
 );
 
-// ✅ Auto-fetch on mount
+watch(
+  () => props.hasInstitution,
+  () => {
+    pagination.send();
+  }
+);
+
 onMounted(() => {
   if (props.search) {
     pagination.search.value = props.search;
@@ -83,7 +93,6 @@ onMounted(() => {
   }
 });
 
-// ✅ Expose to parent
 defineExpose({
   refresh: pagination.send,
   currentPage: computed(() => currentPage.value),

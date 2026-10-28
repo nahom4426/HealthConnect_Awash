@@ -51,7 +51,7 @@ function addYears(dateStr, years) {
 function appendRenewSuffix(policy) {
   const base = String(policy || '').trim();
   if (!base) return '';
-  const suffix = '-renewd';
+  const suffix = '-Renewed';
   if (base.toLowerCase().endsWith(suffix)) return base;
   return `${base}${suffix}`;
 }
@@ -140,6 +140,9 @@ function handleSubmit() {
     (res) => {
       if (res?.success) {
         toasted(true, 'Contract renewed successfully', '');
+        window.dispatchEvent(new CustomEvent('renewContractSuccess'));
+        
+
         if (typeof props.data?.onRefetch === 'function') {
           props.data.onRefetch();
         }
@@ -164,39 +167,39 @@ function handleSubmit() {
         <Form class="p-6 space-y-6" id="renewContractForm" @submit.prevent="handleSubmit">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Begin Date</label>
+              <label class="block text-xs font-medium text-ink-muted">Begin Date</label>
               <input
                 type="date"
                 v-model="beginDate"
                 :min="beginDateMin"
-                class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-primary focus:border-primary"
               />
             </div>
 
             <div class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">End Date</label>
+              <label class="block text-xs font-medium text-ink-muted">End Date</label>
               <input
                 type="date"
                 v-model="endDate"
                 :min="endDateMin"
                 @input="endDateTouched = true"
-                class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-primary focus:border-primary"
               />
             </div>
           </div>
 
           <div class="space-y-1">
-            <label class="block text-xs font-medium text-gray-600">Policy Number</label>
+            <label class="block text-xs font-medium text-ink-muted">Policy Number</label>
             <input
               type="text"
               v-model="policyNumber"
-              class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-primary focus:border-primary"
               placeholder="Policy number"
             />
           </div>
 
           <div class="flex gap-3 justify-end pt-4 border-t">
-            <Button type="button" @click="closeModal" class="p-2 bg-white border border-primary">
+            <Button type="button" @click="closeModal" class="p-2 bg-error border border-primary">
               Cancel
             </Button>
             <Button type="primary" html-type="submit" class="p-2 pt-4 text-white bg-primary" :pending="req.pending.value">

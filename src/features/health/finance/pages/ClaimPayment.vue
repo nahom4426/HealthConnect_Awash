@@ -9,7 +9,6 @@ import { useClaimByInstitutionBatch } from "@/features/health/claim/store/claimB
 import ClaimByBatchDataProvider from '@/features/health/claim/components/ClaimByBatchDataProvider.vue';
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
-import { ModalName } from "@customizer/modal-x";
 
 
 
@@ -56,7 +55,7 @@ const filteredClaims = computed(() => {
           <div class="flex space-x-4">
             <div class="relative">
               <input v-model="searchQuery" type="text" placeholder="Search claims..."
-                class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary"
                 @input="(e: Event) => searchQuery = (e.target as HTMLInputElement).value" />
             </div>
           </div>

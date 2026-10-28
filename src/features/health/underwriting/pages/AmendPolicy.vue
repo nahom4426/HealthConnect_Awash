@@ -33,7 +33,6 @@ const status = ref('ACTIVE');
 // };
 
 function refreshData() {
-  console.log("Refreshing contract data");
   if (dataProvider.value) {
     dataProvider.value.refresh();
   }

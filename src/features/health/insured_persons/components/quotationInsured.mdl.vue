@@ -16,8 +16,8 @@ import {
 const route = useRoute();
 const refreshStore = useInsuredPersonsRefreshStore();
 
-const quotationUuid = computed(() => route.params.quotationUuid || route.params.institutionName);
-const payerInstitutionContractUuid = computed(() => route.params.id);
+const quotationUuid = computed(() => route.params.quotationUuid || route.params.payerInstitutionContractUuid);
+const payerInstitutionContractUuid = computed(() => route.params.id || route.params.payerInstitutionContractUuid);
 
 const importType = ref("main");
 const fileInput = ref(null);
@@ -223,15 +223,15 @@ function closeAndReset() {
       <NewFormParent size="lg" :title="'Import Quotation Insured'">
         <div class="flex flex-col max-h-[85vh]">
           <!-- Header Section -->
-          <div class="px-6 pt-6 pb-4 border-b border-gray-200">
+          <div class="px-6 pt-6 pb-4 border-b border-line">
             <div class="flex gap-4 items-center">
-              <div class="flex gap-2 items-center px-3 py-1.5 bg-blue-50 rounded-lg">
-                <span class="text-lg text-blue-600">📄</span>
-                <span class="text-sm font-medium text-blue-700">
+              <div class="flex gap-2 items-center px-3 py-1.5 bg-primary/5 rounded-lg">
+                <span class="text-lg text-primary">📄</span>
+                <span class="text-sm font-medium text-primary-hover">
                   {{ importType === 'main' ? 'Main Members' : 'Dependants' }}
                 </span>
               </div>
-              <div class="text-sm text-gray-500">
+              <div class="text-sm text-ink-subtle">
                 Upload Excel or CSV file to import insured persons
               </div>
             </div>
@@ -241,27 +241,27 @@ function closeAndReset() {
           <div class="overflow-y-auto flex-1 p-6 space-y-6">
             <!-- Import Type Selection -->
             <div class="space-y-3">
-              <label class="text-sm font-semibold text-gray-700">Import Type</label>
+              <label class="text-sm font-semibold text-ink-muted">Import Type</label>
               <div class="grid grid-cols-2 gap-3">
                 <div
                   class="relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer"
                   :class="
                     importType === 'main'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-line bg-white hover:border-line-strong'
                   "
                   @click="importType = 'main'"
                 >
                   <div class="flex gap-3 items-start">
                     <div
                       class="p-2 rounded-lg"
-                      :class="importType === 'main' ? 'bg-blue-100' : 'bg-gray-100'"
+                      :class="importType === 'main' ? 'bg-primary/10' : 'bg-surface-muted'"
                     >
-                      <span class="text-xl" :class="importType === 'main' ? 'text-blue-600' : 'text-gray-500'">👤</span>
+                      <span class="text-xl" :class="importType === 'main' ? 'text-primary' : 'text-ink-subtle'">👤</span>
                     </div>
                     <div class="flex-1">
-                      <div class="font-medium text-gray-900">Main Members With their Dependents</div>
-                      <div class="mt-1 text-xs text-gray-500">
+                      <div class="font-medium text-ink">Main Members With their Dependents</div>
+                      <div class="mt-1 text-xs text-ink-subtle">
                         Import primary insured members With their depndents 
                       </div>
                     </div>
@@ -269,8 +269,8 @@ function closeAndReset() {
                       class="flex justify-center items-center w-5 h-5 rounded-full border-2"
                       :class="
                         importType === 'main'
-                          ? 'border-blue-500 bg-blue-500'
-                          : 'border-gray-300'
+                          ? 'border-primary bg-primary'
+                          : 'border-line-strong'
                       "
                     >
                       <span v-if="importType === 'main'" class="text-xs text-white">✓</span>
@@ -282,21 +282,21 @@ function closeAndReset() {
                   class="relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer"
                   :class="
                     importType === 'dependant'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-line bg-white hover:border-line-strong'
                   "
                   @click="importType = 'dependant'"
                 >
                   <div class="flex gap-3 items-start">
                     <div
                       class="p-2 rounded-lg"
-                      :class="importType === 'dependant' ? 'bg-blue-100' : 'bg-gray-100'"
+                      :class="importType === 'dependant' ? 'bg-primary/10' : 'bg-surface-muted'"
                     >
-                      <span class="text-xl" :class="importType === 'dependant' ? 'text-blue-600' : 'text-gray-500'">👥</span>
+                      <span class="text-xl" :class="importType === 'dependant' ? 'text-primary' : 'text-ink-subtle'">👥</span>
                     </div>
                     <div class="flex-1">
-                      <div class="font-medium text-gray-900">Dependants</div>
-                      <div class="mt-1 text-xs text-gray-500">
+                      <div class="font-medium text-ink">Dependants</div>
+                      <div class="mt-1 text-xs text-ink-subtle">
                         Import dependent members
                       </div>
                     </div>
@@ -304,8 +304,8 @@ function closeAndReset() {
                       class="flex justify-center items-center w-5 h-5 rounded-full border-2"
                       :class="
                         importType === 'dependant'
-                          ? 'border-blue-500 bg-blue-500'
-                          : 'border-gray-300'
+                          ? 'border-primary bg-primary'
+                          : 'border-line-strong'
                       "
                     >
                       <span v-if="importType === 'dependant'" class="text-xs text-white">✓</span>
@@ -318,9 +318,9 @@ function closeAndReset() {
             <!-- File Upload Section -->
             <div class="space-y-3">
               <div class="flex justify-between items-center">
-                <label class="text-sm font-semibold text-gray-700">Upload File</label>
+                <label class="text-sm font-semibold text-ink-muted">Upload File</label>
                 <button
-                  class="text-xs font-medium text-blue-600 hover:text-blue-700"
+                  class="text-xs font-medium text-primary hover:text-primary-hover"
                   @click="downloadErrorReport"
                   v-if="hasErrors"
                 >
@@ -330,19 +330,19 @@ function closeAndReset() {
 
               <div
                 v-if="!selectedFile"
-                class="relative p-8 bg-gray-50 rounded-xl border-2 border-gray-300 border-dashed transition-colors duration-200 cursor-pointer hover:bg-gray-100 group"
+                class="relative p-8 bg-surface-muted rounded-xl border-2 border-line-strong border-dashed transition-colors duration-200 cursor-pointer hover:bg-surface-muted group"
                 @click="triggerFileInput"
               >
                 <div class="flex flex-col items-center">
                   <div
                     class="p-3 mb-3 bg-white rounded-full shadow-sm transition-shadow duration-200 group-hover:shadow"
                   >
-                    <span class="text-3xl text-gray-400">📤</span>
+                    <span class="text-3xl text-ink-subtle">📤</span>
                   </div>
-                  <div class="text-sm font-medium text-gray-700">
+                  <div class="text-sm font-medium text-ink-muted">
                     Click to upload or drag and drop
                   </div>
-                  <div class="mt-1 text-xs text-gray-500">
+                  <div class="mt-1 text-xs text-ink-subtle">
                     Excel or CSV files (Max 10MB)
                   </div>
                 </div>
@@ -350,22 +350,22 @@ function closeAndReset() {
 
               <div
                 v-else
-                class="p-4 bg-white rounded-xl border border-gray-200"
+                class="p-4 bg-white rounded-xl border border-line"
               >
                 <div class="flex gap-3 items-center">
-                  <div class="p-2 bg-green-50 rounded-lg">
-                    <span class="text-xl text-green-600">📊</span>
+                  <div class="p-2 bg-success-soft rounded-lg">
+                    <span class="text-xl text-success">📊</span>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <div class="text-sm font-medium text-gray-900 truncate">
+                    <div class="text-sm font-medium text-ink truncate">
                       {{ fileName }}
                     </div>
-                    <div class="text-xs text-gray-500">
+                    <div class="text-xs text-ink-subtle">
                       {{ formatFileSize(selectedFile.size) }}
                     </div>
                   </div>
                   <button
-                    class="p-2 text-gray-400 transition-colors duration-200 hover:text-red-600"
+                    class="p-2 text-ink-subtle transition-colors duration-200 hover:text-error"
                     @click.stop="clearFile"
                     :disabled="importing"
                   >
@@ -386,12 +386,12 @@ function closeAndReset() {
             <!-- Progress Bar -->
             <div v-if="importing" class="space-y-2">
               <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Processing file...</span>
-                <span class="font-semibold text-blue-600">{{ progress }}%</span>
+                <span class="text-ink-muted">Processing file...</span>
+                <span class="font-semibold text-primary">{{ progress }}%</span>
               </div>
-              <div class="overflow-hidden w-full h-2 bg-gray-200 rounded-full">
+              <div class="overflow-hidden w-full h-2 bg-line rounded-full">
                 <div
-                  class="h-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
+                  class="h-2 bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-300"
                   :style="{ width: `${progress}%` }"
                 />
               </div>
@@ -401,37 +401,37 @@ function closeAndReset() {
             <div v-if="showResults && importResult" class="space-y-4">
               <!-- Summary Cards -->
               <div class="grid grid-cols-3 gap-3">
-                <div class="p-3 text-center bg-gray-50 rounded-lg border border-gray-200">
-                  <div class="text-2xl font-bold text-gray-900">
+                <div class="p-3 text-center bg-surface-muted rounded-lg border border-line">
+                  <div class="text-2xl font-bold text-ink">
                     {{ resultSummary.total }}
                   </div>
-                  <div class="text-xs text-gray-600">Total Rows</div>
+                  <div class="text-xs text-ink-muted">Total Rows</div>
                 </div>
-                <div class="p-3 text-center bg-green-50 rounded-lg border border-green-200">
-                  <div class="text-2xl font-bold text-green-700">
+                <div class="p-3 text-center bg-success-soft rounded-lg border border-success/20">
+                  <div class="text-2xl font-bold text-success-strong">
                     {{ resultSummary.success }}
                   </div>
-                  <div class="text-xs text-green-600">Successful</div>
+                  <div class="text-xs text-success">Successful</div>
                 </div>
-                <div class="p-3 text-center bg-red-50 rounded-lg border border-red-200">
-                  <div class="text-2xl font-bold text-red-700">
+                <div class="p-3 text-center bg-error-soft rounded-lg border border-error/20">
+                  <div class="text-2xl font-bold text-error-strong">
                     {{ resultSummary.error }}
                   </div>
-                  <div class="text-xs text-red-600">Failed</div>
+                  <div class="text-xs text-error">Failed</div>
                 </div>
               </div>
 
               <!-- Success Rate -->
-              <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div class="p-3 bg-primary/5 rounded-lg border border-primary/20">
                 <div class="flex justify-between items-center">
-                  <span class="text-sm font-medium text-blue-700">Success Rate</span>
-                  <span class="text-sm font-bold text-blue-700">
+                  <span class="text-sm font-medium text-primary-hover">Success Rate</span>
+                  <span class="text-sm font-bold text-primary-hover">
                     {{ resultSummary.successRate }}%
                   </span>
                 </div>
-                <div class="mt-2 w-full h-2 bg-blue-200 rounded-full">
+                <div class="mt-2 w-full h-2 bg-primary/20 rounded-full">
                   <div
-                    class="h-2 bg-blue-600 rounded-full transition-all duration-500"
+                    class="h-2 bg-primary rounded-full transition-all duration-500"
                     :style="{ width: `${resultSummary.successRate}%` }"
                   />
                 </div>
@@ -440,31 +440,31 @@ function closeAndReset() {
               <!-- Error Details -->
               <div v-if="hasErrors" class="space-y-2">
                 <div class="flex gap-2 items-center">
-                  <span class="text-lg text-red-500">⚠️</span>
-                  <span class="text-sm font-medium text-gray-700">Error Details</span>
+                  <span class="text-lg text-error">⚠️</span>
+                  <span class="text-sm font-medium text-ink-muted">Error Details</span>
                 </div>
-                <div class="overflow-y-auto max-h-48 rounded-lg border border-gray-200">
-                  <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="sticky top-0 bg-gray-50">
+                <div class="overflow-y-auto max-h-48 rounded-lg border border-line">
+                  <table class="min-w-full divide-y divide-line">
+                    <thead class="sticky top-0 bg-surface-muted">
                       <tr>
-                        <th class="px-3 py-2 text-xs font-medium text-left text-gray-500">
+                        <th class="px-3 py-2 text-xs font-medium text-left text-ink-subtle">
                           Row
                         </th>
-                        <th class="px-3 py-2 text-xs font-medium text-left text-gray-500">
+                        <th class="px-3 py-2 text-xs font-medium text-left text-ink-subtle">
                           Error Message
                         </th>
                       </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-line">
                       <tr
                         v-for="(result, index) in importResult.rowResults.filter(r => r.error)"
                         :key="index"
-                        class="hover:bg-gray-50"
+                        class="hover:bg-surface-muted"
                       >
-                        <td class="px-3 py-2 text-sm font-medium text-gray-900">
+                        <td class="px-3 py-2 text-sm font-medium text-ink">
                           #{{ result.rowNumber }}
                         </td>
-                        <td class="px-3 py-2 text-sm text-red-600">
+                        <td class="px-3 py-2 text-sm text-error">
                           {{ result.message }}
                         </td>
                       </tr>
@@ -474,9 +474,9 @@ function closeAndReset() {
               </div>
 
               <!-- Success Message -->
-              <div v-if="hasSuccess" class="flex gap-2 items-center p-3 bg-green-50 rounded-lg border border-green-200">
-                <span class="text-lg text-green-600">✅</span>
-                <span class="text-sm text-green-700">
+              <div v-if="hasSuccess" class="flex gap-2 items-center p-3 bg-success-soft rounded-lg border border-success/20">
+                <span class="text-lg text-success">✅</span>
+                <span class="text-sm text-success-strong">
                   Successfully imported {{ resultSummary.success }} record(s)
                 </span>
               </div>
@@ -484,10 +484,10 @@ function closeAndReset() {
           </div>
 
           <!-- Footer Actions -->
-          <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <div class="px-6 py-4 bg-surface-muted border-t border-line">
             <div class="flex gap-3 justify-end">
               <Button
-                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                class="px-4 py-2 text-ink-muted bg-error border border-line-strong hover:bg-surface-muted"
                 @click.prevent="closeAndReset"
                 :disabled="importing"
               >
@@ -495,14 +495,14 @@ function closeAndReset() {
               </Button>
               <Button
                 v-if="hasErrors"
-                class="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700"
+                class="px-4 py-2 text-white bg-primary hover:bg-primary-hover"
                 @click.prevent="closeAndReset"
               >
                 Close
               </Button>
               <Button
                 v-else
-                class="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 text-white bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="importing || !selectedFile"
                 @click.prevent="importNow"
               >
@@ -530,16 +530,16 @@ function closeAndReset() {
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--surface-muted));
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgb(var(--line-strong));
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgb(var(--ink-subtle));
 }
 </style>

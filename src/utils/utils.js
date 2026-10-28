@@ -36,9 +36,9 @@ export function generateUUID() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  
+
   // Fallback for older browsers
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -183,6 +183,16 @@ export function formatCurrency(currencyValue) {
   }).format(parseInt(currencyValue));
   return currencyFormat;
 }
+
+export function formatMoney(val) {
+  if (val === null || val === undefined || val === "") return "-";
+  const num = Number(val);
+  if (isNaN(num)) return "-";
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 export function getColumnValue(key, row) {
   return key.split(".").reduce((all, el) => {
     return all?.[el];
@@ -192,12 +202,23 @@ export function getColumnValue(key, row) {
 export function secondDateFormat(d) {
   if (!d) return " ";
   try {
-    const date = new Date(d);
+    let dateObj;
+    if (typeof d === "string") {
+      const ddmmyyyy = d.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (ddmmyyyy) {
+        dateObj = new Date(`${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`);
+      } else {
+        dateObj = new Date(d);
+      }
+    } else {
+      dateObj = new Date(d);
+    }
+    if (isNaN(dateObj.getTime())) return String(d);
     const dateFormat = new Intl.DateTimeFormat("en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
-    }).format(date);
+    }).format(dateObj);
     return dateFormat;
   } catch (err) {
     return "";
@@ -207,14 +228,25 @@ export function secondDateFormat(d) {
 export function secondDateFormatWithTime(d) {
   if (!d) return " ";
   try {
-    const date = new Date(d);
+    let dateObj;
+    if (typeof d === "string") {
+      const ddmmyyyy = d.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (ddmmyyyy) {
+        dateObj = new Date(`${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`);
+      } else {
+        dateObj = new Date(d);
+      }
+    } else {
+      dateObj = new Date(d);
+    }
+    if (isNaN(dateObj.getTime())) return String(d);
     const dateFormat = new Intl.DateTimeFormat("en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
       hour: "numeric",
       minute: "numeric",
-    }).format(date);
+    }).format(dateObj);
     return dateFormat;
   } catch (err) {
     return "";
@@ -266,7 +298,6 @@ export function addYear(date, year) {
   const modifiedDate = new Date(givenDate);
   modifiedDate.setFullYear(modifiedDate.getFullYear() + year);
 
-  console.log(modifiedDate);
   return modifiedDate;
 }
 

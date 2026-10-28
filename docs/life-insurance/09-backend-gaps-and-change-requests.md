@@ -191,6 +191,17 @@ underwriting decisions, reinsurance cession bordereau) with Excel export.
 15. Questionnaire: `GET /question` requires `status`, so there is no "all questions" view; and `GET /possible-answer/active`
     is unpaged (fine for a small library). Say whether deleting a library answer that questions still offer is
     allowed, and what happens to those questions.
+16. Group quotation totals: `QuotationResponse` has no total premium while the quotation is a draft or issued, so the
+    UI can only show each member's premium. Return the quotation's gross premium (term + riders), withholding tax,
+    revenue stamp and net premium once it is priced, so the payment screen can show the expected figures instead of
+    finance typing all four amounts from the receipt (`PUT /quotation/pay` would then only need receipt number and
+    date; see G6).
+17. `POST /quotation/revise/{uuid}`: say from which statuses a revision is allowed (the UI offers it only on a paid
+    quotation whose policy is issued) and confirm it returns the new quotation with its UUID.
+18. `PUT /policy/issue/{quotationUuid}` takes `PolicyRequest { beginDate, endDate }`: say whether the end date must
+    equal begin date + term (the UI only checks end > begin), and whether begin may be before the payment date.
+19. `QuotationRequest.quotedByUuid` / `quotedByFullName` are sent by the UI from the signed-in user; the backend should
+    take them from the token instead so they can't be spoofed.
 
 ### G10 · Privileges
 

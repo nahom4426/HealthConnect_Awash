@@ -1,6 +1,6 @@
 # Life Insurance implementation analysis
 
-Status: analysis complete; Stages 1–4 implemented (API, products & rates, reinsurance, underwriting questionnaire). Screens checked with Swagger-shaped data, not yet against the live Life service.
+Status: analysis complete; Stages 1–5 implemented (API, products & rates, reinsurance, underwriting questionnaire, group quotations). Screens checked with Swagger-shaped data, not yet against the live Life service.
 together first. Prepared 2026-10-28 against the Life service OpenAPI document at
 `http://192.168.100.251:8194/api/life/v3/api-docs`.
 
@@ -177,7 +177,7 @@ for their gap.
 | 2 | Products & rates: riders (versions, activate, revise), group & individual term rates, rider rates, Excel import, rate lookup | — | **Done** (UI checked with Swagger-shaped data; not yet against the live service — needs a Life login) |
 | 3 | Reinsurance set-up: reinsurers, medical tests, treaties (list, 5-step create wizard, detail with members, group FCL, medical ranges and required tests, activate / revise / delete) | — | **Done** (UI checked with Swagger-shaped data; open questions in 09 §G9 items 8–11) |
 | 4 | Underwriting questionnaire set-up: questions list (active / draft / disabled), question editor (single choice, multiple choice, number ranges, free text; scores, critical flags, follow-up text; applicant preview), shared answer library | — | **Done** (UI checked with Swagger-shaped data; open questions in 09 §G9 items 12–15) |
-| 5 | Group quotation pipeline (incl. insured import, riders, issue, accept, pay) | 2, 3 | Ready |
+| 5 | Group quotation pipeline: list per status, create (institution search), members (add / edit / remove, Excel template and import, above-retention filter), riders within rider limits, treaty link, issue → accept → record payment → issue policy, revise | 2, 3 | **Done** (UI checked with Swagger-shaped data; open questions in 09 §G9 items 16–19) |
 | 6 | Policies (issue, list, treaty report) | 5 | Ready (detail limited) |
 | 7 | Claims (queues, review/approve/reject, documents, timeline) | 6 | Partly ready; settlement after G3 |
 | 8 | Individual term policies | 2 | After G2/G11 for issuance |

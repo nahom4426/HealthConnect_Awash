@@ -9,6 +9,8 @@ const TreatyWizard = () => import("@/features/life/pages/reinsurance/TreatyWizar
 const TreatyDetail = () => import("@/features/life/pages/reinsurance/TreatyDetail.vue");
 const ReinsurersList = () => import("@/features/life/pages/reinsurance/ReinsurersList.vue");
 const MedicalTests = () => import("@/features/life/pages/reinsurance/MedicalTests.vue");
+const QuotationsList = () => import("@/features/life/pages/quotations/QuotationsList.vue");
+const QuotationDetail = () => import("@/features/life/pages/quotations/QuotationDetail.vue");
 const QuestionsList = () => import("@/features/life/pages/underwriting/QuestionsList.vue");
 const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
@@ -67,6 +69,18 @@ const lifeRoutes = [
     name: "life-medical-tests",
     component: MedicalTests,
     meta: { requiresAuth: true, title: "Medical tests" },
+  },
+  {
+    path: "/life/quotations",
+    name: "life-quotations",
+    component: QuotationsList,
+    meta: { requiresAuth: true, title: "Group quotations" },
+  },
+  {
+    path: "/life/quotations/:quotationUuid",
+    name: "life-quotation-detail",
+    component: QuotationDetail,
+    meta: { requiresAuth: true, title: "Quotation" },
   },
   {
     path: "/life/underwriting/questions",

@@ -33,7 +33,7 @@ async function submit() {
 
 <template>
   <ModalParent>
-    <NewFormParent size="sm" :title="editing ? 'Edit answer' : 'Add answer'" :subtitle="editing ? 'Every question that offers this answer shows the new wording.' : 'Answers are shared: any question can offer them.'">
+    <NewFormParent size="md" :title="editing ? 'Edit answer' : 'Add answer'" :subtitle="editing ? 'Every question that offers this answer shows the new wording.' : 'Answers are shared: any question can offer them.'">
       <form id="life-possible-answer-form" class="grid gap-4 p-5" novalidate @submit.prevent="submit">
         <label class="flex flex-col gap-1 text-sm font-medium text-ink">
           Answer

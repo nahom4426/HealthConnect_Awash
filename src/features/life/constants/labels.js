@@ -14,3 +14,12 @@ export function formatDate(value) {
 export const toDateTime = (date) => (date ? `${date}T00:00:00` : null);
 /** API date-time → <input type="date"> value */
 export const toDateInput = (value) => (value ? String(value).slice(0, 10) : "");
+
+/** Backend amount → "12,500.00" (display only; amounts are never computed here) */
+export function formatAmount(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = Number(value);
+  return Number.isNaN(n) ? String(value) : n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export const quotationStatusLabel = { PENDING: "Draft", ISSUED: "Issued", ACCEPTED: "Accepted", PAID: "Paid" };

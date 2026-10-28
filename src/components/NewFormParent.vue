@@ -7,6 +7,7 @@ defineProps({
     default: "md",
   },
   title: String,
+  subtitle: String,
   goBack: {
     type: Boolean,
     default: false,
@@ -43,7 +44,10 @@ defineProps({
             <path d="M16 10H4m0 0 5-5m-5 5 5 5" />
           </svg>
         </button>
-        <h2 class="!px-0 text-base font-semibold truncate text-ink">{{ title }}</h2>
+        <div class="min-w-0">
+          <h2 class="!px-0 text-base font-semibold truncate text-ink">{{ title }}</h2>
+          <p v-if="subtitle" class="text-xs truncate text-ink-muted">{{ subtitle }}</p>
+        </div>
       </div>
       <div class="flex gap-2 items-center shrink-0">
         <slot name="right-actions" />

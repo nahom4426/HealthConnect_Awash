@@ -189,7 +189,9 @@ function onFile(e) {
                 <select
                   v-model="row[c.key]"
                   :aria-label="c.label"
-                  :class="['h-8 px-2 text-sm rounded-md border bg-surface text-ink outline-none focus:border-primary', c.wide ? 'min-w-[12rem]' : '', errorFor(row, c.key) ? 'border-error' : 'border-line']"
+                  :disabled="c.lockExisting && !!row[spec.idField]"
+                  :title="c.lockExisting && row[spec.idField] ? 'Saved rows cannot change this. Delete the row and add a new one.' : undefined"
+                  :class="['h-8 px-2 text-sm rounded-md border bg-surface text-ink outline-none focus:border-primary disabled:opacity-70', c.wide ? 'min-w-[12rem]' : '', errorFor(row, c.key) ? 'border-error' : 'border-line']"
                 >
                   <option value="" disabled>Select…</option>
                   <option v-for="o in c.options" :key="o.value" :value="o.value">{{ o.label }}</option>

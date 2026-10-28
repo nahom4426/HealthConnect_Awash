@@ -40,7 +40,7 @@ const field = "w-full px-3 text-sm rounded-lg border outline-none bg-surface tex
 
 <template>
   <ModalParent>
-    <NewFormParent size="sm" :title="editing ? 'Edit medical test' : 'Add medical test'" subtitle="Evidence a reinsurer can require above its free cover limit.">
+    <NewFormParent size="md" :title="editing ? 'Edit medical test' : 'Add medical test'" subtitle="Evidence a reinsurer can require above its free cover limit.">
       <form id="life-medical-test-form" class="grid gap-4 p-5" novalidate @submit.prevent="submit">
         <label class="flex flex-col gap-1 text-sm font-medium text-ink">
           Short code

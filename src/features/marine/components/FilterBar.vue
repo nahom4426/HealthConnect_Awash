@@ -7,6 +7,7 @@
 //          { type: "dateRange", from, to, label }
 //          { type: "toggle", key, label }]
 import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { inputClass } from "./styles";
 
 defineProps({
@@ -14,6 +15,7 @@ defineProps({
   list: { type: Object, required: true },
 });
 
+const { t } = useI18n();
 const openMulti = ref("");
 const root = ref(null);
 const closeOutside = (e) => {
@@ -49,7 +51,7 @@ const labelFor = (f, v) => f.options.find((o) => o.value === v)?.label ?? v;
           @click="openMulti = openMulti === f.key ? '' : f.key"
         >
           <span class="text-ink-muted">{{ f.label }}:</span>
-          <span class="font-medium truncate max-w-[12rem]">{{ list.filters[f.key].length ? list.filters[f.key].map((v) => labelFor(f, v)).join(", ") : "Any" }}</span>
+          <span class="font-medium truncate max-w-[12rem]">{{ list.filters[f.key].length ? list.filters[f.key].map((v) => labelFor(f, v)).join(", ") : t("common.any") }}</span>
           <svg class="w-3.5 h-3.5 text-ink-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 8 4 4 4-4" /></svg>
         </button>
         <div v-if="openMulti === f.key" class="absolute left-0 top-full z-30 p-1 mt-1 w-56 rounded-xl border shadow-pop bg-surface border-line">
@@ -66,14 +68,14 @@ const labelFor = (f, v) => f.options.find((o) => o.value === v)?.label ?? v;
         :aria-label="f.label"
         :class="[inputClass, 'border-line !w-auto !h-9 pr-8']"
       >
-        <option value="">{{ f.label }}: any</option>
+        <option value="">{{ t("common.anyFor", { label: f.label }) }}</option>
         <option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option>
       </select>
 
       <div v-else-if="f.type === 'dateRange'" class="inline-flex gap-1 items-center text-sm">
         <span class="text-ink-muted">{{ f.label }}</span>
         <input v-model="list.filters[f.from]" type="date" :aria-label="`${f.label} from`" :max="list.filters[f.to] || undefined" :class="[inputClass, 'border-line !w-auto !h-9']" />
-        <span class="text-ink-subtle">to</span>
+        <span class="text-ink-subtle">{{ t("common.to") }}</span>
         <input v-model="list.filters[f.to]" type="date" :aria-label="`${f.label} to`" :min="list.filters[f.from] || undefined" :class="[inputClass, 'border-line !w-auto !h-9']" />
       </div>
 
@@ -82,7 +84,7 @@ const labelFor = (f, v) => f.options.find((o) => o.value === v)?.label ?? v;
         {{ f.label }}
       </label>
     </template>
-    <button v-if="list.isFiltered.value" type="button" class="px-2 h-9 text-sm font-medium text-primary hover:underline" @click="list.reset()">Reset</button>
+    <button v-if="list.isFiltered.value" type="button" class="px-2 h-9 text-sm font-medium text-primary hover:underline" @click="list.reset()">{{ t("common.reset") }}</button>
     <div class="flex flex-1 gap-2 justify-end"><slot /></div>
   </div>
 </template>

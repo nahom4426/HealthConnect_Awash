@@ -115,12 +115,6 @@ export const STATUS_TONES = Object.freeze({
   recovery: { OPEN: "amber", RECOVERED: "green", PARTLY_RECOVERED: "teal", WRITTEN_OFF: "grey" },
 });
 
-export const STATUS_LABELS = Object.freeze({
-  certificate: { AMENDED: "Amended (superseded)" },
-  verify: { VALID: "Valid", SUPERSEDED: "Superseded by a newer version" },
-  referral: { WITHDRAWN: "Withdrawn (re-rated)" },
-  quote: { REFERRED: "Referred" },
-});
 
 export const AGE_BAND_ACTIONS = Object.freeze(["LOAD", "REFER", "DECLINE"]);
 export const FX_SOURCES = Object.freeze({ NBE: "NBE feed", MANUAL: "Manual" });

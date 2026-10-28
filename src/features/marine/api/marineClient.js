@@ -1,6 +1,7 @@
 import ApiService from "@/service/ApiService";
 import { useToast } from "vue-toastification";
 import { marineMockEnabled } from "./mockMode";
+import { rememberCorrelationId } from "../utils/errorReporting";
 
 /**
  * Marine & Cargo backend client (base /api/marine/v1).
@@ -89,9 +90,12 @@ function defaultMessage(status) {
 export async function request(method, url, { params, data, responseType, headers, onUploadProgress } = {}) {
   try {
     const res = await http.request({ method, url, params, data, responseType, headers, onUploadProgress });
+    rememberCorrelationId(res.headers?.["x-correlation-id"]);
     return { ok: true, data: res.data, headers: res.headers };
   } catch (e) {
-    return { ok: false, error: toApiError(e) };
+    const error = toApiError(e);
+    rememberCorrelationId(error.correlationId);
+    return { ok: false, error };
   }
 }
 

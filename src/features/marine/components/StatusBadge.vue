@@ -1,7 +1,8 @@
 <script setup>
 // Coloured status pill: `entity` + `status` pick the colour from the plan's status table.
 import { computed } from "vue";
-import { STATUS_LABELS, STATUS_TONES } from "../constants";
+import { STATUS_TONES } from "../constants";
+import { statusLabel } from "../i18n";
 
 const props = defineProps({
   entity: { type: String, required: true },
@@ -19,12 +20,7 @@ const CLASSES = {
 };
 
 const tone = computed(() => STATUS_TONES[props.entity]?.[props.status] ?? "grey");
-const label = computed(() => {
-  const custom = STATUS_LABELS[props.entity]?.[props.status];
-  if (custom) return custom;
-  const s = String(props.status || "—").replace(/_/g, " ");
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-});
+const label = computed(() => statusLabel(props.status));
 </script>
 
 <template>

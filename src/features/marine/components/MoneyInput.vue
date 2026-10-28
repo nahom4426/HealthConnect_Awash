@@ -1,6 +1,6 @@
 <script setup>
 // Amount with currency. The amount is a decimal string with 2 places and thousands separators
-// while not focused; JavaScript numbers are never used for it.
+// while not being edited; JavaScript numbers are never used for it.
 import { computed, ref } from "vue";
 import { CURRENCIES } from "../constants";
 import { formatAmount, normalizeAmount } from "../utils/money";
@@ -18,10 +18,13 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:amount", "update:currency", "blur"]);
 
-const focused = ref(false);
-const display = computed(() => (focused.value || props.amount === "" || props.amount === null ? props.amount ?? "" : formatAmount(props.amount)));
+// Shown formatted ("120,000.00") until the user types; then their raw text until they leave the
+// field. Focusing alone doesn't change the text, so typing never races a re-render.
+const editing = ref(false);
+const display = computed(() => (editing.value || props.amount === "" || props.amount === null ? props.amount ?? "" : formatAmount(props.amount)));
 
 function onInput(e) {
+  editing.value = true;
   // Digits and one dot only; at most 2 decimals
   let v = e.target.value.replace(/[^\d.]/g, "");
   const [i, ...rest] = v.split(".");
@@ -29,9 +32,11 @@ function onInput(e) {
   e.target.value = v;
   emit("update:amount", v);
 }
-function onBlur() {
-  focused.value = false;
-  if (props.amount !== "" && props.amount !== null) emit("update:amount", normalizeAmount(props.amount));
+function onBlur(e) {
+  editing.value = false;
+  // Read the element, not props.amount: a fast Tab can blur before the parent re-renders the new value
+  const typed = e.target.value.replace(/,/g, "");
+  if (typed !== "") emit("update:amount", normalizeAmount(typed));
   emit("blur");
 }
 </script>
@@ -55,7 +60,6 @@ function onBlur() {
       :aria-invalid="invalid || undefined"
       :aria-describedby="describedby"
       :class="[inputClass, inputBorder(invalid), 'rounded-l-none text-right tabular-nums']"
-      @focus="focused = true"
       @input="onInput"
       @blur="onBlur"
     />

@@ -9,9 +9,9 @@ import { listPolicies } from "../../api/marineApi";
 import { POLICY_STATUSES, PRODUCTS, productLabel } from "../../constants";
 import { formatAmount, formatMoney } from "../../utils/money";
 import { formatDate } from "../../utils/format";
+import { statusLabel } from "../../i18n";
 
 const list = useListQuery(listPolicies, { filters: { q: "", status: [], product: "", periodFrom: "", periodTo: "" }, sort: "updatedAt,desc" });
-const statusLabel = (s) => s.charAt(0) + s.slice(1).toLowerCase();
 const columns = [
   { key: "policyNo", label: "Policy no", sortable: true },
   { key: "product", label: "Product" },

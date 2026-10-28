@@ -12,6 +12,7 @@ import { listQuotes } from "../../api/marineApi";
 import { PRODUCTS, QUOTE_STATUSES, productLabel } from "../../constants";
 import { formatAmount, formatMoney } from "../../utils/money";
 import { addDays, formatDate, formatDateTime, todayIso } from "../../utils/format";
+import { statusLabel } from "../../i18n";
 
 const router = useRouter();
 const { can } = useCan();
@@ -20,7 +21,6 @@ const list = useListQuery(listQuotes, {
   sort: "updatedAt,desc",
 });
 
-const statusLabel = (s) => s.charAt(0) + s.slice(1).toLowerCase();
 const expiringSoon = (row) => row.validUntil && ["QUOTED", "APPROVED"].includes(row.status) && row.validUntil <= addDays(todayIso(), 5);
 
 const columns = [

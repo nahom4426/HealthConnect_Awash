@@ -2,6 +2,7 @@
 // Search-as-you-type picker (ARIA combobox) behind PartyPicker, PortAutocomplete and
 // HsCodeAutocomplete. modelValue is the picked object (or an array of them when `multiple`).
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { inputClass, inputBorder } from "./styles";
 import { useId } from "../utils/useId";
 
@@ -21,6 +22,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:modelValue", "blur"]);
 
+const { t } = useI18n();
 const listId = useId("lb");
 const query = ref("");
 const items = ref([]);
@@ -106,13 +108,13 @@ defineExpose({ close: () => (open.value = false) });
         <p class="text-sm font-medium truncate text-ink">{{ itemLabel(modelValue) }}</p>
         <p v-if="itemSub" class="text-xs truncate text-ink-subtle">{{ itemSub(modelValue) }}</p>
       </div>
-      <button v-if="!disabled" type="button" class="shrink-0 px-2 text-xs font-medium text-primary hover:underline" :aria-label="`Change ${itemLabel(modelValue)}`" @click="remove(modelValue)">Change</button>
+      <button v-if="!disabled" type="button" class="shrink-0 px-2 text-xs font-medium text-primary hover:underline" :aria-label="`${t('common.change')}: ${itemLabel(modelValue)}`" @click="remove(modelValue)">{{ t("common.change") }}</button>
     </div>
 
     <div v-else :class="[inputClass, inputBorder(invalid), 'flex flex-wrap gap-1 items-center !h-auto min-h-10 py-1']">
       <span v-for="s in selected" :key="s[itemKey]" class="inline-flex gap-1 items-center py-0.5 pr-1 pl-2 text-xs font-medium rounded-md bg-primary/10 text-primary">
         {{ itemLabel(s) }}
-        <button type="button" class="grid place-items-center w-4 h-4 rounded hover:bg-primary/20" :aria-label="`Remove ${itemLabel(s)}`" @click="remove(s)">×</button>
+        <button type="button" class="grid place-items-center w-4 h-4 rounded hover:bg-primary/20" :aria-label="t('common.remove', { name: itemLabel(s) })" @click="remove(s)">×</button>
       </span>
       <input
         :id="id"
@@ -124,7 +126,7 @@ defineExpose({ close: () => (open.value = false) });
         :aria-activedescendant="active >= 0 ? `${listId}-${active}` : undefined"
         :aria-invalid="invalid || undefined"
         :aria-describedby="describedby"
-        :placeholder="atMax ? `Up to ${max}` : placeholder"
+        :placeholder="atMax ? t('common.upTo', { n: max }) : placeholder"
         :disabled="disabled || atMax"
         class="flex-1 min-w-[8rem] h-8 bg-transparent outline-none"
         autocomplete="off"
@@ -140,8 +142,8 @@ defineExpose({ close: () => (open.value = false) });
       role="listbox"
       class="overflow-auto absolute z-40 p-1 mt-1 w-full max-h-72 rounded-xl border shadow-pop bg-surface border-line"
     >
-      <li v-if="searching && !items.length" class="px-3 py-2 text-sm text-ink-subtle">Searching…</li>
-      <li v-else-if="!items.length" class="px-3 py-2 text-sm text-ink-subtle">No matches</li>
+      <li v-if="searching && !items.length" class="px-3 py-2 text-sm text-ink-subtle">{{ t("common.searching") }}</li>
+      <li v-else-if="!items.length" class="px-3 py-2 text-sm text-ink-subtle">{{ t("common.noMatches") }}</li>
       <li
         v-for="(item, i) in items"
         :id="`${listId}-${i}`"

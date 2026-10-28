@@ -2,10 +2,12 @@
 // Count of items needing the user (plan section 3): referrals assigned to them and overdue claim
 // deadlines, with a dropdown linking to each.
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useDashboard } from "../composables/useDashboard";
 import { formatDate } from "../utils/format";
 import { DEADLINE_KINDS } from "../constants";
 
+const { t } = useI18n();
 const { data } = useDashboard();
 const open = ref(false);
 const root = ref(null);
@@ -23,7 +25,7 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", close));
     <button
       type="button"
       class="relative grid place-items-center w-8 h-8 rounded-lg border border-line bg-surface text-ink-muted hover:text-ink"
-      :aria-label="`Alerts: ${count} item${count === 1 ? '' : 's'} need you`"
+      :aria-label="t('alerts.label', { n: count }, count)"
       :aria-expanded="open"
       @click="open = !open"
     >
@@ -31,17 +33,17 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", close));
       <span v-if="count" class="absolute -top-1.5 -right-1.5 grid place-items-center px-1 min-w-[1.1rem] h-[1.1rem] text-[10px] font-bold text-white rounded-full bg-error">{{ count }}</span>
     </button>
     <div v-if="open" class="absolute right-0 top-full z-40 p-2 mt-1 w-80 rounded-xl border shadow-pop bg-surface border-line">
-      <p v-if="!referrals.length && !deadlines.length" class="px-2 py-3 text-sm text-ink-muted">Nothing needs you right now.</p>
+      <p v-if="!referrals.length && !deadlines.length" class="px-2 py-3 text-sm text-ink-muted">{{ t("alerts.nothing") }}</p>
       <template v-if="referrals.length">
-        <p class="px-2 pt-1 text-xs font-semibold tracking-wide uppercase text-ink-subtle">Your referrals</p>
+        <p class="px-2 pt-1 text-xs font-semibold tracking-wide uppercase text-ink-subtle">{{ t("alerts.referrals") }}</p>
         <RouterLink v-for="r in referrals" :key="r.id" :to="`/marine/underwriting/${r.id}`" class="block px-2 py-1.5 text-sm rounded-lg hover:bg-surface-muted" @click="open = false">
           {{ r.quoteNo }} <span class="text-ink-subtle">· {{ r.insured?.name }}</span>
         </RouterLink>
       </template>
       <template v-if="deadlines.length">
-        <p class="px-2 pt-2 text-xs font-semibold tracking-wide uppercase text-ink-subtle">Overdue deadlines</p>
+        <p class="px-2 pt-2 text-xs font-semibold tracking-wide uppercase text-ink-subtle">{{ t("alerts.deadlines") }}</p>
         <RouterLink v-for="d in deadlines" :key="d.id" :to="`/marine/claims/${d.claimId}?tab=deadlines`" class="block px-2 py-1.5 text-sm rounded-lg hover:bg-surface-muted" @click="open = false">
-          {{ d.claimNo }} <span class="text-ink-subtle">· {{ DEADLINE_KINDS[d.kind] }} due {{ formatDate(d.dueDate) }}</span>
+          {{ d.claimNo }} <span class="text-ink-subtle">· {{ t("alerts.dueOn", { kind: DEADLINE_KINDS[d.kind], date: formatDate(d.dueDate) }) }}</span>
         </RouterLink>
       </template>
     </div>

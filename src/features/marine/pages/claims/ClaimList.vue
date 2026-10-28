@@ -13,12 +13,12 @@ import { listClaims } from "../../api/marineApi";
 import { CLAIM_STATUSES, CLAIM_TYPES, DEADLINE_KINDS, label } from "../../constants";
 import { formatAmount } from "../../utils/money";
 import { formatDate } from "../../utils/format";
+import { statusLabel } from "../../i18n";
 
 const router = useRouter();
 const { roles } = useCan();
 const canRegister = () => roles.value.includes("CLAIMS_HANDLER");
 const list = useListQuery(listClaims, { filters: { q: "", status: [], type: "", handler: "", lossFrom: "", lossTo: "", overdue: "" }, sort: "" });
-const statusLabel = (s) => s.charAt(0) + s.slice(1).toLowerCase();
 const columns = [
   { key: "claimNo", label: "Claim no" },
   { key: "certNo", label: "Certificate no" },

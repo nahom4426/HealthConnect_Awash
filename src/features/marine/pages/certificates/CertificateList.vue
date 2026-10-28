@@ -6,12 +6,12 @@ import ListTable from "../../components/ListTable.vue";
 import StatusBadge from "../../components/StatusBadge.vue";
 import { useListQuery } from "../../composables/useListQuery";
 import { listCertificates } from "../../api/marineApi";
-import { CERTIFICATE_STATUSES, STATUS_LABELS } from "../../constants";
+import { CERTIFICATE_STATUSES } from "../../constants";
 import { formatMoney } from "../../utils/money";
 import { formatDateTime } from "../../utils/format";
+import { statusLabel } from "../../i18n";
 
 const list = useListQuery(listCertificates, { filters: { q: "", status: [], vesselImo: "", issuedFrom: "", issuedTo: "" }, sort: "createdAt,desc" });
-const statusLabel = (s) => STATUS_LABELS.certificate[s] ?? s.charAt(0) + s.slice(1).toLowerCase();
 const columns = [
   { key: "certNo", label: "Certificate no", sortable: true },
   { key: "version", label: "Version" },

@@ -9,8 +9,9 @@ features/
                  institutions, insured_persons, insured_service, providers, provider_contracts,
                  product_settings, authorization, finance, broker_management, reports
   motor/         rate config, quotations, proposals, and claims/ (the digital-channel claims flow)
+  marine/        Marine & Cargo phases 0–1: quotes, policies, certificates, masters, FX, rate tables,
+                 users, public verify page; mock/ answers the API until the backend exists
   fire/          }
-  marine/        }
   life/          }  dashboard + navs only so far
   engineering/   }
   liability/     }

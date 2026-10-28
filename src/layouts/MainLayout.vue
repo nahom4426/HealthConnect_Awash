@@ -10,7 +10,8 @@ import { useModuleStore } from "@/stores/moduleStore";
 import healthNavs from "@/features/health/navs";
 import motorNavs from "@/features/motor/navs.js";
 import fireNavs from "@/features/fire/navs.js";
-import marineNavs from "@/features/marine/navs.js";
+import marineNavs, { filterMarineNavs } from "@/features/marine/navs.js";
+import { useMarineRoles } from "@/features/marine/composables/useCan";
 import lifeNavs from "@/features/life/navs.js";
 import engineeringNavs from "@/features/engineering/navs.js";
 import liabilityNavs from "@/features/liability/navs.js";
@@ -87,8 +88,11 @@ const MODULE_NAVS = {
 };
 
 // ── Active module raw navs ──
+const marineRoles = useMarineRoles();
 const activeNavs = computed(() => {
   const id = moduleStore.activeModuleId;
+  // Marine items carry their own role lists (Marine roles, not the AuthService role names)
+  if (id === "marine") return filterMarineNavs(marineNavs, marineRoles.value);
   return MODULE_NAVS[id] || healthNavs;
 });
 

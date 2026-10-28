@@ -69,6 +69,8 @@ const isSuperAdmin = computed(() => {
 // ── Current page title from breadcrumbs or route ──
 const pageTitle = computed(() => {
   if (breadcrumbs?.current?.value) return breadcrumbs.current.value;
+  // Detail pages end in an id, so prefer a title declared on the route
+  if (route.meta?.title) return route.meta.title;
   const seg = route.path.split("/").filter(Boolean).pop() || "Dashboard";
   return seg.replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 });
@@ -184,7 +186,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
             <NotificationCenter />
 
             <!-- User & Roles Access Settings (Super Admin Only) -->
-            <button v-if="isSuperAdmin" @click="router.push('/admin/user-roles')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer ml-1" title="Manage System Users & Privileges">
+            <button v-if="isSuperAdmin" @click="router.push('/admin/user-roles')" class="px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary border border-primary/20 font-bold text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer ml-1" title="Manage System Users & Privileges">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
               <span>User & Roles</span>
             </button>
@@ -238,7 +240,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   flex-direction: row;
   width: 100%;
   height: 100vh;
-  background: #F8FAFC;
+  background: rgb(var(--canvas));
   overflow: hidden;
 }
 
@@ -255,8 +257,8 @@ const isModuleSelect = computed(() => route.path === "/module-select");
 .topbar {
   height: 64px;
   flex-shrink: 0;
-  background: #ffffff;
-  border-bottom: 1px solid #E2E8F0;
+  background: rgb(var(--surface));
+  border-bottom: 1px solid rgb(var(--line));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -271,7 +273,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
 .topbar-title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #0F172A;
+  color: rgb(var(--ink));
   font-family: 'Outfit', sans-serif;
   letter-spacing: -0.01em;
 }
@@ -291,28 +293,28 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.5rem;
-  border: 1px solid #E2E8F0;
-  background: #F8FAFC;
-  color: #64748B;
+  border: 1px solid rgb(var(--line));
+  background: rgb(var(--surface-muted));
+  color: rgb(var(--ink-muted));
   cursor: pointer;
   transition: all 0.15s;
 }
 .tb-icon-btn svg { width: 1.1rem; height: 1.1rem; }
-.tb-icon-btn:hover { background: #F1F5F9; color: #0F172A; border-color: #CBD5E1; }
+.tb-icon-btn:hover { background: rgb(var(--surface-raised)); color: rgb(var(--ink)); border-color: rgb(var(--line-strong)); }
 .tb-notif-dot {
   position: absolute;
   top: 0.35rem; right: 0.35rem;
   width: 0.45rem; height: 0.45rem;
   border-radius: 50%;
   background: #FE9312;
-  border: 1.5px solid #ffffff;
+  border: 1.5px solid rgb(var(--surface));
 }
 
 /* Divider */
 .tb-divider {
   width: 1px;
   height: 1.75rem;
-  background: #E2E8F0;
+  background: rgb(var(--line));
   margin: 0 0.25rem;
 }
 
@@ -323,17 +325,17 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   gap: 0.625rem;
   padding: 0.375rem 0.75rem 0.375rem 0.375rem;
   border-radius: 2rem;
-  border: 1px solid #E2E8F0;
-  background: #F8FAFC;
+  border: 1px solid rgb(var(--line));
+  background: rgb(var(--surface-muted));
   cursor: pointer;
   transition: all 0.15s;
 }
-.tb-profile:hover { background: #F1F5F9; border-color: #CBD5E1; }
+.tb-profile:hover { background: rgb(var(--surface-raised)); border-color: rgb(var(--line-strong)); }
 .tb-avatar {
   width: 2rem; height: 2rem;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #03396C;
+  border: 2px solid rgb(var(--primary-fg));
   flex-shrink: 0;
 }
 .tb-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -341,13 +343,13 @@ const isModuleSelect = computed(() => route.path === "/module-select");
 .tb-user-name {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #0F172A;
+  color: rgb(var(--ink));
   white-space: nowrap;
 }
 .tb-user-role {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #03396C;
+  color: rgb(var(--primary-fg));
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -359,9 +361,9 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   gap: 0.4rem;
   padding: 0.4rem 0.875rem;
   border-radius: 0.5rem;
-  border: 1px solid #FECACA;
-  background: #FFF5F5;
-  color: #EF4444;
+  border: 1px solid rgb(var(--error) / 0.35);
+  background: rgb(var(--error-soft));
+  color: rgb(var(--error));
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -369,7 +371,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   white-space: nowrap;
 }
 .tb-logout-btn svg { width: 1rem; height: 1rem; }
-.tb-logout-btn:hover { background: #FEE2E2; border-color: #FCA5A5; }
+.tb-logout-btn:hover { background: rgb(var(--error-soft)); border-color: rgb(var(--error) / 0.5); }
 
 /* ── Scrollable page content ── */
 .content-area {
@@ -377,7 +379,7 @@ const isModuleSelect = computed(() => route.path === "/module-select");
   min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #F8FAFC;
+  background: rgb(var(--canvas));
   box-sizing: border-box;
 }
 

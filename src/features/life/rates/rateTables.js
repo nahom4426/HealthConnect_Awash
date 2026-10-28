@@ -64,6 +64,8 @@ export const groupRiderSpec = {
   ],
   uniqueBy: (r) => `${r.minAge}-${r.maxAge}`,
   uniqueLabel: "age range",
+  rangePairs: [["minAge", "maxAge", "from age"]],
+  noOverlap: { from: "minAge", to: "maxAge", label: "Age ranges" },
 };
 
 const isBlank = (v) => v === "" || v === null || v === undefined;
@@ -72,7 +74,7 @@ const isBlank = (v) => v === "" || v === null || v === undefined;
 export function normalizeRow(spec, row) {
   const out = { ...row };
   for (const c of spec.columns) {
-    if (c.type === "status") continue;
+    if (c.type === "status" || c.type === "select") continue;
     const v = row[c.key];
     out[c.key] = isBlank(v) ? null : c.type === "int" ? Number.parseInt(v, 10) : Number(v);
   }
@@ -97,52 +99,79 @@ export function validateRateRows(spec, rows) {
         if (!c.statuses.includes(raw[c.key])) set(raw._key, c.key, "Pick a status");
         continue;
       }
+      if (c.type === "select") {
+        if (!c.options.some((o) => o.value === raw[c.key])) set(raw._key, c.key, "Required");
+        continue;
+      }
       const v = r[c.key];
       if (v === null || Number.isNaN(v)) { set(raw._key, c.key, "Required"); continue; }
       if (c.type === "int" && !Number.isInteger(Number(raw[c.key]))) set(raw._key, c.key, "Whole number");
       else if (c.min !== undefined && v < c.min) set(raw._key, c.key, `Min ${c.min}`);
+      else if (c.max !== undefined && v > c.max) set(raw._key, c.key, `Max ${c.max}`);
     }
-    if ("minAge" in r && "maxAge" in r && r.minAge !== null && r.maxAge !== null && r.minAge > r.maxAge) {
-      set(raw._key, "maxAge", "Must be ≥ from age");
+    for (const [from, to, label] of spec.rangePairs || []) {
+      if (r[from] !== null && r[to] !== null && r[from] > r[to]) set(raw._key, to, `Must be ≥ ${label}`);
     }
   }
 
-  // Duplicates on the business key (age, age+term, age range)
-  const seen = new Map();
-  for (const raw of rows) {
-    const k = spec.uniqueBy(normalizeRow(spec, raw));
-    if (seen.has(k)) {
-      tableErrors.push(`Two rows have the same ${spec.uniqueLabel} (${k.replace("|", " / ")}).`);
-      set(raw._key, spec.columns[0].key, "Duplicate");
-    } else seen.set(k, raw._key);
+  // Duplicates on the business key (age, age+term, age range, reinsurer…)
+  if (spec.uniqueBy) {
+    const seen = new Map();
+    for (const raw of rows) {
+      const k = spec.uniqueBy(normalizeRow(spec, raw));
+      if (seen.has(k)) {
+        tableErrors.push(`Two rows have the same ${spec.uniqueLabel} (${spec.formatKey ? spec.formatKey(k) : k.replace("|", " / ")}).`);
+        set(raw._key, spec.columns[0].key, "Duplicate");
+      } else seen.set(k, raw._key);
+    }
   }
 
-  // Overlapping age ranges among active-looking rows (group rider rates)
-  if (spec.id === "group-rider") {
-    const ranges = rows.map((raw) => ({ raw, r: normalizeRow(spec, raw) }))
-      .filter(({ r }) => r.minAge !== null && r.maxAge !== null && r.minAge <= r.maxAge)
-      .sort((a, b) => a.r.minAge - b.r.minAge);
-    for (let i = 1; i < ranges.length; i++) {
-      const prev = ranges[i - 1].r, cur = ranges[i].r;
-      if (cur.minAge <= prev.maxAge) {
-        tableErrors.push(`Age ranges ${prev.minAge}–${prev.maxAge} and ${cur.minAge}–${cur.maxAge} overlap.`);
-        set(ranges[i].raw._key, "minAge", "Overlaps");
+  // Bands that must not overlap (group rider age bands, FCL lives bands)
+  if (spec.noOverlap) {
+    const { from, to, label } = spec.noOverlap;
+    const bands = rows.map((raw) => ({ raw, r: normalizeRow(spec, raw) }))
+      .filter(({ r }) => r[from] !== null && r[to] !== null && r[from] <= r[to])
+      .sort((a, b) => a.r[from] - b.r[from]);
+    for (let i = 1; i < bands.length; i++) {
+      const prev = bands[i - 1].r, cur = bands[i].r;
+      if (cur[from] <= prev[to]) {
+        tableErrors.push(`${label} ${prev[from]}–${prev[to]} and ${cur[from]}–${cur[to]} overlap.`);
+        set(bands[i].raw._key, from, "Overlaps");
       }
     }
   }
 
-  return { fieldErrors, tableErrors: [...new Set(tableErrors)], valid: !Object.keys(fieldErrors).length && !tableErrors.length };
+  // Spec-specific checks over the whole table: errors block saving, warnings don't
+  const extra = spec.checks ? spec.checks(rows.map((raw) => normalizeRow(spec, raw))) : {};
+  tableErrors.push(...(extra.errors || []));
+
+  return {
+    fieldErrors,
+    tableErrors: [...new Set(tableErrors)],
+    warnings: extra.warnings || [],
+    valid: !Object.keys(fieldErrors).length && !tableErrors.length,
+  };
 }
 
-/** Builds the bulk-save payload: only changed or new rows, numbers normalized, editor keys removed. */
-export function toSavePayload(spec, rows, original, extra = {}) {
+const rowChanged = (spec, before, raw) => !before || spec.columns.some((c) => String(before[c.key] ?? "") !== String(raw[c.key] ?? ""));
+
+/** Number of new or edited rows compared with what was loaded. */
+export function countChanges(spec, rows, original) {
+  const byId = new Map(original.map((o) => [o[spec.idField], o]));
+  const edited = rows.filter((raw) => !raw[spec.idField] || rowChanged(spec, byId.get(raw[spec.idField]), raw)).length;
+  const removed = original.filter((o) => !rows.some((r) => r[spec.idField] === o[spec.idField])).length;
+  return edited + removed;
+}
+
+/**
+ * Builds the bulk-save payload, numbers normalized and editor keys removed.
+ * By default only new or changed rows; `all` sends every row (for bulk endpoints whose
+ * replace-or-merge behaviour isn't documented, sending the full list is right either way).
+ */
+export function toSavePayload(spec, rows, original, extra = {}, { all = false } = {}) {
   const byId = new Map(original.map((o) => [o[spec.idField], o]));
   return rows
-    .filter((raw) => {
-      if (!raw[spec.idField]) return true; // new row
-      const before = byId.get(raw[spec.idField]);
-      return !before || spec.columns.some((c) => String(before[c.key] ?? "") !== String(raw[c.key] ?? ""));
-    })
+    .filter((raw) => all || !raw[spec.idField] || rowChanged(spec, byId.get(raw[spec.idField]), raw))
     .map((raw) => {
       const r = normalizeRow(spec, raw);
       const body = { ...extra };

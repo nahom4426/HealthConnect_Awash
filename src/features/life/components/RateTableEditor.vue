@@ -5,7 +5,7 @@
 import { computed, ref, watch } from "vue";
 import Button from "@/components/Button.vue";
 import LifeStatusBadge from "./LifeStatusBadge.vue";
-import { toSavePayload, validateRateRows } from "../rates/rateTables";
+import { countChanges, toSavePayload, validateRateRows } from "../rates/rateTables";
 
 const props = defineProps({
   spec: { type: Object, required: true },
@@ -19,6 +19,14 @@ const props = defineProps({
   importable: { type: Boolean, default: false },
   importing: { type: Boolean, default: false },
   readonly: { type: Boolean, default: false },
+  /** emit the full list on save (for bulk endpoints that may replace the whole set) */
+  sendAll: { type: Boolean, default: false },
+  /** keep rows in the order given instead of sorting by the first column */
+  keepOrder: { type: Boolean, default: false },
+  /** empty-state hint override */
+  emptyHint: { type: String, default: "" },
+  /** part of a multi-step form: no save/discard, the parent calls collect() */
+  collectOnly: { type: Boolean, default: false },
 });
 const emit = defineEmits(["save", "remove", "import", "retry"]);
 
@@ -37,7 +45,8 @@ watch(() => props.rows, reset, { immediate: true });
 const firstKey = computed(() => props.spec.columns[0].key);
 const visibleRows = computed(() => {
   const q = filter.value.trim();
-  const list = q ? editRows.value.filter((r) => String(r[firstKey.value] ?? "").startsWith(q)) : editRows.value;
+  const list = q ? editRows.value.filter((r) => cellText(r, props.spec.columns[0]).toLowerCase().startsWith(q.toLowerCase())) : editRows.value;
+  if (props.keepOrder) return list;
   // Rows from the backend in key order; new rows stay at the bottom while being typed
   return [...list].sort((a, b) => {
     const an = !a[props.spec.idField], bn = !b[props.spec.idField];
@@ -46,14 +55,19 @@ const visibleRows = computed(() => {
   });
 });
 
-const payload = computed(() => toSavePayload(props.spec, editRows.value, props.rows, props.extra));
-const changedCount = computed(() => payload.value.length);
+function cellText(row, c) {
+  if (c.type === "select") return c.options.find((o) => o.value === row[c.key])?.label ?? "";
+  return String(row[c.key] ?? "");
+}
+
+const payload = computed(() => toSavePayload(props.spec, editRows.value, props.rows, props.extra, { all: props.sendAll }));
+const changedCount = computed(() => countChanges(props.spec, editRows.value, props.rows));
 const validation = computed(() => validateRateRows(props.spec, editRows.value));
 const errorFor = (row, key) => (showErrors.value ? validation.value.fieldErrors[row._key]?.[key] : "");
 
 function addRow() {
   const blank = { _key: `n${seq++}` };
-  for (const c of props.spec.columns) blank[c.key] = c.type === "status" ? props.defaultStatus : "";
+  for (const c of props.spec.columns) blank[c.key] = c.type === "status" ? props.defaultStatus : c.type === "select" ? (c.default ?? "") : "";
   editRows.value.push(blank);
   filter.value = "";
 }
@@ -71,6 +85,13 @@ function save() {
   if (!validation.value.valid || !changedCount.value) return;
   emit("save", payload.value);
 }
+
+/** For multi-step forms: show errors and return the rows as request bodies (no API call). */
+function collect() {
+  showErrors.value = true;
+  return { valid: validation.value.valid, rows: toSavePayload(props.spec, editRows.value, [], props.extra, { all: true }) };
+}
+defineExpose({ collect });
 
 function pickFile() {
   fileInput.value?.click();
@@ -92,7 +113,7 @@ function onFile(e) {
           <svg class="absolute left-2.5 top-1/2 w-4 h-4 -translate-y-1/2 text-ink-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5L17 17" stroke-linecap="round" /></svg>
           <input
             v-model="filter"
-            inputmode="numeric"
+            :inputmode="spec.columns[0].type === 'select' ? 'text' : 'numeric'"
             :placeholder="`Find ${spec.columns[0].label.toLowerCase()}`"
             class="pl-8 pr-3 w-44 h-9 text-sm rounded-lg border outline-none bg-surface-muted border-line focus:border-primary focus:ring-2 focus:ring-primary/15 text-ink"
           />
@@ -103,8 +124,8 @@ function onFile(e) {
         <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="onFile" />
         <Button v-if="importable" variant="outline" size="sm" :pending="importing" @click="pickFile">Import Excel</Button>
         <Button variant="outline" size="sm" @click="addRow">Add row</Button>
-        <Button v-if="changedCount" variant="ghost" size="sm" :disabled="saving" @click="reset">Discard</Button>
-        <Button size="sm" :pending="saving" :disabled="!changedCount" @click="save">
+        <Button v-if="changedCount && !collectOnly" variant="ghost" size="sm" :disabled="saving" @click="reset">Discard</Button>
+        <Button v-if="!collectOnly" size="sm" :pending="saving" :disabled="!changedCount" @click="save">
           {{ changedCount ? `Save ${changedCount} change${changedCount === 1 ? "" : "s"}` : "No changes" }}
         </Button>
       </div>
@@ -116,6 +137,11 @@ function onFile(e) {
       <ul v-if="validation.tableErrors.length" class="mt-1 list-disc list-inside">
         <li v-for="m in validation.tableErrors" :key="m">{{ m }}</li>
       </ul>
+    </div>
+
+    <!-- Non-blocking business warnings (e.g. reinsurer shares not adding to 100 %) -->
+    <div v-if="!readonly && validation.warnings.length && editRows.length" class="px-4 py-2.5 text-sm border-b bg-warning-soft border-line text-warning-strong">
+      <p v-for="w in validation.warnings" :key="w">{{ w }}</p>
     </div>
 
     <!-- Load error -->
@@ -143,7 +169,7 @@ function onFile(e) {
           <tr v-else-if="!visibleRows.length">
             <td :colspan="spec.columns.length + 1" class="px-6 py-12 text-center">
               <p class="text-sm font-semibold text-ink">{{ filter ? "No matching rows" : "No rates yet" }}</p>
-              <p v-if="!filter && !readonly" class="mt-1 text-sm text-ink-muted">Add rows by hand{{ importable ? " or import an Excel sheet" : "" }}.</p>
+              <p v-if="!filter && !readonly" class="mt-1 text-sm text-ink-muted">{{ emptyHint || `Add rows by hand${importable ? " or import an Excel sheet" : ""}.` }}</p>
             </td>
           </tr>
           <tr
@@ -155,8 +181,19 @@ function onFile(e) {
             <td v-for="c in spec.columns" :key="c.key" class="px-2 py-1.5 align-top">
               <template v-if="readonly">
                 <LifeStatusBadge v-if="c.type === 'status'" :status="row[c.key]" />
-                <span v-else class="px-1 tabular-nums text-ink">{{ row[c.key] }}</span>
+                <span v-else class="px-1 tabular-nums text-ink">{{ cellText(row, c) }}</span>
               </template>
+              <div v-else-if="c.type === 'select'">
+                <select
+                  v-model="row[c.key]"
+                  :aria-label="c.label"
+                  :class="['h-8 px-2 text-sm rounded-md border bg-surface text-ink outline-none focus:border-primary', c.wide ? 'min-w-[12rem]' : '', errorFor(row, c.key) ? 'border-error' : 'border-line']"
+                >
+                  <option value="" disabled>Select…</option>
+                  <option v-for="o in c.options" :key="o.value" :value="o.value">{{ o.label }}</option>
+                </select>
+                <p v-if="errorFor(row, c.key)" class="mt-0.5 text-xs text-error">{{ errorFor(row, c.key) }}</p>
+              </div>
               <select
                 v-else-if="c.type === 'status'"
                 v-model="row[c.key]"

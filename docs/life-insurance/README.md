@@ -175,7 +175,7 @@ for their gap.
 |---|---|---|---|
 | 1 | API integration: generated client, enums, dev proxy, auth | — | **Done** |
 | 2 | Products & rates: riders (versions, activate, revise), group & individual term rates, rider rates, Excel import, rate lookup | — | **Done** (UI checked with Swagger-shaped data; not yet against the live service — needs a Life login) |
-| 3 | Reinsurance set-up | — | Ready |
+| 3 | Reinsurance set-up: reinsurers, medical tests, treaties (list, 5-step create wizard, detail with members, group FCL, medical ranges and required tests, activate / revise / delete) | — | **Done** (UI checked with Swagger-shaped data; open questions in 09 §G9 items 8–11) |
 | 4 | Underwriting questionnaire set-up | — | Ready |
 | 5 | Group quotation pipeline (incl. insured import, riders, issue, accept, pay) | 2, 3 | Ready |
 | 6 | Policies (issue, list, treaty report) | 5 | Ready (detail limited) |

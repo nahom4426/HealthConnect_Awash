@@ -4,6 +4,11 @@ const RidersList = () => import("@/features/life/pages/products/RidersList.vue")
 const RiderDetail = () => import("@/features/life/pages/products/RiderDetail.vue");
 const GroupTermRates = () => import("@/features/life/pages/products/GroupTermRates.vue");
 const IndividualTermRates = () => import("@/features/life/pages/products/IndividualTermRates.vue");
+const TreatiesList = () => import("@/features/life/pages/reinsurance/TreatiesList.vue");
+const TreatyWizard = () => import("@/features/life/pages/reinsurance/TreatyWizard.vue");
+const TreatyDetail = () => import("@/features/life/pages/reinsurance/TreatyDetail.vue");
+const ReinsurersList = () => import("@/features/life/pages/reinsurance/ReinsurersList.vue");
+const MedicalTests = () => import("@/features/life/pages/reinsurance/MedicalTests.vue");
 
 const lifeRoutes = [
   {
@@ -29,6 +34,36 @@ const lifeRoutes = [
     name: "life-individual-term-rates",
     component: IndividualTermRates,
     meta: { requiresAuth: true, title: "Individual term rates" },
+  },
+  {
+    path: "/life/reinsurance/treaties",
+    name: "life-treaties",
+    component: TreatiesList,
+    meta: { requiresAuth: true, title: "Reinsurance treaties" },
+  },
+  {
+    path: "/life/reinsurance/treaties/new",
+    name: "life-treaty-new",
+    component: TreatyWizard,
+    meta: { requiresAuth: true, title: "New treaty" },
+  },
+  {
+    path: "/life/reinsurance/treaties/:treatyUuid",
+    name: "life-treaty-detail",
+    component: TreatyDetail,
+    meta: { requiresAuth: true, title: "Treaty" },
+  },
+  {
+    path: "/life/reinsurance/reinsurers",
+    name: "life-reinsurers",
+    component: ReinsurersList,
+    meta: { requiresAuth: true, title: "Reinsurers" },
+  },
+  {
+    path: "/life/reinsurance/medical-tests",
+    name: "life-medical-tests",
+    component: MedicalTests,
+    meta: { requiresAuth: true, title: "Medical tests" },
   },
 ];
 

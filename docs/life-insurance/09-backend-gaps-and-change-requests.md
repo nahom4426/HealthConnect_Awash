@@ -169,6 +169,17 @@ underwriting decisions, reinsurance cession bordereau) with Excel export.
 5. Accept `quotationUuid` as an alias of the misspelled `qutoationUuid` on insured import (keep the old name).
 6. Move `pay` and `deny` inputs from query string to JSON body (keep the old forms working).
 7. Type claim statuses as an enum.
+8. Document whether the bulk `PUT /reinsurance/treaty/member/{treatyUuid}`, `PUT /reinsurance/fcl-group/{treatyUuid}`
+   and `PUT /reinsurance/fcl/underwriting-range/{treatyUuid}` **replace** the treaty's whole list or only update
+   the rows sent, and whether rows without a UUID are created. The frontend currently sends the full list (correct
+   under either behaviour) and creates new members through `POST /reinsurance/treaty/member`.
+9. `FclGroupRequest` (`POST /reinsurance/fcl-group`) has no `reinsuranceTreatyUuid`, so a band can't be added to an
+   existing treaty on its own; new bands are sent through the bulk PUT. Add the field.
+10. `FclMedicalUnderwritingRangeUpdateRequest` has no `insuranceType`, so a range's Group/Individual type can't be
+    changed after creation (the UI locks it). Also document what `fclMedicalParameters` in that PUT does to the
+    range's existing medical requirements.
+11. New rider rate rows: confirm the intended default status (the UI uses ACTIVE) and whether pricing reads only
+    ACTIVE rows.
 
 ### G10 · Privileges
 

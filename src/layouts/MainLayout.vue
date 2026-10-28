@@ -99,6 +99,8 @@ const activeNavs = computed(() => {
 // ── Role-filtered navigation items for all modules ──
 const filteredNavs = computed(() => {
   const rawNavs = activeNavs.value || [];
+  // Marine items are already filtered by Marine role in activeNavs
+  if (moduleStore.activeModuleId === "marine") return rawNavs;
   const user = authStore.auth?.user ?? authStore.auth ?? {};
   const roleName = user?.roleName || '';
   const roleCode = user?.roleCode || (typeof user?.role === 'string' ? user.role : '') || getActingRole();

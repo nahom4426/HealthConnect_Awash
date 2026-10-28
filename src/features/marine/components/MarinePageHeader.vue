@@ -4,6 +4,7 @@
 import { watchEffect } from "vue";
 import StatusBadge from "./StatusBadge.vue";
 import DevRoleSwitch from "./DevRoleSwitch.vue";
+import AlertsBell from "./AlertsBell.vue";
 import { marineMockEnabled } from "../api/mockMode";
 
 const props = defineProps({
@@ -13,6 +14,8 @@ const props = defineProps({
   entity: { type: String, default: "" },
   /** [{ label, to? }] — the last item is the current page */
   crumbs: { type: Array, default: () => [] },
+  /** The public verify page and other bare pages leave the bell out */
+  bell: { type: Boolean, default: true },
 });
 
 watchEffect(() => {
@@ -33,7 +36,10 @@ watchEffect(() => {
         </ol>
       </nav>
       <span v-else />
-      <DevRoleSwitch v-if="marineMockEnabled" />
+      <div class="flex gap-2 items-center">
+        <DevRoleSwitch v-if="marineMockEnabled" />
+        <AlertsBell v-if="bell" />
+      </div>
     </div>
     <div class="flex flex-wrap gap-4 justify-between items-start">
       <div class="min-w-0">

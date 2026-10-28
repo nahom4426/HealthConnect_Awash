@@ -61,3 +61,15 @@ export function useCan() {
   const can = (action) => hasAnyRole(roles.value, PERMISSIONS[action] ?? []);
   return { roles, can, devRoles };
 }
+
+/**
+ * Mock backend only: who the current user is in the mock's data. A broker-only role acts as the
+ * seeded broker party "Nile Insurance Brokers" (id 8), so the broker portal scoping can be tried.
+ */
+export function mockIdentity(roles) {
+  const auth = useAuthStore();
+  const u = auth.auth?.user ?? auth.auth ?? {};
+  const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "You";
+  const brokerOnly = roles.length > 0 && roles.every((r) => r === "BROKER");
+  return { name: brokerOnly ? "Dawit Bekele (Nile Insurance Brokers)" : name, brokerPartyId: brokerOnly ? "8" : null };
+}

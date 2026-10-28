@@ -16,6 +16,7 @@ import { useResource } from "../../composables/useResource";
 import { getPolicy } from "../../api/marineApi";
 import { productLabel, clauseLabel } from "../../constants";
 import { formatDate, formatDateTime } from "../../utils/format";
+import { formatAmount } from "../../utils/money";
 import { coverItems, lcItems, shipmentItems, vesselText } from "../../utils/quoteSummary";
 
 const route = useRoute();
@@ -71,7 +72,13 @@ onMounted(() => load(route.params.id));
           </section>
         </template>
         <template #premium>
-          <section :class="[cardClass, 'p-4 max-w-3xl']"><PremiumBreakdown :premium="p.premium" :fx="p.fx" /></section>
+          <section :class="[cardClass, 'p-4 max-w-3xl']">
+            <PremiumBreakdown :premium="p.premium" :fx="p.fx" />
+            <p v-if="p.refund" class="flex justify-between p-3 mt-3 text-sm rounded-xl bg-success-soft text-success-strong">
+              <span>Refund on cancelling {{ p.refund.certNo }} ({{ p.refund.reason.replace(/_/g, " ").toLowerCase() }}), {{ formatDate(p.refund.at) }}</span>
+              <span class="font-semibold tabular-nums">ETB {{ formatAmount(p.refund.amount) }}</span>
+            </p>
+          </section>
         </template>
         <template #certificates>
           <section :class="[cardClass, 'overflow-hidden']">

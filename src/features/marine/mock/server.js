@@ -1,9 +1,9 @@
 // In-browser mock of the Marine & Cargo backend (plan: "MSW handlers double as a local mock
-// backend"). It plugs in as the axios adapter of the marine client, answers every phase 0 and 1
-// endpoint, and keeps its data in localStorage so records survive a reload.
-// Reset it from the browser console with: localStorage.removeItem("marine.mockdb.v1")
+// backend"). It plugs in as the axios adapter of the marine client and answers every endpoint;
+// data lives in localStorage so records survive a reload. Domain routes are split across this
+// file (masters, FX, users, quotes, policies, certificates, rate tables) and underwriting.js,
+// openCovers.js and claims.js. Reset from the console: localStorage.removeItem("marine.mockdb.v1")
 import { AxiosError } from "axios";
-import { createSeed } from "./seed";
 import { rate } from "./rating";
 import { buildCertificatePdf } from "./pdf";
 import { addDays, todayIso } from "../utils/format";
@@ -11,251 +11,27 @@ import { isValidImo, vesselAge } from "../utils/imo";
 import { normalizeAmount, parseDecimal } from "../utils/money";
 import { parseFxCsv } from "../utils/fxCsv";
 import { validateRateTable } from "../utils/rateTable";
-import { FOREIGN_CURRENCIES, PAGE_SIZE } from "../constants";
+import { FOREIGN_CURRENCIES } from "../constants";
+import {
+  db, save, resetMockDb, HttpError, fail, invalid, nowIso, year, nextNo, lc, listParam, actor, audit, page, inRange,
+  partyRef, portRef, vesselRef, commodityRef, activeTable, fxFor, refreshQuoteStatus, quoteView, pickQuote, quoteErrors,
+  editableQuote, certificateStatus, certificateView, policyView, on, routes, caller, brokerOnly, nextId, declarationContext,
+} from "./core";
+import { assess, applyAssessment, syncReferral } from "./underwriting";
+import "./openCovers";
+import "./claims";
 
-const KEY = "marine.mockdb.v1";
-let db = load();
+export { resetMockDb };
 
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    /* fall through to a fresh seed */
-  }
-  return createSeed();
-}
-function save() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(db));
-  } catch {
-    /* storage full or blocked: keep working in memory */
-  }
-}
-export function resetMockDb() {
-  db = createSeed();
-  save();
-}
-
-// ── helpers ──
-class HttpError extends Error {
-  constructor(status, message, { code = "", fields = [] } = {}) {
-    super(message);
-    this.status = status;
-    this.code = code;
-    this.fields = fields;
-  }
-}
-const fail = (status, message, opts) => {
-  throw new HttpError(status, message, opts);
-};
-const invalid = (fields) => fail(422, "Some fields need attention.", { code: "VALIDATION", fields });
-const nowIso = () => new Date().toISOString();
-const year = () => new Date().getFullYear();
-const nextNo = (prefix, key) => `${prefix}-${year()}-${String(++db.seq[key]).padStart(5, "0")}`;
-const lc = (v) => String(v ?? "").toLowerCase();
-const listParam = (v) => (Array.isArray(v) ? v : String(v ?? "").split(",")).filter(Boolean);
-
-function actor() {
-  try {
-    const raw = JSON.parse(localStorage.getItem("userDetail") || "null");
-    const u = raw?.user ?? raw;
-    return [u?.firstName, u?.lastName].filter(Boolean).join(" ") || u?.name || u?.email || "You";
-  } catch {
-    return "You";
-  }
-}
-
-function audit(entity, id, action, before, after) {
-  const changes = [];
-  if (before && after) {
-    for (const k of Object.keys(after)) {
-      if (["updatedAt", "createdAt", "premium", "referralReasons", "fx"].includes(k)) continue;
-      const a = JSON.stringify(before[k] ?? null);
-      const b = JSON.stringify(after[k] ?? null);
-      if (a !== b) changes.push({ field: k, before: before[k] ?? null, after: after[k] ?? null });
-    }
-  }
-  db.audit.push({ id: String(db.seq.audit++), entity, entityId: String(id), action, by: actor(), at: nowIso(), changes });
-}
-
-function page(items, query, { sortDefault = "updatedAt,desc" } = {}) {
-  const [field, dir] = String(query.sort || sortDefault).split(",");
-  const sorted = [...items].sort((a, b) => {
-    const x = a[field] ?? "";
-    const y = b[field] ?? "";
-    const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true });
-    return dir === "asc" ? c : -c;
-  });
-  const size = Number(query.size) || PAGE_SIZE;
-  const p = Math.max(0, Number(query.page) || 0);
-  return { content: sorted.slice(p * size, p * size + size), page: p, size, totalElements: sorted.length };
-}
-
-function inRange(value, from, to) {
-  const v = String(value ?? "").slice(0, 10);
-  if (from && v < from) return false;
-  if (to && v > to) return false;
-  return true;
-}
-
-const partyRef = (id) => {
-  const p = db.parties.find((x) => x.id === String(id));
-  return p ? { id: p.id, name: p.name, email: p.email, phone: p.phone } : null;
-};
-const portRef = (code) => {
-  const p = db.ports.find((x) => x.code === code);
-  return p ? { code: p.code, name: p.name, country: p.country } : code ? { code, name: code, country: "" } : null;
-};
-const vesselRef = (imo) => {
-  const v = db.vessels.find((x) => x.imo === imo);
-  return v ? { ...v, age: vesselAge(v.yearBuilt) } : null;
-};
-const commodityRef = (hs) => db.commodities.find((c) => c.hsCode === hs) ?? null;
-
-function activeTable(product = "SINGLE_SHIPMENT") {
-  return db.rateTables.find((t) => t.status === "ACTIVE" && t.product === product) ?? db.rateTables.find((t) => t.status === "ACTIVE");
-}
-
-/** Today's rate, or the latest earlier one flagged as a fallback (MAR-25). */
-function fxFor(currency, date = todayIso()) {
-  if (currency === "ETB") return { currency, rate: "1", date, fallback: false };
-  const rows = db.fxRates.filter((r) => r.currency === currency && r.date <= date).sort((a, b) => b.date.localeCompare(a.date));
-  if (!rows.length) return null;
-  return { currency, rate: rows[0].rate, date: rows[0].date, fallback: rows[0].date !== date };
-}
-
-// ── quotes ──
-function refreshQuoteStatus(q) {
-  if (["QUOTED", "APPROVED"].includes(q.status) && q.validUntil && q.validUntil < todayIso()) q.status = "EXPIRED";
+// Brokers only reach their own business; anything else answers 404 as if it didn't exist (plan 7.7)
+const mine = (brokerId) => !brokerOnly() || brokerId === caller.brokerPartyId;
+function ownQuote(q) {
+  if (!mine(q.brokerId)) fail(404, "Quote not found");
   return q;
 }
-
-function quoteView(q) {
-  refreshQuoteStatus(q);
-  return {
-    ...q,
-    insured: partyRef(q.insuredId),
-    consignee: partyRef(q.consigneeId),
-    broker: partyRef(q.brokerId),
-    vessel: vesselRef(q.vesselImo),
-    loadingPort: portRef(q.portOfLoading),
-    dischargePort: portRef(q.portOfDischarge),
-    transshipments: (q.transshipmentPorts ?? []).map(portRef),
-    commodity: commodityRef(q.hsCode),
-    lcBank: q.lc?.enabled ? partyRef(q.lc.bankId) : null,
-    policy: q.policyId ? (({ id, policyNo }) => ({ id, policyNo }))(db.policies.find((p) => p.id === q.policyId) ?? {}) : null,
-  };
-}
-
-const QUOTE_FIELDS = [
-  "product", "insuredId", "insuredRole", "consigneeId", "brokerId", "incoterm", "mode", "vesselImo", "portOfLoading",
-  "transshipmentPorts", "portOfDischarge", "finalDestination", "sailingDate", "hsCode", "goodsDescription", "packing",
-  "currency", "invoiceValue", "freight", "invoiceNo", "blNo", "containers", "clause", "warCover", "strikesCover",
-  "deductible", "specialConditions", "lc",
-];
-const pickQuote = (body) => Object.fromEntries(QUOTE_FIELDS.filter((k) => k in body).map((k) => [k, body[k]]));
-
-function quoteErrors(q) {
-  const e = [];
-  const req = (field, label) => (q[field] === undefined || q[field] === null || q[field] === "") && e.push({ field, message: `${label} is required` });
-  req("product", "Product");
-  req("insuredId", "Insured");
-  req("insuredRole", "Insured is the buyer or seller");
-  req("incoterm", "Incoterm");
-  req("mode", "Mode of conveyance");
-  if (q.mode !== "AIR") {
-    if (!q.vesselImo) e.push({ field: "vesselImo", message: "Vessel is required for sea shipments" });
-    else if (!isValidImo(q.vesselImo)) e.push({ field: "vesselImo", message: "This IMO number's check digit is wrong" });
-  }
-  req("portOfLoading", "Port of loading");
-  req("portOfDischarge", "Port of discharge");
-  if (q.portOfLoading && q.portOfLoading === q.portOfDischarge) e.push({ field: "portOfDischarge", message: "Port of discharge must differ from the port of loading" });
-  req("finalDestination", "Final destination");
-  req("sailingDate", "Sailing date");
-  req("hsCode", "Commodity");
-  if (q.hsCode && !commodityRef(q.hsCode)) e.push({ field: "hsCode", message: "Commodity is not in the master list" });
-  req("goodsDescription", "Goods description");
-  if (!(parseDecimal(q.invoiceValue) > 0n)) e.push({ field: "invoiceValue", message: "Invoice value must be greater than 0" });
-  if (parseDecimal(q.freight) === null || parseDecimal(q.freight) < 0n) e.push({ field: "freight", message: "Freight must be 0 or more" });
-  req("clause", "Clause");
-  if (q.lc?.enabled) {
-    if (!q.lc.number) e.push({ field: "lc.number", message: "LC number is required" });
-    if (!q.lc.bankId) e.push({ field: "lc.bankId", message: "Issuing bank is required" });
-    if (!(parseDecimal(q.lc.amount) > 0n)) e.push({ field: "lc.amount", message: "LC amount must be greater than 0" });
-    if (!q.lc.expiry) e.push({ field: "lc.expiry", message: "LC expiry is required" });
-    else if (q.sailingDate && q.lc.expiry <= q.sailingDate) e.push({ field: "lc.expiry", message: "LC expiry must be after the sailing date" });
-  }
-  return e;
-}
-
-function editableQuote(id) {
-  const q = db.quotes.find((x) => x.id === id) ?? fail(404, "Quote not found");
-  refreshQuoteStatus(q);
-  if (!["DRAFT", "QUOTED", "DECLINED", "REFERRED"].includes(q.status)) fail(409, `A ${lc(q.status)} quote can't be changed.`, { code: "WRONG_STATE" });
-  return q;
-}
-
-// ── policies and certificates ──
-function certificateStatus(c) {
-  // Generation takes a few seconds on the real backend; the mock issues it 6 s after binding
-  if (c.status === "PENDING" && Date.now() - new Date(c.createdAt).getTime() > 6000) {
-    c.status = "ISSUED";
-    c.issuedAt = new Date(new Date(c.createdAt).getTime() + 6000).toISOString();
-    save();
-  }
-  const policy = db.policies.find((p) => p.id === c.policyId);
-  if (c.status === "ISSUED" && policy?.periodTo < todayIso()) return "EXPIRED";
-  return c.status;
-}
-
-function certificateView(c) {
-  const policy = db.policies.find((p) => p.id === c.policyId);
-  const q = policy?.snapshot ?? {};
-  return {
-    ...c,
-    status: certificateStatus(c),
-    policy: policy ? { id: policy.id, policyNo: policy.policyNo, periodFrom: policy.periodFrom, periodTo: policy.periodTo } : null,
-    insured: partyRef(q.insuredId),
-    vessel: vesselRef(q.vesselImo),
-    loadingPort: portRef(q.portOfLoading),
-    dischargePort: portRef(q.portOfDischarge),
-    finalDestination: q.finalDestination,
-    sailingDate: q.sailingDate,
-    blNo: q.blNo,
-    lcBank: q.lc?.enabled ? partyRef(q.lc.bankId) : null,
-    goodsDescription: q.goodsDescription,
-    currency: q.currency,
-    sumInsured: q.premium?.sumInsured?.total,
-    emails: [partyRef(q.insuredId)?.email, partyRef(q.brokerId)?.email, q.lc?.enabled ? partyRef(q.lc.bankId)?.email : null].filter(Boolean),
-    versions: db.certificates
-      .filter((x) => x.policyId === c.policyId && x.certNo === c.certNo)
-      .map((x) => ({ id: x.id, version: x.version, status: certificateStatus(x), issuedAt: x.issuedAt })),
-  };
-}
-
-function policyView(p) {
-  const status = p.status === "ACTIVE" && p.periodTo < todayIso() ? "EXPIRED" : p.status;
-  const { snapshot, ...policy } = p;
-  return {
-    ...quoteView({ ...snapshot }),
-    ...policy,
-    status,
-    quoteId: snapshot.id,
-    quoteNo: snapshot.quoteNo,
-    certificates: db.certificates
-      .filter((c) => c.policyId === p.id)
-      .map((c) => ({ id: c.id, certNo: c.certNo, version: c.version, status: certificateStatus(c), issuedAt: c.issuedAt })),
-  };
-}
-
-// ── routes ──
-const routes = [];
-const on = (method, pattern, handler) => {
-  const keys = [];
-  const re = new RegExp(`^${pattern.replace(/:(\w+)/g, (_, k) => (keys.push(k), "([^/]+)"))}$`);
-  routes.push({ method, re, keys, handler });
-};
+const ownPolicy = (p) => (mine(p.snapshot.brokerId) ? p : fail(404, "Policy not found"));
+const certSnapshot = (c) => c.snapshot ?? db.policies.find((p) => p.id === c.policyId)?.snapshot ?? {};
+const ownCert = (c) => (mine(certSnapshot(c).brokerId) ? c : fail(404, "Certificate not found"));
 
 // masters: vessels
 on("get", "/vessels", ({ query }) => {
@@ -508,7 +284,7 @@ on("post", "/users/:id/:action", ({ params }) => {
 on("get", "/quotes", ({ query }) => {
   const q = lc(query.q);
   const statuses = listParam(query.status);
-  let items = db.quotes.map(quoteView);
+  let items = db.quotes.filter((x) => mine(x.brokerId)).map(quoteView);
   if (q) items = items.filter((x) => lc(`${x.quoteNo} ${x.insured?.name}`).includes(q));
   if (statuses.length) items = items.filter((x) => statuses.includes(x.status));
   if (query.product) items = items.filter((x) => x.product === query.product);
@@ -517,53 +293,60 @@ on("get", "/quotes", ({ query }) => {
   if (query.expiring) items = items.filter((x) => x.validUntil && x.validUntil <= addDays(todayIso(), Number(query.expiring)) && ["QUOTED", "APPROVED"].includes(x.status));
   return page(items.map((x) => ({ ...x, premiumTotal: x.premium?.total ?? null, sumInsuredTotal: x.premium?.sumInsured?.total ?? null })), query);
 });
-on("get", "/quotes/:id", ({ params }) => quoteView(db.quotes.find((x) => x.id === params.id) ?? fail(404, "Quote not found")));
+on("get", "/quotes/:id", ({ params }) => quoteView(ownQuote(db.quotes.find((x) => x.id === params.id) ?? fail(404, "Quote not found"))));
 on("post", "/quotes", ({ body }) => {
-  const q = { id: String(db.seq.quote + 1), quoteNo: nextNo("Q", "quote"), status: "DRAFT", ...pickQuote(body), createdBy: actor(), createdAt: nowIso(), updatedAt: nowIso() };
+  const q = { id: nextId(db.quotes), quoteNo: nextNo("Q", "quote"), status: "DRAFT", ...pickQuote(body), createdBy: actor(), createdAt: nowIso(), updatedAt: nowIso() };
+  // A broker's quotes always carry their own party as broker
+  if (brokerOnly()) q.brokerId = caller.brokerPartyId;
   db.quotes.push(q);
   audit("quote", q.id, "Created");
   return quoteView(q);
 });
 on("put", "/quotes/:id", ({ params, body }) => {
-  const q = editableQuote(params.id);
+  const q = ownQuote(editableQuote(params.id));
   const before = { ...q };
-  Object.assign(q, pickQuote(body), { status: "DRAFT", premium: null, referralReasons: [], declineNote: "", fx: null, validUntil: null, updatedAt: nowIso() });
+  Object.assign(q, pickQuote(body), { status: "DRAFT", premium: null, referralReasons: [], declineNote: "", fx: null, validUntil: null, checks: null, sanctionsConfirmed: false, updatedAt: nowIso() });
+  if (brokerOnly()) q.brokerId = caller.brokerPartyId;
   audit("quote", q.id, "Updated", before, q);
   return quoteView(q);
 });
 on("post", "/quotes/:id/rate", ({ params }) => {
   const q = editableQuote(params.id);
+  ownQuote(q);
   const e = quoteErrors(q);
   if (e.length) invalid(e);
-  const table = activeTable(q.product) ?? fail(409, "There is no active rate table for this product.", { code: "NO_RATE_TABLE" });
-  const fx = fxFor(q.currency) ?? fail(409, `There is no ${q.currency} exchange rate. Ask Finance to enter one.`, { code: "NO_FX_RATE" });
-  const result = rate(q, { table, vessel: vesselRef(q.vesselImo), commodity: commodityRef(q.hsCode), fxRate: fx });
-  Object.assign(q, {
-    status: result.status,
-    premium: result.premium,
-    referralReasons: result.referralReasons,
-    declineNote: result.declineNote,
-    fx: result.fx,
-    validUntil: addDays(todayIso(), 30),
-    ratedAt: nowIso(),
-    updatedAt: nowIso(),
-  });
-  audit("quote", q.id, `Rated: ${lc(result.status)}`);
+  if (q.product === "INLAND_TRANSIT") {
+    q.mode = "ROAD";
+    q.finalDestination = portRef(q.inland.to)?.name ?? q.inland.to;
+  }
+  // A fresh rating drops any earlier approval terms
+  q.rateOverridePct = null;
+  q.waivedWarranties = [];
+  const decl = declarationContext(q);
+  const a = assess(q, { agreedRatePct: decl.agreedRatePct, extraReasons: decl.extraReasons });
+  applyAssessment(q, a);
+  Object.assign(q, { validUntil: addDays(todayIso(), 30), ratedAt: nowIso(), late: decl.late, declarationReasons: decl.extraReasons, limits: decl.limits });
+  syncReferral(q, a);
+  audit("quote", q.id, `Rated: ${lc(a.status)}`);
   return quoteView(q);
 });
 on("post", "/quotes/:id/bind", ({ params }) => {
   const q = db.quotes.find((x) => x.id === params.id) ?? fail(404, "Quote not found");
+  ownQuote(q);
   refreshQuoteStatus(q);
+  if (q.sanctionsConfirmed) fail(409, "Sanctions match confirmed. This quote can't be bound.", { code: "SANCTIONS_CONFIRMED" });
   const bindable = (q.status === "QUOTED" && !(q.referralReasons ?? []).length) || q.status === "APPROVED";
   if (!bindable) fail(409, q.status === "REFERRED" ? "Referral pending: an underwriter must approve before binding." : `A ${lc(q.status)} quote can't be bound.`, { code: "WRONG_STATE" });
+  const cover = q.openCoverId ? db.openCovers.find((c) => c.id === q.openCoverId) : null;
   const policy = {
-    id: String(db.seq.policy + 1),
+    id: nextId(db.policies),
     policyNo: nextNo("P", "policy"),
     status: "ACTIVE",
     product: q.product,
     periodFrom: q.sailingDate,
-    periodTo: addDays(q.sailingDate, 90),
-    wordingVersion: "ICC 1/1/2009",
+    periodTo: addDays(q.sailingDate, q.product === "INLAND_TRANSIT" ? 30 : 90),
+    wordingVersion: q.product === "INLAND_TRANSIT" ? "ICC 1/1/2009 with inland transit extension" : "ICC 1/1/2009",
+    openCoverId: cover?.id ?? null,
     createdAt: nowIso(),
     updatedAt: nowIso(),
   };
@@ -573,7 +356,7 @@ on("post", "/quotes/:id/bind", ({ params }) => {
   policy.snapshot = { ...q };
   db.policies.push(policy);
   const cert = {
-    id: String(db.seq.certificate + 1),
+    id: nextId(db.certificates),
     certNo: nextNo("C", "certificate"),
     version: 1,
     status: "PENDING",
@@ -582,44 +365,46 @@ on("post", "/quotes/:id/bind", ({ params }) => {
     createdAt: nowIso(),
     issuedAt: null,
     events: [],
+    snapshot: { ...q },
   };
   db.certificates.push(cert);
   audit("quote", q.id, `Bound: policy ${policy.policyNo}`);
   audit("policy", policy.id, "Created from quote " + q.quoteNo);
-  return { quote: quoteView(q), policy: { id: policy.id, policyNo: policy.policyNo }, certificate: { id: cert.id, certNo: cert.certNo } };
+  if (cover) audit("openCover", cover.id, `Declaration ${q.quoteNo} bound${q.late ? " (late)" : ""}`);
+  return { quote: quoteView(q), policy: { id: policy.id, policyNo: policy.policyNo }, certificate: { id: cert.id, certNo: cert.certNo }, openCover: cover ? { id: cover.id } : null };
 });
 
 // policies
 on("get", "/policies", ({ query }) => {
   const q = lc(query.q);
   const statuses = listParam(query.status);
-  let items = db.policies.map(policyView);
+  let items = db.policies.filter((p) => mine(p.snapshot.brokerId)).map(policyView);
   if (q) items = items.filter((p) => lc(`${p.policyNo} ${p.insured?.name} ${p.vesselImo}`).includes(q));
   if (statuses.length) items = items.filter((p) => statuses.includes(p.status));
   if (query.product) items = items.filter((p) => p.product === query.product);
   items = items.filter((p) => inRange(p.periodFrom, query.periodFrom, query.periodTo));
   return page(items.map((p) => ({ ...p, sumInsuredTotal: p.premium?.sumInsured?.total, premiumTotal: p.premium?.total })), query);
 });
-on("get", "/policies/:id", ({ params }) => policyView(db.policies.find((p) => p.id === params.id) ?? fail(404, "Policy not found")));
+on("get", "/policies/:id", ({ params }) => policyView(ownPolicy(db.policies.find((p) => p.id === params.id) ?? fail(404, "Policy not found"))));
 
 // certificates
 on("get", "/certificates", ({ query }) => {
   const q = lc(query.q);
   const statuses = listParam(query.status);
-  let items = db.certificates.map(certificateView);
+  let items = db.certificates.filter((c) => mine(certSnapshot(c).brokerId)).map(certificateView);
   if (q) items = items.filter((c) => lc(`${c.certNo} ${c.blNo}`).includes(q));
   if (statuses.length) items = items.filter((c) => statuses.includes(c.status));
   if (query.vesselImo) items = items.filter((c) => c.vessel?.imo === query.vesselImo);
   items = items.filter((c) => (query.issuedFrom || query.issuedTo ? c.issuedAt && inRange(c.issuedAt, query.issuedFrom, query.issuedTo) : true));
   return page(items, query, { sortDefault: "createdAt,desc" });
 });
-on("get", "/certificates/:id", ({ params }) => certificateView(db.certificates.find((c) => c.id === params.id) ?? fail(404, "Certificate not found")));
+on("get", "/certificates/:id", ({ params }) => certificateView(ownCert(db.certificates.find((c) => c.id === params.id) ?? fail(404, "Certificate not found"))));
 on("get", "/certificates/:id/pdf", async ({ params }) => {
   const c = db.certificates.find((x) => x.id === params.id) ?? fail(404, "Certificate not found");
   if (certificateStatus(c) === "PENDING") fail(409, "The PDF is still being generated.", { code: "PDF_PENDING" });
   const view = certificateView(c);
   const policy = db.policies.find((p) => p.id === c.policyId);
-  return { __blob: await buildCertificatePdf(view, policy.snapshot, verifyUrl(c.token)) };
+  return { __blob: await buildCertificatePdf(view, c.snapshot ?? policy.snapshot, verifyUrl(c.token)) };
 });
 on("post", "/certificates/:id/email", ({ params, body }) => {
   const c = db.certificates.find((x) => x.id === params.id) ?? fail(404, "Certificate not found");
@@ -724,6 +509,11 @@ export async function handleRequest(config) {
   const route = routes.find((r) => r.method === method && r.re.test(path));
   const correlationId = crypto.randomUUID().slice(0, 8);
   const respond = (status, data) => ({ data, status, statusText: String(status), headers: { "x-correlation-id": correlationId }, config, request: {} });
+
+  const header = (k) => config.headers?.[k] ?? config.headers?.get?.(k) ?? "";
+  caller.roles = String(header("x-dev-roles") || "").split(",").filter(Boolean);
+  caller.user = decodeURIComponent(String(header("x-dev-user") || ""));
+  caller.brokerPartyId = String(header("x-dev-broker-party") || "") || null;
 
   try {
     if (!route) fail(404, `Mock backend has no ${method.toUpperCase()} ${path}`);

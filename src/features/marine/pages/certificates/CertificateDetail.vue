@@ -14,6 +14,7 @@ import PdfPreview from "../../components/PdfPreview.vue";
 import StatusBadge from "../../components/StatusBadge.vue";
 import { cardClass } from "../../components/styles";
 import { useResource } from "../../composables/useResource";
+import { useCan } from "../../composables/useCan";
 import { getCertificate, getCertificatePdf, logCertificateEvent } from "../../api/marineApi";
 import { formatDate, formatDateTime } from "../../utils/format";
 import { formatMoney } from "../../utils/money";
@@ -57,6 +58,13 @@ async function onDownloaded() {
 }
 
 const EVENT_LABELS = { EMAIL: "Emailed", DOWNLOAD: "Downloaded", PRINT: "Printed" };
+
+const { can } = useCan();
+// Only the newest version of an issued certificate can be amended or cancelled
+const isCurrent = computed(() => c.value && ["ISSUED", "PENDING"].includes(c.value.status) && c.value.version === Math.max(...c.value.versions.map((v) => v.version)));
+function cancel() {
+  openModal("MarineCancelCertificate", { certificate: c.value }, (done) => done && reload());
+}
 </script>
 
 <template>
@@ -78,10 +86,12 @@ const EVENT_LABELS = { EMAIL: "Emailed", DOWNLOAD: "Downloaded", PRINT: "Printed
       >
         <template #actions>
           <Button variant="outline" :disabled="c.status === 'PENDING'" @click="email">Email</Button>
-          <span title="Amend and cancel arrive in phase 2" class="flex gap-2">
-            <Button variant="outline" disabled>Amend</Button>
-            <Button variant="outline" disabled>Cancel</Button>
-          </span>
+          <template v-if="can('certificate.amend') && isCurrent">
+            <RouterLink :to="`/marine/certificates/${c.id}/amend`"><Button variant="outline">Amend</Button></RouterLink>
+            <span :title="c.hasOpenClaim ? 'This certificate has an open claim' : ''">
+              <Button variant="outline" :disabled="c.hasOpenClaim" @click="cancel">Cancel</Button>
+            </span>
+          </template>
         </template>
       </MarinePageHeader>
 
@@ -110,6 +120,15 @@ const EVENT_LABELS = { EMAIL: "Emailed", DOWNLOAD: "Downloaded", PRINT: "Printed
                 { label: 'Sailing date', value: formatDate(c.sailingDate) },
                 { label: 'Sum insured', value: formatMoney(c.sumInsured, c.currency) },
                 { label: 'BL no', value: c.blNo },
+                ...(c.inland ? [
+                  { label: 'Inland leg', value: `${c.inland.fromName ?? c.inland.from} → ${c.inland.toName ?? c.inland.to}`, wide: true },
+                  { label: 'Truck plate', value: c.inland.truckPlate },
+                  { label: 'Driver', value: c.inland.driverName },
+                  { label: 'Convoy', value: c.inland.convoyRef },
+                ] : []),
+                ...(c.openCover?.id ? [{ label: 'Open cover', value: c.openCover.coverNo, to: `/marine/open-covers/${c.openCover.id}` }] : []),
+                ...(c.status === 'CANCELLED' ? [{ label: 'Cancelled', value: `${c.cancelReason?.replace(/_/g, ' ').toLowerCase()}: ${c.cancelNote}`, wide: true }] : []),
+                ...(c.amendReason ? [{ label: 'Amendment reason', value: c.amendReason, wide: true }] : []),
               ]"
             />
           </section>

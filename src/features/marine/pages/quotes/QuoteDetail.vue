@@ -11,6 +11,7 @@ import KeyValueGrid from "../../components/KeyValueGrid.vue";
 import PremiumBreakdown from "../../components/PremiumBreakdown.vue";
 import MoneyDisplay from "../../components/MoneyDisplay.vue";
 import AuditTimeline from "../../components/AuditTimeline.vue";
+import ChecksPanel from "../../components/ChecksPanel.vue";
 import DetailTabs from "../../components/DetailTabs.vue";
 import { cardClass } from "../../components/styles";
 import { useResource } from "../../composables/useResource";
@@ -29,7 +30,14 @@ const { data: q, loading, error, notFound, load, reload } = useResource(getQuote
 onMounted(() => load(route.params.id));
 
 const editable = computed(() => ["DRAFT", "QUOTED"].includes(q.value?.status));
-const canBind = computed(() => q.value && ((q.value.status === "QUOTED" && !(q.value.referralReasons ?? []).length) || q.value.status === "APPROVED"));
+const canBind = computed(
+  () => q.value && !q.value.sanctionsConfirmed && ((q.value.status === "QUOTED" && !(q.value.referralReasons ?? []).length) || q.value.status === "APPROVED")
+);
+const isUnderwriter = computed(() => can("certificate.amend"));
+
+function reviewScreening(s) {
+  openModal("MarineSanctionsReview", { screening: s }, (done) => done && reload());
+}
 const rating = ref(false);
 
 async function rerate() {
@@ -89,17 +97,28 @@ function bind() {
             <Button variant="outline" @click="router.push(`/marine/quotes/${q.id}/edit`)">Edit</Button>
             <Button variant="outline" :pending="rating" @click="rerate">Re-rate</Button>
           </template>
-          <span v-if="can('quote.bind') && q.status !== 'BOUND'" :title="canBind ? '' : q.status === 'REFERRED' ? 'Referral pending' : 'Get a quote first'">
+          <span v-if="can('quote.bind') && q.status !== 'BOUND' && !q.sanctionsConfirmed" :title="canBind ? '' : q.status === 'REFERRED' ? 'Referral pending' : 'Get a quote first'">
             <Button variant="success" :disabled="!canBind" @click="bind">Bind</Button>
           </span>
           <RouterLink v-if="q.policy?.id" :to="`/marine/policies/${q.policy.id}`"><Button variant="outline">Open policy {{ q.policy.policyNo }}</Button></RouterLink>
         </template>
       </MarinePageHeader>
 
-      <div v-if="q.status === 'REFERRED'" role="status" class="p-4 mb-4 rounded-xl bg-warning-soft">
-        <p class="text-sm font-semibold text-warning-strong">Referred: an underwriter must approve before binding</p>
-        <ul class="mt-1 text-sm list-disc list-inside text-ink"><li v-for="r in q.referralReasons" :key="r.code">{{ r.message }}</li></ul>
-        <p class="mt-1 text-xs text-ink-muted">Assigned to: {{ q.referralAssignee ?? "unassigned (the referral queue arrives in phase 2)" }}</p>
+      <div v-if="q.sanctionsConfirmed" role="alert" class="p-4 mb-4 text-sm font-semibold rounded-xl bg-error-soft text-error-strong">Sanctions match confirmed. This quote can't be bound.</div>
+      <div v-else-if="q.underReview" role="status" class="p-4 mb-4 text-sm rounded-xl bg-warning-soft text-warning-strong">
+        <p class="font-semibold">Under review by underwriting</p>
+        <p class="text-ink">You can bind once an underwriter approves it.</p>
+      </div>
+      <div v-else-if="q.status === 'REFERRED'" role="status" class="flex flex-wrap gap-3 justify-between items-start p-4 mb-4 rounded-xl bg-warning-soft">
+        <div>
+          <p class="text-sm font-semibold text-warning-strong">Referred: an underwriter must approve before binding</p>
+          <p class="mt-1 text-sm text-ink">Assigned to {{ q.referral?.assigneeName ?? "nobody yet" }}<span v-if="q.referral"> · needs {{ q.referral.authorityNeeded === "SENIOR_UNDERWRITER" ? "a senior underwriter" : "an underwriter" }}</span></p>
+        </div>
+        <RouterLink v-if="isUnderwriter && q.referral?.status === 'OPEN'" :to="`/marine/underwriting/${q.referral.id}`"><Button size="sm">Review referral</Button></RouterLink>
+      </div>
+      <div v-else-if="q.status === 'APPROVED'" role="status" class="p-4 mb-4 text-sm rounded-xl bg-success-soft text-success-strong">
+        <p class="font-semibold">Approved by underwriting</p>
+        <p v-if="q.decisionNote" class="text-ink">{{ q.decisionNote }}</p>
       </div>
       <div v-else-if="q.status === 'DECLINED'" role="status" class="p-4 mb-4 text-sm rounded-xl bg-error-soft text-error-strong">
         <p class="font-semibold">Declined</p>
@@ -126,6 +145,10 @@ function bind() {
                 <PremiumBreakdown :premium="q.premium" :fx="q.fx" />
               </template>
               <p v-else class="text-sm text-ink-muted">Not rated yet.</p>
+              <div v-if="q.checks || q.referralReasons?.length" class="pt-4 mt-4 border-t border-line">
+                <h3 class="mb-3 text-sm font-semibold text-ink">Checks</h3>
+                <ChecksPanel :checks="q.checks" :reasons="q.referralReasons" :reviewable="isUnderwriter && q.status === 'REFERRED'" @review="reviewScreening" />
+              </div>
             </section>
           </div>
         </template>

@@ -225,13 +225,14 @@ async function getAQuote() {
 
 const canBind = computed(() => {
   const q = quote.value;
-  if (!q || dirty.value) return false;
+  if (!q || dirty.value || q.sanctionsConfirmed) return false;
   return (q.status === "QUOTED" && !(q.referralReasons ?? []).length) || q.status === "APPROVED";
 });
 const bindBlockedReason = computed(() => {
   const q = quote.value;
   if (!q?.premium) return "Get a quote first";
   if (dirty.value) return "Inputs changed. Get a new quote before binding.";
+  if (q.sanctionsConfirmed) return "Sanctions match confirmed";
   if (q.status === "REFERRED") return "Referral pending";
   if (q.status === "DECLINED") return "Declined";
   return "";

@@ -1,6 +1,5 @@
 // Marine & Cargo routes (plan section 2). meta.marineRoles limits a page to those Marine roles;
-// anyone else lands on the 403 page naming the role needed. Phase 2 adds the dashboard, so until
-// then the module's dashboard opens the quote list.
+// anyone else lands on the 403 page naming the role needed.
 import { useMarineRoles, hasAnyRole } from "@/features/marine/composables/useCan";
 
 // Pages load on demand; the glob keeps each one a separate chunk
@@ -8,6 +7,7 @@ const pages = import.meta.glob("/src/features/marine/pages/**/*.vue");
 const p = (path) => pages[`/src/features/marine/pages/${path}.vue`];
 
 const QUOTERS = ["BROKER", "UNDERWRITER", "SENIOR_UNDERWRITER"];
+const UNDERWRITERS = ["UNDERWRITER", "SENIOR_UNDERWRITER"];
 
 function roleGuard(to) {
   const needed = to.meta.marineRoles;
@@ -26,7 +26,7 @@ const route = (path, name, component, meta = {}) => ({
 });
 
 export const marineRoutes = [
-  { path: "/marine/dashboard", name: "marine-dashboard", redirect: "/marine/quotes" },
+  route("/marine/dashboard", "marine-dashboard", p("Dashboard"), { title: "Dashboard" }),
   route("/marine/quotes", "marine-quotes", p("quotes/QuoteList"), { title: "Quotes" }),
   route("/marine/quotes/new", "marine-quote-new", p("quotes/QuoteWizard"), { title: "New quote", marineRoles: QUOTERS }),
   route("/marine/quotes/:id", "marine-quote", p("quotes/QuoteDetail"), { title: "Quote" }),
@@ -35,11 +35,15 @@ export const marineRoutes = [
   route("/marine/policies/:id", "marine-policy", p("policies/PolicyDetail"), { title: "Policy" }),
   route("/marine/certificates", "marine-certificates", p("certificates/CertificateList"), { title: "Certificates" }),
   route("/marine/certificates/:id", "marine-certificate", p("certificates/CertificateDetail"), { title: "Certificate" }),
+  route("/marine/certificates/:id/amend", "marine-certificate-amend", p("certificates/AmendCertificate"), { title: "Amend certificate", marineRoles: UNDERWRITERS }),
+  route("/marine/underwriting", "marine-underwriting", p("underwriting/ReferralQueue"), { title: "Underwriting", marineRoles: UNDERWRITERS }),
+  route("/marine/underwriting/:id", "marine-referral", p("underwriting/ReferralReview"), { title: "Referral", marineRoles: UNDERWRITERS }),
   route("/marine/admin/masters", "marine-masters", p("admin/Masters"), { title: "Masters", marineRoles: ["ADMIN"] }),
   route("/marine/admin/fx-rates", "marine-fx-rates", p("admin/FxRates"), { title: "FX rates" }),
   route("/marine/admin/rate-tables", "marine-rate-tables", p("admin/RateTables"), { title: "Rate tables", marineRoles: ["ADMIN", "SENIOR_UNDERWRITER"] }),
   route("/marine/admin/rate-tables/:id", "marine-rate-table", p("admin/RateTableEditor"), { title: "Rate table", marineRoles: ["ADMIN", "SENIOR_UNDERWRITER"] }),
   route("/marine/admin/users", "marine-users", p("admin/Users"), { title: "Users", marineRoles: ["ADMIN"] }),
+  route("/marine/admin/rules", "marine-rules", p("admin/Rules"), { title: "Rules", marineRoles: ["ADMIN"] }),
   route("/marine/forbidden", "marine-forbidden", p("Forbidden"), { title: "No access" }),
   route("/marine/:pathMatch(.*)*", "marine-not-found", p("NotFound"), { title: "Not found" }),
 ];

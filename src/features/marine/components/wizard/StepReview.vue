@@ -5,6 +5,7 @@ import KeyValueGrid from "../KeyValueGrid.vue";
 import PremiumBreakdown from "../PremiumBreakdown.vue";
 import StatusBadge from "../StatusBadge.vue";
 import MoneyDisplay from "../MoneyDisplay.vue";
+import ChecksPanel from "../ChecksPanel.vue";
 import { cardClass } from "../styles";
 import { clauseLabel, modeLabel, productLabel } from "../../constants";
 import { formatDate } from "../../utils/format";
@@ -75,11 +76,18 @@ const port = (p) => (p ? `${p.code} · ${p.name}` : null);
         <p v-if="quote.validUntil" class="text-xs text-ink-muted">Valid until <span class="font-medium text-ink">{{ formatDate(quote.validUntil) }}</span></p>
       </div>
       <p v-if="quote.status === 'DECLINED'" class="p-3 mb-3 text-sm rounded-xl bg-error-soft text-error-strong">{{ quote.declineNote || "Outside appetite." }}</p>
-      <div v-if="quote.referralReasons?.length" class="p-3 mb-3 rounded-xl bg-warning-soft">
-        <p class="text-sm font-semibold text-warning-strong">An underwriter must approve before binding</p>
-        <ul class="mt-1 text-sm list-disc list-inside text-ink">
-          <li v-for="r in quote.referralReasons" :key="r.code">{{ r.message }}</li>
-        </ul>
+      <p v-if="quote.sanctionsConfirmed" role="alert" class="p-3 mb-3 text-sm font-semibold rounded-xl bg-error-soft text-error-strong">Sanctions match confirmed. This quote can't be bound.</p>
+      <p v-else-if="quote.underReview" class="p-3 mb-3 text-sm font-semibold rounded-xl bg-warning-soft text-warning-strong">Under review by underwriting. You can bind once an underwriter approves it.</p>
+      <p v-else-if="quote.status === 'REFERRED'" class="p-3 mb-3 text-sm font-semibold rounded-xl bg-warning-soft text-warning-strong">An underwriter must approve before binding.</p>
+      <div v-if="quote.late" class="p-3 mb-3 text-sm font-semibold rounded-xl bg-warning-soft text-warning-strong">Late declaration: the sailing date is past the cover's declaration days.</div>
+      <div v-if="quote.limits" class="grid grid-cols-2 gap-2 p-3 mb-3 text-sm rounded-xl sm:grid-cols-4 bg-surface-muted">
+        <div><p class="text-xs text-ink-subtle">Remaining before</p><p class="tabular-nums text-ink">{{ formatMoney(quote.limits.remainingBefore, quote.limits.currency) }}</p></div>
+        <div><p class="text-xs text-ink-subtle">This declaration</p><p class="tabular-nums text-ink">{{ formatMoney(quote.limits.thisDeclaration, quote.limits.currency) }}</p></div>
+        <div><p class="text-xs text-ink-subtle">Remaining after</p><p :class="['tabular-nums font-semibold', Number(quote.limits.remainingAfter) < 0 ? 'text-error-strong' : 'text-ink']">{{ formatMoney(quote.limits.remainingAfter, quote.limits.currency) }}</p></div>
+        <div><p class="text-xs text-ink-subtle">Per-conveyance limit</p><p class="tabular-nums text-ink">{{ formatMoney(quote.limits.perConveyanceLimit, quote.limits.currency) }}</p></div>
+      </div>
+      <div v-if="quote.checks || quote.referralReasons?.length" class="p-3 mb-3 rounded-xl border border-line">
+        <ChecksPanel :checks="quote.checks" :reasons="quote.referralReasons" />
       </div>
       <div v-if="quote.premium" class="grid gap-4 2xl:grid-cols-[1fr_auto]">
         <PremiumBreakdown :premium="quote.premium" :fx="quote.fx" />

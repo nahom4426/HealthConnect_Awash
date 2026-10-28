@@ -23,6 +23,16 @@ http.defaults.validateStatus = (s) => s >= 200 && s < 300;
 if (marineMockEnabled) {
   // Loaded on first call so the mock never ships in a build that doesn't use it
   http.defaults.adapter = async (config) => (await import("../mock/server")).handleRequest(config);
+  // The mock has no tokens to read, so it learns who is calling from these headers
+  http.interceptors.request.use(async (config) => {
+    const { useMarineRoles, mockIdentity } = await import("../composables/useCan");
+    const roles = useMarineRoles().value;
+    const me = mockIdentity(roles);
+    config.headers["x-dev-roles"] = roles.join(",");
+    config.headers["x-dev-user"] = encodeURIComponent(me.name);
+    if (me.brokerPartyId) config.headers["x-dev-broker-party"] = me.brokerPartyId;
+    return config;
+  });
 }
 
 export class ApiError {
@@ -76,9 +86,9 @@ function defaultMessage(status) {
   return "Something went wrong on the server.";
 }
 
-export async function request(method, url, { params, data, responseType, headers } = {}) {
+export async function request(method, url, { params, data, responseType, headers, onUploadProgress } = {}) {
   try {
-    const res = await http.request({ method, url, params, data, responseType, headers });
+    const res = await http.request({ method, url, params, data, responseType, headers, onUploadProgress });
     return { ok: true, data: res.data, headers: res.headers };
   } catch (e) {
     return { ok: false, error: toApiError(e) };

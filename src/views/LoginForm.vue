@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router';
 import { Form } from '@/components/new_form_builder';
 import Input from '@/components/new_form_elements/Input.vue';
 import InputPassword from '@/components/new_form_elements/InputPassword.vue';
-import Button from '@/components/Button.vue';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { login } from '@/features/auth/authApi';
 import { useAuthStore } from '@/stores/auth';
@@ -18,6 +17,8 @@ const forgotReq = useApiRequest(false);
 const resetReq = useApiRequest(false);
 
 const showSuccess = ref(false);
+const loginError = ref('');
+const errorKey = ref(0);
 const showForgot = ref(false);
 const forgotStep = ref('request');
 const forgotEmail = ref('');
@@ -37,28 +38,62 @@ function reRoute() {
   router.push(target);
 }
 
+// The backend reports bad credentials as a 500, so map auth-ish failures to a friendly message.
+function friendlyLoginError(res) {
+  const msg = String(res?.error || '');
+  if (/credential|password|unauthori|not found|invalid/i.test(msg) || res?.status === 401) {
+    return 'The username or password you entered is incorrect.';
+  }
+  if (typeof res?.status === 'string' || /network/i.test(msg)) {
+    return 'We could not reach the server. Check your connection and try again.';
+  }
+  return msg || 'Sign in failed. Please try again.';
+}
+
+function showLoginError(message) {
+  loginError.value = message;
+  errorKey.value++;
+}
+
+function clearLoginError() {
+  if (loginError.value) loginError.value = '';
+}
+
 function loginUser({ values }) {
-  if (req.pending.value) return;
+  if (req.pending.value || showSuccess.value) return;
+  clearLoginError();
 
   req.send(
     () => login(values),
     (res) => {
+      // responseHandler resolves (never rejects) on HTTP errors, so check the outcome here.
+      if (!res?.success) {
+        showLoginError(friendlyLoginError(res));
+        return;
+      }
+
       let userObj = res;
       if (res && res.data) userObj = res.data;
       if (userObj && userObj.data) userObj = userObj.data;
 
-      if (userObj?.roleCode) {
+      if (!userObj || typeof userObj !== 'object') {
+        showLoginError('Sign in failed. Please try again.');
+        return;
+      }
+
+      if (userObj.roleCode) {
         localStorage.setItem('standard_active_testing_role', userObj.roleCode);
       }
       showSuccess.value = true;
       auth.setAuth(userObj);
       localStorage.setItem('userDetail', JSON.stringify(userObj));
-      setTimeout(() => reRoute(), 600);
+      setTimeout(() => reRoute(), 900);
     }
-  );
+  ).catch(() => showLoginError('Sign in failed. Please try again.'));
 }
 
 function openForgot() {
+  clearLoginError();
   showForgot.value = true;
   forgotStep.value = 'request';
   forgotEmail.value = '';
@@ -90,643 +125,386 @@ function handleResetPassword() {
 
 <template>
   <div class="lf-root">
-    
-    <!-- ── Success Overlay ── -->
+
+    <!-- ── Success overlay (only after a successful sign-in) ── -->
     <Transition name="success">
-      <div v-if="showSuccess" class="lf-success-overlay">
+      <div v-if="showSuccess" class="lf-success-overlay" role="status" aria-live="polite">
         <div class="lf-success-inner">
-
-          <!-- Minimalist animated loader -->
-          <div class="lf-loader">
-            <!-- Breathing ring -->
-            <div class="lf-loader-ring"></div>
-            <!-- Center checkmark -->
-            <div class="lf-loader-check">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path class="lf-check-path" d="M5 13l4 4L19 7"/>
-              </svg>
-            </div>
-            <!-- Three orbit dots -->
-            <span class="lf-dot lf-dot-1"></span>
-            <span class="lf-dot lf-dot-2"></span>
-            <span class="lf-dot lf-dot-3"></span>
+          <div class="lf-success-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path class="lf-check-path" d="M5 13l4 4L19 7"/>
+            </svg>
           </div>
-
-          <h3 class="lf-success-title">Welcome Back!</h3>
-          <p class="lf-success-sub">Redirecting to your dashboard...</p>
-          <div class="lf-progress-track">
-            <div class="lf-progress-bar animate-progress"></div>
-          </div>
+          <h3 class="lf-success-title">You're signed in</h3>
+          <p class="lf-success-sub">Taking you to your workspace…</p>
+          <div class="lf-progress-track"><div class="lf-progress-bar"></div></div>
         </div>
       </div>
     </Transition>
 
-    <!-- ── Main content ── -->
-    <div class="lf-body">
+    <!-- ── LOGIN VIEW ── -->
+    <div v-if="!showForgot" class="lf-view">
+      <header class="lf-header">
+        <h2 class="lf-title">Sign in</h2>
+        <p class="lf-subtitle">Welcome back. Enter your details to access your dashboard.</p>
+      </header>
 
-      <!-- LOGIN VIEW -->
-      <div v-if="!showForgot" class="animate-fade-in">
-
-        <!-- Header -->
-        <div class="lf-header">
-          <div class="lf-header-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-7 h-7 text-white">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
+      <Transition name="alert">
+        <div v-if="loginError" :key="errorKey" class="lf-alert" role="alert">
+          <svg class="lf-alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <path stroke-linecap="round" d="M12 8v4.5M12 16h.01"/>
+          </svg>
+          <div class="lf-alert-text">
+            <strong>Couldn't sign you in</strong>
+            <span>{{ loginError }}</span>
           </div>
-          <h2 class="lf-title">Welcome Back</h2>
-          <p class="lf-subtitle">Sign in to access your dashboard</p>
+          <button type="button" class="lf-alert-close" aria-label="Dismiss" @click="clearLoginError">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
         </div>
+      </Transition>
 
-        <!-- Form -->
-        <Form v-slot="{ submit }" id="login-form">
-          <div class="lf-fields">
-
+      <Form v-slot="{ submit }" id="login-form">
+        <div
+          class="lf-fields"
+          :class="{ 'lf-has-error': loginError }"
+          @input="clearLoginError"
+          @keydown.enter.prevent="submit(loginUser)"
+        >
+          <div class="lf-field">
             <Input
               :focus="true"
               validation="required"
               name="email"
-              label="Username or Email Address"
-              :attributes="{ placeholder: 'adjustor@standardinsurance.com or adjustor', autocomplete: 'email', type: 'text' }"
+              label="Username or email"
+              :attributes="{ placeholder: 'e.g. adjustor@standardinsurance.com', autocomplete: 'username', type: 'text' }"
             />
+          </div>
 
+          <div class="lf-field">
             <InputPassword
               validation="required"
               name="password"
               label="Password"
-              :attributes="{ placeholder: '••••••••', autocomplete: 'current-password' }"
+              :attributes="{ placeholder: 'Enter your password', autocomplete: 'current-password' }"
             />
-
-            <!-- Remember + Forgot -->
-            <div class="lf-options">
-              <label class="lf-remember">
-                <input type="checkbox" v-model="rememberMe" class="lf-checkbox" />
-                <span>Remember me</span>
-              </label>
-              <button type="button" @click.prevent="openForgot" class="lf-forgot">
-                Forgot password?
-              </button>
-            </div>
-
-            <!-- Sign In Button -->
-            <Button
-              type="button"
-              :fullWidth="true"
-              :pending="req.pending.value"
-              @click.prevent="submit(loginUser)"
-              @keydown.enter.prevent="submit(loginUser)"
-              class="lf-submit-btn"
-            >
-              <span class="lf-btn-shimmer"></span>
-              <span class="lf-btn-content">
-                Sign In
-                <svg class="lf-btn-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-              </span>
-            </Button>
-
           </div>
-        </Form>
 
-        <!-- Trust strip -->
-        <div class="lf-trust">
-          <div class="lf-trust-item">
-            <svg class="lf-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            256-bit SSL
+          <div class="lf-options">
+            <label class="lf-remember">
+              <input type="checkbox" v-model="rememberMe" class="lf-checkbox" />
+              <span>Keep me signed in</span>
+            </label>
+            <button type="button" @click.prevent="openForgot" class="lf-link">Forgot password?</button>
           </div>
-          <div class="lf-trust-dot"></div>
-          <div class="lf-trust-item">
-            <svg class="lf-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-            </svg>
-            Secure Auth
-          </div>
-          <div class="lf-trust-dot"></div>
-          <div class="lf-trust-item">
-            <svg class="lf-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            99.9% Uptime
-          </div>
+
+          <button
+            type="button"
+            class="lf-btn"
+            :disabled="req.pending.value || showSuccess"
+            :aria-busy="req.pending.value"
+            @click.prevent="submit(loginUser)"
+          >
+            <span>{{ req.pending.value ? 'Signing in…' : 'Sign in' }}</span>
+            <span class="lf-btn-orb" aria-hidden="true">
+              <span v-if="req.pending.value" class="lf-spinner"></span>
+              <svg v-else class="lf-btn-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 12h14m-5-5l5 5-5 5"/>
+              </svg>
+            </span>
+          </button>
         </div>
-      </div>
+      </Form>
 
-      <!-- FORGOT PASSWORD VIEW -->
-      <div v-else class="animate-fade-in">
+      <p class="lf-help">
+        Having trouble signing in? <a href="#" class="lf-link">Contact support</a>
+      </p>
+    </div>
 
-        <!-- Back -->
-        <button type="button" @click="showForgot = false" class="lf-back-btn">
-          <svg class="lf-back-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-          </svg>
-          Back to Sign In
-        </button>
+    <!-- ── FORGOT PASSWORD VIEW ── -->
+    <div v-else class="lf-view">
+      <button type="button" @click="showForgot = false" class="lf-back">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to sign in
+      </button>
 
-        <!-- Header -->
-        <div class="lf-header" style="margin-bottom: 1.5rem;">
-          <div class="lf-header-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-            </svg>
-          </div>
-          <h2 class="lf-title">{{ forgotStep === 'request' ? 'Reset Password' : 'New Password' }}</h2>
-          <p class="lf-subtitle">{{ forgotStep === 'request' ? 'Enter your email to receive a reset code' : 'Enter the code and choose a new password' }}</p>
-        </div>
+      <header class="lf-header">
+        <h2 class="lf-title">{{ forgotStep === 'request' ? 'Reset your password' : 'Choose a new password' }}</h2>
+        <p class="lf-subtitle">
+          {{ forgotStep === 'request'
+            ? "Enter the email on your account and we'll send you a reset code."
+            : 'Enter the code from your email and pick a new password.' }}
+        </p>
+      </header>
 
-        <!-- Step: Request reset -->
-        <div v-if="forgotStep === 'request'" class="lf-fields">
+      <div v-if="forgotStep === 'request'" class="lf-fields">
+        <div class="lf-field">
           <Input
             name="forgotEmail"
-            label="Email Address"
-            :attributes="{ placeholder: 'you@company.com', type: 'email' }"
+            label="Email address"
+            :attributes="{ placeholder: 'you@standardinsurance.com', type: 'email' }"
             :modelValue="forgotEmail"
             @update:modelValue="forgotEmail = $event"
-            :glass="true"
           />
-          <Button
-            type="button"
-            size="lg"
-            :pending="forgotReq.pending.value"
-            @click="handleForgotPassword"
-            class="lf-submit-btn"
-          >
-            <span class="lf-btn-shimmer"></span>
-            <span class="lf-btn-content">Send Reset Code</span>
-          </Button>
         </div>
+        <button type="button" class="lf-btn" :disabled="forgotReq.pending.value" @click="handleForgotPassword">
+          <span v-if="forgotReq.pending.value" class="lf-spinner" aria-hidden="true"></span>
+          <span>Send reset code</span>
+        </button>
+      </div>
 
-        <!-- Step: Reset password -->
-        <div v-else class="lf-fields">
+      <div v-else class="lf-fields">
+        <div class="lf-field">
           <Input
             name="resetCode"
-            label="Reset Code"
+            label="Reset code"
             :attributes="{ placeholder: '· · · · · ·', type: 'text', class: 'text-center font-mono tracking-widest text-lg' }"
             :modelValue="resetCode"
             @update:modelValue="resetCode = $event"
-            :glass="true"
           />
+        </div>
+        <div class="lf-field">
           <Input
             name="newPassword"
-            label="New Password"
+            label="New password"
             :attributes="{ placeholder: 'Create a strong password', type: 'password' }"
             :modelValue="newPassword"
             @update:modelValue="newPassword = $event"
-            :glass="true"
           />
+        </div>
+        <div class="lf-field">
           <Input
             name="confirmPassword"
-            label="Confirm Password"
+            label="Confirm password"
             :attributes="{ placeholder: 'Re-enter your password', type: 'password' }"
             :modelValue="confirmPassword"
             @update:modelValue="confirmPassword = $event"
-            :glass="true"
           />
-          <p v-if="passwordMismatch" class="lf-error-msg">Passwords do not match</p>
-          <div class="lf-reset-actions">
-            <Button
-              type="button"
-              size="md"
-              @click="forgotStep = 'request'"
-              class="lf-btn-ghost-comp"
-            >Back</Button>
-            <Button
-              type="button"
-              size="lg"
-              :pending="resetReq.pending.value"
-              :disabled="passwordMismatch"
-              @click="handleResetPassword"
-              class="lf-submit-btn lf-btn-flex"
-            >
-              <span class="lf-btn-shimmer"></span>
-              <span class="lf-btn-content">Update Password</span>
-            </Button>
-          </div>
+        </div>
+        <p v-if="passwordMismatch" class="lf-error-msg">Passwords do not match</p>
+        <div class="lf-reset-actions">
+          <button type="button" class="lf-btn lf-btn-ghost" @click="forgotStep = 'request'">Back</button>
+          <button
+            type="button"
+            class="lf-btn"
+            :disabled="resetReq.pending.value || passwordMismatch"
+            @click="handleResetPassword"
+          >
+            <span v-if="resetReq.pending.value" class="lf-spinner" aria-hidden="true"></span>
+            <span>Update password</span>
+          </button>
         </div>
       </div>
-
-      <!-- Footer -->
-      <div class="lf-footer">
-        Need help?&nbsp;
-        <a href="#" class="lf-footer-link">Contact Support</a>
-      </div>
-
     </div>
   </div>
 </template>
 
 <style scoped>
-/* ── Root wrapper ──────────────────────────────────────────────────────────── */
+/* Theme tokens (--si-*) are defined on .login-wrapper in Login.vue. */
 .lf-root { position: relative; }
 
-/* ── Success overlay ───────────────────────────────────────────────────────── */
+.lf-view { animation: lfFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ── Header ── */
+.lf-header { margin-bottom: 1.75rem; }
+.lf-title {
+  font-family: var(--si-display, inherit);
+  font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15;
+  color: var(--si-text); margin: 0 0 0.5rem;
+}
+.lf-subtitle { font-size: 0.9375rem; line-height: 1.55; color: var(--si-text-muted); margin: 0; }
+
+/* ── Error alert ── */
+.lf-alert {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.875rem 0.875rem 0.875rem 1rem; margin-bottom: 1.25rem;
+  border-radius: 16px;
+  background: var(--si-danger-bg);
+  border: 1px solid var(--si-danger-border);
+  color: var(--si-danger-text);
+  animation: lfShake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+.lf-alert-icon { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; color: var(--si-danger); }
+.lf-alert-text { display: flex; flex-direction: column; gap: 2px; flex: 1; font-size: 0.875rem; line-height: 1.45; }
+.lf-alert-text strong { font-weight: 700; color: var(--si-danger-strong); }
+.lf-alert-close {
+  width: 28px; height: 28px; flex-shrink: 0; margin: -4px -2px 0 0;
+  display: grid; place-items: center; border-radius: 8px;
+  background: none; border: none; cursor: pointer; color: inherit; opacity: 0.7;
+}
+.lf-alert-close:hover { opacity: 1; background: var(--si-danger-border); }
+.lf-alert-close svg { width: 16px; height: 16px; }
+
+/* ── Fields ── */
+.lf-fields { display: flex; flex-direction: column; gap: 1.125rem; }
+.lf-fields > *:nth-child(1) { animation: lfFadeUp 0.5s 0.06s both; }
+.lf-fields > *:nth-child(2) { animation: lfFadeUp 0.5s 0.12s both; }
+.lf-fields > *:nth-child(3) { animation: lfFadeUp 0.5s 0.18s both; }
+.lf-fields > *:nth-child(4) { animation: lfFadeUp 0.5s 0.24s both; }
+
+.lf-field :deep(.flex-col) { align-items: stretch !important; text-align: left; }
+.lf-field :deep(label) {
+  font-size: 0.8125rem; font-weight: 600; letter-spacing: 0;
+  color: var(--si-text) !important; margin-bottom: 0.25rem; overflow: visible;
+}
+/* The bordered box rendered by NewInputLayout */
+.lf-field :deep(.border) {
+  height: 54px; border-radius: 16px !important;
+  background: var(--si-input-bg);
+  border: 1.5px solid var(--si-input-border) !important;
+  box-shadow: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.lf-field :deep(.border:hover) { border-color: var(--si-input-border-hover) !important; }
+.lf-field :deep(.border:focus-within) {
+  border-color: var(--si-primary) !important;
+  background: var(--si-input-bg-focus);
+  box-shadow: 0 0 0 4px var(--si-ring) !important;
+}
+.lf-field :deep(.border-red-300),
+.lf-has-error .lf-field :deep(.border) { border-color: var(--si-danger) !important; }
+.lf-field :deep(.border-red-300:focus-within),
+.lf-has-error .lf-field :deep(.border:focus-within) { box-shadow: 0 0 0 4px var(--si-danger-ring) !important; }
+
+.lf-field :deep(input) {
+  height: 100%; padding: 0 1rem !important;
+  font-size: 0.9375rem !important; color: var(--si-text) !important;
+  background: transparent !important;
+}
+.lf-field :deep(input[type='password']),
+.lf-field :deep(.cursor-pointer) + input,
+.lf-field :deep(.flex.w-full:has(.cursor-pointer) input) { padding-right: 3rem !important; }
+.lf-field :deep(input::placeholder) { color: var(--si-placeholder) !important; }
+.lf-field :deep(.flex.w-full) { height: 100%; align-items: center; }
+.lf-field :deep(.cursor-pointer) { color: var(--si-text-muted); }
+.lf-field :deep(.cursor-pointer:hover) { color: var(--si-text); }
+.lf-field :deep(.cursor-pointer svg) { width: 20px; height: 20px; }
+
+/* Field validation message from InputError */
+.lf-field :deep(.text-red-500),
+.lf-field :deep(.text-red-600),
+.lf-field :deep([class*='text-red']) { color: var(--si-danger) !important; font-size: 0.78rem; }
+
+/* ── Options row ── */
+.lf-options { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-size: 0.875rem; }
+.lf-remember { display: flex; align-items: center; gap: 0.55rem; cursor: pointer; color: var(--si-text-muted); user-select: none; }
+.lf-remember:hover { color: var(--si-text); }
+.lf-checkbox { width: 17px; height: 17px; accent-color: var(--si-primary); cursor: pointer; }
+
+.lf-link {
+  font-weight: 600; font-size: inherit; color: var(--si-link);
+  background: none; border: none; padding: 0; cursor: pointer; text-decoration: none;
+  border-radius: 4px;
+}
+.lf-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.lf-link:focus-visible { outline: 2px solid var(--si-primary); outline-offset: 2px; }
+
+/* ── Buttons ── */
+.lf-btn {
+  position: relative; width: 100%; height: 58px; margin-top: 0.4rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-family: inherit; font-size: 1rem; font-weight: 500; letter-spacing: 0.01em; color: #fff;
+  background: var(--si-btn-bg);
+  box-shadow: var(--si-btn-shadow);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease, opacity 0.2s;
+  overflow: hidden;
+}
+.lf-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+  transform: translateX(-100%); transition: transform 0.7s ease;
+}
+.lf-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--si-btn-shadow-hover); background: var(--si-btn-bg-hover, var(--si-btn-bg)); }
+.lf-btn:hover:not(:disabled)::after { transform: translateX(100%); }
+.lf-btn:active:not(:disabled) { transform: translateY(0); }
+.lf-btn:focus-visible { outline: none; box-shadow: var(--si-btn-shadow), 0 0 0 4px var(--si-ring-strong); }
+.lf-btn:disabled { cursor: progress; opacity: 0.85; }
+/* White circle with arrow, as on standardinsurancesc.com */
+.lf-btn-orb {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 42px; height: 42px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: #fff; color: var(--si-btn-bg);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lf-btn-orb .lf-spinner { border-color: rgba(13, 79, 128, 0.25); border-top-color: #0D4F80; }
+.lf-btn-arrow { width: 20px; height: 20px; transition: transform 0.25s ease; }
+.lf-btn:hover:not(:disabled) .lf-btn-orb { transform: translateY(-50%) rotate(-35deg) scale(1.05); }
+
+.lf-btn-ghost {
+  width: auto; padding: 0 1.25rem; flex-shrink: 0;
+  background: transparent; color: var(--si-text);
+  border: 1.5px solid var(--si-input-border); box-shadow: none;
+}
+.lf-btn-ghost:hover:not(:disabled) { background: var(--si-input-bg); box-shadow: none; }
+
+.lf-spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.35); border-top-color: #fff;
+  animation: lfSpin 0.7s linear infinite;
+}
+
+/* ── Misc ── */
+.lf-help { margin: 1.75rem 0 0; text-align: center; font-size: 0.875rem; color: var(--si-text-muted); }
+
+.lf-back {
+  display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 1.5rem;
+  font-size: 0.875rem; font-weight: 600; color: var(--si-text-muted);
+  background: none; border: none; padding: 0; cursor: pointer;
+}
+.lf-back:hover { color: var(--si-text); }
+.lf-back svg { width: 16px; height: 16px; transition: transform 0.2s; }
+.lf-back:hover svg { transform: translateX(-3px); }
+
+.lf-error-msg { font-size: 0.8rem; color: var(--si-danger); margin: -0.5rem 0 0; }
+.lf-reset-actions { display: flex; gap: 0.75rem; }
+
+/* ── Success overlay ── */
 .lf-success-overlay {
-  position: absolute; inset: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(8, 4, 5, 0.88);
-  backdrop-filter: blur(18px);
-  border-radius: inherit;
+  position: fixed; inset: 0; z-index: 200;
+  display: grid; place-items: center;
+  background: var(--si-overlay);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
+.lf-success-inner { text-align: center; padding: 2rem; }
+.lf-success-badge {
+  width: 72px; height: 72px; margin: 0 auto 1.25rem; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--si-accent); color: #fff;
+  box-shadow: 0 0 0 10px rgba(254,147,18,0.15), 0 12px 30px rgba(254,147,18,0.35);
+  animation: lfPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.lf-success-badge svg { width: 34px; height: 34px; }
+.lf-check-path { stroke-dasharray: 32; stroke-dashoffset: 32; animation: lfDraw 0.45s 0.25s ease-out forwards; }
+.lf-success-title { font-size: 1.375rem; font-weight: 800; color: #fff; margin: 0 0 0.35rem; letter-spacing: -0.01em; }
+.lf-success-sub { font-size: 0.9rem; color: rgba(255,255,255,0.7); margin: 0 0 1.5rem; }
+.lf-progress-track { width: 180px; height: 3px; margin: 0 auto; border-radius: 99px; background: rgba(255,255,255,0.15); overflow: hidden; }
+.lf-progress-bar { height: 100%; border-radius: 99px; background: var(--si-accent); animation: lfProgress 0.9s ease-out forwards; }
 
-.lf-success-inner {
-  text-align: center;
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-}
+/* ── Transitions & keyframes ── */
+.success-enter-active { transition: opacity 0.3s ease; }
+.success-enter-from { opacity: 0; }
+.alert-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.alert-leave-to { opacity: 0; transform: translateY(-4px); }
 
-/* ── Loader assembly ── */
-.lf-loader {
-  position: relative;
-  width: 80px; height: 80px;
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 1.75rem;
+@keyframes lfFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes lfShake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
 }
+@keyframes lfSpin { to { transform: rotate(360deg); } }
+@keyframes lfPop { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes lfDraw { to { stroke-dashoffset: 0; } }
+@keyframes lfProgress { from { width: 0; } to { width: 100%; } }
 
-/* Breathing outer ring */
-.lf-loader-ring {
-  position: absolute; inset: 0;
-  border-radius: 50%;
-  border: 1.5px solid rgba(254, 147, 18, 0.25);
-  animation: ringBreath 1.8s ease-in-out infinite;
+@media (prefers-reduced-motion: reduce) {
+  .lf-view, .lf-fields > *, .lf-alert, .lf-success-badge { animation: none !important; }
+  .lf-btn, .lf-btn::after { transition: none; }
 }
-.lf-loader-ring::after {
-  content: '';
-  position: absolute; inset: 6px;
-  border-radius: 50%;
-  border: 1.5px solid transparent;
-  border-top-color: #03396C;
-  border-right-color: #FE9312;
-  animation: arcSpin 1.1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes ringBreath {
-  0%, 100% { transform: scale(1);     opacity: 0.4; }
-  50%       { transform: scale(1.08);  opacity: 0.9; }
-}
-@keyframes arcSpin {
-  to { transform: rotate(360deg); }
-}
-
-/* Center checkmark */
-.lf-loader-check {
-  position: relative; z-index: 2;
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff;
-}
-.lf-loader-check svg {
-  width: 22px; height: 22px;
-  overflow: visible;
-}
-.lf-check-path {
-  stroke: #FE9312;
-  stroke-dasharray: 32;
-  stroke-dashoffset: 32;
-  animation: drawCheck 0.5s 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-@keyframes drawCheck {
-  to { stroke-dashoffset: 0; }
-}
-
-/* Three orbit dots around the ring */
-.lf-dot {
-  position: absolute;
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: #03396C;
-  animation: dotOrbit 1.8s ease-in-out infinite;
-  transform-origin: 40px 40px;
-}
-.lf-dot-1 { background: #03396C; animation-delay: 0s;    top: -2px; left: calc(50% - 2.5px); }
-.lf-dot-2 { background: #FE9312; animation-delay: 0.6s;  top: -2px; left: calc(50% - 2.5px); }
-.lf-dot-3 { background: #366497; animation-delay: 1.2s;  top: -2px; left: calc(50% - 2.5px); }
-
-@keyframes dotOrbit {
-  0%   { opacity: 0.2; transform: rotate(0deg)   translateY(-38px) scale(0.7); }
-  30%  { opacity: 1;   }
-  100% { opacity: 0.2; transform: rotate(360deg) translateY(-38px) scale(0.7); }
-}
-
-.lf-success-title {
-  font-size: 1.25rem; font-weight: 800; color: #fff;
-  margin: 0 0 0.3rem; letter-spacing: -0.01em;
-}
-.lf-success-sub {
-  font-size: 0.8rem; color: rgba(255,255,255,0.4);
-  margin: 0 0 1.4rem; font-weight: 500;
-}
-
-.lf-progress-track {
-  width: 160px; height: 2px; border-radius: 9999px;
-  background: rgba(255,255,255,0.08); margin: 0 auto; overflow: hidden;
-}
-.lf-progress-bar {
-  height: 100%; border-radius: 9999px;
-  background: linear-gradient(90deg, #03396C, #FE9312, #366497);
-  background-size: 200% 100%;
-  animation: progress 1.1s ease-out forwards, shimmerBar 1.5s ease infinite;
-}
-
-@keyframes progress {
-  from { width: 0%; }
-  to   { width: 100%; }
-}
-@keyframes shimmerBar {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* ── Body ──────────────────────────────────────────────────────────────────── */
-.lf-body { padding: 2rem 2rem 1.5rem; }
-
-/* ── Header ────────────────────────────────────────────────────────────────── */
-.lf-header { text-align: center; margin-bottom: 2rem; }
-
-.lf-header-icon {
-  width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 1rem;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 30px rgba(99,102,241,0.35);
-  animation: iconPulse 3s ease-in-out infinite;
-}
-
-@keyframes iconPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.3); }
-  50%       { box-shadow: 0 0 40px rgba(99,102,241,0.6); }
-}
-
-.lf-title    { font-size: 1.75rem; font-weight: 800; color: var(--text-primary, #0f172a); letter-spacing: -0.02em; margin: 0 0 0.4rem; }
-.lf-subtitle { font-size: 0.875rem; color: var(--text-secondary, #475569); margin: 0; }
-
-/* ── Fields ────────────────────────────────────────────────────────────────── */
-.lf-fields { display: flex; flex-direction: column; gap: 1.1rem; }
-
-/* Stagger children */
-.lf-fields > *:nth-child(1) { animation: fadeUp 0.5s 0.05s ease-out both; }
-.lf-fields > *:nth-child(2) { animation: fadeUp 0.5s 0.12s ease-out both; }
-.lf-fields > *:nth-child(3) { animation: fadeUp 0.5s 0.19s ease-out both; }
-.lf-fields > *:nth-child(4) { animation: fadeUp 0.5s 0.26s ease-out both; }
-.lf-fields > *:nth-child(5) { animation: fadeUp 0.5s 0.33s ease-out both; }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Deep overrides — form builder inputs */
-:deep(.form-group),
-:deep(.input-wrapper) {
-  position: relative;
-}
-
-:deep(label),
-:deep(.form-label) {
-  display: block;
-  margin-bottom: 0.45rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary, #475569) !important;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-:deep(input:not([type='checkbox'])),
-:deep(textarea) {
-  width: 100%;
-  padding: 0.8rem 1rem;
-  background: var(--input-bg, rgba(241,245,249,0.8)) !important;
-  border: 1px solid var(--input-border, rgba(99,102,241,0.2)) !important;
-  border-radius: 0.75rem !important;
-  color: var(--text-primary, #0f172a) !important;
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-  box-sizing: border-box;
-}
-
-:deep(input:not([type='checkbox']):hover) {
-  border-color: var(--input-border-hover, rgba(99,102,241,0.35)) !important;
-  background: var(--input-bg-hover, rgba(241,245,249,1)) !important;
-}
-
-:deep(input:not([type='checkbox']):focus),
-:deep(textarea:focus) {
-  border-color: #6366f1 !important;
-  background: var(--input-bg-focus, rgba(99,102,241,0.06)) !important;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
-}
-
-:deep(input::placeholder),
-:deep(textarea::placeholder) {
-  color: var(--input-placeholder, #94a3b8) !important;
-}
-
-/* Password toggle button inside InputPassword */
-:deep(.pw-toggle),
-:deep(.input-suffix button),
-:deep([class*="eye"]) {
-  color: var(--text-muted, #94a3b8) !important;
-}
-:deep(.pw-toggle:hover),
-:deep(.input-suffix button:hover) {
-  color: var(--text-primary, #0f172a) !important;
-}
-
-/* Ensure the input row and right-slot (eye button) fill height and align center */
-:deep(.flex.w-full) {
-  align-items: stretch !important;
-  min-height: 100%;
-}
-:deep(.flex.w-full > button),
-:deep(.flex.w-full > div[style*="display: flex"]) {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Validation error text */
-:deep(.error-msg),
-:deep(.field-error),
-:deep([class*="error-text"]) {
-  color: #f87171 !important;
-  font-size: 0.75rem;
-  margin-top: 0.3rem;
-}
-
-/* ── Options row ───────────────────────────────────────────────────────────── */
-.lf-options {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 0.82rem;
-}
-
-.lf-remember {
-  display: flex; align-items: center; gap: 0.5rem; cursor: pointer;
-  color: var(--text-muted, #94a3b8);
-  transition: color 0.2s;
-}
-.lf-remember:hover { color: var(--text-primary, #0f172a); }
-
-.lf-checkbox {
-  width: 15px; height: 15px; border-radius: 4px;
-  accent-color: #6366f1; cursor: pointer;
-}
-
-.lf-forgot {
-  font-weight: 600; color: #6366f1;
-  background: none; border: none; cursor: pointer;
-  transition: color 0.2s;
-  font-size: 0.82rem;
-}
-.lf-forgot:hover { color: #818cf8; }
-
-/* ── Submit button (wraps Button component) ────────────────────────────────── */
-.lf-submit-btn {
-  position: relative; width: 100%; overflow: hidden;
-  box-sizing: border-box !important;
-  max-width: 100% !important;
-  background: linear-gradient(135deg, #03396C, #366497) !important;
-  background-size: 200% 200% !important;
-  border: none !important; border-radius: 0.875rem !important;
-  padding: 0.875rem 1.5rem !important;
-  cursor: pointer; font-size: 0.9rem;
-  transition: background-position 0.4s ease, transform 0.15s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 24px rgba(3, 57, 108,0.35) !important;
-  min-height: auto !important;
-}
-.lf-submit-btn:hover {
-  background-position: right center !important;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 32px rgba(99,102,241,0.5), 0 0 0 1px rgba(99,102,241,0.3) !important;
-}
-.lf-submit-btn:active { transform: translateY(0); }
-.lf-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-.lf-btn-flex { flex: 1; min-width: 0 !important; }
-
-.lf-btn-shimmer {
-  position: absolute; top: 0; left: -100%;
-  width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-  transform: skewX(-20deg);
-  animation: shimmer 2.5s ease infinite;
-  pointer-events: none;
-}
-@keyframes shimmer {
-  0%   { left: -100%; }
-  60%  { left: 140%; }
-  100% { left: 140%; }
-}
-
-.lf-btn-content {
-  position: relative; z-index: 1;
-  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-  font-weight: 700; color: #fff; letter-spacing: 0.01em;
-}
-
-.lf-btn-arrow {
-  width: 18px; height: 18px;
-  transition: transform 0.3s ease;
-}
-.lf-submit-btn:hover .lf-btn-arrow { transform: translateX(4px); }
-
-/* ── Ghost button (Button component variant) ───────────────────────────────── */
-.lf-btn-ghost-comp {
-  background: rgba(255,255,255,0.06) !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  border-radius: 0.875rem !important;
-  color: rgba(255,255,255,0.65) !important;
-  font-size: 0.875rem !important; font-weight: 600 !important;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  min-width: auto !important;
-  padding: 0.875rem 1.25rem !important;
-}
-.lf-btn-ghost-comp:hover {
-  background: rgba(255,255,255,0.12) !important;
-  color: #fff !important;
-}
-
-/* ── Trust strip ───────────────────────────────────────────────────────────── */
-.lf-trust {
-  display: flex; justify-content: center; align-items: center;
-  gap: 0.75rem; flex-wrap: wrap;
-  margin-top: 1.5rem; padding-top: 1.25rem;
-  border-top: 1px solid var(--glass-header-border, rgba(226,232,240,0.8));
-  font-size: 0.72rem; color: var(--text-muted, #94a3b8);
-}
-
-.lf-trust-item { display: flex; align-items: center; gap: 0.3rem; font-weight: 500; }
-.lf-trust-icon { width: 12px; height: 12px; color: #34d399; flex-shrink: 0; }
-.lf-trust-dot  { width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted, #94a3b8); }
-
-/* ── Back button ───────────────────────────────────────────────────────────── */
-.lf-back-btn {
-  display: flex; align-items: center; gap: 0.4rem;
-  color: rgba(255,255,255,0.45); font-size: 0.82rem; font-weight: 600;
-  background: none; border: none; cursor: pointer;
-  margin-bottom: 1.5rem; transition: color 0.2s;
-}
-.lf-back-btn:hover { color: rgba(255,255,255,0.85); }
-.lf-back-btn:hover .lf-back-arrow { transform: translateX(-3px); }
-
-.lf-back-arrow {
-  width: 16px; height: 16px; transition: transform 0.25s ease;
-}
-
-/* ── Inline input fields (forgot password section) ─────────────────────────── */
-.lf-field-wrap { display: flex; flex-direction: column; }
-.lf-label { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 0.4rem; letter-spacing: 0.03em; text-transform: uppercase; }
-
-.lf-input {
-  padding: 0.8rem 1rem;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 0.75rem;
-  color: #fff; font-size: 0.9rem;
-  outline: none; transition: all 0.2s ease;
-  width: 100%; box-sizing: border-box;
-}
-.lf-input::placeholder { color: rgba(255,255,255,0.28); }
-.lf-input:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.09); }
-.lf-input:focus { border-color: #6366f1; background: rgba(99,102,241,0.08); box-shadow: 0 0 0 3px rgba(99,102,241,0.18); }
-.lf-input-code { text-align: center; font-family: monospace; font-size: 1.1rem; letter-spacing: 0.3em; }
-.lf-input-error { border-color: #f87171 !important; }
-.lf-input-error:focus { box-shadow: 0 0 0 3px rgba(248,113,113,0.2) !important; }
-
-.lf-error-msg { font-size: 0.75rem; color: #f87171; margin-top: 0.35rem; }
-
-.lf-reset-actions { display: flex; gap: 0.75rem; align-items: center; }
-
-/* ── Footer ────────────────────────────────────────────────────────────────── */
-.lf-footer {
-  margin-top: 1.25rem; padding-top: 1rem;
-  border-top: 1px solid var(--glass-header-border, rgba(226,232,240,0.8));
-  text-align: center; font-size: 0.8rem; color: var(--text-muted, #94a3b8);
-}
-.lf-footer-link { color: #6366f1; font-weight: 600; text-decoration: none; transition: color 0.2s; }
-.lf-footer-link:hover { color: #818cf8; }
-
-/* ── Entry animations ──────────────────────────────────────────────────────── */
-.success-enter-active { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-.success-leave-active { transition: all 0.25s ease-in; }
-.success-enter-from   { opacity: 0; transform: scale(0.92); }
-.success-leave-to     { opacity: 0; transform: scale(1.04); }
-
-@keyframes bounce-in {
-  0%   { opacity: 0; transform: scale(0.3); }
-  50%  { opacity: 1; transform: scale(1.12); }
-  70%  { transform: scale(0.92); }
-  100% { transform: scale(1); }
-}
-.animate-bounce-in { animation: bounce-in 0.65s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in { animation: fade-in 0.45s ease-out both; }
 </style>

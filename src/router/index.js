@@ -20,6 +20,8 @@ import reportsRoutes from "./health/reports.routes";
 import brokerRoutes from "./health/broker.routes";
 // Motor
 import motorRoutes from "./motor/motor.routes";
+// Life
+import lifeRoutes from "./life/life.routes";
 import { installRouteLoading } from "./loading";
 // Shared across products
 import adminRoutes from "./shared/admin.routes";
@@ -202,6 +204,7 @@ const router = createRouter({
           meta: { requiresAuth: true },
         },
         ...motorRoutes,
+        ...lifeRoutes,
         ...adminRoutes,
         ...analyticsRoutes,
         ...reportsRoutes,
@@ -307,9 +310,9 @@ router.beforeEach((to, from, next) => {
   if (rawUser && rawUser.data) {
     rawUser = rawUser.data;
   }
-  if (rawUser) {
-    authStore.auth = rawUser;
-  }
+  // Read only: the store keeps the session as { user: { token, ... } } (stores/auth.ts) and
+  // ApiService reads the token from there. Writing the flattened user back here dropped the
+  // token after the first navigation, so API calls went out unauthenticated.
   const user = rawUser;
   const hasValidToken = !!(user?.token || user?.roleCode || user?.email);
   const hasRolePrivilege = (privilegeName) => {

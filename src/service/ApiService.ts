@@ -60,7 +60,7 @@ async function refreshAccessToken(): Promise<{ newToken: string; refreshToken?: 
 
   refreshPromise = (async () => {
     const authStore = useAuthStore();
-    const refreshToken = authStore.auth?.user?.refreshToken;
+    const refreshToken = authStore.auth?.user?.refreshToken ?? authStore.auth?.refreshToken;
     if (!refreshToken) return null;
     if (!authApiBase) return null;
 
@@ -122,7 +122,7 @@ export default class ApiService {
 
     this.api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       const authStore = useAuthStore();
-      const token = authStore.auth?.user?.token;
+      const token = authStore.auth?.user?.token ?? authStore.auth?.token;
       if (token) {
         config.headers = config.headers || {};
         (config.headers as any).Authorization = `Bearer ${token}`;
@@ -255,7 +255,7 @@ export default class ApiService {
 
   addAuthenticationHeader() {
     const authStore = useAuthStore()
-    const token = authStore.auth?.user?.token;
+    const token = authStore.auth?.user?.token ?? authStore.auth?.token;
     if (token) {
       this.api.defaults.headers.common.Authorization = `Bearer ${token}`;
       // console.log("✓ Authorization header set successfully");

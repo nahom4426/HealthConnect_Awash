@@ -10,6 +10,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), ["VITE_", "v_"]);
   // The dev proxy follows the same backend as the app, so .env.* is the only place to change it.
   const backendHost = env.VITE_BACKEND_HOST || "http://localhost:8888";
+  // The Life Insurance service runs separately (Swagger: <host>/api/life/swagger-ui/index.html)
+  const lifeHost = env.VITE_LIFE_API_HOST || backendHost;
 
   return {
   plugins: [vue(), vueJsx() /*, vueDevTools()*/],
@@ -18,6 +20,12 @@ export default defineConfig(({ mode }) => {
     host: "0.0.0.0",
     port: 5173,
     proxy: {
+      // More specific prefix first: Vite matches proxy keys in order
+      "/api/life": {
+        target: lifeHost,
+        changeOrigin: true,
+        secure: lifeHost.startsWith("https"),
+      },
       "/api": {
         target: backendHost,
         changeOrigin: true,
@@ -42,7 +50,6 @@ export default defineConfig(({ mode }) => {
       "@customizer/modal-x",
       "@headlessui/vue",
       "@iconify/vue",
-      "@jamescoyle/vue-icon",
       "@mdi/js",
       "@vueuse/components",
       "axios",

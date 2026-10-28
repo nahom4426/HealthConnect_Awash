@@ -236,7 +236,7 @@ export function certificateView(c) {
     inland: q.inland ? { ...q.inland, fromName: portRef(q.inland.from)?.name, toName: portRef(q.inland.to)?.name } : null,
     clause: q.clause,
     openCover: q.openCoverId ? (({ id, coverNo }) => ({ id, coverNo }))(db.openCovers.find((x) => x.id === q.openCoverId) ?? {}) : null,
-    hasOpenClaim: db.claims.some((x) => x.certificateId === c.id && x.status !== "CLOSED"),
+    hasOpenClaim: db.claims.some((x) => x.certificateId === c.id && !["CLOSED", "DECLINED"].includes(x.status)),
     status: certificateStatus(c),
     policy: policy ? { id: policy.id, policyNo: policy.policyNo, periodFrom: policy.periodFrom, periodTo: policy.periodTo } : null,
     insured: partyRef(q.insuredId),

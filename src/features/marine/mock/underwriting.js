@@ -395,7 +395,7 @@ on("post", "/certificates/:id/cancel", ({ params, body }) => {
   if (!["SHIPMENT_CANCELLED", "ISSUED_IN_ERROR", "REPLACED"].includes(body?.reason)) e.push({ field: "reason", message: "Pick a reason" });
   if (!String(body?.note ?? "").trim()) e.push({ field: "note", message: "A note is required" });
   if (e.length) invalid(e);
-  if (db.claims.some((x) => x.certificateId === c.id && x.status !== "CLOSED")) fail(409, "This certificate has an open claim.", { code: "OPEN_CLAIM" });
+  if (db.claims.some((x) => x.certificateId === c.id && !["CLOSED", "DECLINED"].includes(x.status))) fail(409, "This certificate has an open claim.", { code: "OPEN_CLAIM" });
   const policy = db.policies.find((p) => p.id === c.policyId);
   c.status = "CANCELLED";
   c.cancelledAt = nowIso();

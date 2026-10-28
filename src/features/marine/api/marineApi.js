@@ -92,6 +92,7 @@ export const listClaims = (params) => get("/claims", params);
 export const getClaim = (id) => get(`/claims/${id}`);
 export const createClaim = (body) => post("/claims", body);
 export const updateClaim = (id, body) => put(`/claims/${id}`, body);
+export const updateReserve = (id, reserve) => put(`/claims/${id}/reserve`, { reserve });
 export const saveClaimTask = (id, body) => (body.id ? put(`/claims/${id}/tasks/${body.id}`, body) : post(`/claims/${id}/tasks`, body));
 export const uploadClaimDocument = (id, form, onUploadProgress) => post(`/claims/${id}/documents`, form, { headers: { "Content-Type": "multipart/form-data" }, onUploadProgress });
 export const assessClaim = (id, body) => post(`/claims/${id}/assess`, body);

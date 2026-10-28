@@ -1,7 +1,6 @@
 <script setup>
-// Policy detail (plan 5.4): shipment, cover, premium, certificates and audit tabs. The claims tab
-// arrives with phase 4.
-import { onMounted } from "vue";
+// Policy detail (plan 5.4): shipment, cover, premium, certificates, claims (claims staff) and audit.
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
 import MarinePageHeader from "../../components/MarinePageHeader.vue";
@@ -13,7 +12,9 @@ import AuditTimeline from "../../components/AuditTimeline.vue";
 import DetailTabs from "../../components/DetailTabs.vue";
 import { cardClass } from "../../components/styles";
 import { useResource } from "../../composables/useResource";
-import { getPolicy } from "../../api/marineApi";
+import { getPolicy, listClaims } from "../../api/marineApi";
+import { useCan } from "../../composables/useCan";
+import { CLAIM_TYPES, label } from "../../constants";
 import { productLabel, clauseLabel } from "../../constants";
 import { formatDate, formatDateTime } from "../../utils/format";
 import { formatAmount } from "../../utils/money";
@@ -22,7 +23,18 @@ import { coverItems, lcItems, shipmentItems, vesselText } from "../../utils/quot
 const route = useRoute();
 const router = useRouter();
 const { data: p, loading, error, notFound, load } = useResource(getPolicy);
-onMounted(() => load(route.params.id));
+const { roles } = useCan();
+const claimsStaff = computed(() => roles.value.some((r) => ["CLAIMS_HANDLER", "CLAIMS_MANAGER"].includes(r)));
+const claims = ref([]);
+onMounted(async () => {
+  await load(route.params.id);
+  if (claimsStaff.value) {
+    const res = await listClaims({ policyId: route.params.id, size: 100 });
+    if (res.ok) claims.value = res.data.content;
+  }
+});
+// Claims go against the current certificate version
+const currentCert = computed(() => p.value?.certificates.filter((x) => ["ISSUED", "PENDING", "EXPIRED"].includes(x.status)).sort((a, b) => b.version - a.version)[0]);
 </script>
 
 <template>
@@ -53,6 +65,7 @@ onMounted(() => load(route.params.id));
           { key: 'cover', label: 'Cover' },
           { key: 'premium', label: 'Premium' },
           { key: 'certificates', label: 'Certificates', count: p.certificates.length },
+          ...(claimsStaff ? [{ key: 'claims', label: 'Claims', count: claims.length }] : []),
           { key: 'audit', label: 'Audit' },
         ]"
       >
@@ -95,6 +108,25 @@ onMounted(() => load(route.params.id));
                   <td class="px-4 py-3">v{{ c.version }}</td>
                   <td class="px-4 py-3"><StatusBadge entity="certificate" :status="c.status" /></td>
                   <td class="px-4 py-3 text-ink-muted">{{ c.issuedAt ? formatDateTime(c.issuedAt) : "Being generated" }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </template>
+        <template #claims>
+          <section :class="[cardClass, 'overflow-hidden']">
+            <div class="flex justify-end p-3" v-if="roles.includes('CLAIMS_HANDLER') && currentCert">
+              <RouterLink :to="`/marine/claims/new?certificateId=${currentCert.id}`"><Button size="sm">Register claim</Button></RouterLink>
+            </div>
+            <PageState v-if="!claims.length" kind="empty" title="No claims on this policy" />
+            <table v-else class="w-full text-sm">
+              <thead class="bg-surface-muted"><tr class="text-xs font-semibold text-left uppercase text-ink-subtle"><th class="px-4 py-3">Claim no</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Loss date</th><th class="px-4 py-3">Status</th></tr></thead>
+              <tbody>
+                <tr v-for="cl in claims" :key="cl.id" class="border-t border-line">
+                  <td class="px-4 py-3"><RouterLink :to="`/marine/claims/${cl.id}`" class="font-semibold text-ink hover:text-primary">{{ cl.claimNo }}</RouterLink></td>
+                  <td class="px-4 py-3">{{ label(CLAIM_TYPES, cl.type) }}</td>
+                  <td class="px-4 py-3">{{ formatDate(cl.lossDate) }}</td>
+                  <td class="px-4 py-3"><StatusBadge entity="claim" :status="cl.status" /></td>
                 </tr>
               </tbody>
             </table>

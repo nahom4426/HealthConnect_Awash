@@ -8,6 +8,7 @@ const p = (path) => pages[`/src/features/marine/pages/${path}.vue`];
 
 const QUOTERS = ["BROKER", "UNDERWRITER", "SENIOR_UNDERWRITER"];
 const UNDERWRITERS = ["UNDERWRITER", "SENIOR_UNDERWRITER"];
+const CLAIMS = ["CLAIMS_HANDLER", "CLAIMS_MANAGER"];
 
 function roleGuard(to) {
   const needed = to.meta.marineRoles;
@@ -43,6 +44,9 @@ export const marineRoutes = [
   route("/marine/open-covers/:coverId/declare", "marine-declare", p("quotes/QuoteWizard"), { title: "Declare shipment", marineRoles: QUOTERS }),
   route("/marine/underwriting", "marine-underwriting", p("underwriting/ReferralQueue"), { title: "Underwriting", marineRoles: UNDERWRITERS }),
   route("/marine/underwriting/:id", "marine-referral", p("underwriting/ReferralReview"), { title: "Referral", marineRoles: UNDERWRITERS }),
+  route("/marine/claims", "marine-claims", p("claims/ClaimList"), { title: "Claims", marineRoles: CLAIMS }),
+  route("/marine/claims/new", "marine-claim-new", p("claims/RegisterClaim"), { title: "Register claim", marineRoles: ["CLAIMS_HANDLER"] }),
+  route("/marine/claims/:id", "marine-claim", p("claims/ClaimWorkspace"), { title: "Claim", marineRoles: CLAIMS }),
   route("/marine/admin/masters", "marine-masters", p("admin/Masters"), { title: "Masters", marineRoles: ["ADMIN"] }),
   route("/marine/admin/fx-rates", "marine-fx-rates", p("admin/FxRates"), { title: "FX rates" }),
   route("/marine/admin/rate-tables", "marine-rate-tables", p("admin/RateTables"), { title: "Rate tables", marineRoles: ["ADMIN", "SENIOR_UNDERWRITER"] }),

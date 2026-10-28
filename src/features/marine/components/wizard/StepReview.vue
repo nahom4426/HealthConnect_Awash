@@ -34,11 +34,18 @@ const port = (p) => (p ? `${p.code} · ${p.name}` : null);
         { label: 'Incoterm', value: draft.incoterm },
       ] },
       { title: 'Shipment', step: 1, items: [
-        { label: 'Mode', value: modeLabel(draft.mode) },
-        { label: 'Vessel', value: draft.vessel ? `${draft.vessel.name} (IMO ${draft.vessel.imo}, ${draft.vessel.age} years)` : null },
-        { label: 'Voyage', value: [port(draft.loadingPort), ...draft.transshipments.map(port), port(draft.dischargePort)].filter(Boolean).join(' → ') },
-        { label: 'Final destination', value: draft.finalDestination },
-        { label: 'Sailing date', value: draft.sailingDate ? formatDate(draft.sailingDate) : null },
+        ...(draft.product === 'INLAND_TRANSIT' ? [] : [
+          { label: 'Mode', value: modeLabel(draft.mode) },
+          { label: 'Vessel', value: draft.vessel ? `${draft.vessel.name} (IMO ${draft.vessel.imo}, ${draft.vessel.age} years)` : null },
+          { label: 'Voyage', value: [port(draft.loadingPort), ...draft.transshipments.map(port), port(draft.dischargePort)].filter(Boolean).join(' → ') },
+          { label: 'Final destination', value: draft.finalDestination },
+        ]),
+        ...(draft.product === 'INLAND_TRANSIT' || draft.mode === 'SEA_ROAD' ? [
+          { label: 'Road leg', value: `${draft.inland.from?.name ?? '—'} → ${draft.inland.to?.name ?? '—'}` },
+          { label: 'Truck / driver', value: [draft.inland.truckPlate, draft.inland.driverName].filter(Boolean).join(' · ') },
+          { label: 'Convoy', value: draft.inland.convoyRef },
+        ] : []),
+        { label: draft.product === 'INLAND_TRANSIT' ? 'Departure date' : 'Sailing date', value: draft.sailingDate ? formatDate(draft.sailingDate) : null },
         { label: 'Commodity', value: draft.commodity ? `${draft.commodity.hsCode} · ${draft.commodity.description}` : null },
         { label: 'Goods', value: draft.goodsDescription, wide: true },
         { label: 'Invoice value', value: formatMoney(draft.invoiceValue, draft.currency) },

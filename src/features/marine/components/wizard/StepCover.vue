@@ -11,12 +11,15 @@ import { addDays } from "../../utils/format";
 defineProps({
   draft: { type: Object, required: true },
   errors: { type: Object, required: true },
+  /** Clause, war and strikes fixed by an open cover */
+  locked: { type: Boolean, default: false },
 });
 const emit = defineEmits(["check"]);
 </script>
 
 <template>
   <div class="grid gap-5">
+    <p v-if="locked" class="p-3 text-sm rounded-xl bg-surface-muted text-ink-muted">Clause, war and strikes follow the open cover's terms.</p>
     <FormField label="Clause" name="clause" required :error="errors.clause">
       <div class="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Clause">
         <label
@@ -25,7 +28,7 @@ const emit = defineEmits(["check"]);
           :class="['flex flex-col gap-1 p-4 rounded-xl border-2 cursor-pointer', draft.clause === c.value ? 'border-primary bg-primary/5' : 'border-line hover:border-line-strong']"
         >
           <span class="flex gap-2 items-center">
-            <input v-model="draft.clause" type="radio" name="clause" :value="c.value" class="accent-[rgb(var(--primary))]" @change="emit('check', 'clause')" />
+            <input v-model="draft.clause" type="radio" name="clause" :value="c.value" :disabled="locked" class="accent-[rgb(var(--primary))]" @change="emit('check', 'clause')" />
             <span class="text-sm font-semibold text-ink">{{ c.label }}{{ c.value === "ICC_A" ? " (all risks)" : "" }}</span>
           </span>
           <span class="text-xs text-ink-muted">{{ c.summary }}</span>
@@ -35,14 +38,14 @@ const emit = defineEmits(["check"]);
 
     <div class="grid gap-3 sm:grid-cols-2">
       <label class="flex gap-3 items-start p-3 rounded-xl border cursor-pointer border-line">
-        <input v-model="draft.warCover" type="checkbox" class="mt-0.5 accent-[rgb(var(--primary))]" />
+        <input v-model="draft.warCover" type="checkbox" :disabled="locked" class="mt-0.5 accent-[rgb(var(--primary))]" />
         <span>
           <span class="block text-sm font-medium text-ink">War cover</span>
           <span class="block text-xs text-ink-muted">Covers goods only while waterborne.</span>
         </span>
       </label>
       <label class="flex gap-3 items-start p-3 rounded-xl border cursor-pointer border-line">
-        <input v-model="draft.strikesCover" type="checkbox" class="mt-0.5 accent-[rgb(var(--primary))]" />
+        <input v-model="draft.strikesCover" type="checkbox" :disabled="locked" class="mt-0.5 accent-[rgb(var(--primary))]" />
         <span>
           <span class="block text-sm font-medium text-ink">Strikes cover</span>
           <span class="block text-xs text-ink-muted">Strikes, riots and civil commotion.</span>

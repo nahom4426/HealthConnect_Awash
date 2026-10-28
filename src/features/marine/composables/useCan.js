@@ -73,3 +73,13 @@ export function mockIdentity(roles) {
   const brokerOnly = roles.length > 0 && roles.every((r) => r === "BROKER");
   return { name: brokerOnly ? "Dawit Bekele (Nile Insurance Brokers)" : name, brokerPartyId: brokerOnly ? "8" : null };
 }
+
+/** The broker party a broker-only user acts for: the session's party, or the mock's seeded broker. */
+export function brokerPartyId(roles) {
+  const brokerOnly = roles.length > 0 && roles.every((r) => r === "BROKER");
+  if (!brokerOnly) return null;
+  if (marineMockEnabled) return mockIdentity(roles).brokerPartyId;
+  const auth = useAuthStore();
+  const u = auth.auth?.user ?? auth.auth ?? {};
+  return u.brokerPartyId ?? u.partyId ?? null;
+}

@@ -20,7 +20,12 @@ import { cardClass } from "../../components/styles";
 import { focusField, isEmpty } from "../../composables/useForm";
 import { useQuoteDraft, toPayload } from "../../store/quoteDraft";
 import { API_FIELD, FIELD_LABELS, FIELD_STEP, STEP_RULES } from "../../utils/quoteRules";
-import { bindQuote, createQuote, getQuote, getRateTable, getTodayFxRates, listRateTables, rateQuote, updateQuote } from "../../api/marineApi";
+import {
+  bindQuote, createDeclaration, createQuote, getOpenCover, getParty, getQuote, getRateTable, getTodayFxRates, listPorts, listRateTables,
+  rateQuote, updateQuote,
+} from "../../api/marineApi";
+import { useCan, brokerPartyId } from "../../composables/useCan";
+import { hasInlandLeg } from "../../constants";
 import { notifyError } from "../../api/marineClient";
 import { formatMoney } from "../../utils/money";
 
@@ -32,6 +37,9 @@ const { draft, quote, dirty, step, furthest } = storeToRefs(store);
 
 const STEPS = ["Product and parties", "Shipment", "Cover", "Review and price"];
 const editId = computed(() => route.params.id || null);
+const coverId = computed(() => route.params.coverId || null);
+const { roles } = useCan();
+const brokerOnly = computed(() => roles.value.length > 0 && roles.value.every((r) => r === "BROKER"));
 const loading = ref(!!editId.value);
 const loadError = ref(null);
 const errors = ref({});
@@ -40,6 +48,57 @@ const saving = ref(false);
 const rating = ref(false);
 const binding = ref(false);
 let watching = false;
+
+// ── declaration mode (plan 7.4): an open cover fixes the parties, currency and terms ──
+const cover = ref(null);
+const coverTerms = computed(() =>
+  cover.value ? { commodities: cover.value.commodities.map((c) => c.hsCode), declarationDays: cover.value.declarationDays, currency: cover.value.currency } : null
+);
+const locked = computed(() =>
+  cover.value
+    ? { product: true, insured: true, broker: true, brokerHint: `Fixed by open cover ${cover.value.coverNo}` }
+    : brokerOnly.value
+      ? { broker: true, brokerHint: "Your own brokerage" }
+      : {}
+);
+
+async function loadCover(id) {
+  const res = await getOpenCover(id);
+  if (!res.ok) throw res.error;
+  cover.value = res.data;
+}
+
+function applyCoverTerms() {
+  const c = cover.value;
+  Object.assign(draft.value, {
+    product: "SINGLE_SHIPMENT",
+    insured: c.insured,
+    broker: c.broker,
+    currency: c.currency,
+    clause: c.clause,
+    warCover: !!c.warCover,
+    strikesCover: !!c.strikesCover,
+    openCoverId: c.id,
+  });
+}
+
+// A broker's own quotes always name their brokerage (plan 7.7)
+async function applyBrokerLock() {
+  const id = brokerPartyId(roles.value);
+  if (!id || draft.value.broker?.id === id) return;
+  const res = await getParty(id);
+  if (res.ok) draft.value.broker = { id: res.data.id, name: res.data.name, email: res.data.email };
+}
+
+// The road leg starts in Djibouti unless the user picks another port
+watch(
+  () => hasInlandLeg(draft.value.product, draft.value.mode),
+  async (needed) => {
+    if (!needed || draft.value.inland.from) return;
+    const res = await listPorts({ q: "DJJIB", size: 1 });
+    if (res.ok && res.data.content[0] && !draft.value.inland.from) draft.value.inland.from = res.data.content[0];
+  }
+);
 
 // ── reference data for the side card and vessel age chip ──
 const table = ref(null);
@@ -61,24 +120,38 @@ async function loadReference() {
 }
 
 onMounted(async () => {
-  if (editId.value) {
-    // Coming back from the first save of a new quote: the store already holds it
-    if (quote.value?.id !== editId.value) {
-      const res = await getQuote(editId.value);
-      if (!res.ok) {
-        loadError.value = res.error;
-        loading.value = false;
-        return;
+  try {
+    if (editId.value) {
+      // Coming back from the first save of a new quote: the store already holds it
+      if (quote.value?.id !== editId.value) {
+        const res = await getQuote(editId.value);
+        if (!res.ok) throw res.error;
+        if (!["DRAFT", "QUOTED"].includes(res.data.status)) {
+          toast.info(`A ${res.data.status.toLowerCase()} quote can't be edited.`);
+          router.replace(`/marine/quotes/${res.data.id}`);
+          return;
+        }
+        store.start(res.data);
       }
-      if (!["DRAFT", "QUOTED"].includes(res.data.status)) {
-        toast.info(`A ${res.data.status.toLowerCase()} quote can't be edited.`);
-        router.replace(`/marine/quotes/${res.data.id}`);
-        return;
+      if (quote.value?.openCoverId) await loadCover(quote.value.openCoverId);
+    } else {
+      store.start();
+      if (coverId.value) {
+        loading.value = true;
+        await loadCover(coverId.value);
+        if (cover.value.status !== "ACTIVE") {
+          toast.info(`Open cover ${cover.value.coverNo} is not active, so it can't take declarations.`);
+          router.replace(`/marine/open-covers/${cover.value.id}`);
+          return;
+        }
+        applyCoverTerms();
       }
-      store.start(res.data);
     }
-  } else {
-    store.start();
+    if (brokerOnly.value && !cover.value) await applyBrokerLock();
+  } catch (e) {
+    loadError.value = e;
+    loading.value = false;
+    return;
   }
   loading.value = false;
   loadReference();
@@ -161,7 +234,11 @@ async function applyServerErrors(error) {
 async function save({ quiet = false, navigate = true } = {}) {
   saving.value = true;
   const body = toPayload(draft.value);
-  const res = quote.value?.id ? await updateQuote(quote.value.id, body) : await createQuote(body);
+  const res = quote.value?.id
+    ? await updateQuote(quote.value.id, body)
+    : cover.value
+      ? await createDeclaration(cover.value.id, body)
+      : await createQuote(body);
   saving.value = false;
   if (!res.ok) {
     if (!(await applyServerErrors(res.error))) notifyError(res.error, { onRetry: () => save({ quiet, navigate }), onStale: reloadQuote });
@@ -261,7 +338,7 @@ function bind() {
       // Clear the draft without it counting as an edit, so the leave guard stays quiet
       watching = false;
       store.start();
-      router.push(`/marine/policies/${res.data.policy.id}`);
+      router.push(res.data.openCover ? `/marine/open-covers/${res.data.openCover.id}` : `/marine/policies/${res.data.policy.id}`);
     }
   );
 }
@@ -288,7 +365,10 @@ const beforeUnload = (e) => {
 window.addEventListener("beforeunload", beforeUnload);
 onBeforeUnmount(() => window.removeEventListener("beforeunload", beforeUnload));
 
-const title = computed(() => (quote.value?.quoteNo ? `Edit ${quote.value.quoteNo}` : "New quote"));
+const title = computed(() => {
+  const what = cover.value ? "declaration" : "quote";
+  return quote.value?.quoteNo ? `Edit ${what} ${quote.value.quoteNo}` : cover.value ? `Declare shipment on ${cover.value.coverNo}` : "New quote";
+});
 </script>
 
 <template>
@@ -297,7 +377,11 @@ const title = computed(() => (quote.value?.quoteNo ? `Edit ${quote.value.quoteNo
       :title="title"
       :status="quote?.status"
       entity="quote"
-      :crumbs="[{ label: 'Marine' }, { label: 'Quotes', to: '/marine/quotes' }, { label: quote?.quoteNo ?? 'New' }]"
+      :crumbs="
+        cover
+          ? [{ label: 'Marine' }, { label: 'Open covers', to: '/marine/open-covers' }, { label: cover.coverNo, to: `/marine/open-covers/${cover.id}` }, { label: quote?.quoteNo ?? 'Declare' }]
+          : [{ label: 'Marine' }, { label: 'Quotes', to: '/marine/quotes' }, { label: quote?.quoteNo ?? 'New' }]
+      "
     />
 
     <PageState v-if="loading" kind="loading" />
@@ -332,9 +416,9 @@ const title = computed(() => (quote.value?.quoteNo ? `Edit ${quote.value.quoteNo
           <p v-if="stale" role="status" class="p-3 mb-4 text-sm font-medium rounded-xl bg-warning-soft text-warning-strong">Inputs changed. Get a new quote before binding.</p>
           <FormErrorBanner v-if="showBanner" :items="stepErrors" />
           <div :class="[cardClass, 'p-5']">
-            <StepParties v-if="step === 0" :draft="draft" :errors="errors" @check="check" />
-            <StepShipment v-else-if="step === 1" :draft="draft" :errors="errors" :refer-from-age="referFromAge" @check="check" />
-            <StepCover v-else-if="step === 2" :draft="draft" :errors="errors" @check="check" />
+            <StepParties v-if="step === 0" :draft="draft" :errors="errors" :locked="locked" @check="check" />
+            <StepShipment v-else-if="step === 1" :draft="draft" :errors="errors" :refer-from-age="referFromAge" :cover="coverTerms" @check="check" />
+            <StepCover v-else-if="step === 2" :draft="draft" :errors="errors" :locked="!!cover" @check="check" />
             <StepReview v-else :draft="draft" :quote="quote" :stale="stale" @edit="goTo" />
           </div>
 

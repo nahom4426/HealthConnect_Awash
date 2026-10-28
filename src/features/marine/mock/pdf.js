@@ -36,8 +36,15 @@ export async function buildCertificatePdf(cert, quote, verifyLink) {
   };
 
   row("Insured", cert.insured?.name);
-  row("Vessel", cert.vessel ? `${cert.vessel.name} (IMO ${cert.vessel.imo}, ${cert.vessel.flag})` : modeLabel(quote.mode));
-  row("Voyage", `${cert.loadingPort?.name ?? "—"} to ${cert.dischargePort?.name ?? "—"}, then ${cert.finalDestination ?? "—"}`);
+  if (quote.product !== "INLAND_TRANSIT") {
+    row("Vessel", cert.vessel ? `${cert.vessel.name} (IMO ${cert.vessel.imo}, ${cert.vessel.flag})` : modeLabel(quote.mode));
+    row("Voyage", `${cert.loadingPort?.name ?? "—"} to ${cert.dischargePort?.name ?? "—"}, then ${cert.finalDestination ?? "—"}`);
+  }
+  if (cert.inland) {
+    row("Inland leg", `${cert.inland.fromName ?? cert.inland.from} to ${cert.inland.toName ?? cert.inland.to} by road`);
+    row("Truck", `${cert.inland.truckPlate}, driver ${cert.inland.driverName}${cert.inland.convoyRef ? `, convoy ${cert.inland.convoyRef}` : ""}`);
+  }
+  if (cert.openCover?.coverNo) row("Open cover", `Declaration under ${cert.openCover.coverNo}`);
   row("Sailing date", formatDate(cert.sailingDate));
   row("Goods", cert.goodsDescription);
   if (quote.packing) row("Packing", quote.packing);

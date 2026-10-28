@@ -4,17 +4,20 @@
 import Autocomplete from "./Autocomplete.vue";
 import { listCommodities } from "../api/marineApi";
 
-defineProps({
+const props = defineProps({
   modelValue: { type: Object, default: null },
   id: { type: String, default: "" },
   invalid: { type: Boolean, default: false },
   describedby: { type: String, default: undefined },
+  /** Limit the choice to these HS codes (an open cover's commodity list) */
+  allowed: { type: Array, default: null },
 });
 const emit = defineEmits(["update:modelValue", "blur"]);
 
 async function search(q) {
-  const res = await listCommodities({ q, size: 12 });
-  return res.ok ? res.data.content : [];
+  const res = await listCommodities({ q, size: props.allowed ? 100 : 12 });
+  const rows = res.ok ? res.data.content : [];
+  return props.allowed ? rows.filter((c) => props.allowed.includes(c.hsCode)) : rows;
 }
 const cls = (c) => c.commodityClass.charAt(0) + c.commodityClass.slice(1).toLowerCase();
 </script>

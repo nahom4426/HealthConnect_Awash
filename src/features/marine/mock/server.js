@@ -18,7 +18,7 @@ import {
   editableQuote, certificateStatus, certificateView, policyView, on, routes, caller, brokerOnly, nextId, declarationContext,
 } from "./core";
 import { assess, applyAssessment, syncReferral } from "./underwriting";
-import "./openCovers";
+import { lockToCover } from "./openCovers";
 import "./claims";
 
 export { resetMockDb };
@@ -307,6 +307,7 @@ on("put", "/quotes/:id", ({ params, body }) => {
   const before = { ...q };
   Object.assign(q, pickQuote(body), { status: "DRAFT", premium: null, referralReasons: [], declineNote: "", fx: null, validUntil: null, checks: null, sanctionsConfirmed: false, updatedAt: nowIso() });
   if (brokerOnly()) q.brokerId = caller.brokerPartyId;
+  if (q.openCoverId) lockToCover(q);
   audit("quote", q.id, "Updated", before, q);
   return quoteView(q);
 });

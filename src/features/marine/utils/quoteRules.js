@@ -1,6 +1,6 @@
 // Field rules for the quote wizard, one function per step (plan 5.2). Each returns
 // { field: message } for the fields that fail; field names are the wizard draft's keys.
-import { isSeaMode } from "../constants";
+import { hasInlandLeg, isSeaMode } from "../constants";
 import { parseDecimal } from "./money";
 import { isValidContainerNo, isValidImo } from "./imo";
 import { addDays, todayIso } from "./format";
@@ -23,18 +23,27 @@ export function partiesErrors(d) {
 
 export function shipmentErrors(d, today = todayIso()) {
   const e = {};
-  if (blank(d.mode)) e.mode = "Mode of conveyance is required";
-  if (isSeaMode(d.mode)) {
-    if (!d.vessel) e.vessel = "Vessel is required for sea shipments";
-    else if (!isValidImo(d.vessel.imo)) e.vessel = "This IMO number's check digit is wrong";
+  const inlandOnly = d.product === "INLAND_TRANSIT";
+  if (!inlandOnly) {
+    if (blank(d.mode)) e.mode = "Mode of conveyance is required";
+    if (isSeaMode(d.mode)) {
+      if (!d.vessel) e.vessel = "Vessel is required for sea shipments";
+      else if (!isValidImo(d.vessel.imo)) e.vessel = "This IMO number's check digit is wrong";
+    }
+    if (!d.loadingPort) e.loadingPort = "Port of loading is required";
+    if ((d.transshipments ?? []).length > 5) e.transshipments = "At most 5 transshipment ports";
+    if (!d.dischargePort) e.dischargePort = "Port of discharge is required";
+    else if (d.loadingPort && d.loadingPort.code === d.dischargePort.code) e.dischargePort = "Port of discharge must differ from the port of loading";
+    if (blank(d.finalDestination)) e.finalDestination = "Final destination is required";
   }
-  if (!d.loadingPort) e.loadingPort = "Port of loading is required";
-  if ((d.transshipments ?? []).length > 5) e.transshipments = "At most 5 transshipment ports";
-  if (!d.dischargePort) e.dischargePort = "Port of discharge is required";
-  else if (d.loadingPort && d.loadingPort.code === d.dischargePort.code) e.dischargePort = "Port of discharge must differ from the port of loading";
-  if (blank(d.finalDestination)) e.finalDestination = "Final destination is required";
-  if (blank(d.sailingDate)) e.sailingDate = "Sailing date is required";
-  else if (d.sailingDate < addDays(today, -30)) e.sailingDate = "Sailing date can't be more than 30 days in the past";
+  if (hasInlandLeg(d.product, d.mode)) {
+    if (!d.inland?.from) e["inland.from"] = "Where the road leg starts is required";
+    if (!d.inland?.to) e["inland.to"] = "Dry port is required";
+    if (blank(d.inland?.truckPlate)) e["inland.truckPlate"] = "Truck plate is required";
+    if (blank(d.inland?.driverName)) e["inland.driverName"] = "Driver name is required";
+  }
+  if (blank(d.sailingDate)) e.sailingDate = `${inlandOnly ? "Departure" : "Sailing"} date is required`;
+  else if (d.sailingDate < addDays(today, -30)) e.sailingDate = `${inlandOnly ? "Departure" : "Sailing"} date can't be more than 30 days in the past`;
   if (!d.commodity) e.commodity = "Commodity is required";
   if (blank(d.goodsDescription)) e.goodsDescription = "Goods description is required";
   else if (d.goodsDescription.length > 500) e.goodsDescription = "At most 500 characters";
@@ -67,6 +76,7 @@ export const FIELD_STEP = {
   product: 0, insured: 0, insuredRole: 0, consignee: 0, broker: 0, incoterm: 0,
   mode: 1, vessel: 1, loadingPort: 1, transshipments: 1, dischargePort: 1, finalDestination: 1, sailingDate: 1,
   commodity: 1, goodsDescription: 1, packing: 1, invoiceValue: 1, freight: 1, invoiceNo: 1, blNo: 1, containers: 1,
+  "inland.from": 1, "inland.to": 1, "inland.truckPlate": 1, "inland.driverName": 1, "inland.convoyRef": 1,
   clause: 2, warCover: 2, strikesCover: 2, deductible: 2, specialConditions: 2,
   "lc.number": 2, "lc.bank": 2, "lc.amount": 2, "lc.expiry": 2,
 };
@@ -84,4 +94,5 @@ export const FIELD_LABELS = {
   goodsDescription: "Goods description", invoiceValue: "Invoice value", freight: "Freight", containers: "Container numbers",
   clause: "Clause", deductible: "Deductible", specialConditions: "Special conditions",
   "lc.number": "LC number", "lc.bank": "Issuing bank", "lc.amount": "LC amount", "lc.expiry": "LC expiry",
+  "inland.from": "Road leg from", "inland.to": "Dry port", "inland.truckPlate": "Truck plate", "inland.driverName": "Driver name",
 };

@@ -37,7 +37,7 @@ export const FOREIGN_CURRENCIES = CURRENCIES.filter((c) => c !== "ETB");
 
 export const PRODUCTS = Object.freeze([
   { value: "SINGLE_SHIPMENT", label: "Single shipment", summary: "One voyage, one certificate.", phase: 1 },
-  { value: "INLAND_TRANSIT", label: "Inland transit", summary: "Road and rail within Ethiopia.", phase: 3 },
+  { value: "INLAND_TRANSIT", label: "Inland transit", summary: "Djibouti to a dry port by road.", phase: 3 },
   { value: "HULL", label: "Hull", summary: "The vessel itself.", phase: null, flag: "hull" },
 ]);
 export const productLabel = (v) => PRODUCTS.find((p) => p.value === v)?.label ?? v ?? "—";
@@ -61,8 +61,11 @@ export const MODES = Object.freeze([
   { value: "AIR", label: "Air" },
   { value: "SEA_ROAD", label: "Sea then road" },
 ]);
+/** Inland transit quotes travel by road only; route factors also use this mode. */
+export const ROAD_MODE = { value: "ROAD", label: "Road" };
 export const isSeaMode = (mode) => mode === "SEA" || mode === "SEA_ROAD";
-export const modeLabel = (v) => MODES.find((m) => m.value === v)?.label ?? v ?? "—";
+export const modeLabel = (v) => [...MODES, ROAD_MODE].find((m) => m.value === v)?.label ?? v ?? "—";
+export const hasInlandLeg = (product, mode) => product === "INLAND_TRANSIT" || mode === "SEA_ROAD";
 
 export const CLAUSES = Object.freeze([
   { value: "ICC_A", label: "ICC A", summary: "All risks, except the listed exclusions." },

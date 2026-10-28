@@ -10,12 +10,14 @@ const props = defineProps({
   draft: { type: Object, required: true },
   errors: { type: Object, required: true },
   flags: { type: Object, default: () => ({}) },
+  /** Fields fixed by an open cover or the broker's own party: { product, insured, broker } */
+  locked: { type: Object, default: () => ({}) },
 });
 const emit = defineEmits(["check"]);
 
 // Inland transit arrives in phase 3; hull only behind its feature flag
 const products = computed(() => PRODUCTS.filter((p) => (p.flag ? props.flags[p.flag] : true)));
-const available = (p) => p.phase === 1;
+const available = (p) => p.phase && p.phase <= 3 && (!props.locked.product || p.value === props.draft.product);
 const warning = computed(() => incotermWarning(props.draft.incoterm, props.draft.insuredRole));
 </script>
 
@@ -35,14 +37,14 @@ const warning = computed(() => incotermWarning(props.draft.incoterm, props.draft
             <input v-model="draft.product" type="radio" name="product" :value="p.value" :disabled="!available(p)" class="accent-[rgb(var(--primary))]" />
             <span class="text-sm font-semibold text-ink">{{ p.label }}</span>
           </span>
-          <span class="text-xs text-ink-muted">{{ available(p) ? p.summary : "Coming in phase 3" }}</span>
+          <span class="text-xs text-ink-muted">{{ available(p) ? p.summary : locked.product ? "Not on this open cover" : "Not available yet" }}</span>
         </label>
       </div>
     </FormField>
 
     <div class="grid gap-5 sm:grid-cols-2">
       <FormField v-slot="{ id, invalid, describedby }" label="Insured" name="insured" required :error="errors.insured">
-        <PartyPicker :id="id" v-model="draft.insured" type="INSURED" :invalid="invalid" :describedby="describedby" @blur="emit('check', 'insured')" />
+        <PartyPicker :id="id" v-model="draft.insured" type="INSURED" :disabled="!!locked.insured" :can-create="!locked.insured" :invalid="invalid" :describedby="describedby" @blur="emit('check', 'insured')" />
       </FormField>
       <FormField label="Insured is the" name="insuredRole" required :error="errors.insuredRole" hint="Used for the Incoterm check">
         <div class="flex gap-2" role="radiogroup" aria-label="Insured is the">
@@ -55,8 +57,8 @@ const warning = computed(() => incotermWarning(props.draft.incoterm, props.draft
       <FormField v-slot="{ id, describedby }" label="Consignee" name="consignee" hint="Screened for sanctions from phase 2">
         <PartyPicker :id="id" v-model="draft.consignee" type="CONSIGNEE" :describedby="describedby" />
       </FormField>
-      <FormField v-slot="{ id, describedby }" label="Broker" name="broker">
-        <PartyPicker :id="id" v-model="draft.broker" type="BROKER" :describedby="describedby" />
+      <FormField v-slot="{ id, describedby }" label="Broker" name="broker" :hint="locked.broker ? locked.brokerHint : ''">
+        <PartyPicker :id="id" v-model="draft.broker" type="BROKER" :disabled="!!locked.broker" :can-create="!locked.broker" :describedby="describedby" />
       </FormField>
       <FormField v-slot="{ id, invalid, describedby }" label="Incoterm" name="incoterm" required :error="errors.incoterm">
         <select :id="id" v-model="draft.incoterm" :aria-describedby="describedby" :class="[inputClass, inputBorder(invalid)]" @change="emit('check', 'incoterm')">

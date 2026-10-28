@@ -33,8 +33,12 @@ export function emptyDraft() {
     deductible: "",
     specialConditions: "",
     lc: { enabled: false, number: "", bank: null, amount: "", expiry: "" },
+    inland: emptyInland(),
+    openCoverId: null,
   };
 }
+
+export const emptyInland = () => ({ from: null, to: null, truckPlate: "", driverName: "", convoyRef: "" });
 
 /** API quote → wizard draft */
 export function draftFromQuote(q) {
@@ -67,12 +71,18 @@ export function draftFromQuote(q) {
     deductible: q.deductible ?? "",
     specialConditions: q.specialConditions ?? "",
     lc: { enabled: !!q.lc?.enabled, number: q.lc?.number ?? "", bank: q.lcBank ?? null, amount: q.lc?.amount ?? "", expiry: q.lc?.expiry ?? "" },
+    inland: q.inland
+      ? { from: q.inlandFrom, to: q.inlandTo, truckPlate: q.inland.truckPlate ?? "", driverName: q.inland.driverName ?? "", convoyRef: q.inland.convoyRef ?? "" }
+      : emptyInland(),
+    openCoverId: q.openCoverId ?? null,
   };
 }
 
 /** Wizard draft → API body */
 export function toPayload(d) {
-  const sea = d.mode === "SEA" || d.mode === "SEA_ROAD";
+  const inlandOnly = d.product === "INLAND_TRANSIT";
+  const sea = !inlandOnly && (d.mode === "SEA" || d.mode === "SEA_ROAD");
+  const inland = inlandOnly || d.mode === "SEA_ROAD";
   return {
     product: d.product,
     insuredId: d.insured?.id ?? null,
@@ -80,12 +90,12 @@ export function toPayload(d) {
     consigneeId: d.consignee?.id ?? null,
     brokerId: d.broker?.id ?? null,
     incoterm: d.incoterm || null,
-    mode: d.mode || null,
+    mode: inlandOnly ? "ROAD" : d.mode || null,
     vesselImo: sea ? d.vessel?.imo ?? null : null,
-    portOfLoading: d.loadingPort?.code ?? null,
-    transshipmentPorts: d.transshipments.map((p) => p.code),
-    portOfDischarge: d.dischargePort?.code ?? null,
-    finalDestination: d.finalDestination.trim(),
+    portOfLoading: inlandOnly ? null : d.loadingPort?.code ?? null,
+    transshipmentPorts: inlandOnly ? [] : d.transshipments.map((p) => p.code),
+    portOfDischarge: inlandOnly ? null : d.dischargePort?.code ?? null,
+    finalDestination: inlandOnly ? d.inland.to?.name ?? "" : d.finalDestination.trim(),
     sailingDate: d.sailingDate || null,
     hsCode: d.commodity?.hsCode ?? null,
     goodsDescription: d.goodsDescription.trim(),
@@ -104,6 +114,10 @@ export function toPayload(d) {
     lc: d.lc.enabled
       ? { enabled: true, number: d.lc.number.trim(), bankId: d.lc.bank?.id ?? null, amount: d.lc.amount || null, expiry: d.lc.expiry || null }
       : { enabled: false },
+    inland: inland
+      ? { from: d.inland.from?.code ?? null, to: d.inland.to?.code ?? null, truckPlate: d.inland.truckPlate.trim(), driverName: d.inland.driverName.trim(), convoyRef: d.inland.convoyRef.trim() }
+      : null,
+    openCoverId: d.openCoverId,
   };
 }
 

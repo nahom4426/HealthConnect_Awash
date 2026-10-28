@@ -19,12 +19,25 @@ export const vesselText = (v) => (v ? `${v.name} · IMO ${v.imo} · ${v.flag} ·
 
 export const shipmentItems = (q) => [
   { label: "Mode", value: modeLabel(q.mode) },
-  { label: "Vessel", value: vesselText(q.vessel), wide: true },
-  { label: "Port of loading", value: port(q.loadingPort) },
-  { label: "Transshipment", value: (q.transshipments ?? []).map(port).join(", ") },
-  { label: "Port of discharge", value: port(q.dischargePort) },
-  { label: "Final destination", value: q.finalDestination },
-  { label: "Sailing date", value: q.sailingDate ? formatDate(q.sailingDate) : null },
+  ...(q.product === "INLAND_TRANSIT"
+    ? []
+    : [
+        { label: "Vessel", value: vesselText(q.vessel), wide: true },
+        { label: "Port of loading", value: port(q.loadingPort) },
+        { label: "Transshipment", value: (q.transshipments ?? []).map(port).join(", ") },
+        { label: "Port of discharge", value: port(q.dischargePort) },
+        { label: "Final destination", value: q.finalDestination },
+      ]),
+  ...(q.inland
+    ? [
+        { label: "Road leg", value: `${q.inlandFrom?.name ?? q.inland.from} → ${q.inlandTo?.name ?? q.inland.to}` },
+        { label: "Truck plate", value: q.inland.truckPlate },
+        { label: "Driver", value: q.inland.driverName },
+        { label: "Convoy", value: q.inland.convoyRef },
+      ]
+    : []),
+  ...(q.openCover?.id ? [{ label: "Open cover", value: q.openCover.coverNo, to: `/marine/open-covers/${q.openCover.id}` }] : []),
+  { label: q.product === "INLAND_TRANSIT" ? "Departure date" : "Sailing date", value: q.sailingDate ? formatDate(q.sailingDate) : null },
   { label: "Commodity", value: q.commodity ? `${q.commodity.hsCode} · ${q.commodity.description}` : null },
   { label: "Goods description", value: q.goodsDescription, wide: true },
   { label: "Packing", value: q.packing },

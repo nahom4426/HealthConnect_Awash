@@ -8,7 +8,7 @@ import TabGroup from '@/components/TabGroup.vue';
 import { openModal } from '@customizer/modal-x';
 import IssuedContractsDataProvider from '../components/IssuedContractsDataProvider.vue';
 import MembershipCategoryRow from '../components/MembershipCategoryRow.vue';
-import { useUnderwriting } from '../store/underwritingStore';
+import { useUnderwriting } from '@/features/health/underwriting/store/underwritingStore';
 import icons from '@/utils/icons';
 import { getInstitution } from '../api/underwritingApi';
 import { activeMembershipTab } from '../utils/membershipTabState';

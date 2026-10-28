@@ -1,12 +1,13 @@
 <script setup lang="ts">
+import type { PropType } from "vue";
 import { computed, defineProps, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { issuedPolicyQuotation } from '@/features/health/quotation/api/quotationApi';
 
 const props = defineProps({
-  rowData: { type: Array, required: true },
-  rowKeys: { type: Array, required: true },
-  headKeys: { type: Array, required: true },
+  rowData: { type: Array as PropType<any[]>, required: true },
+  rowKeys: { type: Array as PropType<any[]>, required: true },
+  headKeys: { type: Array as PropType<any[]>, required: true },
   cells: {
     type: [Object, Array],
     default: () => ({}),

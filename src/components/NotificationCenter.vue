@@ -3,7 +3,7 @@
     <!-- Bell Button Trigger -->
     <button
       @click="toggleDropdown"
-      class="relative p-2 rounded-xl text-slate-600 hover:text-blue-900 hover:bg-slate-100 transition cursor-pointer outline-none"
+      class="relative p-2 rounded-xl text-ink-muted hover:text-blue-900 hover:bg-surface-raised transition cursor-pointer outline-none"
       title="Notifications & System Alerts"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,7 +27,7 @@
     <Transition name="fade-slide">
       <div
         v-if="isOpen"
-        class="absolute right-0 mt-2 w-80 sm:w-96 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200 z-[9999] overflow-hidden"
+        class="absolute right-0 mt-2 w-80 sm:w-96 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-line z-[9999] overflow-hidden"
       >
         <!-- Header -->
         <div class="px-4 py-3 bg-gradient-to-r from-slate-900 to-blue-950 text-white flex items-center justify-between">
@@ -51,13 +51,13 @@
         </div>
 
         <!-- Notification Feed Items -->
-        <div class="max-h-80 overflow-y-auto divide-y divide-slate-100">
+        <div class="max-h-80 overflow-y-auto divide-y divide-line">
           <div
             v-for="item in notifStore.notifications"
             :key="item.id"
             @click="handleNotificationClick(item)"
             :class="[
-              'p-3.5 transition cursor-pointer flex items-start gap-3 hover:bg-slate-50',
+              'p-3.5 transition cursor-pointer flex items-start gap-3 hover:bg-surface-muted',
               !item.isRead ? 'bg-blue-50/40 border-l-4 border-blue-600' : 'bg-white opacity-85'
             ]"
           >
@@ -72,13 +72,13 @@
             <!-- Content -->
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-1">
-                <h4 class="text-xs font-extrabold text-slate-900 truncate">{{ item.title }}</h4>
-                <span class="text-[10px] text-slate-400 font-mono whitespace-nowrap">{{ item.timestamp }}</span>
+                <h4 class="text-xs font-extrabold text-ink truncate">{{ item.title }}</h4>
+                <span class="text-[10px] text-ink-subtle font-mono whitespace-nowrap">{{ item.timestamp }}</span>
               </div>
-              <p class="text-[11px] text-slate-600 leading-tight mt-0.5 line-clamp-2">{{ item.message }}</p>
+              <p class="text-[11px] text-ink-muted leading-tight mt-0.5 line-clamp-2">{{ item.message }}</p>
 
               <div class="flex items-center gap-2 mt-1.5">
-                <span v-if="item.badge" class="px-2 py-0.5 bg-slate-100 text-slate-700 font-bold text-[9px] rounded-md border border-slate-200 uppercase">
+                <span v-if="item.badge" class="px-2 py-0.5 bg-surface-raised text-ink-muted font-bold text-[9px] rounded-md border border-line uppercase">
                   {{ item.badge }}
                 </span>
                 <span v-if="!item.isRead" class="w-2 h-2 rounded-full bg-blue-600"></span>
@@ -86,14 +86,14 @@
             </div>
           </div>
 
-          <div v-if="notifStore.notifications.length === 0" class="p-6 text-center text-xs text-slate-400 italic">
+          <div v-if="notifStore.notifications.length === 0" class="p-6 text-center text-xs text-ink-subtle italic">
             No system notifications available.
           </div>
         </div>
 
         <!-- Footer -->
-        <div class="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
-          <button @click="isOpen = false" class="text-xs font-bold text-slate-600 hover:text-slate-900 transition">
+        <div class="p-2.5 bg-surface-muted border-t border-line text-center">
+          <button @click="isOpen = false" class="text-xs font-bold text-ink-muted hover:text-ink transition">
             Close Panel
           </button>
         </div>

@@ -73,7 +73,7 @@ async function fetchProviderDetails(provider: any, page = 1) {
     };
     if (reportInstitutionUuid.value) params.institutionUuid = reportInstitutionUuid.value;
     const res = await getRequestedClaim(params);
-    const data = res?.data ?? res;
+    const data: any = res?.data ?? res;
     detailClaims.value = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
     detailTotal.value = data?.totalElements ?? detailClaims.value.length;
     detailPage.value = page;
@@ -199,8 +199,8 @@ onMounted(() => { fetchReport(); });
           <label class="pr-field-label">Institution</label>
           <SearchSelect
             placeholder="All Institutions"
-            :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
-            :selectCb="(res) => reportInstitutionUuid = res?.institutionUuid || ''"
+            :searchCb="(data: any) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
+            :selectCb="(res: any) => reportInstitutionUuid = res?.institutionUuid || ''"
             :option="{ label: 'institutionName', value: 'institutionUuid' }"
           />
         </div>
@@ -208,8 +208,8 @@ onMounted(() => { fetchReport(); });
           <label class="pr-field-label">Provider</label>
           <SearchSelect
             placeholder="All Providers"
-            :searchCb="(data) => getActiveContracts({ ...data, status: Status.ACTIVE })"
-            :selectCb="(res) => reportProviderUuid = res?.providerUuid || ''"
+            :searchCb="(data: any) => getActiveContracts({ ...data, status: Status.ACTIVE })"
+            :selectCb="(res: any) => reportProviderUuid = res?.providerUuid || ''"
             :option="{ label: 'providerName', value: 'providerUuid' }"
           />
         </div>

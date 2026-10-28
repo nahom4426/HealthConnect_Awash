@@ -1346,9 +1346,9 @@ async function submit(action: "add" | "generate" = "add") {
                 }"
                 :rows="itemsWithCoverage"
                 :cells="{
-                  unitPrice: (v) => formatCurrency(v),
-                  totalPrice: (v) => formatCurrency(v),
-                  remainingAfter: (v) => formatCurrency(v),
+                  unitPrice: (v: any) => formatCurrency(v),
+                  totalPrice: (v: any) => formatCurrency(v),
+                  remainingAfter: (v: any) => formatCurrency(v),
                 }"
               >
                 <template #serviceCode="{ row }">

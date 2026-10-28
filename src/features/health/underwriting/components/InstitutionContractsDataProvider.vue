@@ -37,9 +37,9 @@ const pagination = usePagination({
       totalItems: institutionContractStore.totalItems,
     },
     getAll: () => institutionContractStore.getAll(),
-    set: (data) => institutionContractStore.set(data),
+    set: (data: any) => institutionContractStore.set(data),
   },
-  cb: async (params) => {
+  cb: async (params: any) => {
     loading.value = true; // Set loading to true before request
     try {
       const response = await getInstitutionContracts(
@@ -91,7 +91,7 @@ const pagination = usePagination({
 });
 
 // Debounce the search to prevent too many requests
-let searchTimeout: number;
+let searchTimeout: ReturnType<typeof setTimeout> | undefined;
 watch(
   () => props.search,
   (newVal) => {

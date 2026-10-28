@@ -711,7 +711,7 @@ onMounted(async () => {
                 <div class="flex gap-2 items-center mt-1">
                   <p class="text-sm text-ink-muted">Issued for:</p>
                   <span class="text-sm font-semibold text-success">
-                    {{ isIndividualQuotation ? individualForm.fullName : instituton?.institutionName }}
+                    {{ isIndividualQuotation ? individualForm.fullName : institutionForm.institutionName }}
                   </span>
                   <span class="text-xs text-ink-subtle">• Quotation ID: {{ draft?.quotationUuid?.slice(-8) }}</span>
                 </div>

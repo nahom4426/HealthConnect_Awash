@@ -7,7 +7,7 @@ import Table from '@/components/Table.vue';
 import { openModal } from '@customizer/modal-x';
 import InstitutionContractsDataProvider from '../components/InstitutionContractsDataProvider.vue';
 import instutionContractRow from '../components/instutionContractRow.vue';
-import { useInstitutionContract } from '../store/institutionContractsStore';
+import { useInstitutionContract } from '@/features/health/underwriting/store/institutionContractsStore';
 import icons from '@/utils/icons';
 import { getInstitution } from '../api/underwritingApi';
 

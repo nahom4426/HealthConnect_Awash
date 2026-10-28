@@ -1,5 +1,5 @@
 <template>
-  <div class="form-builder-home w-full rounded-2xl border border-slate-200/80 bg-white text-slate-800 p-6 lg:p-8 shadow-sm box-border">
+  <div class="form-builder-home w-full rounded-2xl border border-line/80 bg-white text-ink p-6 lg:p-8 shadow-sm box-border">
     <!-- Header -->
     <div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -10,8 +10,8 @@
             </svg>
           </div>
           <div>
-            <h1 class="text-xl font-bold tracking-tight text-slate-900">Proposal Form Builder</h1>
-            <p class="text-xs text-slate-500">Visually configure mobile proposal questionnaires for all insurance products</p>
+            <h1 class="text-xl font-bold tracking-tight text-ink">Proposal Form Builder</h1>
+            <p class="text-xs text-ink-subtle">Visually configure mobile proposal questionnaires for all insurance products</p>
           </div>
         </div>
       </div>
@@ -42,12 +42,12 @@
             </span>
           </div>
 
-          <h3 class="text-base font-bold text-slate-900 transition-colors" :class="prod.titleHover">{{ prod.name }}</h3>
-          <p class="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">{{ prod.description }}</p>
+          <h3 class="text-base font-bold text-ink transition-colors" :class="prod.titleHover">{{ prod.name }}</h3>
+          <p class="text-xs text-ink-muted mt-2 line-clamp-2 leading-relaxed">{{ prod.description }}</p>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
-          <span class="text-[11px] text-slate-400 font-mono font-medium">Form v{{ prod.version || '1.0' }}</span>
+        <div class="mt-6 pt-4 border-t border-line/60 flex items-center justify-between text-xs text-ink-subtle">
+          <span class="text-[11px] text-ink-subtle font-mono font-medium">Form v{{ prod.version || '1.0' }}</span>
           <div class="flex items-center space-x-1.5 font-bold transition-transform group-hover:translate-x-1" :class="prod.textAccent">
             <span>Configure</span>
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

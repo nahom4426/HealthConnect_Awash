@@ -1,37 +1,37 @@
 <template>
-  <div class="mobile-preview flex-1 bg-slate-50/60 p-4 sm:p-6 flex flex-col md:flex-row items-center md:items-start justify-center gap-6 min-h-0 select-none overflow-y-auto custom-scrollbar box-border w-full h-full">
+  <div class="mobile-preview flex-1 bg-surface-muted/60 p-4 sm:p-6 flex flex-col md:flex-row items-center md:items-start justify-center gap-6 min-h-0 select-none overflow-y-auto custom-scrollbar box-border w-full h-full">
     
     <!-- Sidebar Control Panel -->
-    <div class="w-full md:w-60 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs shrink-0 space-y-4 box-border overflow-hidden">
+    <div class="w-full md:w-60 bg-white p-4 rounded-2xl border border-line shadow-xs shrink-0 space-y-4 box-border overflow-hidden">
       <div>
         <div class="flex items-center space-x-2 text-emerald-700 mb-1">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">Device Simulator</h3>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-ink">Device Simulator</h3>
         </div>
-        <p class="text-[11px] text-slate-500 leading-relaxed">Select target mobile device to preview exact screen layout.</p>
+        <p class="text-[11px] text-ink-subtle leading-relaxed">Select target mobile device to preview exact screen layout.</p>
       </div>
 
       <!-- Preset Selector List -->
-      <div class="space-y-1.5 pt-2 border-t border-slate-100 box-border">
-        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Preset</label>
+      <div class="space-y-1.5 pt-2 border-t border-line box-border">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Target Preset</label>
         <div class="space-y-1.5 box-border">
           <button
             v-for="d in devices"
             :key="d.id"
             @click="selectedDevice = d"
             class="w-full max-w-full box-border text-left px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between border"
-            :class="selectedDevice.id === d.id ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs font-bold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'"
+            :class="selectedDevice.id === d.id ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs font-bold' : 'bg-surface-muted text-ink-muted border-line hover:bg-surface-raised hover:text-ink'"
           >
             <span class="truncate mr-2">{{ d.name }}</span>
-            <span class="text-[10px] font-mono text-slate-400 shrink-0">{{ d.width }}×{{ d.height }}</span>
+            <span class="text-[10px] font-mono text-ink-subtle shrink-0">{{ d.width }}×{{ d.height }}</span>
           </button>
         </div>
       </div>
 
       <!-- Info Badge -->
-      <div class="pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex items-center space-x-1.5">
+      <div class="pt-3 border-t border-line text-[10px] text-ink-subtle flex items-center space-x-1.5">
         <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -61,7 +61,7 @@
         <div class="flex items-center space-x-1 text-slate-300 text-[9px]">
           <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.3A.996.996 0 005.06 20h13.88c.38 0 .73-.21.89-.55.17-.35.11-.76-.14-1.04l-.62-.7C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9zm0 14.5c-3.03 0-5.5-2.47-5.5-5.5S8.97 6.5 12 6.5s5.5 2.47 5.5 5.5-2.47 5.5-5.5 5.5z"/></svg>
           <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98C20.93 5.9 16.69 4 12 4z"/></svg>
-          <div class="w-4 h-2 border border-slate-400 rounded-2xs p-0.5 flex items-center">
+          <div class="w-4 h-2 border border-line-strong rounded-2xs p-0.5 flex items-center">
             <div class="w-full h-full bg-emerald-400 rounded-2xs"></div>
           </div>
         </div>
@@ -84,7 +84,7 @@
       </div>
 
       <!-- Mobile Step Indicators -->
-      <div v-if="steps.length > 1" class="bg-slate-100 border-b border-slate-200 px-3.5 py-1.5 flex items-center space-x-1 shrink-0 overflow-x-auto">
+      <div v-if="steps.length > 1" class="bg-surface-raised border-b border-line px-3.5 py-1.5 flex items-center space-x-1 shrink-0 overflow-x-auto">
         <div
           v-for="(s, idx) in steps"
           :key="idx"
@@ -97,9 +97,9 @@
       <!-- Mobile Form Screen Body -->
       <div class="flex-1 bg-white p-3.5 overflow-y-auto space-y-3 custom-scrollbar text-left">
         <div v-if="currentStep">
-          <div class="mb-2.5 border-b border-slate-100 pb-1.5">
-            <h4 class="text-xs font-bold text-slate-900">{{ currentStep.stepTitle || `Step ${activeStepIndex + 1}` }}</h4>
-            <p class="text-[10px] text-slate-500 mt-0.5">Please provide accurate insurance details</p>
+          <div class="mb-2.5 border-b border-line pb-1.5">
+            <h4 class="text-xs font-bold text-ink">{{ currentStep.stepTitle || `Step ${activeStepIndex + 1}` }}</h4>
+            <p class="text-[10px] text-ink-subtle mt-0.5">Please provide accurate insurance details</p>
           </div>
 
           <div class="space-y-3">
@@ -109,13 +109,13 @@
               class="space-y-1"
             >
               <!-- Label -->
-              <label class="block text-[11px] font-bold text-slate-800">
+              <label class="block text-[11px] font-bold text-ink">
                 {{ field.label }}
                 <span v-if="field.required" class="text-rose-500">*</span>
               </label>
 
               <!-- Header Field -->
-              <div v-if="field.type === 'header'" class="pt-1.5 border-b border-slate-200 text-xs font-bold text-emerald-700">
+              <div v-if="field.type === 'header'" class="pt-1.5 border-b border-line text-xs font-bold text-emerald-700">
                 {{ field.label }}
               </div>
 
@@ -125,14 +125,14 @@
                 v-model="formValues[field.id]"
                 :type="field.type === 'number' ? 'number' : 'text'"
                 :placeholder="field.placeholder || 'Enter value'"
-                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors"
+                class="w-full bg-surface-muted border border-line rounded-lg px-2.5 py-1.5 text-xs text-ink placeholder-ink-subtle focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors"
               />
 
               <!-- Dropdown -->
               <select
                 v-else-if="field.type === 'dropdown'"
                 v-model="formValues[field.id]"
-                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors"
+                class="w-full bg-surface-muted border border-line rounded-lg px-2.5 py-1.5 text-xs text-ink focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors"
               >
                 <option value="" disabled>Select option...</option>
                 <option v-for="(opt, oIdx) in field.options" :key="oIdx" :value="opt.value || opt">
@@ -145,12 +145,12 @@
                 v-else-if="field.type === 'date'"
                 v-model="formValues[field.id]"
                 type="date"
-                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors"
+                class="w-full bg-surface-muted border border-line rounded-lg px-2.5 py-1.5 text-xs text-ink focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors"
               />
 
               <!-- Toggle Switch -->
-              <div v-else-if="field.type === 'toggle'" class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-                <span class="text-[11px] font-semibold text-slate-800">{{ formValues[field.id] ? 'Yes / Enabled' : 'No / Disabled' }}</span>
+              <div v-else-if="field.type === 'toggle'" class="flex items-center justify-between bg-surface-muted border border-line rounded-lg px-3 py-1.5">
+                <span class="text-[11px] font-semibold text-ink">{{ formValues[field.id] ? 'Yes / Enabled' : 'No / Disabled' }}</span>
                 <button
                   @click="formValues[field.id] = !formValues[field.id]"
                   class="w-9 h-5 rounded-full p-0.5 transition-colors"
@@ -163,22 +163,22 @@
                 </button>
               </div>
 
-              <p v-if="field.helpText" class="text-[9px] text-slate-500">{{ field.helpText }}</p>
+              <p v-if="field.helpText" class="text-[9px] text-ink-subtle">{{ field.helpText }}</p>
             </div>
           </div>
         </div>
 
-        <div v-else class="text-center py-10 text-xs text-slate-400 font-medium">
+        <div v-else class="text-center py-10 text-xs text-ink-subtle font-medium">
           No fields in this step
         </div>
       </div>
 
       <!-- Mobile Footer Action Bar -->
-      <div class="bg-white border-t border-slate-200 p-2.5 flex items-center justify-between shrink-0 shadow-lg">
+      <div class="bg-white border-t border-line p-2.5 flex items-center justify-between shrink-0 shadow-lg">
         <button
           v-if="activeStepIndex > 0"
           @click="activeStepIndex--"
-          class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200 transition-colors"
+          class="px-3 py-1.5 rounded-lg bg-surface-raised text-ink-muted text-[11px] font-bold hover:bg-line transition-colors"
         >
           Previous
         </button>

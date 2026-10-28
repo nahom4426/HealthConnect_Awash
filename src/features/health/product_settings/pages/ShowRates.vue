@@ -145,7 +145,7 @@ async function fetchRates() {
 
   api.send(() => getPackageRatesPerCover(packageUuid), (res) => {
     const rawData = (res?.data || [])
-    rates.value = rawData.map((r) => ({
+    rates.value = rawData.map((r: any) => ({
       familyBenefitRangeUuid: r.familyBenefitRangeUuid,
       packageUuid: r.packageUuid || packageUuid,
       planType: r.planType || 'Individual_Plan',

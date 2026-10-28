@@ -1,11 +1,11 @@
 <template>
-  <div class="form-builder-editor w-full h-[calc(100vh-100px)] rounded-2xl border border-slate-200 bg-white text-slate-800 flex flex-col overflow-hidden select-none shadow-sm box-border">
+  <div class="form-builder-editor w-full h-[calc(100vh-100px)] rounded-2xl border border-line bg-white text-ink flex flex-col overflow-hidden select-none shadow-sm box-border">
     <!-- Top Navigation Header -->
-    <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0 box-border w-full">
+    <header class="bg-white border-b border-line px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0 box-border w-full">
       <div class="flex items-center space-x-3">
         <router-link
           to="/form-builder"
-          class="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors border border-slate-200 shrink-0"
+          class="p-1.5 rounded-xl bg-surface-raised hover:bg-line text-ink-muted hover:text-ink transition-colors border border-line shrink-0"
           title="Back to Form Builder Home"
         >
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -15,7 +15,7 @@
 
         <div>
           <div class="flex items-center space-x-2">
-            <h2 class="text-xs sm:text-sm font-bold text-slate-900 capitalize truncate max-w-[200px] sm:max-w-none">{{ productId }} Proposal Form Builder</h2>
+            <h2 class="text-xs sm:text-sm font-bold text-ink capitalize truncate max-w-[200px] sm:max-w-none">{{ productId }} Proposal Form Builder</h2>
             <span
               class="text-[9px] sm:text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border"
               :class="getStatusBadgeClass(store.activeSchema?.status)"
@@ -23,16 +23,16 @@
               {{ store.activeSchema?.status || 'Draft' }}
             </span>
           </div>
-          <p class="text-[10px] text-slate-500 font-mono">Schema Version: v{{ store.activeSchema?.version || '1.0' }}</p>
+          <p class="text-[10px] text-ink-subtle font-mono">Schema Version: v{{ store.activeSchema?.version || '1.0' }}</p>
         </div>
       </div>
 
       <!-- Center Tab Controls -->
-      <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
+      <div class="flex items-center space-x-1 bg-surface-raised p-1 rounded-xl border border-line shrink-0">
         <button
           @click="activeTab = 'editor'"
           class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5"
-          :class="activeTab === 'editor' ? 'bg-white text-emerald-700 shadow-xs border border-slate-200 font-bold' : 'text-slate-600 hover:text-slate-900'"
+          :class="activeTab === 'editor' ? 'bg-white text-emerald-700 shadow-xs border border-line font-bold' : 'text-ink-muted hover:text-ink'"
         >
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           <span>Visual Canvas</span>
@@ -40,7 +40,7 @@
         <button
           @click="activeTab = 'preview'"
           class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5"
-          :class="activeTab === 'preview' ? 'bg-white text-emerald-700 shadow-xs border border-slate-200 font-bold' : 'text-slate-600 hover:text-slate-900'"
+          :class="activeTab === 'preview' ? 'bg-white text-emerald-700 shadow-xs border border-line font-bold' : 'text-ink-muted hover:text-ink'"
         >
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
           <span>Mobile App Preview</span>
@@ -51,16 +51,16 @@
       <div class="flex items-center space-x-2 shrink-0">
         <button
           @click="showHistory = true"
-          class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium border border-slate-200 transition-colors flex items-center space-x-1"
+          class="px-2.5 py-1.5 rounded-xl bg-surface-raised hover:bg-line text-ink-muted text-xs font-medium border border-line transition-colors flex items-center space-x-1"
         >
-          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg class="w-3.5 h-3.5 text-ink-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span class="hidden sm:inline">Revisions</span>
         </button>
 
         <button
           @click="handleSave"
           :disabled="store.saving"
-          class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-200 transition-colors flex items-center space-x-1"
+          class="px-3 py-1.5 rounded-xl bg-surface-raised hover:bg-line text-ink text-xs font-bold border border-line transition-colors flex items-center space-x-1"
         >
           <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
           <span>{{ store.saving ? 'Saving...' : 'Save Draft' }}</span>
@@ -78,7 +78,7 @@
     </header>
 
     <!-- Main Workspace -->
-    <div class="flex-1 flex min-h-0 relative overflow-hidden bg-slate-50/50">
+    <div class="flex-1 flex min-h-0 relative overflow-hidden bg-surface-muted/50">
       <!-- Left Field Palette -->
       <FieldPalette
         v-if="activeTab === 'editor'"
@@ -86,7 +86,7 @@
       />
 
       <!-- Middle Main Panel -->
-      <div class="flex-1 flex flex-col min-w-0 bg-slate-100/60 overflow-hidden border-x border-slate-200">
+      <div class="flex-1 flex flex-col min-w-0 bg-surface-raised/60 overflow-hidden border-x border-line">
         <!-- Step Manager Bar -->
         <StepManager
           v-if="activeTab === 'editor'"

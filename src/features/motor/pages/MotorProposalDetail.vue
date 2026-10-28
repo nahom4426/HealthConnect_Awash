@@ -40,7 +40,7 @@
             </span>
           </div>
           <p class="mpd-subtitle">
-            Insured: <strong class="text-slate-900">{{ proposal.insuredName }}</strong> ({{ proposal.insuredPhone || '—' }}) • 
+            Insured: <strong class="text-ink">{{ proposal.insuredName }}</strong> ({{ proposal.insuredPhone || '—' }}) • 
             Plate: <strong class="text-blue-700 font-mono">{{ proposal.vehiclePlateNumber }}</strong>
           </p>
         </div>
@@ -122,19 +122,19 @@
               <div class="mpd-spec-box">
                 <div class="mpd-spec-label">Sum Insured (OD)</div>
                 <div class="mpd-spec-value text-emerald-700 font-extrabold">ETB {{ formatMoney(proposal.sumInsured) }}</div>
-                <div v-if="proposal.vehicleValue && Number(proposal.vehicleValue) !== Number(proposal.sumInsured)" class="text-[10px] text-slate-500 mt-1">Customer declared: ETB {{ formatMoney(proposal.vehicleValue) }}</div>
+                <div v-if="proposal.vehicleValue && Number(proposal.vehicleValue) !== Number(proposal.sumInsured)" class="text-[10px] text-ink-subtle mt-1">Customer declared: ETB {{ formatMoney(proposal.vehicleValue) }}</div>
               </div>
               <div class="mpd-spec-box">
                 <div class="mpd-spec-label">Engine CC / Power</div>
-                <div class="mpd-spec-value">{{ proposal.engineCc ? proposal.engineCc + ' cc' : '—' }}<span v-if="proposal.horsePower" class="text-slate-500 font-normal"> · {{ proposal.horsePower }} HP</span></div>
+                <div class="mpd-spec-value">{{ proposal.engineCc ? proposal.engineCc + ' cc' : '—' }}<span v-if="proposal.horsePower" class="text-ink-subtle font-normal"> · {{ proposal.horsePower }} HP</span></div>
               </div>
               <div class="mpd-spec-box">
                 <div class="mpd-spec-label">Seats / Capacity</div>
-                <div class="mpd-spec-value">{{ proposal.numberOfSeats ? proposal.numberOfSeats + ' seats' : '—' }}<span v-if="proposal.carryingCapacityQuintals" class="text-slate-500 font-normal"> · {{ proposal.carryingCapacityQuintals }} q</span></div>
+                <div class="mpd-spec-value">{{ proposal.numberOfSeats ? proposal.numberOfSeats + ' seats' : '—' }}<span v-if="proposal.carryingCapacityQuintals" class="text-ink-subtle font-normal"> · {{ proposal.carryingCapacityQuintals }} q</span></div>
               </div>
               <div class="mpd-spec-box">
                 <div class="mpd-spec-label">Colour / Plate Code</div>
-                <div class="mpd-spec-value">{{ proposal.vehicleColor || '—' }}<span v-if="proposal.licensePlateCode" class="text-slate-500 font-normal"> · code {{ proposal.licensePlateCode }}</span></div>
+                <div class="mpd-spec-value">{{ proposal.vehicleColor || '—' }}<span v-if="proposal.licensePlateCode" class="text-ink-subtle font-normal"> · code {{ proposal.licensePlateCode }}</span></div>
               </div>
               <div class="mpd-spec-box">
                 <div class="mpd-spec-label">Usage</div>
@@ -147,12 +147,12 @@
             </div>
 
             <div class="px-5 pb-5 pt-1">
-              <div class="text-xs font-semibold text-slate-500 mb-2">Selected Endorsements & Add-ons:</div>
+              <div class="text-xs font-semibold text-ink-subtle mb-2">Selected Endorsements & Add-ons:</div>
               <div class="flex flex-wrap gap-2">
                 <span v-for="end in parsedEndorsements" :key="end" class="mpd-endorsement-pill">
                   {{ end }}
                 </span>
-                <span v-if="parsedEndorsements.length === 0" class="text-xs text-slate-400 italic">Standard coverage only (No endorsements)</span>
+                <span v-if="parsedEndorsements.length === 0" class="text-xs text-ink-subtle italic">Standard coverage only (No endorsements)</span>
               </div>
             </div>
           </div>
@@ -165,9 +165,9 @@
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5">
                <div v-for="img in photoImages" :key="img.imageUuid" class="flex flex-col items-center">
-                 <div v-if="!img.src" class="w-full h-24 rounded border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">Unavailable</div>
-                 <img v-else :src="img.src" class="w-full h-24 object-cover rounded shadow border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity" @click="openImage(img.src)" />
-                 <span class="text-xs font-bold text-slate-600 mt-2 uppercase">{{ img.imageName || img.imageType }}</span>
+                 <div v-if="!img.src" class="w-full h-24 rounded border border-dashed border-line-strong flex items-center justify-center text-[10px] text-ink-subtle">Unavailable</div>
+                 <img v-else :src="img.src" class="w-full h-24 object-cover rounded shadow border border-line cursor-pointer hover:opacity-90 transition-opacity" @click="openImage(img.src)" />
+                 <span class="text-xs font-bold text-ink-muted mt-2 uppercase">{{ img.imageName || img.imageType }}</span>
                </div>
             </div>
           </div>
@@ -180,9 +180,9 @@
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5">
                <div v-for="img in libreImages" :key="img.imageUuid" class="flex flex-col items-center">
-                 <div v-if="!img.src" class="w-full h-24 rounded border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">Unavailable</div>
-                 <img v-else :src="img.src" class="w-full h-24 object-cover rounded shadow border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity" @click="openImage(img.src)" />
-                 <span class="text-xs font-bold text-slate-600 mt-2 uppercase">{{ img.imageName || img.imageType }}</span>
+                 <div v-if="!img.src" class="w-full h-24 rounded border border-dashed border-line-strong flex items-center justify-center text-[10px] text-ink-subtle">Unavailable</div>
+                 <img v-else :src="img.src" class="w-full h-24 object-cover rounded shadow border border-line cursor-pointer hover:opacity-90 transition-opacity" @click="openImage(img.src)" />
+                 <span class="text-xs font-bold text-ink-muted mt-2 uppercase">{{ img.imageName || img.imageType }}</span>
                </div>
             </div>
           </div>
@@ -196,8 +196,8 @@
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 p-5 text-xs">
                <div v-for="[key, val] in libreDataEntries" :key="key">
-                 <span class="text-slate-500 block uppercase tracking-wide">{{ libreLabel(key) }}</span>
-                 <strong class="text-slate-900 font-mono break-all">{{ val }}</strong>
+                 <span class="text-ink-subtle block uppercase tracking-wide">{{ libreLabel(key) }}</span>
+                 <strong class="text-ink font-mono break-all">{{ val }}</strong>
                </div>
             </div>
           </div>
@@ -212,50 +212,50 @@
             <div class="p-5 space-y-4 text-xs">
               <!-- Proposer & Driving Profile -->
               <div>
-                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">1. Proposer & Driving License Profile</div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <div><span class="text-slate-500 block">Proposer Age:</span><strong class="text-slate-900">{{ proposal.proposerAge ? (proposal.proposerAge + ' years') : '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">Residential Address:</span><strong class="text-slate-900">{{ proposal.proposerAddress || '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">P.O. Box:</span><strong class="text-slate-900">{{ proposal.poBox || '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">Trade / Profession:</span><strong class="text-slate-900">{{ proposal.tradeProfession || '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">Driving License No:</span><strong class="text-slate-900 font-mono">{{ proposal.licenseNo || '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">License Issue Date:</span><strong class="text-slate-900">{{ proposal.licenseIssueDate || '—' }}</strong></div>
+                <div class="font-bold text-ink mb-2 text-xs uppercase tracking-wider text-amber-800">1. Proposer & Driving License Profile</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-surface-muted p-3.5 rounded-xl border border-line">
+                  <div><span class="text-ink-subtle block">Proposer Age:</span><strong class="text-ink">{{ proposal.proposerAge ? (proposal.proposerAge + ' years') : '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">Residential Address:</span><strong class="text-ink">{{ proposal.proposerAddress || '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">P.O. Box:</span><strong class="text-ink">{{ proposal.poBox || '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">Trade / Profession:</span><strong class="text-ink">{{ proposal.tradeProfession || '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">Driving License No:</span><strong class="text-ink font-mono">{{ proposal.licenseNo || '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">License Issue Date:</span><strong class="text-ink">{{ proposal.licenseIssueDate || '—' }}</strong></div>
                 </div>
               </div>
 
               <!-- Vehicle Usage & Interest -->
               <div>
-                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">2. Usage, Parking & Insurable Interest</div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <div><span class="text-slate-500 block">Vehicle Category:</span><strong class="text-blue-700 font-semibold">{{ proposal.categoryName || '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">Body Type:</span><strong class="text-slate-900">{{ proposal.bodyType || '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">Overnight Parking:</span><strong class="text-slate-900">{{ proposal.overnightParking || '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">Sole Property:</span><strong class="text-slate-900">{{ proposal.isSoleProperty === true ? 'YES' : (proposal.isSoleProperty === false ? 'NO' : '—') }}</strong></div>
-                  <div><span class="text-slate-500 block">Hire Purchase / Financier:</span><strong class="text-slate-900">{{ proposal.isHirePurchase === true ? (proposal.financierNameAddress || 'YES') : (proposal.isHirePurchase === false ? 'NO' : '—') }}</strong></div>
-                  <div><span class="text-slate-500 block">Private Purpose Only:</span><strong class="text-slate-900">{{ proposal.privatePurposeOnly === true ? 'YES' : (proposal.privatePurposeOnly === false ? 'NO' : '—') }}</strong></div>
+                <div class="font-bold text-ink mb-2 text-xs uppercase tracking-wider text-amber-800">2. Usage, Parking & Insurable Interest</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-surface-muted p-3.5 rounded-xl border border-line">
+                  <div><span class="text-ink-subtle block">Vehicle Category:</span><strong class="text-blue-700 font-semibold">{{ proposal.categoryName || '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">Body Type:</span><strong class="text-ink">{{ proposal.bodyType || '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">Overnight Parking:</span><strong class="text-ink">{{ proposal.overnightParking || '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">Sole Property:</span><strong class="text-ink">{{ proposal.isSoleProperty === true ? 'YES' : (proposal.isSoleProperty === false ? 'NO' : '—') }}</strong></div>
+                  <div><span class="text-ink-subtle block">Hire Purchase / Financier:</span><strong class="text-ink">{{ proposal.isHirePurchase === true ? (proposal.financierNameAddress || 'YES') : (proposal.isHirePurchase === false ? 'NO' : '—') }}</strong></div>
+                  <div><span class="text-ink-subtle block">Private Purpose Only:</span><strong class="text-ink">{{ proposal.privatePurposeOnly === true ? 'YES' : (proposal.privatePurposeOnly === false ? 'NO' : '—') }}</strong></div>
                 </div>
               </div>
 
               <!-- Driving & Physical Declarations -->
               <div>
-                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">3. Driving Record & Safety Declarations</div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <div><span class="text-slate-500 block">Self Driving Experience:</span><strong class="text-slate-900">{{ proposal.drivingYearsSelf ? (proposal.drivingYearsSelf + ' Years') : '—' }}</strong></div>
-                  <div><span class="text-slate-500 block">Physical Infirmity / Defective Vision:</span><strong class="text-slate-900">{{ proposal.hasPhysicalInfirmity === true ? (proposal.physicalInfirmityDetails || 'YES') : (proposal.hasPhysicalInfirmity === false ? 'NONE (Good Health)' : '—') }}</strong></div>
-                  <div><span class="text-slate-500 block">Driving Convictions:</span><strong class="text-slate-900">{{ proposal.hasDrivingConvictions === true ? (proposal.convictionDetails || 'YES') : (proposal.hasDrivingConvictions === false ? 'NONE' : '—') }}</strong></div>
-                  <div><span class="text-slate-500 block">Audio / Radio Accessories:</span><strong class="text-slate-900">{{ proposal.hasRadioAccessories === true ? (proposal.radioDetailsValue || 'YES') : (proposal.hasRadioAccessories === false ? 'NO' : '—') }}</strong></div>
-                  <div><span class="text-slate-500 block">Paid Driver & Assistant PA:</span><strong class="text-slate-900">{{ proposal.insurePaidDriverAssistant === true ? 'COVERED' : (proposal.insurePaidDriverAssistant === false ? 'NOT COVERED' : '—') }}</strong></div>
-                  <div><span class="text-slate-500 block">Passenger PA Cover:</span><strong class="text-slate-900">{{ proposal.insurePassengersPa === true ? 'COVERED' : (proposal.insurePassengersPa === false ? 'NOT COVERED' : '—') }}</strong></div>
+                <div class="font-bold text-ink mb-2 text-xs uppercase tracking-wider text-amber-800">3. Driving Record & Safety Declarations</div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-surface-muted p-3.5 rounded-xl border border-line">
+                  <div><span class="text-ink-subtle block">Self Driving Experience:</span><strong class="text-ink">{{ proposal.drivingYearsSelf ? (proposal.drivingYearsSelf + ' Years') : '—' }}</strong></div>
+                  <div><span class="text-ink-subtle block">Physical Infirmity / Defective Vision:</span><strong class="text-ink">{{ proposal.hasPhysicalInfirmity === true ? (proposal.physicalInfirmityDetails || 'YES') : (proposal.hasPhysicalInfirmity === false ? 'NONE (Good Health)' : '—') }}</strong></div>
+                  <div><span class="text-ink-subtle block">Driving Convictions:</span><strong class="text-ink">{{ proposal.hasDrivingConvictions === true ? (proposal.convictionDetails || 'YES') : (proposal.hasDrivingConvictions === false ? 'NONE' : '—') }}</strong></div>
+                  <div><span class="text-ink-subtle block">Audio / Radio Accessories:</span><strong class="text-ink">{{ proposal.hasRadioAccessories === true ? (proposal.radioDetailsValue || 'YES') : (proposal.hasRadioAccessories === false ? 'NO' : '—') }}</strong></div>
+                  <div><span class="text-ink-subtle block">Paid Driver & Assistant PA:</span><strong class="text-ink">{{ proposal.insurePaidDriverAssistant === true ? 'COVERED' : (proposal.insurePaidDriverAssistant === false ? 'NOT COVERED' : '—') }}</strong></div>
+                  <div><span class="text-ink-subtle block">Passenger PA Cover:</span><strong class="text-ink">{{ proposal.insurePassengersPa === true ? 'COVERED' : (proposal.insurePassengersPa === false ? 'NOT COVERED' : '—') }}</strong></div>
                 </div>
               </div>
 
               <!-- Dynamic EAV Fields -->
               <div v-if="Object.keys(filteredQuestionnaire).length > 0">
-                <div class="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wider text-amber-800">4. Additional Form Responses</div>
+                <div class="font-bold text-ink mb-2 text-xs uppercase tracking-wider text-amber-800">4. Additional Form Responses</div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-amber-50/50 p-3.5 rounded-xl border border-amber-100">
                   <div v-for="(val, key) in filteredQuestionnaire" :key="key">
-                    <span class="text-slate-500 block text-[11px] uppercase tracking-wide">{{ key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim() }}:</span>
-                    <strong class="text-slate-900" style="word-break: break-word;">
+                    <span class="text-ink-subtle block text-[11px] uppercase tracking-wide">{{ key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim() }}:</span>
+                    <strong class="text-ink" style="word-break: break-word;">
                       <span v-if="val === true" class="text-emerald-700">YES</span>
                       <span v-else-if="val === false" class="text-red-700">NO</span>
                       <span v-else-if="val === 'true'">YES</span>
@@ -335,26 +335,26 @@
 
               <div v-else class="space-y-2.5 text-xs">
                 <template v-if="premiumBreakdown?.tp">
-                  <div class="text-[10px] font-extrabold uppercase tracking-wide text-slate-500 pt-1">Third Party (Reg. 554/2024)</div>
-                  <div class="flex justify-between"><span class="text-slate-600">Government tariff</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.tariff) }}</span></div>
-                  <div class="flex justify-between"><span class="text-slate-600">Passenger liability ({{ premiumBreakdown.tp.passengerSeats }} × {{ premiumBreakdown.tp.passengerRate }})</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.passengerLiability) }}</span></div>
-                  <div class="flex justify-between"><span class="text-slate-600">VAT 15% · DDR 1% · Levy 10% · Stamp</span><span class="font-mono">ETB {{ formatMoney(Number(premiumBreakdown.tp.vat) + Number(premiumBreakdown.tp.ddr) + Number(premiumBreakdown.tp.governmentLevy) + Number(premiumBreakdown.tp.stampDuty)) }}</span></div>
-                  <div class="flex justify-between font-bold border-b border-slate-200 pb-2"><span>TP total</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.total) }}</span></div>
+                  <div class="text-[10px] font-extrabold uppercase tracking-wide text-ink-subtle pt-1">Third Party (Reg. 554/2024)</div>
+                  <div class="flex justify-between"><span class="text-ink-muted">Government tariff</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.tariff) }}</span></div>
+                  <div class="flex justify-between"><span class="text-ink-muted">Passenger liability ({{ premiumBreakdown.tp.passengerSeats }} × {{ premiumBreakdown.tp.passengerRate }})</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.passengerLiability) }}</span></div>
+                  <div class="flex justify-between"><span class="text-ink-muted">VAT 15% · DDR 1% · Levy 10% · Stamp</span><span class="font-mono">ETB {{ formatMoney(Number(premiumBreakdown.tp.vat) + Number(premiumBreakdown.tp.ddr) + Number(premiumBreakdown.tp.governmentLevy) + Number(premiumBreakdown.tp.stampDuty)) }}</span></div>
+                  <div class="flex justify-between font-bold border-b border-line pb-2"><span>TP total</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.tp.total) }}</span></div>
                 </template>
                 <template v-if="premiumBreakdown?.od">
-                  <div class="text-[10px] font-extrabold uppercase tracking-wide text-slate-500 pt-1">Own Damage (Rate Guide Feb 2024)</div>
-                  <div class="flex justify-between"><span class="text-slate-600">{{ premiumBreakdown.od.ratePercent }}% × ETB {{ formatMoney(premiumBreakdown.sumInsured) }} <span class="text-slate-400">({{ premiumBreakdown.od.rateRule }})</span></span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.basic) }}</span></div>
-                  <div v-if="Number(premiumBreakdown.od.dutyFreeLoading) > 0" class="flex justify-between"><span class="text-slate-600">Duty-free loading 30%</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.dutyFreeLoading) }}</span></div>
-                  <div class="flex justify-between"><span class="text-slate-600">DDR 1% · VAT 15% · Stamp</span><span class="font-mono">ETB {{ formatMoney(Number(premiumBreakdown.od.ddr) + Number(premiumBreakdown.od.vat) + Number(premiumBreakdown.od.stampDuty)) }}</span></div>
-                  <div class="flex justify-between font-bold border-b border-slate-200 pb-2"><span>OD total</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.total) }}</span></div>
-                  <div class="text-[11px] text-slate-500">Compulsory excess: {{ premiumBreakdown.od.excessType }}</div>
+                  <div class="text-[10px] font-extrabold uppercase tracking-wide text-ink-subtle pt-1">Own Damage (Rate Guide Feb 2024)</div>
+                  <div class="flex justify-between"><span class="text-ink-muted">{{ premiumBreakdown.od.ratePercent }}% × ETB {{ formatMoney(premiumBreakdown.sumInsured) }} <span class="text-ink-subtle">({{ premiumBreakdown.od.rateRule }})</span></span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.basic) }}</span></div>
+                  <div v-if="Number(premiumBreakdown.od.dutyFreeLoading) > 0" class="flex justify-between"><span class="text-ink-muted">Duty-free loading 30%</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.dutyFreeLoading) }}</span></div>
+                  <div class="flex justify-between"><span class="text-ink-muted">DDR 1% · VAT 15% · Stamp</span><span class="font-mono">ETB {{ formatMoney(Number(premiumBreakdown.od.ddr) + Number(premiumBreakdown.od.vat) + Number(premiumBreakdown.od.stampDuty)) }}</span></div>
+                  <div class="flex justify-between font-bold border-b border-line pb-2"><span>OD total</span><span class="font-mono">ETB {{ formatMoney(premiumBreakdown.od.total) }}</span></div>
+                  <div class="text-[11px] text-ink-subtle">Compulsory excess: {{ premiumBreakdown.od.excessType }}</div>
                 </template>
                 <template v-if="!premiumBreakdown">
-                  <div class="flex justify-between"><span class="text-slate-600">Third Party</span><span class="font-mono">ETB {{ formatMoney(proposal.tpPremiumAmount) }}</span></div>
-                  <div class="flex justify-between"><span class="text-slate-600">Own Damage</span><span class="font-mono">ETB {{ formatMoney(proposal.odPremiumAmount) }}</span></div>
+                  <div class="flex justify-between"><span class="text-ink-muted">Third Party</span><span class="font-mono">ETB {{ formatMoney(proposal.tpPremiumAmount) }}</span></div>
+                  <div class="flex justify-between"><span class="text-ink-muted">Own Damage</span><span class="font-mono">ETB {{ formatMoney(proposal.odPremiumAmount) }}</span></div>
                 </template>
                 <div class="flex justify-between items-center pt-1 font-extrabold text-sm">
-                  <span class="text-slate-900">Total Payable</span>
+                  <span class="text-ink">Total Payable</span>
                   <span class="font-mono text-emerald-700">ETB {{ formatMoney(proposal.totalPremiumAmount) }}</span>
                 </div>
               </div>
@@ -362,17 +362,17 @@
               <!-- Payment status (customer pays on mobile at the gateway mandated by the coverage) -->
               <div class="mpd-gateway-box">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="font-bold text-slate-800">Customer payment{{ gatewayLabel ? ' · ' + gatewayLabel : '' }}</span>
+                  <span class="font-bold text-ink">Customer payment{{ gatewayLabel ? ' · ' + gatewayLabel : '' }}</span>
                   <span :class="paymentMeta.cls" class="font-bold">{{ paymentMeta.label }}</span>
                 </div>
-                <div v-if="payment" class="mt-2 space-y-1 text-[11px] text-slate-600">
+                <div v-if="payment" class="mt-2 space-y-1 text-[11px] text-ink-muted">
                   <div class="font-mono">Txn: {{ payment.txRef }}<span v-if="payment.bankCode && payment.gateway !== 'TELEBIRR'"> · {{ payment.bankCode }}</span></div>
                   <div v-if="payment.receiptNumber">Receipt: <span class="font-mono">{{ payment.receiptNumber }}</span> · Ref <span class="font-mono">{{ payment.gatewayReference }}</span></div>
                   <div v-if="payment.confirmedAt">Confirmed {{ formatDateTime(payment.confirmedAt) }} · ETB {{ formatMoney(payment.amount) }}</div>
                   <div v-if="payment.failureReason" class="text-red-600">{{ payment.failureReason }}</div>
                 </div>
                 <div v-else-if="uiStatus === 'APPROVED'" class="text-[11px] text-amber-600 mt-1 font-medium">Awaiting customer payment via the mobile app</div>
-                <div v-else-if="uiStatus === 'SUBMITTED'" class="text-[11px] text-slate-500 mt-1">Payment opens for the customer after approval</div>
+                <div v-else-if="uiStatus === 'SUBMITTED'" class="text-[11px] text-ink-subtle mt-1">Payment opens for the customer after approval</div>
               </div>
             </div>
           </div>
@@ -390,8 +390,8 @@
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <div>
-                      <div class="text-xs font-bold text-slate-900">Official Certificate (Reg 554/2024)</div>
-                      <div class="text-[11px] text-slate-500">Compulsory Government TP Insurance Sticker</div>
+                      <div class="text-xs font-bold text-ink">Official Certificate (Reg 554/2024)</div>
+                      <div class="text-[11px] text-ink-subtle">Compulsory Government TP Insurance Sticker</div>
                     </div>
                   </div>
                   <button type="button" @click="showCertModal = true" class="mpd-view-doc-btn whitespace-nowrap flex-shrink-0">
@@ -404,8 +404,8 @@
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     <div>
-                      <div class="text-xs font-bold text-slate-900">{{ proposal.coverageType === 'OWN_DAMAGE' ? 'Standalone OD Policy Schedule' : 'Comprehensive Motor Policy Schedule' }}</div>
-                      <div class="text-[11px] text-slate-500">Official Standard Contract Terms, Rates & Excesses</div>
+                      <div class="text-xs font-bold text-ink">{{ proposal.coverageType === 'OWN_DAMAGE' ? 'Standalone OD Policy Schedule' : 'Comprehensive Motor Policy Schedule' }}</div>
+                      <div class="text-[11px] text-ink-subtle">Official Standard Contract Terms, Rates & Excesses</div>
                     </div>
                   </div>
                   <button type="button" @click="showScheduleModal = true" class="mpd-view-doc-btn whitespace-nowrap flex-shrink-0">
@@ -414,7 +414,7 @@
                 </div>
               </div>
 
-              <div v-else class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
+              <div v-else class="p-4 bg-surface-muted rounded-xl border border-line text-center text-xs text-ink-subtle">
                 Official documents will be generated automatically when contract is issued.
               </div>
             </div>
@@ -425,7 +425,7 @@
 
     <div v-if="showCertModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm overflow-y-auto print:bg-transparent">
       <div class="min-h-full py-8 sm:py-12 px-4 sm:px-6 flex justify-center">
-        <div class="bg-[#FFFEE0] text-slate-900 border-4 border-amber-500/60 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative print:m-0 print:p-8 print:border-0 print:shadow-none print:bg-[#FFFEE0]">
+        <div class="bg-[#FFFEE0] text-ink border-4 border-amber-500/60 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-8 font-sans relative print:m-0 print:p-8 print:border-0 print:shadow-none print:bg-[#FFFEE0]">
         
         <!-- Action Buttons (Print / Close) -->
         <div class="flex items-center justify-between border-b border-amber-300 pb-3 mb-4 print:hidden">
@@ -449,14 +449,14 @@
         <div class="border-b-2 border-slate-800 pb-4 mb-4">
           <div class="flex items-start justify-between">
             <!-- Left: FDRE Transport Ministry Header -->
-            <div class="text-[11px] leading-tight font-bold text-slate-900 max-w-xs space-y-0.5">
+            <div class="text-[11px] leading-tight font-bold text-ink max-w-xs space-y-0.5">
               <div>በኢ.ፌ.ዴ.ሪ</div>
               <div>የትራንስፖርት እና ሎጅስቲክስ ሚኒስቴር</div>
               <div>የመንገድ ደህንነትና መድን ፈንድ አገልግሎት</div>
               <div class="font-extrabold text-blue-900 text-[11px] pt-1">FDRE MINISTRY OF TRANSPORT</div>
               <div class="font-extrabold text-blue-900 text-[11px]">LOGISTICS ROAD SAFETY &</div>
               <div class="font-extrabold text-blue-900 text-[11px]">INSURANCE FUND SERVICE</div>
-              <div class="font-extrabold underline text-xs pt-1.5 text-slate-950">የመድን ምስክር ወረቀት<br/>CERTIFICATE OF INSURANCE</div>
+              <div class="font-extrabold underline text-xs pt-1.5 text-ink">የመድን ምስክር ወረቀት<br/>CERTIFICATE OF INSURANCE</div>
             </div>
 
             <!-- Right: Standard Insurance Logo & Header -->
@@ -465,136 +465,136 @@
               <div class="text-lg font-black text-blue-950 tracking-tight">ስታንዳርድ ኢንሹራንስ አ.ማ.</div>
               <div class="text-xs font-bold text-blue-900">Standard Insurance S.C.</div>
               <div class="text-[11px] font-semibold italic text-amber-900 pt-0.5">"Your trust, our standard"</div>
-              <div class="text-[10px] font-semibold text-slate-700">"የተሻለ ጥበቃ ለተሻለ ህይወት!"</div>
+              <div class="text-[10px] font-semibold text-ink-muted">"የተሻለ ጥበቃ ለተሻለ ህይወት!"</div>
             </div>
           </div>
         </div>
 
         <!-- Certificate Fields Grid (100% Mirroring sample certificate.pdf) -->
-        <div class="space-y-3.5 text-xs font-semibold text-slate-900">
-          <div class="grid grid-cols-2 gap-6 border-b border-slate-400 pb-2">
+        <div class="space-y-3.5 text-xs font-semibold text-ink">
+          <div class="grid grid-cols-2 gap-6 border-b border-line-strong pb-2">
             <div>
-              <span class="text-slate-700 block text-[11px]">የስርቲፊኬት ቁጥር / CERTIFICATE NUMBER:</span>
+              <span class="text-ink-muted block text-[11px]">የስርቲፊኬት ቁጥር / CERTIFICATE NUMBER:</span>
               <span class="font-bold font-mono text-sm text-blue-950 underline">{{ proposal.proposalNumber || 'CN-24072104017' }}</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">የተሰጠበት ቀን / DATE OF ISSUANCE:</span>
-              <span class="font-bold text-sm text-slate-950 underline">09-Jul-2024</span>
+              <span class="text-ink-muted block text-[11px]">የተሰጠበት ቀን / DATE OF ISSUANCE:</span>
+              <span class="font-bold text-sm text-ink underline">09-Jul-2024</span>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-4 border-b border-slate-400 pb-2">
+          <div class="grid grid-cols-3 gap-4 border-b border-line-strong pb-2">
             <div>
-              <span class="text-slate-700 block text-[11px]">የመድኑ ገዢው ስም / NAME OF INSURED:</span>
-              <span class="font-bold text-sm text-slate-950 underline">{{ proposal.insuredName || 'Biruk Hagoss' }}</span>
+              <span class="text-ink-muted block text-[11px]">የመድኑ ገዢው ስም / NAME OF INSURED:</span>
+              <span class="font-bold text-sm text-ink underline">{{ proposal.insuredName || 'Biruk Hagoss' }}</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">አድራሻ: ክልል/አስተዳደር / Address:REGION:</span>
-              <span class="font-bold text-slate-950 underline">Addis Ababa</span>
+              <span class="text-ink-muted block text-[11px]">አድራሻ: ክልል/አስተዳደር / Address:REGION:</span>
+              <span class="font-bold text-ink underline">Addis Ababa</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">ከተማ / CITY:</span>
-              <span class="font-bold text-slate-950 underline">Addis Ababa</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-5 gap-3 border-b border-slate-400 pb-2">
-            <div>
-              <span class="text-slate-700 block text-[10px]">ክፍለ ከተማ SUB CITY:</span>
-              <span class="font-bold text-slate-950 underline">Bole</span>
-            </div>
-            <div>
-              <span class="text-slate-700 block text-[10px]">ወረዳ WEREDA:</span>
-              <span class="font-bold text-slate-950 underline">09</span>
-            </div>
-            <div>
-              <span class="text-slate-700 block text-[10px]">ቀበሌ KEBELE:</span>
-              <span class="font-bold text-slate-950 underline">09</span>
-            </div>
-            <div>
-              <span class="text-slate-700 block text-[10px]">የቤት/ቁ HOUSE No.:</span>
-              <span class="font-bold text-slate-950 underline">2694</span>
-            </div>
-            <div>
-              <span class="text-slate-700 block text-[10px]">ሞባይል PHONE:</span>
-              <span class="font-bold font-mono text-slate-950 underline">{{ proposal.insuredPhone || '0963048258' }}</span>
+              <span class="text-ink-muted block text-[11px]">ከተማ / CITY:</span>
+              <span class="font-bold text-ink underline">Addis Ababa</span>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-4 border-b border-slate-400 pb-2">
+          <div class="grid grid-cols-5 gap-3 border-b border-line-strong pb-2">
             <div>
-              <span class="text-slate-700 block text-[11px]">የሰሌዳ ቁጥር / PLATE NUMBER:</span>
+              <span class="text-ink-muted block text-[10px]">ክፍለ ከተማ SUB CITY:</span>
+              <span class="font-bold text-ink underline">Bole</span>
+            </div>
+            <div>
+              <span class="text-ink-muted block text-[10px]">ወረዳ WEREDA:</span>
+              <span class="font-bold text-ink underline">09</span>
+            </div>
+            <div>
+              <span class="text-ink-muted block text-[10px]">ቀበሌ KEBELE:</span>
+              <span class="font-bold text-ink underline">09</span>
+            </div>
+            <div>
+              <span class="text-ink-muted block text-[10px]">የቤት/ቁ HOUSE No.:</span>
+              <span class="font-bold text-ink underline">2694</span>
+            </div>
+            <div>
+              <span class="text-ink-muted block text-[10px]">ሞባይል PHONE:</span>
+              <span class="font-bold font-mono text-ink underline">{{ proposal.insuredPhone || '0963048258' }}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 border-b border-line-strong pb-2">
+            <div>
+              <span class="text-ink-muted block text-[11px]">የሰሌዳ ቁጥር / PLATE NUMBER:</span>
               <span class="font-bold font-mono text-sm text-blue-950 underline">{{ proposal.vehiclePlateNumber || '3-A98123' }}</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">የሞተር ቁጥር / ENGINE NUMBER:</span>
-              <span class="font-bold font-mono text-slate-950 underline">{{ proposal.engineNumber || 'ENG-WD615-9921' }}</span>
+              <span class="text-ink-muted block text-[11px]">የሞተር ቁጥር / ENGINE NUMBER:</span>
+              <span class="font-bold font-mono text-ink underline">{{ proposal.engineNumber || 'ENG-WD615-9921' }}</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">የቻሲስ ቁጥር / CHASSIS NUMBER:</span>
-              <span class="font-bold font-mono text-slate-950 underline">{{ proposal.chassisNumber || 'CHAS-881923091' }}</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-4 border-b border-slate-400 pb-2">
-            <div>
-              <span class="text-slate-700 block text-[11px]">የተሽከርካሪ አይነት / VEHICLE TYPE:</span>
-              <span class="font-bold text-slate-950 underline">{{ proposal.carType || 'Private Saloon / SUV' }}</span>
-            </div>
-            <div>
-              <span class="text-slate-700 block text-[11px]">የመጫን አቅም / CARRYING CAPACITY:</span>
-              <span class="font-bold text-slate-950 underline">-</span>
-            </div>
-            <div>
-              <span class="text-slate-700 block text-[11px]">ሰዎች / PERSONS:</span>
-              <span class="font-bold text-slate-950 underline">5</span>
+              <span class="text-ink-muted block text-[11px]">የቻሲስ ቁጥር / CHASSIS NUMBER:</span>
+              <span class="font-bold font-mono text-ink underline">{{ proposal.chassisNumber || 'CHAS-881923091' }}</span>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-4 border-b border-slate-400 pb-2">
+          <div class="grid grid-cols-3 gap-4 border-b border-line-strong pb-2">
             <div>
-              <span class="text-slate-700 block text-[11px]">የመድኑ ፖሊሲ ቁጥር INSURER POLICY No.:</span>
+              <span class="text-ink-muted block text-[11px]">የተሽከርካሪ አይነት / VEHICLE TYPE:</span>
+              <span class="font-bold text-ink underline">{{ proposal.carType || 'Private Saloon / SUV' }}</span>
+            </div>
+            <div>
+              <span class="text-ink-muted block text-[11px]">የመጫን አቅም / CARRYING CAPACITY:</span>
+              <span class="font-bold text-ink underline">-</span>
+            </div>
+            <div>
+              <span class="text-ink-muted block text-[11px]">ሰዎች / PERSONS:</span>
+              <span class="font-bold text-ink underline">5</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 border-b border-line-strong pb-2">
+            <div>
+              <span class="text-ink-muted block text-[11px]">የመድኑ ፖሊሲ ቁጥር INSURER POLICY No.:</span>
               <span class="font-bold font-mono text-blue-950 underline">NYA-MOT-POL-881923</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">ፖሊሲው ዘመን ከ POLICY PERIOD FROM:</span>
-              <span class="font-bold text-slate-950 underline">03-Jan-2026</span>
+              <span class="text-ink-muted block text-[11px]">ፖሊሲው ዘመን ከ POLICY PERIOD FROM:</span>
+              <span class="font-bold text-ink underline">03-Jan-2026</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">እስከ TO:</span>
-              <span class="font-bold text-slate-950 underline">02-Jan-2027</span>
+              <span class="text-ink-muted block text-[11px]">እስከ TO:</span>
+              <span class="font-bold text-ink underline">02-Jan-2027</span>
             </div>
           </div>
 
-          <div class="space-y-2 border-b border-slate-400 pb-2">
+          <div class="space-y-2 border-b border-line-strong pb-2">
             <div>
-              <span class="text-slate-700 block text-[11px]">የመድኑ ፖሊሲው የተሰጡባቸው ሁኔታዎች / CONDITIONS SUBJECT TO WHICH THE POLICY ISSUED:</span>
-              <span class="font-bold text-slate-950 underline">MAP/1261/26/BG</span>
+              <span class="text-ink-muted block text-[11px]">የመድኑ ፖሊሲው የተሰጡባቸው ሁኔታዎች / CONDITIONS SUBJECT TO WHICH THE POLICY ISSUED:</span>
+              <span class="font-bold text-ink underline">MAP/1261/26/BG</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">በመድኑ ፖሊሲው ተጠቃሚ የሚሆኑ ሰዎች ወይም ወገኖች / PERSONS ENTITLED TO USE/DRIVE:</span>
-              <span class="font-bold text-slate-950 underline">ANY PERSON DRIVING WITH VALID ETHIOPIAN DRIVER LICENSE</span>
+              <span class="text-ink-muted block text-[11px]">በመድኑ ፖሊሲው ተጠቃሚ የሚሆኑ ሰዎች ወይም ወገኖች / PERSONS ENTITLED TO USE/DRIVE:</span>
+              <span class="font-bold text-ink underline">ANY PERSON DRIVING WITH VALID ETHIOPIAN DRIVER LICENSE</span>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-4 border-b border-slate-400 pb-2">
+          <div class="grid grid-cols-3 gap-4 border-b border-line-strong pb-2">
             <div class="col-span-2">
-              <span class="text-slate-700 block text-[11px]">የመድኑ ሰጪው ስም / NAME OF INSURER:</span>
+              <span class="text-ink-muted block text-[11px]">የመድኑ ሰጪው ስም / NAME OF INSURER:</span>
               <span class="font-bold text-sm text-blue-950 underline">Standard Insurance S.C.</span>
             </div>
             <div>
-              <span class="text-slate-700 block text-[11px]">የአረቦን መጠን / PREMIUM TARIF:</span>
+              <span class="text-ink-muted block text-[11px]">የአረቦን መጠን / PREMIUM TARIF:</span>
               <span class="font-bold font-mono text-sm text-emerald-950 underline">ETB {{ formatMoney(proposal.tpPremiumAmount) }}</span>
             </div>
           </div>
 
           <div class="pt-2 text-center space-y-2 relative">
-            <div class="text-[11px] font-bold text-slate-800">
+            <div class="text-[11px] font-bold text-ink">
               NAME OF AUTHORIZED PERSON __________________________________________________
             </div>
 
-            <div class="font-black text-slate-950 text-sm tracking-wide pt-1">ማረጋገጫ / DECLARATION</div>
-            <div class="text-[11px] text-slate-900 max-w-xl mx-auto leading-tight font-bold">
+            <div class="font-black text-ink text-sm tracking-wide pt-1">ማረጋገጫ / DECLARATION</div>
+            <div class="text-[11px] text-ink max-w-xl mx-auto leading-tight font-bold">
               የምስክር ወረቀቱ የተሰጠበት የመድን ፖሊሲ በአዋጅ ቁጥር 799/2005 የተደነገጉትን መስፈርቶች የሚያሟላ ነው<br/>
               THE POLICY TO WHICH THE CERTIFICATE IS ISSUED COMPLIES WITH THE REQUIREMENTS OF PROCLAMATION No. 799/2013 & REGULATION No. 554/2024
             </div>
@@ -613,9 +613,9 @@
 
     <div v-if="showScheduleModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm overflow-y-auto print:bg-transparent">
       <div class="min-h-full py-8 sm:py-12 px-4 sm:px-6 flex justify-center">
-        <div class="bg-white text-slate-900 border border-slate-300 rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-10 pb-12 sm:pb-16 font-sans relative print:m-0 print:px-8 print:py-4 print:border-0 print:shadow-none">
+        <div class="bg-white text-ink border border-line-strong rounded-2xl shadow-2xl max-w-4xl w-full p-6 sm:p-10 pb-12 sm:pb-16 font-sans relative print:m-0 print:px-8 print:py-4 print:border-0 print:shadow-none">
         <!-- Action Buttons (Print / Close) -->
-        <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5 print:hidden">
+        <div class="flex items-center justify-between border-b border-line pb-3 mb-5 print:hidden">
           <div class="flex items-center gap-2">
             <span class="px-2.5 py-1 bg-blue-100 text-blue-900 text-xs font-bold rounded-lg border border-blue-300">
               DOCUMENT 2: COMPREHENSIVE POLICY SCHEDULE
@@ -641,13 +641,13 @@
                 <h1 class="text-xl font-black text-blue-950 tracking-tight">ስታንዳርድ ኢንሹራንስ አ.ማ.</h1>
                 <h2 class="text-sm font-bold text-blue-900">STANDARD INSURANCE S.C.</h2>
                 <p class="text-xs font-bold text-amber-800 italic">"Your trust, our standard"</p>
-                <p class="text-[11px] text-slate-500 font-medium">Head Office: Addis Ababa, Ethiopia</p>
+                <p class="text-[11px] text-ink-subtle font-medium">Head Office: Addis Ababa, Ethiopia</p>
               </div>
             </div>
             <div class="text-right">
-              <div class="text-xs font-bold text-slate-600 uppercase tracking-widest">Policy Schedule</div>
+              <div class="text-xs font-bold text-ink-muted uppercase tracking-widest">Policy Schedule</div>
               <div class="text-sm font-black font-mono text-blue-950">{{ proposal.policyNumber || proposal.proposalNumber }}</div>
-              <div class="text-xs text-slate-500 font-medium">Issue Date: {{ new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }}</div>
+              <div class="text-xs text-ink-subtle font-medium">Issue Date: {{ new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }}</div>
               <div class="text-xs text-emerald-700 font-bold mt-1">Status: ACTIVE & FULLY PAID</div>
             </div>
           </div>
@@ -659,124 +659,124 @@
         </div>
 
         <!-- Schedule Sections -->
-        <div class="space-y-6 print:space-y-3 text-xs text-slate-800">
+        <div class="space-y-6 print:space-y-3 text-xs text-ink">
           
           <!-- Section 1: Policyholder Information -->
-          <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <div class="bg-slate-100 px-4 py-2 font-bold text-slate-900 border-b border-slate-200">
+          <div class="border border-line rounded-xl overflow-hidden">
+            <div class="bg-surface-raised px-4 py-2 font-bold text-ink border-b border-line">
               1. INSURED POLICYHOLDER DETAILS
             </div>
             <div class="p-4 grid grid-cols-3 gap-4">
               <div>
-                <span class="text-slate-500 block text-[11px]">Insured Full Name:</span>
-                <span class="font-bold text-slate-950">{{ proposal.insuredName }}</span>
+                <span class="text-ink-subtle block text-[11px]">Insured Full Name:</span>
+                <span class="font-bold text-ink">{{ proposal.insuredName }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Phone Number:</span>
-                <span class="font-bold font-mono text-slate-950">{{ proposal.insuredPhone }}</span>
+                <span class="text-ink-subtle block text-[11px]">Phone Number:</span>
+                <span class="font-bold font-mono text-ink">{{ proposal.insuredPhone }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Email Address:</span>
-                <span class="font-bold text-slate-950">{{ proposal.insuredEmail }}</span>
+                <span class="text-ink-subtle block text-[11px]">Email Address:</span>
+                <span class="font-bold text-ink">{{ proposal.insuredEmail }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Business / Occupation:</span>
-                <span class="font-bold text-slate-950">Private Executive</span>
+                <span class="text-ink-subtle block text-[11px]">Business / Occupation:</span>
+                <span class="font-bold text-ink">Private Executive</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Region & City:</span>
-                <span class="font-bold text-slate-950">Addis Ababa, Bole Sub-City</span>
+                <span class="text-ink-subtle block text-[11px]">Region & City:</span>
+                <span class="font-bold text-ink">Addis Ababa, Bole Sub-City</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Underwriting Branch:</span>
+                <span class="text-ink-subtle block text-[11px]">Underwriting Branch:</span>
                 <span class="font-bold text-blue-900">Bole Main Branch</span>
               </div>
             </div>
           </div>
 
           <!-- Section 2: Insured Vehicle Specifications -->
-          <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <div class="bg-slate-100 px-4 py-2 font-bold text-slate-900 border-b border-slate-200">
+          <div class="border border-line rounded-xl overflow-hidden">
+            <div class="bg-surface-raised px-4 py-2 font-bold text-ink border-b border-line">
               2. INSURED VEHICLE SPECIFICATIONS
             </div>
             <div class="p-4 grid grid-cols-4 gap-4">
               <div>
-                <span class="text-slate-500 block text-[11px]">Make & Model:</span>
-                <span class="font-bold text-slate-950">{{ proposal.carName }} {{ proposal.carModel }}</span>
+                <span class="text-ink-subtle block text-[11px]">Make & Model:</span>
+                <span class="font-bold text-ink">{{ proposal.carName }} {{ proposal.carModel }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Plate Number:</span>
+                <span class="text-ink-subtle block text-[11px]">Plate Number:</span>
                 <span class="font-bold font-mono text-blue-950">{{ proposal.vehiclePlateNumber }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Chassis Number:</span>
-                <span class="font-bold font-mono text-slate-950">{{ proposal.chassisNumber }}</span>
+                <span class="text-ink-subtle block text-[11px]">Chassis Number:</span>
+                <span class="font-bold font-mono text-ink">{{ proposal.chassisNumber }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Engine Number:</span>
-                <span class="font-bold font-mono text-slate-950">{{ proposal.engineNumber }}</span>
+                <span class="text-ink-subtle block text-[11px]">Engine Number:</span>
+                <span class="font-bold font-mono text-ink">{{ proposal.engineNumber }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Year of Manufacture:</span>
-                <span class="font-bold text-slate-950">{{ proposal.makeYear }}</span>
+                <span class="text-ink-subtle block text-[11px]">Year of Manufacture:</span>
+                <span class="font-bold text-ink">{{ proposal.makeYear }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Body / Vehicle Type:</span>
-                <span class="font-bold text-slate-950">{{ proposal.carType }}</span>
+                <span class="text-ink-subtle block text-[11px]">Body / Vehicle Type:</span>
+                <span class="font-bold text-ink">{{ proposal.carType }}</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Seating Capacity:</span>
-                <span class="font-bold text-slate-950">7 Passengers</span>
+                <span class="text-ink-subtle block text-[11px]">Seating Capacity:</span>
+                <span class="font-bold text-ink">7 Passengers</span>
               </div>
               <div>
-                <span class="text-slate-500 block text-[11px]">Vehicle Sum Insured:</span>
+                <span class="text-ink-subtle block text-[11px]">Vehicle Sum Insured:</span>
                 <span class="font-bold font-mono text-blue-950 text-sm">ETB {{ formatMoney(proposal.sumInsured) }}</span>
               </div>
             </div>
           </div>
 
           <!-- Section 2B: Dynamic Questionnaire Fields -->
-          <div v-if="Object.keys(filteredQuestionnaire).length > 0" class="border border-slate-200 rounded-xl overflow-hidden mt-6">
-            <div class="bg-slate-100 px-4 py-2 font-bold text-slate-900 border-b border-slate-200">
+          <div v-if="Object.keys(filteredQuestionnaire).length > 0" class="border border-line rounded-xl overflow-hidden mt-6">
+            <div class="bg-surface-raised px-4 py-2 font-bold text-ink border-b border-line">
               INSURED VEHICLE QUESTIONNAIRE & CUSTOM DATA
             </div>
             <div class="p-4 grid grid-cols-3 gap-4">
               <div v-for="(val, key) in filteredQuestionnaire" :key="key">
-                <span class="text-slate-500 block text-[11px] uppercase tracking-wide">{{ key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim() }}:</span>
-                <span class="font-bold text-slate-950" style="word-break: break-word;">{{ val || '—' }}</span>
+                <span class="text-ink-subtle block text-[11px] uppercase tracking-wide">{{ key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim() }}:</span>
+                <span class="font-bold text-ink" style="word-break: break-word;">{{ val || '—' }}</span>
               </div>
             </div>
           </div>
 
           <!-- Section 3: Premium Calculation Breakdown -->
-          <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <div class="bg-slate-100 px-4 py-2 font-bold text-slate-900 border-b border-slate-200">
+          <div class="border border-line rounded-xl overflow-hidden">
+            <div class="bg-surface-raised px-4 py-2 font-bold text-ink border-b border-line">
               3. PREMIUM BREAKDOWN & TARIFF SCHEDULE
             </div>
             <table class="w-full text-left text-xs border-collapse">
               <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
+                <tr class="bg-surface-muted border-b border-line text-ink-muted font-bold uppercase text-[10px]">
                   <th class="py-2.5 px-4">Coverage Description</th>
                   <th class="py-2.5 px-4">Payment Rail / Gateway</th>
                   <th class="py-2.5 px-4">Status</th>
                   <th class="py-2.5 px-4 text-right">Amount (ETB)</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-200 font-medium">
+              <tbody class="divide-y divide-line font-medium">
                 <tr>
-                  <td class="py-2.5 px-4 font-bold text-slate-900">1. Standard Own Damage (OD) Premium</td>
+                  <td class="py-2.5 px-4 font-bold text-ink">1. Standard Own Damage (OD) Premium</td>
                   <td class="py-2.5 px-4">EthiSwitch National Gateway</td>
                   <td class="py-2.5 px-4 text-emerald-700 font-bold">PAID</td>
                   <td class="py-2.5 px-4 text-right font-mono font-bold">ETB {{ formatMoney(proposal.odPremiumAmount) }}</td>
                 </tr>
                 <tr v-if="proposal.coverageType !== 'OWN_DAMAGE'">
-                  <td class="py-2.5 px-4 font-bold text-slate-900">2. Compulsory Third Party (TP) Fund</td>
+                  <td class="py-2.5 px-4 font-bold text-ink">2. Compulsory Third Party (TP) Fund</td>
                   <td class="py-2.5 px-4">EthioTelecom Telebirr Rail</td>
                   <td class="py-2.5 px-4 text-emerald-700 font-bold">PAID</td>
                   <td class="py-2.5 px-4 text-right font-mono font-bold">ETB {{ formatMoney(proposal.tpPremiumAmount) }}</td>
                 </tr>
-                <tr class="bg-slate-50 font-bold">
-                  <td colspan="3" class="py-2.5 px-4 text-right uppercase text-slate-700">Total Policy Premium Paid:</td>
+                <tr class="bg-surface-muted font-bold">
+                  <td colspan="3" class="py-2.5 px-4 text-right uppercase text-ink-muted">Total Policy Premium Paid:</td>
                   <td class="py-2.5 px-4 text-right font-mono text-sm text-blue-950 font-black">ETB {{ formatMoney(proposal.totalPremiumAmount) }}</td>
                 </tr>
               </tbody>
@@ -784,9 +784,9 @@
           </div>
 
           <!-- Section 4: Policy Conditions & Excess / Deductibles -->
-          <div class="border border-slate-200 rounded-xl p-4 bg-slate-50 space-y-2">
-            <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wide">4. POLICY TERMS & EXCESS CONDITIONS</h4>
-            <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-700 leading-relaxed font-medium">
+          <div class="border border-line rounded-xl p-4 bg-surface-muted space-y-2">
+            <h4 class="font-bold text-ink text-xs uppercase tracking-wide">4. POLICY TERMS & EXCESS CONDITIONS</h4>
+            <ul class="list-disc list-inside space-y-1 text-[11px] text-ink-muted leading-relaxed font-medium">
               <li><strong>Own Damage Excess:</strong> Insured pays 10% of total repair claim (Minimum ETB 5,000) per accident.</li>
               <li><strong>Compulsory TP Coverage:</strong> Complies strictly with FDRE Proclamation No. 799/2013 and Regulation No. 554/2024.</li>
               <li><strong>Authorized Drivers:</strong> Any person driving with valid Ethiopian Driver License.</li>
@@ -795,11 +795,11 @@
           </div>
 
           <!-- Section 5: Authorized Signatures & Seal -->
-          <div class="pt-6 pb-4 print:pt-2 print:pb-0 flex items-end justify-between border-t border-slate-300">
+          <div class="pt-6 pb-4 print:pt-2 print:pb-0 flex items-end justify-between border-t border-line-strong">
             <div>
-              <p class="text-[11px] font-bold text-slate-800">Issued by Standard Insurance S.C.</p>
-              <p class="text-[10px] text-slate-500">Authorized Underwriter: Solomon Tadesse</p>
-              <div class="mt-3 font-mono text-xs font-bold text-slate-950 border-b-2 border-slate-800 w-56 pb-1">
+              <p class="text-[11px] font-bold text-ink">Issued by Standard Insurance S.C.</p>
+              <p class="text-[10px] text-ink-subtle">Authorized Underwriter: Solomon Tadesse</p>
+              <div class="mt-3 font-mono text-xs font-bold text-ink border-b-2 border-slate-800 w-56 pb-1">
                 Solomon Tadesse (Underwriter)
               </div>
             </div>

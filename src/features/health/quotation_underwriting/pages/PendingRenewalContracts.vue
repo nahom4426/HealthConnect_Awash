@@ -46,7 +46,7 @@ function handleLimitChange(limit: number) {
         <label class="text-sm text-ink-muted">Status</label>
         <select
           :value="status"
-          @change="status = $event.target.value"
+          @change="status = ($event.target as HTMLSelectElement).value"
           class="px-3 py-2 text-sm bg-white rounded-lg border border-line"
         >
           <option v-for="opt in statusOptions" :key="opt" :value="opt">
@@ -61,7 +61,7 @@ function handleLimitChange(limit: number) {
         ref="dataProvider"
         :key="reloadKey"
         :auto="false"
-        :institutionUuid="route.params.id || ''"
+        :institutionUuid="String(route.params.id || '')"
         :status="status"
         :search="search"
         v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages }"
@@ -78,9 +78,9 @@ function handleLimitChange(limit: number) {
             currentStatus: status,
           }"
           :pagination="{
-            currentPage: currentPage?.value || 1,
-            itemsPerPage: itemsPerPage?.value || 25,
-            totalPages: totalPages?.value || 1,
+            currentPage: currentPage || 1,
+            itemsPerPage: itemsPerPage || 25,
+            totalPages: totalPages || 1,
             onPageChange: handlePageChange,
             onLimitChange: handleLimitChange,
           }"

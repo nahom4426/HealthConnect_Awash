@@ -141,7 +141,7 @@ function getBadgeClass(badge) {
 </script>
 
 <template>
-  <div class="form-builder-home w-full rounded-2xl border border-slate-200/80 bg-white text-slate-800 p-6 lg:p-8 shadow-sm box-border min-h-full">
+  <div class="form-builder-home w-full rounded-2xl border border-line/80 bg-white text-ink p-6 lg:p-8 shadow-sm box-border min-h-full">
     <!-- Header -->
     <div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -152,21 +152,21 @@ function getBadgeClass(badge) {
             </svg>
           </div>
           <div>
-            <h1 class="text-xl font-bold tracking-tight text-slate-900">Rate Configuration</h1>
-            <p class="text-xs text-slate-500">Select an insurance type to configure premium rates and risk factors</p>
+            <h1 class="text-xl font-bold tracking-tight text-ink">Rate Configuration</h1>
+            <p class="text-xs text-ink-subtle">Select an insurance type to configure premium rates and risk factors</p>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center space-x-4 bg-slate-50 border border-slate-200/80 px-4 py-2 rounded-xl">
+      <div class="flex items-center space-x-4 bg-surface-muted border border-line/80 px-4 py-2 rounded-xl">
         <div class="text-center">
-          <span class="block text-base font-bold text-slate-900 leading-none">{{ insuranceTypes.length }}</span>
-          <span class="block text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Products</span>
+          <span class="block text-base font-bold text-ink leading-none">{{ insuranceTypes.length }}</span>
+          <span class="block text-[10px] text-ink-subtle font-semibold uppercase tracking-wider mt-0.5">Products</span>
         </div>
-        <div class="w-px h-6 bg-slate-200"></div>
+        <div class="w-px h-6 bg-line"></div>
         <div class="text-center">
           <span class="block text-xs font-bold text-emerald-600 leading-none">Active</span>
-          <span class="block text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">All Rates Live</span>
+          <span class="block text-[10px] text-ink-subtle font-semibold uppercase tracking-wider mt-0.5">All Rates Live</span>
         </div>
       </div>
     </div>
@@ -174,14 +174,14 @@ function getBadgeClass(badge) {
     <!-- Search & Filter bar -->
     <div class="w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
       <div class="relative flex-1 max-w-md">
-        <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
           v-model="search"
           type="text"
           placeholder="Search insurance products…"
-          class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all bg-slate-50/50"
+          class="w-full pl-10 pr-4 py-2 rounded-xl border border-line text-xs text-ink placeholder-ink-subtle focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all bg-surface-muted/50"
         />
       </div>
 
@@ -191,7 +191,7 @@ function getBadgeClass(badge) {
           :key="f"
           @click="activeFilter = f"
           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border capitalize"
-          :class="activeFilter === f ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'"
+          :class="activeFilter === f ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-ink-muted border-line hover:bg-surface-muted hover:border-line-strong'"
         >
           {{ f === 'all' ? 'All Products' : f }}
         </button>
@@ -223,19 +223,19 @@ function getBadgeClass(badge) {
                 {{ type.badge }}
               </span>
               <span
-                class="text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full border border-slate-200/80 bg-white/80 text-slate-500 shadow-2xs"
+                class="text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full border border-line/80 bg-white/80 text-ink-subtle shadow-2xs"
               >
                 {{ type.fields }} factors
               </span>
             </div>
           </div>
 
-          <h3 class="text-base font-bold text-slate-900 transition-colors" :class="type.titleHover">{{ type.name }}</h3>
-          <p class="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">{{ type.description }}</p>
+          <h3 class="text-base font-bold text-ink transition-colors" :class="type.titleHover">{{ type.name }}</h3>
+          <p class="text-xs text-ink-muted mt-2 line-clamp-2 leading-relaxed">{{ type.description }}</p>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
-          <span class="text-[11px] text-slate-400 font-mono font-medium">Updated {{ type.lastUpdated }}</span>
+        <div class="mt-6 pt-4 border-t border-line/60 flex items-center justify-between text-xs text-ink-subtle">
+          <span class="text-[11px] text-ink-subtle font-mono font-medium">Updated {{ type.lastUpdated }}</span>
           <div class="flex items-center space-x-1.5 font-bold transition-transform group-hover:translate-x-1" :class="type.textAccent">
             <span>Configure</span>
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -251,7 +251,7 @@ function getBadgeClass(badge) {
       <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
-      <p class="text-sm font-medium text-slate-500 mb-3">No products match your search.</p>
+      <p class="text-sm font-medium text-ink-subtle mb-3">No products match your search.</p>
       <button @click="search='';activeFilter='all'" class="px-4 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-bold hover:bg-blue-100 transition-colors cursor-pointer border border-blue-200">
         Clear filters
       </button>

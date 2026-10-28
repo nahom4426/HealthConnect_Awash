@@ -96,17 +96,17 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50/60 text-slate-900 font-sans flex flex-col">
+  <div class="min-h-screen bg-surface-muted/60 text-ink font-sans flex flex-col">
     
     <!-- Top Navigation Bar -->
-    <header class="bg-white border-b border-slate-200/80 px-8 py-3.5 shadow-2xs sticky top-0 z-30">
+    <header class="bg-white border-b border-line/80 px-8 py-3.5 shadow-2xs sticky top-0 z-30">
       <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
         
         <!-- Left: Brand Logo -->
         <div class="flex items-center gap-3 shrink-0">
           <img :src="eicLogo" alt="Standard Insurance S.C." class="h-9 w-auto object-contain shrink-0" />
           <div class="flex flex-col text-left justify-center items-start shrink-0">
-            <h1 class="text-sm font-extrabold text-slate-900 leading-none whitespace-nowrap">Standard Insurance S.C.</h1>
+            <h1 class="text-sm font-extrabold text-ink leading-none whitespace-nowrap">Standard Insurance S.C.</h1>
             <p class="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mt-1 leading-none whitespace-nowrap pl-[7px]">YOUR TRUST, OUR STANDARD</p>
           </div>
         </div>
@@ -117,7 +117,7 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
           <!-- Language Switcher -->
           <button 
             @click.stop="langStore.toggleLanguage()"
-            class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200/80"
+            class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-raised hover:bg-line text-ink-muted transition-colors border border-line/80"
           >
             {{ langStore.isAmharic ? 'English' : 'አማርኛ' }}
           </button>
@@ -126,22 +126,22 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
           <div class="relative">
             <button 
               @click.stop="showUserMenu = !showUserMenu"
-              class="flex items-center gap-2.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-colors"
+              class="flex items-center gap-2.5 px-3 py-1 rounded-full bg-surface-raised hover:bg-line border border-line/80 transition-colors"
             >
               <img :src="profilePicture" class="w-6 h-6 rounded-full object-cover border-2 border-amber-500" />
               <div class="text-left leading-tight hidden sm:block">
-                <span class="text-xs font-bold text-slate-800 block">{{ userName }}</span>
+                <span class="text-xs font-bold text-ink block">{{ userName }}</span>
                 <span class="text-[9px] font-bold text-amber-600 uppercase">{{ userRole }}</span>
               </div>
             </button>
 
             <!-- Dropdown Menu -->
-            <div v-if="showUserMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
-              <div class="px-4 py-2 border-b border-slate-100">
-                <p class="text-xs font-bold text-slate-900">{{ userName }}</p>
-                <p class="text-[10px] text-slate-500 font-medium">{{ userRole }}</p>
+            <div v-if="showUserMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-line py-2 z-50">
+              <div class="px-4 py-2 border-b border-line">
+                <p class="text-xs font-bold text-ink">{{ userName }}</p>
+                <p class="text-[10px] text-ink-subtle font-medium">{{ userRole }}</p>
               </div>
-              <button @click="goProfile" class="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              <button @click="goProfile" class="w-full text-left px-4 py-2 text-xs font-semibold text-ink-muted hover:bg-surface-muted">
                 My Profile
               </button>
               <button @click="logout" class="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">
@@ -169,8 +169,8 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
       
       <!-- Welcome Section -->
       <div class="mb-8 space-y-1.5">
-        <h2 class="text-2xl sm:text-[1.85rem] font-black text-slate-900 tracking-tight leading-tight">Welcome, {{ userName }}</h2>
-        <p class="text-sm sm:text-[0.92rem] font-medium text-slate-500 leading-relaxed">Select an insurance module to manage rate configurations, underwriting workflows, and claims processing.</p>
+        <h2 class="text-2xl sm:text-[1.85rem] font-black text-ink tracking-tight leading-tight">Welcome, {{ userName }}</h2>
+        <p class="text-sm sm:text-[0.92rem] font-medium text-ink-subtle leading-relaxed">Select an insurance module to manage rate configurations, underwriting workflows, and claims processing.</p>
       </div>
 
       <!-- Module Cards Grid -->
@@ -181,8 +181,8 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
           @click="selectModule(mod)"
           :class="[
             'group rounded-2xl p-6 border transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-2xs hover:shadow-md',
-            cardThemeMap[mod.id]?.cardBg || 'bg-slate-50',
-            cardThemeMap[mod.id]?.border || 'border-slate-200'
+            cardThemeMap[mod.id]?.cardBg || 'bg-surface-muted',
+            cardThemeMap[mod.id]?.border || 'border-line'
           ]"
         >
           <div>
@@ -191,7 +191,7 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
               <div 
                 :class="[
                   'w-8 h-8 transition-transform group-hover:scale-110 flex items-center justify-center',
-                  cardThemeMap[mod.id]?.iconColor || 'text-slate-700'
+                  cardThemeMap[mod.id]?.iconColor || 'text-ink-muted'
                 ]"
               >
                 <div class="w-full h-full [&>svg]:w-full [&>svg]:h-full" v-html="mod.icon"></div>
@@ -201,7 +201,7 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
                 v-if="mod.badge"
                 :class="[
                   'px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider',
-                  cardThemeMap[mod.id]?.badge || 'bg-slate-100 text-slate-600'
+                  cardThemeMap[mod.id]?.badge || 'bg-surface-raised text-ink-muted'
                 ]"
               >
                 {{ mod.badge }}
@@ -209,18 +209,18 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
             </div>
 
             <!-- Title & Description -->
-            <h3 class="text-[0.95rem] font-extrabold text-slate-900 mb-1.5 tracking-tight">
+            <h3 class="text-[0.95rem] font-extrabold text-ink mb-1.5 tracking-tight">
               {{ langStore.t('modules.' + mod.id) }}
             </h3>
 
-            <p class="text-xs sm:text-[0.82rem] text-slate-500 font-medium leading-relaxed line-clamp-3 mb-6">
+            <p class="text-xs sm:text-[0.82rem] text-ink-subtle font-medium leading-relaxed line-clamp-3 mb-6">
               {{ langStore.t('modules.' + mod.id + 'Desc') }}
             </p>
           </div>
 
           <!-- Bottom Action Row -->
-          <div class="pt-3.5 border-t border-slate-200/60 flex items-center justify-between text-xs">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+          <div class="pt-3.5 border-t border-line/60 flex items-center justify-between text-xs">
+            <span class="text-[10px] font-semibold text-ink-subtle uppercase tracking-wide">
               Module v3.2
             </span>
             <span 

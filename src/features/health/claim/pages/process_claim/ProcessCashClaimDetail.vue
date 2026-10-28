@@ -46,9 +46,9 @@ function batchProcessed() {
 				res => {
 					if(res.success) {
 						toasted(true, 'Claim Processed')
-						pagination.data.value = pagination.data.value.filter((el: any) => {
-							return checked.value.find(id => id != el.claimUuid)
-						})
+						// data is computed (read-only): reload so processed claims drop out of the REQUESTED list
+						checked.value = []
+						pagination.fetch()
 					}
 				}
 			)

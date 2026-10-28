@@ -92,8 +92,8 @@ function goToStageExclusion() {
             currentPage: currentPage?.value || 1,
             itemsPerPage: itemsPerPage?.value || 25,
             totalPages: totalPages?.value || 1,
-            onPageChange: (p) => setPage(p),
-            onLimitChange: (l) => setLimit(l),
+            onPageChange: (p: any) => setPage(p),
+            onLimitChange: (l: any) => setLimit(l),
           }"
         />
       </QuotationDataProviderByStatus>

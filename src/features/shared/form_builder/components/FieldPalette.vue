@@ -1,8 +1,8 @@
 <template>
-  <div class="field-palette bg-white border-r border-slate-200 p-4 w-64 flex flex-col h-full min-h-0 select-none overflow-y-auto custom-scrollbar shrink-0 box-border">
+  <div class="field-palette bg-white border-r border-line p-4 w-64 flex flex-col h-full min-h-0 select-none overflow-y-auto custom-scrollbar shrink-0 box-border">
     <div class="mb-3 shrink-0">
-      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Field Types</h3>
-      <p class="text-xs text-slate-500 mt-1">Drag or click to add fields to your form canvas</p>
+      <h3 class="text-xs font-bold text-ink-subtle uppercase tracking-wider">Field Types</h3>
+      <p class="text-xs text-ink-subtle mt-1">Drag or click to add fields to your form canvas</p>
     </div>
 
     <div class="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar box-border">
@@ -12,16 +12,16 @@
         draggable="true"
         @dragstart="onDragStart($event, item)"
         @click="onClickAdd(item)"
-        class="palette-card flex items-center p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 text-slate-800 hover:bg-white hover:border-emerald-500 hover:shadow-md cursor-grab transition-all duration-200 group box-border max-w-full"
+        class="palette-card flex items-center p-2.5 rounded-xl bg-surface-muted border border-line/90 text-ink hover:bg-white hover:border-emerald-500 hover:shadow-md cursor-grab transition-all duration-200 group box-border max-w-full"
       >
-        <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-50 group-hover:border-emerald-300 transition-colors mr-2.5 shadow-xs shrink-0">
+        <div class="w-7 h-7 rounded-lg bg-white border border-line flex items-center justify-center text-emerald-600 group-hover:bg-emerald-50 group-hover:border-emerald-300 transition-colors mr-2.5 shadow-xs shrink-0">
           <component :is="item.icon" class="w-3.5 h-3.5" />
         </div>
         <div class="flex-1 min-w-0">
-          <div class="text-xs font-bold text-slate-800 group-hover:text-emerald-700 transition-colors truncate">{{ item.label }}</div>
-          <div class="text-[10px] text-slate-500 truncate">{{ item.description }}</div>
+          <div class="text-xs font-bold text-ink group-hover:text-emerald-700 transition-colors truncate">{{ item.label }}</div>
+          <div class="text-[10px] text-ink-subtle truncate">{{ item.description }}</div>
         </div>
-        <div class="text-slate-400 group-hover:text-emerald-600 ml-1 shrink-0">
+        <div class="text-ink-subtle group-hover:text-emerald-600 ml-1 shrink-0">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <div class="mt-3 pt-3 border-t border-slate-200 shrink-0 box-border">
+    <div class="mt-3 pt-3 border-t border-line shrink-0 box-border">
       <div class="p-2.5 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800 flex items-start space-x-2 leading-relaxed">
         <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

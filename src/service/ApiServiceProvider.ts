@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { AxiosInstance, AxiosRequestConfig } from "axios";
 import { responseHandler } from "./ApiResponseHandler";
 import { useAuthStore } from "@/stores/auth";
 import { useSignal } from "@/composables/useSignal";
@@ -6,14 +7,16 @@ import { useSignal } from "@/composables/useSignal";
 export const backendApi = import.meta.env?.v_API_PROVIDER_URI;
 
 export default class ApiServiceProvider {
-  constructor(baseURL) {
+  api: AxiosInstance;
+
+  constructor(baseURL?: string) {
     this.api = axios.create({
       baseURL: baseURL || backendApi,
-      validateStatus: (status) => status >= 200 && status < 300,
+      validateStatus: (status: number) => status >= 200 && status < 300,
     });
   }
 
-  async get(url, config = {}) {
+  async get(url: string, config: AxiosRequestConfig = {}) {
     const signal = useSignal();
     return await responseHandler(
       this.api({
@@ -28,7 +31,7 @@ export default class ApiServiceProvider {
     );
   }
 
-  async post(url, data, config = {}) {
+  async post(url: string, data?: any, config: AxiosRequestConfig = {}) {
     const signal = useSignal();
     return await responseHandler(
       this.api({
@@ -44,7 +47,7 @@ export default class ApiServiceProvider {
     );
   }
 
-  async put(url, data, config = {}) {
+  async put(url: string, data?: any, config: AxiosRequestConfig = {}) {
     const signal = useSignal();
     return await responseHandler(
       this.api({
@@ -60,7 +63,7 @@ export default class ApiServiceProvider {
     );
   }
 
-  async patch(url, data, config = {}) {
+  async patch(url: string, data?: any, config: AxiosRequestConfig = {}) {
     const signal = useSignal();
     return await responseHandler(
       this.api({
@@ -76,7 +79,7 @@ export default class ApiServiceProvider {
     );
   }
 
-  async delete(url, config = {}) {
+  async delete(url: string, config: AxiosRequestConfig = {}) {
     const signal = useSignal();
     return await responseHandler(
       this.api({

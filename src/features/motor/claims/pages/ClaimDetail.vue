@@ -226,7 +226,7 @@ onMounted(() => {
               Accident Photos
               <span v-if="claimPhotos.length" class="font-normal opacity-60">({{ claimPhotos.length }})</span>
             </span>
-            <div v-if="photosLoading" class="cd-photo-container py-8 text-xs text-slate-400">Loading photos…</div>
+            <div v-if="photosLoading" class="cd-photo-container py-8 text-xs text-ink-subtle">Loading photos…</div>
             <div v-else-if="claimPhotos.length" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <button
                 v-for="p in claimPhotos"
@@ -240,7 +240,7 @@ onMounted(() => {
                 <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-900/70 text-white">{{ photoLabel(p) }}</span>
               </button>
             </div>
-            <div v-else class="cd-photo-container py-8 text-xs text-slate-400">No accident photos uploaded by the customer.</div>
+            <div v-else class="cd-photo-container py-8 text-xs text-ink-subtle">No accident photos uploaded by the customer.</div>
           </div>
         </div>
 
@@ -255,9 +255,9 @@ onMounted(() => {
               allowfullscreen 
               :src="`https://maps.google.com/maps?q=${claim.gpsCoordinates}&z=15&output=embed`">
             </iframe>
-            <div class="mt-2 text-xs text-slate-500 text-center font-mono">{{ claim.gpsCoordinates }}</div>
+            <div class="mt-2 text-xs text-ink-subtle text-center font-mono">{{ claim.gpsCoordinates }}</div>
           </div>
-          <div v-else class="cd-empty-map flex-1 flex items-center justify-center text-slate-400">
+          <div v-else class="cd-empty-map flex-1 flex items-center justify-center text-ink-subtle">
             No GPS coordinates provided by the mobile app.
           </div>
         </div>
@@ -304,14 +304,14 @@ onMounted(() => {
               <span class="cd-label">Assigned Adjustor</span>
               <span class="cd-val">
                 <span v-if="claim.adjustorUuid" class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold">{{ claim.adjustorUuid }}</span>
-                <span v-else class="text-slate-400">Unassigned</span>
+                <span v-else class="text-ink-subtle">Unassigned</span>
               </span>
             </div>
             <div class="cd-info-row">
               <span class="cd-label">Assigned Garage</span>
               <span class="cd-val">
                 <span v-if="claim.garageUuid" class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold">{{ claim.garageUuid }}</span>
-                <span v-else class="text-slate-400">Unassigned</span>
+                <span v-else class="text-ink-subtle">Unassigned</span>
               </span>
             </div>
           </div>

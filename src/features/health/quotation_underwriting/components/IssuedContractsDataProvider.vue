@@ -1,6 +1,6 @@
 <script setup>
 import { usePagination } from "@/composables/usePagination";
-import { useUnderwriting } from "../store/underwritingStore";
+import { useUnderwriting } from "@/features/health/underwriting/store/underwritingStore";
 import { getIssuedContracts } from "../api/underwritingApi";
 import { watch, ref } from "vue";
 import { removeUndefined } from "@/utils/utils";

@@ -5,8 +5,8 @@ import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
 <template>
 	<div class="p-2 flex flex-col w-full h-full">
 		<div class="flex items-center border-b py-2 justify-between h-10">
-			<div class="bg-gray-200 h-full animate-pulse rounded w-[15rem]"></div>
-			<div class="bg-gray-200 h-full animate-pulse rounded w-[25rem]"></div>
+			<div class="bg-line h-full animate-pulse rounded w-[15rem]"></div>
+			<div class="bg-line h-full animate-pulse rounded w-[25rem]"></div>
 		</div>
 		<table class="min-w-full rounded-lg">
 			<tbody>

@@ -1,12 +1,12 @@
 <template>
   <div v-if="show" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white border border-slate-200 rounded-3xl w-full max-w-xl p-6 shadow-2xl space-y-5">
-      <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+    <div class="bg-white border border-line rounded-3xl w-full max-w-xl p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-line pb-4">
         <div>
-          <h3 class="text-base font-bold text-slate-900">Form Version History</h3>
-          <p class="text-xs text-slate-500">View and manage schema revisions for {{ productId }}</p>
+          <h3 class="text-base font-bold text-ink">Form Version History</h3>
+          <p class="text-xs text-ink-subtle">View and manage schema revisions for {{ productId }}</p>
         </div>
-        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100">
+        <button @click="$emit('close')" class="text-ink-subtle hover:text-ink-muted p-1.5 rounded-xl hover:bg-surface-raised">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
@@ -15,16 +15,16 @@
         <div
           v-for="item in versions"
           :key="item.formUuid"
-          class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between transition-colors hover:bg-slate-100/60"
+          class="p-4 rounded-2xl bg-surface-muted border border-line flex items-center justify-between transition-colors hover:bg-surface-raised/60"
         >
           <div class="space-y-1">
             <div class="flex items-center space-x-2">
-              <span class="text-xs font-bold text-slate-900">v{{ item.version }}</span>
+              <span class="text-xs font-bold text-ink">v{{ item.version }}</span>
               <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border" :class="getStatusBadgeClass(item.status)">
                 {{ item.status }}
               </span>
             </div>
-            <p class="text-[11px] text-slate-500 font-mono">
+            <p class="text-[11px] text-ink-subtle font-mono">
               Updated: {{ formatDate(item.updatedAt || item.createdAt) }}
             </p>
           </div>
@@ -32,7 +32,7 @@
           <div class="flex items-center space-x-2">
             <button
               @click="$emit('load-version', item)"
-              class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors shadow-xs"
+              class="px-3 py-1.5 rounded-xl bg-white border border-line hover:bg-surface-muted text-ink-muted text-xs font-semibold transition-colors shadow-xs"
             >
               Open
             </button>
@@ -46,13 +46,13 @@
           </div>
         </div>
 
-        <div v-if="!versions || !versions.length" class="text-center py-8 text-xs text-slate-400">
+        <div v-if="!versions || !versions.length" class="text-center py-8 text-xs text-ink-subtle">
           No previous versions recorded.
         </div>
       </div>
 
-      <div class="flex justify-end pt-3 border-t border-slate-200">
-        <button @click="$emit('close')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">
+      <div class="flex justify-end pt-3 border-t border-line">
+        <button @click="$emit('close')" class="px-4 py-2 rounded-xl bg-surface-raised text-ink-muted text-xs font-bold hover:bg-line">
           Close
         </button>
       </div>

@@ -186,7 +186,7 @@ const setRef = (el) => {
         :for="name"
         :class="[
           'text-sm font-medium leading-none select-none',
-          disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 cursor-pointer'
+          disabled ? 'text-ink-subtle cursor-not-allowed' : 'text-ink-muted cursor-pointer'
         ]"
       >
         {{ label }}
@@ -194,7 +194,7 @@ const setRef = (el) => {
       <span
         v-if="description"
         :id="`desc-${name}`"
-        class="text-xs text-gray-400 select-none"
+        class="text-xs text-ink-subtle select-none"
       >
         {{ description }}
       </span>

@@ -103,8 +103,8 @@ function toOptions(opts: string[] | undefined) {
             v-if="isInstitutionParam(param)"
             :key="`inst-${param.name}-${resetKey}`"
             :placeholder="`Filter ${param.label}`"
-            :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
-            :selectCb="(res) => handleInstitutionSelect(param.name, res)"
+            :searchCb="(data: any) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
+            :selectCb="(res: any) => handleInstitutionSelect(param.name, res)"
             :option="{ label: 'institutionName', value: 'institutionUuid' }"
             class="rpf-input-ctrl"
           />

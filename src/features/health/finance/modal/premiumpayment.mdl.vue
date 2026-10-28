@@ -292,7 +292,7 @@ function pay(): Promise<any> {
           reject(new Error(errorMsg));
         }
       },
-      (error) => {
+      (error: any) => {
         const errorMessage = error?.response?.data?.message || 
                            error?.message || 
                            'Payment failed. Please try again.';

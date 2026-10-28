@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router';
 import DefaultPage from '@/components/DefaultPage.vue';
 import Table from '@/components/Table.vue';
 import IssuedContractsDataProvider from '../components/IssuedContractsDataProvider.vue';
-import expiredContractsStatusRow from '../components/expiredContractsStatusRow.vue';
+import expiredContractsStatusRow from '@/features/health/underwriting/components/expiredContractsStatusRow.vue';
 
 const route = useRoute();
 

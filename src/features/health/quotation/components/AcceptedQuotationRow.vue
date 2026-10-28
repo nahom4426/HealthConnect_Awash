@@ -1,23 +1,24 @@
 <script setup lang="ts">
+import type { PropType } from "vue";
 import { computed, defineProps } from "vue";
 import { RouterLink } from "vue-router";
 import icons from "@/utils/icons";
 
 const props = defineProps({
   rowData: {
-    type: Array,
+    type: Array as PropType<any[]>,
     required: true,
   },
   rowKeys: {
-    type: Array,
+    type: Array as PropType<any[]>,
     required: true,
   },
   headKeys: {
-    type: Array,
+    type: Array as PropType<any[]>,
     required: true,
   },
   cells: {
-    type: Object,
+    type: Object as PropType<Record<string, any>>,
     default: () => ({}),
   },
   onRowClick: {

@@ -177,10 +177,13 @@ export async function allRequest(funs) {
 
 export function formatCurrency(currencyValue) {
   if ([undefined, null].includes(currencyValue)) return;
+  // Number(), not parseInt(): parseInt dropped the cents (1,234,567.50 showed as .00)
+  const amount = Number(currencyValue);
+  if (Number.isNaN(amount)) return;
   const currencyFormat = new Intl.NumberFormat("am-ET", {
     style: "currency",
     currency: "ETB",
-  }).format(parseInt(currencyValue));
+  }).format(amount);
   return currencyFormat;
 }
 

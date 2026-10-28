@@ -634,7 +634,7 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <label v-if="label" class="block text-sm font-semibold text-gray-800">
+    <label v-if="label" class="block text-sm font-semibold text-ink">
       {{ label }}
     </label>
     
@@ -653,7 +653,7 @@ onMounted(() => {
       <div
         v-for="pkg in pinnedPackages"
         :key="pkg.packageUuid"
-        class="rounded-xl border border-gray-200 shadow-sm backdrop-blur-md transition-all bg-white/80 hover:shadow-md"
+        class="rounded-xl border border-line shadow-sm backdrop-blur-md transition-all bg-white/80 hover:shadow-md"
         :class="expandedPackages.has(pkg.packageUuid) ? 'p-4' : 'p-3'"
       >
         <!-- Package header - always visible and clickable -->
@@ -669,15 +669,15 @@ onMounted(() => {
               @change="updatePackageSelection(pkg, $event.target.checked, $event)"
               @click.stop
               :disabled="props.readOnly || isDependentRowReadOnly(pkg) || isPreSelected(pkg)"
-              class="w-5 h-5 text-blue-600 rounded border-gray-300 transition-all focus:ring-blue-500 shrink-0"
+              class="w-5 h-5 text-blue-600 rounded border-line-strong transition-all focus:ring-blue-500 shrink-0"
             />
             <label
               :for="`package-${pkg.packageUuid}`"
-              class="ml-3 text-sm font-medium text-gray-800 truncate"
+              class="ml-3 text-sm font-medium text-ink truncate"
               @click.stop
             >
               {{ pkg.packageName }}
-              <span class="text-gray-500">({{ pkg.packageCode }})</span>
+              <span class="text-ink-subtle">({{ pkg.packageCode }})</span>
             </label>
           </div>
           
@@ -697,7 +697,7 @@ onMounted(() => {
             
             <!-- Expand/collapse icon -->
             <svg 
-              class="w-5 h-5 text-gray-500 transition-transform duration-200"
+              class="w-5 h-5 text-ink-subtle transition-transform duration-200"
               :class="{ 'rotate-180': expandedPackages.has(pkg.packageUuid) }"
               fill="none" 
               stroke="currentColor" 
@@ -709,25 +709,25 @@ onMounted(() => {
         </div>
         
         <!-- Details - only when expanded -->
-        <div v-if="expandedPackages.has(pkg.packageUuid) && pkg.isSelected" class="pt-4 mt-4 border-t border-gray-200">
+        <div v-if="expandedPackages.has(pkg.packageUuid) && pkg.isSelected" class="pt-4 mt-4 border-t border-line">
           <!-- Summary line for quick info when expanded -->
           <div class="grid grid-cols-1 gap-3 mb-4 md:grid-cols-4">
             <div v-if="showSumAssured" class="text-sm">
-              <span class="text-gray-600">Sum Assured:</span>
+              <span class="text-ink-muted">Sum Assured:</span>
               <span class="ml-2 font-semibold">ETB {{ Number(displayedSumAssured(pkg)).toLocaleString() }}</span>
             </div>
             <div v-if="showUsed" class="text-sm">
-              <span class="text-gray-600">Used:</span>
+              <span class="text-ink-muted">Used:</span>
               <span class="ml-2 font-semibold">ETB {{ Number(displayedUsed(pkg)).toLocaleString() }}</span>
             </div>
             <div class="text-sm">
-              <span class="text-gray-600">Remaining:</span>
+              <span class="text-ink-muted">Remaining:</span>
               <span class="ml-2 font-bold" :class="(displayedSumAssured(pkg) - displayedUsed(pkg)) <= 0 ? 'text-red-600' : 'text-emerald-600'">
                 ETB {{ (displayedSumAssured(pkg) - displayedUsed(pkg)).toLocaleString() }}
               </span>
             </div>
             <div v-if="showPlanType" class="text-sm">
-              <span class="text-gray-600">Plan Type:</span>
+              <span class="text-ink-muted">Plan Type:</span>
               <span class="ml-2 font-semibold">{{ 
                 insuredPlanTypeOptions.find(opt => opt.value === pkg.planType)?.label || 
                 dependentExtraPlanTypeOptions.find(opt => opt.value === pkg.planType)?.label || 
@@ -738,15 +738,15 @@ onMounted(() => {
 
           <div v-if="shouldShowDepSharedFields(pkg)" class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2">
             <div class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Dep Sum Assured</label>
+              <label class="block text-xs font-medium text-ink-muted">Dep Sum Assured</label>
               <div class="relative">
-                <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                 <input
                   type="number"
                   :value="pkg.depSumAssured"
                   @input="updateDepSumAssured(pkg, $event.target.value)"
                   :disabled="props.readOnly"
-                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                   min="0"
                   placeholder="0"
                 />
@@ -754,15 +754,15 @@ onMounted(() => {
             </div>
 
             <div class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Dep Used Benefit</label>
+              <label class="block text-xs font-medium text-ink-muted">Dep Used Benefit</label>
               <div class="relative">
-                <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                 <input
                   type="number"
                   :value="pkg.depUsedBenefit"
                   @input="updateDepUsedBenefit(pkg, $event.target.value)"
                   :disabled="isDepUsedBenefitDisabled(pkg)"
-                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                   min="0"
                   placeholder="0"
                 />
@@ -772,15 +772,15 @@ onMounted(() => {
 
           <div v-if="shouldShowDepSumAssuredOnly(pkg)" class="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2">
             <div class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Dep Sum Assured</label>
+              <label class="block text-xs font-medium text-ink-muted">Dep Sum Assured</label>
               <div class="relative">
-                <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                 <input
                   type="number"
                   :value="pkg.depSumAssured"
                   @input="updateDepSumAssured(pkg, $event.target.value)"
                   :disabled="props.readOnly"
-                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                   min="0"
                   placeholder="0"
                 />
@@ -792,15 +792,15 @@ onMounted(() => {
           <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
             <!-- Sum Assured -->
             <div v-if="showSumAssured" class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Sum Assured</label>
+              <label class="block text-xs font-medium text-ink-muted">Sum Assured</label>
               <div class="relative">
-                <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                 <input
                   type="number"
                   :value="displayedSumAssured(pkg)"
                   @input="shouldUseDependentMainFields(pkg) ? updateDepSumAssured(pkg, $event.target.value) : updateSumAssured(pkg, $event.target.value)"
                   :disabled="props.readOnly || isDependentSumAssuredLocked(pkg)"
-                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                   min="0"
                   placeholder="0"
                 />
@@ -809,15 +809,15 @@ onMounted(() => {
 
             <!-- Used -->
             <div v-if="showUsed" class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Used</label>
+              <label class="block text-xs font-medium text-ink-muted">Used</label>
               <div class="relative">
-                <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                 <input
                   type="number"
                   :value="displayedUsed(pkg)"
                   @input="shouldUseDependentMainFields(pkg) ? updateDepUsedBenefit(pkg, $event.target.value) : updateUsed(pkg, $event.target.value)"
                   :disabled="isUsedDisabled(pkg)"
-                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                   min="0"
                   placeholder="0"
                 />
@@ -826,12 +826,12 @@ onMounted(() => {
 
             <!-- Status Select -->
             <div v-if="showStatus" class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Status</label>
+              <label class="block text-xs font-medium text-ink-muted">Status</label>
               <select
                 :value="pkg.status"
                 @change="updateStatus(pkg, $event.target.value)"
                 :disabled="isDependentRowReadOnly(pkg)"
-                class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
               >
                 <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
                   {{ opt.label }}
@@ -841,12 +841,12 @@ onMounted(() => {
 
             <!-- Plan Type -->
             <div v-if="showPlanType" class="space-y-1">
-              <label class="block text-xs font-medium text-gray-600">Plan Type</label>
+              <label class="block text-xs font-medium text-ink-muted">Plan Type</label>
               <select
                 :value="pkg.planType"
                 @change="updatePlanType(pkg, $event.target.value)"
                 :disabled="isDependentRowReadOnly(pkg)"
-                class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
               >
                 <option v-for="opt in optionsForPackage(pkg)" :key="opt.value" :value="opt.value">
                   {{ opt.label }}
@@ -857,10 +857,10 @@ onMounted(() => {
 
           <!-- Capped Package Section -->
           <div v-if="!props.dependantUuid" class="mt-4">
-            <div class="flex justify-between items-center p-3 rounded-xl border border-gray-200 bg-gray-50/60">
+            <div class="flex justify-between items-center p-3 rounded-xl border border-line bg-surface-muted/60">
               <div>
-                <div class="text-xs font-semibold text-gray-700">Capped Package</div>
-                <div class="text-xs text-gray-500">Cap this package with another selected package</div>
+                <div class="text-xs font-semibold text-ink-muted">Capped Package</div>
+                <div class="text-xs text-ink-subtle">Cap this package with another selected package</div>
               </div>
               <label class="inline-flex relative items-center cursor-pointer">
                 <input
@@ -871,7 +871,7 @@ onMounted(() => {
                   @click.stop
                   :disabled="props.readOnly"
                 />
-                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></div>
+                <div class="w-11 h-6 bg-line rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></div>
               </label>
             </div>
 
@@ -881,7 +881,7 @@ onMounted(() => {
                 @change="updateCupPackageUuid(pkg, $event.target.value)"
                 @click.stop
                 :disabled="props.readOnly"
-                class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select package</option>
                 <option
@@ -897,10 +897,10 @@ onMounted(() => {
 
           <!-- Excess Amount Section -->
           <div v-if="showExcessAmount && !props.dependantUuid" class="mt-4">
-            <div class="flex justify-between items-center p-3 rounded-xl border border-gray-200 bg-gray-50/60">
+            <div class="flex justify-between items-center p-3 rounded-xl border border-line bg-surface-muted/60">
               <div>
-                <div class="text-xs font-semibold text-gray-700">Excess Amount</div>
-                <div class="text-xs text-gray-500">Allow excess for this package</div>
+                <div class="text-xs font-semibold text-ink-muted">Excess Amount</div>
+                <div class="text-xs text-ink-subtle">Allow excess for this package</div>
               </div>
               <label class="inline-flex relative items-center cursor-pointer">
                 <input
@@ -911,7 +911,7 @@ onMounted(() => {
                   @click.stop
                   :disabled="props.readOnly"
                 />
-                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></div>
+                <div class="w-11 h-6 bg-line rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></div>
               </label>
             </div>
 
@@ -923,7 +923,7 @@ onMounted(() => {
                   @click.stop
                   :disabled="props.readOnly"
                   class="flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                  :class="pkg.excessUnlimited ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+                  :class="pkg.excessUnlimited ? 'bg-blue-600 text-white' : 'bg-white text-ink-muted border border-line hover:bg-surface-muted'"
                 >
                   Unlimited
                 </button>
@@ -933,7 +933,7 @@ onMounted(() => {
                   @click.stop
                   :disabled="props.readOnly"
                   class="flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                  :class="!pkg.excessUnlimited ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+                  :class="!pkg.excessUnlimited ? 'bg-blue-600 text-white' : 'bg-white text-ink-muted border border-line hover:bg-surface-muted'"
                 >
                   Limited
                 </button>
@@ -946,7 +946,7 @@ onMounted(() => {
                   @click.stop
                   :disabled="props.readOnly"
                   class="flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                  :class="pkg.excessType === 'amount' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+                  :class="pkg.excessType === 'amount' ? 'bg-blue-600 text-white' : 'bg-white text-ink-muted border border-line hover:bg-surface-muted'"
                 >
                   Amount
                 </button>
@@ -956,7 +956,7 @@ onMounted(() => {
                   @click.stop
                   :disabled="props.readOnly"
                   class="flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                  :class="pkg.excessType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+                  :class="pkg.excessType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-ink-muted border border-line hover:bg-surface-muted'"
                 >
                   Percentage
                 </button>
@@ -964,14 +964,14 @@ onMounted(() => {
 
               <div v-if="!pkg.excessUnlimited">
                 <div v-if="pkg.excessType === 'amount'" class="relative">
-                  <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                  <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                   <input
                     type="number"
                     :value="pkg.allowedAmount"
                     @input="updateAllowedAmount(pkg, $event.target.value)"
                     @click.stop
                     :disabled="props.readOnly"
-                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     min="1"
                     placeholder="Enter amount"
                   />
@@ -994,11 +994,11 @@ onMounted(() => {
                       @input="updateExcessPercentage(pkg, $event.target.value)"
                       @click.stop
                       :disabled="props.readOnly"
-                      class="py-1 pr-6 pl-2 w-full text-xs font-semibold text-center bg-white rounded-lg border border-gray-200"
+                      class="py-1 pr-6 pl-2 w-full text-xs font-semibold text-center bg-white rounded-lg border border-line"
                       min="1"
                       max="100"
                     />
-                    <span class="absolute top-1 right-2 text-xs text-gray-500">%</span>
+                    <span class="absolute top-1 right-2 text-xs text-ink-subtle">%</span>
                   </div>
                 </div>
               </div>
@@ -1012,7 +1012,7 @@ onMounted(() => {
         <div
           v-for="pkg in selectablePackages"
           :key="pkg.packageUuid"
-          class="rounded-xl border border-gray-200 shadow-sm transition-all bg-white/80 hover:shadow-md"
+          class="rounded-xl border border-line shadow-sm transition-all bg-white/80 hover:shadow-md"
           :class="expandedPackages.has(pkg.packageUuid) ? 'p-4 md:col-span-3' : 'p-3'"
         >
           <!-- Package header - always visible and clickable when selected -->
@@ -1028,15 +1028,15 @@ onMounted(() => {
                 @change="updatePackageSelection(pkg, $event.target.checked, $event)"
                 @click.stop
                 :disabled="props.readOnly || isDependentRowReadOnly(pkg) || isPreSelected(pkg)"
-                class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 shrink-0"
+                class="w-5 h-5 text-blue-600 rounded border-line-strong focus:ring-blue-500 shrink-0"
               />
               <label
                 :for="`package-${pkg.packageUuid}`"
-                class="ml-3 text-sm font-medium text-gray-800 truncate cursor-pointer"
+                class="ml-3 text-sm font-medium text-ink truncate cursor-pointer"
                 @click.stop
               >
                 {{ pkg.packageName }}
-                <span class="text-gray-500">({{ pkg.packageCode }})</span>
+                <span class="text-ink-subtle">({{ pkg.packageCode }})</span>
               </label>
             </div>
 
@@ -1059,10 +1059,10 @@ onMounted(() => {
                 v-if="pkg.isSelected"
                 type="button"
                 @click.stop="toggleExpand(pkg.packageUuid, $event)"
-                class="p-1 rounded-full transition-colors hover:bg-gray-100"
+                class="p-1 rounded-full transition-colors hover:bg-surface-raised"
               >
                 <svg 
-                  class="w-5 h-5 text-gray-500 transition-transform duration-200"
+                  class="w-5 h-5 text-ink-subtle transition-transform duration-200"
                   :class="{ 'rotate-180': expandedPackages.has(pkg.packageUuid) }"
                   fill="none" 
                   stroke="currentColor" 
@@ -1075,25 +1075,25 @@ onMounted(() => {
           </div>
 
           <!-- Quick summary when selected but not expanded -->
-          <div v-if="pkg.isSelected && !expandedPackages.has(pkg.packageUuid)" class="mt-2 text-xs text-gray-500">
+          <div v-if="pkg.isSelected && !expandedPackages.has(pkg.packageUuid)" class="mt-2 text-xs text-ink-subtle">
             <span v-if="showSumAssured">Sum: ETB {{ Number(displayedSumAssured(pkg)).toLocaleString() }}</span>
             <span v-if="showUsed" class="ml-3">Used: ETB {{ Number(displayedUsed(pkg)).toLocaleString() }}</span>
           </div>
 
           <!-- Details (only when selected and expanded) -->
-          <div v-if="pkg.isSelected && expandedPackages.has(pkg.packageUuid)" class="pt-4 mt-4 border-t border-gray-200">
+          <div v-if="pkg.isSelected && expandedPackages.has(pkg.packageUuid)" class="pt-4 mt-4 border-t border-line">
             <div v-if="shouldShowDepSharedFields(pkg)" class="grid grid-cols-1 gap-4 mt-2 md:grid-cols-2">
               <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Dep Sum Assured</label>
+                <label class="block text-xs font-medium text-ink-muted">Dep Sum Assured</label>
                 <div class="relative">
-                  <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                  <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                   <input
                     type="number"
                     :value="pkg.depSumAssured"
                     @input="updateDepSumAssured(pkg, $event.target.value)"
                     @click.stop
                     :disabled="props.readOnly"
-                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                     min="0"
                     placeholder="0"
                   />
@@ -1101,16 +1101,16 @@ onMounted(() => {
               </div>
 
               <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Dep Used Benefit</label>
+                <label class="block text-xs font-medium text-ink-muted">Dep Used Benefit</label>
                 <div class="relative">
-                  <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                  <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                   <input
                     type="number"
                     :value="pkg.depUsedBenefit"
                     @input="updateDepUsedBenefit(pkg, $event.target.value)"
                     @click.stop
                     :disabled="isDepUsedBenefitDisabled(pkg)"
-                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                     min="0"
                     placeholder="0"
                   />
@@ -1120,16 +1120,16 @@ onMounted(() => {
 
             <div v-if="shouldShowDepSumAssuredOnly(pkg)" class="grid grid-cols-1 gap-4 mt-2 md:grid-cols-2">
               <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Dep Sum Assured</label>
+                <label class="block text-xs font-medium text-ink-muted">Dep Sum Assured</label>
                 <div class="relative">
-                  <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                  <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                   <input
                     type="number"
                     :value="pkg.depSumAssured"
                     @input="updateDepSumAssured(pkg, $event.target.value)"
                     @click.stop
                     :disabled="props.readOnly"
-                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                     min="0"
                     placeholder="0"
                   />
@@ -1140,16 +1140,16 @@ onMounted(() => {
             <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
               <!-- Sum Assured -->
               <div v-if="showSumAssured" class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Sum Assured</label>
+                <label class="block text-xs font-medium text-ink-muted">Sum Assured</label>
                 <div class="relative">
-                  <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                  <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                   <input
                     type="number"
                     :value="displayedSumAssured(pkg)"
                     @input="shouldUseDependentMainFields(pkg) ? updateDepSumAssured(pkg, $event.target.value) : updateSumAssured(pkg, $event.target.value)"
                     @click.stop
                     :disabled="props.readOnly || isDependentSumAssuredLocked(pkg)"
-                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                     min="0"
                   />
                 </div>
@@ -1157,15 +1157,15 @@ onMounted(() => {
 
               <!-- Used -->
               <div v-if="showUsed" class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Used</label>
+                <label class="block text-xs font-medium text-ink-muted">Used</label>
                 <div class="relative">
-                  <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                  <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                   <input
                     type="number"
                     :value="displayedUsed(pkg)"
                     @input="shouldUseDependentMainFields(pkg) ? updateDepUsedBenefit(pkg, $event.target.value) : updateUsed(pkg, $event.target.value)"
                     @click.stop
-                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                     min="0"
                   />
                 </div>
@@ -1173,13 +1173,13 @@ onMounted(() => {
 
               <!-- Status Select -->
               <div v-if="showStatus" class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Status</label>
+                <label class="block text-xs font-medium text-ink-muted">Status</label>
                 <select
                   :value="pkg.status"
                   @change="updateStatus(pkg, $event.target.value)"
                   @click.stop
                   :disabled="isDependentRowReadOnly(pkg)"
-                  class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                 >
                   <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
@@ -1189,13 +1189,13 @@ onMounted(() => {
 
               <!-- Plan Type -->
               <div v-if="showPlanType" class="space-y-1">
-                <label class="block text-xs font-medium text-gray-600">Plan Type</label>
+                <label class="block text-xs font-medium text-ink-muted">Plan Type</label>
                 <select
                   :value="pkg.planType"
                   @change="updatePlanType(pkg, $event.target.value)"
                   @click.stop
                   :disabled="isDependentRowReadOnly(pkg)"
-                  class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-surface-raised"
                 >
                   <option v-for="opt in optionsForPackage(pkg)" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
@@ -1206,10 +1206,10 @@ onMounted(() => {
 
             <!-- Capped Package Section (only for non-dependent) -->
             <div v-if="!props.dependantUuid && pkg.isSelected" class="mt-4">
-              <div class="flex justify-between items-center p-3 rounded-xl border border-gray-200 bg-gray-50/60">
+              <div class="flex justify-between items-center p-3 rounded-xl border border-line bg-surface-muted/60">
                 <div>
-                  <div class="text-xs font-semibold text-gray-700">Capped Package</div>
-                  <div class="text-xs text-gray-500">Cap this package with another selected package</div>
+                  <div class="text-xs font-semibold text-ink-muted">Capped Package</div>
+                  <div class="text-xs text-ink-subtle">Cap this package with another selected package</div>
                 </div>
                 <label class="inline-flex relative items-center cursor-pointer">
                   <input
@@ -1220,7 +1220,7 @@ onMounted(() => {
                     @click.stop
                     :disabled="props.readOnly"
                   />
-                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></div>
+                  <div class="w-11 h-6 bg-line rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></div>
                 </label>
               </div>
 
@@ -1230,7 +1230,7 @@ onMounted(() => {
                   @change="updateCupPackageUuid(pkg, $event.target.value)"
                   @click.stop
                   :disabled="props.readOnly"
-                  class="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  class="px-3 py-2 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select package</option>
                   <option
@@ -1246,10 +1246,10 @@ onMounted(() => {
 
             <!-- Excess Amount Section (only for non-dependent) -->
             <div v-if="showExcessAmount && !props.dependantUuid && pkg.isSelected" class="mt-4">
-              <div class="flex justify-between items-center p-3 rounded-xl border border-gray-200 bg-gray-50/60">
+              <div class="flex justify-between items-center p-3 rounded-xl border border-line bg-surface-muted/60">
                 <div>
-                  <div class="text-xs font-semibold text-gray-700">Excess Amount</div>
-                  <div class="text-xs text-gray-500">Allow excess for this package</div>
+                  <div class="text-xs font-semibold text-ink-muted">Excess Amount</div>
+                  <div class="text-xs text-ink-subtle">Allow excess for this package</div>
                 </div>
                 <label class="inline-flex relative items-center cursor-pointer">
                   <input
@@ -1260,7 +1260,7 @@ onMounted(() => {
                     @click.stop
                     :disabled="props.readOnly"
                   />
-                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></div>
+                  <div class="w-11 h-6 bg-line rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5"></div>
                 </label>
               </div>
 
@@ -1272,7 +1272,7 @@ onMounted(() => {
                     @click.stop
                     :disabled="props.readOnly"
                     class="flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                    :class="pkg.excessUnlimited ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+                    :class="pkg.excessUnlimited ? 'bg-blue-600 text-white' : 'bg-white text-ink-muted border border-line hover:bg-surface-muted'"
                   >
                     Unlimited
                   </button>
@@ -1282,7 +1282,7 @@ onMounted(() => {
                     @click.stop
                     :disabled="props.readOnly"
                     class="flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                    :class="!pkg.excessUnlimited ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+                    :class="!pkg.excessUnlimited ? 'bg-blue-600 text-white' : 'bg-white text-ink-muted border border-line hover:bg-surface-muted'"
                   >
                     Limited
                   </button>
@@ -1295,7 +1295,7 @@ onMounted(() => {
                     @click.stop
                     :disabled="props.readOnly"
                     class="flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                    :class="pkg.excessType === 'amount' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+                    :class="pkg.excessType === 'amount' ? 'bg-blue-600 text-white' : 'bg-white text-ink-muted border border-line hover:bg-surface-muted'"
                   >
                     Amount
                   </button>
@@ -1305,7 +1305,7 @@ onMounted(() => {
                     @click.stop
                     :disabled="props.readOnly"
                     class="flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors"
-                    :class="pkg.excessType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+                    :class="pkg.excessType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-ink-muted border border-line hover:bg-surface-muted'"
                   >
                     Percentage
                   </button>
@@ -1313,14 +1313,14 @@ onMounted(() => {
 
                 <div v-if="!pkg.excessUnlimited">
                   <div v-if="pkg.excessType === 'amount'" class="relative">
-                    <span class="absolute top-2 left-3 text-sm text-gray-500">ETB</span>
+                    <span class="absolute top-2 left-3 text-sm text-ink-subtle">ETB</span>
                     <input
                       type="number"
                       :value="pkg.allowedAmount"
                       @input="updateAllowedAmount(pkg, $event.target.value)"
                       @click.stop
                       :disabled="props.readOnly"
-                      class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      class="py-2 pr-3 pl-12 w-full text-sm rounded-lg border border-line-strong shadow-sm focus:ring-blue-500 focus:border-blue-500"
                       min="1"
                       placeholder="Enter amount"
                     />
@@ -1343,11 +1343,11 @@ onMounted(() => {
                         @input="updateExcessPercentage(pkg, $event.target.value)"
                         @click.stop
                         :disabled="props.readOnly"
-                        class="py-1 pr-6 pl-2 w-full text-xs font-semibold text-center bg-white rounded-lg border border-gray-200"
+                        class="py-1 pr-6 pl-2 w-full text-xs font-semibold text-center bg-white rounded-lg border border-line"
                         min="1"
                         max="100"
                       />
-                      <span class="absolute top-1 right-2 text-xs text-gray-500">%</span>
+                      <span class="absolute top-1 right-2 text-xs text-ink-subtle">%</span>
                     </div>
                   </div>
                 </div>
@@ -1358,7 +1358,7 @@ onMounted(() => {
       </div>
 
       <!-- Empty state -->
-      <div v-if="!packagesWithSumAssured?.length && !loading" class="py-8 text-center text-gray-500">
+      <div v-if="!packagesWithSumAssured?.length && !loading" class="py-8 text-center text-ink-subtle">
         No packages available
       </div>
     </div>

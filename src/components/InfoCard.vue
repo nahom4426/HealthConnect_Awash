@@ -15,7 +15,7 @@ const props = defineProps({
 });
 </script>
 <template>
-  <div class="flex flex-col gap-3 bg-gray-100 p-3 px-2 rounded-md">
+  <div class="flex flex-col gap-3 bg-surface-raised p-3 px-2 rounded-md">
     <div class="text-lg border-b pb-2">
       <slot name="title">
         {{ props?.title }}

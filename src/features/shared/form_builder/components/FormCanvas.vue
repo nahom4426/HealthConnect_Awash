@@ -1,22 +1,22 @@
 <template>
   <div
-    class="form-canvas flex-1 bg-slate-50/80 p-4 sm:p-6 overflow-y-auto min-h-0 relative box-border"
+    class="form-canvas flex-1 bg-surface-muted/80 p-4 sm:p-6 overflow-y-auto min-h-0 relative box-border"
     @dragover.prevent="isDraggingOver = true"
     @dragleave="isDraggingOver = false"
     @drop.prevent="onDrop"
   >
     <div v-if="step" class="max-w-2xl mx-auto space-y-4 box-border">
       <!-- Step Header Card -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs box-border overflow-hidden">
+      <div class="bg-white border border-line rounded-2xl p-4 sm:p-5 shadow-xs box-border overflow-hidden">
         <div class="flex items-center justify-between mb-2">
           <span class="text-[11px] font-bold tracking-widest text-emerald-700 uppercase">Step Details</span>
-          <span class="text-xs text-slate-500 font-medium">{{ step.fields?.length || 0 }} fields</span>
+          <span class="text-xs text-ink-subtle font-medium">{{ step.fields?.length || 0 }} fields</span>
         </div>
         <input
           v-model="step.stepTitle"
           type="text"
           placeholder="Step Title (e.g. Particulars of Risk)"
-          class="w-full max-w-full box-border bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors font-bold"
+          class="w-full max-w-full box-border bg-surface-muted border border-line rounded-xl px-4 py-2.5 text-sm text-ink placeholder-ink-subtle focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors font-bold"
           @input="emitUpdate"
         />
       </div>
@@ -39,7 +39,7 @@
           :class="[
             selectedFieldId === field.id
               ? 'border-emerald-500 bg-emerald-50/20 shadow-md ring-2 ring-emerald-500/20'
-              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
+              : 'border-line hover:border-line-strong hover:bg-surface-muted/60'
           ]"
         >
           <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
@@ -63,7 +63,7 @@
               <button
                 v-if="index > 0"
                 @click.stop="moveField(index, -1)"
-                class="p-1 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-100"
+                class="p-1 text-ink-subtle hover:text-ink rounded hover:bg-surface-raised"
                 title="Move up"
               >
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -73,7 +73,7 @@
               <button
                 v-if="index < step.fields.length - 1"
                 @click.stop="moveField(index, 1)"
-                class="p-1 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-100"
+                class="p-1 text-ink-subtle hover:text-ink rounded hover:bg-surface-raised"
                 title="Move down"
               >
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -82,7 +82,7 @@
               </button>
               <button
                 @click.stop="deleteField(index)"
-                class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50"
+                class="p-1 text-ink-subtle hover:text-rose-600 rounded hover:bg-rose-50"
                 title="Delete field"
               >
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,34 +94,34 @@
 
           <!-- Field Canvas Mock Display -->
           <div class="space-y-1.5 box-border">
-            <label class="block text-xs font-bold text-slate-800">
+            <label class="block text-xs font-bold text-ink">
               {{ field.label || 'Untitled Field' }}
             </label>
-            <p v-if="field.helpText" class="text-[11px] text-slate-500">{{ field.helpText }}</p>
+            <p v-if="field.helpText" class="text-[11px] text-ink-subtle">{{ field.helpText }}</p>
 
-            <div v-if="field.type === 'header'" class="border-t border-slate-200 pt-2 text-slate-400 text-xs italic">
+            <div v-if="field.type === 'header'" class="border-t border-line pt-2 text-ink-subtle text-xs italic">
               Section Header Divider
             </div>
 
-            <div v-else-if="field.type === 'text' || field.type === 'number'" class="w-full max-w-full box-border bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-500 pointer-events-none">
+            <div v-else-if="field.type === 'text' || field.type === 'number'" class="w-full max-w-full box-border bg-surface-muted border border-line rounded-xl px-3 py-2 text-xs text-ink-subtle pointer-events-none">
               {{ field.placeholder || 'User input placeholder...' }}
             </div>
 
-            <div v-else-if="field.type === 'dropdown'" class="w-full max-w-full box-border bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-500 flex justify-between items-center pointer-events-none">
+            <div v-else-if="field.type === 'dropdown'" class="w-full max-w-full box-border bg-surface-muted border border-line rounded-xl px-3 py-2 text-xs text-ink-subtle flex justify-between items-center pointer-events-none">
               <span>{{ field.options && field.options.length ? `${field.options.length} options configured` : 'Select option...' }}</span>
-              <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <svg class="w-4 h-4 text-ink-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
 
-            <div v-else-if="field.type === 'date'" class="w-full max-w-full box-border bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-500 flex justify-between items-center pointer-events-none">
+            <div v-else-if="field.type === 'date'" class="w-full max-w-full box-border bg-surface-muted border border-line rounded-xl px-3 py-2 text-xs text-ink-subtle flex justify-between items-center pointer-events-none">
               <span>DD / MM / YYYY</span>
-              <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <svg class="w-4 h-4 text-ink-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             </div>
 
             <div v-else-if="field.type === 'toggle'" class="flex items-center space-x-3 pt-1 pointer-events-none">
-              <div class="w-10 h-6 bg-slate-200 rounded-full p-1 flex items-center">
+              <div class="w-10 h-6 bg-line rounded-full p-1 flex items-center">
                 <div class="w-4 h-4 bg-white rounded-full shadow-xs"></div>
               </div>
-              <span class="text-xs text-slate-500">Yes / No Switch</span>
+              <span class="text-xs text-ink-subtle">Yes / No Switch</span>
             </div>
           </div>
         </div>
@@ -130,16 +130,16 @@
       <!-- Empty State -->
       <div
         v-else
-        class="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-3"
+        class="bg-white border-2 border-dashed border-line rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-3"
       >
-        <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+        <div class="w-12 h-12 rounded-2xl bg-surface-raised flex items-center justify-center text-ink-subtle">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <div>
-          <h4 class="text-sm font-bold text-slate-700">No fields in this step</h4>
-          <p class="text-xs text-slate-500 mt-1">Drag fields from the left palette or click a field to add</p>
+          <h4 class="text-sm font-bold text-ink-muted">No fields in this step</h4>
+          <p class="text-xs text-ink-subtle mt-1">Drag fields from the left palette or click a field to add</p>
         </div>
       </div>
     </div>

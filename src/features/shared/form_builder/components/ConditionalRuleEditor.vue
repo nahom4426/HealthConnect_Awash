@@ -1,5 +1,5 @@
 <template>
-  <div class="conditional-rule-editor bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-3">
+  <div class="conditional-rule-editor bg-surface-muted border border-line rounded-xl p-3 space-y-3">
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-1.5 text-xs font-bold text-cyan-700">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -16,7 +16,7 @@
       </button>
     </div>
 
-    <div v-if="!condition" class="text-[11px] text-slate-500">
+    <div v-if="!condition" class="text-[11px] text-ink-subtle">
       Field is always visible. Add a rule to show it only when another field has a specific value.
       <button
         @click="initCondition"
@@ -28,10 +28,10 @@
 
     <div v-else class="space-y-2 text-xs">
       <div>
-        <label class="block text-[10px] text-slate-500 uppercase tracking-wider mb-1 font-bold">Show when field</label>
+        <label class="block text-[10px] text-ink-subtle uppercase tracking-wider mb-1 font-bold">Show when field</label>
         <select
           v-model="condition.field"
-          class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-cyan-500 font-medium"
+          class="w-full bg-white border border-line rounded-lg px-2.5 py-1.5 text-ink text-xs focus:outline-none focus:border-cyan-500 font-medium"
           @change="emitUpdate"
         >
           <option value="" disabled>Select target field...</option>
@@ -43,10 +43,10 @@
 
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="block text-[10px] text-slate-500 uppercase tracking-wider mb-1 font-bold">Operator</label>
+          <label class="block text-[10px] text-ink-subtle uppercase tracking-wider mb-1 font-bold">Operator</label>
           <select
             v-model="condition.operator"
-            class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-cyan-500 font-medium"
+            class="w-full bg-white border border-line rounded-lg px-2.5 py-1.5 text-ink text-xs focus:outline-none focus:border-cyan-500 font-medium"
             @change="emitUpdate"
           >
             <option value="equals">Equals (==)</option>
@@ -56,12 +56,12 @@
         </div>
 
         <div>
-          <label class="block text-[10px] text-slate-500 uppercase tracking-wider mb-1 font-bold">Target Value</label>
+          <label class="block text-[10px] text-ink-subtle uppercase tracking-wider mb-1 font-bold">Target Value</label>
           <input
             v-model="condition.value"
             type="text"
             placeholder="e.g. true, Commercial"
-            class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-cyan-500 font-mono"
+            class="w-full bg-white border border-line rounded-lg px-2.5 py-1.5 text-ink text-xs focus:outline-none focus:border-cyan-500 font-mono"
             @input="emitUpdate"
           />
         </div>

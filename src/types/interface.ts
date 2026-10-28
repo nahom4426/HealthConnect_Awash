@@ -144,7 +144,9 @@ export enum PaymentStatus {
   VERIFIED = "VERIFIED",
   CONFIRMED = "CONFIRMED",
   COMPLETED = "COMPLETED",
-  PAYED = "PAYED"
+  PAYED = "PAYED",
+  // Used by the Claims Payment page (finance/pages/ClaimPayment.vue)
+  PAYMENT_REQUESTED = "PAYMENT_REQUESTED"
 }
 export enum ClaimLevel {
   LEVEL1 = "LEVEL1",

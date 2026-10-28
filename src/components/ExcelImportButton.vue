@@ -10,7 +10,7 @@
     <button
       @click="triggerFileInput"
       :disabled="disabled"
-      class="flex gap-2 items-center px-4 py-2 text-sm font-medium bg-white rounded-xl border shadow-sm transition-all duration-200 text-slate-700 border-slate-200/60 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex gap-2 items-center px-4 py-2 text-sm font-medium bg-white rounded-xl border shadow-sm transition-all duration-200 text-ink-muted border-line/60 hover:bg-surface-muted hover:border-line-strong disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />

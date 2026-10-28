@@ -1,21 +1,20 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { fetchImageObjectUrl } from '@/utils/imageBlob';
+import { getActingRole, roleSwitcherEnabled } from '@/utils/actingRole';
 
 const apiBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
 
 function getClient() {
   const auth = useAuthStore();
   const token = auth.auth?.token || auth.auth?.user?.token;
-  const activeRole =
-    localStorage.getItem('standard_active_testing_role') ||
-    localStorage.getItem('awash_active_testing_role') ||
-    'ROLE_UNDERWRITER';
+  // Production sends the signed-in user's own role; only demo builds may override it
+  const activeRole = getActingRole() || (roleSwitcherEnabled ? 'ROLE_UNDERWRITER' : '');
   return axios.create({
     baseURL: apiBase,
     headers: {
       'Content-Type': 'application/json',
-      'X-User-Role': activeRole,
+      ...(activeRole ? { 'X-User-Role': activeRole } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });

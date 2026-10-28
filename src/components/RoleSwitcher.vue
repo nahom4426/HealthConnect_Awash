@@ -1,7 +1,8 @@
 <script setup>
 import { useRoleContext } from '@/features/motor/composables/useRoleContext';
 
-const { activeRole, setRole, ROLES } = useRoleContext();
+// Only rendered in dev / demo builds; see utils/actingRole.js
+const { activeRole, setRole, ROLES, roleSwitcherEnabled } = useRoleContext();
 
 // Reload so every role-derived computed (including ones that read the logged-in
 // role once) picks up the newly selected demo role.
@@ -12,7 +13,7 @@ function onChange(event) {
 </script>
 
 <template>
-  <div class="role-switcher" title="Demo: act as a different role">
+  <div v-if="roleSwitcherEnabled" class="role-switcher" title="Demo: act as a different role">
     <svg class="role-switcher__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

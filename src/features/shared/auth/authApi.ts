@@ -10,14 +10,6 @@ export function login(data: any) {
   return api.post(`${path}/signIn`, {
     password: data.password,
     userName: data.email || data.userName,
-  }).then((res: any) => {
-    const userObj = res?.data || res;
-    const roleCode = userObj?.roleCode || userObj?.role || userObj?.roleName;
-    if (roleCode) {
-      localStorage.setItem('standard_active_testing_role', roleCode);
-      localStorage.setItem('awash_active_testing_role', roleCode);
-    }
-    return res;
   });
 }
 

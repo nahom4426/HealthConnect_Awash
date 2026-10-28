@@ -831,6 +831,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
+import { getActingRole } from '@/utils/actingRole';
 import {
   fetchMotorProposalDetail,
   assignProposalAdjustor,
@@ -941,7 +942,7 @@ const ocrSourceBadge = computed(() => {
 
 // Role Permissions
 const normRole = computed(() => {
-  const roleFromStorage = localStorage.getItem('standard_active_testing_role') || localStorage.getItem('user_role') || activeRole.value || '';
+  const roleFromStorage = getActingRole() || activeRole.value || '';
   return roleFromStorage.toUpperCase().replace('ROLE_', '');
 });
 const isUnderwriter = computed(() => normRole.value === 'UNDERWRITER' || normRole.value === 'SUPER_ADMIN');

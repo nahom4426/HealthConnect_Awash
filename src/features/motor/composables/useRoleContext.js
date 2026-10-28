@@ -1,6 +1,5 @@
 import { ref } from 'vue';
-
-const STORAGE_KEY = 'standard_active_testing_role';
+import { getActingRole, roleSwitcherEnabled, setActingRole } from '@/utils/actingRole';
 
 const ROLES = [
   { code: 'ROLE_UNDERWRITER', name: 'Solomon Tadesse (Underwriter)', badge: 'bg-blue-100 text-blue-800 border-blue-200' },
@@ -10,27 +9,22 @@ const ROLES = [
   { code: 'ROLE_CUSTOMER', name: 'Biruk Hagoss (Customer)', badge: 'bg-slate-100 text-slate-800 border-slate-200' },
 ];
 
-const activeRole = ref(
-  localStorage.getItem(STORAGE_KEY) ||
-  localStorage.getItem('user_role') ||
-  localStorage.getItem('role') ||
-  'ROLE_UNDERWRITER'
-);
+// Demo builds fall back to Underwriter so the motor flow has a role to show;
+// production only ever uses the signed-in user's role.
+const activeRole = ref(getActingRole() || (roleSwitcherEnabled ? 'ROLE_UNDERWRITER' : ''));
 
 function setRole(roleCode) {
+  if (!roleSwitcherEnabled) return;
   activeRole.value = roleCode;
-  localStorage.setItem(STORAGE_KEY, roleCode);
-  localStorage.setItem('user_role', roleCode);
+  setActingRole(roleCode);
 }
 
 export function useRoleContext() {
-  const currentRole = localStorage.getItem('user_role') || localStorage.getItem('role');
-  if (currentRole && !localStorage.getItem(STORAGE_KEY)) {
-    activeRole.value = currentRole;
-  }
+  activeRole.value = getActingRole() || activeRole.value;
   return {
     activeRole,
     setRole,
-    ROLES
+    ROLES,
+    roleSwitcherEnabled,
   };
 }

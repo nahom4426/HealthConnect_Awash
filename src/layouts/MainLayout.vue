@@ -1,5 +1,6 @@
 <script setup>
 import NavBar from "@/components/NavBar.vue";
+import { getActingRole } from "@/utils/actingRole";
 import { prefetchRoutesIdle } from "@/router/prefetch";
 import NotificationCenter from "@/components/NotificationCenter.vue";
 import { useAuthStore } from "@/stores/auth";
@@ -94,7 +95,7 @@ const filteredNavs = computed(() => {
   const rawNavs = activeNavs.value || [];
   const user = authStore.auth?.user ?? authStore.auth ?? {};
   const roleName = user?.roleName || '';
-  const roleCode = user?.roleCode || user?.role || localStorage.getItem('standard_active_testing_role') || '';
+  const roleCode = user?.roleCode || (typeof user?.role === 'string' ? user.role : '') || getActingRole();
   
   // Auth admin / Super Admin see ALL navigation items (incl. motor Claims/Quotation/Proposals)
   if (hasFullSystemAccess(user) || hasFullSystemAccess({ roleName, roleCode })) {

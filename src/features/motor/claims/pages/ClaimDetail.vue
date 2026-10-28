@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { getActingRole, roleSwitcherEnabled } from '@/utils/actingRole';
 import { useRoute, useRouter } from 'vue-router';
 import { fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage, fetchClaimImage, fetchClaimDocuments, fetchClaimDocumentUrl } from '@/features/motor/claims/api/digitalChannelApi';
 import RoleSwitcher from '@/components/RoleSwitcher.vue';
@@ -33,9 +34,9 @@ const formatText = (text) => {
 };
 
 const myRole = computed(() =>
-  localStorage.getItem('standard_active_testing_role') ||
+  getActingRole() ||
   authStore.auth?.user?.roleCode ||
-  'ROLE_CLAIM_MANAGER');
+  (roleSwitcherEnabled ? 'ROLE_CLAIM_MANAGER' : ''));
 
 const statusColors = {
   SUBMITTED: '#3b82f6', IN_PROCESS: '#8b5cf6', BID_ASSIGNED: '#f59e0b', BID_COMPLETED: '#f97316', 

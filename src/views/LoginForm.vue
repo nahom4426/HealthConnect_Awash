@@ -1,4 +1,5 @@
 <script setup>
+import { clearActingRole } from '@/utils/actingRole';
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Form } from '@/components/new_form_builder';
@@ -81,9 +82,8 @@ function loginUser({ values }) {
         return;
       }
 
-      if (userObj.roleCode) {
-        localStorage.setItem('standard_active_testing_role', userObj.roleCode);
-      }
+      // A demo role picked by whoever used this browser before must not carry over
+      clearActingRole();
       showSuccess.value = true;
       auth.setAuth(userObj);
       localStorage.setItem('userDetail', JSON.stringify(userObj));

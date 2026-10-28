@@ -120,6 +120,7 @@ export default [
     path: '/admin/user-roles',
     name: 'Standard User & Privilege Control',
     component: () => import('@/features/shared/admin/pages/UserRoleManagement.vue'),
-    meta: { requiresAuth: false }
+    // User & privilege control: signed-in admins only (Super Admin / All Privileges pass the guard)
+    meta: { requiresAuth: true, permissions: ["read_user"] }
   }
 ];

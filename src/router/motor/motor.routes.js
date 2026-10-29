@@ -12,47 +12,45 @@ const ClaimDetail = () => import("@/features/motor/claims/pages/ClaimDetail.vue"
 const ClaimManagerDashboard = () => import("@/features/motor/claims/pages/ClaimManagerDashboard.vue");
 const GarageDashboard = () => import("@/features/motor/claims/pages/GarageDashboard.vue");
 
-// The digital-channel claims flow is keyed by :module so the same pages serve
-// every product's /<product>/claims/* nav entries; today only motor's service backs it.
 const claimsRoutes = [
   {
-    path: '/:module/claims/process',
+    path: '/motor/claims/process',
     name: 'module-claims-process',
     component: ClaimsProcess,
     meta: { requiresAuth: true, roleAccess: 'claims' },
   },
   {
-    path: '/:module/claims/manager',
+    path: '/motor/claims/manager',
     name: 'module-claims-manager',
     component: ClaimManagerDashboard,
     meta: { requiresAuth: true, roleAccess: 'claims' },
   },
   {
-    path: '/:module/claims/garage',
+    path: '/motor/claims/garage',
     name: 'module-claims-garage',
     component: GarageDashboard,
     meta: { requiresAuth: true, roleAccess: 'claims' },
   },
   {
-    path: '/:module/claims/approved',
+    path: '/motor/claims/approved',
     name: 'module-claims-approved',
     component: ClaimsProcess,
     meta: { requiresAuth: true, roleAccess: 'claims' },
   },
   {
-    path: '/:module/claims/completed',
+    path: '/motor/claims/completed',
     name: 'module-claims-completed',
     component: ClaimsProcess,
     meta: { requiresAuth: true, roleAccess: 'claims' },
   },
   {
-    path: '/:module/claims/new',
+    path: '/motor/claims/new',
     name: 'module-claims-new',
     component: ClaimNew,
     meta: { requiresAuth: true, roleAccess: 'claims' },
   },
   {
-    path: '/:module/claims/detail/:claimUuid',
+    path: '/motor/claims/detail/:claimUuid',
     name: 'module-claims-detail',
     component: ClaimDetail,
     meta: { requiresAuth: true, roleAccess: 'claims' },

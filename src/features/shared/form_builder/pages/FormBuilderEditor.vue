@@ -4,9 +4,9 @@
     <header class="bg-white border-b border-line px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0 box-border w-full">
       <div class="flex items-center space-x-3">
         <router-link
-          to="/form-builder"
+          :to="pcModule?.productPath || '/form-builder'"
           class="p-1.5 rounded-xl bg-surface-raised hover:bg-line text-ink-muted hover:text-ink transition-colors border border-line shrink-0"
-          title="Back to Form Builder Home"
+          :title="pcModule ? `Back to ${pcModule.label} rates` : 'Back to Form Builder Home'"
         >
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -72,7 +72,7 @@
           class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all flex items-center space-x-1"
         >
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          <span>Publish Form to Mobile</span>
+          <span>{{ pcModule?.publishLabel || 'Publish Form to Mobile' }}</span>
         </button>
       </div>
     </header>
@@ -148,6 +148,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFormBuilderStore } from '../store/formBuilderStore';
+import { PC_MODULES } from '@/features/pc/pcModule.js';
 
 import FieldPalette from '../components/FieldPalette.vue';
 import StepManager from '../components/StepManager.vue';
@@ -161,6 +162,7 @@ const route = useRoute();
 const store = useFormBuilderStore();
 
 const productId = computed(() => route.params.productId || 'motor');
+const pcModule = computed(() => PC_MODULES[productId.value]);
 const activeTab = ref('editor');
 const showHistory = ref(false);
 const toastMessage = ref('');
@@ -231,7 +233,9 @@ async function handleSave() {
 async function handlePublish() {
   try {
     await store.publishActiveSchema();
-    triggerToast('Schema published to Mobile App SDUI endpoint!');
+    triggerToast(pcModule.value
+      ? `${pcModule.value.label} proposal form published. New Proposal now uses these questions.`
+      : 'Schema published to Mobile App SDUI endpoint!');
   } catch (e) {
     alert('Publish failed: ' + e.message);
   }

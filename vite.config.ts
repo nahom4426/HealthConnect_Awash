@@ -20,11 +20,15 @@ export default defineConfig(({ mode }) => {
     host: "0.0.0.0",
     port: 5173,
     proxy: {
-      // More specific prefix first: Vite matches proxy keys in order
+      // More specific prefixes first: Vite matches proxy keys in order
       "/api/life": {
         target: lifeHost,
         changeOrigin: true,
         secure: lifeHost.startsWith("https"),
+      },
+      "/api/payer/property-casualty": {
+        target: "http://localhost:8998",
+        changeOrigin: true,
       },
       "/api": {
         target: backendHost,

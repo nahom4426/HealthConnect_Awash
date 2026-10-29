@@ -74,6 +74,17 @@ const MODULE_NAVS = {
   burglary:    burglaryNavs,
 };
 
+watch(
+  () => route.path,
+  (path) => {
+    const id = path.split("/").filter(Boolean)[0];
+    if (id && MODULE_NAVS[id] && moduleStore.activeModuleId !== id) {
+      moduleStore.selectModule(id);
+    }
+  },
+  { immediate: true }
+);
+
 // ── Active module raw navs ──
 const marineRoles = useMarineRoles();
 const activeNavs = computed(() => {
@@ -170,8 +181,8 @@ const isModuleSelect = computed(() => route.path === "/module-select");
         <main class="content-area">
           <Transition name="page-fade" mode="out-in">
             <HomeScreen v-if="isHomePage" :navs="filteredNavs" :key="'home'" />
-            <div v-else class="page-wrapper" :key="route.path">
-              <RouterView />
+            <div v-else class="page-wrapper" :key="route.fullPath">
+              <RouterView :key="route.fullPath" />
             </div>
           </Transition>
         </main>

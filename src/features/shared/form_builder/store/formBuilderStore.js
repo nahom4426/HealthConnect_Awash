@@ -182,12 +182,16 @@ export const useFormBuilderStore = defineStore('formBuilder', () => {
   }
 
   async function publishActiveSchema() {
-    if (!activeSchema.value || !activeSchema.value.formUuid) {
+    if (!activeSchema.value) return;
+    if (activeSchema.value.productId === 'fire' || activeSchema.value.productId === 'burglary') {
+      return saveActiveSchema();
+    }
+    if (!activeSchema.value.formUuid) {
       await saveActiveSchema();
     }
     saving.value = true;
     try {
-      const published = await publishFormSchema(activeSchema.value.formUuid);
+      const published = await publishFormSchema(activeSchema.value.formUuid, activeSchema.value.productId);
       activeSchema.value = published;
       return published;
     } catch (e) {

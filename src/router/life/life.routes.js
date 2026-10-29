@@ -16,6 +16,9 @@ const PolicyDetail = () => import("@/features/life/pages/policies/PolicyDetail.v
 const ClaimsQueue = () => import("@/features/life/pages/claims/ClaimsQueue.vue");
 const NewClaim = () => import("@/features/life/pages/claims/NewClaim.vue");
 const ClaimDetail = () => import("@/features/life/pages/claims/ClaimDetail.vue");
+const IndividualPoliciesList = () => import("@/features/life/pages/individual/IndividualPoliciesList.vue");
+const IndividualPolicyForm = () => import("@/features/life/pages/individual/IndividualPolicyForm.vue");
+const IndividualPolicyDetail = () => import("@/features/life/pages/individual/IndividualPolicyDetail.vue");
 const QuestionsList = () => import("@/features/life/pages/underwriting/QuestionsList.vue");
 const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
@@ -122,6 +125,30 @@ const lifeRoutes = [
     name: "life-claim-detail",
     component: ClaimDetail,
     meta: { requiresAuth: true, title: "Claim" },
+  },
+  {
+    path: "/life/individual",
+    name: "life-individual",
+    component: IndividualPoliciesList,
+    meta: { requiresAuth: true, title: "Individual policies" },
+  },
+  {
+    path: "/life/individual/new",
+    name: "life-individual-new",
+    component: IndividualPolicyForm,
+    meta: { requiresAuth: true, title: "New individual policy" },
+  },
+  {
+    path: "/life/individual/:benefitUuid",
+    name: "life-individual-detail",
+    component: IndividualPolicyDetail,
+    meta: { requiresAuth: true, title: "Individual policy" },
+  },
+  {
+    path: "/life/individual/:benefitUuid/edit",
+    name: "life-individual-edit",
+    component: IndividualPolicyForm,
+    meta: { requiresAuth: true, title: "Edit individual policy" },
   },
   {
     path: "/life/underwriting/questions",

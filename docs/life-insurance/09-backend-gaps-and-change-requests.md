@@ -217,6 +217,20 @@ underwriting decisions, reinsurance cession bordereau) with Excel export.
     files with comma-separated names are supported, the allowed types and the size limit.
 26. Claims: `PUT /claim/deny` takes the reason in the query string (see item 6); long reasons may be cut by URL
     limits. Accept `ClaimRequest` as JSON like the other claim actions.
+27. **Individual pricing (high).** `BenefitRequest.termPremium` and `IndividualRiderBenefitRequest.premium` expect the
+    client to send premiums, but the API only returns rates (`calculate-term-premium` returns the rate row, not an
+    amount). The UI sends neither. The backend must price the term benefit and each rider on create/update
+    (rate × sum assured ÷ rate unit, with any discount or loading), ignore client premiums, and return
+    `termPremium`, rider `premium`, `totalPremium` and `totalBenefit`. A priced quote endpoint
+    (`GET /benefit/quote?dateOfBirth&gender&beginDate&term&termBenefit&riders=…`) would let the form show the
+    premium before saving.
+28. Individual age basis: the UI looks rates up by age last birthday at the cover start date. Confirm the basis
+    (last birthday or nearest) and whether the backend derives the age itself.
+29. `GET /benefit/benefits/{status}` has no paging or search, and `GET /individual-rider-benefit/active/benefits`
+    returns every policy's riders (the UI filters by `benefitUuid`). Add `page/limit/search` and
+    `?benefitUuid=` (README R2).
+30. `BenefitRequest` has no `status` and there is no issue endpoint, so drafts can't become ACTIVE from the UI
+    (G11). Say what `endDate` the backend sets (begin + term?) and when `policyNumber` is generated.
 
 ### G10 · Privileges
 

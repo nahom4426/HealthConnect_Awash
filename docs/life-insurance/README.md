@@ -1,6 +1,6 @@
 # Life Insurance implementation analysis
 
-Status: analysis complete; Stages 1–7 implemented (API, products & rates, reinsurance, underwriting questionnaire, group quotations, group policies, claims on the existing API). Screens checked with Swagger-shaped data, not yet against the live Life service.
+Status: analysis complete; Stages 1–8 implemented (API, products & rates, reinsurance, underwriting questionnaire, group quotations, group policies, claims and individual policies on the existing API). Screens checked with Swagger-shaped data, not yet against the live Life service.
 together first. Prepared 2026-10-28 against the Life service OpenAPI document at
 `http://192.168.100.251:8194/api/life/v3/api-docs`.
 
@@ -43,7 +43,7 @@ dev proxy `/api/life` → `VITE_LIFE_API_HOST` in `vite.config.ts` and `.env.dev
 | Products & rates | 40 | Riders with versioning; group term rates (age × gender); individual term rates (age × term × gender, max discount/load); individual & group rider rates; Excel imports; premium lookups |
 | Underwriting questionnaire | 15 | Questions (Text/Multiselect/Numeric/Radio), answer library, numeric ranges with weights and critical flags, recorded answers |
 | Group quotations | 14 | PENDING → ISSUED → ACCEPTED → PAID, revise, quoted riders |
-| Insured persons | 8 | Per-quotation members, Excel import/template, members above reinsurance retention |
+| Insured persons | 8 | Individual policies: list per status (client-side search and paging), new / edit policy with rate check for the age and term, riders with their limits and rate, policy page with riders (add, change, remove on drafts); no premium is sent from the UI | 6 | **Done for the existing API** (checked with Swagger-shaped data). Issue, pricing, beneficiaries, questionnaire and KYC wait on G11, G9 item 27, G1, G4, G2; open questions in 09 §G9 items 27–30 |
 | Policies | 3 | Issue from paid quotation, list by status, treaty report |
 | Individual policies | 10 | "Benefit" = individual term policy with embedded person, plus rider benefits |
 | Claims | 30 | Agency and insurance work queues, review, approve, deny, attachments, logs |

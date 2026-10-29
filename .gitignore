@@ -31,3 +31,7 @@ coverage
 
 # Project/env archives (shared copies of the repo must not be committed)
 *.zip
+
+# Playwright
+test-results/
+playwright-report/

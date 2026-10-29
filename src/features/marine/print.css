@@ -1,0 +1,42 @@
+/* Printing a Marine page (plan section 9, "Print"): no sidebar, top bar or controls, tables at full
+   width, and no clipped scroll areas. Applies only while a marine page is on screen. */
+@media print {
+  body:has(.marine-header) .sidebar,
+  body:has(.marine-header) .topbar,
+  body:has(.marine-header) [data-print-hide],
+  body:has(.marine-header) .marine-header button,
+  body:has(.marine-header) [role="tablist"],
+  body:has(.marine-header) .Vue-Toastification__container {
+    display: none !important;
+  }
+  body:has(.marine-header) .content-column,
+  body:has(.marine-header) .content-area,
+  body:has(.marine-header) .page-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  body:has(.marine-header) .overflow-x-auto,
+  body:has(.marine-header) .overflow-hidden,
+  body:has(.marine-header) .overflow-auto {
+    overflow: visible !important;
+  }
+  body:has(.marine-header) table {
+    width: 100% !important;
+    page-break-inside: auto;
+  }
+  body:has(.marine-header) tr {
+    page-break-inside: avoid;
+  }
+  body:has(.marine-header) .shadow-card,
+  body:has(.marine-header) .shadow-pop {
+    box-shadow: none !important;
+  }
+  body:has(.marine-header) .xl\:sticky,
+  body:has(.marine-header) .sticky {
+    position: static !important;
+  }
+}

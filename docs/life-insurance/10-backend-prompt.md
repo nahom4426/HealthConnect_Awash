@@ -29,6 +29,13 @@ stored them with moduleType "health" because the request has no module field —
 the privilege and role requests, or tell us how a privilege is assigned to the Life module. The Life service must
 check these names (G10).
 
+Stale privileges at login: after the 16 Life privileges were added to the "admin" role (155 privileges), signing
+in as an admin user still returned the old 139. They only appeared after the user was saved again through
+PUT /auth/users/{uuid} with the same role. So the AuthService keeps a per-user copy of the role's privileges and
+doesn't refresh it when the role changes. Recompute the user's privileges from the role at login (or refresh every
+user of a role when the role is updated). Also: GET /auth/users/user/{uuid} returns no privileges, so the app
+can't refresh them without a new login.
+
 ═══════════════════════════════════════════════════════════════════════════════════════════════
 GENERAL RULES
 ═══════════════════════════════════════════════════════════════════════════════════════════════

@@ -6,6 +6,7 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { toasted } from "@/utils/utils";
 import { issuePolicy } from "../api/policyApi";
 import { toDateInput } from "../constants/labels";
@@ -29,24 +30,14 @@ async function submit() {
     closeModal(res.data || true);
   }
 }
-
-const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15";
 </script>
 
 <template>
   <ModalParent>
     <NewFormParent size="md" title="Issue policy" :subtitle="`${q.institutionName || ''} · ${q.term || '?'}-year term`">
       <form id="life-issue-policy" class="grid gap-4 p-5" novalidate @submit.prevent="submit">
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Cover starts
-          <input v-model="form.beginDate" v-focus="true" type="date" :class="[field, errors.beginDate ? 'border-error' : 'border-line']" />
-          <span v-if="errors.beginDate" class="text-xs text-error">{{ errors.beginDate }}</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Cover ends
-          <input v-model="form.endDate" type="date" :min="form.beginDate" :class="[field, errors.endDate ? 'border-error' : 'border-line']" />
-          <span v-if="errors.endDate" class="text-xs text-error">{{ errors.endDate }}</span>
-        </label>
+        <TextField v-model="form.beginDate" label="Cover starts" focus type="date" :error="errors.beginDate" />
+        <TextField v-model="form.endDate" label="Cover ends" type="date" :min="form.beginDate" :error="errors.endDate" />
         <p class="text-xs text-ink-subtle">Members and riders on the quotation are covered from the start date. This can't be undone.</p>
       </form>
       <template #bottom>

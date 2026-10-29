@@ -3,8 +3,9 @@
 import { computed, ref } from "vue";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
+import PageHeader from "@/components/PageHeader.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { deletePossibleAnswer, getAllPossibleAnswers } from "../../api/underwritingApi";
@@ -34,12 +35,12 @@ function remove(a) {
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader title="Answer library" subtitle="Reusable answers for single- and multiple-choice questions. Each question sets its own score for an answer.">
+    <PageHeader title="Answer library" subtitle="Reusable answers for single- and multiple-choice questions. Each question sets its own score for an answer.">
       <template #actions><Button @click="edit()">Add answer</Button></template>
-    </LifePageHeader>
+    </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-      <input v-model="search" type="search" placeholder="Search answers" aria-label="Search answers" class="px-3 w-72 h-9 text-sm rounded-lg border outline-none bg-surface border-line text-ink focus:border-primary focus:ring-2 focus:ring-primary/15" />
+      <div class="w-72"><TextField v-model="search" type="search" placeholder="Search answers" aria-label="Search answers" /></div>
       <span v-if="!answers.loading.value && !answers.error.value" class="text-xs text-ink-subtle">{{ visible.length }} of {{ answers.data.value.length }} answers</span>
     </div>
 

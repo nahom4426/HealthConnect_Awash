@@ -6,9 +6,10 @@ import { ref, shallowRef } from "vue";
 import { useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
 import { toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
-import LifePager from "../../components/LifePager.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
+import PageNav from "@/components/PageNav.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { useLifePagedList } from "../../composables/useLifePagedList";
 import { PolicyStatus } from "../../constants/statuses";
 import { formatAmount, formatDate } from "../../constants/labels";
@@ -50,12 +51,11 @@ async function create() {
   router.push(claimUuid ? { path: `/life/claims/${claimUuid}`, query: { side: "agency", queue: "saved" } } : { path: "/life/claims/agency", query: { queue: "saved" } });
 }
 
-const search = "px-3 w-full sm:w-80 h-9 text-sm rounded-lg border outline-none bg-surface-muted border-line text-ink focus:border-primary focus:ring-2 focus:ring-primary/15";
 </script>
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader title="New claim" back="/life/claims/agency" subtitle="Find the member's group policy and choose the member. You'll add the documents on the next page." />
+    <PageHeader title="New claim" back="/life/claims/agency" subtitle="Find the member's group policy and choose the member. You'll add the documents on the next page." />
 
     <ol class="grid gap-5 max-w-4xl">
       <!-- 1 · Policy -->
@@ -72,7 +72,7 @@ const search = "px-3 w-full sm:w-80 h-9 text-sm rounded-lg border outline-none b
           <span class="text-ink-subtle">· cover {{ formatDate(policy.beginDate) }} – {{ formatDate(policy.endDate) }}</span>
         </p>
         <template v-else>
-          <input v-model="policies.search.value" v-focus="true" type="search" placeholder="Search policy number or institution" aria-label="Search active policies" :class="[search, 'mt-3']" />
+          <div class="mt-3 w-full sm:w-80"><TextField v-model="policies.search.value" focus type="search" placeholder="Search policy number or institution" aria-label="Search active policies" /></div>
           <p v-if="policies.error.value" class="mt-3 text-sm text-ink-muted">{{ policies.error.value }} <button type="button" class="font-semibold text-primary" @click="policies.reload()">Try again</button></p>
           <ul v-else class="mt-3 rounded-xl border divide-y border-line divide-line">
             <li v-if="policies.loading.value" class="px-4 py-3 text-sm text-ink-subtle">Loading active policies…</li>
@@ -83,11 +83,11 @@ const search = "px-3 w-full sm:w-80 h-9 text-sm rounded-lg border outline-none b
                   <span class="font-medium text-ink">{{ p.institutionName }}</span>
                   <span class="block text-xs text-ink-subtle">{{ p.institutionLifeInsuranceNumber || p.quotationNumber }} · {{ formatDate(p.beginDate) }} – {{ formatDate(p.endDate) }}</span>
                 </span>
-                <LifeStatusBadge :status="p.policyStatus" />
+                <StatusBadge :status="p.policyStatus" />
               </button>
             </li>
           </ul>
-          <LifePager v-model:page="policies.page.value" :total-pages="policies.totalPages.value" :disabled="policies.loading.value" />
+          <PageNav v-model:page="policies.page.value" :total-pages="policies.totalPages.value" :disabled="policies.loading.value" />
         </template>
       </li>
 
@@ -98,7 +98,7 @@ const search = "px-3 w-full sm:w-80 h-9 text-sm rounded-lg border outline-none b
           Member
         </h2>
         <template v-if="memberList">
-          <input v-model="memberList.search.value" type="search" placeholder="Search name, phone or insurance ID" aria-label="Search members" :class="[search, 'mt-3']" />
+          <div class="mt-3 w-full sm:w-80"><TextField v-model="memberList.search.value" type="search" placeholder="Search name, phone or insurance ID" aria-label="Search members" /></div>
           <p v-if="memberList.error.value" class="mt-3 text-sm text-ink-muted">{{ memberList.error.value }}</p>
           <ul v-else role="radiogroup" aria-label="Member" class="mt-3 rounded-xl border divide-y border-line divide-line">
             <li v-if="memberList.loading.value" class="px-4 py-3 text-sm text-ink-subtle">Loading members…</li>
@@ -114,7 +114,7 @@ const search = "px-3 w-full sm:w-80 h-9 text-sm rounded-lg border outline-none b
               </label>
             </li>
           </ul>
-          <LifePager v-model:page="memberList.page.value" :total-pages="memberList.totalPages.value" :disabled="memberList.loading.value" />
+          <PageNav v-model:page="memberList.page.value" :total-pages="memberList.totalPages.value" :disabled="memberList.loading.value" />
         </template>
         <p v-else class="mt-2 text-sm text-ink-subtle">Choose the policy first.</p>
       </li>

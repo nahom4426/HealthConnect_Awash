@@ -1,7 +1,8 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import Button from "@/components/Button.vue";
-import LifePageHeader from "../../components/LifePageHeader.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import TextField from "@/components/fields/TextField.vue";
 import RateTableEditor from "../../components/RateTableEditor.vue";
 import { useRateTable } from "../../composables/useRateTable";
 import { individualTermSpec } from "../../rates/rateTables";
@@ -43,7 +44,7 @@ async function runLookup() {
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader
+    <PageHeader
       title="Individual term rates"
       subtitle="Premium rate by age, term and gender for individual term life, with the discount and loading limits underwriters may apply."
     />
@@ -52,14 +53,8 @@ async function runLookup() {
       <h2 class="text-sm font-semibold text-ink">Rate lookup</h2>
       <p class="mt-0.5 text-xs text-ink-muted">Check which rate the backend applies for an entry age and term.</p>
       <form class="flex flex-wrap gap-3 items-end mt-3" @submit.prevent="runLookup">
-        <label class="flex flex-col gap-1 text-xs font-medium text-ink-muted">
-          Age
-          <input v-model="lookup.age" type="number" min="0" step="1" class="px-3 w-28 h-9 text-sm rounded-lg border outline-none bg-surface border-line text-ink focus:border-primary focus:ring-2 focus:ring-primary/15" />
-        </label>
-        <label class="flex flex-col gap-1 text-xs font-medium text-ink-muted">
-          Term (years)
-          <input v-model="lookup.term" type="number" min="1" step="1" class="px-3 w-28 h-9 text-sm rounded-lg border outline-none bg-surface border-line text-ink focus:border-primary focus:ring-2 focus:ring-primary/15" />
-        </label>
+        <div class="w-28"><TextField v-model.number="lookup.age" label="Age" type="number" numeric min="0" step="1" /></div>
+        <div class="w-28"><TextField v-model.number="lookup.term" label="Term (years)" type="number" numeric min="1" step="1" /></div>
         <Button size="sm" html-type="submit" :pending="lookupPending">Look up</Button>
       </form>
       <p v-if="lookupError" role="alert" class="mt-3 text-sm text-error">{{ lookupError }}</p>

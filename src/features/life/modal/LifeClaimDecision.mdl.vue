@@ -6,6 +6,7 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextareaField from "@/components/fields/TextareaField.vue";
 import { toasted } from "@/utils/utils";
 import { DECISIONS, personName, validateDecision } from "../claims/claimRules";
 import { denyClaim, setInsuranceApproveApprovedBy, setInsuranceApproveRevieweBy, setProviderApprovePreparedBy } from "../api/claimApi";
@@ -43,21 +44,7 @@ async function submit() {
   <ModalParent>
     <NewFormParent size="md" :title="d.title" :subtitle="[claim.claimNumber, personName(claim)].filter(Boolean).join(' · ')">
       <form id="life-claim-decision" class="grid gap-3 p-5" novalidate @submit.prevent="submit">
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          {{ d.required ? "Reason" : "Comment" }}
-          <textarea
-            v-model="comment"
-            v-focus="true"
-            rows="4"
-            maxlength="1000"
-            :placeholder="d.placeholder"
-            :class="['px-3 py-2 w-full text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15', error ? 'border-error' : 'border-line']"
-          />
-          <span class="flex justify-between text-xs">
-            <span class="text-error">{{ error }}</span>
-            <span class="text-ink-subtle">{{ comment.length }}/1000</span>
-          </span>
-        </label>
+        <TextareaField v-model="comment" :label="d.required ? 'Reason' : 'Comment'" focus rows="4" :maxlength="1000" counter :placeholder="d.placeholder" :error="error" />
         <p v-if="action === 'submit'" class="text-xs text-ink-muted">Describe the event (what happened, when and where) — the system doesn't have separate fields for it yet. You can't change the documents after submitting.</p>
       </form>
       <template #bottom>

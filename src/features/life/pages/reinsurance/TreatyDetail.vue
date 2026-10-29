@@ -4,9 +4,10 @@ import { useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
+import ListTable from "@/components/ListTable.vue";
 import { formatCurrency, toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
 import RateTableEditor from "../../components/RateTableEditor.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
@@ -131,6 +132,14 @@ function removeFcl(row) {
 }
 
 // ── Medical ranges ──
+const RANGE_COLUMNS = [
+  { key: "insuranceType", label: "Applies to" },
+  { key: "age", label: "Age" },
+  { key: "sumAssured", label: "Sum assured", align: "right", class: "whitespace-nowrap" },
+  { key: "tests", label: "Required tests" },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "Actions", align: "right", srOnly: true },
+];
 const testLabel = (q) => q.label || tests.data.value.find((x) => x.fclMedicalParameterUuid === q.fclMedicalPararameterUuid)?.label || "?";
 const overlaps = computed(() => overlappingRanges(ranges.data.value.filter((r) => r.status !== TreatyStatus.REVISED)));
 
@@ -205,8 +214,8 @@ function removeRange(range) {
     </div>
 
     <template v-else>
-      <LifePageHeader :title="t?.treatyCode || (treaty.loading.value ? 'Loading treaty…' : 'Treaty')" :subtitle="t?.treatyDescription" back="/life/reinsurance/treaties">
-        <template #badge><LifeStatusBadge v-if="t" :status="t.status" /></template>
+      <PageHeader :title="t?.treatyCode || (treaty.loading.value ? 'Loading treaty…' : 'Treaty')" :subtitle="t?.treatyDescription" back="/life/reinsurance/treaties">
+        <template #badge><StatusBadge v-if="t" :status="t.status" /></template>
         <template v-if="t" #actions>
           <Button v-if="editable" variant="outline" @click="editTerms">Edit terms</Button>
           <template v-if="t.status === 'PENDING'">
@@ -215,7 +224,7 @@ function removeRange(range) {
           </template>
           <Button v-else-if="t.status === 'ACTIVE'" variant="outline" @click="setStatus('REVISED')">Mark revised</Button>
         </template>
-      </LifePageHeader>
+      </PageHeader>
 
       <dl v-if="t" class="grid grid-cols-2 gap-3 mb-5 md:grid-cols-3 xl:grid-cols-6">
         <div v-for="[label, value] in [
@@ -268,61 +277,45 @@ function removeRange(range) {
         @remove="removeFcl"
       />
 
-      <section v-else class="overflow-hidden rounded-2xl border bg-surface border-line shadow-card">
-        <div class="flex flex-wrap gap-3 justify-between items-center px-4 py-3 border-b border-line">
-          <p class="text-sm text-ink-muted">Tests the reinsurer requires for lives in each age and sum-assured band.</p>
-          <Button v-if="editable" size="sm" variant="outline" @click="addRange">Add range</Button>
-        </div>
-        <div v-if="overlaps.length" class="px-4 py-2.5 text-sm border-b bg-warning-soft border-line text-warning-strong">
-          <p v-for="([a, b], i) in overlaps" :key="i">{{ insuranceTypeLabel[a.insuranceType] }} ranges age {{ a.minAge }}–{{ a.maxAge }} and {{ b.minAge }}–{{ b.maxAge }} overlap in sum assured; a life could fall in both.</p>
-        </div>
-        <div v-if="ranges.error.value && !ranges.loading.value" class="flex flex-col gap-3 items-center px-6 py-12 text-center">
-          <p class="text-sm font-semibold text-ink">Couldn't load medical ranges</p>
-          <p class="text-sm text-ink-muted">{{ ranges.error.value }}</p>
-          <Button variant="outline" size="sm" @click="ranges.load()">Try again</Button>
-        </div>
-        <table v-else class="w-full text-sm">
-          <thead class="bg-surface-muted">
-            <tr class="text-xs font-semibold tracking-wide text-left uppercase text-ink-subtle">
-              <th class="px-4 py-3">Applies to</th>
-              <th class="px-4 py-3">Age</th>
-              <th class="px-4 py-3 text-right">Sum assured</th>
-              <th class="px-4 py-3">Required tests</th>
-              <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="ranges.loading.value">
-              <tr v-for="i in 3" :key="i" class="border-t border-line"><td v-for="j in 6" :key="j" class="px-4 py-3.5"><div class="h-4 rounded animate-pulse bg-surface-raised"></div></td></tr>
-            </template>
-            <tr v-else-if="!ranges.data.value.length">
-              <td colspan="6" class="px-6 py-12 text-center">
-                <p class="text-sm font-semibold text-ink">No medical ranges</p>
-                <p class="mt-1 text-sm text-ink-muted">Add one for each band where the reinsurer requires evidence.</p>
-              </td>
-            </tr>
-            <tr v-for="r in ranges.data.value" v-else :key="r.fclMedicalUnderwritingRangeUuid" class="border-t border-line">
-              <td class="px-4 py-3 text-ink">{{ insuranceTypeLabel[r.insuranceType] || r.insuranceType }}</td>
-              <td class="px-4 py-3 tabular-nums text-ink">{{ r.minAge }}–{{ r.maxAge }}</td>
-              <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums text-ink">{{ money(r.lowerLimit) }} – {{ money(r.upperLimit) }}</td>
-              <td class="px-4 py-3">
-                <span v-if="!r.requirements.length" class="text-ink-subtle">None</span>
-                <span v-for="q in r.requirements" :key="q.fclUnderwritingRangeMedicalRequirementUuid" class="inline-block px-1.5 py-0.5 mr-1 mb-1 font-mono text-xs rounded bg-surface-raised text-ink" :title="q.testDescription">{{ testLabel(q) }}</span>
-              </td>
-              <td class="px-4 py-3"><LifeStatusBadge :status="r.status" /></td>
-              <td class="px-4 py-3">
-                <div v-if="editable" class="flex gap-1 justify-end">
-                  <Button variant="ghost" size="sm" @click="editRange(r)">Edit</Button>
-                  <Button v-if="r.status !== 'ACTIVE'" variant="ghost" size="sm" @click="setRangeStatus(r, 'ACTIVE')">Activate</Button>
-                  <Button v-else variant="ghost" size="sm" @click="setRangeStatus(r, 'REVISED')">Retire</Button>
-                  <Button variant="ghost" size="sm" class="!text-error" @click="removeRange(r)">Delete</Button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <ListTable
+        v-else
+        :columns="RANGE_COLUMNS"
+        :rows="ranges.data.value"
+        row-key="fclMedicalUnderwritingRangeUuid"
+        :loading="ranges.loading.value"
+        :error="ranges.error.value"
+        error-title="Couldn't load medical ranges"
+        empty-title="No medical ranges"
+        empty-hint="Add one for each band where the reinsurer requires evidence."
+        :skeleton-rows="3"
+        @retry="ranges.load()"
+      >
+        <template #toolbar>
+          <div class="flex flex-wrap gap-3 justify-between items-center px-4 py-3 border-b border-line">
+            <p class="text-sm text-ink-muted">Tests the reinsurer requires for lives in each age and sum-assured band.</p>
+            <Button v-if="editable" size="sm" variant="outline" @click="addRange">Add range</Button>
+          </div>
+          <div v-if="overlaps.length" class="px-4 py-2.5 text-sm border-b bg-warning-soft border-line text-warning-strong">
+            <p v-for="([a, b], i) in overlaps" :key="i">{{ insuranceTypeLabel[a.insuranceType] }} ranges age {{ a.minAge }}–{{ a.maxAge }} and {{ b.minAge }}–{{ b.maxAge }} overlap in sum assured; a life could fall in both.</p>
+          </div>
+        </template>
+        <template #cell-insuranceType="{ row }"><span class="text-ink">{{ insuranceTypeLabel[row.insuranceType] || row.insuranceType }}</span></template>
+        <template #cell-age="{ row }"><span class="tabular-nums text-ink">{{ row.minAge }}–{{ row.maxAge }}</span></template>
+        <template #cell-sumAssured="{ row }"><span class="tabular-nums text-ink">{{ money(row.lowerLimit) }} – {{ money(row.upperLimit) }}</span></template>
+        <template #cell-tests="{ row }">
+          <span v-if="!row.requirements.length" class="text-ink-subtle">None</span>
+          <span v-for="q in row.requirements" :key="q.fclUnderwritingRangeMedicalRequirementUuid" class="inline-block px-1.5 py-0.5 mr-1 mb-1 font-mono text-xs rounded bg-surface-raised text-ink" :title="q.testDescription">{{ testLabel(q) }}</span>
+        </template>
+        <template #cell-status="{ row }"><StatusBadge :status="row.status" /></template>
+        <template #cell-actions="{ row }">
+          <div v-if="editable" class="flex gap-1 justify-end">
+            <Button variant="ghost" size="sm" @click="editRange(row)">Edit</Button>
+            <Button v-if="row.status !== 'ACTIVE'" variant="ghost" size="sm" @click="setRangeStatus(row, 'ACTIVE')">Activate</Button>
+            <Button v-else variant="ghost" size="sm" @click="setRangeStatus(row, 'REVISED')">Retire</Button>
+            <Button variant="ghost" size="sm" class="!text-error" @click="removeRange(row)">Delete</Button>
+          </div>
+        </template>
+      </ListTable>
     </template>
   </div>
 </template>

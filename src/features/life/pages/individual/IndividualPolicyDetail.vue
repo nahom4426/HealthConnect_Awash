@@ -6,8 +6,10 @@ import { useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import { toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
+import { hasPrivilege } from "@/utils/privileges";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
+import ListTable from "@/components/ListTable.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
@@ -21,7 +23,11 @@ const uuid = route.params.benefitUuid;
 
 const benefit = useLifeResource(getBenefit);
 const b = computed(() => benefit.data.value || {});
-const can = computed(() => benefitActions(b.value));
+const can = computed(() => {
+  const a = benefitActions(b.value);
+  const may = hasPrivilege(["Life_Quotation_Create", "Life_Policy_Issue"]);
+  return { edit: a.edit && may, remove: a.remove && may, riders: a.riders && may, isDraft: a.edit };
+});
 benefit.load(uuid);
 
 // GET /individual-rider-benefit/active/benefits isn't filtered by policy (README R2): filter here
@@ -30,6 +36,15 @@ const riders = useLifeResource(getRiders, { initial: [] });
 riderBenefits.load();
 riders.load();
 const riderName = (id) => riders.data.value.find((r) => r.riderUuid === id)?.riderName || "Rider";
+
+const riderColumns = computed(() => [
+  { key: "rider", label: "Rider" },
+  { key: "benefits", label: "Benefit", align: "right" },
+  { key: "premium", label: "Premium", align: "right" },
+  { key: "paid", label: "Paid" },
+  { key: "status", label: "Status" },
+  ...(can.value.riders ? [{ key: "actions", label: "Actions", align: "right", srOnly: true }] : []),
+]);
 
 const cards = computed(() => [
   ["Sum assured", formatAmount(b.value.termBenefit)],
@@ -80,13 +95,13 @@ function remove() {
     </div>
 
     <template v-else>
-      <LifePageHeader :title="benefitName(b) || (benefit.loading.value ? 'Loading…' : 'Individual policy')" :subtitle="b.policyNumber ? `Policy ${b.policyNumber} · Individual term life` : 'Individual term life'" back="/life/individual">
-        <template v-if="b.status" #badge><LifeStatusBadge :status="b.status" /></template>
+      <PageHeader :title="benefitName(b) || (benefit.loading.value ? 'Loading…' : 'Individual policy')" :subtitle="b.policyNumber ? `Policy ${b.policyNumber} · Individual term life` : 'Individual term life'" back="/life/individual">
+        <template v-if="b.status" #badge><StatusBadge :status="b.status" /></template>
         <template #actions>
           <Button v-if="can.remove" variant="ghost" class="!text-error" @click="remove">Delete draft</Button>
           <Button v-if="can.edit" variant="outline" @click="router.push(`/life/individual/${uuid}/edit`)">Edit</Button>
         </template>
-      </LifePageHeader>
+      </PageHeader>
 
       <p v-if="can.edit && b.status" class="px-4 py-2.5 mb-5 text-xs rounded-xl bg-surface-muted text-ink-muted">
         Draft. Issuing the policy (policy number, active cover) isn't available in the system yet (backend gap G11).
@@ -118,38 +133,31 @@ function remove() {
             </div>
             <Button v-if="can.riders" size="sm" :disabled="riders.loading.value" @click="editRider()">Add rider</Button>
           </div>
-          <div v-if="riderBenefits.error.value && !riderBenefits.loading.value" class="flex gap-3 items-center mt-4 text-sm text-ink-muted">
-            {{ riderBenefits.error.value }} <Button variant="outline" size="sm" @click="riderBenefits.load()">Try again</Button>
-          </div>
-          <table v-else class="mt-4 w-full text-sm">
-            <thead>
-              <tr class="text-xs font-semibold tracking-wide text-left uppercase text-ink-subtle">
-                <th class="py-2 pr-3">Rider</th>
-                <th class="py-2 pr-3 text-right">Benefit</th>
-                <th class="py-2 pr-3 text-right">Premium</th>
-                <th class="py-2 pr-3">Paid</th>
-                <th class="py-2 pr-3">Status</th>
-                <th v-if="can.riders" class="py-2"><span class="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="riderBenefits.loading.value"><td :colspan="can.riders ? 6 : 5" class="py-3"><div class="h-4 rounded animate-pulse bg-surface-raised"></div></td></tr>
-              <tr v-else-if="!riderBenefits.data.value.length"><td :colspan="can.riders ? 6 : 5" class="py-4 text-sm text-ink-subtle">No riders on this policy.</td></tr>
-              <tr v-for="r in riderBenefits.data.value" v-else :key="r.individualRiderBenefitUuid" class="border-t border-line">
-                <td class="py-2.5 pr-3 text-ink">{{ riderName(r.riderUuid) }}</td>
-                <td class="py-2.5 pr-3 text-right tabular-nums text-ink">{{ formatAmount(r.benefits) }}</td>
-                <td class="py-2.5 pr-3 text-right tabular-nums text-ink">{{ formatAmount(r.premium) }}</td>
-                <td class="py-2.5 pr-3 text-ink-muted">{{ r.paid ? "Yes" : "No" }}</td>
-                <td class="py-2.5 pr-3"><LifeStatusBadge v-if="r.status" :status="r.status" /></td>
-                <td v-if="can.riders" class="py-2.5">
-                  <div class="flex gap-1 justify-end">
-                    <Button variant="ghost" size="sm" @click="editRider(r)">Change</Button>
-                    <Button variant="ghost" size="sm" class="!text-error" @click="removeRider(r)">Remove</Button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <ListTable
+            bare
+            class="mt-4"
+            :columns="riderColumns"
+            :rows="riderBenefits.data.value"
+            row-key="individualRiderBenefitUuid"
+            :loading="riderBenefits.loading.value"
+            :error="riderBenefits.error.value"
+            error-title="Couldn't load riders"
+            empty-title="No riders on this policy."
+            :skeleton-rows="1"
+            @retry="riderBenefits.load()"
+          >
+            <template #cell-rider="{ row }"><span class="text-ink">{{ riderName(row.riderUuid) }}</span></template>
+            <template #cell-benefits="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.benefits) }}</span></template>
+            <template #cell-premium="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.premium) }}</span></template>
+            <template #cell-paid="{ row }"><span class="text-ink-muted">{{ row.paid ? "Yes" : "No" }}</span></template>
+            <template #cell-status="{ row }"><StatusBadge v-if="row.status" :status="row.status" /></template>
+            <template #cell-actions="{ row }">
+              <div class="flex gap-1 justify-end">
+                <Button variant="ghost" size="sm" @click="editRider(row)">Change</Button>
+                <Button variant="ghost" size="sm" class="!text-error" @click="removeRider(row)">Remove</Button>
+              </div>
+            </template>
+          </ListTable>
         </section>
       </div>
       <p class="mt-5 text-xs text-ink-subtle">Beneficiaries, the health questionnaire and the policyholder's KYC need new backend endpoints (gaps G1, G4 and G2).</p>

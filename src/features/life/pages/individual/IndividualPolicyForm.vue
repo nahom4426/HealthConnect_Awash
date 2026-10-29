@@ -6,7 +6,9 @@ import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
 import { toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import TextField from "@/components/fields/TextField.vue";
+import SelectField from "@/components/fields/SelectField.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { BenefitStatus } from "../../constants/statuses";
 import { formatAmount } from "../../constants/labels";
@@ -96,18 +98,17 @@ async function save() {
   router.push(uuid ? `/life/individual/${uuid}` : "/life/individual");
 }
 
-const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60";
 const PERSON = [["firstName", "First name"], ["fatherName", "Father's name"], ["grandFatherName", "Grandfather's name"]];
 </script>
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader :title="editing ? 'Edit individual policy' : 'New individual policy'" :back="editing ? `/life/individual/${benefitUuid}` : '/life/individual'" subtitle="Term life for one person. The premium is set by the system from the individual term rates.">
+    <PageHeader :title="editing ? 'Edit individual policy' : 'New individual policy'" :back="editing ? `/life/individual/${benefitUuid}` : '/life/individual'" subtitle="Term life for one person. The premium is set by the system from the individual term rates.">
       <template #actions>
         <Button variant="outline" @click="router.back()">Cancel</Button>
         <Button :pending="saving" :disabled="locked || existing.loading.value" @click="save">{{ editing ? "Save changes" : "Create draft" }}</Button>
       </template>
-    </LifePageHeader>
+    </PageHeader>
 
     <p v-if="locked" class="px-4 py-2.5 mb-5 text-sm rounded-xl bg-warning-soft text-warning-strong">This policy is no longer a draft and can't be edited.</p>
     <div v-if="existing.error.value && !existing.loading.value" class="flex flex-col gap-3 items-center px-6 py-12 text-center">
@@ -120,49 +121,18 @@ const PERSON = [["firstName", "First name"], ["fatherName", "Father's name"], ["
         <fieldset :disabled="locked" class="grid gap-4 p-5 rounded-2xl border sm:grid-cols-3 bg-surface border-line shadow-card">
           <legend class="sr-only">Policyholder</legend>
           <h2 class="text-sm font-semibold sm:col-span-3 text-ink">Policyholder (insured life)</h2>
-          <label v-for="[key, label] in PERSON" :key="key" class="flex flex-col gap-1 text-sm font-medium text-ink">
-            {{ label }}
-            <input v-model="form[key]" maxlength="25" :class="[field, errors[key] ? 'border-error' : 'border-line']" />
-            <span v-if="errors[key]" class="text-xs text-error">{{ errors[key] }}</span>
-          </label>
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Gender
-            <select v-model="form.gender" :class="[field, errors.gender ? 'border-error' : 'border-line']">
-              <option value="" disabled>Select…</option>
-              <option v-for="g in GENDERS" :key="g" :value="g">{{ g }}</option>
-            </select>
-            <span v-if="errors.gender" class="text-xs text-error">{{ errors.gender }}</span>
-          </label>
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Date of birth
-            <input v-model="form.dateOfBirth" type="date" :class="[field, errors.dateOfBirth ? 'border-error' : 'border-line']" />
-            <span v-if="errors.dateOfBirth" class="text-xs text-error">{{ errors.dateOfBirth }}</span>
-          </label>
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Phone
-            <input v-model="form.personPhone" type="tel" maxlength="13" placeholder="+2519…" :class="[field, errors.personPhone ? 'border-error' : 'border-line']" />
-            <span v-if="errors.personPhone" class="text-xs text-error">{{ errors.personPhone }}</span>
-          </label>
+          <TextField v-for="[key, label] in PERSON" :key="key" v-model="form[key]" :label="label" maxlength="25" :error="errors[key]" />
+          <SelectField v-model="form.gender" label="Gender" :options="GENDERS" :error="errors.gender" />
+          <TextField v-model="form.dateOfBirth" label="Date of birth" type="date" :error="errors.dateOfBirth" />
+          <TextField v-model="form.personPhone" label="Phone" type="tel" maxlength="13" placeholder="+2519…" :error="errors.personPhone" />
         </fieldset>
 
         <fieldset :disabled="locked" class="grid gap-4 p-5 rounded-2xl border sm:grid-cols-3 bg-surface border-line shadow-card">
           <legend class="sr-only">Cover</legend>
           <h2 class="text-sm font-semibold sm:col-span-3 text-ink">Cover</h2>
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Cover starts
-            <input v-model="form.beginDate" type="date" :class="[field, errors.beginDate ? 'border-error' : 'border-line']" />
-            <span v-if="errors.beginDate" class="text-xs text-error">{{ errors.beginDate }}</span>
-          </label>
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Term (years)
-            <input v-model="form.insuranceTerm" type="number" min="1" step="1" inputmode="numeric" :class="[field, errors.insuranceTerm ? 'border-error' : 'border-line']" />
-            <span v-if="errors.insuranceTerm" class="text-xs text-error">{{ errors.insuranceTerm }}</span>
-          </label>
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Sum assured
-            <input v-model="form.termBenefit" type="number" min="0" step="any" inputmode="decimal" :class="[field, 'text-right tabular-nums', errors.termBenefit ? 'border-error' : 'border-line']" />
-            <span v-if="errors.termBenefit" class="text-xs text-error">{{ errors.termBenefit }}</span>
-          </label>
+          <TextField v-model="form.beginDate" label="Cover starts" type="date" :error="errors.beginDate" />
+          <TextField v-model.number="form.insuranceTerm" label="Term (years)" type="number" min="1" step="1" inputmode="numeric" :error="errors.insuranceTerm" />
+          <TextField v-model.number="form.termBenefit" label="Sum assured" type="number" numeric min="0" step="any" :error="errors.termBenefit" />
         </fieldset>
 
         <section v-if="!editing" class="p-5 rounded-2xl border bg-surface border-line shadow-card">
@@ -176,22 +146,27 @@ const PERSON = [["firstName", "First name"], ["fatherName", "Father's name"], ["
           <p v-if="riders.error.value" class="mt-3 text-sm text-ink-muted">{{ riders.error.value }}</p>
           <ul v-else-if="riderRows.length" class="grid gap-3 mt-4">
             <li v-for="row in riderRows" :key="row.key" class="grid gap-3 items-start p-3 rounded-xl border sm:grid-cols-[1fr_12rem_auto] border-line">
-              <label class="flex flex-col gap-1 text-xs font-medium text-ink-muted">
-                Rider
-                <select v-model="row.riderUuid" :class="[field, row.errors.riderUuid ? 'border-error' : 'border-line']" @change="lookupRiderRate(row)">
-                  <option value="" disabled>Select…</option>
-                  <option v-for="r in availableFor(row)" :key="r.riderUuid" :value="r.riderUuid">{{ r.riderName }}</option>
-                </select>
-                <span v-if="row.errors.riderUuid" class="text-error">{{ row.errors.riderUuid }}</span>
-                <span v-else-if="row.rate" class="text-ink-subtle">Rate {{ rateFor(row.rate, form.gender)?.rate ?? "—" }} per {{ row.rate.rateUnit ?? "—" }}</span>
-                <span v-else-if="row.rateError" class="text-warning-strong">{{ row.rateError }}</span>
-              </label>
-              <label class="flex flex-col gap-1 text-xs font-medium text-ink-muted">
-                Benefit
-                <input v-model="row.benefits" type="number" min="0" step="any" inputmode="decimal" :class="[field, 'text-right tabular-nums', row.errors.benefits ? 'border-error' : 'border-line']" />
-                <span v-if="row.errors.benefits" class="text-error">{{ row.errors.benefits }}</span>
-                <span v-else-if="riderOf(row.riderUuid)" class="text-ink-subtle">{{ formatAmount(riderOf(row.riderUuid).minLimit) }} – {{ formatAmount(riderOf(row.riderUuid).maxLimit) }}</span>
-              </label>
+              <div>
+                <SelectField
+                  v-model="row.riderUuid"
+                  label="Rider"
+                  :options="availableFor(row).map((r) => ({ value: r.riderUuid, label: r.riderName }))"
+                  :error="row.errors.riderUuid"
+                  :hint="row.rate ? `Rate ${rateFor(row.rate, form.gender)?.rate ?? '—'} per ${row.rate.rateUnit ?? '—'}` : undefined"
+                  @change="lookupRiderRate(row)"
+                />
+                <p v-if="!row.errors.riderUuid && !row.rate && row.rateError" class="mt-1 text-xs text-warning-strong">{{ row.rateError }}</p>
+              </div>
+              <TextField
+                v-model.number="row.benefits"
+                label="Benefit"
+                type="number"
+                numeric
+                min="0"
+                step="any"
+                :error="row.errors.benefits"
+                :hint="riderOf(row.riderUuid) ? `${formatAmount(riderOf(row.riderUuid).minLimit)} – ${formatAmount(riderOf(row.riderUuid).maxLimit)}` : undefined"
+              />
               <button type="button" class="self-center p-2 mt-4 text-xs font-semibold rounded-md text-error hover:bg-error-soft" @click="removeRider(row)">Remove</button>
             </li>
           </ul>

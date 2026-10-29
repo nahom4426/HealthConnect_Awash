@@ -4,13 +4,22 @@ import { useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
+import ListTable from "@/components/ListTable.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { formatCurrency } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { getModifiedRiders, getPendingRiders, getRiders } from "../../api/productApi";
 
 const router = useRouter();
+const COLUMNS = [
+  { key: "rider", label: "Rider" },
+  { key: "range", label: "Sum assured range", align: "right", class: "whitespace-nowrap" },
+  { key: "rates", label: "Rate rows", align: "right", class: "whitespace-nowrap" },
+  { key: "status", label: "Status" },
+  { key: "open", label: "Open", align: "right", srOnly: true },
+];
 // The backend keeps riders in versions: pending (draft), active (in use), modified (superseded)
 const TABS = { Active: getRiders, Pending: getPendingRiders, Modified: getModifiedRiders };
 const tab = ref("Active");
@@ -31,80 +40,48 @@ function newRider() {
   });
 }
 
+const open = (r) => router.push(`/life/products/riders/${r.riderUuid}`);
 const money = (v) => (v === null || v === undefined ? "—" : formatCurrency(v));
 </script>
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader title="Riders" subtitle="Additional covers sold with term life — accidental death, disability and others — each with its own individual and group rate tables.">
+    <PageHeader title="Riders" subtitle="Additional covers sold with term life — accidental death, disability and others — each with its own individual and group rate tables.">
       <template #actions>
         <Button @click="newRider">New rider</Button>
       </template>
-    </LifePageHeader>
+    </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
       <TabGroup v-model="tab" :tabs="Object.keys(TABS)" />
-      <input
-        v-model="search"
-        type="search"
-        placeholder="Search riders"
-        aria-label="Search riders"
-        class="px-3 w-64 h-9 text-sm rounded-lg border outline-none bg-surface border-line text-ink focus:border-primary focus:ring-2 focus:ring-primary/15"
-      />
+      <div class="w-64"><TextField v-model="search" type="search" placeholder="Search riders" aria-label="Search riders" /></div>
     </div>
 
-    <section class="overflow-hidden rounded-2xl border bg-surface border-line shadow-card">
-      <div v-if="error && !loading" class="flex flex-col gap-3 items-center px-6 py-12 text-center">
-        <p class="text-sm font-semibold text-ink">Couldn't load riders</p>
-        <p class="max-w-md text-sm text-ink-muted">{{ error }}</p>
-        <Button variant="outline" size="sm" @click="load(tab)">Try again</Button>
-      </div>
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-surface-muted">
-            <tr class="text-xs font-semibold tracking-wide text-left uppercase text-ink-subtle">
-              <th class="px-4 py-3">Rider</th>
-              <th class="px-4 py-3 text-right">Sum assured range</th>
-              <th class="px-4 py-3 text-right">Rate rows</th>
-              <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3"><span class="sr-only">Open</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="loading">
-              <tr v-for="i in 5" :key="i" class="border-t border-line">
-                <td v-for="j in 5" :key="j" class="px-4 py-3.5"><div class="h-4 rounded animate-pulse bg-surface-raised"></div></td>
-              </tr>
-            </template>
-            <tr v-else-if="!visible.length">
-              <td colspan="5" class="px-6 py-14 text-center">
-                <p class="text-sm font-semibold text-ink">{{ search ? "No riders match your search" : `No ${tab.toLowerCase()} riders` }}</p>
-                <p v-if="!search && tab === 'Active'" class="mt-1 text-sm text-ink-muted">Create a rider, add its rates, then activate it.</p>
-              </td>
-            </tr>
-            <tr
-              v-for="r in visible"
-              v-else
-              :key="r.riderUuid"
-              class="border-t cursor-pointer border-line hover:bg-surface-muted/60"
-              @click="router.push(`/life/products/riders/${r.riderUuid}`)"
-            >
-              <td class="px-4 py-3">
-                <p class="font-semibold text-ink">{{ r.riderName }}</p>
-                <p v-if="r.riderDescription" class="mt-0.5 max-w-lg text-xs truncate text-ink-muted">{{ r.riderDescription }}</p>
-              </td>
-              <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums text-ink">{{ money(r.minLimit) }} – {{ money(r.maxLimit) }}</td>
-              <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums text-ink-muted">
-                {{ r.individualRiders?.length ?? 0 }} individual · {{ r.groupRiders?.length ?? 0 }} group
-              </td>
-              <td class="px-4 py-3"><LifeStatusBadge :status="r.status" /></td>
-              <td class="px-4 py-3 text-right">
-                <RouterLink :to="`/life/products/riders/${r.riderUuid}`" class="text-sm font-semibold text-primary hover:underline" @click.stop>Open</RouterLink>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <ListTable
+      :columns="COLUMNS"
+      :rows="visible"
+      row-key="riderUuid"
+      :loading="loading"
+      :error="error"
+      error-title="Couldn't load riders"
+      :empty-title="search ? 'No riders match your search' : `No ${tab.toLowerCase()} riders`"
+      :empty-hint="!search && tab === 'Active' ? 'Create a rider, add its rates, then activate it.' : ''"
+      clickable
+      @row-click="open"
+      @retry="load(tab)"
+    >
+      <template #cell-rider="{ row }">
+        <p class="font-semibold text-ink">{{ row.riderName }}</p>
+        <p v-if="row.riderDescription" class="mt-0.5 max-w-lg text-xs truncate text-ink-muted">{{ row.riderDescription }}</p>
+      </template>
+      <template #cell-range="{ row }"><span class="tabular-nums text-ink">{{ money(row.minLimit) }} – {{ money(row.maxLimit) }}</span></template>
+      <template #cell-rates="{ row }">
+        <span class="tabular-nums text-ink-muted">{{ row.individualRiders?.length ?? 0 }} individual · {{ row.groupRiders?.length ?? 0 }} group</span>
+      </template>
+      <template #cell-status="{ row }"><StatusBadge :status="row.status" /></template>
+      <template #cell-open="{ row }">
+        <RouterLink :to="`/life/products/riders/${row.riderUuid}`" class="text-sm font-semibold text-primary hover:underline" @click.stop>Open</RouterLink>
+      </template>
+    </ListTable>
   </div>
 </template>

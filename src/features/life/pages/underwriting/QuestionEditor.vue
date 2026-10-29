@@ -5,9 +5,11 @@ import { computed, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
+import TextareaField from "@/components/fields/TextareaField.vue";
 import { toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
 import RateTableEditor from "../../components/RateTableEditor.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { QuestionType, RecordStatus } from "../../constants/statuses";
@@ -69,14 +71,12 @@ async function save(status) {
     router.push("/life/underwriting/questions");
   }
 }
-
-const field = "w-full px-3 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15";
 </script>
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader :title="editing ? 'Edit question' : 'New question'" back="/life/underwriting/questions" subtitle="Write the question, choose how it is answered, then score the answers.">
-      <template v-if="editing && form.status" #badge><LifeStatusBadge :status="form.status" /></template>
+    <PageHeader :title="editing ? 'Edit question' : 'New question'" back="/life/underwriting/questions" subtitle="Write the question, choose how it is answered, then score the answers.">
+      <template v-if="editing && form.status" #badge><StatusBadge :status="form.status" /></template>
       <template #actions>
         <template v-if="!editing || form.status !== 'ACTIVE'">
           <Button variant="outline" :pending="!!saving && saving !== 'ACTIVE'" :disabled="!!saving || question.loading.value" @click="save(editing ? form.status || 'PENDING' : 'PENDING')">{{ editing ? "Save changes" : "Save as draft" }}</Button>
@@ -84,7 +84,7 @@ const field = "w-full px-3 text-sm rounded-lg border outline-none bg-surface tex
         </template>
         <Button v-else :pending="saving === 'ACTIVE'" :disabled="!!saving" @click="save('ACTIVE')">Save changes</Button>
       </template>
-    </LifePageHeader>
+    </PageHeader>
 
     <div v-if="question.error.value && !question.loading.value" class="flex flex-col gap-3 items-center px-6 py-12 text-center rounded-2xl border bg-surface border-line">
       <p class="text-sm font-semibold text-ink">Couldn't load this question</p>
@@ -96,19 +96,8 @@ const field = "w-full px-3 text-sm rounded-lg border outline-none bg-surface tex
       <div class="grid gap-5 min-w-0">
         <!-- Wording -->
         <section class="grid gap-4 p-5 rounded-2xl border bg-surface border-line shadow-card">
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Question
-            <textarea v-model="form.question" rows="2" maxlength="250" placeholder="e.g. Have you ever been diagnosed with high blood pressure?" :disabled="question.loading.value" :class="[field, 'py-2', errors.question ? 'border-error' : 'border-line']" />
-            <span class="flex justify-between text-xs">
-              <span class="text-error">{{ errors.question }}</span>
-              <span class="text-ink-subtle">{{ form.question.length }}/250</span>
-            </span>
-          </label>
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink sm:w-80">
-            Category <span class="text-xs font-normal text-ink-subtle">Groups questions on the form, e.g. Medical history or Lifestyle</span>
-            <input v-model="form.category" maxlength="50" :disabled="question.loading.value" :class="[field, 'h-10', errors.category ? 'border-error' : 'border-line']" />
-            <span v-if="errors.category" class="text-xs text-error">{{ errors.category }}</span>
-          </label>
+          <TextareaField v-model="form.question" label="Question" rows="2" :maxlength="250" counter placeholder="e.g. Have you ever been diagnosed with high blood pressure?" :disabled="question.loading.value" :error="errors.question" />
+          <div class="sm:w-80"><TextField v-model="form.category" label="Category" hint="Groups questions on the form, e.g. Medical history or Lifestyle" maxlength="50" :disabled="question.loading.value" :error="errors.category" /></div>
         </section>
 
         <!-- Answer type -->

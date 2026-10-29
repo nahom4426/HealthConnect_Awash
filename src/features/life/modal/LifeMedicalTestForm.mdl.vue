@@ -6,6 +6,8 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
+import TextareaField from "@/components/fields/TextareaField.vue";
 import { toasted } from "@/utils/utils";
 import { createFclMedicalParameter, updateFclMedicalParameter } from "../api/reinsuranceApi";
 
@@ -35,24 +37,14 @@ async function submit() {
   }
 }
 
-const field = "w-full px-3 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15";
 </script>
 
 <template>
   <ModalParent>
     <NewFormParent size="md" :title="editing ? 'Edit medical test' : 'Add medical test'" subtitle="Evidence a reinsurer can require above its free cover limit.">
       <form id="life-medical-test-form" class="grid gap-4 p-5" novalidate @submit.prevent="submit">
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Short code
-          <input v-model="form.label" v-focus="true" maxlength="5" placeholder="e.g. ECG" :class="[field, 'h-10 uppercase w-32', errors.label ? 'border-error' : 'border-line']" />
-          <span v-if="errors.label" class="text-xs text-error">{{ errors.label }}</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Description
-          <textarea v-model="form.medicalTestDescription" maxlength="500" rows="3" placeholder="e.g. Resting electrocardiogram with report" :class="[field, 'py-2', errors.medicalTestDescription ? 'border-error' : 'border-line']" />
-          <span class="text-xs text-ink-subtle">{{ form.medicalTestDescription.length }}/500</span>
-          <span v-if="errors.medicalTestDescription" class="text-xs text-error">{{ errors.medicalTestDescription }}</span>
-        </label>
+        <div class="w-32"><TextField v-model="form.label" label="Short code" required focus maxlength="5" placeholder="e.g. ECG" class="uppercase" :error="errors.label" /></div>
+        <TextareaField v-model="form.medicalTestDescription" label="Description" required :maxlength="500" counter rows="3" placeholder="e.g. Resting electrocardiogram with report" :error="errors.medicalTestDescription" />
       </form>
       <template #bottom>
         <div class="flex gap-2 justify-end p-4 w-full border-t border-line">

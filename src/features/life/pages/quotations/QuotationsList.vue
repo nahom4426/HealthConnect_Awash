@@ -4,11 +4,14 @@ import { useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
-import LifePager from "../../components/LifePager.vue";
+import ListTable from "@/components/ListTable.vue";
+import TextField from "@/components/fields/TextField.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
+import PageNav from "@/components/PageNav.vue";
 import { useLifePagedList } from "../../composables/useLifePagedList";
 import { QuotationStatus } from "../../constants/statuses";
+import { hasPrivilege } from "@/utils/privileges";
 import { formatDate } from "../../constants/labels";
 import { getQuotations } from "../../api/quotationApi";
 
@@ -27,6 +30,15 @@ const tab = computed({ get: () => Object.keys(TABS).find((k) => TABS[k] === list
 // The date that matters for the tab: when it was created, issued, accepted or paid
 const stageDate = (q) => ({ PENDING: q.createdAt ?? q.audit?.createdAt, ISSUED: q.issueDate, ACCEPTED: q.acceptedDate, PAID: q.paidDate })[q.quotationStatus];
 const stageDateLabel = computed(() => ({ Draft: "Created", Issued: "Issued", Accepted: "Accepted", Paid: "Paid" })[tab.value]);
+const columns = computed(() => [
+  { key: "quotationNumber", label: "Quotation" },
+  { key: "institutionName", label: "Institution" },
+  { key: "term", label: "Term" },
+  { key: "contact", label: "Contact" },
+  { key: "quotedByFullName", label: "Prepared by" },
+  { key: "stageDate", label: stageDateLabel.value },
+  { key: "status", label: "Status" },
+]);
 
 const open = (q) => router.push(`/life/quotations/${q.quotationUuid}`);
 const create = () => openModal("LifeQuotationForm", {}, (saved) => saved?.quotationUuid && open(saved));
@@ -34,61 +46,43 @@ const create = () => openModal("LifeQuotationForm", {}, (saved) => saved?.quotat
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader title="Group quotations" subtitle="Group term life quotes for institutions, from draft to paid.">
-      <template #actions><Button @click="create">New quotation</Button></template>
-    </LifePageHeader>
+    <PageHeader title="Group quotations" subtitle="Group term life quotes for institutions, from draft to paid.">
+      <template v-if="hasPrivilege('Life_Quotation_Create')" #actions><Button @click="create">New quotation</Button></template>
+    </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-2">
       <TabGroup v-model="tab" :tabs="Object.keys(TABS)" />
-      <input v-model="list.search.value" type="search" placeholder="Search number or institution" aria-label="Search quotations" class="px-3 w-72 h-9 text-sm rounded-lg border outline-none bg-surface border-line text-ink focus:border-primary focus:ring-2 focus:ring-primary/15" />
+      <div class="w-72"><TextField v-model="list.search.value" type="search" placeholder="Search number or institution" aria-label="Search quotations" /></div>
     </div>
     <p class="mb-4 text-xs text-ink-subtle">{{ HINTS[tab] }}</p>
 
-    <section class="overflow-hidden rounded-2xl border bg-surface border-line shadow-card">
-      <div v-if="list.error.value && !list.loading.value" class="flex flex-col gap-3 items-center px-6 py-12 text-center">
-        <p class="text-sm font-semibold text-ink">Couldn't load quotations</p>
-        <p class="max-w-md text-sm text-ink-muted">{{ list.error.value }}</p>
-        <Button variant="outline" size="sm" @click="list.reload()">Try again</Button>
-      </div>
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-surface-muted">
-            <tr class="text-xs font-semibold tracking-wide text-left uppercase text-ink-subtle">
-              <th class="px-4 py-3">Quotation</th>
-              <th class="px-4 py-3">Institution</th>
-              <th class="px-4 py-3">Term</th>
-              <th class="px-4 py-3">Contact</th>
-              <th class="px-4 py-3">Prepared by</th>
-              <th class="px-4 py-3">{{ stageDateLabel }}</th>
-              <th class="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="list.loading.value">
-              <tr v-for="i in 6" :key="i" class="border-t border-line"><td v-for="j in 7" :key="j" class="px-4 py-3.5"><div class="h-4 rounded animate-pulse bg-surface-raised"></div></td></tr>
-            </template>
-            <tr v-else-if="!list.rows.value.length">
-              <td colspan="7" class="px-6 py-14 text-center">
-                <p class="text-sm font-semibold text-ink">{{ list.search.value ? "No quotations match your search" : `No ${tab.toLowerCase()} quotations` }}</p>
-                <p v-if="!list.search.value && tab === 'Draft'" class="mt-1 text-sm text-ink-muted">Start one for an institution with “New quotation”.</p>
-              </td>
-            </tr>
-            <tr v-for="q in list.rows.value" v-else :key="q.quotationUuid" tabindex="0" class="border-t cursor-pointer border-line hover:bg-surface-muted/60 focus:outline-none focus:bg-surface-muted" @click="open(q)" @keydown.enter="open(q)">
-              <td class="px-4 py-3 font-medium whitespace-nowrap text-ink">{{ q.quotationNumber || "Draft" }}</td>
-              <td class="px-4 py-3 text-ink">{{ q.institutionName || "—" }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-ink-muted">{{ q.term ? `${q.term} yr${q.term === 1 ? "" : "s"}` : "—" }}</td>
-              <td class="px-4 py-3 text-ink-muted">
-                {{ q.contactPersonFullName || "—" }}
-                <span v-if="q.contactPhone" class="block text-xs text-ink-subtle">{{ q.contactPhone }}</span>
-              </td>
-              <td class="px-4 py-3 text-ink-muted">{{ q.quotedByFullName || "—" }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-ink-muted">{{ formatDate(stageDate(q)) }}</td>
-              <td class="px-4 py-3"><LifeStatusBadge :status="q.quotationStatus" /></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <LifePager v-model:page="list.page.value" :total-pages="list.totalPages.value" :disabled="list.loading.value" />
-    </section>
+    <ListTable
+      :columns="columns"
+      :rows="list.rows.value"
+      row-key="quotationUuid"
+      :loading="list.loading.value"
+      :error="list.error.value"
+      error-title="Couldn't load quotations"
+      :skeleton-rows="6"
+      clickable
+      @row-click="open"
+      @retry="list.reload()"
+    >
+      <template #empty>
+        <p class="text-sm font-semibold text-ink">{{ list.search.value ? "No quotations match your search" : `No ${tab.toLowerCase()} quotations` }}</p>
+        <p v-if="!list.search.value && tab === 'Draft'" class="mt-1 text-sm text-ink-muted">Start one for an institution with “New quotation”.</p>
+      </template>
+      <template #cell-quotationNumber="{ row }"><span class="font-medium whitespace-nowrap text-ink">{{ row.quotationNumber || "Draft" }}</span></template>
+      <template #cell-institutionName="{ row }"><span class="text-ink">{{ row.institutionName || "—" }}</span></template>
+      <template #cell-term="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ row.term ? `${row.term} yr${row.term === 1 ? "" : "s"}` : "—" }}</span></template>
+      <template #cell-contact="{ row }">
+        <span class="text-ink-muted">{{ row.contactPersonFullName || "—" }}</span>
+        <span v-if="row.contactPhone" class="block text-xs text-ink-subtle">{{ row.contactPhone }}</span>
+      </template>
+      <template #cell-quotedByFullName="{ row }"><span class="text-ink-muted">{{ row.quotedByFullName || "—" }}</span></template>
+      <template #cell-stageDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(stageDate(row)) }}</span></template>
+      <template #cell-status="{ row }"><StatusBadge :status="row.quotationStatus" /></template>
+      <template #footer><PageNav v-model:page="list.page.value" :total-pages="list.totalPages.value" :disabled="list.loading.value" /></template>
+    </ListTable>
   </div>
 </template>

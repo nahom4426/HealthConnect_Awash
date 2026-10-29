@@ -6,6 +6,7 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { toasted } from "@/utils/utils";
 import { payQuotation } from "../api/quotationApi";
 import { PAYMENT_AMOUNTS, toPaymentParams, validatePayment } from "../quotations/quotationRules";
@@ -29,8 +30,6 @@ async function submit() {
     closeModal(res.data || true);
   }
 }
-
-const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15";
 </script>
 
 <template>
@@ -38,21 +37,9 @@ const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surfac
     <NewFormParent size="md" title="Record payment" :subtitle="`${q.quotationNumber || ''} · ${q.institutionName || ''}`">
       <form id="life-quotation-payment" class="grid gap-4 p-5" novalidate @submit.prevent="submit">
         <div class="grid gap-4 sm:grid-cols-2">
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Receipt number
-            <input v-model="form.receiptNumber" v-focus="true" maxlength="60" :class="[field, errors.receiptNumber ? 'border-error' : 'border-line']" />
-            <span v-if="errors.receiptNumber" class="text-xs text-error">{{ errors.receiptNumber }}</span>
-          </label>
-          <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-            Receipt date
-            <input v-model="form.receiptDate" type="date" :max="maxDate" :class="[field, errors.receiptDate ? 'border-error' : 'border-line']" />
-            <span v-if="errors.receiptDate" class="text-xs text-error">{{ errors.receiptDate }}</span>
-          </label>
-          <label v-for="[key, label] in PAYMENT_AMOUNTS" :key="key" class="flex flex-col gap-1 text-sm font-medium text-ink">
-            {{ label }}
-            <input v-model="form[key]" type="number" min="0" step="any" inputmode="decimal" :class="[field, 'text-right tabular-nums', errors[key] ? 'border-error' : 'border-line']" />
-            <span v-if="errors[key]" class="text-xs text-error">{{ errors[key] }}</span>
-          </label>
+          <TextField v-model="form.receiptNumber" label="Receipt number" focus maxlength="60" :error="errors.receiptNumber" />
+          <TextField v-model="form.receiptDate" label="Receipt date" type="date" :max="maxDate" :error="errors.receiptDate" />
+          <TextField v-for="[key, label] in PAYMENT_AMOUNTS" :key="key" v-model="form[key]" :label="label" numeric type="number" min="0" step="any" :error="errors[key]" />
         </div>
         <p class="px-3 py-2 text-xs rounded-lg bg-warning-soft text-warning-strong">Enter the amounts exactly as they appear on the receipt. The quotation becomes Paid and can no longer be changed.</p>
       </form>

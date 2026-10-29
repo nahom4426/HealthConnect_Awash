@@ -5,8 +5,8 @@ import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
 import { formatCurrency, toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
 import RateTableEditor from "../../components/RateTableEditor.vue";
 import { fileForm, useLifeResource } from "../../composables/useLifeResource";
 import { groupRiderSpec, individualRiderSpec } from "../../rates/rateTables";
@@ -129,8 +129,8 @@ const money = (v) => (v === null || v === undefined ? "—" : formatCurrency(v))
     </div>
 
     <template v-else>
-      <LifePageHeader :title="rider?.riderName || (loading ? 'Loading rider…' : 'Rider')" :subtitle="rider?.riderDescription" back="/life/products/riders">
-        <template #badge><LifeStatusBadge v-if="rider" :status="rider.status" /></template>
+      <PageHeader :title="rider?.riderName || (loading ? 'Loading rider…' : 'Rider')" :subtitle="rider?.riderDescription" back="/life/products/riders">
+        <template #badge><StatusBadge v-if="rider" :status="rider.status" /></template>
         <template v-if="rider" #actions>
           <template v-if="rider.status === 'PENDING'">
             <Button variant="outline" @click="edit">Edit details</Button>
@@ -139,7 +139,7 @@ const money = (v) => (v === null || v === undefined ? "—" : formatCurrency(v))
           </template>
           <Button v-else-if="rider.status === 'ACTIVE'" @click="revise">Revise</Button>
         </template>
-      </LifePageHeader>
+      </PageHeader>
 
       <dl v-if="rider" class="grid grid-cols-2 gap-3 mb-5 md:grid-cols-4">
         <div class="px-4 py-3 rounded-2xl border bg-surface border-line">

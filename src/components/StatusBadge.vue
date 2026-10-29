@@ -1,5 +1,5 @@
 <script setup>
-// Status pill for every Life enum (colours as listed in docs/life-insurance/07-status-lifecycle.md)
+// Status pill for backend status enums (Life colours as listed in docs/life-insurance/07-status-lifecycle.md)
 import { computed } from "vue";
 
 const props = defineProps({ status: { type: String, default: "" } });

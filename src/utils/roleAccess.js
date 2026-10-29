@@ -11,7 +11,8 @@ import { getActingRole } from "@/utils/actingRole";
 export const ROLE_ACCESS = {
   productConfig: {
     roleCodes: ["ROLE_PRODUCT_MANAGER"],
-    roleNames: ["Product Manager"],
+    // Life's builder route itself is guarded by Life_Product_Manage (router/life/life.routes.js)
+    roleNames: ["Product Manager", "Life Product Manager"],
   },
   claims: {
     roleCodes: ["ROLE_ADJUSTOR", "ROLE_CLAIM_MANAGER", "ROLE_CUSTOMER", "ROLE_SUPER_ADMIN", "ROLE_PRODUCT_MANAGER", "ROLE_GARAGE"],

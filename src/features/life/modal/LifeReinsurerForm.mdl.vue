@@ -5,6 +5,7 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { toasted } from "@/utils/utils";
 import { createReinsurer, updateReinsurer } from "../api/reinsuranceApi";
 
@@ -51,26 +52,15 @@ async function submit() {
     closeModal(res.data || true);
   }
 }
-
-const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15";
 </script>
 
 <template>
   <ModalParent>
     <NewFormParent size="md" :title="editing ? 'Edit reinsurer' : 'Add reinsurer'" subtitle="Reinsurance company that takes a share of ceded life risk.">
       <form id="life-reinsurer-form" class="grid gap-4 p-5 sm:grid-cols-2" novalidate @submit.prevent="submit">
-        <label v-for="(f, i) in FIELDS" :key="f.key" :class="['flex flex-col gap-1 text-sm font-medium text-ink', f.wide ? 'sm:col-span-2' : '']">
-          {{ f.label }}
-          <input
-            v-model="form[f.key]"
-            v-focus="i === 0"
-            :type="f.type || 'text'"
-            :maxlength="f.max"
-            :placeholder="f.placeholder"
-            :class="[field, errors[f.key] ? 'border-error' : 'border-line']"
-          />
-          <span v-if="errors[f.key]" class="text-xs text-error">{{ errors[f.key] }}</span>
-        </label>
+        <div v-for="(f, i) in FIELDS" :key="f.key" :class="f.wide ? 'sm:col-span-2' : ''">
+          <TextField v-model="form[f.key]" :label="f.label" :type="f.type || 'text'" :focus="i === 0" :maxlength="f.max" :placeholder="f.placeholder" :error="errors[f.key]" />
+        </div>
       </form>
       <template #bottom>
         <div class="flex gap-2 justify-end p-4 w-full border-t border-line">

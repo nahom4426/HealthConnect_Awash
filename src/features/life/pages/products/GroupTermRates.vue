@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import TabGroup from "@/components/TabGroup.vue";
-import LifePageHeader from "../../components/LifePageHeader.vue";
+import PageHeader from "@/components/PageHeader.vue";
 import RateTableEditor from "../../components/RateTableEditor.vue";
 import { useRateTable } from "../../composables/useRateTable";
 import { groupTermSpec } from "../../rates/rateTables";
@@ -25,7 +25,7 @@ watch(tab, (t) => table.reload(TABS[t]), { immediate: true });
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader
+    <PageHeader
       title="Group term rates"
       subtitle="Annual premium rate by age and gender for group term life. Group quotations are priced from the active table."
     />

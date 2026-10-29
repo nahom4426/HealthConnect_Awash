@@ -7,8 +7,9 @@ import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
 import { toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
+import { hasPrivilege } from "@/utils/privileges";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
 import InsuredMembersPanel from "../../components/InsuredMembersPanel.vue";
 import QuotedRidersPanel from "../../components/QuotedRidersPanel.vue";
 import TreatyLinksPanel from "../../components/TreatyLinksPanel.vue";
@@ -91,17 +92,17 @@ function renew() {
     </div>
 
     <template v-else>
-      <LifePageHeader
+      <PageHeader
         :title="p.institutionLifeInsuranceNumber || p.quotationNumber || (policy.loading.value ? 'Loading…' : 'Policy')"
         :subtitle="[p.institutionName, 'Group term life'].filter(Boolean).join(' · ')"
         back="/life/policies"
       >
-        <template v-if="p.policyStatus" #badge><LifeStatusBadge :status="p.policyStatus" /></template>
+        <template v-if="p.policyStatus" #badge><StatusBadge :status="p.policyStatus" /></template>
         <template #actions>
           <Button variant="outline" @click="router.push(`/life/quotations/${uuid}`)">View quotation</Button>
-          <Button v-if="quotationActions(p).revise" @click="renew">Renew / revise</Button>
+          <Button v-if="quotationActions(p).revise && hasPrivilege('Life_Policy_Service')" @click="renew">Renew / revise</Button>
         </template>
-      </LifePageHeader>
+      </PageHeader>
 
       <dl class="grid gap-3 mb-5 sm:grid-cols-2 xl:grid-cols-4">
         <div v-for="[label, value] in cards" :key="label" class="px-4 py-3 rounded-2xl border bg-surface border-line shadow-card">
@@ -117,7 +118,7 @@ function renew() {
         <QuotedRidersPanel v-show="tab === 'Riders'" :key="`r${uuid}`" :quotation-uuid="uuid" />
         <div v-show="tab === 'Reinsurance'" class="grid gap-4">
           <TreatyLinksPanel :key="`t${uuid}`" :quotation-uuid="uuid">
-            <template #actions><Button variant="outline" size="sm" :pending="generating" @click="makeReport">Generate treaty report</Button></template>
+            <template v-if="hasPrivilege(['Life_Reinsurance_Manage', 'Life_Report_View'])" #actions><Button variant="outline" size="sm" :pending="generating" @click="makeReport">Generate treaty report</Button></template>
           </TreatyLinksPanel>
           <section v-if="report !== null" class="p-5 rounded-2xl border bg-surface border-line shadow-card">
             <h2 class="text-sm font-semibold text-ink">Treaty report</h2>

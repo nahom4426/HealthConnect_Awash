@@ -4,10 +4,13 @@
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
+import { hasPrivilege } from "@/utils/privileges";
 import TabGroup from "@/components/TabGroup.vue";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
-import LifePager from "../../components/LifePager.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
+import PageNav from "@/components/PageNav.vue";
+import ListTable from "@/components/ListTable.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { BenefitStatus } from "../../constants/statuses";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
@@ -15,6 +18,15 @@ import { benefitName, pageOf } from "../../individual/individualRules";
 import { getBenefits } from "../../api/policyApi";
 
 const router = useRouter();
+const COLUMNS = [
+  { key: "holder", label: "Policyholder" },
+  { key: "policyNumber", label: "Policy" },
+  { key: "insuranceTerm", label: "Term" },
+  { key: "sumAssured", label: "Sum assured", align: "right" },
+  { key: "premium", label: "Total premium", align: "right" },
+  { key: "cover", label: "Cover" },
+  { key: "status", label: "Status" },
+];
 const TABS = { Draft: BenefitStatus.PENDING, Active: BenefitStatus.ACTIVE, Renewed: BenefitStatus.RENEWED, Lapsed: BenefitStatus.LAPSED, Cancelled: BenefitStatus.CANCELLED, Disabled: BenefitStatus.DISABLED };
 const tab = ref("Draft");
 const list = useLifeResource((status) => getBenefits(status), { initial: [], map: (d) => (Array.isArray(d) ? d : []) });
@@ -34,63 +46,47 @@ const open = (b) => router.push(`/life/individual/${b.benefitUuid}`);
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader title="Individual policies" subtitle="Term life policies for individual customers, with optional riders.">
-      <template #actions><Button @click="router.push('/life/individual/new')">New policy</Button></template>
-    </LifePageHeader>
+    <PageHeader title="Individual policies" subtitle="Term life policies for individual customers, with optional riders.">
+      <template v-if="hasPrivilege(['Life_Quotation_Create', 'Life_Policy_Issue'])" #actions><Button @click="router.push('/life/individual/new')">New policy</Button></template>
+    </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
       <TabGroup v-model="tab" :tabs="Object.keys(TABS)" />
-      <input v-model="search" type="search" placeholder="Search name, policy or phone" aria-label="Search individual policies" class="px-3 w-72 h-9 text-sm rounded-lg border outline-none bg-surface border-line text-ink focus:border-primary focus:ring-2 focus:ring-primary/15" />
+      <div class="w-72"><TextField v-model="search" type="search" placeholder="Search name, policy or phone" aria-label="Search individual policies" /></div>
     </div>
 
-    <section class="overflow-hidden rounded-2xl border bg-surface border-line shadow-card">
-      <div v-if="list.error.value && !list.loading.value" class="flex flex-col gap-3 items-center px-6 py-12 text-center">
-        <p class="text-sm font-semibold text-ink">Couldn't load policies</p>
-        <p class="max-w-md text-sm text-ink-muted">{{ list.error.value }}</p>
-        <Button variant="outline" size="sm" @click="list.load(TABS[tab])">Try again</Button>
-      </div>
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-surface-muted">
-            <tr class="text-xs font-semibold tracking-wide text-left uppercase text-ink-subtle">
-              <th class="px-4 py-3">Policyholder</th>
-              <th class="px-4 py-3">Policy</th>
-              <th class="px-4 py-3">Term</th>
-              <th class="px-4 py-3 text-right">Sum assured</th>
-              <th class="px-4 py-3 text-right">Total premium</th>
-              <th class="px-4 py-3">Cover</th>
-              <th class="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="list.loading.value">
-              <tr v-for="i in 6" :key="i" class="border-t border-line"><td v-for="j in 7" :key="j" class="px-4 py-3.5"><div class="h-4 rounded animate-pulse bg-surface-raised"></div></td></tr>
-            </template>
-            <tr v-else-if="!view.rows.length">
-              <td colspan="7" class="px-6 py-14 text-center">
-                <p class="text-sm font-semibold text-ink">{{ search ? "No policies match your search" : `No ${tab.toLowerCase()} individual policies` }}</p>
-                <p v-if="!search && tab === 'Draft'" class="mt-1 text-sm text-ink-muted">Start one with “New policy”.</p>
-              </td>
-            </tr>
-            <tr v-for="b in view.rows" v-else :key="b.benefitUuid" tabindex="0" class="border-t cursor-pointer border-line hover:bg-surface-muted/60 focus:outline-none focus:bg-surface-muted" @click="open(b)" @keydown.enter="open(b)">
-              <td class="px-4 py-3">
-                <span class="font-medium text-ink">{{ benefitName(b) }}</span>
-                <span class="block text-xs text-ink-subtle">{{ [b.gender, b.personPhone].filter(Boolean).join(" · ") }}</span>
-              </td>
-              <td class="px-4 py-3 whitespace-nowrap text-ink-muted">{{ b.policyNumber || "Not issued" }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-ink-muted">{{ b.insuranceTerm ? `${b.insuranceTerm} yrs` : "—" }}</td>
-              <td class="px-4 py-3 text-right tabular-nums text-ink">{{ formatAmount(b.totalBenefit ?? b.termBenefit) }}</td>
-              <td class="px-4 py-3 text-right tabular-nums text-ink">{{ formatAmount(b.totalPremium ?? b.termPremium) }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-ink-muted">
-                {{ b.beginDate ? `${formatDate(b.beginDate)} – ${formatDate(b.endDate)}` : "—" }}
-                <span v-if="b.endDate && tab === 'Active'" class="block text-xs text-ink-subtle">{{ remainingLabel(daysUntil(b.endDate)) }}</span>
-              </td>
-              <td class="px-4 py-3"><LifeStatusBadge :status="b.status" /></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <LifePager v-model:page="page" :total-pages="view.totalPages" :disabled="list.loading.value" />
-    </section>
+    <ListTable
+      :columns="COLUMNS"
+      :rows="view.rows"
+      row-key="benefitUuid"
+      :loading="list.loading.value"
+      :error="list.error.value"
+      error-title="Couldn't load policies"
+      :skeleton-rows="6"
+      clickable
+      @row-click="open"
+      @retry="list.load(TABS[tab])"
+    >
+      <template #empty>
+        <p class="text-sm font-semibold text-ink">{{ search ? "No policies match your search" : `No ${tab.toLowerCase()} individual policies` }}</p>
+        <p v-if="!search && tab === 'Draft'" class="mt-1 text-sm text-ink-muted">Start one with “New policy”.</p>
+      </template>
+      <template #cell-holder="{ row }">
+        <span class="font-medium text-ink">{{ benefitName(row) }}</span>
+        <span class="block text-xs text-ink-subtle">{{ [row.gender, row.personPhone].filter(Boolean).join(" · ") }}</span>
+      </template>
+      <template #cell-policyNumber="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ row.policyNumber || "Not issued" }}</span></template>
+      <template #cell-insuranceTerm="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ row.insuranceTerm ? `${row.insuranceTerm} yrs` : "—" }}</span></template>
+      <template #cell-sumAssured="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.totalBenefit ?? row.termBenefit) }}</span></template>
+      <template #cell-premium="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.totalPremium ?? row.termPremium) }}</span></template>
+      <template #cell-cover="{ row }">
+        <span class="whitespace-nowrap text-ink-muted">
+          {{ row.beginDate ? `${formatDate(row.beginDate)} – ${formatDate(row.endDate)}` : "—" }}
+          <span v-if="row.endDate && tab === 'Active'" class="block text-xs text-ink-subtle">{{ remainingLabel(daysUntil(row.endDate)) }}</span>
+        </span>
+      </template>
+      <template #cell-status="{ row }"><StatusBadge :status="row.status" /></template>
+      <template #footer><PageNav v-model:page="page" :total-pages="view.totalPages" :disabled="list.loading.value" /></template>
+    </ListTable>
   </div>
 </template>

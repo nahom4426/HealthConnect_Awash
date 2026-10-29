@@ -42,16 +42,13 @@ watch(() => mod.value?.id, () => {
 });
 
 
-const kpiConfigs = {
-  motor:       { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Vehicles Covered'],   values: ['ETB 1.82M', '3,412', '189', '5,640'], trends: [9.2, 6.1, -1.4, 4.8], subs: ['vs last month','across all classes','this month','on network'], colors: ['#2563eb','#059669','#f59e0b','#7c3aed'] },
-  fire:        { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Properties Insured'], values: ['ETB 980K',  '1,104', '57',  '2,890'], trends: [5.3, 3.7, -0.8, 2.2],  subs: ['vs last month','residential & commercial','this month','total portfolio'], colors: ['#ea580c','#059669','#f59e0b','#7c3aed'] },
-  marine:      { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Shipments Covered'],  values: ['ETB 640K',  '412',   '23',  '1,200'], trends: [7.1, 5.0, -2.1, 6.3],  subs: ['vs last month','hull & cargo','this month','in transit'], colors: ['#0284c7','#059669','#f59e0b','#7c3aed'] },
-  life:        { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Lives Covered'],      values: ['ETB 2.1M',  '8,731', '44',  '12,400'],trends: [11.4, 8.9, -0.5, 7.2], subs: ['vs last month','individual & group','this month','beneficiaries'], colors: ['#7c3aed','#059669','#f59e0b','#2563eb'] },
-  engineering: { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Projects Covered'],   values: ['ETB 520K',  '234',   '18',  '340'],   trends: [4.2, 2.8, 1.1, 3.5],   subs: ['vs last month','contractors & machinery','this month','active sites'], colors: ['#d97706','#059669','#f59e0b','#7c3aed'] },
-  liability:   { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Businesses Covered'], values: ['ETB 310K',  '687',   '31',  '820'],   trends: [3.6, 1.9, 0.7, 2.4],   subs: ['vs last month','public & employers','this month','registered entities'], colors: ['#e11d48','#059669','#f59e0b','#7c3aed'] },
-  burglary:    { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Premises Covered'],   values: ['ETB 215K',  '443',   '26',  '680'],   trends: [2.8, 1.5, -1.2, 1.9],  subs: ['vs last month','commercial & residential','this month','secured premises'], colors: ['#0d9488','#059669','#f59e0b','#7c3aed'] },
-  travel:      { kpis: ['Total Premiums', 'Active Policies', 'Claims Filed', 'Travelers Covered'],  values: ['ETB 450K',  '1,250', '15',  '3,100'], trends: [8.5, 4.2, -3.1, 5.7],  subs: ['vs last month','single & multi-trip','this month','total insured persons'], colors: ['#0284c7','#059669','#f59e0b','#7c3aed'] },
-};
+// Every figure below comes from this module's claims (fetchClaimsByModule). Premium and
+// policy figures need a policy service per product, which only health and life have today.
+const KPI_COLORS = ['#2563eb', '#059669', '#f59e0b', '#7c3aed'];
+const CLOSED = ['HANDOVER_COMPLETED', 'REJECTED'];
+
+const fmtEtb = (n) => `ETB ${Math.round(n).toLocaleString()}`;
+const claimAmount = (c) => Number(c.approvedAmount ?? c.estimatedAmount) || 0;
 
 const kpiIcons = [
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
@@ -60,33 +57,74 @@ const kpiIcons = [
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`,
 ];
 
-const claimPipeline = [
-  { status: 'Submitted',  pct: 30, color: '#3b82f6' },
-  { status: 'In Process', pct: 22, color: '#f59e0b' },
-  { status: 'Verified',   pct: 18, color: '#8b5cf6' },
-  { status: 'Approved',   pct: 17, color: '#10b981' },
-  { status: 'Completed',  pct: 13, color: '#06b6d4' },
+const PIPELINE_STAGES = [
+  { status: 'Submitted',  codes: ['SUBMITTED'],                                    color: '#3b82f6' },
+  { status: 'In Process', codes: ['IN_PROCESS', 'BID_ASSIGNED', 'BID_COMPLETED'],  color: '#f59e0b' },
+  { status: 'In Repair',  codes: ['ASSIGN_TO_GARAGE', 'IN_MAINTENANCE'],           color: '#8b5cf6' },
+  { status: 'Repaired',   codes: ['MAINTENANCE_COMPLETED'],                        color: '#10b981' },
+  { status: 'Completed',  codes: ['HANDOVER_COMPLETED'],                           color: '#06b6d4' },
+  { status: 'Rejected',   codes: ['REJECTED'],                                     color: '#e11d48' },
 ];
 
-const recentActivities = computed(() => {
-  const name = mod.value?.name || 'Module';
-  return [
-    { action: 'New policy issued',   entity: name, time: '1 hr ago',   color: '#3b82f6' },
-    { action: 'Claim submitted',     entity: name, time: '3 hrs ago',  color: '#f59e0b' },
-    { action: 'Rate config updated', entity: name, time: 'Yesterday',  color: '#8b5cf6' },
-    { action: 'Policy renewed',      entity: name, time: '2 days ago', color: '#10b981' },
-    { action: 'Claim approved',      entity: name, time: '3 days ago', color: '#059669' },
-  ];
+const claimPipeline = computed(() => {
+  const total = liveClaims.value.length;
+  return PIPELINE_STAGES.map(stage => {
+    const count = liveClaims.value.filter(c => stage.codes.includes(c.status)).length;
+    return { ...stage, count, pct: total ? Math.round((count / total) * 100) : 0 };
+  });
 });
 
+const STATUS_LABELS = Object.fromEntries(
+  PIPELINE_STAGES.flatMap(stage => stage.codes.map(code => [code, stage.status]))
+);
+const STATUS_COLORS = Object.fromEntries(
+  PIPELINE_STAGES.flatMap(stage => stage.codes.map(code => [code, stage.color]))
+);
+
+function relativeTime(value) {
+  const t = new Date(value).getTime();
+  if (!t) return '';
+  const mins = Math.round((Date.now() - t) / 60000);
+  if (mins < 60) return `${Math.max(mins, 1)} min ago`;
+  if (mins < 1440) return `${Math.round(mins / 60)} hr ago`;
+  return `${Math.round(mins / 1440)} days ago`;
+}
+
+const recentActivities = computed(() =>
+  [...liveClaims.value]
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt || b.incidentDate || 0) - new Date(a.updatedAt || a.createdAt || a.incidentDate || 0))
+    .slice(0, 5)
+    .map(c => ({
+      action: `Claim ${STATUS_LABELS[c.status] || c.status || 'filed'}`,
+      entity: c.claimNumber || c.policyNumber || c.claimUuid,
+      time: relativeTime(c.updatedAt || c.createdAt || c.incidentDate),
+      color: STATUS_COLORS[c.status] || '#64748b',
+    }))
+);
+
 const cfg = computed(() => {
-  const base = kpiConfigs[mod.value?.id] || kpiConfigs.motor;
-  if (liveClaims.value && liveClaims.value.length > 0) {
-    const updatedValues = [...base.values];
-    updatedValues[2] = String(liveClaims.value.length);
-    return { ...base, values: updatedValues };
-  }
-  return base;
+  const claims = liveClaims.value;
+  const open = claims.filter(c => !CLOSED.includes(c.status));
+  const completed = claims.filter(c => c.status === 'HANDOVER_COMPLETED');
+  const claimed = claims.reduce((sum, c) => sum + claimAmount(c), 0);
+  return {
+    kpis: ['Claims Filed', 'Open Claims', 'Completed Claims', 'Claimed Amount'],
+    values: [String(claims.length), String(open.length), String(completed.length), fmtEtb(claimed)],
+    subs: ['all time', 'awaiting a decision or repair', 'handed over', 'approved or estimated'],
+    shares: [100, claims.length ? (open.length / claims.length) * 100 : 0, claims.length ? (completed.length / claims.length) * 100 : 0, 100],
+    colors: KPI_COLORS,
+  };
+});
+
+const insights = computed(() => {
+  const claims = liveClaims.value;
+  const decided = claims.filter(c => CLOSED.includes(c.status));
+  const completed = decided.filter(c => c.status === 'HANDOVER_COMPLETED');
+  const valued = claims.filter(c => claimAmount(c) > 0);
+  return {
+    approvalRate: decided.length ? `${((completed.length / decided.length) * 100).toFixed(1)}%` : '—',
+    avgClaimValue: valued.length ? fmtEtb(valued.reduce((sum, c) => sum + claimAmount(c), 0) / valued.length) : '—',
+  };
 });
 
 const now = new Date();
@@ -161,18 +199,12 @@ function switchModule() {
       >
         <div class="mdb-kpi-top">
           <div class="mdb-kpi-icon" :style="`background:${cfg.colors[i]}15;color:${cfg.colors[i]};border-color:${cfg.colors[i]}30`" v-html="kpiIcons[i]"></div>
-          <span class="mdb-kpi-trend" :class="cfg.trends[i] >= 0 ? 'up' : 'down'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="cfg.trends[i] >= 0 ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'"/>
-            </svg>
-            {{ Math.abs(cfg.trends[i]) }}%
-          </span>
         </div>
         <div class="mdb-kpi-val">{{ langStore.translateValue(cfg.values[i]) }}</div>
         <div class="mdb-kpi-label">{{ langStore.t('kpis.' + kpi, {}, kpi) }}</div>
         <div class="mdb-kpi-sub">{{ langStore.t('subs.' + cfg.subs[i], {}, cfg.subs[i]) }}</div>
         <div class="mdb-kpi-bar">
-          <div class="mdb-kpi-bar-fill" :style="`background:${cfg.colors[i]};width:${50 + i * 10}%`"></div>
+          <div class="mdb-kpi-bar-fill" :style="`background:${cfg.colors[i]};width:${cfg.shares[i]}%`"></div>
         </div>
       </div>
     </div>
@@ -199,7 +231,7 @@ function switchModule() {
               <div class="mdb-pipeline-track">
                 <div class="mdb-pipeline-fill" :style="`width:${p.pct}%;background:${p.color}`"></div>
               </div>
-              <span class="mdb-pipeline-pct">{{ p.pct }}%</span>
+              <span class="mdb-pipeline-pct">{{ p.count }}</span>
             </div>
           </div>
         </div>
@@ -213,23 +245,23 @@ function switchModule() {
       <div class="mdb-insights-col">
         <div class="mdb-insight mdb-ins-blue">
           <div class="mdb-ins-label">{{ langStore.t('insights.approvalRate') }}</div>
-          <div class="mdb-ins-val">92.4%</div>
-          <div class="mdb-ins-trend up">↑ 1.8% {{ langStore.t('insights.vsLastMonth') }}</div>
+          <div class="mdb-ins-val">{{ insights.approvalRate }}</div>
+          <div class="mdb-ins-trend">of closed claims completed</div>
         </div>
         <div class="mdb-insight mdb-ins-emerald">
           <div class="mdb-ins-label">{{ langStore.t('insights.avgClaimValue') }}</div>
-          <div class="mdb-ins-val">{{ langStore.translateValue('ETB 6,820') }}</div>
-          <div class="mdb-ins-trend up">↑ 2.4% {{ langStore.t('insights.vsLastMonth') }}</div>
+          <div class="mdb-ins-val">{{ langStore.translateValue(insights.avgClaimValue) }}</div>
+          <div class="mdb-ins-trend">approved or estimated</div>
         </div>
         <div class="mdb-insight mdb-ins-violet">
           <div class="mdb-ins-label">{{ langStore.t('insights.processTime') }}</div>
-          <div class="mdb-ins-val" v-html="`2.8 ${langStore.isAmharic ? 'ቀናት' : 'days'}`"></div>
-          <div class="mdb-ins-trend up">↓ 0.3 {{ langStore.isAmharic ? 'ቀናት ፈጣን' : 'days faster' }}</div>
+          <div class="mdb-ins-val">—</div>
+          <div class="mdb-ins-trend">needs claim timestamps from the API</div>
         </div>
         <div class="mdb-insight mdb-ins-amber">
           <div class="mdb-ins-label">{{ langStore.t('insights.lossRatio') }}</div>
-          <div class="mdb-ins-val">58.7%</div>
-          <div class="mdb-ins-trend down">↑ 0.9% {{ langStore.t('insights.vsLastMonth') }}</div>
+          <div class="mdb-ins-val">—</div>
+          <div class="mdb-ins-trend">needs premium data for this product</div>
         </div>
       </div>
 
@@ -246,6 +278,7 @@ function switchModule() {
           </span>
         </div>
         <div class="mdb-activity-list">
+          <div v-if="recentActivities.length === 0" class="mdb-act-entity">No claims filed for this product yet.</div>
           <div v-for="(a, i) in recentActivities" :key="i" class="mdb-activity-row">
             <div class="mdb-activity-dot" :style="`background:${a.color}20;color:${a.color}`">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
@@ -254,9 +287,9 @@ function switchModule() {
             </div>
             <div class="mdb-act-body">
               <div class="mdb-act-action">{{ langStore.t('activities.' + a.action, {}, a.action) }}</div>
-              <div class="mdb-act-entity">{{ langStore.t('modules.' + mod.id, {}, a.entity) }}</div>
+              <div class="mdb-act-entity">{{ a.entity }}</div>
             </div>
-            <span class="mdb-act-time">{{ langStore.t('times.' + a.time, {}, a.time) }}</span>
+            <span class="mdb-act-time">{{ a.time }}</span>
           </div>
         </div>
       </div>

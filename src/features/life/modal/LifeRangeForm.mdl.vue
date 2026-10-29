@@ -7,6 +7,7 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { InsuranceType } from "../constants/statuses";
 import { validateRange } from "../reinsurance/treatyRules";
 
@@ -30,8 +31,6 @@ function submit() {
     testUuids: selected.value,
   });
 }
-
-const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surface text-ink tabular-nums focus:border-primary focus:ring-2 focus:ring-primary/15";
 </script>
 
 <template>
@@ -47,22 +46,10 @@ const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surfac
           </div>
           <p v-if="editing" class="mt-1 text-xs text-ink-subtle">The type can't be changed on an existing range.</p>
         </fieldset>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">From age
-          <input v-model="form.minAge" type="number" min="0" step="1" :class="[field, errors.minAge ? 'border-error' : 'border-line']" />
-          <span v-if="errors.minAge" class="text-xs text-error">{{ errors.minAge }}</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">To age
-          <input v-model="form.maxAge" type="number" min="0" step="1" :class="[field, errors.maxAge ? 'border-error' : 'border-line']" />
-          <span v-if="errors.maxAge" class="text-xs text-error">{{ errors.maxAge }}</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">From sum assured (ETB)
-          <input v-model="form.lowerLimit" type="number" min="0" step="any" :class="[field, errors.lowerLimit ? 'border-error' : 'border-line']" />
-          <span v-if="errors.lowerLimit" class="text-xs text-error">{{ errors.lowerLimit }}</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">To sum assured (ETB)
-          <input v-model="form.upperLimit" type="number" min="0" step="any" :class="[field, errors.upperLimit ? 'border-error' : 'border-line']" />
-          <span v-if="errors.upperLimit" class="text-xs text-error">{{ errors.upperLimit }}</span>
-        </label>
+        <TextField v-model.number="form.minAge" label="From age" type="number" numeric min="0" step="1" :error="errors.minAge" />
+        <TextField v-model.number="form.maxAge" label="To age" type="number" numeric min="0" step="1" :error="errors.maxAge" />
+        <TextField v-model.number="form.lowerLimit" label="From sum assured (ETB)" type="number" numeric min="0" step="any" :error="errors.lowerLimit" />
+        <TextField v-model.number="form.upperLimit" label="To sum assured (ETB)" type="number" numeric min="0" step="any" :error="errors.upperLimit" />
         <fieldset class="sm:col-span-2">
           <legend class="mb-1 text-sm font-medium text-ink">Required tests</legend>
           <p v-if="!tests.length" class="text-sm text-ink-muted">No active medical tests yet — add them under Reinsurance → Medical tests.</p>

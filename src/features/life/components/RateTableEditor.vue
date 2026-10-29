@@ -4,7 +4,7 @@
 // emitted save / remove / import with the matching endpoints, then reloads.
 import { computed, ref, watch } from "vue";
 import Button from "@/components/Button.vue";
-import LifeStatusBadge from "./LifeStatusBadge.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
 import { countChanges, toSavePayload, validateRateRows } from "../rates/rateTables";
 
 const props = defineProps({
@@ -182,7 +182,7 @@ function onFile(e) {
           >
             <td v-for="c in spec.columns" :key="c.key" class="px-2 py-1.5 align-top">
               <template v-if="readonly">
-                <LifeStatusBadge v-if="c.type === 'status'" :status="row[c.key]" />
+                <StatusBadge v-if="c.type === 'status'" :status="row[c.key]" />
                 <span v-else class="px-1 tabular-nums text-ink">{{ cellText(row, c) }}</span>
               </template>
               <div v-else-if="c.type === 'select'">

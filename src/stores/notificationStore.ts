@@ -1,4 +1,5 @@
 import { getActingRole, roleSwitcherEnabled } from '@/utils/actingRole';
+import { useAuthStore } from '@/stores/auth';
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
@@ -14,65 +15,43 @@ export interface NotificationItem {
   badge?: string;
 }
 
+const notificationsUrl = `${import.meta.env.VITE_NOTIFICATION_HOST}/api/payer/motor/digital-channel/notifications`;
+
+// Same bearer token as the rest of the digital-channel calls (see digitalChannelApi.js)
+function authHeaders() {
+  const auth = useAuthStore();
+  const token = auth.auth?.token || auth.auth?.user?.token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const useNotificationStore = defineStore('notifications', () => {
-  const notifications = ref<NotificationItem[]>([
-    {
-      id: 'notif-1',
-      title: 'New Motor Proposal Submitted',
-      message: 'Solomon Tadesse submitted proposal #NYA-PROP-881923 for Toyota Land Cruiser LC300.',
-      timestamp: '10 mins ago',
-      type: 'proposal',
-      isRead: false,
-      link: '/motor/proposals/PROP-2026-001',
-      badge: 'New Proposal'
-    },
-    {
-      id: 'notif-2',
-      title: 'EthioTelecom TP Payment Confirmed',
-      message: 'Payment of ETB 1,250.00 verified. Reference: ETHIO-TP-881923.',
-      timestamp: '25 mins ago',
-      type: 'payment',
-      isRead: false,
-      link: '/motor/proposals/PROP-2026-001',
-      badge: 'Payment OK'
-    },
-    {
-      id: 'notif-3',
-      title: 'Pre-Insurance Inspection Passed',
-      message: 'Adjustor Dawit Tesfaye approved vehicle condition for #NYA-PROP-772910.',
-      timestamp: '1 hour ago',
-      type: 'inspection',
-      isRead: false,
-      link: '/motor/proposals/PROP-2026-002',
-      badge: 'Inspection OK'
-    }
-  ]);
+  // Filled from the backend by fetchNotifications(); no demo items
+  const notifications = ref<NotificationItem[]>([]);
 
   const unreadCount = computed(() => notifications.value.filter(n => !n.isRead).length);
 
   async function fetchNotifications() {
     try {
-      const role = getActingRole() || (roleSwitcherEnabled ? 'UNDERWRITER' : '');
-      const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_NOTIFICATION_HOST;
-      const res = await axios.get(`${baseUrl}/api/payer/motor/digital-channel/notifications`, {
+      const role = getActingRole() || (roleSwitcherEnabled ? 'ROLE_UNDERWRITER' : '');
+      const res = await axios.get(notificationsUrl, {
         params: { role },
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+        headers: authHeaders()
       });
-      if (Array.isArray(res.data) && res.data.length > 0) {
+      if (Array.isArray(res.data)) {
         notifications.value = res.data.map((item: any) => ({
-          id: item.id || `notif-${Math.random()}`,
+          id: String(item.id ?? item.uuid ?? `notif-${Math.random()}`),
           title: item.title || 'System Alert',
           message: item.message || '',
-          timestamp: item.timestamp || 'Just now',
+          timestamp: item.timestamp || item.createdAt || '',
           type: item.type || 'system',
-          isRead: item.isRead === true,
+          isRead: item.isRead === true || item.read === true,
           link: item.link || '',
           badge: item.type ? item.type.toUpperCase() : 'ALERT'
         }));
       }
     } catch (e) {
-      console.warn('Backend notification sync fallback to local cache:', e);
+      // Keep what is already shown; the next poll retries
+      console.warn('Could not load notifications:', e);
     }
   }
 
@@ -82,11 +61,7 @@ export const useNotificationStore = defineStore('notifications', () => {
       item.isRead = true;
     }
     try {
-      const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_NOTIFICATION_HOST;
-      await axios.put(`${baseUrl}/api/payer/motor/digital-channel/notifications/${id}/read`, {}, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
+      await axios.put(`${notificationsUrl}/${id}/read`, {}, { headers: authHeaders() });
     } catch (ignored) {}
   }
 
@@ -95,11 +70,7 @@ export const useNotificationStore = defineStore('notifications', () => {
       n.isRead = true;
     });
     try {
-      const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_NOTIFICATION_HOST;
-      await axios.put(`${baseUrl}/api/payer/motor/digital-channel/notifications/read-all`, {}, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
+      await axios.put(`${notificationsUrl}/read-all`, {}, { headers: authHeaders() });
     } catch (ignored) {}
   }
 

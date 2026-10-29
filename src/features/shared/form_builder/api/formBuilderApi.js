@@ -1,17 +1,53 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { PC_MODULES } from '@/features/pc/pcModule.js';
 
 const apiBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
 
-function getClient() {
+function authHeaders() {
   const auth = useAuthStore();
-  const token = auth.auth?.token || auth.auth?.user?.token;
+  let token = auth.auth?.token || auth.auth?.user?.token;
+  if (!token) {
+    try {
+      const stored = JSON.parse(localStorage.getItem('userDetail') || '{}');
+      token = stored.token || stored.user?.token;
+    } catch {
+      token = null;
+    }
+  }
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+function pcClass(productId) {
+  return PC_MODULES[productId]?.productClass;
+}
+
+function pcClient() {
+  return axios.create({
+    baseURL: '/api/payer/property-casualty',
+    headers: authHeaders(),
+  });
+}
+
+function toFormSchema(productId, product) {
+  return {
+    formUuid: product.productUuid,
+    formId: `${productId}_proposal`,
+    productId,
+    version: product.version,
+    status: product.status,
+    schemaJson: product.schemaJson,
+    updatedAt: product.publishedAt,
+  };
+}
+
+function getClient() {
   return axios.create({
     baseURL: apiBase,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: authHeaders(),
   });
 }
 
@@ -29,6 +65,17 @@ function setLocal(key, val) {
 // ── Form Schemas API ───────────────────────────────────────────────────────
 
 export async function fetchFormSchemas(productId) {
+  const productClass = pcClass(productId);
+  if (productClass) {
+    try {
+      const { data } = await pcClient().get(`/products/published/${productClass}`);
+      if (data?.productUuid) return [toFormSchema(productId, data)];
+    } catch (e) {
+      console.warn('Property-casualty form schema unavailable, using local storage fallback:', e.message);
+    }
+    const all = getLocal(LOCAL_FORMS_KEY);
+    return all.filter(f => f.productId === productId && !f.isDeleted);
+  }
   try {
     const { data } = await getClient().get(`/forms/product/${productId}`);
     if (Array.isArray(data) && data.length) return data;
@@ -41,6 +88,15 @@ export async function fetchFormSchemas(productId) {
 
 export async function fetchFormSchema(formUuid) {
   try {
+    const { data } = await pcClient().get(`/products/${formUuid}`);
+    if (data?.productClass) {
+      const productId = String(data.productClass).toLowerCase();
+      return toFormSchema(PC_MODULES[productId] ? productId : 'fire', data);
+    }
+  } catch (e) {
+    /* not a PC product uuid; fall through to motor / local */
+  }
+  try {
     const { data } = await getClient().get(`/forms/${formUuid}`);
     if (data) return data;
   } catch (e) {
@@ -52,16 +108,29 @@ export async function fetchFormSchema(formUuid) {
 
 export async function saveFormSchema(payload) {
   // payload: { formUuid, formId, productId, version, schemaJson }
-  try {
-    if (payload.formUuid) {
-      const { data } = await getClient().put(`/forms/${payload.formUuid}`, payload);
-      return data;
-    } else {
-      const { data } = await getClient().post('/forms', payload);
-      return data;
+  const productClass = pcClass(payload.productId);
+  if (productClass) {
+    try {
+      const schemaJson = typeof payload.schemaJson === 'string'
+        ? payload.schemaJson
+        : JSON.stringify(payload.schemaJson);
+      const { data } = await pcClient().put(`/products/published/${productClass}/schema`, { schemaJson });
+      return toFormSchema(payload.productId, data);
+    } catch (e) {
+      console.warn('Property-casualty schema save failed, using local storage:', e.message);
     }
-  } catch (e) {
-    console.warn('Backend API error/offline, saving to local storage:', e.message);
+  } else {
+    try {
+      if (payload.formUuid) {
+        const { data } = await getClient().put(`/forms/${payload.formUuid}`, payload);
+        return data;
+      } else {
+        const { data } = await getClient().post('/forms', payload);
+        return data;
+      }
+    } catch (e) {
+      console.warn('Backend API error/offline, saving to local storage:', e.message);
+    }
   }
 
   // Fallback
@@ -92,7 +161,18 @@ export async function saveFormSchema(payload) {
   return schemaObj;
 }
 
-export async function publishFormSchema(formUuid) {
+export async function publishFormSchema(formUuid, productId) {
+  const productClass = pcClass(productId);
+  if (productClass) {
+    const current = await fetchFormSchema(formUuid);
+    if (current?.schemaJson) {
+      return saveFormSchema({
+        productId,
+        formUuid,
+        schemaJson: current.schemaJson,
+      });
+    }
+  }
   try {
     if (formUuid && formUuid.startsWith('local-')) {
       const all = getLocal(LOCAL_FORMS_KEY);

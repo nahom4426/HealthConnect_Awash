@@ -3,8 +3,9 @@
 // Editable on a draft: link an active treaty, unlink.
 import { computed, ref } from "vue";
 import Button from "@/components/Button.vue";
+import SelectField from "@/components/fields/SelectField.vue";
 import { toasted } from "@/utils/utils";
-import LifeStatusBadge from "./LifeStatusBadge.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
 import { useLifeResource } from "../composables/useLifeResource";
 import { confirmAction } from "../composables/confirmAction";
 import { TreatyStatus } from "../constants/statuses";
@@ -22,6 +23,11 @@ const treaties = useLifeResource(() => getReinsuranceTreatys({ status: TreatySta
 const treatyToAdd = ref("");
 const linking = ref(false);
 const available = computed(() => (treaties.data.value || []).filter((t) => !mappings.data.value.some((m) => m.reinsuranceTreatyUuid === t.reinsuranceTreatyUuid)));
+// The empty first option stays choosable (it clears the pick), so it is an option rather than the field's placeholder
+const treatyOptions = computed(() => [
+  { value: "", label: treaties.loading.value ? "Loading treaties…" : available.value.length ? "Choose an active treaty" : "No other active treaties" },
+  ...available.value.map((t) => ({ value: t.reinsuranceTreatyUuid, label: `${t.treatyCode} — ${t.treatyDescription}` })),
+]);
 
 async function load() {
   await mappings.load();
@@ -66,16 +72,13 @@ function unlink(m) {
           <span class="px-2 py-0.5 mr-2 font-mono text-xs font-semibold rounded-md bg-surface-raised">{{ m.treatyCode || "—" }}</span>{{ m.treatyDescription }}
         </span>
         <span class="flex gap-2 items-center">
-          <LifeStatusBadge :status="m.status" />
+          <StatusBadge :status="m.status" />
           <Button v-if="editable" variant="ghost" size="sm" class="!text-error" @click="unlink(m)">Unlink</Button>
         </span>
       </li>
     </ul>
     <div v-if="editable" class="flex flex-wrap gap-2 items-center mt-4">
-      <select v-model="treatyToAdd" aria-label="Treaty to link" :disabled="treaties.loading.value" class="px-3 min-w-[18rem] h-9 text-sm rounded-lg border outline-none bg-surface border-line text-ink focus:border-primary">
-        <option value="">{{ treaties.loading.value ? "Loading treaties…" : available.length ? "Choose an active treaty" : "No other active treaties" }}</option>
-        <option v-for="t in available" :key="t.reinsuranceTreatyUuid" :value="t.reinsuranceTreatyUuid">{{ t.treatyCode }} — {{ t.treatyDescription }}</option>
-      </select>
+      <div class="min-w-[18rem]"><SelectField v-model="treatyToAdd" :options="treatyOptions" :placeholder="null" aria-label="Treaty to link" :disabled="treaties.loading.value" /></div>
       <Button size="sm" :disabled="!treatyToAdd" :pending="linking" @click="link">Link treaty</Button>
     </div>
   </section>

@@ -6,9 +6,10 @@ import { useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import { toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
-import LifePager from "../../components/LifePager.vue";
+import { hasPrivilege } from "@/utils/privileges";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
+import PageNav from "@/components/PageNav.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { useLifePagedList } from "../../composables/useLifePagedList";
 import { confirmAction } from "../../composables/confirmAction";
@@ -26,7 +27,18 @@ const claim = useLifeResource(getClaimDetails);
 const c = computed(() => claim.data.value || {});
 const queue = computed(() => (queuesFor(side).some((q) => q.key === route.query.queue) ? route.query.queue : queueFromStatus(c.value.status)));
 const stageLabel = computed(() => queuesFor(side).find((q) => q.key === queue.value)?.label);
-const can = computed(() => claimActions(side, queue.value));
+const can = computed(() => {
+  const a = claimActions(side, queue.value);
+  const prepare = hasPrivilege("Life_Claim_Prepare");
+  return {
+    submit: a.submit && prepare,
+    remove: a.remove && prepare,
+    documents: a.documents && prepare,
+    review: a.review && hasPrivilege("Life_Claim_Review"),
+    approve: a.approve && hasPrivilege("Life_Claim_Approve"),
+    reject: a.reject && hasPrivilege(["Life_Claim_Review", "Life_Claim_Approve"]),
+  };
+});
 
 const documents = useLifeResource(() => getClaimAttachments(uuid), { initial: [] });
 const approvers = useLifeResource(() => getClaimApproverResponse({ claimUuid: uuid }), { initial: [], map: (d) => (Array.isArray(d) ? d : d ? [d] : []) });
@@ -115,10 +127,10 @@ async function openDocument(a) {
     </div>
 
     <template v-else>
-      <LifePageHeader :title="c.claimNumber ? `Claim ${c.claimNumber}` : claim.loading.value && !c.claimUuid ? 'Loading…' : 'Draft claim'" :subtitle="personName(c)" :back="{ path: back, query: { queue } }">
+      <PageHeader :title="c.claimNumber ? `Claim ${c.claimNumber}` : claim.loading.value && !c.claimUuid ? 'Loading…' : 'Draft claim'" :subtitle="personName(c)" :back="{ path: back, query: { queue } }">
         <template #badge>
           <span v-if="stageLabel" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-surface-raised text-ink-muted">{{ stageLabel }}</span>
-          <LifeStatusBadge v-if="c.status && c.status.toLowerCase() !== stageLabel?.toLowerCase()" :status="c.status" />
+          <StatusBadge v-if="c.status && c.status.toLowerCase() !== stageLabel?.toLowerCase()" :status="c.status" />
         </template>
         <template #actions>
           <Button v-if="can.remove" variant="ghost" class="!text-error" @click="remove">Delete draft</Button>
@@ -127,7 +139,7 @@ async function openDocument(a) {
           <Button v-if="can.review" @click="decide('review')">Mark reviewed</Button>
           <Button v-if="can.approve" @click="decide('approve')">Approve</Button>
         </template>
-      </LifePageHeader>
+      </PageHeader>
 
       <p v-if="side === 'insurance' && ['approved', 'for-authorization', 'authorized'].includes(queue)" class="px-4 py-2.5 mb-5 text-xs rounded-xl bg-warning-soft text-warning-strong">
         Authorizing and paying claims aren't available in the system yet (backend gap G3). This claim can be viewed only.
@@ -229,7 +241,7 @@ async function openDocument(a) {
                 <span v-if="l.comment" class="block mt-0.5 text-xs whitespace-pre-line text-ink-muted">{{ l.comment }}</span>
               </li>
             </ol>
-            <LifePager v-model:page="logs.page.value" :total-pages="logs.totalPages.value" :disabled="logs.loading.value" />
+            <PageNav v-model:page="logs.page.value" :total-pages="logs.totalPages.value" :disabled="logs.loading.value" />
           </section>
         </aside>
       </div>

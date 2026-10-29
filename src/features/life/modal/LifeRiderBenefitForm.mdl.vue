@@ -7,6 +7,8 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
+import SelectField from "@/components/fields/SelectField.vue";
 import { toasted } from "@/utils/utils";
 import { formatAmount } from "../constants/labels";
 import { ageOn, benefitName, rateFor, toRiderBenefitRequest, validateRiderBenefit } from "../individual/individualRules";
@@ -50,29 +52,32 @@ async function submit() {
     closeModal(true);
   }
 }
-
-const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-70";
 </script>
 
 <template>
   <ModalParent>
     <NewFormParent size="md" :title="editing ? 'Change rider' : 'Add rider'" :subtitle="benefitName(benefit)">
       <form id="life-rider-benefit-form" class="grid gap-4 p-5" novalidate @submit.prevent="submit">
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Rider
-          <select v-model="form.riderUuid" v-focus="true" :disabled="editing" :class="[field, errors.riderUuid ? 'border-error' : 'border-line']">
-            <option value="" disabled>{{ riders.length ? "Select…" : "Every active rider is already on this policy" }}</option>
-            <option v-for="r in riders" :key="r.riderUuid" :value="r.riderUuid">{{ r.riderName }}</option>
-          </select>
-          <span v-if="errors.riderUuid" class="text-xs text-error">{{ errors.riderUuid }}</span>
-          <span v-else-if="rider?.riderDescription" class="text-xs font-normal text-ink-subtle">{{ rider.riderDescription }}</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Benefit amount
-          <input v-model="form.benefits" type="number" min="0" step="any" inputmode="decimal" :class="[field, 'text-right tabular-nums', errors.benefits ? 'border-error' : 'border-line']" />
-          <span v-if="errors.benefits" class="text-xs text-error">{{ errors.benefits }}</span>
-          <span v-else-if="rider" class="text-xs font-normal text-ink-subtle">Allowed {{ formatAmount(rider.minLimit) }} – {{ formatAmount(rider.maxLimit) }}</span>
-        </label>
+        <SelectField
+          v-model="form.riderUuid"
+          label="Rider"
+          focus
+          :disabled="editing"
+          :options="riders.map((r) => ({ value: r.riderUuid, label: r.riderName }))"
+          :placeholder="riders.length ? 'Select…' : 'Every active rider is already on this policy'"
+          :error="errors.riderUuid"
+          :hint="rider?.riderDescription || undefined"
+        />
+        <TextField
+          v-model.number="form.benefits"
+          label="Benefit amount"
+          type="number"
+          numeric
+          min="0"
+          step="any"
+          :error="errors.benefits"
+          :hint="rider ? `Allowed ${formatAmount(rider.minLimit)} – ${formatAmount(rider.maxLimit)}` : undefined"
+        />
         <p v-if="rate" class="px-3 py-2 text-xs rounded-lg bg-surface-muted text-ink-muted">Rate at age {{ age }}: <span class="font-semibold text-ink">{{ rate.rate ?? "—" }}</span> per {{ rate.rateUnit ?? "—" }}. The premium is calculated by the system.</p>
         <p v-else-if="rateNote" class="px-3 py-2 text-xs rounded-lg bg-warning-soft text-warning-strong">{{ rateNote }}</p>
       </form>

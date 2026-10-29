@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import BarChart from "@/components/charts/BarChart.vue";
-import LineChart from "@/components/charts/LineChart.vue";
-import { useChartData } from "@/composables/useChartData";
+import { getActiveProviders } from "@/features/health/providers/api/providerApi";
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
@@ -19,14 +17,14 @@ const formatCurrency = (value: number): string => {
 const now = new Date();
 const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';
 
+// No dashboard figures are made up: provider numbers load from the provider API, and
+// premium/policy/claim figures live on /analytics (server-defined reports) until this
+// page gets its own summary endpoint.
 const kpis = ref([
   {
     title: "Total Premium Revenue",
-    value: "ETB 2.45M",
-    rawValue: 2450000,
-    trend: 12.5,
-    trendUp: true,
-    sub: "vs last month",
+    value: "—",
+    sub: "see Analytics",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
     gradient: "from-blue-600 to-blue-500",
     bg: "bg-blue-50",
@@ -35,11 +33,8 @@ const kpis = ref([
   },
   {
     title: "Active Policies",
-    value: "1,247",
-    rawValue: 1247,
-    trend: 8.3,
-    trendUp: true,
-    sub: "across all types",
+    value: "—",
+    sub: "see Analytics",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
     gradient: "from-emerald-600 to-emerald-500",
     bg: "bg-emerald-50",
@@ -48,11 +43,8 @@ const kpis = ref([
   },
   {
     title: "Claims This Month",
-    value: "342",
-    rawValue: 342,
-    trend: -2.1,
-    trendUp: false,
-    sub: "94.2% approval rate",
+    value: "—",
+    sub: "see Analytics",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>`,
     gradient: "from-amber-600 to-amber-500",
     bg: "bg-amber-50",
@@ -61,11 +53,8 @@ const kpis = ref([
   },
   {
     title: "Provider Network",
-    value: "156",
-    rawValue: 156,
-    trend: 5.8,
-    trendUp: true,
-    sub: "across 12 cities",
+    value: "—",
+    sub: "active providers on the network",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>`,
     gradient: "from-violet-600 to-violet-500",
     bg: "bg-violet-50",
@@ -74,29 +63,37 @@ const kpis = ref([
   },
 ]);
 
-const claimPipeline = ref([
-  { status: "Submitted",  count: 45, pct: 30, color: "#3b82f6", light: "#eff6ff" },
-  { status: "In Process", count: 32, pct: 21, color: "#f59e0b", light: "#fffbeb" },
-  { status: "Verified",   count: 28, pct: 19, color: "#8b5cf6", light: "#f5f3ff" },
-  { status: "Approved",   count: 25, pct: 17, color: "#10b981", light: "#ecfdf5" },
-  { status: "Completed",  count: 20, pct: 13, color: "#06b6d4", light: "#ecfeff" },
-]);
+type ProviderRow = { name: string; category: string; contact: string; status: string };
+const activeProviders = ref<ProviderRow[]>([]);
+const providerTotal = ref<number | null>(null);
 
-const recentActivities = ref([
-  { action: "New quotation created",  institution: "ABC Hospital",       time: "2 hrs ago",  type: "quote",    dot: "#3b82f6" },
-  { action: "Claim approved",         institution: "XYZ Clinic",         time: "5 hrs ago",  type: "claim",    dot: "#10b981" },
-  { action: "Policy renewed",         institution: "City Medical Center", time: "Yesterday",  type: "policy",   dot: "#8b5cf6" },
-  { action: "Provider added",         institution: "Metro Healthcare",    time: "2 days ago", type: "provider", dot: "#f59e0b" },
-  { action: "Rate config updated",    institution: "Motor Insurance",     time: "3 days ago", type: "rate",     dot: "#ef4444" },
-]);
+// The provider list answers in a few shapes (see usePagination); read the page out of any of them
+function readPage(response: any) {
+  let data = response?.data ?? response;
+  if (data?.data && (Array.isArray(data.data) || data.data.content)) data = data.data;
+  const rows = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
+  const total = typeof data?.totalElements === "number" ? data.totalElements : rows.length;
+  return { rows, total };
+}
 
-const activeProviders = ref([
-  { name: "Metro Hospital",           type: "Hospital",  location: "Addis Ababa", claims: 42, status: "Active" },
-  { name: "City Medical Center",      type: "Clinic",    location: "Bahir Dar",   claims: 31, status: "Active" },
-  { name: "Central Pharmacy",         type: "Pharmacy",  location: "Hawassa",     claims: 18, status: "Active" },
-  { name: "Regional Health Center",   type: "Hospital",  location: "Mekelle",     claims: 27, status: "Active" },
-  { name: "Family Clinic",            type: "Clinic",    location: "Dire Dawa",   claims: 14, status: "Active" },
-]);
+async function loadProviders() {
+  try {
+    const response: any = await getActiveProviders({ page: 1, limit: 5, status: "ACTIVE" });
+    // ApiService resolves failures as { success: false, error } instead of throwing; keep "—"
+    if (response?.success === false) throw new Error(response.error || `HTTP ${response.status}`);
+    const { rows, total } = readPage(response);
+    providerTotal.value = total;
+    kpis.value[3].value = total.toLocaleString();
+    activeProviders.value = rows.slice(0, 5).map((p: any) => ({
+      name: p.providerName || "—",
+      category: p.categoryName || p.category || "—",
+      contact: p.telephone || p.email || "—",
+      status: p.status || "ACTIVE",
+    }));
+  } catch (e) {
+    console.warn("Could not load providers for the dashboard:", e);
+  }
+}
 
 const rateProducts = [
   { id: "motor",       name: "Motor",    color: "#2563eb", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`, updated: "2d ago" },
@@ -109,45 +106,13 @@ const rateProducts = [
 
 const quickActions = [
   { label: "New Quotation",   sub: "Create quote",      to: "/new_quotation",          color: "#2563eb", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>` },
-  { label: "Add Policy",      sub: "Issue policy",      to: "/underwriting/add_policy", color: "#059669", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>` },
-  { label: "Process Claim",   sub: "Handle request",    to: "/claim/cash_claim",        color: "#7c3aed", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>` },
-  { label: "Add Provider",    sub: "Expand network",    to: "/providers/add",           color: "#ea580c", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>` },
+  { label: "Add Policy",      sub: "Issue policy",      to: "/institution_policy", color: "#059669", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>` },
+  { label: "Process Claim",   sub: "Handle request",    to: "/create_cash_claims",        color: "#7c3aed", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>` },
+  { label: "Add Provider",    sub: "Expand network",    to: "/add_provider",           color: "#ea580c", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>` },
 ];
 
-const { policyVsClaimData, revenueChartData, fetchChartData } = useChartData();
 
-const barChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-  },
-  plugins: { legend: { position: 'top' as const, labels: { color: '#64748b', font: { size: 12 } } } },
-};
-
-const lineChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-  },
-  plugins: { legend: { position: 'top' as const, labels: { color: '#64748b', font: { size: 12 } } } },
-};
-
-const typeColors: Record<string, string> = {
-  quote: "#3b82f6", claim: "#10b981", policy: "#8b5cf6", provider: "#f59e0b", rate: "#ef4444",
-};
-const typeIcons: Record<string, string> = {
-  quote:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>`,
-  claim:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`,
-  policy:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
-  provider: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/></svg>`,
-  rate:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`,
-};
-
-onMounted(() => { fetchChartData(); });
+onMounted(() => { loadProviders(); });
 </script>
 
 <template>
@@ -180,133 +145,23 @@ onMounted(() => { fetchChartData(); });
           <div class="db-kpi-icon-wrap" :class="k.bg + ' ' + k.border">
             <span :class="k.iconColor" v-html="k.icon" style="width:22px;height:22px;display:flex"></span>
           </div>
-          <span class="db-kpi-trend" :class="k.trendUp ? 'db-trend-up' : 'db-trend-down'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="k.trendUp ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'"/>
-            </svg>
-            {{ Math.abs(k.trend) }}%
-          </span>
         </div>
         <div class="db-kpi-value">{{ k.value }}</div>
         <div class="db-kpi-title">{{ k.title }}</div>
         <div class="db-kpi-sub">{{ k.sub }}</div>
-        <div class="db-kpi-bar-track">
-          <div class="db-kpi-bar-fill" :class="`bg-gradient-to-r ${k.gradient}`" :style="`width:${Math.min(100, (k.rawValue / [2500000,1500,400,200][i]) * 100)}%`"></div>
-        </div>
       </div>
     </div>
 
-    <!-- ══ CHARTS ROW ══ -->
-    <div class="db-charts-row">
-      <div class="db-card db-chart-card">
-        <div class="db-card-header">
-          <div>
-            <h3 class="db-card-title">Policies vs Claims</h3>
-            <p class="db-card-sub">Monthly comparison</p>
-          </div>
-          <span class="db-chip db-chip-blue">This Month</span>
-        </div>
-        <div style="height:240px;position:relative">
-          <BarChart :chart-data="policyVsClaimData" :options="barChartOptions" :barThickness="18" :maxBarThickness="26" height="240px"/>
+    <!-- ══ CHARTS + CLAIM FIGURES: served by the reports service on /analytics ══ -->
+    <div class="db-card">
+      <div class="db-card-header">
+        <div>
+          <h3 class="db-card-title">Premiums, claims and loss ratio</h3>
+          <p class="db-card-sub">Live figures come from the server-defined reports on the Analytics page.</p>
         </div>
       </div>
-
-      <div class="db-card db-chart-card">
-        <div class="db-card-header">
-          <div>
-            <h3 class="db-card-title">Revenue Trend</h3>
-            <p class="db-card-sub">Premium collection growth</p>
-          </div>
-          <span class="db-chip db-chip-emerald">Last 6 Months</span>
-        </div>
-        <div style="height:240px;position:relative">
-          <LineChart :chart-data="revenueChartData" :options="lineChartOptions" height="240px" :fill="true"/>
-        </div>
-      </div>
+      <RouterLink to="/analytics" class="db-view-link">Open Analytics</RouterLink>
     </div>
-
-    <!-- ══ MIDDLE ROW: Claim Pipeline + Insights + Activity ══ -->
-    <div class="db-mid-row">
-
-      <!-- Claim Pipeline -->
-      <div class="db-card db-pipeline-card">
-        <div class="db-card-header">
-          <div>
-            <h3 class="db-card-title">Claim Pipeline</h3>
-            <p class="db-card-sub">Processing status overview</p>
-          </div>
-          <span class="db-chip db-chip-blue">342 Total</span>
-        </div>
-        <div class="db-pipeline-list">
-          <div v-for="(item, i) in claimPipeline" :key="i" class="db-pipeline-row">
-            <div class="db-pipeline-label">
-              <div class="db-pipeline-dot" :style="`background:${item.color}`"></div>
-              <span>{{ item.status }}</span>
-            </div>
-            <div class="db-pipeline-bar-wrap">
-              <div class="db-pipeline-bar-track">
-                <div class="db-pipeline-bar-fill" :style="`width:${item.pct}%;background:${item.color}`"></div>
-              </div>
-              <span class="db-pipeline-pct">{{ item.pct }}%</span>
-            </div>
-            <span class="db-pipeline-count">{{ item.count }}</span>
-          </div>
-        </div>
-        <RouterLink to="/claim/process_claims" class="db-view-link">
-          View all claims
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-        </RouterLink>
-      </div>
-
-      <!-- Market Insights -->
-      <div class="db-insights-col">
-        <div class="db-insight-item db-insight-blue">
-          <div class="db-insight-label">Avg Claim Value</div>
-          <div class="db-insight-val">ETB 7,150</div>
-          <div class="db-insight-trend up">↑ 3.2% vs last month</div>
-        </div>
-        <div class="db-insight-item db-insight-emerald">
-          <div class="db-insight-label">Approval Rate</div>
-          <div class="db-insight-val">94.2%</div>
-          <div class="db-insight-trend up">↑ 2.1% vs last month</div>
-        </div>
-        <div class="db-insight-item db-insight-violet">
-          <div class="db-insight-label">Avg Process Time</div>
-          <div class="db-insight-val">2.3 days</div>
-          <div class="db-insight-trend up">↓ 0.5 days faster</div>
-        </div>
-        <div class="db-insight-item db-insight-amber">
-          <div class="db-insight-label">Loss Ratio</div>
-          <div class="db-insight-val">61.4%</div>
-          <div class="db-insight-trend down">↑ 1.3% vs last month</div>
-        </div>
-      </div>
-
-      <!-- Activity Feed -->
-      <div class="db-card db-activity-card">
-        <div class="db-card-header">
-          <div>
-            <h3 class="db-card-title">Recent Activity</h3>
-            <p class="db-card-sub">Latest platform events</p>
-          </div>
-          <span class="db-live-dot-wrap">
-            <span class="db-live-dot"></span>
-            <span class="db-live-txt">Live</span>
-          </span>
-        </div>
-        <div class="db-activity-list">
-          <div v-for="(a, i) in recentActivities" :key="i" class="db-activity-row">
-            <div class="db-activity-icon" :style="`background:${typeColors[a.type]}15;color:${typeColors[a.type]}`" v-html="typeIcons[a.type]"></div>
-            <div class="db-activity-body">
-              <div class="db-activity-action">{{ a.action }}</div>
-              <div class="db-activity-inst">{{ a.institution }}</div>
-            </div>
-            <span class="db-activity-time">{{ a.time }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
 
     <!-- ══ BOTTOM ROW: Providers + Quick Actions ══ -->
     <div class="db-bottom-row">
@@ -316,17 +171,18 @@ onMounted(() => { fetchChartData(); });
         <div class="db-card-header">
           <div>
             <h3 class="db-card-title">Top Active Providers</h3>
-            <p class="db-card-sub">Network utilization this month</p>
+            <p class="db-card-sub">Most recent on the network</p>
           </div>
-          <span class="db-chip db-chip-slate">156 Network</span>
+          <span v-if="providerTotal !== null" class="db-chip db-chip-slate">{{ providerTotal.toLocaleString() }} Network</span>
         </div>
         <div class="db-providers-table">
           <div class="db-tbl-head">
             <span>Provider</span>
-            <span>Type</span>
-            <span>Location</span>
-            <span class="db-tbl-right">Claims</span>
+            <span>Category</span>
+            <span>Contact</span>
+            <span class="db-tbl-right">Status</span>
           </div>
+          <div v-if="activeProviders.length === 0" class="db-tbl-row"><span class="db-tbl-type">No active providers loaded.</span></div>
           <div v-for="(p, i) in activeProviders" :key="i" class="db-tbl-row" :style="`animation-delay:${i*40}ms`">
             <div class="db-tbl-name">
               <div class="db-tbl-avatar" :style="`background:${['#eff6ff','#ecfdf5','#fefce8','#f5f3ff','#fff7ed'][i]};color:${['#2563eb','#059669','#d97706','#7c3aed','#ea580c'][i]}`">
@@ -334,12 +190,12 @@ onMounted(() => { fetchChartData(); });
               </div>
               {{ p.name }}
             </div>
-            <span class="db-tbl-type">{{ p.type }}</span>
-            <span class="db-tbl-loc">{{ p.location }}</span>
-            <span class="db-tbl-claims">{{ p.claims }}</span>
+            <span class="db-tbl-type">{{ p.category }}</span>
+            <span class="db-tbl-loc">{{ p.contact }}</span>
+            <span class="db-tbl-claims">{{ p.status }}</span>
           </div>
         </div>
-        <RouterLink to="/providers/active" class="db-view-link">
+        <RouterLink to="/active_providers" class="db-view-link">
           View all providers
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
         </RouterLink>

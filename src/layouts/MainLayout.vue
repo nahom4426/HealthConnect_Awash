@@ -1,6 +1,6 @@
 <script setup>
 import NavBar from "@/components/NavBar.vue";
-import { getActingRole } from "@/utils/actingRole";
+import { hasFullSystemAccess, hasRoleAccess, navItemArea } from "@/utils/roleAccess";
 import { prefetchRoutesIdle } from "@/router/prefetch";
 import NotificationCenter from "@/components/NotificationCenter.vue";
 import { useAuthStore } from "@/stores/auth";
@@ -49,19 +49,6 @@ const profilePicture = computed(() => {
 function handleImgError(e) { e.target.src = imageSrc; }
 function logout() { authStore.logout(); }
 
-/** AuthService "admin" role (and Super Admin) should see full motor/admin nav. */
-function hasFullSystemAccess(user = {}) {
-  const roleName = String(user?.roleName || '').trim().toLowerCase();
-  const roleCode = String(user?.roleCode || user?.role || '').trim().toUpperCase();
-  return (
-    roleName === 'super admin' ||
-    roleName === 'admin' ||
-    roleCode === 'ROLE_SUPER_ADMIN' ||
-    roleCode === 'ROLE_ADMIN' ||
-    roleCode === 'ADMIN'
-  );
-}
-
 const isSuperAdmin = computed(() => {
   const user = authStore.auth?.user ?? authStore.auth ?? {};
   return hasFullSystemAccess(user);
@@ -87,6 +74,17 @@ const MODULE_NAVS = {
   burglary:    burglaryNavs,
 };
 
+watch(
+  () => route.path,
+  (path) => {
+    const id = path.split("/").filter(Boolean)[0];
+    if (id && MODULE_NAVS[id] && moduleStore.activeModuleId !== id) {
+      moduleStore.selectModule(id);
+    }
+  },
+  { immediate: true }
+);
+
 // ── Active module raw navs ──
 const marineRoles = useMarineRoles();
 const activeNavs = computed(() => {
@@ -96,58 +94,14 @@ const activeNavs = computed(() => {
   return MODULE_NAVS[id] || healthNavs;
 });
 
-// ── Role-filtered navigation items for all modules ──
+// ── Role-filtered navigation items for all modules (same rules the router enforces) ──
 const filteredNavs = computed(() => {
-  const rawNavs = activeNavs.value || [];
   // Marine items are already filtered by Marine role in activeNavs
-  if (moduleStore.activeModuleId === "marine") return rawNavs;
+  if (moduleStore.activeModuleId === "marine") return activeNavs.value || [];
   const user = authStore.auth?.user ?? authStore.auth ?? {};
-  const roleName = user?.roleName || '';
-  const roleCode = user?.roleCode || (typeof user?.role === 'string' ? user.role : '') || getActingRole();
-  
-  // Auth admin / Super Admin see ALL navigation items (incl. motor Claims/Quotation/Proposals)
-  if (hasFullSystemAccess(user) || hasFullSystemAccess({ roleName, roleCode })) {
-    return rawNavs;
-  }
-
-  const isProductConfigName = (name) => ['Product Config', 'Proposal Form Builder', 'Rate Config'].some(k => name?.includes(k));
-  const isClaimsName = (name) => name?.includes('Claim');
-  const isQuotationName = (name) => name?.includes('Quotation');
-  const isProposalsName = (name) => name?.includes('Proposal') && !name?.includes('Builder');
-  const isDashboardName = (name) => name?.includes('Dashboard');
-
-  return rawNavs.filter(item => {
-    const itemName = item.name || '';
-
-    // Product Config & Form Builder: ONLY Product Manager and Super Admin
-    if (isProductConfigName(itemName)) {
-      return roleCode === 'ROLE_PRODUCT_MANAGER' || roleName === 'Product Manager';
-    }
-
-    // Claims: Adjustor, Claim Manager, Customer, Product Manager, Super Admin
-    if (isClaimsName(itemName)) {
-      return ['ROLE_ADJUSTOR', 'ROLE_CLAIM_MANAGER', 'ROLE_CUSTOMER', 'ROLE_SUPER_ADMIN', 'ROLE_PRODUCT_MANAGER'].includes(roleCode) || 
-             ['Adjustor', 'Claim Manager', 'Customer', 'Product Manager'].includes(roleName);
-    }
-
-    // Quotation: Underwriter, Product Manager, Customer, Super Admin
-    if (isQuotationName(itemName)) {
-      return ['ROLE_UNDERWRITER', 'ROLE_PRODUCT_MANAGER', 'ROLE_CUSTOMER', 'ROLE_SUPER_ADMIN'].includes(roleCode) ||
-             ['Underwriter', 'Product Manager', 'Customer'].includes(roleName);
-    }
-
-    // Proposals & Contracts: Underwriter, Adjustor, Product Manager, Customer, Super Admin
-    if (isProposalsName(itemName)) {
-      return ['ROLE_UNDERWRITER', 'ROLE_ADJUSTOR', 'ROLE_PRODUCT_MANAGER', 'ROLE_CUSTOMER', 'ROLE_SUPER_ADMIN'].includes(roleCode) ||
-             ['Underwriter', 'Adjustor', 'Product Manager', 'Customer'].includes(roleName);
-    }
-
-    // Dashboard: Visible to all authenticated users
-    if (isDashboardName(itemName)) {
-      return true;
-    }
-
-    return true;
+  return (activeNavs.value || []).filter(item => {
+    const area = navItemArea(item.name || '');
+    return !area || hasRoleAccess(user, area);
   });
 });
 
@@ -227,8 +181,8 @@ const isModuleSelect = computed(() => route.path === "/module-select");
         <main class="content-area">
           <Transition name="page-fade" mode="out-in">
             <HomeScreen v-if="isHomePage" :navs="filteredNavs" :key="'home'" />
-            <div v-else class="page-wrapper" :key="route.path">
-              <RouterView />
+            <div v-else class="page-wrapper" :key="route.fullPath">
+              <RouterView :key="route.fullPath" />
             </div>
           </Transition>
         </main>

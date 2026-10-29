@@ -18,5 +18,9 @@ RUN npm run build
 
 FROM nginx:alpine
 RUN rm /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx:alpine runs envsubst on /etc/nginx/templates/*.template at start-up and writes the
+# result to conf.d, so the Life API address can be changed with `docker run -e LIFE_API_UPSTREAM=...`
+# without rebuilding. The default matches the dev proxy: Life on the same host as the main backend.
+ENV LIFE_API_UPSTREAM=https://trainnyala.medcoanalytics.com
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html

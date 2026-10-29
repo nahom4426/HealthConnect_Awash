@@ -7,8 +7,9 @@ import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
 import { toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
-import LifeStatusBadge from "../../components/LifeStatusBadge.vue";
+import { hasPrivilege } from "@/utils/privileges";
+import PageHeader from "@/components/PageHeader.vue";
+import StatusBadge from "@/components/StatusBadge.vue";
 import InsuredMembersPanel from "../../components/InsuredMembersPanel.vue";
 import QuotedRidersPanel from "../../components/QuotedRidersPanel.vue";
 import TreatyLinksPanel from "../../components/TreatyLinksPanel.vue";
@@ -25,8 +26,23 @@ const uuid = computed(() => route.params.quotationUuid);
 
 const quotation = useLifeResource(getQuotation);
 const q = computed(() => quotation.data.value || {});
-const can = computed(() => quotationActions(q.value));
+// Status says what is possible next; the user's Life privileges say who may do it
+const can = computed(() => {
+  const a = quotationActions(q.value);
+  const create = hasPrivilege("Life_Quotation_Create");
+  return {
+    ...a,
+    edit: a.edit && create,
+    remove: a.remove && create,
+    issue: a.issue && hasPrivilege("Life_Quotation_Issue"),
+    accept: a.accept && hasPrivilege("Life_Quotation_Issue"),
+    pay: a.pay && hasPrivilege("Life_Payment_Record"),
+    issuePolicy: a.issuePolicy && hasPrivilege("Life_Policy_Issue"),
+    revise: a.revise && hasPrivilege("Life_Policy_Service"),
+  };
+});
 const draft = computed(() => can.value.edit);
+const isDraft = computed(() => quotationActions(q.value).edit);
 
 const TABS = ["Members", "Riders", "Reinsurance", "Details"];
 const tab = ref("Members");
@@ -98,14 +114,14 @@ function remove() {
     </div>
 
     <template v-else>
-      <LifePageHeader
+      <PageHeader
         :title="q.quotationNumber || (quotation.loading.value && !q.quotationUuid ? 'Loading…' : 'Draft quotation')"
         :subtitle="[q.institutionName, q.term ? `${q.term}-year group term life` : ''].filter(Boolean).join(' · ')"
         back="/life/quotations"
       >
         <template v-if="q.quotationStatus" #badge>
-          <LifeStatusBadge :status="q.quotationStatus" />
-          <LifeStatusBadge v-if="q.policyStatus && q.policyIssuedDate" :status="q.policyStatus" />
+          <StatusBadge :status="q.quotationStatus" />
+          <StatusBadge v-if="q.policyStatus && q.policyIssuedDate" :status="q.policyStatus" />
         </template>
         <template #actions>
           <Button v-if="can.remove" variant="ghost" class="!text-error" @click="remove">Delete draft</Button>
@@ -117,15 +133,15 @@ function remove() {
           <Button v-if="q.policyIssuedDate" variant="outline" @click="router.push(`/life/policies/${uuid}`)">View policy</Button>
           <Button v-if="can.revise" variant="outline" @click="revise">Revise</Button>
         </template>
-      </LifePageHeader>
+      </PageHeader>
 
       <!-- Draft checklist -->
-      <ol v-if="draft" class="flex flex-wrap gap-2 mb-5" aria-label="Before issuing">
+      <ol v-if="isDraft" class="flex flex-wrap gap-2 mb-5" aria-label="Before issuing">
         <li v-for="(s, i) in steps" :key="s.label">
           <button
             type="button"
             :class="['inline-flex gap-2 items-center py-1.5 pr-3 pl-1.5 text-xs font-medium rounded-full border', s.done ? 'border-success/40 bg-success-soft text-success-strong' : 'border-line bg-surface text-ink-muted hover:border-primary/50']"
-            @click="s.label !== 'Details' ? (tab = s.label) : editDetails()"
+            @click="s.label !== 'Details' ? (tab = s.label) : can.edit && editDetails()"
           >
             <span :class="['grid place-items-center w-5 h-5 text-[11px] rounded-full', s.done ? 'bg-success text-white' : 'bg-surface-raised text-ink-subtle']">{{ s.done ? "✓" : i + 1 }}</span>
             {{ s.label }}<span v-if="s.optional && !s.done" class="text-ink-subtle">(optional)</span>

@@ -12,6 +12,31 @@ policies. Everything below is what the frontend needs from you. Gap codes (G1…
 match the frontend's tracking document, so please keep them in your replies.
 
 ═══════════════════════════════════════════════════════════════════════════════════════════════
+BLOCKER — FIX FIRST (found 2026-10-29)
+═══════════════════════════════════════════════════════════════════════════════════════════════
+With a valid token from the AuthService login (user admin2, role "admin"), EVERY Life endpoint returns
+500 {"type":"internal.error","title":"Unexpected error","detail":"An unexpected error occurred."}: e.g.
+GET /rider/active, /group-term/list?status=ACTIVE, /reinsurance/reinsurer/list, /reinsurance/medical-parameter/list,
+/question?status=ACTIVE, /quotation/list?status=PENDING. An invalid token correctly gets 401 "Invalid JWT token",
+so the token is parsed and the failure happens after authentication (user/role lookup from the token, a missing
+module or claim in the JWT, or the database). Please look at the Life service log for that request, fix it, and
+make the error handler log the root cause instead of a bare 500. Nothing in the frontend can be tested live until
+this works.
+
+New privileges and roles: 16 privileges named Life_* (category "Life") and 8 roles named "Life …" were created
+through POST /auth/users/privilege/add and /auth/users/role/add, and added to the "admin" role. The AuthService
+stored them with moduleType "health" because the request has no module field — add a moduleType (e.g. "life") to
+the privilege and role requests, or tell us how a privilege is assigned to the Life module. The Life service must
+check these names (G10).
+
+Stale privileges at login: after the 16 Life privileges were added to the "admin" role (155 privileges), signing
+in as an admin user still returned the old 139. They only appeared after the user was saved again through
+PUT /auth/users/{uuid} with the same role. So the AuthService keeps a per-user copy of the role's privileges and
+doesn't refresh it when the role changes. Recompute the user's privileges from the role at login (or refresh every
+user of a role when the role is updated). Also: GET /auth/users/user/{uuid} returns no privileges, so the app
+can't refresh them without a new login.
+
+═══════════════════════════════════════════════════════════════════════════════════════════════
 GENERAL RULES
 ═══════════════════════════════════════════════════════════════════════════════════════════════
 - Never break existing endpoints, paths, field names or enum values. Add new endpoints or optional fields;

@@ -6,7 +6,7 @@ import { useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import { formatCurrency, toasted } from "@/utils/utils";
-import LifePageHeader from "../../components/LifePageHeader.vue";
+import PageHeader from "@/components/PageHeader.vue";
 import RateTableEditor from "../../components/RateTableEditor.vue";
 import TreatyTermsFields from "../../components/TreatyTermsFields.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
@@ -108,7 +108,7 @@ const money = (v) => (v === null || v === undefined || v === "" ? "—" : format
 
 <template>
   <div class="p-4 md:p-6">
-    <LifePageHeader title="New reinsurance treaty" subtitle="Set the terms, the reinsurers and their shares, the group free cover limits and the medical evidence required above them." back="/life/reinsurance/treaties" />
+    <PageHeader title="New reinsurance treaty" subtitle="Set the terms, the reinsurers and their shares, the group free cover limits and the medical evidence required above them." back="/life/reinsurance/treaties" />
 
     <ol class="flex flex-wrap gap-2 mb-5" aria-label="Steps">
       <li v-for="(s, i) in STEPS" :key="s">

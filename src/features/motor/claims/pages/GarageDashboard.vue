@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { fetchAllClaims } from '@/features/motor/claims/api/digitalChannelApi';
 import { useAuthStore } from '@/stores/auth';
+import { getActingRole } from '@/utils/actingRole';
 import { useRouter } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';
 
@@ -22,9 +23,13 @@ const statusLabels = {
   MAINTENANCE_COMPLETED: 'Repair Done', HANDOVER_COMPLETED: 'Handed Over'
 };
 
+// A garage partner sees only the claims assigned to it; staff see every claim that has a garage
 const assignedClaims = computed(() => {
-  const myUsername = authStore.auth?.user?.username || 'garage_auto_care';
-  return claims.value.filter(c => c.garageUuid === myUsername || c.garageUuid);
+  const withGarage = claims.value.filter(c => c.garageUuid);
+  if (getActingRole() !== 'ROLE_GARAGE') return withGarage;
+  const user = authStore.auth?.user || {};
+  const myIds = [user.garageUuid, user.userUuid, user.uuid, user.username].filter(Boolean);
+  return withGarage.filter(c => myIds.includes(c.garageUuid));
 });
 
 const filteredClaims = computed(() => {

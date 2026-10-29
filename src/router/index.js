@@ -1,5 +1,6 @@
 import MainLayout from "@/layouts/MainLayout.vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
+import { hasRoleAccess } from "@/utils/roleAccess";
 // Pages load on demand so the first screen doesn't download the whole app
 const HomeView = () => import("@/views/HomeView.vue");
 const RateConfigHome = () => import("@/views/RateConfig/RateConfigHome.vue");
@@ -24,6 +25,7 @@ import motorRoutes from "./motor/motor.routes";
 import lifeRoutes from "./life/life.routes";
 // Marine & Cargo
 import { marineRoutes, marinePublicRoutes } from "./marine/marine.routes";
+import fireRoutes, { burglaryRoutes } from "./fire/fire.routes";
 import { installRouteLoading } from "./loading";
 // Shared across products
 import adminRoutes from "./shared/admin.routes";
@@ -203,6 +205,8 @@ const router = createRouter({
         ...motorRoutes,
         ...lifeRoutes,
         ...marineRoutes,
+        ...fireRoutes,
+        ...burglaryRoutes,
         ...adminRoutes,
         ...analyticsRoutes,
         ...reportsRoutes,
@@ -220,13 +224,13 @@ const router = createRouter({
           path: '/rate-config',
           name: 'rate-config',
           component: RateConfigHome,
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, roleAccess: 'productConfig' },
         },
         {
           path: '/rate-config/:typeId',
           name: 'rate-config-form',
           component: RateConfigForm,
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, roleAccess: 'productConfig' },
         },
         {
           path: '/profile',
@@ -312,7 +316,8 @@ router.beforeEach((to, from, next) => {
   // ApiService reads the token from there. Writing the flattened user back here dropped the
   // token after the first navigation, so API calls went out unauthenticated.
   const user = rawUser;
-  const hasValidToken = !!(user?.token || user?.roleCode || user?.email);
+  // Signed in means holding a token; a stored email or role code alone is not a session
+  const hasValidToken = !!user?.token;
   const hasRolePrivilege = (privilegeName) => {
     if (!user) return false;
     const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
@@ -359,6 +364,13 @@ router.beforeEach((to, from, next) => {
         }
         return acc;
       }, []);
+
+      // Motor-style module pages: the same role rules that hide them from the sidebar
+      const roleArea = [...to.matched].reverse().find(r => r.meta?.roleAccess)?.meta.roleAccess;
+      if (roleArea && !hasRoleAccess(user, roleArea)) {
+        next('/module-select');
+        return;
+      }
 
       if (requiredPerms.length > 0) {
         const privileges = Array.isArray(user.privileges) ? user.privileges : [];

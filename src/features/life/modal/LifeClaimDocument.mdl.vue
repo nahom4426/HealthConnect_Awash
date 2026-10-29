@@ -6,6 +6,7 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
 import { toasted } from "@/utils/utils";
 import { fileForm } from "../composables/useLifeResource";
 import { formatFileSize, validateAttachment } from "../claims/claimRules";
@@ -51,11 +52,7 @@ async function submit() {
           <span v-if="file" class="text-xs text-ink-subtle">{{ file.name }} · {{ formatFileSize(file.size) }}</span>
           <span v-if="errors.file" class="text-xs text-error">{{ errors.file }}</span>
         </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Document name
-          <input v-model="name" maxlength="100" placeholder="e.g. Death certificate" :class="['px-3 w-full h-10 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15', errors.name ? 'border-error' : 'border-line']" />
-          <span v-if="errors.name" class="text-xs text-error">{{ errors.name }}</span>
-        </label>
+        <TextField v-model="name" label="Document name" maxlength="100" placeholder="e.g. Death certificate" :error="errors.name" />
       </form>
       <template #bottom>
         <div class="flex gap-2 justify-end p-4 w-full border-t border-line">

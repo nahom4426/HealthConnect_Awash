@@ -6,6 +6,8 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
+import TextField from "@/components/fields/TextField.vue";
+import TextareaField from "@/components/fields/TextareaField.vue";
 import { toasted } from "@/utils/utils";
 import { createRider, updateRider } from "../api/productApi";
 
@@ -54,34 +56,16 @@ async function submit() {
     closeModal(res.data);
   }
 }
-
-const field = "w-full px-3 h-10 text-sm rounded-lg border outline-none bg-surface text-ink focus:border-primary focus:ring-2 focus:ring-primary/15";
 </script>
 
 <template>
   <ModalParent>
     <NewFormParent size="md" :title="editing ? 'Edit rider' : 'New rider'" subtitle="Additional cover attached to term life, priced from its own rate tables.">
       <form id="life-rider-form" class="grid gap-4 p-5 sm:grid-cols-2" novalidate @submit.prevent="submit">
-        <label class="flex flex-col gap-1 sm:col-span-2 text-sm font-medium text-ink">
-          Rider name <span class="sr-only">(required)</span>
-          <input v-model="form.riderName" v-focus="true" maxlength="100" :class="[field, errors.riderName ? 'border-error' : 'border-line']" placeholder="e.g. Accidental death benefit" />
-          <span v-if="errors.riderName" class="text-xs text-error">{{ errors.riderName }}</span>
-        </label>
-        <label class="flex flex-col gap-1 sm:col-span-2 text-sm font-medium text-ink">
-          Description
-          <textarea v-model="form.riderDescription" maxlength="250" rows="3" :class="[field, 'h-auto py-2', errors.riderDescription ? 'border-error' : 'border-line']" placeholder="What the rider covers and when it pays" />
-          <span class="text-xs text-ink-subtle">{{ form.riderDescription.length }}/250</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Minimum sum assured (ETB)
-          <input v-model="form.minLimit" type="number" min="0" step="any" :class="[field, 'tabular-nums', errors.minLimit ? 'border-error' : 'border-line']" />
-          <span v-if="errors.minLimit" class="text-xs text-error">{{ errors.minLimit }}</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-          Maximum sum assured (ETB)
-          <input v-model="form.maxLimit" type="number" min="0" step="any" :class="[field, 'tabular-nums', errors.maxLimit ? 'border-error' : 'border-line']" />
-          <span v-if="errors.maxLimit" class="text-xs text-error">{{ errors.maxLimit }}</span>
-        </label>
+        <div class="sm:col-span-2"><TextField v-model="form.riderName" label="Rider name" required focus maxlength="100" placeholder="e.g. Accidental death benefit" :error="errors.riderName" /></div>
+        <div class="sm:col-span-2"><TextareaField v-model="form.riderDescription" label="Description" :maxlength="250" counter rows="3" placeholder="What the rider covers and when it pays" :error="errors.riderDescription" /></div>
+        <TextField v-model.number="form.minLimit" label="Minimum sum assured (ETB)" type="number" numeric min="0" step="any" :error="errors.minLimit" />
+        <TextField v-model.number="form.maxLimit" label="Maximum sum assured (ETB)" type="number" numeric min="0" step="any" :error="errors.maxLimit" />
       </form>
       <template #bottom>
         <div class="flex gap-2 justify-end p-4 w-full border-t border-line">

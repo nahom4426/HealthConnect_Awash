@@ -214,10 +214,13 @@ export function editableQuote(id) {
 
 // ── policies and certificates ──
 export function certificateStatus(c) {
-  // Generation takes a few seconds on the real backend; the mock issues it 6 s after binding
-  if (c.status === "PENDING" && Date.now() - new Date(c.createdAt).getTime() > 6000) {
+  // No cover until the premium is paid: the certificate waits for Finance's receipt
+  if (c.status === "PENDING" && c.awaitingPayment) return "AWAITING_PAYMENT";
+  // Generation takes a few seconds on the real backend; the mock issues it 6 s after release
+  const from = new Date(c.releasedAt ?? c.createdAt).getTime();
+  if (c.status === "PENDING" && Date.now() - from > 6000) {
     c.status = "ISSUED";
-    c.issuedAt = new Date(new Date(c.createdAt).getTime() + 6000).toISOString();
+    c.issuedAt = new Date(from + 6000).toISOString();
     save();
   }
   const policy = db.policies.find((p) => p.id === c.policyId);
@@ -255,7 +258,15 @@ export function certificateView(c) {
     versions: db.certificates
       .filter((x) => x.policyId === c.policyId && x.certNo === c.certNo)
       .map((x) => ({ id: x.id, version: x.version, status: certificateStatus(x), issuedAt: x.issuedAt })),
+    billing: billingFor({ certificateId: c.id }),
   };
+}
+
+/** The debit or credit notes raised for a certificate or policy, for the finance panels. */
+export function billingFor({ certificateId = null, policyId = null }) {
+  return (db.notes ?? [])
+    .filter((n) => (certificateId ? n.certificateId === certificateId : n.policyId === policyId))
+    .map((n) => ({ id: n.id, noteNo: n.noteNo, kind: n.kind, source: n.source, status: n.status, total: n.total, paid: n.paid, outstanding: toFixedString((parseDecimal(n.total) ?? 0n) - (parseDecimal(n.paid) ?? 0n)), issuedAt: n.issuedAt, dueDate: n.dueDate }));
 }
 
 export function policyView(p) {
@@ -270,6 +281,7 @@ export function policyView(p) {
     certificates: db.certificates
       .filter((c) => c.policyId === p.id)
       .map((c) => ({ id: c.id, certNo: c.certNo, version: c.version, status: certificateStatus(c), issuedAt: c.issuedAt })),
+    billing: billingFor({ policyId: p.id }),
   };
 }
 

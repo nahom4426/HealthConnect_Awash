@@ -6,6 +6,8 @@ import {
 } from "./core";
 import { todayIso } from "../utils/format";
 import { parseDecimal, toFixedString } from "../utils/money";
+import { approvedCustomerError } from "./customers";
+import { raiseNote } from "./finance";
 
 const UW = ["UNDERWRITER", "SENIOR_UNDERWRITER"];
 const gt = (a, b) => (parseDecimal(a) ?? 0n) > (parseDecimal(b) ?? 0n);
@@ -108,6 +110,8 @@ on("get", "/open-covers/:id", ({ params }) => {
 on("post", "/open-covers", ({ body }) => {
   if (!hasRole(...UW)) fail(403, "You don't have permission for this action.");
   const e = coverErrors(body);
+  const notApproved = body?.insuredId && approvedCustomerError(body.insuredId, "insured");
+  if (notApproved) e.push(notApproved);
   if (e.length) invalid(e);
   const id = nextId(db.openCovers);
   const seq = ++db.seq.openCover;
@@ -125,6 +129,10 @@ on("post", "/open-covers", ({ body }) => {
   };
   db.openCovers.push(c);
   audit("openCover", c.id, `Created with master policy ${c.masterPolicyNo}`);
+  // The provisional premium is billed up front; declarations draw on it and the year-end adjustment settles the rest
+  const deposit = parseDecimal(c.provisionalPremium) ?? 0n;
+  if (deposit > 0n)
+    raiseNote({ source: "OPEN_COVER_DEPOSIT", customerId: c.insuredId, brokerId: c.brokerId ?? null, openCoverId: c.id, amounts: { net: deposit, vat: 0n, stamp: 0n }, description: `Provisional premium for ${c.coverNo}` });
   return coverView(c);
 });
 
@@ -201,6 +209,16 @@ on("post", "/open-covers/:id/adjustment", ({ params, body }) => {
   const s = statement(c);
   if (body?.dryRun) return s;
   c.adjustment = { ...s, postedAt: nowIso(), postedBy: actor(), exportRef: `ACC-${year()}-${c.coverNo.slice(-5)}` };
+  const diff = parseDecimal(s.difference) ?? 0n;
+  const note = raiseNote({
+    source: "ADJUSTMENT",
+    customerId: c.insuredId,
+    brokerId: c.brokerId ?? null,
+    openCoverId: c.id,
+    amounts: { net: s.direction === "DUE_FROM_INSURED" ? diff : -diff, vat: 0n, stamp: 0n },
+    description: `Year-end adjustment for ${c.coverNo}`,
+  });
+  c.adjustment.noteNo = note?.noteNo ?? null;
   c.updatedAt = nowIso();
   audit("openCover", c.id, `Year-end adjustment posted: ${s.direction === "DUE_FROM_INSURED" ? "due from insured" : "refund to insured"} ETB ${s.difference}`);
   return coverView(c);

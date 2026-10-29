@@ -97,11 +97,33 @@ export function createSeed() {
     contactPerson: "",
     ...extra,
   });
+  // Registered, approved customers (customer registration): companies with their licences on file
+  let customerNo = 0;
+  const company = (name, types, extra, licence, region, city, businessType) =>
+    party(name, types, {
+      ...extra,
+      kind: "COMPANY",
+      status: "APPROVED",
+      customerNo: `CU-${thisYear}-${String(++customerNo).padStart(5, "0")}`,
+      tradeLicenceNo: licence,
+      tradeLicenceExpiry: `${thisYear + 1}-06-30`,
+      vatRegNo: `VAT-${licence.slice(-6)}`,
+      businessType,
+      addressParts: { region, city, subCity: "", woreda: "", houseNo: "" },
+      registeredBy: "Hanna Girma",
+      registeredAt: `${thisYear}-01-05T08:00:00Z`,
+      approvedBy: "Yonas Alemu",
+      approvedAt: `${thisYear}-01-06T08:00:00Z`,
+      documents: [
+        { id: `d${customerNo}a`, kind: "TRADE_LICENCE", name: "trade-licence.pdf", size: 182000, type: "application/pdf", uploadedBy: "Hanna Girma", uploadedAt: `${thisYear}-01-05T08:00:00Z` },
+        { id: `d${customerNo}b`, kind: "TIN_CERTIFICATE", name: "tin-certificate.pdf", size: 96000, type: "application/pdf", uploadedBy: "Hanna Girma", uploadedAt: `${thisYear}-01-05T08:00:00Z` },
+      ],
+    });
   const parties = [
-    party("Abyssinia Agro Industries PLC", ["INSURED", "CONSIGNEE"], { tin: "0012345678", phone: "+251 11 551 2200", email: "imports@abyssinia-agro.example", address: "Bole, Addis Ababa" }),
-    party("Habesha Pharmaceuticals SC", ["INSURED"], { tin: "0023456789", phone: "+251 11 662 3011", email: "logistics@habesha-pharma.example", address: "Kality, Addis Ababa" }),
-    party("Rift Valley Steel Works", ["INSURED", "CONSIGNEE"], { tin: "0034567890", email: "procurement@rvsteel.example", address: "Adama" }),
-    party("Shewa Electronics Trading", ["INSURED"], { tin: "0045678901", email: "ops@shewa-electronics.example" }),
+    company("Abyssinia Agro Industries PLC", ["INSURED", "CONSIGNEE"], { tin: "0012345678", phone: "+251 11 551 2200", email: "imports@abyssinia-agro.example", address: "Bole, Addis Ababa", contactPerson: "Mekdes Alemayehu" }, "AA/14/1/0012345", "Addis Ababa", "Addis Ababa", "IMPORTER"),
+    company("Habesha Pharmaceuticals SC", ["INSURED"], { tin: "0023456789", phone: "+251 11 662 3011", email: "logistics@habesha-pharma.example", address: "Kality, Addis Ababa", contactPerson: "Samuel Tadesse" }, "AA/14/1/0023456", "Addis Ababa", "Addis Ababa", "MANUFACTURER"),
+    company("Rift Valley Steel Works", ["INSURED", "CONSIGNEE"], { tin: "0034567890", phone: "+251 22 111 4020", email: "procurement@rvsteel.example", address: "Adama", contactPerson: "Lemma Bekele" }, "OR/03/2/0034567", "Oromia", "Adama", "MANUFACTURER"),
+    company("Shewa Electronics Trading", ["INSURED"], { tin: "0045678901", phone: "+251 11 557 9090", email: "ops@shewa-electronics.example", address: "Merkato, Addis Ababa", contactPerson: "Hirut Kebede" }, "AA/14/1/0045678", "Addis Ababa", "Addis Ababa", "IMPORTER_EXPORTER"),
     party("Commercial Bank of Ethiopia", ["BANK"], { email: "trade.finance@cbe.example", phone: "+251 11 551 5004" }),
     party("Awash Bank", ["BANK"], { email: "lc.desk@awashbank.example" }),
     party("Dashen Bank", ["BANK"], { email: "tradeservices@dashenbank.example" }),
@@ -110,9 +132,29 @@ export function createSeed() {
     party("Ethiopian Shipping & Logistics", ["CARRIER"], { email: "bookings@esl.example" }),
     party("Horn Marine Surveyors", ["SURVEYOR"], { email: "surveys@hornmarine.example" }),
     // Close to a sanctions-list name on purpose, so screening shows a Potential match (phase 2)
-    party("Horn Coastal Trading PLC", ["CONSIGNEE", "INSURED"], { email: "info@horncoastal.example", address: "Dire Dawa" }),
+    company("Horn Coastal Trading PLC", ["CONSIGNEE", "INSURED"], { tin: "0056789012", phone: "+251 25 111 2233", email: "info@horncoastal.example", address: "Dire Dawa", contactPerson: "Abdi Yusuf" }, "DD/01/1/0056789", "Dire Dawa", "Dire Dawa", "TRADER"),
     party("Mediterranean Shipping Agency", ["CARRIER"], { email: "claims@msa-agency.example" }),
     party("Addis General Average Adjusters", ["SURVEYOR"], { email: "ga@addisadjusters.example" }),
+    // Waiting for approval, so the approval queue isn't empty
+    party("Tsehay Coffee Exporters PLC", ["INSURED"], {
+      tin: "0067890123",
+      phone: "+251 46 220 1188",
+      email: "export@tsehaycoffee.example",
+      address: "Hawassa",
+      contactPerson: "Kidist Haile",
+      kind: "COMPANY",
+      status: "PENDING_APPROVAL",
+      customerNo: `CU-${thisYear}-${String(++customerNo).padStart(5, "0")}`,
+      tradeLicenceNo: "SD/02/1/0067890",
+      tradeLicenceExpiry: `${thisYear + 1}-03-31`,
+      vatRegNo: "",
+      businessType: "EXPORTER",
+      addressParts: { region: "Sidama", city: "Hawassa", subCity: "", woreda: "", houseNo: "" },
+      brokerId: "8",
+      registeredBy: "Dawit Bekele (Nile Insurance Brokers)",
+      registeredAt: new Date(Date.now() - 26 * 3600_000).toISOString(),
+      documents: [{ id: "d9a", kind: "TRADE_LICENCE", name: "tsehay-trade-licence.pdf", size: 210000, type: "application/pdf", uploadedBy: "Dawit Bekele", uploadedAt: new Date(Date.now() - 26 * 3600_000).toISOString() }],
+    }),
   ];
 
   const users = [
@@ -191,7 +233,10 @@ export function createSeed() {
   ];
 
   return {
-    seq: { quote: 0, policy: 0, certificate: 0, party: partyId, user: users.length + 1, fx: fxId, rateTable: 2, audit: 1, referral: 0, screening: 0, openCover: 2, claim: 0, deadline: 0, task: 0, document: 0, payment: 0 },
+    seq: {
+      quote: 0, policy: 0, certificate: 0, party: partyId, user: users.length + 1, fx: fxId, rateTable: 2, audit: 1, referral: 0, screening: 0, openCover: 2,
+      claim: 0, deadline: 0, task: 0, document: 0, payment: 0, customer: customerNo, debitNote: 0, creditNote: 0, receipt: 0, voucher: 0, commission: 0, statement: 0,
+    },
     ports,
     commodities,
     vessels,
@@ -208,6 +253,11 @@ export function createSeed() {
     openCovers: createOpenCovers(today),
     claims: [],
     deadlines: [],
+    notes: [],
+    receipts: [],
+    vouchers: [],
+    commissions: [],
+    statements: [],
     rules: createRules(),
     sanctionsList: SANCTIONS_LIST,
     seededOn: yesterday,
@@ -242,6 +292,8 @@ function createRules() {
       { kind: "DOCUMENTS", base: "NOTIFIED_DATE", days: 30, alerts: [14, 7, 3, 1] },
       { kind: "SUIT_TIME_BAR", base: "DELIVERY_DATE", days: 365, alerts: [30, 14, 7, 3, 1] },
     ],
+    // Broker commission on net premium (excluding VAT and stamp duty), earned when the premium is paid
+    commission: { defaultPct: "10", brokers: [{ brokerId: "9", pct: "12.5" }] },
     changes: [],
   };
 }

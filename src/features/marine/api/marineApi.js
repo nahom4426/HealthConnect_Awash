@@ -102,3 +102,30 @@ export const markDeadlineMet = (id, body) => post(`/deadlines/${id}/met`, body);
 
 // ── public (no sign-in) ──
 export const verifyCertificate = (token) => get(`/public/verify/${encodeURIComponent(token)}`);
+
+// ── customer registration ──
+export const listCustomers = (params) => get("/customers", params);
+export const getCustomer = (id) => get(`/customers/${id}`);
+export const createCustomer = (body) => post("/customers", body);
+export const updateCustomer = (id, body) => put(`/customers/${id}`, body);
+export const uploadCustomerDocument = (id, form, onUploadProgress) => post(`/customers/${id}/documents`, form, { headers: { "Content-Type": "multipart/form-data" }, onUploadProgress });
+export const approveCustomer = (id, body) => post(`/customers/${id}/approve`, body);
+export const rejectCustomer = (id, body) => post(`/customers/${id}/reject`, body);
+export const getCustomerAccount = (id) => get(`/customers/${id}/account`);
+
+// ── finance ──
+export const listNotes = (params) => get("/finance/notes", params);
+export const getNote = (id) => get(`/finance/notes/${id}`);
+export const getAgeing = () => get("/finance/ageing");
+export const recordReceipt = (body) => post("/finance/receipts", body);
+export const payRefund = (id, body) => post(`/finance/notes/${id}/refund`, body);
+export const listVouchers = (params) => get("/finance/vouchers", params);
+export const payVoucher = (id, body) => post(`/finance/vouchers/${id}/pay`, body);
+export const listRecoveries = () => get("/finance/recoveries");
+export const recordRecovery = (claimId, body) => post(`/finance/recoveries/${claimId}/receipts`, body);
+export const getCommissionRates = () => get("/finance/commission-rates");
+export const saveCommissionRates = (body) => put("/finance/commission-rates", body);
+export const listUnbilledCommission = () => get("/finance/commissions");
+export const listCommissionStatements = (params) => get("/finance/commission-statements", params);
+export const createCommissionStatement = (body) => post("/finance/commission-statements", body);
+export const payCommissionStatement = (id, body) => post(`/finance/commission-statements/${id}/pay`, body);

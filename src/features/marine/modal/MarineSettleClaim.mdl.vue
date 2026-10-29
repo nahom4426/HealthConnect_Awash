@@ -1,7 +1,8 @@
 <script setup>
 // Settle a claim (plan 8.3, MAR-46): amount (warning above the reserve), payee locked to the loss
-// payee unless changed with a note, payment reference. A 422 lists missing mandatory documents as
-// links to the Documents tab; a 403 above authority says a higher limit is needed.
+// payee unless changed with a note. Settling sends a payment request to Finance, who pays it and
+// records the reference. A 422 lists missing mandatory documents as links to the Documents tab; a 403
+// above authority says a higher limit is needed.
 // data: { claim }. Closes with the updated claim.
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
@@ -24,7 +25,6 @@ const amount = ref(c.reserve ?? "");
 const payee = ref(c.lossPayee ?? c.payee);
 const changingPayee = ref(false);
 const payeeNote = ref("");
-const paymentRef = ref("");
 const errors = ref({});
 const missing = ref([]);
 const pending = ref(false);
@@ -35,15 +35,14 @@ async function submit() {
   if (!(Number(amount.value) > 0)) e.amount = "Amount must be greater than 0";
   if (!payee.value) e.payee = "Payee is required";
   if (c.lossPayee && payee.value?.id !== c.lossPayee.id && !payeeNote.value.trim()) e.payeeNote = "Say why payment doesn't go to the loss payee";
-  if (!paymentRef.value.trim()) e.paymentRef = "Payment reference is required";
   errors.value = e;
   missing.value = [];
   if (Object.keys(e).length) return;
   pending.value = true;
-  const res = await settleClaim(c.id, { amount: amount.value, payeeId: payee.value.id, payeeNote: payeeNote.value.trim(), paymentRef: paymentRef.value.trim() });
+  const res = await settleClaim(c.id, { amount: amount.value, payeeId: payee.value.id, payeeNote: payeeNote.value.trim() });
   pending.value = false;
   if (res.ok) {
-    toasted(true, `${c.claimNo} paid`);
+    toasted(true, `${c.claimNo}: payment request ${res.data.vouchers.at(-1)?.voucherNo ?? ""} sent to Finance`);
     return closeModal(res.data);
   }
   if (res.error.code === "MISSING_DOCUMENTS") missing.value = res.error.fields.map((f) => ({ kind: f.field.replace("documents.", ""), message: f.message }));
@@ -85,15 +84,11 @@ function goToDocuments(kind) {
         <input v-model="payeeNote" :class="[inputClass, inputBorder(errors.payeeNote)]" />
         <span v-if="errors.payeeNote" class="text-xs text-error">{{ errors.payeeNote }}</span>
       </label>
-      <label class="flex flex-col gap-1 text-sm font-medium text-ink">
-        Payment reference
-        <input v-model="paymentRef" placeholder="e.g. bank transfer reference" :class="[inputClass, inputBorder(errors.paymentRef)]" />
-        <span v-if="errors.paymentRef" class="text-xs text-error">{{ errors.paymentRef }}</span>
-      </label>
+      <p class="p-3 text-xs rounded-xl bg-surface-muted text-ink-muted">Finance makes the payment and records the bank reference. The claim shows Paid once they do.</p>
       <template #bottom>
         <div class="flex gap-2 justify-end p-4 w-full border-t border-line">
           <Button variant="outline" @click="closeModal()">Cancel</Button>
-          <Button variant="success" :pending="pending" @click="submit">Settle</Button>
+          <Button variant="success" :pending="pending" @click="submit">Send to Finance</Button>
         </div>
       </template>
     </NewFormParent>

@@ -7,6 +7,7 @@ import {
 import { addDays, daysBetween, todayIso } from "../utils/format";
 import { multiply, parseDecimal, toFixedString } from "../utils/money";
 import { CAUSES_OF_LOSS, DOCUMENT_KINDS } from "../constants";
+import { requestClaimPayment, voucherView } from "./finance";
 
 const CLAIMS = ["CLAIMS_HANDLER", "CLAIMS_MANAGER"];
 const money = (v) => parseDecimal(v) ?? 0n;
@@ -155,6 +156,8 @@ function claimView(claim) {
     salvage: claim.salvage.map((x) => ({ ...x, salvor: partyRef(x.salvorId) })),
     recovery: claim.recovery ? { ...claim.recovery, carrier: partyRef(claim.recovery.carrierId) } : null,
     recoveryResolved: !claim.recovery || claim.recovery.status !== "OPEN",
+    vouchers: db.vouchers.filter((v) => v.claimId === claim.id).map(voucherView),
+    recoveryReceipts: claim.recoveryReceipts ?? [],
   };
 }
 
@@ -217,6 +220,7 @@ on("post", "/claims", ({ body }) => {
   const cert = db.certificates.find((c) => c.id === body?.certificateId);
   const e = lossErrors(body ?? {}, cert);
   if (cert && certificateStatus(cert) === "CANCELLED") e.push({ field: "certificate", message: "A cancelled certificate can't take a claim" });
+  if (cert && certificateStatus(cert) === "AWAITING_PAYMENT") e.push({ field: "certificate", message: "The premium for this certificate isn't paid, so there is no cover" });
   if (e.length) invalid(e);
   const snap = cert.snapshot ?? db.policies.find((p) => p.id === cert.policyId)?.snapshot;
   const policy = db.policies.find((p) => p.id === cert.policyId);
@@ -385,7 +389,6 @@ on("post", "/claims/:id/settle", ({ params, body }) => {
   if (!body?.payeeId) e.push({ field: "payee", message: "Payee is required" });
   const lossPayee = snapshotFor(claim).lc?.enabled ? snapshotFor(claim).lc.bankId : null;
   if (lossPayee && body?.payeeId !== lossPayee && !String(body?.payeeNote ?? "").trim()) e.push({ field: "payeeNote", message: "Say why payment doesn't go to the loss payee" });
-  if (!String(body?.paymentRef ?? "").trim()) e.push({ field: "paymentRef", message: "Payment reference is required" });
   if (e.length) invalid(e);
   const missing = missingMandatory(claim);
   if (missing.length)
@@ -397,9 +400,10 @@ on("post", "/claims/:id/settle", ({ params, body }) => {
   const etb = multiply(body.amount, rate) ?? 0n;
   const limit = db.rules.authority.find((a) => a.role === "CLAIMS_MANAGER")?.maxSumInsured ?? "0";
   if (etb > money(limit)) fail(403, "Needs a higher approval limit.", { code: "ABOVE_AUTHORITY" });
-  claim.payments.push({ id: String(++db.seq.payment), amount: body.amount, payeeId: body.payeeId, payeeNote: body.payeeNote ?? "", paymentRef: body.paymentRef, paidAt: nowIso(), paidBy: actor(), exportRef: `PAY-${year()}-${String(db.seq.payment).padStart(5, "0")}` });
+  // The claims manager approves the amount and payee; Finance makes the payment (two people per payment)
+  const v = requestClaimPayment(claim, { amount: body.amount, payeeId: body.payeeId, payeeNote: body.payeeNote });
   claim.payeeId = body.payeeId;
-  setStatus(claim, "PAID", `Paid ${claim.currency} ${body.amount}, reference ${body.paymentRef}`);
+  setStatus(claim, "PAYMENT_REQUESTED", `${v.voucherNo}: ${claim.currency} ${body.amount} sent to Finance for payment`);
   return claimView(claim);
 });
 

@@ -1,6 +1,7 @@
 <script setup>
 // Certificate detail (plan 5.5, MAR-37, MAR-40): the PDF on the left; summary, verification link
 // with QR, versions and the document event log on the right. Pending certificates poll every 5 s.
+// A certificate waiting for its premium shows the debit note instead of the PDF.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { openModal } from "@customizer/modal-x";
@@ -12,6 +13,7 @@ import PageState from "../../components/PageState.vue";
 import KeyValueGrid from "../../components/KeyValueGrid.vue";
 import PdfPreview from "../../components/PdfPreview.vue";
 import StatusBadge from "../../components/StatusBadge.vue";
+import BillingPanel from "../../components/BillingPanel.vue";
 import { cardClass } from "../../components/styles";
 import { useResource } from "../../composables/useResource";
 import { useCan } from "../../composables/useCan";
@@ -61,7 +63,20 @@ const EVENT_LABELS = { EMAIL: "Emailed", DOWNLOAD: "Downloaded", PRINT: "Printed
 
 const { can } = useCan();
 // Only the newest version of an issued certificate can be amended or cancelled
-const isCurrent = computed(() => c.value && ["ISSUED", "PENDING"].includes(c.value.status) && c.value.version === Math.max(...c.value.versions.map((v) => v.version)));
+const latest = computed(() => c.value && c.value.version === Math.max(...c.value.versions.map((v) => v.version)));
+const isCurrent = computed(() => latest.value && ["ISSUED", "PENDING"].includes(c.value.status));
+// An unpaid version 1 can still be cancelled (nothing to refund)
+const canCancel = computed(() => isCurrent.value || (latest.value && c.value.status === "AWAITING_PAYMENT" && c.value.version === 1));
+const awaiting = computed(() => c.value?.status === "AWAITING_PAYMENT");
+const dueNote = computed(() => c.value?.billing?.find((n) => n.kind === "DEBIT" && ["UNPAID", "PARTLY_PAID"].includes(n.status)));
+function recordPremium() {
+  const n = dueNote.value;
+  openModal(
+    "MarineRecordPayment",
+    { kind: "receipt", id: n.id, title: `Receipt for ${n.noteNo}`, amount: n.outstanding, maxAmount: n.outstanding, editableAmount: true, details: [{ label: "Customer", value: c.value.insured?.name }, { label: "Outstanding", value: formatMoney(n.outstanding, "ETB") }] },
+    (done) => done && reload()
+  );
+}
 function cancel() {
   openModal("MarineCancelCertificate", { certificate: c.value }, (done) => done && reload());
 }
@@ -85,9 +100,10 @@ function cancel() {
         :crumbs="[{ label: 'Marine' }, { label: 'Certificates', to: '/marine/certificates' }, { label: c.certNo }]"
       >
         <template #actions>
-          <Button variant="outline" :disabled="c.status === 'PENDING'" @click="email">Email</Button>
-          <template v-if="can('certificate.amend') && isCurrent">
-            <RouterLink :to="`/marine/certificates/${c.id}/amend`"><Button variant="outline">Amend</Button></RouterLink>
+          <Button v-if="awaiting && dueNote && can('finance.post')" variant="success" @click="recordPremium">Record premium receipt</Button>
+          <Button variant="outline" :disabled="c.status === 'PENDING' || awaiting" @click="email">Email</Button>
+          <template v-if="can('certificate.amend') && canCancel">
+            <RouterLink v-if="isCurrent" :to="`/marine/certificates/${c.id}/amend`"><Button variant="outline">Amend</Button></RouterLink>
             <span :title="c.hasOpenClaim ? 'This certificate has an open claim' : ''">
               <Button variant="outline" :disabled="c.hasOpenClaim" @click="cancel">Cancel</Button>
             </span>
@@ -97,7 +113,17 @@ function cancel() {
 
       <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem] items-start">
         <section :class="[cardClass, 'p-4 min-h-[36rem] flex flex-col']" aria-label="Certificate PDF">
-          <div v-if="c.status === 'PENDING'" class="flex flex-col flex-1 gap-3 justify-center items-center py-20 text-center" role="status">
+          <div v-if="awaiting" class="flex flex-col flex-1 gap-3 justify-center items-center px-6 py-20 text-center" role="status">
+            <span class="grid place-items-center w-14 h-14 rounded-2xl ring-8 bg-warning-soft text-warning-strong ring-warning-soft/40" aria-hidden="true">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2" /><path d="M2.5 10h19M6.5 15h3" /></svg>
+            </span>
+            <p class="mt-1 text-base font-semibold text-ink">Waiting for the premium</p>
+            <p class="max-w-md text-sm text-ink-muted">
+              There's no cover yet. The certificate is issued as soon as Finance records payment
+              <template v-if="dueNote"> of <span class="font-semibold text-ink">{{ formatMoney(dueNote.outstanding, "ETB") }}</span> on {{ dueNote.noteNo }}</template>.
+            </p>
+          </div>
+          <div v-else-if="c.status === 'PENDING'" class="flex flex-col flex-1 gap-3 justify-center items-center py-20 text-center" role="status">
             <span class="w-8 h-8 rounded-full border-4 animate-spin border-primary/20 border-t-primary" aria-hidden="true"></span>
             <p class="text-sm font-semibold text-ink">PDF is being generated</p>
             <p class="text-xs text-ink-muted">This page checks again every 5 seconds.</p>
@@ -131,6 +157,11 @@ function cancel() {
                 ...(c.amendReason ? [{ label: 'Amendment reason', value: c.amendReason, wide: true }] : []),
               ]"
             />
+          </section>
+
+          <section :class="[cardClass, 'p-4']">
+            <h2 class="mb-2 text-sm font-semibold text-ink">Billing</h2>
+            <BillingPanel :notes="c.billing" />
           </section>
 
           <section :class="[cardClass, 'p-4']" aria-labelledby="cd-verify">

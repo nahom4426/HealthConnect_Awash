@@ -9,6 +9,12 @@ const marineNavs = [
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="3.25" cy="3.25" r="2.75"/><circle cx="10.75" cy="3.25" r="2.75"/><circle cx="3.25" cy="10.75" r="2.75"/><circle cx="10.75" cy="10.75" r="2.75"/></g></svg>`,
   },
   {
+    path: '/marine/customers',
+    name: 'Customers',
+    roles: ['ADMIN', 'BROKER', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'CLAIMS_HANDLER', 'CLAIMS_MANAGER', 'FINANCE'],
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></g></svg>`,
+  },
+  {
     path: '/marine/quotes',
     name: 'Quotes',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></g></svg>`,
@@ -39,6 +45,17 @@ const marineNavs = [
     name: 'Claims',
     roles: ['CLAIMS_HANDLER', 'CLAIMS_MANAGER'],
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5 8.5h4m-2-2v4m5.5-7h-11a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1m-2.5 0v-2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v2"/></svg>`,
+  },
+  {
+    name: 'Finance',
+    roles: ['FINANCE', 'ADMIN'],
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19M6.5 15h3"/><path d="M6 6V4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V6"/></g></svg>`,
+    navs: [
+      { path: '/marine/finance/receivables', name: 'Receivables' },
+      { path: '/marine/finance/refunds', name: 'Refunds' },
+      { path: '/marine/finance/claim-payments', name: 'Claim payments' },
+      { path: '/marine/finance/commission', name: 'Commission' },
+    ],
   },
   {
     name: 'Admin',

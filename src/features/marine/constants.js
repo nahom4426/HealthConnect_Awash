@@ -30,6 +30,9 @@ export const PERMISSIONS = Object.freeze({
   "fx.edit": ["FINANCE"],
   "masters.edit": ["ADMIN"],
   "users.edit": ["ADMIN"],
+  "customer.register": ["ADMIN", "BROKER", "UNDERWRITER", "SENIOR_UNDERWRITER"],
+  "customer.approve": ["ADMIN", "UNDERWRITER", "SENIOR_UNDERWRITER"],
+  "finance.post": ["FINANCE"],
 });
 
 export const CURRENCIES = Object.freeze(["ETB", "USD", "EUR", "GBP", "CNY", "AED"]);
@@ -95,14 +98,14 @@ export const CLASS_SOCIETIES = Object.freeze([
 
 export const QUOTE_STATUSES = Object.freeze(["DRAFT", "QUOTED", "REFERRED", "APPROVED", "BOUND", "DECLINED", "EXPIRED"]);
 export const POLICY_STATUSES = Object.freeze(["ACTIVE", "EXPIRED", "CANCELLED"]);
-export const CERTIFICATE_STATUSES = Object.freeze(["PENDING", "ISSUED", "AMENDED", "EXPIRED", "CANCELLED"]);
+export const CERTIFICATE_STATUSES = Object.freeze(["AWAITING_PAYMENT", "PENDING", "ISSUED", "AMENDED", "EXPIRED", "CANCELLED"]);
 export const RATE_TABLE_STATUSES = Object.freeze(["DRAFT", "ACTIVE", "RETIRED"]);
 
 /** Status colours (plan section 3). Anything not listed is grey. */
 export const STATUS_TONES = Object.freeze({
   quote: { QUOTED: "blue", REFERRED: "amber", APPROVED: "green", BOUND: "teal", DECLINED: "red" },
   policy: { ACTIVE: "green", CANCELLED: "red" },
-  certificate: { PENDING: "amber", ISSUED: "green", CANCELLED: "red" },
+  certificate: { AWAITING_PAYMENT: "amber", PENDING: "amber", ISSUED: "green", CANCELLED: "red" },
   rateTable: { DRAFT: "amber", ACTIVE: "green" },
   user: { ENABLED: "green", DISABLED: "red" },
   verify: { VALID: "green", CANCELLED: "red" },
@@ -110,7 +113,11 @@ export const STATUS_TONES = Object.freeze({
   screening: { POTENTIAL: "amber", CLEAR: "green", CONFIRMED: "red" },
   warranty: { PASS: "green", BREACH: "red", WAIVED: "grey" },
   openCover: { ACTIVE: "green", EXPIRED: "grey", ADJUSTED: "teal" },
-  claim: { REGISTERED: "blue", SURVEYED: "blue", RECOVERY: "amber", APPROVED: "green", PAID: "teal", DECLINED: "red", CLOSED: "grey" },
+  claim: { REGISTERED: "blue", SURVEYED: "blue", RECOVERY: "amber", APPROVED: "green", PAYMENT_REQUESTED: "amber", PAID: "teal", DECLINED: "red", CLOSED: "grey" },
+  customer: { PENDING_APPROVAL: "amber", APPROVED: "green", REJECTED: "red" },
+  note: { UNPAID: "amber", PARTLY_PAID: "blue", PAID: "green", CANCELLED: "grey" },
+  voucher: { REQUESTED: "amber", PAID: "green", CANCELLED: "grey" },
+  statement: { OPEN: "amber", PAID: "green" },
   deadline: { MET: "grey", DUE: "amber", OPEN: "green", OVERDUE: "red" },
   recovery: { OPEN: "amber", RECOVERED: "green", PARTLY_RECOVERED: "teal", WRITTEN_OFF: "grey" },
 });
@@ -178,7 +185,7 @@ export const CAUSES_OF_LOSS = Object.freeze([
   { value: "HIJACK", label: "Hijack" },
   { value: "OTHER", label: "Other" },
 ]);
-export const CLAIM_STATUSES = Object.freeze(["REGISTERED", "SURVEYED", "APPROVED", "DECLINED", "PAID", "RECOVERY", "CLOSED"]);
+export const CLAIM_STATUSES = Object.freeze(["REGISTERED", "SURVEYED", "APPROVED", "PAYMENT_REQUESTED", "DECLINED", "PAID", "RECOVERY", "CLOSED"]);
 export const DEADLINE_KINDS = Object.freeze({
   SURVEY: "Survey report",
   CARRIER_NOTICE: "Carrier notice",
@@ -195,3 +202,62 @@ export const DOCUMENT_KINDS = Object.freeze([
   { value: "CARRIER_NOTICE", label: "Carrier notice or protest letter", mandatory: true },
 ]);
 export const label = (list, v) => list.find((x) => x.value === v)?.label ?? v ?? "—";
+
+// ── customer registration ──
+export const CUSTOMER_KINDS = Object.freeze([
+  { value: "COMPANY", label: "Company" },
+  { value: "INDIVIDUAL", label: "Individual" },
+]);
+export const CUSTOMER_STATUSES = Object.freeze(["PENDING_APPROVAL", "APPROVED", "REJECTED"]);
+export const BUSINESS_TYPES = Object.freeze([
+  { value: "IMPORTER", label: "Importer" },
+  { value: "EXPORTER", label: "Exporter" },
+  { value: "IMPORTER_EXPORTER", label: "Importer and exporter" },
+  { value: "MANUFACTURER", label: "Manufacturer" },
+  { value: "TRADER", label: "Trader or distributor" },
+  { value: "OTHER", label: "Other" },
+]);
+export const ID_TYPES = Object.freeze([
+  { value: "NATIONAL_ID", label: "National ID (Fayda)" },
+  { value: "KEBELE_ID", label: "Kebele ID" },
+  { value: "PASSPORT", label: "Passport" },
+  { value: "DRIVING_LICENCE", label: "Driving licence" },
+]);
+export const ETH_REGIONS = Object.freeze([
+  "Addis Ababa", "Afar", "Amhara", "Benishangul-Gumuz", "Central Ethiopia", "Dire Dawa", "Gambela", "Harari", "Oromia",
+  "Sidama", "Somali", "South Ethiopia", "South West Ethiopia", "Tigray",
+]);
+/** Documents a customer needs before approval; the rest are optional. */
+export const CUSTOMER_DOCUMENT_KINDS = Object.freeze([
+  { value: "TRADE_LICENCE", label: "Trade licence", for: "COMPANY", mandatory: true },
+  { value: "TIN_CERTIFICATE", label: "TIN certificate", for: "COMPANY", mandatory: true },
+  { value: "VAT_CERTIFICATE", label: "VAT registration certificate", for: "COMPANY", mandatory: false },
+  { value: "MEMORANDUM", label: "Memorandum of association", for: "COMPANY", mandatory: false },
+  { value: "ID_COPY", label: "Copy of ID", for: "INDIVIDUAL", mandatory: true },
+  { value: "OTHER", label: "Other", for: "ANY", mandatory: false },
+]);
+
+// ── finance ──
+export const NOTE_STATUSES = Object.freeze(["UNPAID", "PARTLY_PAID", "PAID", "CANCELLED"]);
+export const NOTE_SOURCES = Object.freeze({
+  BIND: "New policy",
+  ENDORSEMENT: "Amendment",
+  CANCELLATION: "Cancellation refund",
+  DECLARATION: "Open cover declaration",
+  OPEN_COVER_DEPOSIT: "Open cover deposit",
+  ADJUSTMENT: "Year-end adjustment",
+});
+export const PAYMENT_METHODS = Object.freeze([
+  { value: "BANK_TRANSFER", label: "Bank transfer" },
+  { value: "CHEQUE", label: "Cheque" },
+  { value: "CASH", label: "Cash" },
+  { value: "TELEBIRR", label: "Telebirr" },
+]);
+export const VOUCHER_STATUSES = Object.freeze(["REQUESTED", "PAID", "CANCELLED"]);
+export const STATEMENT_STATUSES = Object.freeze(["OPEN", "PAID"]);
+export const AGEING_BUCKETS = Object.freeze([
+  { key: "current", label: "0–30 days" },
+  { key: "d31", label: "31–60 days" },
+  { key: "d61", label: "61–90 days" },
+  { key: "d90", label: "Over 90 days" },
+]);

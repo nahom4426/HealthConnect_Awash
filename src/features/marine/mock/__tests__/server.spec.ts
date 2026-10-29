@@ -53,7 +53,9 @@ describe("mock backend", () => {
     expect(bound.data.policy.policyNo).toMatch(/^P-\d{4}-00001$/);
 
     const cert = await call("get", `/certificates/${bound.data.certificate.id}`);
-    expect(cert.data.status).toBe("PENDING");
+    // No cover until the premium is paid
+    expect(cert.data.status).toBe("AWAITING_PAYMENT");
+    expect(bound.data.debitNote.total).toBe(rated.data.premium.total);
     const verify = await call("get", `/public/verify/${cert.data.token}`);
     expect(verify.data.certNo).toBe(cert.data.certNo);
     expect(verify.data).not.toHaveProperty("premium");

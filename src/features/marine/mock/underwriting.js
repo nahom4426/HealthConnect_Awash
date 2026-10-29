@@ -11,6 +11,8 @@ import { addDays, todayIso } from "../utils/format";
 import { vesselAge } from "../utils/imo";
 import { add, multiply, parseDecimal, toFixedString } from "../utils/money";
 import { FOREIGN_CURRENCIES } from "../constants";
+import { cancelUnpaidNotes, financeTotals, paidOnPolicy, raiseNote, splitPremium } from "./finance";
+import { customerStatus, isCustomer } from "./customers";
 
 const UW = ["UNDERWRITER", "SENIOR_UNDERWRITER"];
 const gt = (a, b) => (parseDecimal(a) ?? 0n) > (parseDecimal(b) ?? 0n);
@@ -334,11 +336,12 @@ on("post", "/screenings/:id/review", ({ params, body }) => {
 // ── amend and cancel certificates (MAR-39) ──
 const AMENDABLE = ["vesselImo", "sailingDate", "invoiceValue", "freight", "lc", "specialConditions"];
 
-function amendTarget(id) {
+function amendTarget(id, { allowUnpaid = false } = {}) {
   if (!hasRole(...UW)) fail(403, "You don't have permission for this action.");
   const c = db.certificates.find((x) => x.id === id) ?? fail(404, "Certificate not found");
   const latest = Math.max(...db.certificates.filter((x) => x.certNo === c.certNo).map((x) => x.version));
-  if (c.version !== latest || !["ISSUED", "PENDING"].includes(certificateStatus(c))) fail(409, "Only the current version of an issued certificate can be changed.", { code: "WRONG_STATE" });
+  const ok = ["ISSUED", "PENDING"].includes(certificateStatus(c)) || (allowUnpaid && certificateStatus(c) === "AWAITING_PAYMENT" && c.version === 1);
+  if (c.version !== latest || !ok) fail(409, "Only the current version of an issued certificate can be changed.", { code: "WRONG_STATE" });
   return c;
 }
 
@@ -368,7 +371,12 @@ on("post", "/certificates/:id/amend", ({ params, body }) => {
 
   const snapshot = { ...next, premium: a.premium, fx: a.fx, checks: a.checks };
   const version = c.version + 1;
-  c.status = "AMENDED";
+  // Extra premium is paid before the new version takes over; until then the current one stays valid
+  const oldSplit = splitPremium(before.premium);
+  const newSplit = splitPremium(a.premium);
+  const amounts = { net: newSplit.net - oldSplit.net, vat: newSplit.vat - oldSplit.vat, stamp: 0n };
+  const extraDue = !cover && amounts.net + amounts.vat > 0n;
+  if (!extraDue) c.status = "AMENDED";
   const cert = {
     id: nextId(db.certificates),
     certNo: c.certNo,
@@ -381,16 +389,19 @@ on("post", "/certificates/:id/amend", ({ params, body }) => {
     events: [],
     snapshot,
     amendReason: reason,
+    awaitingPayment: extraDue,
   };
   db.certificates.push(cert);
+  if (!cover)
+    raiseNote({ source: "ENDORSEMENT", customerId: before.insuredId, brokerId: before.brokerId ?? null, policyId: policy.id, certificateId: cert.id, amounts, description: `Amendment of ${c.certNo} to version ${version}` });
   policy.snapshot = snapshot;
   policy.updatedAt = nowIso();
   audit("policy", policy.id, `Certificate ${c.certNo} amended to version ${version}: ${reason}`, before, snapshot);
-  return { id: cert.id, certNo: cert.certNo, version };
+  return { id: cert.id, certNo: cert.certNo, version, awaitingPayment: extraDue };
 });
 
 on("post", "/certificates/:id/cancel", ({ params, body }) => {
-  const c = amendTarget(params.id);
+  const c = amendTarget(params.id, { allowUnpaid: true });
   const e = [];
   if (!["SHIPMENT_CANCELLED", "ISSUED_IN_ERROR", "REPLACED"].includes(body?.reason)) e.push({ field: "reason", message: "Pick a reason" });
   if (!String(body?.note ?? "").trim()) e.push({ field: "note", message: "A note is required" });
@@ -401,9 +412,20 @@ on("post", "/certificates/:id/cancel", ({ params, body }) => {
   c.cancelledAt = nowIso();
   c.cancelReason = body.reason;
   c.cancelNote = body.note;
-  // Shipment never sailed or certificate issued in error: full premium back. Replaced: no refund.
-  const premium = (c.snapshot ?? policy.snapshot).premium?.total ?? "0";
-  policy.refund = { amount: body.reason === "REPLACED" ? "0.00" : premium, reason: body.reason, at: nowIso(), certNo: c.certNo };
+  // Shipment never sailed or certificate issued in error: the premium paid comes back. Replaced: no
+  // refund. Unpaid premium is simply cancelled.
+  const snap = c.snapshot ?? policy.snapshot;
+  const paid = paidOnPolicy(policy.id);
+  cancelUnpaidNotes(policy.id, `Certificate ${c.certNo} cancelled`);
+  let refund = 0n;
+  if (body.reason !== "REPLACED" && paid > 0n) {
+    const split = splitPremium(snap.premium);
+    const full = paid >= split.total;
+    const amounts = full ? { net: -split.net, vat: -split.vat, stamp: -split.stamp } : { net: -paid, vat: 0n, stamp: 0n };
+    const cn = raiseNote({ source: "CANCELLATION", customerId: snap.insuredId, brokerId: snap.brokerId ?? null, policyId: policy.id, certificateId: c.id, amounts, description: `Refund on cancelling ${c.certNo}` });
+    refund = parseDecimal(cn?.total) ?? 0n;
+  }
+  policy.refund = { amount: toFixedString(refund), reason: body.reason, at: nowIso(), certNo: c.certNo };
   if (db.certificates.filter((x) => x.policyId === policy.id).every((x) => ["CANCELLED", "AMENDED"].includes(x.status))) policy.status = "CANCELLED";
   audit("policy", policy.id, `Certificate ${c.certNo} v${c.version} cancelled: ${body.note}`);
   return certificateView(c);
@@ -481,6 +503,21 @@ on("get", "/dashboard", () => {
         .map((c) => ({ id: c.id, certNo: c.certNo, version: c.version, status: certificateStatus(c), issuedAt: c.issuedAt }))
     );
   }
+  if (hasRole("FINANCE")) {
+    const { unpaidPremiums, refundsToPay, claimPayments } = financeTotals();
+    const noteRow = (n) => ({ id: n.id, noteNo: n.noteNo, customer: partyRef(n.customerId), amount: toFixedString((parseDecimal(n.total) ?? 0n) - (parseDecimal(n.paid) ?? 0n)), issuedAt: n.issuedAt });
+    widgets.unpaidPremiums = take([...unpaidPremiums].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)).map(noteRow));
+    widgets.refundsToPay = take(refundsToPay.map(noteRow));
+    widgets.claimPayments = take(claimPayments.map((v) => ({ id: v.id, voucherNo: v.voucherNo, claimNo: v.claimNo, currency: v.currency, amount: v.amount, payee: partyRef(v.payeeId) })));
+  }
+  if (hasRole("ADMIN", ...UW)) {
+    widgets.customersToApprove = take(
+      db.parties
+        .filter((p) => isCustomer(p) && customerStatus(p) === "PENDING_APPROVAL")
+        .sort((a, b) => String(a.registeredAt).localeCompare(String(b.registeredAt)))
+        .map((p) => ({ id: p.id, customerNo: p.customerNo, name: p.name, registeredBy: p.registeredBy, registeredAt: p.registeredAt }))
+    );
+  }
   const overdue = db.deadlines.filter((d) => d.status === "OPEN" && d.dueDate < today).length;
   const bell = (widgets.myReferrals?.count ?? 0) + (hasRole("CLAIMS_HANDLER", "CLAIMS_MANAGER") ? overdue : 0);
   save();
@@ -528,6 +565,8 @@ function dashboardSummary() {
     certificate: (id) => db.certificates.find((c) => c.id === id),
     openCover: (id) => db.openCovers.find((c) => c.id === id),
     claim: (id) => db.claims.find((c) => c.id === id),
+    customer: (id) => db.parties.find((p) => p.id === id),
+    note: (id) => db.notes.find((n) => n.id === id),
   };
   const visible = (a) => {
     if (!brokerOnly()) return true;
@@ -544,7 +583,7 @@ function dashboardSummary() {
     .reverse()
     .map((a) => {
       const rec = NUMBERS[a.entity]?.(a.entityId);
-      return { id: a.id, entity: a.entity, entityId: a.entityId, number: rec?.quoteNo ?? rec?.policyNo ?? rec?.certNo ?? rec?.coverNo ?? rec?.claimNo ?? null, action: a.action, by: a.by, at: a.at };
+      return { id: a.id, entity: a.entity, entityId: a.entityId, number: rec?.quoteNo ?? rec?.policyNo ?? rec?.certNo ?? rec?.coverNo ?? rec?.claimNo ?? rec?.customerNo ?? rec?.noteNo ?? null, action: a.action, by: a.by, at: a.at };
     });
 
   return {

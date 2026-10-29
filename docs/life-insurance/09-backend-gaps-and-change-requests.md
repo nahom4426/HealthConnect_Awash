@@ -202,6 +202,12 @@ underwriting decisions, reinsurance cession bordereau) with Excel export.
     equal begin date + term (the UI only checks end > begin), and whether begin may be before the payment date.
 19. `QuotationRequest.quotedByUuid` / `quotedByFullName` are sent by the UI from the signed-in user; the backend should
     take them from the token instead so they can't be spoofed.
+20. Policies: there is no `GET /policy/{quotationUuid}`; the policy page reads `GET /quotation/{uuid}`, which carries
+    the policy fields. Add a policy detail endpoint (or confirm the quotation one is the intended source).
+21. `PUT /policy/generate/treaty-report/{quotationUuid}` returns an undocumented `object`. Document it (JSON summary
+    or a file?) and say whether it is safe to call more than once. The UI shows whatever fields come back, or
+    downloads it if it is a file.
+22. `GET /policy/lists` search: say which fields it matches (policy number, quotation number, institution name).
 
 ### G10 · Privileges
 

@@ -11,6 +11,8 @@ const ReinsurersList = () => import("@/features/life/pages/reinsurance/Reinsurer
 const MedicalTests = () => import("@/features/life/pages/reinsurance/MedicalTests.vue");
 const QuotationsList = () => import("@/features/life/pages/quotations/QuotationsList.vue");
 const QuotationDetail = () => import("@/features/life/pages/quotations/QuotationDetail.vue");
+const PoliciesList = () => import("@/features/life/pages/policies/PoliciesList.vue");
+const PolicyDetail = () => import("@/features/life/pages/policies/PolicyDetail.vue");
 const QuestionsList = () => import("@/features/life/pages/underwriting/QuestionsList.vue");
 const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
@@ -81,6 +83,18 @@ const lifeRoutes = [
     name: "life-quotation-detail",
     component: QuotationDetail,
     meta: { requiresAuth: true, title: "Quotation" },
+  },
+  {
+    path: "/life/policies",
+    name: "life-policies",
+    component: PoliciesList,
+    meta: { requiresAuth: true, title: "Group policies" },
+  },
+  {
+    path: "/life/policies/:quotationUuid",
+    name: "life-policy-detail",
+    component: PolicyDetail,
+    meta: { requiresAuth: true, title: "Policy" },
   },
   {
     path: "/life/underwriting/questions",

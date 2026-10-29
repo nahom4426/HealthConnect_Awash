@@ -23,3 +23,17 @@ export function formatAmount(value) {
 }
 
 export const quotationStatusLabel = { PENDING: "Draft", ISSUED: "Issued", ACCEPTED: "Accepted", PAID: "Paid" };
+
+/** Whole days from today to an API date (negative once past); display only */
+export function daysUntil(value, now = new Date()) {
+  if (!value) return null;
+  const end = new Date(String(value).slice(0, 10) + "T00:00:00");
+  const start = new Date(now.toISOString().slice(0, 10) + "T00:00:00");
+  return Number.isNaN(end.getTime()) ? null : Math.round((end - start) / 86400000);
+}
+export function remainingLabel(days) {
+  if (days === null || days === undefined) return "—";
+  if (days < 0) return `Ended ${-days} day${days === -1 ? "" : "s"} ago`;
+  if (days === 0) return "Ends today";
+  return `${days} day${days === 1 ? "" : "s"} left`;
+}

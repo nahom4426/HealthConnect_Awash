@@ -11,6 +11,7 @@ import PageState from "../../components/PageState.vue";
 import FormField from "../../components/FormField.vue";
 import FormErrorBanner from "../../components/FormErrorBanner.vue";
 import PartyPicker from "../../components/PartyPicker.vue";
+import CustomerPicker from "../../components/CustomerPicker.vue";
 import DateField from "../../components/DateField.vue";
 import MoneyInput from "../../components/MoneyInput.vue";
 import HsCodeAutocomplete from "../../components/HsCodeAutocomplete.vue";
@@ -150,7 +151,7 @@ onBeforeRouteLeave(
       <FormErrorBanner :items="submitted ? bannerItems() : []" />
       <section :class="[cardClass, 'p-5 grid gap-5 sm:grid-cols-2']">
         <FormField v-slot="{ id, invalid }" label="Insured" name="insured" required :error="errors.insured">
-          <PartyPicker :id="id" v-model="form.insured" type="INSURED" :invalid="invalid" @blur="check('insured')" />
+          <CustomerPicker :id="id" v-model="form.insured" :invalid="invalid" @blur="check('insured')" />
         </FormField>
         <FormField v-slot="{ id }" label="Broker" name="broker">
           <PartyPicker :id="id" v-model="form.broker" type="BROKER" />

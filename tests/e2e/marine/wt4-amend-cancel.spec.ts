@@ -1,6 +1,6 @@
 // WT4: amend, then cancel a certificate (plan section 10, FE-25, FE-26).
 import { expect, test } from "@playwright/test";
-import { expectAccessible, issueCertificate, mock, signIn } from "./helpers";
+import { expectAccessible, issueCertificate, mock, payNote, signIn } from "./helpers";
 
 test("amending issues version 2 and supersedes the old QR; cancelling shows Cancelled", async ({ page }) => {
   await signIn(page, ["UNDERWRITER"]);
@@ -18,6 +18,11 @@ test("amending issues version 2 and supersedes the old QR; cancelling shows Canc
   await expectAccessible(page);
   await page.getByRole("button", { name: "Issue version 2" }).click();
   await expect(page.getByRole("heading", { name: new RegExp(`${v1.certNo} · v2`) })).toBeVisible();
+
+  // The extra premium is paid before version 2 takes over; until then version 1 stays valid
+  await expect(page.getByText("Waiting for the premium")).toBeVisible();
+  const extra = (await mock(page, "get", "/finance/notes")).content.find((n: any) => n.source === "ENDORSEMENT");
+  await payNote(page, extra.id, extra.total);
 
   await page.goto(`/verify/${v1.token}`);
   await expect(page.getByText("Superseded by a newer version")).toBeVisible();

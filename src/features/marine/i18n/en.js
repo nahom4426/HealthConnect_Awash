@@ -92,5 +92,12 @@ export default {
     RECOVERED: "Recovered",
     PARTLY_RECOVERED: "Partly recovered",
     WRITTEN_OFF: "Written off",
+    AWAITING_PAYMENT: "Awaiting payment",
+    PAYMENT_REQUESTED: "Payment requested",
+    PENDING_APPROVAL: "Pending approval",
+    REJECTED: "Rejected",
+    UNPAID: "Unpaid",
+    PARTLY_PAID: "Partly paid",
+    REQUESTED: "Requested",
   },
 };

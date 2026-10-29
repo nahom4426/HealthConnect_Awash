@@ -102,6 +102,9 @@ const strip = computed(() =>
         </template>
       </MarinePageHeader>
 
+      <p v-if="c.status === 'PAYMENT_REQUESTED'" role="status" class="p-3 mb-4 text-sm rounded-xl bg-warning-soft text-warning-strong">
+        Waiting for Finance to pay {{ c.vouchers?.at(-1)?.voucherNo }} ({{ formatMoney(c.vouchers?.at(-1)?.amount, c.currency) }} to {{ c.vouchers?.at(-1)?.payee?.name }}).
+      </p>
       <section class="grid grid-cols-2 gap-3 mb-5 sm:grid-cols-4 xl:grid-cols-7" aria-label="Money">
         <div v-for="[l, v] in strip" :key="l" :class="[cardClass, 'p-3.5 border-l-4', l === 'Net cost' ? '!border-l-sky-600 !bg-sky-50 dark:!bg-sky-900/30' : '!border-l-sky-300 dark:!border-l-sky-700']">
           <p class="text-[11px] font-semibold tracking-wider uppercase text-ink-muted">{{ l }}</p>

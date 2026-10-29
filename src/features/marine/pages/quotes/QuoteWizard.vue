@@ -321,7 +321,9 @@ function bind() {
     "MarineConfirm",
     {
       title: `Bind ${q.quoteNo}?`,
-      message: "Binding creates the policy and issues the certificate.",
+      message: q.openCoverId
+        ? "Binding creates the policy and issues the certificate under the open cover."
+        : "Binding creates the policy and a debit note. The certificate is issued once Finance records the premium.",
       confirmLabel: "Bind",
       details: [
         { label: "Sum insured", value: formatMoney(q.premium.sumInsured.total, q.currency) },
@@ -334,7 +336,12 @@ function bind() {
       const res = await bindQuote(q.id);
       binding.value = false;
       if (!res.ok) return notifyError(res.error, { onStale: reloadQuote });
-      toasted(true, `Policy ${res.data.policy.policyNo} created, certificate ${res.data.certificate.certNo} issued`);
+      toasted(
+        true,
+        res.data.debitNote
+          ? `Policy ${res.data.policy.policyNo} created. Debit note ${res.data.debitNote.noteNo} raised; certificate ${res.data.certificate.certNo} is issued once it's paid.`
+          : `Policy ${res.data.policy.policyNo} created, certificate ${res.data.certificate.certNo} issued`
+      );
       // Clear the draft without it counting as an edit, so the leave guard stays quiet
       watching = false;
       store.start();

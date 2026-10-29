@@ -1,6 +1,6 @@
 // WT1: quote, bind and issue a single-shipment certificate (plan section 10).
 import { expect, test } from "@playwright/test";
-import { expectAccessible, pick, signIn, today } from "./helpers";
+import { actAs, expectAccessible, pick, signIn, today } from "./helpers";
 
 test("an underwriter quotes, binds and emails a certificate", async ({ page }) => {
   await signIn(page, ["UNDERWRITER"]);
@@ -8,7 +8,7 @@ test("an underwriter quotes, binds and emails a certificate", async ({ page }) =
   await page.getByRole("button", { name: "New quote" }).first().click();
 
   // Step 1: parties, with the Incoterm warning
-  await pick(page, "Search insured by name or TIN", "Abyss", /Abyssinia Agro/);
+  await pick(page, "Search approved customers by name, TIN or customer no", "Abyss", /Abyssinia Agro/);
   await page.getByText("Buyer", { exact: true }).click();
   await page.getByLabel("Incoterm").selectOption("CIF");
   await expect(page.getByText("Under CIF the seller normally insures.")).toBeVisible();
@@ -49,9 +49,16 @@ test("an underwriter quotes, binds and emails a certificate", async ({ page }) =
   await page.getByRole("alertdialog").getByRole("button", { name: "Bind" }).click();
   await expect(page).toHaveURL(/\/marine\/policies\/\d+/);
 
-  // Policy → certificate (issued a few seconds after binding) → email
+  // Policy → certificate, which waits for the premium; Finance records the receipt, then it's issued → email
   await page.getByRole("tab", { name: /Certificates/ }).click();
   await page.getByRole("link", { name: /^C-\d{4}-\d{5}$/ }).click();
+  await expect(page.getByText("Waiting for the premium")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Email" })).toBeDisabled();
+  await actAs(page, "FINANCE");
+  await page.getByRole("button", { name: "Record premium receipt" }).click();
+  await page.getByPlaceholder("Transfer or transaction ID").fill("CBE-TT-90211");
+  await page.getByRole("button", { name: "Record receipt" }).click();
+  await actAs(page, "UNDERWRITER");
   await expect(page.getByText("Issued", { exact: true })).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: "Email" }).click();
   await page.getByRole("button", { name: "Send" }).click();

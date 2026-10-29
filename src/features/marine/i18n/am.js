@@ -93,5 +93,12 @@ export default {
     RECOVERED: "የተመለሰ",
     PARTLY_RECOVERED: "በከፊል የተመለሰ",
     WRITTEN_OFF: "የተሰረዘ ዕዳ",
+    AWAITING_PAYMENT: "ክፍያ በመጠባበቅ ላይ",
+    PAYMENT_REQUESTED: "ክፍያ ተጠይቋል",
+    PENDING_APPROVAL: "ማጽደቅ በመጠባበቅ ላይ",
+    REJECTED: "ውድቅ ተደርጓል",
+    UNPAID: "ያልተከፈለ",
+    PARTLY_PAID: "በከፊል የተከፈለ",
+    REQUESTED: "ተጠይቋል",
   },
 };

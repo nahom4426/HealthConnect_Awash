@@ -2,6 +2,7 @@
 // Wizard step 1: product and parties (plan 5.2).
 import { computed } from "vue";
 import FormField from "../FormField.vue";
+import CustomerPicker from "../CustomerPicker.vue";
 import PartyPicker from "../PartyPicker.vue";
 import { inputClass, inputBorder } from "../styles";
 import { INCOTERMS, PRODUCTS, incotermWarning } from "../../constants";
@@ -44,7 +45,7 @@ const warning = computed(() => incotermWarning(props.draft.incoterm, props.draft
 
     <div class="grid gap-5 sm:grid-cols-2">
       <FormField v-slot="{ id, invalid, describedby }" label="Insured" name="insured" required :error="errors.insured">
-        <PartyPicker :id="id" v-model="draft.insured" type="INSURED" :disabled="!!locked.insured" :can-create="!locked.insured" :invalid="invalid" :describedby="describedby" @blur="emit('check', 'insured')" />
+        <CustomerPicker :id="id" v-model="draft.insured" :disabled="!!locked.insured" :can-register="!locked.insured" :invalid="invalid" :describedby="describedby" @blur="emit('check', 'insured')" />
       </FormField>
       <FormField label="Insured is the" name="insuredRole" required :error="errors.insuredRole" hint="Used for the Incoterm check">
         <div class="flex gap-2" role="radiogroup" aria-label="Insured is the">

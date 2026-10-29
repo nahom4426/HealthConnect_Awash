@@ -26,6 +26,17 @@ export async function actAs(page: Page, role: string) {
 
 /** Calls the mock backend directly, for setting up data a walkthrough doesn't exercise. */
 export async function mock(page: Page, method: string, url: string, data?: unknown, roles = "SENIOR_UNDERWRITER,UNDERWRITER,CLAIMS_HANDLER,CLAIMS_MANAGER,FINANCE,ADMIN") {
+  // On a cold dev server the page may still be loading modules (or reload once); wait, and retry once
+  await page.waitForLoadState("networkidle");
+  try {
+    return await callMock(page, method, url, data, roles);
+  } catch {
+    await page.waitForLoadState("networkidle");
+    return callMock(page, method, url, data, roles);
+  }
+}
+
+function callMock(page: Page, method: string, url: string, data: unknown, roles: string) {
   return page.evaluate(
     async ({ method, url, data, roles }) => {
       const m = await import("/src/features/marine/mock/server.js");
@@ -45,12 +56,18 @@ export const SHIPMENT = {
   currency: "USD", invoiceValue: "100000.00", freight: "5000.00", containers: [], clause: "ICC_A", warCover: true, strikesCover: false, lc: { enabled: false },
 };
 
-/** Quotes, rates and binds a shipment in the mock; returns the bind result. */
-export async function issueCertificate(page: Page, overrides: Record<string, unknown> = {}) {
+/** Quotes, rates and binds a shipment in the mock and pays its premium (pay before cover); returns the bind result. */
+export async function issueCertificate(page: Page, overrides: Record<string, unknown> = {}, { pay = true } = {}) {
   const q = await mock(page, "post", "/quotes", { ...SHIPMENT, sailingDate: today(), ...overrides });
   await mock(page, "post", `/quotes/${q.id}/rate`);
-  return mock(page, "post", `/quotes/${q.id}/bind`);
+  const bound = await mock(page, "post", `/quotes/${q.id}/bind`);
+  if (pay && bound.debitNote) await payNote(page, bound.debitNote.id, bound.debitNote.total);
+  return bound;
 }
+
+/** Finance records a premium receipt in full for a debit note. */
+export const payNote = (page: Page, noteId: string, amount: string) =>
+  mock(page, "post", "/finance/receipts", { noteId, amount, method: "BANK_TRANSFER", reference: "E2E-TT-1", date: today() }, "FINANCE");
 
 /** No serious or critical WCAG 2.1 A/AA violations inside the page content (plan section 9). */
 export async function expectAccessible(page: Page) {

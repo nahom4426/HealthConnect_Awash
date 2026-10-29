@@ -19,6 +19,8 @@ import {
 } from "./core";
 import { assess, applyAssessment, syncReferral } from "./underwriting";
 import { lockToCover } from "./openCovers";
+import { approvedCustomerError } from "./customers";
+import { raiseNote, splitPremium } from "./finance";
 import "./claims";
 
 export { resetMockDb };
@@ -315,6 +317,8 @@ on("post", "/quotes/:id/rate", ({ params }) => {
   const q = editableQuote(params.id);
   ownQuote(q);
   const e = quoteErrors(q);
+  const notApproved = q.insuredId && approvedCustomerError(q.insuredId);
+  if (notApproved) e.push(notApproved);
   if (e.length) invalid(e);
   if (q.product === "INLAND_TRANSIT") {
     q.mode = "ROAD";
@@ -361,6 +365,8 @@ on("post", "/quotes/:id/bind", ({ params }) => {
     certNo: nextNo("C", "certificate"),
     version: 1,
     status: "PENDING",
+    // Pay before cover; declarations are billed through the open cover's deposit and year-end adjustment
+    awaitingPayment: !cover,
     policyId: policy.id,
     token: crypto.randomUUID().replace(/-/g, ""),
     createdAt: nowIso(),
@@ -369,10 +375,19 @@ on("post", "/quotes/:id/bind", ({ params }) => {
     snapshot: { ...q },
   };
   db.certificates.push(cert);
+  const debitNote = cover
+    ? null
+    : raiseNote({ source: "BIND", customerId: q.insuredId, brokerId: q.brokerId ?? null, policyId: policy.id, certificateId: cert.id, amounts: splitPremium(q.premium), description: `Premium for ${policy.policyNo}` });
   audit("quote", q.id, `Bound: policy ${policy.policyNo}`);
   audit("policy", policy.id, "Created from quote " + q.quoteNo);
   if (cover) audit("openCover", cover.id, `Declaration ${q.quoteNo} bound${q.late ? " (late)" : ""}`);
-  return { quote: quoteView(q), policy: { id: policy.id, policyNo: policy.policyNo }, certificate: { id: cert.id, certNo: cert.certNo }, openCover: cover ? { id: cover.id } : null };
+  return {
+    quote: quoteView(q),
+    policy: { id: policy.id, policyNo: policy.policyNo },
+    certificate: { id: cert.id, certNo: cert.certNo, awaitingPayment: cert.awaitingPayment },
+    debitNote: debitNote ? { id: debitNote.id, noteNo: debitNote.noteNo, total: debitNote.total } : null,
+    openCover: cover ? { id: cover.id } : null,
+  };
 });
 
 // policies
@@ -402,6 +417,7 @@ on("get", "/certificates", ({ query }) => {
 on("get", "/certificates/:id", ({ params }) => certificateView(ownCert(db.certificates.find((c) => c.id === params.id) ?? fail(404, "Certificate not found"))));
 on("get", "/certificates/:id/pdf", async ({ params }) => {
   const c = db.certificates.find((x) => x.id === params.id) ?? fail(404, "Certificate not found");
+  if (certificateStatus(c) === "AWAITING_PAYMENT") fail(409, "The certificate is issued once the premium is paid.", { code: "AWAITING_PAYMENT" });
   if (certificateStatus(c) === "PENDING") fail(409, "The PDF is still being generated.", { code: "PDF_PENDING" });
   const view = certificateView(c);
   const policy = db.policies.find((p) => p.id === c.policyId);
@@ -409,6 +425,7 @@ on("get", "/certificates/:id/pdf", async ({ params }) => {
 });
 on("post", "/certificates/:id/email", ({ params, body }) => {
   const c = db.certificates.find((x) => x.id === params.id) ?? fail(404, "Certificate not found");
+  if (certificateStatus(c) === "AWAITING_PAYMENT") fail(409, "The certificate is issued once the premium is paid.", { code: "AWAITING_PAYMENT" });
   const to = Array.isArray(body?.recipients) ? body.recipients : [];
   const bad = to.filter((r) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r));
   if (!to.length) invalid([{ field: "recipients", message: "Add at least one recipient" }]);
@@ -427,8 +444,9 @@ export const verifyUrl = (token) => `${location.origin}/verify/${token}`;
 on("get", "/public/verify/:token", ({ params }) => {
   const c = db.certificates.find((x) => x.token === params.token) ?? fail(404, "We couldn't verify this certificate.");
   const v = certificateView(c);
-  const latest = Math.max(...v.versions.map((x) => x.version));
-  const status = v.status === "CANCELLED" ? "CANCELLED" : c.version < latest || v.status === "AMENDED" ? "SUPERSEDED" : v.status === "EXPIRED" ? "EXPIRED" : v.status === "ISSUED" ? "VALID" : "PENDING";
+  // A paid-for version takes over; an amendment still awaiting payment doesn't supersede yet
+  const latest = Math.max(...v.versions.filter((x) => x.status !== "AWAITING_PAYMENT").map((x) => x.version));
+  const status = v.status === "CANCELLED" ? "CANCELLED" : c.version < latest || v.status === "AMENDED" ? "SUPERSEDED" : v.status === "EXPIRED" ? "EXPIRED" : v.status === "ISSUED" ? "VALID" : "PENDING"; // AWAITING_PAYMENT shows as not yet valid
   return {
     status,
     certNo: v.certNo,
@@ -525,7 +543,7 @@ export async function handleRequest(config) {
     if (result?.__blob) return respond(200, result.__blob);
     if (result?.__status) return respond(result.__status, { queued: true });
     // Deep copy so callers can't mutate the mock's records in place
-    return respond(method === "post" && /\/(vessels|ports|commodities|parties|users|fx-rates|quotes|rate-tables)$/.test(path) ? 201 : 200, structuredClone(result));
+    return respond(method === "post" && /\/(vessels|ports|commodities|parties|customers|users|fx-rates|quotes|rate-tables)$/.test(path) ? 201 : 200, structuredClone(result));
   } catch (e) {
     if (!(e instanceof HttpError)) {
       console.error("[marine mock]", e);

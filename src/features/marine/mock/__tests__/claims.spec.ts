@@ -28,7 +28,10 @@ async function issued(overrides = {}) {
     strikesCover: false, lc: { enabled: true, number: "LC-1", bankId: "5", amount: "100000", expiry: addDays(todayIso(), 60) }, ...overrides,
   })).data;
   await call("post", `/quotes/${q.id}/rate`);
-  return (await call("post", `/quotes/${q.id}/bind`)).data;
+  const bound = (await call("post", `/quotes/${q.id}/bind`)).data;
+  // Pay before cover: Finance records the premium so the certificate can take a claim
+  await call("post", "/finance/receipts", { noteId: bound.debitNote.id, amount: bound.debitNote.total, method: "BANK_TRANSFER", reference: "TT-9", date: todayIso() }, "FINANCE");
+  return bound;
 }
 
 const LOSS = (certificateId: string, extra = {}) => ({
@@ -86,6 +89,12 @@ describe("phase 4 claims", () => {
     expect((await call("post", `/claims/${claim.id}/settle`, { amount: "10000", payeeId: "5", paymentRef: "TT-1" }, "CLAIMS_HANDLER")).status).toBe(403);
     expect((await call("post", `/claims/${claim.id}/settle`, { amount: "10000", payeeId: "1", paymentRef: "TT-1" })).data.fields[0].field).toBe("payeeNote");
     c = (await call("post", `/claims/${claim.id}/settle`, { amount: "10000", payeeId: "5", paymentRef: "TT-1" })).data;
+    expect(c.status).toBe("PAYMENT_REQUESTED");
+    expect(c.money.paid).toBe("0.00");
+    // Finance pays the request; only then is the claim paid
+    expect((await call("post", `/finance/vouchers/${c.vouchers[0].id}/pay`, { method: "BANK_TRANSFER", reference: "TT-1", date: todayIso() })).status).toBe(403);
+    expect((await call("post", `/finance/vouchers/${c.vouchers[0].id}/pay`, { method: "BANK_TRANSFER", reference: "TT-1", date: todayIso() }, "FINANCE")).data.status).toBe("PAID");
+    c = (await call("get", `/claims/${claim.id}`)).data;
     expect(c.status).toBe("RECOVERY");
     expect(c.payee.name).toBe("Commercial Bank of Ethiopia");
 
@@ -94,7 +103,7 @@ describe("phase 4 claims", () => {
     c = (await call("post", `/claims/${claim.id}/close`)).data;
     expect(c.status).toBe("CLOSED");
     expect(c.money.net).toBe("7500.00"); // 10000 paid + 1500 GA - 4000 recovered
-  });
+  }, 20000);
 
   it("needs a note to mark a deadline met (FE-43)", async () => {
     const b = await issued();

@@ -8,6 +8,7 @@ import PageState from "../../components/PageState.vue";
 import KeyValueGrid from "../../components/KeyValueGrid.vue";
 import PremiumBreakdown from "../../components/PremiumBreakdown.vue";
 import StatusBadge from "../../components/StatusBadge.vue";
+import BillingPanel from "../../components/BillingPanel.vue";
 import AuditTimeline from "../../components/AuditTimeline.vue";
 import DetailTabs from "../../components/DetailTabs.vue";
 import { cardClass } from "../../components/styles";
@@ -91,6 +92,10 @@ const currentCert = computed(() => p.value?.certificates.filter((x) => ["ISSUED"
               <span>Refund on cancelling {{ p.refund.certNo }} ({{ p.refund.reason.replace(/_/g, " ").toLowerCase() }}), {{ formatDate(p.refund.at) }}</span>
               <span class="font-semibold tabular-nums">ETB {{ formatAmount(p.refund.amount) }}</span>
             </p>
+          </section>
+          <section :class="[cardClass, 'p-4 mt-4 max-w-3xl']">
+            <h2 class="mb-2 text-sm font-semibold text-ink">Billing</h2>
+            <BillingPanel :notes="p.billing ?? []" />
           </section>
         </template>
         <template #certificates>

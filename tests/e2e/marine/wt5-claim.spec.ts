@@ -67,16 +67,26 @@ test("register, survey, recover, assess, settle to the LC bank and close", async
 
   await actAs(page, "CLAIMS_MANAGER");
   await page.getByRole("button", { name: "Settle" }).click();
-  await page.getByPlaceholder("e.g. bank transfer reference").fill("TT-2026-118");
-  await page.getByRole("alertdialog").or(page.getByRole("dialog")).getByRole("button", { name: "Settle" }).click();
+  await page.getByRole("alertdialog").or(page.getByRole("dialog")).getByRole("button", { name: "Send to Finance" }).click();
   await expect(page.getByText("Commercial invoice is missing")).toBeVisible();
   await page.getByText("Commercial invoice is missing").click();
   await uploadOnDocuments(page, "Commercial invoice", "invoice.pdf");
   await uploadOnDocuments(page, "Carrier notice or protest letter", "notice.pdf");
   await page.getByRole("button", { name: "Settle" }).click();
   await expect(page.getByText("Awash Bank").first()).toBeVisible();
-  await page.getByPlaceholder("e.g. bank transfer reference").fill("TT-2026-118");
-  await page.getByRole("dialog").getByRole("button", { name: "Settle" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Send to Finance" }).click();
+  await expect(page.getByText(/Waiting for Finance to pay PV-/)).toBeVisible();
+
+  // Finance pays the request with the bank reference; the claim then shows Paid (recovery open)
+  const claimUrl = page.url();
+  await actAs(page, "FINANCE");
+  await page.goto("/marine/finance/claim-payments");
+  await page.getByRole("button", { name: "Pay", exact: true }).click();
+  await page.getByPlaceholder("Transfer or transaction ID").fill("TT-2026-118");
+  await page.getByRole("dialog").getByRole("button", { name: "Record payment" }).click();
+  await expect(page.getByText("Paid", { exact: true }).first()).toBeVisible();
+  await actAs(page, "CLAIMS_MANAGER");
+  await page.goto(claimUrl);
   await expect(page.getByText("Recovery", { exact: true }).first()).toBeVisible();
 
   // Close waits for the recovery to be resolved

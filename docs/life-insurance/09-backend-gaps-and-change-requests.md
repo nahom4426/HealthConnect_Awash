@@ -260,6 +260,8 @@ single or monthly premium; claims pay the lender first.
 
 ## Copy-paste prompt for the backend session
 
+> Superseded by the full, self-contained prompt in [10-backend-prompt.md](10-backend-prompt.md) (all gaps and items 1–30).
+
 ```text
 You are working on the Life Insurance Spring Boot service (OpenAPI at /api/life/v3/api-docs, currently 169
 operations, 25 controllers). The web frontend (Vue) has been built against the existing contract; the attached

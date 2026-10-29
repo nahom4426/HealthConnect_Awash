@@ -575,7 +575,7 @@ function goToPage(p: number | '...') {
 }
 
 .rrt-mode-btn--active {
-  background: #fff;
+  background: rgb(var(--surface));
   color: rgb(var(--primary));
   box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
@@ -600,7 +600,7 @@ function goToPage(p: number | '...') {
   gap: 4px;
   height: 24px;
   padding: 0 8px;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px solid rgb(var(--line-strong));
   border-radius: 5px;
   font-size: 10.5px;
@@ -623,7 +623,7 @@ function goToPage(p: number | '...') {
   right: 0;
   margin-top: 4px;
   width: 220px;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px solid rgb(var(--line-strong));
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
@@ -772,7 +772,7 @@ function goToPage(p: number | '...') {
 }
 
 .badge-active { background: rgb(var(--success-soft)); color: rgb(var(--success-strong)); }
-.badge-purple { background: #f3e8ff; color: #7e22ce; }
+.badge-purple { background: var(--tint-f3e8ff, #f3e8ff); color: #7e22ce; }
 .badge-pending { background: rgb(var(--warning-soft)); color: rgb(var(--warning-strong)); }
 .badge-danger  { background: rgb(var(--error-soft)); color: rgb(var(--error-strong)); }
 .badge-neutral { background: rgb(var(--surface-muted)); color: rgb(var(--ink-muted)); }
@@ -958,7 +958,7 @@ function goToPage(p: number | '...') {
 }
 
 .row-even {
-  background: #ffffff;
+  background: rgb(var(--surface));
 }
 
 .row-odd {
@@ -1047,7 +1047,7 @@ function goToPage(p: number | '...') {
   font-size: 11px;
   font-weight: 600;
   color: rgb(var(--ink-muted));
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px solid rgb(var(--line));
   cursor: pointer;
   transition: all 0.12s;

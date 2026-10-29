@@ -439,7 +439,7 @@ onMounted(() => { fetchReport(); });
 
 /* Filter Card */
 .pr-filter-card {
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px solid rgb(var(--line));
   border-radius: 16px;
   padding: 20px 24px;
@@ -503,7 +503,7 @@ onMounted(() => { fetchReport(); });
   border-radius: 8px;
   font-size: 14px;
   color: rgb(var(--ink));
-  background: #fff;
+  background: rgb(var(--surface));
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   width: 100%;
@@ -520,7 +520,7 @@ onMounted(() => { fetchReport(); });
   justify-content: center;
   gap: 12px;
   padding: 80px 24px;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px solid rgb(var(--line));
   border-radius: 16px;
   color: rgb(var(--ink-muted));
@@ -544,7 +544,7 @@ onMounted(() => { fetchReport(); });
 
 /* Table Card */
 .pr-table-card {
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px solid rgb(var(--line));
   border-radius: 16px;
   overflow: hidden;
@@ -556,7 +556,7 @@ onMounted(() => { fetchReport(); });
   align-items: flex-start;
   padding: 18px 20px;
   border-bottom: 1px solid rgb(var(--surface-muted));
-  background: linear-gradient(180deg, rgb(var(--primary) / 0.05) 0%, #fff 100%);
+  background: linear-gradient(180deg, rgb(var(--primary) / 0.05) 0%, rgb(var(--surface)) 100%);
 }
 .pr-table-title { font-size: 15px; font-weight: 700; color: rgb(var(--ink)); margin: 0 0 2px; }
 .pr-table-sub { font-size: 12px; color: rgb(var(--ink-subtle)); margin: 0; }
@@ -659,7 +659,7 @@ onMounted(() => { fetchReport(); });
 
 /* Detail Panel */
 .pr-detail-panel {
-  background: #fff;
+  background: rgb(var(--surface));
   border: 2px solid rgb(var(--primary) / 0.3);
   border-radius: 16px;
   overflow: hidden;
@@ -681,7 +681,7 @@ onMounted(() => { fetchReport(); });
 .pr-detail-header-left { display: flex; align-items: center; gap: 12px; }
 .pr-back-btn {
   width: 32px; height: 32px;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1.5px solid rgb(var(--primary) / 0.3);
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
@@ -697,7 +697,7 @@ onMounted(() => { fetchReport(); });
 .pr-detail-header-right { display: flex; align-items: center; gap: 12px; }
 .pr-detail-count {
   padding: 4px 12px;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1.5px solid rgb(var(--primary) / 0.3);
   color: rgb(var(--primary));
   font-size: 12px;
@@ -758,7 +758,7 @@ onMounted(() => { fetchReport(); });
 .pr-pagination-btns { display: flex; gap: 8px; }
 .pr-page-btn {
   padding: 6px 14px;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1.5px solid rgb(var(--line));
   border-radius: 8px;
   font-size: 12px;

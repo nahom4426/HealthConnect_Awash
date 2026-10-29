@@ -2725,7 +2725,7 @@ export default {
 .btn-purple   { background: #9333ea; color: #fff; }
 .btn-purple:not(:disabled):hover  { background: #7e22ce; }
 
-.btn-outline  { background: #fff; color: rgb(var(--ink-muted)); border-color: rgb(var(--line-strong)); }
+.btn-outline  { background: rgb(var(--surface)); color: rgb(var(--ink-muted)); border-color: rgb(var(--line-strong)); }
 .btn-outline:not(:disabled):hover { background: rgb(var(--surface-muted)); }
 
 .btn-soft     { background: color-mix(in srgb, var(--color-primary,rgb(var(--primary))) 10%, transparent); color: var(--color-primary,rgb(var(--primary))); }
@@ -2746,7 +2746,7 @@ export default {
 
 /* ── Card ────────────────────────────────────────────────────── */
 .qb-card {
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px solid rgb(var(--line));
   border-radius: 1.25rem;
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
@@ -2791,7 +2791,7 @@ export default {
   font-size: .875rem;
   font-weight: 500;
   color: rgb(var(--ink-muted));
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right .75rem center / 1rem;
+  background: rgb(var(--surface)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right .75rem center / 1rem;
   border: 1.5px solid rgb(var(--line));
   border-radius: .75rem;
   appearance: none;
@@ -2827,7 +2827,7 @@ export default {
   font-size: .875rem;
   font-weight: 500;
   color: rgb(var(--ink-muted));
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1.5px solid rgb(var(--line));
   border-radius: .75rem;
   outline: none;
@@ -2913,7 +2913,7 @@ export default {
   font-size: .875rem;
   font-weight: 500;
   color: rgb(var(--ink-muted));
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1.5px solid rgb(var(--line));
   border-radius: .75rem;
   cursor: pointer;
@@ -2934,7 +2934,7 @@ export default {
 /* ── Teleported dropdown ─────────────────────────────────────── */
 .qb-pkg-dropdown {
   position: absolute;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1.5px solid rgb(var(--line));
   border-radius: 1rem;
   box-shadow: 0 8px 40px rgba(0,0,0,.15);
@@ -3053,7 +3053,7 @@ export default {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: #fff;
+  background: rgb(var(--surface));
   transition: background .1s, border-color .1s;
 }
 
@@ -3305,7 +3305,7 @@ export default {
   left: 0.1875rem;
   width: 0.875rem;
   height: 0.875rem;
-  background: #fff;
+  background: rgb(var(--surface));
   border-radius: 50%;
   transition: transform 0.2s;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
@@ -3327,7 +3327,7 @@ export default {
   border: 1.5px solid rgb(var(--line));
   border-radius: 1.25rem;
   overflow: hidden;
-  background: #fff;
+  background: rgb(var(--surface));
 }
 .qb-discount-toggle-btn {
   width: 100%;

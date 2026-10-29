@@ -89,7 +89,7 @@ const totalPages = inject("totalPages", 1);
 }
 
 .overflow-x-auto::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
+  background: var(--tint-e2e8f0, #e2e8f0);
   border-radius: 4px;
 }
 

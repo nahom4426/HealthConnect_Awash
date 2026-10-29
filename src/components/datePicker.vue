@@ -46,7 +46,7 @@ const updateValue = (e) => {
       {{ label }} <span v-if="required" class="text-red-500">*</span>
     </label>
     <div
-      class="flex items-center bg-[#FFFFFF] rounded-md px-4 h-10 text-[#75778B] cursor-pointer border border-line-strong"
+      class="flex items-center bg-surface rounded-md px-4 h-10 text-ink-subtle cursor-pointer border border-line-strong"
       :class="{ 'border-red-500': error }"
       @click="openDatePicker"
     >

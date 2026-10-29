@@ -237,7 +237,7 @@ function navigate(path) {
 }
 .brand-mark:hover {
   transform: scale(1.06);
-  background: #ffffff;
+  background: rgb(var(--surface));
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3), 0 0 16px rgba(254, 147, 18, 0.5);
 }
 .brand-logo-img {

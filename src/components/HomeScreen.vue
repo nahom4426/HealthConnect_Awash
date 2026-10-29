@@ -162,7 +162,7 @@ function openModule(nav) {
 <style scoped>
 .home-root {
   min-height: 100%;
-  background: #f1f5f9;
+  background: rgb(var(--surface-raised));
 }
 
 /* ══ HERO ══ */
@@ -387,7 +387,7 @@ function openModule(nav) {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: rgb(var(--ink-subtle));
   white-space: nowrap;
 }
 

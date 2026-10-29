@@ -280,7 +280,7 @@ function toOptions(opts: string[] | undefined) {
   border-radius: 8px;
   font-size: 12.5px;
   color: rgb(var(--ink));
-  background: #fff;
+  background: rgb(var(--surface));
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.15s, box-shadow 0.15s;

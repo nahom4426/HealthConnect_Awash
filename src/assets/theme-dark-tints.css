@@ -1,0 +1,43 @@
+/* Dark values for the coloured tints written as hex in page <style> blocks (they use
+   var(--tint-<hex>, <hex>) / var(--shade-<hex>, <hex>), so light mode keeps the original colour).
+   Generated; to add more, convert the hex in the page the same way and add the variable here. */
+:root[data-theme="dark"] {
+  --shade-022b54: rgb(96 165 250);
+  --shade-03396c: rgb(96 165 250);
+  --shade-047857: rgb(52 211 153);
+  --shade-059669: rgb(52 211 153);
+  --shade-065f46: rgb(52 211 153);
+  --shade-15803d: rgb(74 222 128);
+  --shade-166534: rgb(74 222 128);
+  --shade-92400e: rgb(251 146 60);
+  --tint-a5b4fc: rgb(99 102 241 / 0.35);
+  --tint-a7f3d0: rgb(16 185 129 / 0.35);
+  --tint-bbf7d0: rgb(34 197 94 / 0.35);
+  --tint-bfdbfe: rgb(59 130 246 / 0.35);
+  --tint-c7d2fe: rgb(99 102 241 / 0.35);
+  --tint-d1fae5: rgb(34 197 94 / 0.35);
+  --tint-dbeafe: rgb(59 130 246 / 0.35);
+  --tint-dcfce7: rgb(34 197 94 / 0.35);
+  --tint-ddd6fe: rgb(139 92 246 / 0.35);
+  --tint-e0e7ff: rgb(59 130 246 / 0.16);
+  --tint-e2e8f0: rgb(59 130 246 / 0.16);
+  --tint-ecfdf5: rgb(16 185 129 / 0.1);
+  --tint-ede9fe: rgb(139 92 246 / 0.35);
+  --tint-eff6ff: rgb(59 130 246 / 0.1);
+  --tint-f0f9ff: rgb(14 165 233 / 0.1);
+  --tint-f0fdf4: rgb(34 197 94 / 0.1);
+  --tint-f3e8ff: rgb(168 85 247 / 0.1);
+  --tint-f5f3ff: rgb(139 92 246 / 0.1);
+  --tint-f8fafc: rgb(59 130 246 / 0.35);
+  --tint-fafafe: rgb(99 102 241 / 0.1);
+  --tint-fde68a: rgb(234 179 8 / 0.35);
+  --tint-fecaca: rgb(239 68 68 / 0.35);
+  --tint-fed7aa: rgb(245 158 11 / 0.35);
+  --tint-fee2e2: rgb(239 68 68 / 0.16);
+  --tint-fef2f2: rgb(239 68 68 / 0.1);
+  --tint-fef3c7: rgb(234 179 8 / 0.35);
+  --tint-fef9c3: rgb(234 179 8 / 0.22);
+  --tint-fff1f2: rgb(239 68 68 / 0.1);
+  --tint-fff7ed: rgb(245 158 11 / 0.1);
+  --tint-fffbeb: rgb(234 179 8 / 0.1);
+}

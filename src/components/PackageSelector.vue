@@ -1377,7 +1377,7 @@ onMounted(() => {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: rgb(var(--surface-raised));
   border-radius: 4px;
 }
 

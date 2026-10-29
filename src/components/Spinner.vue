@@ -58,7 +58,7 @@
   font-family: "Segoe UI", sans-serif;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: rgb(var(--ink));
   letter-spacing: 0.05em;
   text-shadow: 0 0 5px rgba(75, 85, 99, 0.5);
   animation: pulse 1.5s ease-in-out infinite,

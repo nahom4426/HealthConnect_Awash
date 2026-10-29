@@ -31,19 +31,19 @@ function onChange(event) {
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.6rem;
-  background: #fff;
+  background: rgb(var(--surface));
   border: 1px dashed var(--primary, #03396c);
   border-radius: 10px;
   font-size: 0.78rem;
 }
-.role-switcher__icon { width: 1rem; height: 1rem; color: var(--primary, #03396c); }
-.role-switcher__label { font-weight: 700; color: var(--primary, #03396c); white-space: nowrap; }
+.role-switcher__icon { width: 1rem; height: 1rem; color: var(--primary, var(--shade-03396c, #03396c)); }
+.role-switcher__label { font-weight: 700; color: var(--primary, var(--shade-03396c, #03396c)); white-space: nowrap; }
 .role-switcher__select {
   border: none;
   background: transparent;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #1e293b;
+  color: rgb(var(--ink));
   cursor: pointer;
   outline: none;
   max-width: 190px;

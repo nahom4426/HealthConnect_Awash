@@ -353,7 +353,7 @@ const endIndex = computed(() => Math.min(currentPage.value * currentPerPage.valu
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
+  background: var(--tint-e2e8f0, #e2e8f0);
   border-radius: 3px;
 }
 

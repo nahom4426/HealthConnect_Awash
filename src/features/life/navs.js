@@ -39,6 +39,7 @@ const lifeNavs = [
       { path: '/life/products/group-term-rates', name: 'Group Term Rates', meta: { permissions: ["Life_Rate_Manage", "Life_Product_Manage"] } },
       { path: '/life/products/individual-term-rates', name: 'Individual Term Rates', meta: { permissions: ["Life_Rate_Manage", "Life_Product_Manage"] } },
       { path: '/life/products/riders', name: 'Riders', meta: { permissions: ["Life_Product_Manage", "Life_Rate_Manage"] } },
+      { path: '/form-builder/life', name: 'Proposal Form Builder', meta: { permissions: ["Life_Product_Manage"] } },
     ],
   },
   {

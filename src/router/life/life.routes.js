@@ -19,6 +19,9 @@ const ClaimDetail = () => import("@/features/life/pages/claims/ClaimDetail.vue")
 const IndividualPoliciesList = () => import("@/features/life/pages/individual/IndividualPoliciesList.vue");
 const IndividualPolicyForm = () => import("@/features/life/pages/individual/IndividualPolicyForm.vue");
 const IndividualPolicyDetail = () => import("@/features/life/pages/individual/IndividualPolicyDetail.vue");
+// The shared proposal form builder, opened for Life with Life privileges instead of the Motor-style
+// productConfig role rule that guards /form-builder/:productId for the other products
+const FormBuilderEditor = () => import("@/features/shared/form_builder/pages/FormBuilderEditor.vue");
 const QuestionsList = () => import("@/features/life/pages/underwriting/QuestionsList.vue");
 const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
@@ -38,6 +41,12 @@ const P = {
 };
 
 const lifeRoutes = [
+  {
+    path: "/form-builder/:productId(life)",
+    name: "life-form-builder",
+    component: FormBuilderEditor,
+    meta: { requiresAuth: true, permissions: P.PRODUCTS, title: "Life proposal form builder" },
+  },
   {
     path: "/life/products/riders",
     name: "life-riders",

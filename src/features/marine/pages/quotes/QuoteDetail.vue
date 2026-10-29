@@ -76,7 +76,7 @@ function bind() {
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <PageState v-if="loading && !q" kind="loading" />
     <template v-else-if="notFound">
       <MarinePageHeader title="Quote not found" :crumbs="[{ label: 'Marine' }, { label: 'Quotes', to: '/marine/quotes' }]" />

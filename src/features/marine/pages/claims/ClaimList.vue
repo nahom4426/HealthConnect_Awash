@@ -34,7 +34,7 @@ const columns = [
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Claims" :crumbs="[{ label: 'Marine' }, { label: 'Claims' }]">
       <template #actions>
         <Button v-if="canRegister()" @click="router.push('/marine/claims/new')">Register claim</Button>

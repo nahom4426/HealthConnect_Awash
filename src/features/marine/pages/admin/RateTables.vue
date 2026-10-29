@@ -38,7 +38,7 @@ const columns = [
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Rate tables" subtitle="Every premium is computed from the active version. Edit a draft, then activate it from a date; the current version retires the day before." :crumbs="[{ label: 'Marine' }, { label: 'Admin' }, { label: 'Rate tables' }]">
       <template #actions>
         <Button :pending="creating" @click="newVersion">New version</Button>

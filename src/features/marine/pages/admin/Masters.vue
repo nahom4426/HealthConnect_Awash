@@ -36,7 +36,7 @@ function create() {
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Masters" subtitle="Reference data every quote picks from. Only admins can change it; everyone else sees it through the pickers." :crumbs="[{ label: 'Marine' }, { label: 'Admin' }, { label: 'Masters' }]">
       <template #actions>
         <Button v-if="can('masters.edit')" @click="create">{{ NEW[tab][1] }}</Button>

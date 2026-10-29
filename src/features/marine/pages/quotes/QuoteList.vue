@@ -38,7 +38,7 @@ const columns = [
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Quotes" :crumbs="[{ label: 'Marine' }, { label: 'Quotes' }]">
       <template #actions>
         <Button v-if="can('quote.create')" @click="router.push('/marine/quotes/new')">New quote</Button>

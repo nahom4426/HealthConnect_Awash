@@ -100,7 +100,7 @@ onBeforeRouteLeave(
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <PageState v-if="loading && !t" kind="loading" />
     <PageState v-else-if="loadError?.status === 404" kind="notFound"><RouterLink to="/marine/admin/rate-tables"><Button variant="outline" size="sm">Back to rate tables</Button></RouterLink></PageState>
     <PageState v-else-if="loadError" kind="error" :message="loadError.message" @retry="load" />

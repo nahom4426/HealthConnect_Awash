@@ -81,7 +81,7 @@ const columns = [
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="FX rates" subtitle="ETB per unit of each foreign currency. Quotes use today's rate, or the previous day's when today's is missing." :crumbs="[{ label: 'Marine' }, { label: 'Admin' }, { label: 'FX rates' }]">
       <template #actions>
         <Button v-if="can('fx.edit')" variant="outline" @click="importCsv">Import CSV</Button>

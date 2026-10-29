@@ -75,7 +75,7 @@ const strip = computed(() =>
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <PageState v-if="loading && !c" kind="loading" />
     <template v-else-if="notFound">
       <MarinePageHeader title="Claim not found" :crumbs="[{ label: 'Marine' }, { label: 'Claims', to: '/marine/claims' }]" />
@@ -102,13 +102,13 @@ const strip = computed(() =>
         </template>
       </MarinePageHeader>
 
-      <section :class="[cardClass, 'grid gap-4 p-4 mb-5 grid-cols-2 sm:grid-cols-4 xl:grid-cols-7']" aria-label="Money">
-        <div v-for="[l, v] in strip" :key="l">
-          <p class="text-xs text-ink-subtle">{{ l }}</p>
-          <p :class="['font-semibold tabular-nums', l === 'Net cost' ? 'text-ink' : 'text-ink']">{{ v === null ? "—" : formatMoney(v, c.currency) }}</p>
+      <section class="grid grid-cols-2 gap-3 mb-5 sm:grid-cols-4 xl:grid-cols-7" aria-label="Money">
+        <div v-for="[l, v] in strip" :key="l" :class="[cardClass, 'p-3.5 border-l-4', l === 'Net cost' ? '!border-l-sky-600 !bg-sky-50 dark:!bg-sky-900/30' : '!border-l-sky-300 dark:!border-l-sky-700']">
+          <p class="text-[11px] font-semibold tracking-wider uppercase text-ink-muted">{{ l }}</p>
+          <p class="mt-1 text-base font-bold tabular-nums text-ink">{{ v === null ? "—" : formatMoney(v, c.currency) }}</p>
         </div>
-        <button v-if="c.nextDeadline" type="button" class="text-left" @click="router.replace({ query: { tab: 'deadlines' } })">
-          <p class="text-xs text-ink-subtle">Next deadline</p>
+        <button v-if="c.nextDeadline" type="button" :class="[cardClass, 'p-3.5 text-left border-l-4 !border-l-amber-500']" @click="router.replace({ query: { tab: 'deadlines' } })">
+          <p class="text-[11px] font-semibold tracking-wider uppercase text-ink-muted">Next deadline</p>
           <DeadlineChip :due-date="c.nextDeadline.dueDate" :status="c.nextDeadline.status" />
           <p class="text-xs text-ink-muted">{{ DEADLINE_KINDS[c.nextDeadline.kind] }}, {{ formatDate(c.nextDeadline.dueDate) }}</p>
         </button>

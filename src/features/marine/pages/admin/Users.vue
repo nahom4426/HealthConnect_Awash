@@ -61,7 +61,7 @@ const columns = [
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Users" subtitle="Who can use Marine & Cargo, and with which roles." :crumbs="[{ label: 'Marine' }, { label: 'Admin' }, { label: 'Users' }]">
       <template #actions>
         <Button @click="edit(null)">New user</Button>

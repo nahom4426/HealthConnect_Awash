@@ -7,7 +7,7 @@ defineProps({ backTo: { type: String, default: "/marine/quotes" }, backLabel: { 
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Not found" />
     <PageState kind="notFound">
       <RouterLink :to="backTo"><Button variant="outline" size="sm">{{ backLabel }}</Button></RouterLink>

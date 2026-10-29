@@ -29,9 +29,9 @@ defineProps({
         </tr>
       </tbody>
       <tfoot>
-        <tr class="border-t-2 border-line-strong">
-          <th scope="row" colspan="2" class="py-2.5 text-left font-semibold text-ink">Total premium</th>
-          <td class="py-2.5 text-base font-semibold text-right tabular-nums text-ink">ETB {{ formatAmount(premium.total) }}</td>
+        <tr class="border-t-2 border-sky-600/40 bg-sky-50 dark:bg-sky-900/30">
+          <th scope="row" colspan="2" class="px-2 py-3 font-semibold text-left text-sky-900 dark:text-sky-100">Total premium</th>
+          <td class="px-2 py-3 text-lg font-bold text-right whitespace-nowrap tabular-nums text-sky-900 dark:text-sky-100">ETB {{ formatAmount(premium.total) }}</td>
         </tr>
       </tfoot>
     </table>

@@ -131,7 +131,12 @@ const actions = computed(() => ACTIONS.filter((a) => hasAnyRole(roles.value, a.r
 <template>
   <div class="mdb-root" :class="{ dark: isDark }">
     <!-- ══ TOP BAR ══ -->
-    <div class="mdb-topbar">
+    <div class="mdb-topbar marine-topbar">
+      <svg class="marine-topbar-waves" viewBox="0 0 520 140" preserveAspectRatio="none" fill="none" aria-hidden="true">
+        <path d="M0 96c43 0 65-22 108-22s65 22 108 22 65-22 108-22 65 22 108 22 65-22 88-22v68H0V96Z" fill="currentColor" opacity=".06" />
+        <path d="M0 114c43 0 65-18 108-18s65 18 108 18 65-18 108-18 65 18 108 18 65-18 88-18v44H0v-26Z" fill="currentColor" opacity=".08" />
+        <path d="M0 78c43 0 65-20 108-20s65 20 108 20 65-20 108-20 65 20 108 20 65-20 88-20" stroke="currentColor" stroke-opacity=".18" stroke-width="1.5" />
+      </svg>
       <div class="mdb-topbar-left">
         <div class="mdb-standalone-icon" :style="`color:${mod.color.to}`">
           <span class="mdb-badge-icon" v-html="mod.icon"></span>
@@ -364,6 +369,26 @@ const actions = computed(() => ACTIONS.filter((a) => hasAnyRole(roles.value, a.r
   --theme-color-glow: v-bind("mod.color.glow");
   --theme-color-accent: v-bind("mod.color.accent");
   --theme-color-from: v-bind("mod.color.from");
+}
+/* Top card: the same gradient line and waves as the marine page headers (theme.css .marine-hero) */
+.marine-topbar { position: relative; overflow: hidden; }
+.marine-topbar > :not(.marine-topbar-waves) { position: relative; }
+.marine-topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--theme-color-from), var(--theme-color-primary) 45%, var(--theme-color-accent));
+}
+.marine-topbar-waves {
+  position: absolute;
+  inset: auto 0 0 auto;
+  width: 62%;
+  height: 72%;
+  color: var(--theme-color-primary);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
 }
 .mdb-kpi-link { text-decoration: none; }
 .mdb-ins-note { font-size: 0.72rem; font-weight: 600; color: var(--mdb-subtitle); }

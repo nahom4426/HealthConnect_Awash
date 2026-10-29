@@ -53,7 +53,7 @@ async function assign() {
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <PageState v-if="loading && !r" kind="loading" />
     <PageState v-else-if="notFound" kind="notFound"><RouterLink to="/marine/underwriting"><Button variant="outline" size="sm">Back to the queue</Button></RouterLink></PageState>
     <PageState v-else-if="error" kind="error" :message="error.message" @retry="load(route.params.id)" />

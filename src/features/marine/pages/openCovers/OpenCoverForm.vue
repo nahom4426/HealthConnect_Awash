@@ -139,7 +139,7 @@ onBeforeRouteLeave(
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader
       :title="existing ? `Edit ${existing.coverNo}` : 'New open cover'"
       :crumbs="[{ label: 'Marine' }, { label: 'Open covers', to: '/marine/open-covers' }, { label: existing?.coverNo ?? 'New' }]"

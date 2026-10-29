@@ -372,7 +372,7 @@ const title = computed(() => {
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader
       :title="title"
       :status="quote?.status"
@@ -391,7 +391,7 @@ const title = computed(() => {
     <PageState v-else-if="loadError" kind="error" :message="loadError.message" @retry="$router.go(0)" />
 
     <template v-else>
-      <nav aria-label="Quote steps" class="mb-5">
+      <nav aria-label="Quote steps" class="mb-5 marine-steps">
         <ol class="grid grid-cols-4 gap-2">
           <li v-for="(s, i) in STEPS" :key="s">
             <button
@@ -399,13 +399,25 @@ const title = computed(() => {
               :disabled="i > furthest"
               :aria-current="i === step ? 'step' : undefined"
               :class="[
-                'flex flex-col gap-1 pt-2 w-full text-left border-t-4 disabled:cursor-not-allowed',
-                i === step ? 'border-primary' : i <= furthest ? 'border-primary/40 hover:border-primary/70' : 'border-line',
+                'flex gap-3 items-center w-full text-left transition-colors disabled:cursor-not-allowed disabled:opacity-70',
+                i <= furthest && i !== step ? 'hover:border-primary/50' : '',
               ]"
               @click="goTo(i)"
             >
-              <span :class="['text-xs font-semibold', i <= furthest ? 'text-primary' : 'text-ink-subtle']">Step {{ i + 1 }}</span>
-              <span :class="['text-sm font-medium', i === step ? 'text-ink' : 'text-ink-muted']">{{ s }}</span>
+              <span
+                :class="[
+                  'grid place-items-center w-8 h-8 text-sm font-bold rounded-full shrink-0',
+                  i === step ? 'text-white bg-gradient-to-br from-sky-800 to-sky-600 shadow' : i <= furthest ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200' : 'bg-surface-raised text-ink-muted',
+                ]"
+                aria-hidden="true"
+              >
+                <svg v-if="i < furthest && i !== step" class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 10 3.5 3.5L15 7" /></svg>
+                <template v-else>{{ i + 1 }}</template>
+              </span>
+              <span class="flex flex-col min-w-0">
+                <span :class="['text-[11px] font-semibold uppercase tracking-wider', i <= furthest ? 'text-primary' : 'text-ink-muted']">Step {{ i + 1 }}</span>
+                <span :class="['text-sm font-semibold truncate', i === step ? 'text-ink' : 'text-ink-muted']">{{ s }}</span>
+              </span>
             </button>
           </li>
         </ol>

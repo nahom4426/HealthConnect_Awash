@@ -24,7 +24,7 @@ const etb = computed(() => (props.currency === "ETB" ? si.value.total : props.fx
     <dl class="mt-3 space-y-1.5 text-sm">
       <div class="flex justify-between gap-3"><dt class="text-ink-muted">Invoice + freight</dt><dd class="tabular-nums text-ink">{{ formatMoney(si.base, currency) }}</dd></div>
       <div class="flex justify-between gap-3"><dt class="text-ink-muted">Uplift {{ upliftPct }}%</dt><dd class="tabular-nums text-ink">{{ formatMoney(si.uplift, currency) }}</dd></div>
-      <div class="flex justify-between gap-3 pt-2 mt-2 border-t border-line"><dt class="font-semibold text-ink">Total</dt><dd class="text-base font-semibold tabular-nums text-ink">{{ formatMoney(si.total, currency) }}</dd></div>
+      <div class="flex gap-3 justify-between px-3 py-2.5 mt-3 rounded-xl bg-sky-50 dark:bg-sky-900/30"><dt class="font-semibold text-sky-900 dark:text-sky-100">Total</dt><dd class="text-base font-bold tabular-nums text-sky-900 dark:text-sky-100">{{ formatMoney(si.total, currency) }}</dd></div>
     </dl>
     <div v-if="currency !== 'ETB'" class="p-3 mt-3 rounded-xl bg-surface-muted">
       <p class="text-xs text-ink-muted">ETB estimate</p>

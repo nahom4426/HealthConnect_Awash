@@ -13,7 +13,7 @@ const roleText = computed(() => (roles.value.length > 1 ? `${roles.value.slice(0
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="No access" />
     <PageState kind="forbidden" title="You don't have access to this page" :message="`You need the ${roleText} role to open this page.`">
       <RouterLink to="/marine/quotes"><Button variant="outline" size="sm">Back to quotes</Button></RouterLink>

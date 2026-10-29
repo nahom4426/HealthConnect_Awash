@@ -133,7 +133,7 @@ onBeforeRouteLeave(
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <PageState v-if="!cert && !loadError" kind="loading" />
     <PageState v-else-if="loadError" :kind="loadError.status === 404 ? 'notFound' : 'error'" :message="loadError.message" />
     <template v-else>

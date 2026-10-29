@@ -98,7 +98,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Register claim" :crumbs="[{ label: 'Marine' }, { label: 'Claims', to: '/marine/claims' }, { label: 'Register' }]" />
     <form novalidate class="grid gap-4 max-w-4xl" @submit.prevent="submit">
       <FormErrorBanner :items="submitted ? bannerItems() : []" />

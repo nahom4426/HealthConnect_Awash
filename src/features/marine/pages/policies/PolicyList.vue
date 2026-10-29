@@ -26,7 +26,7 @@ const columns = [
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Policies" :crumbs="[{ label: 'Marine' }, { label: 'Policies' }]" />
     <FilterBar
       :fields="[

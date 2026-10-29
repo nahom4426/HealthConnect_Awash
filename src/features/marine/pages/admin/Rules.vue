@@ -88,7 +88,7 @@ const recent = computed(() => (rules.value?.changes ?? []).filter((c) => c.secti
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <MarinePageHeader title="Rules" subtitle="What sends a quote to an underwriter, who can decide it, and the limits and deadlines the system enforces." :crumbs="[{ label: 'Marine' }, { label: 'Admin' }, { label: 'Rules' }]" />
     <PageState v-if="!rules && !loadError" kind="loading" />
     <PageState v-else-if="loadError" kind="error" :message="loadError.message" @retry="load" />

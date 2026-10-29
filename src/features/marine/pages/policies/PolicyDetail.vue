@@ -38,7 +38,7 @@ const currentCert = computed(() => p.value?.certificates.filter((x) => ["ISSUED"
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
+  <div class="marine-page">
     <PageState v-if="loading && !p" kind="loading" />
     <template v-else-if="notFound">
       <MarinePageHeader title="Policy not found" :crumbs="[{ label: 'Marine' }, { label: 'Policies', to: '/marine/policies' }]" />

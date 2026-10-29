@@ -24,7 +24,7 @@ function onKey(e, i) {
 
 <template>
   <div>
-    <div role="tablist" class="flex overflow-x-auto gap-1 mb-4 border-b border-line">
+    <div role="tablist" class="mb-4 marine-tabs">
       <button
         v-for="(t, i) in tabs"
         :key="t.key"
@@ -32,11 +32,11 @@ function onKey(e, i) {
         type="button"
         :aria-selected="active === t.key"
         :tabindex="active === t.key ? 0 : -1"
-        :class="['px-4 py-2 -mb-px text-sm font-medium whitespace-nowrap border-b-2', active === t.key ? 'border-primary text-primary' : 'border-transparent text-ink-muted hover:text-ink']"
+        :class="['marine-tab px-4 py-1.5 text-sm font-semibold whitespace-nowrap rounded-[10px] transition-colors', active === t.key ? '' : 'text-ink-muted hover:text-ink hover:bg-surface-muted']"
         @click="select(t.key)"
         @keydown="onKey($event, i)"
       >
-        {{ t.label }}<span v-if="t.count !== undefined" class="ml-1.5 text-xs text-ink-subtle">{{ t.count }}</span>
+        {{ t.label }}<span v-if="t.count !== undefined" :class="['ml-1.5 px-1.5 py-px rounded-full text-[11px] tabular-nums', active === t.key ? 'bg-white/20 text-white' : 'bg-surface-raised text-ink-muted']">{{ t.count }}</span>
       </button>
     </div>
     <fieldset role="tabpanel" :disabled="panelDisabled" class="min-w-0">

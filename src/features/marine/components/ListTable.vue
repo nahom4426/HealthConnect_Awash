@@ -48,7 +48,7 @@ function open(row, e) {
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-surface-muted">
-            <tr class="text-xs font-semibold tracking-wide text-left uppercase text-ink-subtle">
+            <tr class="text-[11px] font-bold tracking-wider text-left uppercase">
               <th
                 v-for="c in columns"
                 :key="c.key"
@@ -87,7 +87,7 @@ function open(row, e) {
             >
               <td v-for="c in columns" :key="c.key" :class="['px-4 py-3 align-top', c.align === 'right' ? 'text-right tabular-nums' : '', c.class ?? '']">
                 <slot :name="`cell-${c.key}`" :row="row">
-                  <RouterLink v-if="rowLink && c === columns[0]" :to="rowLink(row)" class="font-semibold text-ink hover:text-primary" @click.stop>{{ row[c.key] ?? "—" }}</RouterLink>
+                  <RouterLink v-if="rowLink && c === columns[0]" :to="rowLink(row)" class="font-semibold whitespace-nowrap text-ink hover:text-primary" @click.stop>{{ row[c.key] ?? "—" }}</RouterLink>
                   <span v-else>{{ row[c.key] ?? "—" }}</span>
                 </slot>
               </td>
@@ -98,9 +98,9 @@ function open(row, e) {
       <footer v-if="list.total.value > 0" class="flex flex-wrap gap-3 justify-between items-center px-4 py-3 text-xs border-t border-line text-ink-muted">
         <span>{{ t("list.range", { from, to, total: list.total.value }) }}</span>
         <div class="flex gap-1 items-center">
-          <button type="button" class="px-2.5 h-8 rounded-lg border border-line disabled:opacity-40 hover:bg-surface-muted" :disabled="list.page.value <= 1" @click="list.page.value--">{{ t("list.previous") }}</button>
-          <span class="px-2">{{ t("list.page", { page: list.page.value, pages }) }}</span>
-          <button type="button" class="px-2.5 h-8 rounded-lg border border-line disabled:opacity-40 hover:bg-surface-muted" :disabled="list.page.value >= pages" @click="list.page.value++">{{ t("list.next") }}</button>
+          <button type="button" class="px-3 h-8 font-medium rounded-full border border-line bg-surface disabled:opacity-40 hover:border-primary/50 hover:text-primary" :disabled="list.page.value <= 1" @click="list.page.value--">{{ t("list.previous") }}</button>
+          <span class="px-2 font-medium text-ink">{{ t("list.page", { page: list.page.value, pages }) }}</span>
+          <button type="button" class="px-3 h-8 font-medium rounded-full border border-line bg-surface disabled:opacity-40 hover:border-primary/50 hover:text-primary" :disabled="list.page.value >= pages" @click="list.page.value++">{{ t("list.next") }}</button>
         </div>
       </footer>
     </template>

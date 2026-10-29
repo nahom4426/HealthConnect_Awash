@@ -208,6 +208,15 @@ underwriting decisions, reinsurance cession bordereau) with Excel export.
     or a file?) and say whether it is safe to call more than once. The UI shows whatever fields come back, or
     downloads it if it is a file.
 22. `GET /policy/lists` search: say which fields it matches (policy number, quotation number, institution name).
+23. Claims: how does a claim move from the insurance *requested* list to *registered*? There is no register
+    endpoint. The UI lets the claims desk only reject a *requested* claim and review a *registered* one.
+24. Claims: `POST /claim` returns the new `claimUuid` as a plain string — confirm (the UI also accepts
+    `{ claimUuid }`). `ClaimListResponse.status` values: list them so the UI can map a claim opened from a link to
+    its queue (today it guesses from the text).
+25. Claims: `fileNames` on `POST /claim-attachment` — the UI sends one document name per upload. Say whether several
+    files with comma-separated names are supported, the allowed types and the size limit.
+26. Claims: `PUT /claim/deny` takes the reason in the query string (see item 6); long reasons may be cut by URL
+    limits. Accept `ClaimRequest` as JSON like the other claim actions.
 
 ### G10 · Privileges
 

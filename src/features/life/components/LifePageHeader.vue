@@ -2,7 +2,7 @@
 defineProps({
   title: { type: String, required: true },
   subtitle: { type: String, default: "" },
-  back: { type: String, default: "" },
+  back: { type: [String, Object], default: "" }, // RouterLink target
 });
 </script>
 

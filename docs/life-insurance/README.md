@@ -1,6 +1,6 @@
 # Life Insurance implementation analysis
 
-Status: analysis complete; Stages 1–6 implemented (API, products & rates, reinsurance, underwriting questionnaire, group quotations, group policies). Screens checked with Swagger-shaped data, not yet against the live Life service.
+Status: analysis complete; Stages 1–7 implemented (API, products & rates, reinsurance, underwriting questionnaire, group quotations, group policies, claims on the existing API). Screens checked with Swagger-shaped data, not yet against the live Life service.
 together first. Prepared 2026-10-28 against the Life service OpenAPI document at
 `http://192.168.100.251:8194/api/life/v3/api-docs`.
 
@@ -179,7 +179,7 @@ for their gap.
 | 4 | Underwriting questionnaire set-up: questions list (active / draft / disabled), question editor (single choice, multiple choice, number ranges, free text; scores, critical flags, follow-up text; applicant preview), shared answer library | — | **Done** (UI checked with Swagger-shaped data; open questions in 09 §G9 items 12–15) |
 | 5 | Group quotation pipeline: list per status, create (institution search), members (add / edit / remove, Excel template and import, above-retention filter), riders within rider limits, treaty link, issue → accept → record payment → issue policy, revise | 2, 3 | **Done** (UI checked with Swagger-shaped data; open questions in 09 §G9 items 16–19) |
 | 6 | Group policies: list per status (cover period, days left), policy page read from its quotation (members with cover dates, riders, treaty, details, timeline), treaty report, renew / revise; issue policy lives on the paid quotation | 5 | **Done** (UI checked with Swagger-shaped data; servicing waits on G5; open questions in 09 §G9 items 20–22) |
-| 7 | Claims (queues, review/approve/reject, documents, timeline) | 6 | Partly ready; settlement after G3 |
+| 7 | Claims: agency queues (drafts, submitted, approved, paid, rejected) and claims desk queues (new → registered → reviewed → approved → to authorize → authorized → paid, rejected); new claim (policy → member); claim page with documents (attach, replace, open, remove), comments by stage, history, sign-offs; submit, review, approve, reject with reason | 6 | **Done for the existing API** (checked with Swagger-shaped data). Authorize, pay, claim type / event / amount and the document checklist wait on G3; open questions in 09 §G9 items 23–26 |
 | 8 | Individual term policies | 2 | After G2/G11 for issuance |
 | 9 | Beneficiaries | G1 | Blocked |
 | 10 | Customers / KYC | G2 | Blocked |

@@ -13,6 +13,9 @@ const QuotationsList = () => import("@/features/life/pages/quotations/Quotations
 const QuotationDetail = () => import("@/features/life/pages/quotations/QuotationDetail.vue");
 const PoliciesList = () => import("@/features/life/pages/policies/PoliciesList.vue");
 const PolicyDetail = () => import("@/features/life/pages/policies/PolicyDetail.vue");
+const ClaimsQueue = () => import("@/features/life/pages/claims/ClaimsQueue.vue");
+const NewClaim = () => import("@/features/life/pages/claims/NewClaim.vue");
+const ClaimDetail = () => import("@/features/life/pages/claims/ClaimDetail.vue");
 const QuestionsList = () => import("@/features/life/pages/underwriting/QuestionsList.vue");
 const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
@@ -95,6 +98,30 @@ const lifeRoutes = [
     name: "life-policy-detail",
     component: PolicyDetail,
     meta: { requiresAuth: true, title: "Policy" },
+  },
+  {
+    path: "/life/claims/new",
+    name: "life-claim-new",
+    component: NewClaim,
+    meta: { requiresAuth: true, title: "New claim" },
+  },
+  {
+    path: "/life/claims/agency",
+    name: "life-claims-agency",
+    component: ClaimsQueue,
+    meta: { requiresAuth: true, title: "Agency claims", side: "agency" },
+  },
+  {
+    path: "/life/claims/insurance",
+    name: "life-claims-insurance",
+    component: ClaimsQueue,
+    meta: { requiresAuth: true, title: "Claims desk", side: "insurance" },
+  },
+  {
+    path: "/life/claims/:claimUuid",
+    name: "life-claim-detail",
+    component: ClaimDetail,
+    meta: { requiresAuth: true, title: "Claim" },
   },
   {
     path: "/life/underwriting/questions",

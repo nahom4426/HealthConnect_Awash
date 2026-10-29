@@ -66,6 +66,10 @@ const hintId = computed(() => (props.inputId && props.hint ? `${props.inputId}-h
 .input-shell:hover {
   border-color: rgb(var(--ink-subtle) / 0.55);
 }
+/* The shell draws the focus ring; the control inside must not add the global :focus-visible outline */
+.input-shell :focus-visible {
+  outline: none;
+}
 .input-shell:focus-within {
   border-color: rgb(var(--primary));
   box-shadow: var(--focus-ring);

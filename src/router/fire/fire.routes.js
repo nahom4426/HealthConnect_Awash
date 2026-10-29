@@ -1,15 +1,16 @@
-import FireProductConfig from '@/features/fire/pages/FireProductConfig.vue';
-import FireProposals from '@/features/fire/pages/FireProposals.vue';
-import FireProposalNew from '@/features/fire/pages/FireProposalNew.vue';
-import FireProposalDetail from '@/features/fire/pages/FireProposalDetail.vue';
-import FireQuotations from '@/features/fire/pages/FireQuotations.vue';
-import FireQuotationNew from '@/features/fire/pages/FireQuotationNew.vue';
-import FireQuotationDetail from '@/features/fire/pages/FireQuotationDetail.vue';
-import FirePolicies from '@/features/fire/pages/FirePolicies.vue';
-import FirePolicyDetail from '@/features/fire/pages/FirePolicyDetail.vue';
-import FireClaimNew from '@/features/fire/pages/FireClaimNew.vue';
-import FireClaims from '@/features/fire/pages/FireClaims.vue';
-import FireClaimDetail from '@/features/fire/pages/FireClaimDetail.vue';
+// Pages load on first visit (shared by Fire and Burglary), not with the app shell.
+const FireProductConfig = () => import('@/features/fire/pages/FireProductConfig.vue');
+const FireProposals = () => import('@/features/fire/pages/FireProposals.vue');
+const FireProposalNew = () => import('@/features/fire/pages/FireProposalNew.vue');
+const FireProposalDetail = () => import('@/features/fire/pages/FireProposalDetail.vue');
+const FireQuotations = () => import('@/features/fire/pages/FireQuotations.vue');
+const FireQuotationNew = () => import('@/features/fire/pages/FireQuotationNew.vue');
+const FireQuotationDetail = () => import('@/features/fire/pages/FireQuotationDetail.vue');
+const FirePolicies = () => import('@/features/fire/pages/FirePolicies.vue');
+const FirePolicyDetail = () => import('@/features/fire/pages/FirePolicyDetail.vue');
+const FireClaimNew = () => import('@/features/fire/pages/FireClaimNew.vue');
+const FireClaims = () => import('@/features/fire/pages/FireClaims.vue');
+const FireClaimDetail = () => import('@/features/fire/pages/FireClaimDetail.vue');
 
 export function pcRoutes(module) {
   const base = `/${module}`;

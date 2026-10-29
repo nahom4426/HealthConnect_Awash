@@ -350,24 +350,24 @@ function handleResetPassword() {
   font-size: 0.8125rem; font-weight: 600; letter-spacing: 0;
   color: var(--si-text) !important; margin-bottom: 0.25rem; overflow: visible;
 }
-/* The bordered box rendered by NewInputLayout */
-.lf-field :deep(.border) {
+/* The field shell rendered by NewInputLayout (.input-shell) */
+.lf-field :deep(.input-shell) {
   height: 54px; border-radius: 16px !important;
   background: var(--si-input-bg);
   border: 1.5px solid var(--si-input-border) !important;
   box-shadow: none;
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
-.lf-field :deep(.border:hover) { border-color: var(--si-input-border-hover) !important; }
-.lf-field :deep(.border:focus-within) {
+.lf-field :deep(.input-shell:hover) { border-color: var(--si-input-border-hover) !important; }
+.lf-field :deep(.input-shell:focus-within) {
   border-color: var(--si-primary) !important;
   background: var(--si-input-bg-focus);
   box-shadow: 0 0 0 4px var(--si-ring) !important;
 }
-.lf-field :deep(.border-red-300),
-.lf-has-error .lf-field :deep(.border) { border-color: var(--si-danger) !important; }
-.lf-field :deep(.border-red-300:focus-within),
-.lf-has-error .lf-field :deep(.border:focus-within) { box-shadow: 0 0 0 4px var(--si-danger-ring) !important; }
+.lf-field :deep(.input-shell--error),
+.lf-has-error .lf-field :deep(.input-shell) { border-color: var(--si-danger) !important; }
+.lf-field :deep(.input-shell--error:focus-within),
+.lf-has-error .lf-field :deep(.input-shell:focus-within) { box-shadow: 0 0 0 4px var(--si-danger-ring) !important; }
 
 .lf-field :deep(input) {
   height: 100%; padding: 0 1rem !important;

@@ -53,5 +53,13 @@
     "vite-plugin-vue-devtools": "^7.3.1",
     "vitest": "^2.1.9",
     "vue-tsc": "^2.0.21"
-  }
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Edge versions",
+    "last 2 Firefox versions",
+    "last 2 Opera versions",
+    "Safari >= 15.4",
+    "iOS >= 15.4"
+  ]
 }

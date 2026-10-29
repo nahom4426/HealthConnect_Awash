@@ -140,12 +140,25 @@ function handleClickOutside(event) {
   }
 }
 
+// No push channel yet, so poll; skip while the tab is hidden
+const POLL_MS = 60000;
+let pollTimer = null;
+
+function refreshIfVisible() {
+  if (document.visibilityState === 'visible') notifStore.fetchNotifications();
+}
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  document.addEventListener('visibilitychange', refreshIfVisible);
+  notifStore.fetchNotifications();
+  pollTimer = setInterval(refreshIfVisible, POLL_MS);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('visibilitychange', refreshIfVisible);
+  clearInterval(pollTimer);
 });
 </script>
 

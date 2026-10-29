@@ -12,6 +12,8 @@ export default defineConfig(({ mode }) => {
   const backendHost = env.VITE_BACKEND_HOST || "http://localhost:8888";
   // The Life Insurance service runs separately (Swagger: <host>/api/life/swagger-ui/index.html)
   const lifeHost = env.VITE_LIFE_API_HOST || backendHost;
+  // Property & casualty (Fire, Burglary) can run as its own service; set VITE_PC_API_HOST for it
+  const pcHost = env.VITE_PC_API_HOST || backendHost;
 
   return {
   plugins: [vue(), vueJsx() /*, vueDevTools()*/],
@@ -27,8 +29,9 @@ export default defineConfig(({ mode }) => {
         secure: lifeHost.startsWith("https"),
       },
       "/api/payer/property-casualty": {
-        target: "http://localhost:8998",
+        target: pcHost,
         changeOrigin: true,
+        secure: pcHost.startsWith("https"),
       },
       "/api": {
         target: backendHost,

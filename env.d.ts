@@ -14,6 +14,8 @@ interface ImportMetaEnv {
   readonly v_API_URI?: string;
   readonly v_API_PROVIDER_URI?: string;
   readonly VITE_LIFE_API_HOST?: string;
+  /** Property & casualty service host for the dev proxy (falls back to VITE_BACKEND_HOST) */
+  readonly VITE_PC_API_HOST?: string;
   readonly v_API_LIFE_URI?: string;
   readonly v_RECEIPT_URL?: string;
   readonly v_RECEIPT_URL_PROVIDER?: string;

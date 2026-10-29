@@ -23,6 +23,8 @@ import brokerRoutes from "./health/broker.routes";
 import motorRoutes from "./motor/motor.routes";
 // Life
 import lifeRoutes from "./life/life.routes";
+// Marine & Cargo
+import { marineRoutes, marinePublicRoutes } from "./marine/marine.routes";
 import { installRouteLoading } from "./loading";
 // Shared across products
 import adminRoutes from "./shared/admin.routes";
@@ -134,6 +136,7 @@ const router = createRouter({
       component: Login,
       meta: { requiresAuth: false }
     },
+    ...marinePublicRoutes,
     {
       path: "/app",
       name: "app",
@@ -175,12 +178,6 @@ const router = createRouter({
           meta: { requiresAuth: true },
         },
         {
-          path: '/marine/dashboard',
-          name: 'marine-dashboard',
-          component: ModuleDashboard,
-          meta: { requiresAuth: true },
-        },
-        {
           path: '/life/dashboard',
           name: 'life-dashboard',
           component: ModuleDashboard,
@@ -206,6 +203,7 @@ const router = createRouter({
         },
         ...motorRoutes,
         ...lifeRoutes,
+        ...marineRoutes,
         ...adminRoutes,
         ...analyticsRoutes,
         ...reportsRoutes,

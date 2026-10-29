@@ -9,8 +9,10 @@ features/
                  institutions, insured_persons, insured_service, providers, provider_contracts,
                  product_settings, authorization, finance, broker_management, reports
   motor/         rate config, quotations, proposals, and claims/ (the digital-channel claims flow)
+  marine/        Marine & Cargo (all plan phases): quotes, policies, open covers, certificates,
+                 underwriting, claims, admin, public verify page; mock/ answers the API until the
+                 backend exists; i18n/ holds its messages. E2E: tests/e2e/marine (npm run test:e2e)
   fire/          }
-  marine/        }
   life/          }  dashboard + navs only so far
   engineering/   }
   liability/     }

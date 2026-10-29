@@ -9,7 +9,7 @@ import {
 } from "./core";
 import { addDays, todayIso } from "../utils/format";
 import { vesselAge } from "../utils/imo";
-import { add, parseDecimal, toFixedString } from "../utils/money";
+import { add, multiply, parseDecimal, toFixedString } from "../utils/money";
 import { FOREIGN_CURRENCIES } from "../constants";
 
 const UW = ["UNDERWRITER", "SENIOR_UNDERWRITER"];
@@ -484,6 +484,84 @@ on("get", "/dashboard", () => {
   const overdue = db.deadlines.filter((d) => d.status === "OPEN" && d.dueDate < today).length;
   const bell = (widgets.myReferrals?.count ?? 0) + (hasRole("CLAIMS_HANDLER", "CLAIMS_MANAGER") ? overdue : 0);
   save();
-  return { widgets, bell };
+  return { widgets, bell, summary: dashboardSummary() };
 });
+
+// KPI cards, quote pipeline, insights and recent activity for the top of the dashboard (the same
+// layout as the other modules' dashboards). A broker-only caller sees only their own business.
+const pctOf = (part, whole) => (whole > 0n ? Number((part * 10000n) / whole) / 100 : null);
+const monthOf = (iso) => String(iso ?? "").slice(0, 7);
+
+function dashboardSummary() {
+  const mine = (brokerId) => !brokerOnly() || brokerId === caller.brokerPartyId;
+  const snap = (c) => c?.snapshot ?? db.policies.find((p) => p.id === c?.policyId)?.snapshot ?? {};
+  const quotes = db.quotes.filter((q) => mine(q.brokerId));
+  const policies = db.policies.filter((p) => mine(p.snapshot?.brokerId));
+  const certificates = db.certificates.filter((c) => mine(snap(c).brokerId));
+  const claims = db.claims.filter((c) => mine(snap(db.certificates.find((x) => x.id === c.certificateId)).brokerId));
+
+  const bound = quotes.filter((q) => q.status === "BOUND");
+  const premiumOf = (list) => add(...list.map((q) => q.premium?.total ?? "0"));
+  const premium = premiumOf(bound);
+  const boundIn = (month) => bound.filter((q) => monthOf(db.policies.find((p) => p.id === q.policyId)?.createdAt) === month);
+  const thisMonth = monthOf(todayIso());
+  const lastMonth = monthOf(addDays(`${thisMonth}-01`, -1));
+  const premiumTrend = pctOf(premiumOf(boundIn(thisMonth)) - premiumOf(boundIn(lastMonth)), premiumOf(boundIn(lastMonth)));
+
+  const activePolicies = policies.filter((p) => p.status === "ACTIVE").length;
+  const openClaims = claims.filter((c) => !["PAID", "DECLINED", "CLOSED"].includes(c.status)).length;
+  const validCertificates = certificates.filter((c) => certificateStatus(c) === "VALID").length;
+
+  const rated = quotes.filter((q) => q.status !== "DRAFT");
+  const referred = rated.filter((q) => db.referrals.some((r) => r.quoteId === q.id)).length;
+  const paid = claims.reduce((sum, c) => sum + (c.payments ?? []).reduce((s, p) => s + (multiply(p.amount, fxFor(c.currency)?.rate ?? "1") ?? 0n), 0n), 0n);
+
+  const pipeline = ["DRAFT", "QUOTED", "REFERRED", "APPROVED", "BOUND", "DECLINED", "EXPIRED"].map((status) => ({
+    status,
+    count: quotes.filter((q) => q.status === status).length,
+  }));
+
+  // Recent activity: the audit log, limited to the caller's own quotes, policies and certificates for a broker
+  const NUMBERS = {
+    quote: (id) => db.quotes.find((q) => q.id === id),
+    policy: (id) => db.policies.find((p) => p.id === id),
+    certificate: (id) => db.certificates.find((c) => c.id === id),
+    openCover: (id) => db.openCovers.find((c) => c.id === id),
+    claim: (id) => db.claims.find((c) => c.id === id),
+  };
+  const visible = (a) => {
+    if (!brokerOnly()) return true;
+    const rec = NUMBERS[a.entity]?.(a.entityId);
+    if (!rec) return false;
+    if (a.entity === "quote" || a.entity === "openCover") return mine(rec.brokerId);
+    if (a.entity === "policy") return mine(rec.snapshot?.brokerId);
+    if (a.entity === "certificate") return mine(snap(rec).brokerId);
+    return false;
+  };
+  const activity = db.audit
+    .filter(visible)
+    .slice(-5)
+    .reverse()
+    .map((a) => {
+      const rec = NUMBERS[a.entity]?.(a.entityId);
+      return { id: a.id, entity: a.entity, entityId: a.entityId, number: rec?.quoteNo ?? rec?.policyNo ?? rec?.certNo ?? rec?.coverNo ?? rec?.claimNo ?? null, action: a.action, by: a.by, at: a.at };
+    });
+
+  return {
+    kpis: {
+      premium: { value: toFixedString(premium), trendPct: premiumTrend, boundCount: bound.length },
+      activePolicies: { value: activePolicies, of: policies.length },
+      openClaims: { value: openClaims, of: claims.length },
+      validCertificates: { value: validCertificates, of: certificates.length },
+    },
+    pipeline,
+    insights: {
+      conversionPct: pctOf(BigInt(bound.length), BigInt(rated.length)),
+      referralPct: pctOf(BigInt(referred), BigInt(rated.length)),
+      averagePremium: bound.length ? toFixedString(premium / BigInt(bound.length)) : null,
+      lossRatioPct: pctOf(paid, premium),
+    },
+    activity,
+  };
+}
 

@@ -12,6 +12,34 @@ export function getRequestedClaim(query: any) {
 	})
 }
 
+export function createCashServiceProvided(formData: FormData) {
+	return api
+		.addAuthenticationHeader()
+		.post(`${path}/service-provided/cashService` as any, formData, {
+			headers: { 'Content-Type': 'multipart/form-data' },
+		});
+}
+
+export function createCreditServiceProvided(formData: FormData) {
+	return api
+		.addAuthenticationHeader()
+		.post(`${path}/service-provided/manualCreditService` as any, formData, {
+			headers: { 'Content-Type': 'multipart/form-data' },
+		});
+}
+
+export function updateManualCreditServiceProvided(serviceProvidedUuid: string | number, formData: FormData) {
+	return api
+		.addAuthenticationHeader()
+		.put(`${path}/service-provided/manualCreditService/${serviceProvidedUuid}` as any, formData, {
+			headers: { 'Content-Type': 'multipart/form-data' },
+		});
+}
+
+export function getServiceProvidedById(serviceProvidedId: string | number) {
+	return api.addAuthenticationHeader().get(`${path}/service-provided/${serviceProvidedId}` as any);
+}
+
 export function getClaimDetail(id: string,) {
 	return api.addAuthenticationHeader().get<any>(`${path}/details/${id}`)
 }

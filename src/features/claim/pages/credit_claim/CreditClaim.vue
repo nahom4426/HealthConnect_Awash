@@ -1,41 +1,31 @@
 <script setup>
 import Table from "@/components/Table.vue";
-import { usePagination } from "@/composables/usePagination";
-import { getRequestedClaim } from "../../api/claimApi";
 import { formatCurrency, secondDateFormat } from "@/utils/utils";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import DefaultPage from "@/components/DefaultPage.vue";
-import { getMappedActiveProviders } from "@/features/providers/api/providerApi";
+import { getActiveContracts } from "@/features/provider_contracts/api/contractApi";
 import { getInstitutionsPolicyByStatus } from "@/features/institutions/api/institutionApi";
 import { Status } from "@/types/interface";
 import SearchSelect from "@/components/SearchSelect.vue";
-import { useRequestdClaims } from "../../store/requestedCreditClaimStore";
 import FilterOnDetector from "@/components/FilterOnDetector.vue";
 import Button from "@/components/Button.vue";
+import { openModal } from "@customizer/modal-x";
 
 // 👇 import your detail component
 import CreditClaimDetail from "./CreditClaimDetail.vue";
 import CreditClaimTableRow from "../../components/CreditClaimTableRow.vue";
+import CreditClaimDataProvider from "../../components/CreditClaimDataProvider.vue";
 
-const institutionUuid = ref();
-const contractUuid = ref();
-const itemType = ref("SERVICE"); // default to SERVICE
+const institutionUuid = ref("");
+const contractUuid = ref("");
+const itemType = ref(""); // empty by default to show both SERVICE and DRUG
+const serviceType= ref("CREDIT"); // default to CREDIT
+const fromDate = ref("");
+const toDate = ref("");
+const showFilters = ref(false);
 
-const claimStore = useRequestdClaims();
-const pagination = usePagination({
-  store: claimStore,
-  auto: false,
-  cb: (data) =>
-    getRequestedClaim({
-      ...data,
-      institutionUuid: institutionUuid.value,
-      contractUuid: contractUuid.value,
-      itemType: itemType.value,
-    }),
-});
-
-// Always fetch fresh data when component is mounted
-pagination.send();
+const router = useRouter();
 
 // 👇 selected row state
 const selectedRow = ref(null);
@@ -44,76 +34,154 @@ function viewDetail(row) {
   selectedRow.value = row;
 }
 
+// Manual credit services are edited on the full manual-entry page
+function editManual(row) {
+  if (!row?.serviceProvidedUuid) return;
+  router.push({ path: "/credit_claims/manual", query: { edit: String(row.serviceProvidedUuid) } });
+}
+
 function goBack() {
   selectedRow.value = null;
 }
-</script>
+
+function handleInstitutionSelect(result) {
+  institutionUuid.value = result?.institutionUuid || '';
+}
+const search = ref("");
+function handleContractSelect(result) {
+  contractUuid.value = result?.payerProviderContractUuid || '';
+}</script>
 
 <template>
-<DefaultPage v-model="pagination.search.value">
-  <!-- Filter Section -->
-  <template #header v-if="!selectedRow">
-    <FilterOnDetector :watch="[institutionUuid, contractUuid]">
-      <SearchSelect
-        placeholder="Filter by Institution"
-        :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
-        :selectCb="(result) => {
-          institutionUuid = result?.institutionUuid || null;
-          pagination.send();
+<CreditClaimDataProvider 
+  :params="{ 
+    institutionUuid, 
+    contractUuid, 
+    itemType,
+    serviceType,
+    fromDate,
+    toDate
+  }"
+    :search="search"
+  :auto="true"
+>
+    <template #default="{ claims, pending: dataPending, search: paginationSearch, send }">
+    <DefaultPage v-model="search" :hideSearch="selectedRow ? true : false">
+      <!-- Filter Section -->
+      <template #header v-if="!selectedRow">
+        <FilterOnDetector :watch="[() => institutionUuid.value, () => contractUuid.value]">
+          <SearchSelect
+            placeholder="Filter by Institution"
+            :searchCb="(data) => getInstitutionsPolicyByStatus({ ...data, status: Status.ACTIVE })"
+            :selectCb="handleInstitutionSelect"
+            :option="{ label: 'institutionName', value: 'institutionUuid' }"
+          />
+          <SearchSelect
+            placeholder="Filter by Provider / Contract"
+            :searchCb="(data) => getActiveContracts({ ...data, status: Status.ACTIVE })"
+            :selectCb="handleContractSelect"
+            :option="{ label: 'contractName', value: 'payerProviderContractUuid' }"
+          />
+        </FilterOnDetector>
+      </template>
+
+      <template #more v-if="!selectedRow">
+        <Button type="secondary" @click="router.push('/create_credit_claims')">Create Claims</Button>
+        <Button type="primary" @click="router.push('/credit_claims/manual')">
+          <svg class="mr-1.5 w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+          Add
+        </Button>
+        <button 
+          @click="showFilters = !showFilters" 
+          class="flex gap-2 items-center px-4 h-10 text-sm font-medium text-ink-muted bg-surface-muted rounded-lg border border-line shadow-sm transition-colors hover:bg-surface-muted"
+          title="Toggle Date and Type Filters"
+        >
+          <svg class="w-4 h-4 text-ink-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 5.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filters
+        </button>
+      </template>
+
+      <!-- Collapsible Additional Filters -->
+      <div v-if="showFilters && !selectedRow" class="grid grid-cols-1 gap-4 p-4 mb-4 bg-surface-muted rounded-xl border border-line transition-all md:grid-cols-3">
+        <!-- Service Type Filter -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-ink-subtle">Service Type</label>
+          <select 
+            v-model="itemType" 
+            class="px-3 h-10 text-sm bg-white rounded-lg border border-line cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          >
+            <option value="">All Types</option>
+            <option value="SERVICE">SERVICE</option>
+            <option value="DRUG">DRUG</option>
+          </select>
+        </div>
+
+        <!-- From Date Filter -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-ink-subtle">From Date</label>
+          <input 
+            type="date" 
+            v-model="fromDate" 
+            class="px-3 h-10 text-sm bg-white rounded-lg border border-line cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+        </div>
+
+        <!-- To Date Filter -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-ink-subtle">To Date</label>
+          <input 
+            type="date" 
+            v-model="toDate" 
+            class="px-3 h-10 text-sm bg-white rounded-lg border border-line cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      <!-- Conditional content -->
+      <Table
+        v-if="!selectedRow"
+        :pending="dataPending"
+        :rowCom="CreditClaimTableRow"
+        :rowComProps="{ showTotal: true }"
+        :headers="{
+          head: [
+            'Insured Name',
+            'Provider Name',
+            'Institution',
+            'Record No.',
+            'Services',
+            'Total Amount',
+            'Status',
+            'Claim Date',
+            'Actions',
+          ],
+          row: [
+            'fullname',
+            'providerName',
+            'institutionName',
+            'recordNumber',
+            'providedItems',
+            'amount',
+            'status',
+            'providedDate',
+          ],
         }"
-        :option="{ label: 'institutionName', value: 'institutionUuid' }"
-      />
-      <SearchSelect
-        placeholder="Filter by Provider / Contract"
-        :searchCb="(data) => getMappedActiveProviders({ ...data, status: Status.ACTIVE })"
-        :selectCb="(result) => {
-          contractUuid = result?.contractUuid || result?.providerUuid || null;
-          pagination.send();
+        :cells="{
+          onView: viewDetail,
+          onEdit: editManual
         }"
-        :option="{ label: 'providerName', value: 'providerUuid' }"
+        :rows="claims"
       />
-    </FilterOnDetector>
+
+      <CreditClaimDetail
+        v-else
+        :row="selectedRow"
+        @back="goBack"
+      />
+    </DefaultPage>
   </template>
-
-  <!-- Conditional content -->
-  <Table
-    v-if="!selectedRow"
-    :pending="pagination.pending.value"
-    :rowCom="CreditClaimTableRow"
-    :headers="{
-      head: [
-        'Insured Name',
-        'Provider Name',
-        'Institution',
-        'Service Type',
-        'Services',
-        'Total Amount',
-        'Status',
-        'Claim Date',
-        'Actions',
-      ],
-      row: [
-        'fullname',
-        'providerName',
-        'institutionName',
-        'itemType',
-        'providedItems',
-        'amount',
-        'status',
-        'providedDate',
-      ],
-    }"
-    :cells="{
-      onView: viewDetail
-    }"
-    :rows="claimStore.requestedClaims"
-  />
-
-  <CreditClaimDetail
-    v-else
-    :row="selectedRow"
-    @back="goBack"
-  />
-</DefaultPage>
+</CreditClaimDataProvider>
 
 </template>

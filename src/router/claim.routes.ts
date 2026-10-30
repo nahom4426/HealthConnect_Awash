@@ -24,6 +24,8 @@ import CompletedClaimsDetail from "@/features/claim/pages/completed_claims/Compl
 import CompletedClaimsIndividualDetail from "@/features/claim/pages/completed_claims/CompletedClaimsIndividualDetail.vue";
 import ClaimLevelLimits from "@/features/claim/pages/ClaimLevelLimits.vue";
 
+const AddManualServices = () => import("@/features/claim/pages/manual_services/AddManualServices.vue");
+
 export default [
   {
     path: "cash_claims",
@@ -38,6 +40,12 @@ export default [
       {
         path: "",
         component: CreditClaim,
+      },
+      {
+        path: "manual",
+        name: "Add Credit Services",
+        component: AddManualServices,
+        meta: { serviceType: "CREDIT" },
       },
       {
         path: "detail/:claimUuid",

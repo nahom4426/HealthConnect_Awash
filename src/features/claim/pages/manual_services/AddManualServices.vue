@@ -301,30 +301,68 @@ function getCupStart(cupUuid) {
 }
 
 const selectedPackage = computed(() => packages.value.find((p) => p.packageUuid === pkg.value) || null);
+
+function resolvePackageName(packageUuid) {
+  if (!packageUuid) return "";
+  return packages.value.find((p) => p.packageUuid === packageUuid)?.packageName || "";
+}
+
+function cartTotalForPackage(packageUuid) {
+  if (!packageUuid) return 0;
+  return items.value.filter((i) => i.packageUuid === packageUuid).reduce((sum, i) => sum + i.totalPrice, 0);
+}
+
+function cartTotalForCup(cupUuid) {
+  if (!cupUuid) return 0;
+  return items.value.reduce((sum, i) => {
+    const p = packages.value.find((x) => x.packageUuid === i.packageUuid);
+    if (!p || getCupUuid(p) !== cupUuid) return sum;
+    return sum + i.totalPrice;
+  }, 0);
+}
+
 const packageBalance = computed(() => {
   const p = selectedPackage.value;
   if (!p) return null;
   const limit = getPackageLimit(p);
   const used = getAdjustedUsed(p);
-  const cart = items.value.reduce((sum, i) => sum + i.totalPrice, 0);
+  const cart = cartTotalForPackage(p.packageUuid);
   let remaining = limit - used - cart;
   const cupUuid = getCupUuid(p);
-  if (cupUuid) remaining = Math.min(remaining, getCupStart(cupUuid) - cart);
+  if (cupUuid) remaining = Math.min(remaining, getCupStart(cupUuid) - cartTotalForCup(cupUuid));
   return { limit, used, cart, remaining, available: remaining + cart };
 });
 
-// Running balance after each item (every item uses the selected package)
+// Running balance after each line, using that line's mapped benefit/package
 const itemsWithBalance = computed(() => {
-  const p = selectedPackage.value;
-  if (!p) return items.value.map((it) => ({ ...it, remainingAfter: null, isOverLimit: false, overBy: 0 }));
-  const cupUuid = getCupUuid(p);
-  let own = getPackageLimit(p) - getAdjustedUsed(p);
-  let cup = cupUuid ? getCupStart(cupUuid) : Infinity;
+  const ownRemaining = {};
+  const cupRemaining = {};
+  for (const p of packages.value) {
+    ownRemaining[p.packageUuid] = getPackageLimit(p) - getAdjustedUsed(p);
+    const cupUuid = getCupUuid(p);
+    if (cupUuid && cupRemaining[cupUuid] === undefined) {
+      cupRemaining[cupUuid] = getCupStart(cupUuid);
+    }
+  }
+
   return items.value.map((it) => {
-    own -= it.totalPrice;
-    cup -= it.totalPrice;
-    const after = Math.min(own, cup);
-    return { ...it, remainingAfter: after, isOverLimit: after < 0, overBy: after < 0 ? -after : 0 };
+    const pid = it.packageUuid;
+    const p = packages.value.find((x) => x.packageUuid === pid);
+    const packageName = it.packageName || resolvePackageName(pid);
+    if (!pid || !p) {
+      return { ...it, packageName, remainingAfter: null, isOverLimit: false, overBy: 0 };
+    }
+    const cupUuid = getCupUuid(p);
+    ownRemaining[pid] -= it.totalPrice;
+    if (cupUuid) cupRemaining[cupUuid] -= it.totalPrice;
+    const after = Math.min(ownRemaining[pid], cupUuid ? cupRemaining[cupUuid] : Infinity);
+    return {
+      ...it,
+      packageName,
+      remainingAfter: after,
+      isOverLimit: after < 0,
+      overBy: after < 0 ? -after : 0,
+    };
   });
 });
 
@@ -747,6 +785,10 @@ async function saveNewService() {
 
 function addEntry() {
   if (!canAddEntry.value) return;
+  if (!pkg.value) {
+    toasted(false, "", "Choose a benefit / package before adding this item");
+    return;
+  }
   const existing = editingIndex.value !== null ? items.value[editingIndex.value] : null;
   const row = {
     serviceId: entryRef.value?.kind === "SERVICE" ? entryRef.value.serviceId || null : existing?.serviceId || null,
@@ -757,6 +799,8 @@ function addEntry() {
     unitPrice: Number(entryPrice.value),
     qty: Number(entryQty.value),
     totalPrice: entryTotal.value,
+    packageUuid: pkg.value,
+    packageName: selectedPackage.value?.packageName || resolvePackageName(pkg.value),
   };
   if (editingIndex.value !== null) {
     items.value.splice(editingIndex.value, 1, row);
@@ -775,6 +819,7 @@ function itemIndexOf(row) {
 function editItem(row) {
   const index = itemIndexOf(row);
   if (index === -1) return;
+  if (row.packageUuid) pkg.value = row.packageUuid;
   activeItemTab.value = row.itemType;
   entryCode.value = row.serviceCode;
   entryName.value = row.serviceName;
@@ -816,6 +861,7 @@ const missingRequiredFields = computed(() => {
   if (!pkg.value) m.push("Package");
   if (!providedDate.value) m.push("Service Date");
   if (!items.value.length) m.push("At least one service or drug");
+  if (items.value.some((i) => !i.packageUuid)) m.push("Benefit / package on each line item");
   return m;
 });
 
@@ -856,7 +902,7 @@ function submit(action) {
       qty: item.qty,
       totalPrice: item.totalPrice,
       recordNumber: isCredit.value ? invoiceNumber.value.trim() : referenceNumber.value.trim(),
-      packageUuid: pkg.value,
+      packageUuid: item.packageUuid || pkg.value,
       itemType: item.itemType,
       c_section: false,
       deleted: item.deleted,
@@ -933,6 +979,8 @@ function hydrateFromRecord(data) {
     unitPrice: Number(it?.unitPrice) || (Number(it?.totalPrice) || 0) / (Number(it?.quantity) || 1),
     qty: Number(it?.quantity || it?.qty) || 1,
     totalPrice: Number(it?.totalPrice) || 0,
+    packageUuid: it?.packageUuid || "",
+    packageName: it?.packageName || it?.benefitName || "",
   }));
   removedItems.value = [];
   initialEditPackageTotals.value = provided.reduce((totals, it) => {
@@ -951,6 +999,9 @@ watch(packages, () => {
     pkg.value = pendingPackage;
     pendingPackage = "";
   }
+  items.value.forEach((it) => {
+    if (it.packageUuid && !it.packageName) it.packageName = resolvePackageName(it.packageUuid);
+  });
 });
 
 if (isEdit.value) {
@@ -1537,12 +1588,12 @@ function startNextPerson() {
               <p class="mt-1 text-xs text-ink-subtle">Add services or drugs above</p>
             </div>
             <div v-else class="overflow-x-auto">
-              <div class="min-w-[720px]">
+              <div class="min-w-[880px]">
                 <Table
                   :pending="false"
                   :headers="{
-                    head: ['Type', 'Code', 'Name', 'Price', 'Qty', 'Total', 'Balance', 'actions'],
-                    row: ['itemType', 'serviceCode', 'serviceName', 'unitPrice', 'qty', 'totalPrice', 'remainingAfter'],
+                    head: ['Type', 'Code', 'Name', 'Benefit', 'Price', 'Qty', 'Total', 'Balance', 'actions'],
+                    row: ['itemType', 'serviceCode', 'serviceName', 'packageName', 'unitPrice', 'qty', 'totalPrice', 'remainingAfter'],
                   }"
                   :rows="itemsWithBalance"
                   :cells="{
@@ -1572,6 +1623,11 @@ function startNextPerson() {
                   <template #serviceName="{ row }">
                     <div class="max-w-[260px] truncate" :title="row.serviceName">{{ row.serviceName }}</div>
                   </template>
+                  <template #packageName="{ row }">
+                    <div class="max-w-[180px] truncate text-sm text-ink-muted" :title="row.packageName || '—'">
+                      {{ row.packageName || "—" }}
+                    </div>
+                  </template>
                   <template #actions="{ row }">
                     <div class="flex gap-2 items-center">
                       <button type="button" class="p-1 rounded text-primary hover:bg-primary/5" title="Edit" @click="editItem(row)">
@@ -1591,7 +1647,7 @@ function startNextPerson() {
                 <span class="text-lg font-bold text-primary">{{ formatCurrency(grandTotal) }}</span>
               </div>
               <div v-if="packageBalance" class="flex justify-between items-center pt-2 mt-2 text-sm border-t border-primary/20">
-                <span class="text-ink-muted">Remaining balance after this claim</span>
+                <span class="text-ink-muted">Remaining balance (selected benefit)</span>
                 <span :class="packageBalance.remaining < 0 ? 'font-bold text-error-strong' : 'font-semibold text-success-strong'">
                   {{ formatCurrency(packageBalance.remaining) }}
                 </span>

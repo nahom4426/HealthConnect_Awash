@@ -623,6 +623,14 @@ export default [
     },
   },
   {
+    path: "/branches",
+    name: "Branches",
+    icon: icons.institutinpolicy,
+    meta: {
+      permissions: ["branch.manage"],
+    },
+  },
+  {
     path: "/privileges",
     name: "Privilege",
     icon: icons.privilege,

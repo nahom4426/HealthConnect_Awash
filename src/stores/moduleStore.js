@@ -74,7 +74,19 @@ export const MODULES = [
     badge: null,
     dashboardPath: '/burglary/dashboard',
   },
+  {
+    id: 'administration',
+    name: 'User Management',
+    description: 'Manage users, roles and privileges for the modules you administer.',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>`,
+    color: { from: '#1e293b', to: '#475569', accent: '#94a3b8', glow: 'rgba(71,85,105,0.4)' },
+    badge: 'Admin',
+    dashboardPath: '/users',
+    superAdminOnly: true,
+  },
 ];
+
+export const ADMIN_MODULE_ID = 'administration';
 
 export const useModuleStore = defineStore('module', () => {
   const activeModuleId = ref(localStorage.getItem('activeModule') || null);

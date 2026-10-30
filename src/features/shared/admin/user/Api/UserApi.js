@@ -56,10 +56,23 @@ export function fetchUserFilesView() {
 export function fetchUserFiles() {
   return api.addAuthenticationHeader().get(`${path}`);
 }
-export function changeUserStatus(providerId, status) {
+// PATCH /users/{userUuid}/status?status=ACTIVE|PENDING|SUSPENDED
+export function changeUserStatus(userUuid, status) {
   return api
     .addAuthenticationHeader()
-    .put(`${path}/${providerId}/status`, null, {
+    .patch(`${path}/${userUuid}/status`, null, {
       params: { status },
     });
+}
+
+// Module access: one role per module for a user
+export function addUserModuleAccess(userUuid, data) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path}/${userUuid}/modules`, data);
+}
+export function removeUserModuleAccess(userUuid, moduleType) {
+  return api
+    .addAuthenticationHeader()
+    .delete(`${path}/${userUuid}/modules/${encodeURIComponent(moduleType)}`);
 }

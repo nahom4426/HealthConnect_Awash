@@ -1,12 +1,12 @@
 <script setup>
 import NavBar from "@/components/NavBar.vue";
-import { hasFullSystemAccess, hasRoleAccess, navItemArea } from "@/utils/roleAccess";
+import { canOpenUserManagement, hasRoleAccess, isExactSuperAdmin, navItemArea } from "@/utils/roleAccess";
 import { prefetchRoutesIdle } from "@/router/prefetch";
 import NotificationCenter from "@/components/NotificationCenter.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useColorStore } from "@/stores/colorStore";
-import { useModuleStore } from "@/stores/moduleStore";
+import { ADMIN_MODULE_ID, useModuleStore } from "@/stores/moduleStore";
 import healthNavs from "@/features/health/navs";
 import motorNavs from "@/features/motor/navs.js";
 import fireNavs from "@/features/fire/navs.js";
@@ -16,6 +16,7 @@ import lifeNavs from "@/features/life/navs.js";
 import engineeringNavs from "@/features/engineering/navs.js";
 import liabilityNavs from "@/features/liability/navs.js";
 import burglaryNavs from "@/features/burglary/navs.js";
+import administrationNavs from "@/features/shared/admin/navs.js";
 import imageSrc from "@/assets/img/profile.png";
 
 import { computed, defineAsyncComponent, ref, watch } from "vue";
@@ -49,9 +50,20 @@ const profilePicture = computed(() => {
 function handleImgError(e) { e.target.src = imageSrc; }
 function logout() { authStore.logout(); }
 
-const isSuperAdmin = computed(() => {
+const isSuperAdmin = computed(() => isExactSuperAdmin(u.value));
+const canOpenAdmin = computed(() => canOpenUserManagement(u.value));
+
+// Branch directory: Super Admin, or anyone holding branch.manage (same rule as the /branches route guard)
+const canManageBranches = computed(() => {
   const user = authStore.auth?.user ?? authStore.auth ?? {};
-  return hasFullSystemAccess(user);
+  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
+  return (
+    isSuperAdmin.value ||
+    user?.superAdmin === true ||
+    privileges.includes("All Privileges") ||
+    privileges.includes("ROLE_All Privileges") ||
+    privileges.includes("ROLE_branch.manage")
+  );
 });
 
 // ── Current page title from breadcrumbs or route ──
@@ -72,13 +84,22 @@ const MODULE_NAVS = {
   engineering: engineeringNavs,
   liability:   liabilityNavs,
   burglary:    burglaryNavs,
+  [ADMIN_MODULE_ID]: administrationNavs,
 };
+
+const ADMIN_SCREEN = /^\/(users|add_user|edit_user|user_detail|roles|create-role|edit_role|role_detail|privileges|add_privilege|edit_privilege|privilege_detail|branches|admin\/user-roles)(\/|$)/;
 
 watch(
   () => route.path,
   (path) => {
+    if (ADMIN_SCREEN.test(path)) {
+      if (moduleStore.activeModuleId !== ADMIN_MODULE_ID) {
+        moduleStore.selectModule(ADMIN_MODULE_ID);
+      }
+      return;
+    }
     const id = path.split("/").filter(Boolean)[0];
-    if (id && MODULE_NAVS[id] && moduleStore.activeModuleId !== id) {
+    if (id && MODULE_NAVS[id] && id !== ADMIN_MODULE_ID && moduleStore.activeModuleId !== id) {
       moduleStore.selectModule(id);
     }
   },
@@ -100,6 +121,7 @@ const filteredNavs = computed(() => {
   if (moduleStore.activeModuleId === "marine") return activeNavs.value || [];
   const user = authStore.auth?.user ?? authStore.auth ?? {};
   return (activeNavs.value || []).filter(item => {
+    if (item.path === "/branches" && !canManageBranches.value) return false;
     const area = navItemArea(item.name || '');
     return !area || hasRoleAccess(user, area);
   });
@@ -146,9 +168,14 @@ const isModuleSelect = computed(() => route.path === "/module-select");
             <NotificationCenter />
 
             <!-- User & Roles Access Settings (Super Admin Only) -->
-            <button v-if="isSuperAdmin" @click="router.push('/admin/user-roles')" class="px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary border border-primary/20 font-bold text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer ml-1" title="Manage System Users & Privileges">
+            <button v-if="canOpenAdmin" @click="router.push(isSuperAdmin ? '/admin/user-roles' : '/users')" class="px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary border border-primary/20 font-bold text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer ml-1" title="Manage System Users & Privileges">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
               <span>User & Roles</span>
+            </button>
+
+            <button v-if="canManageBranches" @click="router.push('/branches')" class="px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary border border-primary/20 font-bold text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer ml-1" title="Manage Branches">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M4.5 21V10.5M19.5 21V10.5M3 10.5 12 4l9 6.5M8.25 21v-6.75M12 21v-6.75M15.75 21v-6.75"/></svg>
+              <span>Branches</span>
             </button>
 
             <div class="tb-divider"></div>

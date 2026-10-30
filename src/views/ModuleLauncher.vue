@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router';
 import { useModuleStore, MODULES } from '@/stores/moduleStore';
 import { useAuthStore } from '@/stores/auth';
 import { useLanguageStore } from '@/stores/languageStore';
+import { canOpenUserManagement } from '@/utils/roleAccess';
 import { computed, ref } from 'vue';
 import imageSrc from '@/assets/img/profile.png';
 import eicLogo from '@/assets/img/standard_icon.png';
@@ -25,6 +26,9 @@ const profilePicture = computed(() => {
 });
 
 const showUserMenu = ref(false);
+const visibleModules = computed(() =>
+  MODULES.filter((mod) => !mod.superAdminOnly || canOpenUserManagement(u.value))
+);
 
 // Matching card theme colors with standalone larger icons (no inner box wrapper)
 const cardThemeMap = {
@@ -83,6 +87,13 @@ const cardThemeMap = {
     iconColor: 'text-indigo-600',
     badge: 'bg-emerald-100 text-emerald-700',
     actionText: 'text-indigo-600 group-hover:text-indigo-700',
+  },
+  administration: {
+    cardBg: 'bg-[#f8fafc]',
+    border: 'border-slate-300/80 hover:border-slate-500 ring-1 ring-slate-100',
+    iconColor: 'text-slate-700',
+    badge: 'bg-slate-800 text-white',
+    actionText: 'text-slate-700 group-hover:text-slate-900',
   },
 };
 
@@ -176,7 +187,7 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
       <!-- Module Cards Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
-          v-for="mod in MODULES"
+          v-for="mod in visibleModules"
           :key="mod.id"
           @click="selectModule(mod)"
           :class="[

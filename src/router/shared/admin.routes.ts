@@ -10,6 +10,7 @@ const Users = () => import("@/features/shared/admin/user/pages/Users.vue");
 const AddUser = () => import("@/features/shared/admin/user/pages/AddUser.mdl.vue");
 const EditUser = () => import("@/features/shared/admin/user/pages/EditUser.vue");
 const UserDetail = () => import("@/features/shared/admin/user/pages/UserDetail.vue");
+const Branches = () => import("@/features/shared/admin/branch/pages/Branches.vue");
 const PrivilegeDetail = () => import("@/features/shared/admin/privilege/pages/PrivilegeDetail.vue");
 
 export default [
@@ -71,6 +72,15 @@ export default [
     meta: { requiresAuth: true, permissions: ["read_user"] },
   },
   
+  // Branches: directory of the insurer's branches. Writes need branch.manage on the backend;
+  // the router guard lets Super Admin / All Privileges through and otherwise requires ROLE_branch.manage.
+  {
+    path: '/branches',
+    name: 'Branches',
+    component: Branches,
+    meta: { requiresAuth: true, permissions: ["branch.manage"] },
+  },
+
   // Users routes
   {
     path: '/users',

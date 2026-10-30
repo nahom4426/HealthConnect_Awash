@@ -524,7 +524,7 @@
           <div class="grid grid-cols-3 gap-4 border-b border-line-strong pb-2">
             <div>
               <span class="text-ink-muted block text-[11px]">የሰሌዳ ቁጥር / PLATE NUMBER:</span>
-              <span class="font-bold font-mono text-sm text-blue-950 underline">{{ proposal.vehiclePlateNumber || '3-A98123' }}</span>
+              <span class="font-bold font-mono text-sm text-blue-950 underline">{{ proposal.vehiclePlateNumber || '—' }}</span>
             </div>
             <div>
               <span class="text-ink-muted block text-[11px]">የሞተር ቁጥር / ENGINE NUMBER:</span>
@@ -1002,7 +1002,7 @@ async function loadProposal() {
     }
   } catch (e) {
     if (!proposal.value?.proposalUuid) {
-      error.value = e?.response?.data?.message || e.message || 'Failed to load proposal details';
+      error.value = e?.response?.data?.detail || e?.response?.data?.message || e.message || 'Failed to load proposal details';
     }
   }
 }

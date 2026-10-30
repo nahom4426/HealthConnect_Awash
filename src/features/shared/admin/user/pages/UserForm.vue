@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import InputPassword from '@/components/new_form_elements/InputPassword.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Form from '@/components/new_form_builder/Form.vue';
 import { getAllRole } from '../../role/Api/RoleApi';
+import { getAllBranches } from '../../branch/Api/BranchApi';
 import Spinner from '@/components/Spinner.vue';
 import InputLayout from '@/components/new_form_elements/NewInputLayout.vue';
 
@@ -41,7 +42,7 @@ const props = defineProps({
 
 // Create a computed property to handle the pending state
 const isPending = computed(() => {
-  return props.pending || fetchRolesPending.value;
+  return props.pending || fetchRolesPending.value || fetchBranchesPending.value;
 });
 
 // Add a ref for the form element
@@ -58,6 +59,56 @@ const gender = ref('');
 const mobilePhone = ref('');
 const userStatus = ref('');
 const roleUuid = ref('');
+const branchUuids = ref([]);
+const primaryBranchUuid = ref('');
+
+// Staff accounts created from the admin screens are insurer staff (backend UserType enum)
+const STAFF_USER_TYPE = 'INSURANCE';
+
+// Branch options: active branches, plus any branch the user already holds (even if since deactivated)
+const branches = ref([]);
+const fetchBranchesPending = ref(false);
+
+const branchOptions = computed(() => {
+  const list = [...branches.value];
+  (props.initialData?.branches || []).forEach((b) => {
+    if (b?.branchUuid && !list.some((x) => x.branchUuid === b.branchUuid)) list.push(b);
+  });
+  return list.map((b) => ({
+    label: b.status && b.status !== 'ACTIVE' ? `${b.name} (${b.status.toLowerCase()})` : b.name,
+    value: b.branchUuid,
+  }));
+});
+
+// The primary branch must be one of the chosen branches
+const primaryBranchOptions = computed(() =>
+  branchOptions.value.filter((o) => branchUuids.value.includes(o.value))
+);
+
+watch(branchUuids, (selected) => {
+  if (primaryBranchUuid.value && !selected.includes(primaryBranchUuid.value)) {
+    primaryBranchUuid.value = '';
+  }
+  if (!primaryBranchUuid.value && selected.length === 1) {
+    primaryBranchUuid.value = selected[0];
+  }
+}, { deep: true });
+
+async function fetchBranches() {
+  fetchBranchesPending.value = true;
+  try {
+    const response = await getAllBranches(false);
+    if (response.success) {
+      branches.value = Array.isArray(response.data) ? response.data : response.data?.content || [];
+    } else {
+      console.error('Failed to fetch branches:', response.error);
+    }
+  } catch (error) {
+    console.error('Error fetching branches:', error);
+  } finally {
+    fetchBranchesPending.value = false;
+  }
+}
 
 function normalizeEthiopianMobile(input) {
   const raw = String(input ?? '').trim();
@@ -157,7 +208,7 @@ const userStatusOptions = ['ACTIVE', 'SUSPENDED','PENDING'];
 // Initialize form data
 onMounted(async () => {
 
-  await fetchRoles();
+  await Promise.all([fetchRoles(), fetchBranches()]);
 
   if (props.initialData && Object.keys(props.initialData).length > 0) {
     email.value = props.initialData.email || '';
@@ -172,6 +223,11 @@ onMounted(async () => {
     }
     mobilePhone.value = props.initialData.mobilePhone || '';
     userStatus.value = props.initialData.userStatus || '';
+
+    branchUuids.value = Array.isArray(props.initialData.branchUuids) && props.initialData.branchUuids.length
+      ? [...props.initialData.branchUuids]
+      : (props.initialData.branches || []).map((b) => b.branchUuid).filter(Boolean);
+    primaryBranchUuid.value = props.initialData.primaryBranchUuid || '';
     
     if (props.initialData.roleUuid) {
       roleUuid.value = props.initialData.roleUuid;
@@ -203,11 +259,14 @@ function handleSubmit() {
     gender: gender.value,
     mobilePhone: normalizeEthiopianMobile(mobilePhone.value),
     userStatus: userStatus.value,
-    roleUuid: roleUuid.value
+    roleUuid: roleUuid.value,
+    branchUuids: [...branchUuids.value],
+    primaryBranchUuid: primaryBranchUuid.value || null
   };
 
   if (!props.isEdit) {
     formData.password = password.value;
+    formData.userType = STAFF_USER_TYPE;
   }
 
   props.onSubmit(formData);
@@ -408,6 +467,57 @@ function handleSubmit() {
               required: true
             }"
           />
+        </div>
+      </div>
+
+      <!-- Branches -->
+      <div class="grid grid-cols-1 gap-4 mt-6 sm:grid-cols-3 sm:gap-6">
+        <div class="space-y-2 sm:col-span-2">
+          <label class="block text-sm font-medium text-ink-muted">Branches</label>
+          <div class="overflow-y-auto p-3 max-h-40 bg-white rounded-lg border border-line-strong">
+            <p v-if="!branchOptions.length" class="text-sm text-ink-subtle">
+              {{ fetchBranchesPending ? 'Loading branches…' : 'No branches available' }}
+            </p>
+            <div v-else class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <label
+                v-for="option in branchOptions"
+                :key="option.value"
+                class="flex gap-2 items-center text-sm cursor-pointer text-ink"
+              >
+                <input
+                  type="checkbox"
+                  :value="option.value"
+                  v-model="branchUuids"
+                  class="rounded border-line-strong text-primary focus:ring-primary"
+                />
+                <span>{{ option.label }}</span>
+              </label>
+            </div>
+          </div>
+          <p class="text-xs text-ink-subtle">Leave empty to keep the current branches (new users default to Head Office).</p>
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-ink-muted">Primary Branch</label>
+          <InputLayout>
+            <select
+              v-model="primaryBranchUuid"
+              name="primaryBranchUuid"
+              :disabled="!primaryBranchOptions.length"
+              class="px-3 py-2 w-full bg-white rounded-lg border text-ink border-line-strong focus:ring-2 focus:ring-primary focus:border-primary"
+            >
+              <option value="">
+                {{ primaryBranchOptions.length ? 'Default (first selected)' : 'Select branches first' }}
+              </option>
+              <option
+                v-for="option in primaryBranchOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </InputLayout>
         </div>
       </div>
 

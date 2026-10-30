@@ -28,6 +28,52 @@ export const ROLE_ACCESS = {
   },
 };
 
+const MANAGE_SUFFIXES = [".user.view", ".user.create", ".role.manage"];
+
+/** The account whose legacy role is exactly Super Admin. Role name "admin" is a module admin, not this. */
+export function isExactSuperAdmin(user = {}) {
+  if (user?.superAdmin === true) return true;
+  const roleName = String(user?.roleName || "").trim();
+  const roleCode = String(user?.roleCode || user?.role || "").trim();
+  return roleName === "Super Admin" || roleCode === "ROLE_SUPER_ADMIN";
+}
+
+/**
+ * Modules this person may administer.
+ * null means every module (Super Admin). An empty list means none.
+ */
+export function administeredModules(user = {}) {
+  if (isExactSuperAdmin(user)) return null;
+  const modules = new Set();
+  const memberships = Array.isArray(user?.memberships) ? user.memberships : [];
+  for (const membership of memberships) {
+    const moduleType = String(membership?.moduleType || "").trim().toLowerCase();
+    const roleName = String(membership?.roleName || "").trim().toLowerCase();
+    if (moduleType && roleName === "admin") modules.add(moduleType);
+  }
+  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
+  for (const raw of privileges) {
+    const name = String(raw || "").replace(/^ROLE_/, "");
+    if (name === "read_user" || name === "create_user") {
+      modules.add("health");
+      continue;
+    }
+    for (const suffix of MANAGE_SUFFIXES) {
+      if (name.endsWith(suffix)) {
+        const moduleType = name.slice(0, -suffix.length);
+        if (moduleType) modules.add(moduleType);
+      }
+    }
+  }
+  return [...modules];
+}
+
+/** Launcher card and sidebar for Users, Roles, and Privileges. */
+export function canOpenUserManagement(user = {}) {
+  if (isExactSuperAdmin(user)) return true;
+  return administeredModules(user).length > 0;
+}
+
 /** AuthService "admin" role (and Super Admin) can use every area. */
 export function hasFullSystemAccess(user = {}) {
   const roleName = String(user?.roleName || "").trim().toLowerCase();

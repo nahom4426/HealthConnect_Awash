@@ -117,6 +117,12 @@ function getCategoryColor(category) {
         <span class="text-sm text-ink-muted line-clamp-2">{{ row.roleDescription || '—' }}</span>
       </td>
 
+      <td class="px-4 py-4">
+        <span class="inline-flex px-2.5 py-1 text-xs font-semibold capitalize rounded-full bg-surface-muted text-ink">
+          {{ row.moduleType || '—' }}
+        </span>
+      </td>
+
       <!-- Privileges Count with Tooltip -->
       <td class="relative px-4 py-4">
         <div class="inline-block relative group">
@@ -243,6 +249,7 @@ function getCategoryColor(category) {
         <div class="flex gap-2 justify-between items-start">
           <div class="flex-1 min-w-0">
             <h3 class="text-sm font-bold text-ink truncate">{{ row.roleName }}</h3>
+            <p class="text-xs capitalize text-ink-subtle">{{ row.moduleType }}</p>
             <!-- <p class="mt-0.5 text-xs text-ink-subtle truncate">{{ row.roleUuid }}</p> -->
           </div>
           <span class="inline-flex flex-shrink-0 gap-1 items-center px-2 py-0.5 text-xs font-bold text-white bg-gradient-to-r from-primary to-purple-600 rounded-full shadow-md">

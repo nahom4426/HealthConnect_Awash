@@ -115,7 +115,9 @@ async function handleSubmit(formValues) {
       mobilePhone: formValues?.mobilePhone,
       userStatus: formValues?.userStatus,
       roleUuid: formValues?.roleUuid,
-      gender: formValues?.gender
+      gender: formValues?.gender,
+      branchUuids: formValues?.branchUuids,
+      primaryBranchUuid: formValues?.primaryBranchUuid
     };
     
     // Format gender to lowercase for API
@@ -130,6 +132,7 @@ async function handleSubmit(formValues) {
           const updatedUser = {
             ...userData.value,
             ...formValues,
+            ...(res.data && typeof res.data === 'object' ? res.data : {}),
             userUuid: userUuid.value,
           };
 

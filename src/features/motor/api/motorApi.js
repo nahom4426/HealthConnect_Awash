@@ -526,31 +526,34 @@ function mapCategoryName(cat) {
 function normalizeQuotation(q) {
   if (!q) return q;
   const firstCar = q.carRequests?.[0] || {};
-  const buyingPrice = Number(q.buyingPrice || firstCar.buyingPrice || 7400000);
-  const quotationAmount = Number(q.quotationAmount || Math.round(buyingPrice * 0.025) || 185000);
-  const initialDeposit = Number(q.initialDeposit || Math.round(quotationAmount * 0.22) || 40700);
-  const monthlyPayment = Number(q.monthlyPayment || Math.round((quotationAmount - initialDeposit) / 11) || 13118);
+  // Never invent customer, vehicle or money values: a missing field stays empty so the UI and the
+  // backend's validation can flag it, instead of a placeholder flowing into a proposal or policy.
+  const toAmount = (value) => (value === undefined || value === null || value === '' ? null : Number(value));
+  const buyingPrice = toAmount(q.buyingPrice ?? firstCar.buyingPrice);
+  const quotationAmount = toAmount(q.quotationAmount);
+  const initialDeposit = toAmount(q.initialDeposit);
+  const monthlyPayment = toAmount(q.monthlyPayment);
 
-  const rawCat1 = q.category1 || firstCar.rateRequest?.categoryUuid || 'Private Automobile';
+  const rawCat1 = q.category1 || firstCar.rateRequest?.categoryUuid || '';
   const rawCat2 = q.category2 || '';
 
   return {
     ...q,
-    quotationUuid: q.quotationUuid || 'QUO-' + Date.now(),
-    quotationNumber: q.quotationNumber || 'NYA-QT-789012',
-    clientFirstName: q.clientFirstName || q.firstName || 'Abraham',
-    clientFatherName: q.clientFatherName || q.fatherName || 'Addisu',
+    quotationUuid: q.quotationUuid,
+    quotationNumber: q.quotationNumber || '',
+    clientFirstName: q.clientFirstName || q.firstName || '',
+    clientFatherName: q.clientFatherName || q.fatherName || '',
     clientGrandFatherName: q.clientGrandFatherName || q.grandFatherName || '',
-    clientPhoneNumber: q.clientPhoneNumber || q.mobilePhone || q.phone || '0963048258',
-    clientEmail: q.clientEmail || q.email || 'abroid.et@gmail.com',
-    insurance: q.insurance || 'Standard Motor Comprehensive Policy',
+    clientPhoneNumber: q.clientPhoneNumber || q.mobilePhone || q.phone || '',
+    clientEmail: q.clientEmail || q.email || '',
+    insurance: q.insurance || '',
     accountNumber: q.accountNumber || q.bankAccount || '',
-    carName: q.carName || firstCar.carName || 'Sinotruk',
-    carModel: q.carModel || firstCar.carModel || 'Howo 371 Dump Truck 6x4',
-    carType: q.carType || firstCar.carType || 'Heavy Commercial Truck',
-    plateNumber: q.plateNumber || firstCar.plateNumber || 'AA12345',
-    makeYear: q.makeYear || firstCar.makeYear || 2017,
-    engine_No: q.engine_No || firstCar.engine || 'WD615.47 Heavy Engine',
+    carName: q.carName || firstCar.carName || '',
+    carModel: q.carModel || firstCar.carModel || '',
+    carType: q.carType || firstCar.carType || '',
+    plateNumber: q.plateNumber || firstCar.plateNumber || '',
+    makeYear: q.makeYear || firstCar.makeYear || '',
+    engine_No: q.engine_No || firstCar.engine || '',
     buyingPrice: buyingPrice,
     category1: mapCategoryName(rawCat1),
     category2: mapCategoryName(rawCat2),
@@ -560,8 +563,8 @@ function normalizeQuotation(q) {
     quotationDate: q.quotationDate || q.createdAt || new Date().toISOString(),
     quotationStatus: q.quotationStatus || q.status || 'PENDING',
     initialDepositStatus: q.initialDepositStatus || 'PENDING',
-    checked: q.checked ?? true,
-    clientAgreed: q.clientAgreed ?? true,
+    checked: q.checked ?? false,
+    clientAgreed: q.clientAgreed ?? false,
     libreSaved: q.libreSaved ?? false
   };
 }
@@ -690,40 +693,38 @@ export async function registerClientsCar(payload) {
   // Always save to localStorage for the UI until backend motor quotation DB is fully wired
   const existing = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
   const firstCar = payload.carRequests?.[0] || {};
-  const buyingPrice = Number(firstCar.buyingPrice || 0);
-  const computedQuotationAmount = buyingPrice ? Math.round(buyingPrice * 0.025) : 185000;
-  const computedDeposit = Math.round(computedQuotationAmount * 0.22);
-  const computedMonthly = Math.round((computedQuotationAmount - computedDeposit) / 11);
+  // The premium comes from the backend; nothing is estimated here.
+  const backendQuote = backendData?.quotation || backendData?.data || backendData || {};
 
   const newQuotation = normalizeQuotation({
     quotationUuid: backendData?.quotationUuid || 'QUO-' + Date.now(),
     carUuid: backendData?.carUuid || backendData?.data?.carUuid || ('CAR-' + Date.now()),
-    quotationNumber: 'NYA-QT-' + Math.floor(100000 + Math.random() * 900000),
-    clientFirstName: payload.firstName || 'Abraham',
-    clientFatherName: payload.fatherName || 'Addisu',
+    quotationNumber: backendQuote.quotationNumber || '',
+    clientFirstName: payload.firstName || '',
+    clientFatherName: payload.fatherName || '',
     clientGrandFatherName: payload.grandFatherName || '',
-    clientPhoneNumber: payload.mobilePhone || '0963048258',
-    clientEmail: payload.email || 'abroid.et@gmail.com',
-    insurance: 'Standard Motor Comprehensive Policy',
+    clientPhoneNumber: payload.mobilePhone || '',
+    clientEmail: payload.email || '',
+    insurance: '',
     accountNumber: payload.bankAccount || '',
-    carName: firstCar.carName || 'Sinotruk',
-    carModel: firstCar.carModel || 'Howo 371 Dump Truck 6x4',
-    carType: firstCar.carType || 'Heavy Commercial Truck',
-    plateNumber: firstCar.plateNumber || 'AA12345',
-    makeYear: firstCar.makeYear || 2017,
-    engine_No: firstCar.engine || 'WD615.47 Heavy Engine',
-    buyingPrice: buyingPrice || 7400000,
-    category1: firstCar.rateRequest?.categoryUuid || 'Special Construction Vehicles',
-    category2: 'Heavy Dump Truck / Tipper',
-    quotationAmount: computedQuotationAmount,
-    initialDeposit: computedDeposit,
-    monthlyPayment: computedMonthly,
+    carName: firstCar.carName || '',
+    carModel: firstCar.carModel || '',
+    carType: firstCar.carType || '',
+    plateNumber: firstCar.plateNumber || '',
+    makeYear: firstCar.makeYear || '',
+    engine_No: firstCar.engine || '',
+    buyingPrice: firstCar.buyingPrice || null,
+    category1: firstCar.rateRequest?.categoryUuid || '',
+    category2: '',
+    quotationAmount: backendQuote.quotationAmount ?? null,
+    initialDeposit: backendQuote.initialDeposit ?? null,
+    monthlyPayment: backendQuote.monthlyPayment ?? null,
     quotationDate: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     quotationStatus: 'PENDING',
     initialDepositStatus: 'PENDING',
-    checked: true,
-    clientAgreed: true,
+    checked: false,
+    clientAgreed: false,
     libreSaved: false,
     carRequests: payload.carRequests
   });

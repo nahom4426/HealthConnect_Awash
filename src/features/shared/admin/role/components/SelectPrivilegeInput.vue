@@ -21,14 +21,19 @@ const selected = ref([]);
 
 // Group privileges by category
 const group = computed(() => {
-  return props?.options.reduce((state, el) => {
-    if (state[el.privilegeCategory]) {
-      state[el.privilegeCategory].push(el);
+  const modules = new Set((props.options || []).map((el) => el.moduleType).filter(Boolean));
+  const severalModules = modules.size > 1;
+  const grouped = (props.options || []).reduce((state, el) => {
+    const category = el.privilegeCategory || "other";
+    const key = severalModules ? `${el.moduleType || "health"} · ${category}` : category;
+    if (state[key]) {
+      state[key].push(el);
     } else {
-      state[el.privilegeCategory] = [el];
+      state[key] = [el];
     }
     return state;
   }, {});
+  return Object.fromEntries(Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)));
 });
 
 // Watch for changes in selectedPrivilege prop

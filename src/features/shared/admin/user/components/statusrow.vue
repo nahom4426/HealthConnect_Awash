@@ -2,7 +2,8 @@
 import { defineProps, onMounted, onUnmounted } from 'vue';
 import Button from "@/components/Button.vue";
 import { useUsers } from "../store/userStore";
-import { updateUserById } from "../Api/UserApi";
+import { changeUserStatus } from "../Api/UserApi";
+import { useRouter } from "vue-router";
 import { useToast } from '@/toast/store/toast';
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
@@ -47,6 +48,7 @@ const props = defineProps({
 });
 
 const { addToast } = useToast();
+const router = useRouter();
 const usersStore = useUsers();
 // Helper function to capitalize first letter
 function capitalizeFirstLetter(string) {
@@ -55,6 +57,14 @@ function capitalizeFirstLetter(string) {
 }
 
 // Helper function to format fullname with proper capitalization
+function formatMemberships(row) {
+  const list = Array.isArray(row?.memberships) ? row.memberships : [];
+  if (!list.length) return row?.roleName || "—";
+  return list
+    .map((item) => `${item.moduleType || "module"}: ${item.roleName || "—"}`)
+    .join(", ");
+}
+
 function formatFullName(row) {
   const title = capitalizeFirstLetter(row?.title || '');
   const firstName = capitalizeFirstLetter(row?.firstName || '');
@@ -133,7 +143,17 @@ function handleEditWithClose(row) {
 
 function handleViewWithClose(rowId) {
   closeAllDropdowns();
-  props.onView(rowId);
+  if (rowId) router.push(`/user_detail/${rowId}`);
+}
+
+// Branch names the user belongs to; the primary branch is listed first
+function formatBranches(row) {
+  const list = Array.isArray(row?.branches) ? row.branches : [];
+  if (!list.length) return '—';
+  const sorted = [...list].sort((a, b) =>
+    (b.branchUuid === row.primaryBranchUuid) - (a.branchUuid === row.primaryBranchUuid)
+  );
+  return sorted.map((b) => b.name).filter(Boolean).join(', ');
 }
 
 function handleEdit(row) {
@@ -150,34 +170,18 @@ function handleEdit(row) {
   }
 }
 
-function buildUpdatePayloadFromRow(row, nextStatus) {
-  return {
-    email: row?.email,
-    title: row?.title,
-    firstName: row?.firstName,
-    fatherName: row?.fatherName,
-    grandFatherName: row?.grandFatherName,
-    mobilePhone: row?.mobilePhone,
-    userStatus: nextStatus,
-    roleUuid: row?.roleUuid || row?.roleName,
-    gender: row?.gender
-  };
-}
-
 async function handleActivateWithClose(userId) {
   closeAllDropdowns();
   try {
     const row = usersStore.users?.find(u => u.userUuid === userId);
-    const payload = buildUpdatePayloadFromRow(row, 'ACTIVE');
-
-    const response = await updateUserById(userId, payload);
+    const response = await changeUserStatus(userId, 'ACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
         message: 'User has been activated successfully'
       });
-      usersStore.update(userId, { ...row, userStatus: 'ACTIVE' });
+      usersStore.update(userId, { ...row, ...(response.data || {}), userStatus: 'ACTIVE' });
     } else {
       throw new Error(response.error || 'Failed to activate user');
     }
@@ -194,16 +198,14 @@ async function handleDeactivateWithClose(userId) {
   closeAllDropdowns();
   try {
     const row = usersStore.users?.find(u => u.userUuid === userId);
-    const payload = buildUpdatePayloadFromRow(row, 'SUSPENDED');
-
-    const response = await updateUserById(userId, payload);
+    const response = await changeUserStatus(userId, 'SUSPENDED');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
         message: 'User has been suspended successfully'
       });
-      usersStore.update(userId, { ...row, userStatus: 'SUSPENDED' });
+      usersStore.update(userId, { ...row, ...(response.data || {}), userStatus: 'SUSPENDED' });
     } else {
       throw new Error(response.error || 'Failed to suspend user');
     }
@@ -265,6 +267,16 @@ function getTypeStyle(statusOrType) {
       <!-- Mobile Phone field -->
       <span v-else-if="key === 'mobilePhone'" class="text-ink-muted">
         {{ row.mobilePhone }}
+      </span>
+
+      <!-- Branches field -->
+      <span v-else-if="key === 'branches'" class="text-ink-muted">
+        {{ formatBranches(row) }}
+      </span>
+
+      <!-- Module memberships -->
+      <span v-else-if="key === 'memberships'" class="text-sm text-ink-muted">
+        {{ formatMemberships(row) }}
       </span>
 
       <!-- Gender field -->
@@ -331,13 +343,13 @@ function getTypeStyle(statusOrType) {
     </button>
 
     <!-- 👁️ Detail -->
-    <!-- <button
+    <button
       @click.stop="handleViewWithClose(row.userUuid || row.id)"
       class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-primary bg-primary/5 border border-primary/20 rounded-xl hover:bg-primary/10 hover:shadow-sm transition-all duration-200"
     >
       <i v-html="icons.details" class="text-primary" />
       <span>Detail</span>
-    </button> -->
+    </button>
 
     <!-- ✅ Activate -->
     <button
@@ -398,6 +410,11 @@ function getTypeStyle(statusOrType) {
           <span class="text-xs text-ink text-right ml-2 truncate">{{ row.mobilePhone || 'N/A' }}</span>
         </div>
         
+        <div class="flex justify-between items-start py-1 border-b border-line">
+          <span class="text-xs font-medium text-ink-subtle flex-shrink-0">Branch:</span>
+          <span class="text-xs text-ink text-right ml-2 truncate">{{ formatBranches(row) }}</span>
+        </div>
+
         <div class="flex justify-between items-center py-1 border-b border-line">
           <span class="text-xs font-medium text-ink-subtle flex-shrink-0">Gender:</span>
           <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium"
@@ -436,7 +453,7 @@ function getTypeStyle(statusOrType) {
 
         <!-- ✅ Activate -->
         <button
-          v-if="row.userStatus === 'INACTIVE' || row.userStatus === 'Inactive'"
+          v-if="row.userStatus === 'SUSPENDED' || row.userStatus === 'INACTIVE' || row.userStatus === 'Inactive' || row.userStatus === 'PENDING'"
           @click.stop="handleActivateWithClose(row.userUuid || row.id)"
           class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-success bg-success-soft border border-success/20 rounded-md hover:bg-success-soft transition-all duration-200 flex-1"
         >

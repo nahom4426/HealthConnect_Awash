@@ -7,12 +7,18 @@ import { createPrivilege } from "../Api/PrivilegeApi";
 import { useRouter } from "vue-router";
 import { useForm } from "@/components/new_form_builder/useForm";
 import Button from "@/components/Button.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { moduleOptions } from "../../catalog";
 
 const req = useApiRequest();
 const privilegeStore = usePrivilege();
 const router = useRouter();
 const { submit } = useForm("privilegeForm");
+const authStore = useAuthStore();
+const currentUser = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
+const modules = computed(() => moduleOptions(currentUser.value));
+const moduleType = ref(modules.value.length === 1 ? modules.value[0].value : "");
 const bulkData = [
   {
     privilegeName: "Privilage",
@@ -141,6 +147,10 @@ const bulkData = [
   }
 ];
 async function uploadAllPrivileges() {
+  if (!moduleType.value) {
+    toasted(false, "", "Select a module for this privilege");
+    return;
+  }
   const seen = new Set();
 
   for (const item of bulkData) {
@@ -150,7 +160,7 @@ async function uploadAllPrivileges() {
     seen.add(key);
 
     try {
-      const res = await createPrivilege(item);
+      const res = await createPrivilege({ ...item, moduleType: moduleType.value });
 
       if (res.success) {
         privilegeStore.add(res.data || res.data?.content);
@@ -165,9 +175,13 @@ async function uploadAllPrivileges() {
   toasted(true, "Bulk upload completed");
 }
 function create({ values, reset }) {
+  if (!moduleType.value) {
+    toasted(false, "", "Select a module for this privilege");
+    return;
+  }
   req.send(
     () => {
-      return createPrivilege(values);
+      return createPrivilege({ ...values, moduleType: moduleType.value });
     },
     (res) => {
       if (res.success) {
@@ -206,6 +220,17 @@ function create({ values, reset }) {
 
         <!-- Form Content -->
         <div class="p-6 space-y-6 sm:p-8">
+          <div class="max-w-sm">
+            <label class="block mb-1 text-sm font-medium text-ink" for="privilege-module">Module</label>
+            <select
+              id="privilege-module"
+              v-model="moduleType"
+              class="px-3 w-full h-control text-sm bg-white rounded-lg border text-ink border-line-strong"
+            >
+              <option value="">Select a module</option>
+              <option v-for="mod in modules" :key="mod.value" :value="mod.value">{{ mod.label }}</option>
+            </select>
+          </div>
           <PrivilegeForm />
 
           <!-- Info Alert -->

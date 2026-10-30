@@ -38,7 +38,9 @@ const translations = {
       liability: 'Liability',
       liabilityDesc: 'Public liability, employers liability and professional indemnity rate setup.',
       burglary: 'Burglary & Theft',
-      burglaryDesc: 'Configure rates based on security grading, location risk and sum insured.'
+      burglaryDesc: 'Configure rates based on security grading, location risk and sum insured.',
+      administration: 'User Management',
+      administrationDesc: 'Manage users, roles and privileges for the modules you administer.'
     },
     badges: {
       active: 'Active',
@@ -183,7 +185,9 @@ const translations = {
       liability: 'የሃላፊነት መድን',
       liabilityDesc: 'የህዝብ ሃላፊነት፣ የአሰሪዎች ሃላፊነት እና የሙያ ካሳ ክፍያ ተመኖች ማዋቀር።',
       burglary: 'የስርቆት እና ዝርፊያ መድን',
-      burglaryDesc: 'በጥበቃ ደረጃ፣ በቦታ ስጋት እና በዋስትና መጠን ላይ በመመስረት የክፍያ ተመኖችን ያዋቅሩ።'
+      burglaryDesc: 'በጥበቃ ደረጃ፣ በቦታ ስጋት እና በዋስትና መጠን ላይ በመመስረት የክፍያ ተመኖችን ያዋቅሩ።',
+      administration: 'የተጠቃሚ አስተዳደር',
+      administrationDesc: 'የሚያስተዳድሩትን ሞጁል ተጠቃሚዎች፣ ሚናዎች እና መብቶች ያስተዳድሩ።'
     },
     badges: {
       active: 'ንቁ',

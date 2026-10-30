@@ -3,7 +3,7 @@ import { usePagination } from "@/composables/usePagination";
 import { watch } from "vue";
 import { useRolePrivilege } from "../store/roleprivilegeStore";
 import { getAllPrivilege } from "../Api/PrivilegeApi";
-import { removeUndefined } from "@/utils/utils";
+import { catalogQuery } from "../../catalog";
 
 const props = defineProps({
   prePage: {
@@ -14,6 +14,10 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  moduleType: {
+    type: String,
+    default: "",
+  },
 });
 const privilegesStore = useRolePrivilege();
 
@@ -21,26 +25,30 @@ const pagination = usePagination({
   auto: false,
   perPage: props.prePage,
   store: privilegesStore,
-  cb: (data)=> getAllPrivilege(
-    removeUndefined(
-      {
-    
-    ...data,
-    search: props.search.trim(),
-  })),
+  cb: (data) =>
+    getAllPrivilege({
+      ...data,
+      ...catalogQuery({
+        search: props.search.trim(),
+        moduleType: props.moduleType,
+        sortBy: "privilegeName",
+        sortDir: "asc",
+      }),
+    }),
 });
 
-if (privilegesStore.privilege.length == 0) {
-  pagination.send();
-}
-watch(()=> props.search,()=>{
-  pagination.send()
-})
+watch(
+  () => [props.search, props.moduleType],
+  () => {
+    if (props.moduleType) pagination.send();
+  },
+  { immediate: true }
+);
 </script>
 <template>
   <slot
     :pending="pagination.pending.value"
     :error="pagination.error.value"
-    :privileges="privilegesStore.privilege"
+    :privileges="moduleType ? privilegesStore.privilege : []"
   />
 </template>

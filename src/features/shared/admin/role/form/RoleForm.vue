@@ -18,6 +18,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  privilegeKey: {
+    type: String,
+    default: "",
+  },
 });
 
 const selectedPrivileges = ref(props.selectPrivilege);
@@ -60,6 +64,7 @@ watch(
 
     <div class="col-span-3">
       <SelectPrivilegeInput
+        :key="privilegeKey"
         label="Select Privileges"
         validation="required"
         name="privilegeUuid"

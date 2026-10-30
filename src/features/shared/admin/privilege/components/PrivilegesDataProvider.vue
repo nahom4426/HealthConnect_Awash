@@ -1,19 +1,23 @@
 <script setup>
-import { usePagination } from "@/composables/usePagination";
 import { watch } from "vue";
+import { usePagination } from "@/composables/usePagination";
 import { usePrivilege } from "../store/privilegeStore";
 import { getAllPrivilege } from "../Api/PrivilegeApi";
-import { removeUndefined } from "@/utils/utils";
+import { catalogQuery } from "../../catalog";
 
 const props = defineProps({
   prePage: {
     type: Number,
-    default: 25,
+    default: 500,
   },
   search: {
     type: String,
     default: "",
   },
+  moduleType: String,
+  category: String,
+  sortBy: { type: String, default: "privilegeName" },
+  sortDir: { type: String, default: "asc" },
 });
 const privilegesStore = usePrivilege();
 
@@ -21,21 +25,27 @@ const pagination = usePagination({
   auto: false,
   perPage: props.prePage,
   store: privilegesStore,
-  cb: (data)=> getAllPrivilege(
-    removeUndefined(
-      {
-    
-    ...data,
-    search: props.search.trim(),
-  })),
+  cb: (data) =>
+    getAllPrivilege({
+      ...data,
+      ...catalogQuery({
+        search: props.search.trim(),
+        moduleType: props.moduleType,
+        category: props.category,
+        sortBy: props.sortBy,
+        sortDir: props.sortDir,
+      }),
+    }),
 });
 
-if (privilegesStore.privilege.length == 0) {
-  pagination.send();
-}
-watch(()=> props.search,()=>{
-  pagination.send()
-})
+pagination.send();
+
+watch(
+  () => [props.search, props.moduleType, props.category, props.sortBy, props.sortDir],
+  () => {
+    pagination.send();
+  }
+);
 </script>
 <template>
   <slot

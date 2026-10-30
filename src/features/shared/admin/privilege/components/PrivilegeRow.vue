@@ -105,6 +105,10 @@ function handleDetail(row) {
         </span>
       </td>
 
+      <td class="p-4 py-4">
+        <span class="text-sm capitalize text-ink-muted">{{ row?.moduleType || '—' }}</span>
+      </td>
+
       <!-- Actions -->
       <td class="p-4 py-4">
         <div class="flex flex-wrap gap-2 justify-start items-center">

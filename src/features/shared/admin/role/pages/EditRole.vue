@@ -11,7 +11,9 @@ import RoleForm from '../form/RoleForm.vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 
 import { toasted } from '@/utils/utils';
+import { moduleLabel } from '../../catalog';
 import { useAuthStore } from "@/stores/auth";
+import { isExactSuperAdmin } from "@/utils/roleAccess";
 import { refreshPrivileges } from "@/scripts/privilegeRefresh";
 
 const roleStore = useRoles();
@@ -23,6 +25,9 @@ const updateReq = useApiRequest()
 const { submit } = useForm('roleForm')
 const router = useRouter();
 const authStore = useAuthStore();
+const callerIsSuperAdmin = computed(() => isExactSuperAdmin(authStore.auth?.user ?? authStore.auth ?? {}));
+const isSuperAdminRole = computed(() => String(role.value?.roleName || "").trim() === "Super Admin");
+const privilegeModule = computed(() => (isSuperAdminRole.value && callerIsSuperAdmin.value ? "all" : role.value?.moduleType || ""));
 
 const extractPrivilegeUuid = (p) => {
     if (!p) return null;
@@ -199,15 +204,22 @@ function update({ values }) {
     class="pb-2 bg-white"
     title="Update Role"
   >
-    <PrivilegesDataProvider :pre-page="5000" v-slot="{ privileges, pending }">
+    <div v-if="privilegeModule" class="px-6 pt-6">
+      <p class="text-sm text-ink-muted">Module</p>
+      <p class="text-base font-semibold text-ink">{{ isSuperAdminRole && callerIsSuperAdmin ? "All modules" : moduleLabel(role.moduleType) }}</p>
+      <p v-if="isSuperAdminRole && callerIsSuperAdmin" class="mt-1 text-sm text-ink-muted">Super Admin can hold privileges from every module.</p>
+    </div>
+    <PrivilegesDataProvider v-if="privilegeModule" :module-type="privilegeModule" :pre-page="5000" v-slot="{ privileges, pending }">
       <RoleForm 
         v-if="!pending && Object.keys(role).length" 
+        :privilege-key="privilegeModule"
         :selectPrivilege="mappedSelectedPrivilegeUuids" 
         :privileges="privileges" 
         :role="role" 
       />
       <p v-else>Loading...</p>
     </PrivilegesDataProvider>
+    <p v-else class="px-6 py-4">Loading...</p>
 
     <template #bottom>
       <Button

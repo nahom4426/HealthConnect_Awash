@@ -1,20 +1,18 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { fetchImageObjectUrl } from '@/utils/imageBlob';
-import { getActingRole, roleSwitcherEnabled } from '@/utils/actingRole';
 
 const apiBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/motor/digital-channel`;
 
 function getClient() {
   const auth = useAuthStore();
   const token = auth.auth?.token || auth.auth?.user?.token;
-  // Production sends the signed-in user's own role; only demo builds may override it
-  const activeRole = getActingRole() || (roleSwitcherEnabled ? 'ROLE_UNDERWRITER' : '');
+  // The backend authorises from the bearer token's privileges only. The dev "Acting as"
+  // role switcher changes what the UI shows; it is never sent to the API.
   return axios.create({
     baseURL: apiBase,
     headers: {
       'Content-Type': 'application/json',
-      ...(activeRole ? { 'X-User-Role': activeRole } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
@@ -211,31 +209,16 @@ function dedupeProposals(items) {
 }
 
 export async function fetchMotorProposals({ page = 0, limit = 20, status = '' } = {}) {
-  try {
-    const { data } = await getClient().get('/motor/proposals', {
-      params: { page, limit, status }
-    });
-    const backendList = Array.isArray(data) ? data : (data?.content ?? []);
-    if (backendList.length > 0) {
-      return dedupeProposals(backendList);
-    }
-  } catch (e) {
-    console.warn('fetchMotorProposals error:', e.message);
-  }
-  const local = JSON.parse(localStorage.getItem('standard_motor_proposals') || '[]');
-  return local.length ? dedupeProposals(local) : dedupeProposals(SEEDED_MOTOR_PROPOSALS);
+  const { data } = await getClient().get('/motor/proposals', {
+    params: { page, limit, status }
+  });
+  const backendList = Array.isArray(data) ? data : (data?.content ?? []);
+  return dedupeProposals(backendList);
 }
 
 export async function fetchMotorProposalDetail(proposalUuid) {
-  try {
-    const { data } = await getClient().get(`/motor/proposals/${proposalUuid}`);
-    if (data) return data;
-  } catch (e) {
-    console.warn('fetchMotorProposalDetail error:', e.message);
-  }
-  const local = JSON.parse(localStorage.getItem('standard_motor_proposals') || '[]');
-  const found = local.find(p => p.proposalUuid === proposalUuid);
-  return found || SEEDED_MOTOR_PROPOSALS.find(p => p.proposalUuid === proposalUuid) || SEEDED_MOTOR_PROPOSALS[0];
+  const { data } = await getClient().get(`/motor/proposals/${proposalUuid}`);
+  return data;
 }
 
 export async function assignProposalAdjustor(proposalUuid, { adjustorUuid, adjustorName }) {
@@ -254,8 +237,9 @@ function errorResult(e, fallback) {
   return {
     success: false,
     status: e?.response?.status,
-    errorCode: body?.errorCode,
-    message: body?.message || e?.message || fallback,
+    // Motor errors use the ApiError envelope: { type, status, detail, properties: { errorCode? } }
+    errorCode: body?.properties?.errorCode || body?.errorCode || body?.type,
+    message: body?.detail || body?.message || e?.message || fallback,
   };
 }
 
@@ -329,101 +313,6 @@ export async function issueProposalContract(proposalUuid) {
   }
 }
 
-export const SEEDED_MOTOR_PROPOSALS = [
-  {
-    proposalUuid: 'PROP-2026-001',
-    proposalNumber: 'NYA-PROP-881293',
-    insuredUuid: 'INS-881201',
-    insuredName: 'Abraham Addisu',
-    insuredPhone: '0963048258',
-    insuredEmail: 'abroid.et@gmail.com',
-    vehiclePlateNumber: '3-A98123',
-    chassisNumber: 'CHAS-881923091',
-    engineNumber: 'ENG-WD615-9921',
-    carName: 'Toyota',
-    carModel: 'Land Cruiser 300 V6',
-    carType: 'SUV / Station Wagon',
-    makeYear: 2023,
-    sumInsured: 18500000.00,
-    coverageType: 'COMPREHENSIVE',
-    endorsementsJson: '["FLOOD_COVER", "BATTERY_ENDORSEMENT", "RADIO_STEREO"]',
-    tpPremiumAmount: 1250.00,
-    odPremiumAmount: 407000.00,
-    totalPremiumAmount: 408250.00,
-    tpPaymentStatus: 'PAID',
-    tpPaymentRef: 'ETHIO-TP-881923',
-    odPaymentStatus: 'PAID',
-    odPaymentRef: 'ETHISWITCH-OD-771290',
-    assignedAdjustorUuid: 'ADJ-101',
-    assignedAdjustorName: 'Dawit Tesfaye (Senior Adjustor)',
-    inspectionStatus: 'PASSED',
-    inspectionNotes: 'Vehicle pre-inspection clean. Body and glass in perfect condition. Approved for comprehensive endorsement.',
-    status: 'CONTRACT_ISSUED',
-    createdAt: '2026-08-06T10:15:00Z'
-  },
-  {
-    proposalUuid: 'PROP-2026-002',
-    proposalNumber: 'NYA-PROP-772910',
-    insuredUuid: 'INS-772102',
-    insuredName: 'Kebede Michael',
-    insuredPhone: '0911223344',
-    insuredEmail: 'kebede@example.com',
-    vehiclePlateNumber: '3-B44120',
-    chassisNumber: 'CHAS-771920192',
-    engineNumber: 'ENG-4HK1-0021',
-    carName: 'Isuzu',
-    carModel: 'NPR 400 Light Truck',
-    carType: 'Commercial Freight Truck',
-    makeYear: 2022,
-    sumInsured: 6400000.00,
-    coverageType: 'COMPREHENSIVE',
-    endorsementsJson: '["FLOOD_COVER"]',
-    tpPremiumAmount: 2500.00,
-    odPremiumAmount: 140800.00,
-    totalPremiumAmount: 143300.00,
-    tpPaymentStatus: 'PAID',
-    tpPaymentRef: 'ETHIO-TP-771201',
-    odPaymentStatus: 'PENDING',
-    odPaymentRef: null,
-    assignedAdjustorUuid: 'ADJ-102',
-    assignedAdjustorName: 'Almaz Wolde (Adjustor)',
-    inspectionStatus: 'PASSED',
-    inspectionNotes: 'Commercial truck physical check passed.',
-    status: 'INSPECTION_DONE',
-    createdAt: '2026-08-06T11:40:00Z'
-  },
-  {
-    proposalUuid: 'PROP-2026-003',
-    proposalNumber: 'NYA-PROP-554109',
-    insuredUuid: 'INS-554003',
-    insuredName: 'Tigist Bekele',
-    insuredPhone: '0922334455',
-    insuredEmail: 'tigist@example.com',
-    vehiclePlateNumber: '2-C11902',
-    chassisNumber: 'CHAS-554109281',
-    engineNumber: 'ENG-1.2L-DZIRE',
-    carName: 'Suzuki',
-    carModel: 'Dzire Sedan',
-    carType: 'Private Saloon',
-    makeYear: 2023,
-    sumInsured: 2450000.00,
-    coverageType: 'THIRD_PARTY',
-    endorsementsJson: '[]',
-    tpPremiumAmount: 1250.00,
-    odPremiumAmount: 0.00,
-    totalPremiumAmount: 1250.00,
-    tpPaymentStatus: 'PAID',
-    tpPaymentRef: 'ETHIO-TP-554109',
-    odPaymentStatus: 'N/A',
-    odPaymentRef: null,
-    assignedAdjustorUuid: null,
-    assignedAdjustorName: null,
-    inspectionStatus: 'NOT_REQUIRED',
-    inspectionNotes: 'Third Party mandatory coverage only - no physical inspection required under Reg 554/2024.',
-    status: 'TP_PAID',
-    createdAt: '2026-08-06T14:10:00Z'
-  }
-];
 
 // ─── POLICY VALIDATION API ──────────────────────────────────────────────────
 

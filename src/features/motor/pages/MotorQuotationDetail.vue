@@ -211,22 +211,70 @@ async function confirmStatusAction() {
   }
 }
 
+// ── convert to proposal ──────────────────────────────────────────────────────
+// The quotation carries no cover choice, so the underwriter picks it here.
+const COVERAGE_OPTIONS = [
+  { value: 'COMPREHENSIVE', label: 'Comprehensive' },
+  { value: 'OWN_DAMAGE',    label: 'Own Damage' },
+  { value: 'THIRD_PARTY',   label: 'Third Party' },
+];
+const convertCoverage = ref('');
+
+function makeYearOf(item) {
+  const match = String(item?.carMakeYear ?? item?.makeYear ?? '').match(/\d{4}/);
+  return match ? Number(match[0]) : null;
+}
+
+/** Proposal payload from the data already on this page; nothing is defaulted. */
+function proposalPayload(item) {
+  return {
+    insuredUuid:        item.insuredUuid || undefined,
+    insuredName:        fullName(item) || undefined,
+    insuredPhone:       item.clientPhoneNumber || undefined,
+    insuredEmail:       item.clientEmail || undefined,
+    vehiclePlateNumber: item.plateNumber || undefined,
+    engineNumber:       item.engine_No || item.Engine_No || undefined,
+    carName:            item.carName || undefined,
+    carModel:           item.carModel || undefined,
+    carType:            item.carType || undefined,
+    makeYear:           makeYearOf(item) ?? undefined,
+    sumInsured:         item.buyingPrice || undefined,
+    coverageType:       convertCoverage.value || undefined,
+  };
+}
+
+function missingForProposal(payload) {
+  const required = {
+    vehiclePlateNumber: 'plate number',
+    carName: 'vehicle make',
+    carModel: 'vehicle model',
+    makeYear: 'make year',
+    sumInsured: 'sum insured (vehicle value)',
+    coverageType: 'cover type',
+  };
+  const missing = Object.entries(required).filter(([key]) => payload[key] == null).map(([, label]) => label);
+  if (!payload.insuredUuid && !(payload.insuredName && payload.insuredPhone)) missing.push('insured');
+  return missing;
+}
+
 async function convertToProposal() {
-  saving.value = true;
   error.value = '';
   success.value = '';
+  const payload = proposalPayload(q.value);
+  const missing = missingForProposal(payload);
+  if (missing.length) {
+    error.value = `Cannot convert: missing ${missing.join(', ')}.`;
+    return;
+  }
+  saving.value = true;
   try {
-    const payload = {
-      insuredName: fullName(q.value),
-      vehiclePlateNumber: q.value.plateNumber,
-      coverageType: 'COMPREHENSIVE',
-      totalPremiumAmount: q.value.quotationAmount,
-    };
     const res = await submitMotorProposal(payload);
     success.value = 'Quotation converted to proposal successfully!';
     setTimeout(() => router.push(`/motor/proposals/${res.proposalUuid}`), 1500);
   } catch (e) {
-    error.value = e?.response?.data?.message || e.message || 'Failed to convert to proposal';
+    const body = e?.response?.data;
+    const fieldMsg = body?.fieldErrors?.map(f => f.message).join('; ');
+    error.value = fieldMsg || body?.detail || body?.message || e.message || 'Failed to convert to proposal';
   } finally {
     saving.value = false;
   }
@@ -294,7 +342,11 @@ function viewImage(title, src) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Update Status
           </button>
-          <button class="qd-btn qd-btn-confirm" @click="convertToProposal" :disabled="saving">
+          <select v-model="convertCoverage" class="qd-btn" aria-label="Cover for the proposal">
+            <option value="" disabled>Cover type…</option>
+            <option v-for="opt in COVERAGE_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+          <button class="qd-btn qd-btn-confirm" @click="convertToProposal" :disabled="saving || !convertCoverage">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             Convert to Proposal
           </button>
@@ -385,7 +437,7 @@ function viewImage(title, src) {
                 </div>
                 <div class="qd-spec-row">
                   <span class="qd-spec-lbl">Make Year</span>
-                  <span class="qd-spec-val font-bold">{{ q.makeYear || '—' }}</span>
+                  <span class="qd-spec-val font-bold">{{ q.carMakeYear || q.makeYear || '—' }}</span>
                 </div>
                 <div v-if="q.engine_No" class="qd-spec-row">
                   <span class="qd-spec-lbl">Engine No.</span>

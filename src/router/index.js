@@ -1,6 +1,6 @@
 import MainLayout from "@/layouts/MainLayout.vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
-import { hasRoleAccess } from "@/utils/roleAccess";
+import { canOpenUserManagement, hasRoleAccess } from "@/utils/roleAccess";
 // Pages load on demand so the first screen doesn't download the whole app
 const HomeView = () => import("@/views/HomeView.vue");
 const RateConfigHome = () => import("@/views/RateConfig/RateConfigHome.vue");
@@ -372,11 +372,23 @@ router.beforeEach((to, from, next) => {
         return;
       }
 
+      // Users, roles, and privileges are open to a module admin for the modules they administer.
+      // The API still rejects a module they do not manage. Branches stay on branch.manage.
+      const userManagementScreen = /^\/(users|add_user|edit_user|user_detail|roles|create-role|edit_role|role_detail|privileges|add_privilege|edit_privilege|privilege_detail|admin\/user-roles)(\/|$)/;
+      if (userManagementScreen.test(to.path)) {
+        if (!canOpenUserManagement(user)) {
+          next('/module-select');
+          return;
+        }
+        next();
+        return;
+      }
+
       if (requiredPerms.length > 0) {
         const privileges = Array.isArray(user.privileges) ? user.privileges : [];
         
         // Super Admin or All Privileges bypass
-        if (user.roleName === 'Super Admin' || privileges.includes('All Privileges')) {
+        if (user.roleName === 'Super Admin' || user.superAdmin === true || privileges.includes('All Privileges')) {
           next();
           return;
         }

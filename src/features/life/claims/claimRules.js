@@ -57,10 +57,15 @@ export const DECISIONS = {
   reject: { title: "Reject claim", confirmText: "Reject claim", done: "Claim rejected", placeholder: "Reason for rejecting — the agency sees this", tone: "danger", required: true },
 };
 
+export const commentLimit = (action) => (action === "reject" ? 500 : 1000);
+
 export function validateDecision(action, comment) {
   const text = String(comment || "").trim();
   if (DECISIONS[action]?.required && !text) return "Give a reason";
-  if (text.length > 1000) return "At most 1000 characters";
+  // Reject takes 2–500 characters (PUT /claim/{uuid}/deny); other steps take up to 1000
+  if (action === "reject" && text.length < 2) return "At least 2 characters";
+  const max = commentLimit(action);
+  if (text.length > max) return `At most ${max} characters`;
   return "";
 }
 

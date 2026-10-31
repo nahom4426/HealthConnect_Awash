@@ -144,31 +144,38 @@ export function riderChanges(rows, original, quotationUuid) {
   return { create, update };
 }
 
-// ── payment (PUT /quotation/pay query) ──
-export const PAYMENT_AMOUNTS = [
-  ["requestedPremium", "Requested premium"],
+// ── payment (PUT /quotation/{uuid}/pay, JSON body) ──
+// The requested premium is the server's grossPremium. Withholding tax, revenue stamp and net premium
+// are entered from the receipt until finance configures the tax rates; then the server calculates
+// them (the quotation's calculated* fields are no longer null) and the payment needs only the receipt.
+export const PAYMENT_TAXES = [
   ["withHoldingTax", "Withholding tax"],
   ["revenueStamp", "Revenue stamp"],
   ["netPremium", "Net premium received"],
 ];
 
-export function validatePayment(f) {
+/** True once the server returns calculated tax amounts for this quotation */
+export const taxesCalculated = (q = {}) => Object.keys(q).some((k) => k.startsWith("calculated") && q[k] != null);
+
+export function validatePayment(f, { taxesRequired = true } = {}) {
   const e = {};
   if (tooLong(f.receiptNumber, 60)) e.receiptNumber = "At most 60 characters";
   if (blank(f.receiptNumber)) e.receiptNumber = "Enter the receipt number";
   if (!f.receiptDate) e.receiptDate = "Required";
   else if (f.receiptDate > today()) e.receiptDate = "Can't be in the future";
-  for (const [k] of PAYMENT_AMOUNTS) {
-    if (blank(f[k])) e[k] = "Required";
-    else if (Number.isNaN(Number(f[k])) || Number(f[k]) < 0) e[k] = "Must be 0 or more";
+  if (taxesRequired) {
+    for (const [k] of PAYMENT_TAXES) {
+      if (blank(f[k])) e[k] = "Required";
+      else if (Number.isNaN(Number(f[k])) || Number(f[k]) < 0) e[k] = "Must be 0 or more";
+    }
   }
   return e;
 }
 
-export function toPaymentParams(f) {
-  const p = { receiptNumber: String(f.receiptNumber).trim(), receiptDate: toDateTime(f.receiptDate) };
-  for (const [k] of PAYMENT_AMOUNTS) p[k] = Number(f[k]);
-  return p;
+export function toPaymentBody(f, { taxesRequired = true } = {}) {
+  const body = { receiptNumber: String(f.receiptNumber).trim(), receiptDate: f.receiptDate };
+  if (taxesRequired) for (const [k] of PAYMENT_TAXES) body[k] = Number(f[k]);
+  return body;
 }
 
 // ── policy issue (PolicyRequest) ──

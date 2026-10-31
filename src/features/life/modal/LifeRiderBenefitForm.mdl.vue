@@ -11,9 +11,8 @@ import TextField from "@/components/fields/TextField.vue";
 import SelectField from "@/components/fields/SelectField.vue";
 import { toasted } from "@/utils/utils";
 import { formatAmount } from "../constants/labels";
-import { ageOn, benefitName, rateFor, toRiderBenefitRequest, validateRiderBenefit } from "../individual/individualRules";
-import { createIndividualRiderBenefit, updateIndividualRiderBenefit } from "../api/policyApi";
-import { getIndividualRiderRate } from "../api/productApi";
+import { benefitName, fromBenefit, quoteParams, toRiderBenefitRequest, validateRiderBenefit } from "../individual/individualRules";
+import { createIndividualRiderBenefit, getBenefitQuote, updateIndividualRiderBenefit } from "../api/policyApi";
 
 const props = defineProps({ data: { type: Object, default: () => ({}) } });
 const benefit = props.data?.benefit || {};
@@ -25,18 +24,23 @@ const form = reactive({ riderUuid: current?.riderUuid ?? "", benefits: current?.
 const errors = ref({});
 const pending = ref(false);
 const rider = computed(() => riders.value.find((r) => r.riderUuid === form.riderUuid));
-const age = ageOn(benefit.dateOfBirth, benefit.beginDate);
-
-const rate = ref(null);
-const rateNote = ref("");
-watch(() => form.riderUuid, async (uuid) => {
-  rate.value = null;
-  rateNote.value = "";
-  if (!uuid || age === null) return;
-  const res = await getIndividualRiderRate({ age, riderUuid: uuid });
-  const row = Array.isArray(res?.data) ? res.data[0] : res?.data;
-  if (res?.success && row) rate.value = rateFor(row, benefit.gender);
-  else rateNote.value = `No rate is set up for this rider at age ${age}.`;
+// The backend's quote for the policy with this rider, to show the rider's premium before saving
+const quote = ref(null);
+const quoteNote = ref("");
+let timer, seq = 0;
+watch(() => [form.riderUuid, form.benefits], () => {
+  clearTimeout(timer);
+  quote.value = null;
+  quoteNote.value = "";
+  const params = form.riderUuid && Number(form.benefits) > 0 ? quoteParams(fromBenefit(benefit), [{ riderUuid: form.riderUuid, benefits: form.benefits }]) : null;
+  if (!params) return;
+  timer = setTimeout(async () => {
+    const mine = ++seq;
+    const res = await getBenefitQuote(params);
+    if (mine !== seq) return;
+    if (res?.success) quote.value = res.data?.riders?.find((r) => r.riderUuid === form.riderUuid) || null;
+    else quoteNote.value = res?.error || "No price for this rider on this policy.";
+  }, 400);
 }, { immediate: true });
 
 async function submit() {
@@ -78,8 +82,8 @@ async function submit() {
           :error="errors.benefits"
           :hint="rider ? `Allowed ${formatAmount(rider.minLimit)} – ${formatAmount(rider.maxLimit)}` : undefined"
         />
-        <p v-if="rate" class="px-3 py-2 text-xs rounded-lg bg-surface-muted text-ink-muted">Rate at age {{ age }}: <span class="font-semibold text-ink">{{ rate.rate ?? "—" }}</span> per {{ rate.rateUnit ?? "—" }}. The premium is calculated by the system.</p>
-        <p v-else-if="rateNote" class="px-3 py-2 text-xs rounded-lg bg-warning-soft text-warning-strong">{{ rateNote }}</p>
+        <p v-if="quote" class="px-3 py-2 text-xs rounded-lg bg-surface-muted text-ink-muted">Premium <span class="font-semibold text-ink">{{ formatAmount(quote.premium) }}</span> at a rate of {{ quote.rate ?? "—" }} per {{ quote.rateUnit ?? "—" }}, as priced by the system.</p>
+        <p v-else-if="quoteNote" class="px-3 py-2 text-xs rounded-lg bg-warning-soft text-warning-strong">{{ quoteNote }}</p>
       </form>
       <template #bottom>
         <div class="flex gap-2 justify-end p-4 w-full border-t border-line">

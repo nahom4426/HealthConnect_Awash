@@ -15,7 +15,11 @@ export function updateQuotation(quotationUuid, data) {
 export function deleteQuotation(quotationUuid) {
   return lifeApi().delete(`/quotation/${quotationUuid}`);
 }
-/** PUT /quotation/pay/{quotationUuid} · query: receiptNumber: string, withHoldingTax*: number, revenueStamp*: number, netPremium*: number, receiptDate*: string, requestedPremium*: number · returns: QuotationResponse */
+/** PUT /quotation/{quotationUuid}/pay · body: { receiptNumber, receiptDate (yyyy-MM-dd), withHoldingTax?, revenueStamp?, netPremium? } · returns: QuotationResponse. requestedPremium is the server's grossPremium (contract 2026-10 #6). */
+export function recordQuotationPayment(quotationUuid, data) {
+  return lifeApi().put(`/quotation/${quotationUuid}/pay`, data);
+}
+/** @deprecated query-string form; use recordQuotationPayment. PUT /quotation/pay/{quotationUuid} · query: receiptNumber, withHoldingTax*, revenueStamp*, netPremium*, receiptDate*, requestedPremium* */
 export function payQuotation(quotationUuid, params = {}) {
   return lifeApi().put(`/quotation/pay/${quotationUuid}`, undefined, { params });
 }
@@ -30,6 +34,10 @@ export function acceptQuotation(quotationUuid) {
 /** POST /quotation · body: QuotationRequest · returns: QuotationResponse */
 export function createQuotation(data) {
   return lifeApi().post(`/quotation`, data);
+}
+/** GET /quotation/{quotationUuid}/history · returns: [{ action, fromStatus, toStatus, detail, actorUuid, actorName, occurredAt }] oldest first (G13) */
+export function getQuotationHistory(quotationUuid) {
+  return lifeApi().get(`/quotation/${quotationUuid}/history`);
 }
 /** POST /quotation/revise/{quotationUuid} · returns: QuotationResponse */
 export function reviseQuotation(quotationUuid) {
@@ -79,7 +87,7 @@ export function deleteInsuredPerson(insuredUuid) {
 export function createInsuredPerson(data) {
   return lifeApi().post(`/insuredperson`, data);
 }
-/** POST /insuredperson/import-insured-person · query: institutionUuid*: string, qutoationUuid*: string (sic, backend spelling) · body: multipart/form-data · returns: MessageResponse */
+/** POST /insuredperson/import-insured-person · query: institutionUuid*: string, quotationUuid*: string (the misspelled qutoationUuid is deprecated) · body: multipart/form-data · returns: MessageResponse */
 export function importInsuredPerson(formData, params = {}) {
   return lifeApi().post(`/insuredperson/import-insured-person`, formData, { params, headers: { 'Content-Type': 'multipart/form-data' } });
 }

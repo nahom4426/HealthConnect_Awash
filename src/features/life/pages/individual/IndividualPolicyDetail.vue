@@ -1,6 +1,7 @@
 <script setup>
-// One individual term policy with its riders. Amounts and premiums are the backend's. Issuing a
-// draft (policy number, ACTIVE) needs PUT /benefit/{uuid}/issue (gap G11), so drafts stay drafts here.
+// One individual term policy with its riders. Amounts and premiums are the backend's. Issuing a draft
+// (PUT /benefit/{uuid}/issue) sets the policy number and ACTIVE; the backend refuses with 409 until
+// pricing is complete, the customer's KYC is VERIFIED and underwriting is clear.
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
@@ -13,8 +14,8 @@ import ListTable from "@/components/ListTable.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
-import { ageOn, benefitActions, benefitName } from "../../individual/individualRules";
-import { deleteBenefit, deleteIndividualRiderBenefit, getBenefit, getIndividualRiderBenefits } from "../../api/policyApi";
+import { benefitActions, benefitName } from "../../individual/individualRules";
+import { deleteBenefit, deleteIndividualRiderBenefit, getBenefit, getIndividualRiderBenefits, issueBenefit } from "../../api/policyApi";
 import { getRiders } from "../../api/productApi";
 
 const route = useRoute();
@@ -26,12 +27,12 @@ const b = computed(() => benefit.data.value || {});
 const can = computed(() => {
   const a = benefitActions(b.value);
   const may = hasPrivilege(["Life_Quotation_Create", "Life_Policy_Issue"]);
-  return { edit: a.edit && may, remove: a.remove && may, riders: a.riders && may, isDraft: a.edit };
+  return { edit: a.edit && may, remove: a.remove && may, riders: a.riders && may, issue: a.edit && hasPrivilege("Life_Policy_Issue"), isDraft: a.edit };
 });
 benefit.load(uuid);
 
-// GET /individual-rider-benefit/active/benefits isn't filtered by policy (README R2): filter here
-const riderBenefits = useLifeResource(getIndividualRiderBenefits, { initial: [], map: (d) => (Array.isArray(d) ? d : []).filter((r) => r.benefitUuid === uuid) });
+// Riders of this policy only (?benefitUuid=, contract 2026-10 #29); the filter below guards older servers
+const riderBenefits = useLifeResource(() => getIndividualRiderBenefits({ benefitUuid: uuid }), { initial: [], map: (d) => (Array.isArray(d) ? d : []).filter((r) => r.benefitUuid === uuid) });
 const riders = useLifeResource(getRiders, { initial: [] });
 riderBenefits.load();
 riders.load();
@@ -55,7 +56,6 @@ const cards = computed(() => [
 const facts = computed(() => [
   ["Gender", b.value.gender],
   ["Date of birth", b.value.dateOfBirth && formatDate(b.value.dateOfBirth)],
-  ["Age at start", ageOn(b.value.dateOfBirth, b.value.beginDate)],
   ["Phone", b.value.personPhone],
   ["Policy number", b.value.policyNumber || "Not issued yet"],
   ["Term", b.value.insuranceTerm ? `${b.value.insuranceTerm} years` : ""],
@@ -73,6 +73,12 @@ function removeRider(r) {
   confirmAction({ title: `Remove ${riderName(r.riderUuid)}?`, message: "The rider is taken off this policy.", confirmText: "Remove", tone: "danger" }, async () => {
     const res = await deleteIndividualRiderBenefit(r.individualRiderBenefitUuid);
     if (res?.success) { toasted(true, "Rider removed"); riderBenefits.load(); benefit.load(uuid); }
+  });
+}
+function issue() {
+  confirmAction({ title: "Issue this policy?", message: "It gets its policy number and the cover becomes active from the start date. Riders are activated and the premium schedule is created.", confirmText: "Issue policy" }, async () => {
+    const res = await issueBenefit(uuid);
+    if (res?.success) { toasted(true, "Policy issued"); benefit.load(uuid); riderBenefits.load(); }
   });
 }
 function remove() {
@@ -100,11 +106,12 @@ function remove() {
         <template #actions>
           <Button v-if="can.remove" variant="ghost" class="!text-error" @click="remove">Delete draft</Button>
           <Button v-if="can.edit" variant="outline" @click="router.push(`/life/individual/${uuid}/edit`)">Edit</Button>
+          <Button v-if="can.issue" @click="issue">Issue policy</Button>
         </template>
       </PageHeader>
 
       <p v-if="can.edit && b.status" class="px-4 py-2.5 mb-5 text-xs rounded-xl bg-surface-muted text-ink-muted">
-        Draft. Issuing the policy (policy number, active cover) isn't available in the system yet (backend gap G11).
+        Draft. To issue it, the premium must be priced, the customer's KYC verified and underwriting clear; the system says which is missing.
       </p>
 
       <dl class="grid gap-3 mb-5 sm:grid-cols-2 xl:grid-cols-4">

@@ -1,7 +1,6 @@
 // Individual term life ("benefit") rules. Fields follow BenefitRequest and IndividualRiderBenefitRequest.
-// Both requests have premium fields, but the API only offers rate lookups (no priced quote), and premiums
-// must come from the backend: the UI shows the rate the backend has for information and never sends a
-// premium it worked out itself (09 §G9 item 27).
+// The backend prices both on save and ignores client premiums; GET /benefit/quote gives the priced
+// quote before saving (contract 2026-10 #27). The UI never sends a premium.
 import { BenefitStatus } from "../constants/statuses";
 import { toDateTime } from "../constants/labels";
 
@@ -16,22 +15,18 @@ export function benefitActions(b = {}) {
 }
 
 /**
- * Age last birthday on a date (both "YYYY-MM-DD" or API date-times). Used only to look up the
- * rate row; the age basis the backend prices on is an open question (09 §G9 item 28).
+ * Query for GET /benefit/quote, or null until every pricing input is filled (the backend prices
+ * an incomplete draft at 0). The backend works out the age (next birthday at the start date).
+ * @param {object} f form state
+ * @param {{ riderUuid: string, benefits: any }[]} riderRows riders to include
  */
-export function ageOn(dateOfBirth, onDate) {
-  if (!dateOfBirth || !onDate) return null;
-  const [by, bm, bd] = String(dateOfBirth).slice(0, 10).split("-").map(Number);
-  const [y, m, d] = String(onDate).slice(0, 10).split("-").map(Number);
-  if (![by, bm, bd, y, m, d].every(Number.isFinite)) return null;
-  return y - by - (m < bm || (m === bm && d < bd) ? 1 : 0);
-}
-
-/** The rate row's rate for the person's gender (a selection, not a calculation). */
-export function rateFor(row, gender) {
-  if (!row) return null;
-  const rate = gender === "Female" ? row.femaleRate : gender === "Male" ? row.maleRate : null;
-  return { rate: rate ?? null, rateUnit: row.rateUnit ?? null, maxDiscount: row.maxDiscount ?? null, maxLoad: row.maxLoad ?? null };
+export function quoteParams(f, riderRows = []) {
+  if (!f.dateOfBirth || !GENDERS.includes(f.gender) || !f.beginDate) return null;
+  if (!(Number(f.insuranceTerm) >= 1) || !(Number(f.termBenefit) > 0)) return null;
+  const params = { dateOfBirth: f.dateOfBirth, gender: f.gender, beginDate: f.beginDate, term: Number(f.insuranceTerm), termBenefit: Number(f.termBenefit) };
+  const riders = riderRows.filter((r) => r.riderUuid && Number(r.benefits) > 0).map((r) => `${r.riderUuid}:${Number(r.benefits)}`);
+  if (riders.length) params.riders = riders.join(",");
+  return params;
 }
 
 export function fromBenefit(b = {}) {

@@ -1,7 +1,7 @@
 <script setup>
-// Individual term life policies by status. GET /benefit/benefits/{status} has no paging or search,
-// so both happen here (09 §G9 item 29).
-import { computed, ref, watch } from "vue";
+// Individual term life policies by status, paged and searched by the backend
+// (GET /benefit/benefits/{status}?page&limit&search, contract 2026-10 #29).
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
 import { hasPrivilege } from "@/utils/privileges";
@@ -11,10 +11,10 @@ import StatusBadge from "@/components/StatusBadge.vue";
 import PageNav from "@/components/PageNav.vue";
 import ListTable from "@/components/ListTable.vue";
 import TextField from "@/components/fields/TextField.vue";
-import { useLifeResource } from "../../composables/useLifeResource";
+import { useLifePagedList } from "../../composables/useLifePagedList";
 import { BenefitStatus } from "../../constants/statuses";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
-import { benefitName, pageOf } from "../../individual/individualRules";
+import { benefitName } from "../../individual/individualRules";
 import { getBenefits } from "../../api/policyApi";
 
 const router = useRouter();
@@ -28,18 +28,9 @@ const COLUMNS = [
   { key: "status", label: "Status" },
 ];
 const TABS = { Draft: BenefitStatus.PENDING, Active: BenefitStatus.ACTIVE, Renewed: BenefitStatus.RENEWED, Lapsed: BenefitStatus.LAPSED, Cancelled: BenefitStatus.CANCELLED, Disabled: BenefitStatus.DISABLED };
-const tab = ref("Draft");
-const list = useLifeResource((status) => getBenefits(status), { initial: [], map: (d) => (Array.isArray(d) ? d : []) });
-const search = ref("");
-const page = ref(1);
-watch(tab, (t) => { page.value = 1; list.load(TABS[t]); }, { immediate: true });
-watch(search, () => (page.value = 1));
-const filtered = computed(() => {
-  const q = search.value.trim().toLowerCase();
-  const rows = (list.data.value || []).filter((b) => !b.deleted);
-  return q ? rows.filter((b) => `${benefitName(b)} ${b.policyNumber || ""} ${b.personPhone || ""}`.toLowerCase().includes(q)) : rows;
-});
-const view = computed(() => pageOf(filtered.value, page.value, 20));
+const list = useLifePagedList(({ status, ...query }) => getBenefits(status, query), { status: BenefitStatus.PENDING });
+list.reload();
+const tab = computed({ get: () => Object.keys(TABS).find((k) => TABS[k] === list.status.value), set: (t) => (list.status.value = TABS[t]) });
 
 const open = (b) => router.push(`/life/individual/${b.benefitUuid}`);
 </script>
@@ -52,12 +43,12 @@ const open = (b) => router.push(`/life/individual/${b.benefitUuid}`);
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
       <TabGroup v-model="tab" :tabs="Object.keys(TABS)" />
-      <div class="w-72"><TextField v-model="search" type="search" placeholder="Search name, policy or phone" aria-label="Search individual policies" /></div>
+      <div class="w-72"><TextField v-model="list.search.value" type="search" placeholder="Search name, policy or phone" aria-label="Search individual policies" /></div>
     </div>
 
     <ListTable
       :columns="COLUMNS"
-      :rows="view.rows"
+      :rows="list.rows.value"
       row-key="benefitUuid"
       :loading="list.loading.value"
       :error="list.error.value"
@@ -65,11 +56,11 @@ const open = (b) => router.push(`/life/individual/${b.benefitUuid}`);
       :skeleton-rows="6"
       clickable
       @row-click="open"
-      @retry="list.load(TABS[tab])"
+      @retry="list.reload()"
     >
       <template #empty>
-        <p class="text-sm font-semibold text-ink">{{ search ? "No policies match your search" : `No ${tab.toLowerCase()} individual policies` }}</p>
-        <p v-if="!search && tab === 'Draft'" class="mt-1 text-sm text-ink-muted">Start one with “New policy”.</p>
+        <p class="text-sm font-semibold text-ink">{{ list.search.value ? "No policies match your search" : `No ${tab.toLowerCase()} individual policies` }}</p>
+        <p v-if="!list.search.value && tab === 'Draft'" class="mt-1 text-sm text-ink-muted">Start one with “New policy”.</p>
       </template>
       <template #cell-holder="{ row }">
         <span class="font-medium text-ink">{{ benefitName(row) }}</span>
@@ -86,7 +77,7 @@ const open = (b) => router.push(`/life/individual/${b.benefitUuid}`);
         </span>
       </template>
       <template #cell-status="{ row }"><StatusBadge :status="row.status" /></template>
-      <template #footer><PageNav v-model:page="page" :total-pages="view.totalPages" :disabled="list.loading.value" /></template>
+      <template #footer><PageNav v-model:page="list.page.value" :total-pages="list.totalPages.value" :disabled="list.loading.value" /></template>
     </ListTable>
   </div>
 </template>

@@ -26,10 +26,25 @@ const last = () => calls[calls.length - 1];
 beforeEach(() => { calls.length = 0; auth.count = 0; });
 
 describe("Life API client", () => {
-  it("covers all 169 operations from the OpenAPI document, once each", () => {
+  // 169 operations generated from the OpenAPI document + 9 added from the backend contract of
+  // 2026-10 (docs/life-insurance/10-backend-prompt.md); regenerate from Swagger once it is live
+  it("covers the 169 generated operations plus the 9 contract additions, once each", () => {
     const names = [product, quotation, policy, underwriting, claim, reinsurance].flatMap((m) => Object.keys(m));
-    expect(names).toHaveLength(169);
-    expect(new Set(names).size).toBe(169);
+    expect(names).toHaveLength(178);
+    expect(new Set(names).size).toBe(178);
+  });
+
+  it("uses the JSON bodies of the 2026-10 contract", async () => {
+    await quotation.recordQuotationPayment("q-1", { receiptNumber: "R-1", receiptDate: "2026-10-28" });
+    expect(last()).toMatchObject({ method: "put", url: "/quotation/q-1/pay", data: { receiptNumber: "R-1", receiptDate: "2026-10-28" } });
+    await claim.rejectClaim("c-1", "Event before cover");
+    expect(last()).toMatchObject({ method: "put", url: "/claim/c-1/deny", data: { comment: "Event before cover" } });
+    await underwriting.updateQuestionStatus("qn-1", "DISABLED");
+    expect(last()).toMatchObject({ method: "put", url: "/question/qn-1/status", config: { params: { status: "DISABLED" } } });
+    await policy.getBenefitQuote({ term: 10 });
+    expect(last()).toMatchObject({ method: "get", url: "/benefit/quote", config: { params: { term: 10 } } });
+    await policy.getIndividualRiderBenefits({ benefitUuid: "b-1" });
+    expect(last()).toMatchObject({ url: "/individual-rider-benefit/active/benefits", config: { params: { benefitUuid: "b-1" } } });
   });
 
   it("targets the Life service through /api/life and always authenticates", async () => {

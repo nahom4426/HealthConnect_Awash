@@ -46,10 +46,10 @@ describe("question form", () => {
 describe("answer and range grids", () => {
   it("rejects the same library answer twice and an over-long follow-up question", () => {
     const res = validateRateRows(answerOptionSpec(library), [
-      { _key: "a", possibleAnswerUuid: "pa-yes", weight: 1, critical: false, cascadedQuestion: "x".repeat(251) },
+      { _key: "a", possibleAnswerUuid: "pa-yes", weight: 1, critical: false, cascadedQuestion: "x".repeat(501) },
       { _key: "b", possibleAnswerUuid: "pa-yes", weight: 0, critical: false, cascadedQuestion: "" },
     ]);
-    expect(res.fieldErrors.a.cascadedQuestion).toBe("At most 250 characters");
+    expect(res.fieldErrors.a.cascadedQuestion).toBe("At most 500 characters");
     expect(res.tableErrors).toContain("Two rows have the same answer (Yes).");
   });
 

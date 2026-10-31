@@ -2,8 +2,7 @@ import { ref, watch } from "vue";
 import { useLifeResource } from "./useLifeResource";
 
 /**
- * Server-paged Life list (page/limit/search/status query params). The Life API returns a
- * plain array with `totalPages` repeated on each item, like the health backend.
+ * Server-paged Life list (page/limit/search/status query params).
  * @param {(params: { page: number, limit: number, search?: string, status?: string }) => Promise<any>} fetcher
  */
 export function useLifePagedList(fetcher, { status = "", limit = 20 } = {}) {
@@ -11,11 +10,16 @@ export function useLifePagedList(fetcher, { status = "", limit = 20 } = {}) {
   const search = ref("");
   const statusRef = ref(status);
   const totalPages = ref(1);
+  const totalElements = ref(null);
   const { data, loading, error, load } = useLifeResource(fetcher, {
     initial: [],
+    // Older lists: a plain array with totalPages (and totalElements) on each item. Newer lists:
+    // { content, page, limit, totalPages, totalElements } (contract 2026-10)
     map: (d) => {
-      const rows = Array.isArray(d) ? d : [];
-      totalPages.value = Math.max(1, Number(rows[0]?.totalPages) || 1);
+      const rows = Array.isArray(d) ? d : Array.isArray(d?.content) ? d.content : [];
+      const meta = Array.isArray(d) ? rows[0] : d;
+      totalPages.value = Math.max(1, Number(meta?.totalPages) || 1);
+      totalElements.value = Number(meta?.totalElements) || null;
       return rows;
     },
   });
@@ -35,5 +39,5 @@ export function useLifePagedList(fetcher, { status = "", limit = 20 } = {}) {
   watch(statusRef, () => { page.value = 1; reload(); });
   watch(page, reload);
 
-  return { rows: data, loading, error, page, totalPages, search, status: statusRef, reload };
+  return { rows: data, loading, error, page, totalPages, totalElements, search, status: statusRef, reload };
 }

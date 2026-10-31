@@ -12,8 +12,8 @@ import PageNav from "@/components/PageNav.vue";
 import { useLifePagedList } from "../../composables/useLifePagedList";
 import { confirmAction } from "../../composables/confirmAction";
 import { RecordStatus } from "../../constants/statuses";
-import { QUESTION_TYPES, fromQuestion, isChoice, toQuestionRequest } from "../../underwriting/questionRules";
-import { deleteQuestion, getQuestion, getQuestions, updateQuestion } from "../../api/underwritingApi";
+import { QUESTION_TYPES, isChoice } from "../../underwriting/questionRules";
+import { deleteQuestion, getQuestions, updateQuestionStatus } from "../../api/underwritingApi";
 
 const router = useRouter();
 const COLUMNS = [{ key: "question", label: "Question", class: "max-w-md" }, { key: "category", label: "Category" }, { key: "questionType", label: "Answered as" }, { key: "status", label: "Status" }, { key: "actions", label: "Actions", align: "right", srOnly: true }];
@@ -37,7 +37,6 @@ function detail(q) {
 
 const open = (q) => router.push(q ? `/life/underwriting/questions/${q.questionUuid}` : "/life/underwriting/questions/new");
 
-// There is no status-only endpoint: the full question is reloaded and sent back with the new status
 function setStatus(q, status) {
   const activate = status === RecordStatus.ACTIVE;
   confirmAction(
@@ -48,10 +47,7 @@ function setStatus(q, status) {
       tone: activate ? "primary" : "danger",
     },
     async () => {
-      const fresh = await getQuestion(q.questionUuid);
-      if (!fresh?.success) return;
-      const { form, answers, ranges } = fromQuestion(fresh.data);
-      const res = await updateQuestion(q.questionUuid, toQuestionRequest(form, answers, ranges, status));
+      const res = await updateQuestionStatus(q.questionUuid, status);
       if (res?.success) { toasted(true, activate ? "Question activated" : "Question disabled"); list.reload(); }
     }
   );

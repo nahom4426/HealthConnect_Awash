@@ -50,7 +50,7 @@ async function onImport(e) {
   e.target.value = "";
   if (!file) return;
   importing.value = true;
-  const res = await importInsuredPerson(fileForm(file), { institutionUuid: props.quotation.institutionUuid, qutoationUuid: uuid });
+  const res = await importInsuredPerson(fileForm(file), { institutionUuid: props.quotation.institutionUuid, quotationUuid: uuid });
   importing.value = false;
   if (res?.success) { toasted(true, res.data?.message || "Members imported"); members.page.value = 1; members.reload(); }
 }

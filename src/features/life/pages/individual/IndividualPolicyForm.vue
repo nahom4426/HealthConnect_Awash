@@ -1,7 +1,7 @@
 <script setup>
 // Create or edit an individual term policy (BenefitRequest) and, on create, its riders
-// (IndividualRiderBenefitRequest[]). The rate panels show what the backend has for the age and
-// term; premiums are not worked out here.
+// (IndividualRiderBenefitRequest[]). The quote panel shows the backend's priced quote
+// (GET /benefit/quote: age next birthday, rates, premiums); nothing is priced here.
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
@@ -12,9 +12,9 @@ import SelectField from "@/components/fields/SelectField.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { BenefitStatus } from "../../constants/statuses";
 import { formatAmount } from "../../constants/labels";
-import { GENDERS, ageOn, benefitActions, fromBenefit, rateFor, toBenefitRequest, toRiderBenefitRequest, validateBenefit, validateRiderBenefit } from "../../individual/individualRules";
-import { createBenefit, createIndividualRiderBenefit, getBenefit, updateBenefit } from "../../api/policyApi";
-import { geTermPremium, getIndividualRiderRate, getRiders } from "../../api/productApi";
+import { GENDERS, benefitActions, fromBenefit, quoteParams, toBenefitRequest, toRiderBenefitRequest, validateBenefit, validateRiderBenefit } from "../../individual/individualRules";
+import { createBenefit, createIndividualRiderBenefit, getBenefit, getBenefitQuote, updateBenefit } from "../../api/policyApi";
+import { getRiders } from "../../api/productApi";
 
 const route = useRoute();
 const router = useRouter();
@@ -34,27 +34,6 @@ if (editing) {
   });
 }
 
-const age = computed(() => ageOn(form.dateOfBirth, form.beginDate));
-
-// Term rate for the age and term
-const termRate = ref(null);
-const termRateError = ref("");
-const termRateLoading = ref(false);
-let termSeq = 0;
-watch(() => [age.value, form.insuranceTerm], async ([a, t]) => {
-  const mine = ++termSeq;
-  termRate.value = null;
-  termRateError.value = "";
-  if (a === null || a < 0 || !(Number(t) >= 1)) return;
-  termRateLoading.value = true;
-  const res = await geTermPremium({ age: a, term: Number(t) });
-  if (mine !== termSeq) return;
-  termRateLoading.value = false;
-  if (res?.success && res.data) termRate.value = res.data;
-  else termRateError.value = res?.error || `No rate is set up for age ${a} and a ${t}-year term.`;
-});
-const termRateView = computed(() => rateFor(termRate.value, form.gender));
-
 // Riders (create only; the policy page manages them afterwards)
 const riders = useLifeResource(getRiders, { initial: [] });
 if (!editing) riders.load();
@@ -65,16 +44,28 @@ const removeRider = (row) => (riderRows.value = riderRows.value.filter((r) => r.
 const riderOf = (uuid) => riders.data.value.find((r) => r.riderUuid === uuid);
 const availableFor = (row) => riders.data.value.filter((r) => r.riderUuid === row.riderUuid || !riderRows.value.some((x) => x.riderUuid === r.riderUuid));
 
-async function lookupRiderRate(row) {
-  row.rate = null;
-  row.rateError = "";
-  if (!row.riderUuid || age.value === null) return;
-  const res = await getIndividualRiderRate({ age: age.value, riderUuid: row.riderUuid });
-  const found = Array.isArray(res?.data) ? res.data[0] : res?.data;
-  if (res?.success && found) row.rate = found;
-  else row.rateError = `No rate for age ${age.value}`;
-}
-watch(age, () => riderRows.value.forEach(lookupRiderRate));
+// Priced quote from the backend, refreshed as the inputs change (debounced)
+const quote = ref(null);
+const quoteError = ref("");
+const quoteLoading = ref(false);
+const quoteInputs = computed(() => quoteParams(form, riderRows.value));
+let quoteTimer, quoteSeq = 0;
+watch(quoteInputs, (params) => {
+  clearTimeout(quoteTimer);
+  quote.value = null;
+  quoteError.value = "";
+  if (!params) return;
+  quoteTimer = setTimeout(async () => {
+    const mine = ++quoteSeq;
+    quoteLoading.value = true;
+    const res = await getBenefitQuote(params);
+    if (mine !== quoteSeq) return;
+    quoteLoading.value = false;
+    if (res?.success && res.data) quote.value = res.data;
+    else quoteError.value = res?.error || "No quote for these details.";
+  }, 400);
+}, { deep: true });
+const riderQuote = (uuid) => quote.value?.riders?.find((r) => r.riderUuid === uuid);
 
 async function save() {
   errors.value = validateBenefit(form);
@@ -152,10 +143,8 @@ const PERSON = [["firstName", "First name"], ["fatherName", "Father's name"], ["
                   label="Rider"
                   :options="availableFor(row).map((r) => ({ value: r.riderUuid, label: r.riderName }))"
                   :error="row.errors.riderUuid"
-                  :hint="row.rate ? `Rate ${rateFor(row.rate, form.gender)?.rate ?? '—'} per ${row.rate.rateUnit ?? '—'}` : undefined"
-                  @change="lookupRiderRate(row)"
+                  :hint="riderQuote(row.riderUuid) ? `Premium ${formatAmount(riderQuote(row.riderUuid).premium)} · rate ${riderQuote(row.riderUuid).rate ?? '—'} per ${riderQuote(row.riderUuid).rateUnit ?? '—'}` : undefined"
                 />
-                <p v-if="!row.errors.riderUuid && !row.rate && row.rateError" class="mt-1 text-xs text-warning-strong">{{ row.rateError }}</p>
               </div>
               <TextField
                 v-model.number="row.benefits"
@@ -173,24 +162,27 @@ const PERSON = [["firstName", "First name"], ["fatherName", "Father's name"], ["
         </section>
       </form>
 
-      <!-- Rate check -->
+      <!-- Priced quote -->
       <aside class="self-start p-5 rounded-2xl border xl:sticky xl:top-4 bg-surface border-line shadow-card">
-        <p class="text-xs font-semibold tracking-wide uppercase text-ink-subtle">Rate check</p>
-        <dl class="grid gap-3 mt-3 text-sm">
-          <div class="flex justify-between"><dt class="text-ink-muted">Age at start</dt><dd class="font-medium tabular-nums text-ink">{{ age ?? "—" }}</dd></div>
-          <div class="flex justify-between"><dt class="text-ink-muted">Term</dt><dd class="font-medium tabular-nums text-ink">{{ form.insuranceTerm ? `${form.insuranceTerm} years` : "—" }}</dd></div>
-        </dl>
-        <div class="pt-3 mt-3 border-t border-line">
-          <p v-if="termRateLoading" class="text-sm text-ink-subtle">Looking up the rate…</p>
-          <p v-else-if="termRateError" class="text-sm text-warning-strong">{{ termRateError }}</p>
-          <dl v-else-if="termRateView" class="grid gap-2 text-sm">
-            <div class="flex justify-between"><dt class="text-ink-muted">Term rate</dt><dd class="font-semibold tabular-nums text-ink">{{ termRateView.rate ?? "Choose gender" }}<span v-if="termRateView.rate != null" class="font-normal text-ink-subtle"> per {{ termRateView.rateUnit }}</span></dd></div>
-            <div class="flex justify-between"><dt class="text-ink-muted">Max discount</dt><dd class="tabular-nums text-ink">{{ termRateView.maxDiscount ?? "—" }}%</dd></div>
-            <div class="flex justify-between"><dt class="text-ink-muted">Max loading</dt><dd class="tabular-nums text-ink">{{ termRateView.maxLoad ?? "—" }}%</dd></div>
+        <p class="text-xs font-semibold tracking-wide uppercase text-ink-subtle">Quote</p>
+        <p v-if="!quoteInputs" class="mt-3 text-sm text-ink-subtle">Enter the date of birth, gender, start date, term and sum assured to see the premium.</p>
+        <p v-else-if="quoteLoading" class="mt-3 text-sm text-ink-subtle">Pricing…</p>
+        <p v-else-if="quoteError" class="mt-3 text-sm text-warning-strong">{{ quoteError }}</p>
+        <template v-else-if="quote">
+          <dl class="grid gap-2 mt-3 text-sm">
+            <div class="flex justify-between"><dt class="text-ink-muted">Age next birthday</dt><dd class="font-medium tabular-nums text-ink">{{ quote.age ?? "—" }}</dd></div>
+            <div class="flex justify-between"><dt class="text-ink-muted">Term rate</dt><dd class="tabular-nums text-ink">{{ quote.termRate ?? "—" }}<span class="text-ink-subtle"> per {{ quote.rateUnit ?? "—" }}</span></dd></div>
+            <div class="flex justify-between"><dt class="text-ink-muted">Term premium</dt><dd class="tabular-nums text-ink">{{ formatAmount(quote.termPremium) }}</dd></div>
+            <div v-for="r in quote.riders || []" :key="r.riderUuid" class="flex justify-between">
+              <dt class="text-ink-muted">{{ riderOf(r.riderUuid)?.riderName || "Rider" }}</dt><dd class="tabular-nums text-ink">{{ formatAmount(r.premium) }}</dd>
+            </div>
           </dl>
-          <p v-else class="text-sm text-ink-subtle">Enter the date of birth, start date and term to see the rate.</p>
-        </div>
-        <p class="mt-4 text-xs text-ink-subtle">The premium itself is calculated by the system and shown on the policy once saved.</p>
+          <dl class="grid gap-2 pt-3 mt-3 text-sm border-t border-line">
+            <div class="flex justify-between"><dt class="font-medium text-ink">Total premium</dt><dd class="font-semibold tabular-nums text-ink">{{ formatAmount(quote.totalPremium) }}</dd></div>
+            <div class="flex justify-between"><dt class="text-ink-muted">Total benefit</dt><dd class="tabular-nums text-ink">{{ formatAmount(quote.totalBenefit) }}</dd></div>
+          </dl>
+        </template>
+        <p class="mt-4 text-xs text-ink-subtle">Priced by the system from the individual term and rider rates. Saving the policy prices it the same way.</p>
       </aside>
     </div>
   </div>

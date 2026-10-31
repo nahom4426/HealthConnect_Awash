@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validateRateRows } from "../../rates/rateTables";
 import {
-  fromInsured, quotationActions, quotedRiderSpec, riderChanges, toInsuredRequest, toPaymentParams, toQuotationRequest,
+  fromInsured, quotationActions, quotedRiderSpec, riderChanges, taxesCalculated, toInsuredRequest, toPaymentBody, toQuotationRequest,
   validateInsured, validatePayment, validatePolicyDates, validateQuotation,
 } from "../quotationRules";
 
@@ -69,13 +69,17 @@ describe("quoted riders", () => {
 });
 
 describe("payment and policy dates", () => {
-  it("requires the receipt and every amount, without computing any", () => {
-    expect(validatePayment({ receiptNumber: "", receiptDate: "", requestedPremium: "", withHoldingTax: "-1", revenueStamp: "5", netPremium: "x" })).toEqual({
-      receiptNumber: "Enter the receipt number", receiptDate: "Required", requestedPremium: "Required", withHoldingTax: "Must be 0 or more", netPremium: "Must be 0 or more",
+  it("requires the receipt, and the tax amounts only until the server calculates them", () => {
+    expect(validatePayment({ receiptNumber: "", receiptDate: "", withHoldingTax: "-1", revenueStamp: "5", netPremium: "x" })).toEqual({
+      receiptNumber: "Enter the receipt number", receiptDate: "Required", withHoldingTax: "Must be 0 or more", netPremium: "Must be 0 or more",
     });
-    expect(toPaymentParams({ receiptNumber: " R-1 ", receiptDate: "2026-10-01", requestedPremium: "1000", withHoldingTax: "20", revenueStamp: "5", netPremium: "975" })).toEqual({
-      receiptNumber: "R-1", receiptDate: "2026-10-01T00:00:00", requestedPremium: 1000, withHoldingTax: 20, revenueStamp: 5, netPremium: 975,
+    expect(validatePayment({ receiptNumber: "R-1", receiptDate: "2026-10-01" }, { taxesRequired: false })).toEqual({});
+    expect(toPaymentBody({ receiptNumber: " R-1 ", receiptDate: "2026-10-01", withHoldingTax: "20", revenueStamp: "5", netPremium: "975" })).toEqual({
+      receiptNumber: "R-1", receiptDate: "2026-10-01", withHoldingTax: 20, revenueStamp: 5, netPremium: 975,
     });
+    expect(toPaymentBody({ receiptNumber: "R-1", receiptDate: "2026-10-01", withHoldingTax: "20" }, { taxesRequired: false })).toEqual({ receiptNumber: "R-1", receiptDate: "2026-10-01" });
+    expect(taxesCalculated({ calculatedWithHoldingTax: null })).toBe(false);
+    expect(taxesCalculated({ calculatedWithHoldingTax: 20 })).toBe(true);
   });
 
   it("orders policy dates", () => {

@@ -24,7 +24,11 @@ export function setInsuranceApproveRevieweBy(data) {
 export function setInsuranceApproveApprovedBy(data) {
   return lifeApi().put(`/claim/insurance/approve`, data);
 }
-/** PUT /claim/deny · query: claimUuid*: string, comment*: string · returns: object */
+/** PUT /claim/{claimUuid}/deny · body: { comment } (2–500 characters) · contract 2026-10 #26 */
+export function rejectClaim(claimUuid, comment) {
+  return lifeApi().put(`/claim/${claimUuid}/deny`, { comment });
+}
+/** @deprecated query-string form; use rejectClaim. PUT /claim/deny · query: claimUuid*, comment* */
 export function denyClaim(params = {}) {
   return lifeApi().put(`/claim/deny`, undefined, { params });
 }

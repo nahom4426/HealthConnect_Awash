@@ -23,7 +23,7 @@ export function answerOptionSpec(library = []) {
       { key: "possibleAnswerUuid", label: "Answer", type: "select", wide: true, options: library.map((a) => ({ value: a.possibleAnswerUuid, label: a.answer })) },
       { key: "weight", label: "Score", type: "decimal", min: 0, hint: "Added to the applicant's risk score when chosen" },
       { key: "critical", label: "Critical", type: "bool", hint: "Choosing this answer needs an underwriter's review" },
-      { key: "cascadedQuestion", label: "Follow-up question (optional)", type: "text", maxLength: 250, optional: true, wide: true },
+      { key: "cascadedQuestion", label: "Follow-up question (optional)", type: "text", maxLength: 500, optional: true, wide: true },
     ],
     uniqueBy: (r) => r.possibleAnswerUuid || "",
     uniqueLabel: "answer",

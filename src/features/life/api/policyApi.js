@@ -12,6 +12,14 @@ export function issuePolicy(quotationUuid, data) {
 export function generateTreatyReport(quotationUuid) {
   return lifeApi().put(`/policy/generate/treaty-report/${quotationUuid}`, undefined);
 }
+/** GET /policy/{quotationUuid} · policy detail: premiums, members, sum assured, schedule, outstanding premium, endorsements, underwriting (#20) */
+export function getPolicy(quotationUuid) {
+  return lifeApi().get(`/policy/${quotationUuid}`);
+}
+/** GET /policy/{quotationUuid}/history · oldest first (G13) */
+export function getPolicyHistory(quotationUuid) {
+  return lifeApi().get(`/policy/${quotationUuid}/history`);
+}
 /** GET /policy/lists · query: page: integer, limit: integer, status*: string (ACTIVE | PENDING | MODIFIED | DISABLED | LAPSED | CANCELLED), search: string · returns: PolicyResponse[] */
 export function getPolicies(params = {}) {
   return lifeApi().get(`/policy/lists`, { params });
@@ -34,9 +42,21 @@ export function deleteBenefit(benefitUuid) {
 export function createBenefit(data) {
   return lifeApi().post(`/benefit`, data);
 }
-/** GET /benefit/benefits/{status} · status: ACTIVE | PENDING | RENEWED | DISABLED | LAPSED | CANCELLED · returns: BenefitResponse[] */
-export function getBenefits(status) {
-  return lifeApi().get(`/benefit/benefits/${status}`);
+/** GET /benefit/benefits/{status} · query: page, limit, search (all optional; without them every record) · status: ACTIVE | PENDING | RENEWED | DISABLED | LAPSED | CANCELLED · returns: BenefitResponse[] */
+export function getBenefits(status, params = {}) {
+  return lifeApi().get(`/benefit/benefits/${status}`, { params });
+}
+/** GET /benefit/quote · query: dateOfBirth, gender, beginDate, term, termBenefit, riders ("riderUuid:amount,…") · returns: { age, termRate, rateUnit, termPremium, riders[{ riderUuid, benefit, rate, rateUnit, premium }], totalPremium, totalBenefit } (#27) */
+export function getBenefitQuote(params = {}) {
+  return lifeApi().get(`/benefit/quote`, { params });
+}
+/** PUT /benefit/{benefitUuid}/issue · PENDING → ACTIVE; 409 unless pricing is complete, the customer's KYC is VERIFIED and underwriting is clear (G11) */
+export function issueBenefit(benefitUuid) {
+  return lifeApi().put(`/benefit/${benefitUuid}/issue`);
+}
+/** GET /benefit/{benefitUuid}/history · status changes and edits, oldest first (G13) */
+export function getBenefitHistory(benefitUuid) {
+  return lifeApi().get(`/benefit/${benefitUuid}/history`);
 }
 
 // ── individual-rider-benefit ──
@@ -56,7 +76,7 @@ export function deleteIndividualRiderBenefit(individualRiderBenefitUuid) {
 export function createIndividualRiderBenefit(data) {
   return lifeApi().post(`/individual-rider-benefit`, data);
 }
-/** GET /individual-rider-benefit/active/benefits · returns: IndividualRiderBenefitResponse[] */
-export function getIndividualRiderBenefits() {
-  return lifeApi().get(`/individual-rider-benefit/active/benefits`);
+/** GET /individual-rider-benefit/active/benefits · query: benefitUuid (filters to one policy, #29) · returns: IndividualRiderBenefitResponse[] */
+export function getIndividualRiderBenefits(params = {}) {
+  return lifeApi().get(`/individual-rider-benefit/active/benefits`, { params });
 }

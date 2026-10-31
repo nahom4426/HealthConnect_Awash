@@ -8,8 +8,8 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
 import TextareaField from "@/components/fields/TextareaField.vue";
 import { toasted } from "@/utils/utils";
-import { DECISIONS, personName, validateDecision } from "../claims/claimRules";
-import { denyClaim, setInsuranceApproveApprovedBy, setInsuranceApproveRevieweBy, setProviderApprovePreparedBy } from "../api/claimApi";
+import { DECISIONS, commentLimit, personName, validateDecision } from "../claims/claimRules";
+import { rejectClaim, setInsuranceApproveApprovedBy, setInsuranceApproveRevieweBy, setProviderApprovePreparedBy } from "../api/claimApi";
 
 const props = defineProps({ data: { type: Object, default: () => ({}) } });
 const action = props.data?.action;
@@ -24,7 +24,7 @@ const CALL = {
   submit: (body) => setProviderApprovePreparedBy(body),
   review: (body) => setInsuranceApproveRevieweBy(body),
   approve: (body) => setInsuranceApproveApprovedBy(body),
-  reject: (body) => denyClaim(body),
+  reject: (body) => rejectClaim(body.claimUuid, body.comment),
 };
 
 async function submit() {
@@ -44,7 +44,7 @@ async function submit() {
   <ModalParent>
     <NewFormParent size="md" :title="d.title" :subtitle="[claim.claimNumber, personName(claim)].filter(Boolean).join(' · ')">
       <form id="life-claim-decision" class="grid gap-3 p-5" novalidate @submit.prevent="submit">
-        <TextareaField v-model="comment" :label="d.required ? 'Reason' : 'Comment'" focus rows="4" :maxlength="1000" counter :placeholder="d.placeholder" :error="error" />
+        <TextareaField v-model="comment" :label="d.required ? 'Reason' : 'Comment'" focus rows="4" :maxlength="commentLimit(action)" counter :placeholder="d.placeholder" :error="error" />
         <p v-if="action === 'submit'" class="text-xs text-ink-muted">Describe the event (what happened, when and where) — the system doesn't have separate fields for it yet. You can't change the documents after submitting.</p>
       </form>
       <template #bottom>

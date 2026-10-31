@@ -18,6 +18,9 @@ const details = computed(() => [
   ["PV number", q.value.pvNumber],
 ]);
 const money = computed(() => [
+  ["Term premium", formatAmount(q.value.termPremium)],
+  ["Rider premium", formatAmount(q.value.riderPremium)],
+  ["Gross premium", formatAmount(q.value.grossPremium)],
   ["Requested premium", formatAmount(q.value.requestedPremium)],
   ["Withholding tax", formatAmount(q.value.withHoldingTax)],
   ["Revenue stamp", formatAmount(q.value.revenueStamp)],

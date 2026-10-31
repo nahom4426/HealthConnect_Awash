@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ageOn, benefitActions, fromBenefit, pageOf, rateFor, toBenefitRequest, toRiderBenefitRequest, validateBenefit, validateRiderBenefit } from "../individualRules";
+import { benefitActions, fromBenefit, pageOf, quoteParams, toBenefitRequest, toRiderBenefitRequest, validateBenefit, validateRiderBenefit } from "../individualRules";
 
 const valid = { firstName: "Liya", fatherName: "Mekonnen", grandFatherName: "Alemu", gender: "Female", personPhone: "+251911223344", dateOfBirth: "1990-06-15", beginDate: "2026-11-01", insuranceTerm: "10", termBenefit: "500000" };
 
@@ -9,18 +9,11 @@ describe("individual policy", () => {
     expect(benefitActions({ status: "ACTIVE" })).toEqual({ edit: false, remove: false, riders: false });
   });
 
-  it("works out age last birthday for the rate lookup", () => {
-    expect(ageOn("1990-06-15", "2026-06-14")).toBe(35);
-    expect(ageOn("1990-06-15", "2026-06-15")).toBe(36);
-    expect(ageOn("1990-06-15T00:00:00", "2026-11-01")).toBe(36);
-    expect(ageOn("", "2026-11-01")).toBeNull();
-  });
-
-  it("picks the rate for the gender without calculating a premium", () => {
-    const row = { maleRate: 4.2, femaleRate: 3.9, rateUnit: 1000, maxDiscount: 10, maxLoad: 50 };
-    expect(rateFor(row, "Female")).toEqual({ rate: 3.9, rateUnit: 1000, maxDiscount: 10, maxLoad: 50 });
-    expect(rateFor(row, "")).toMatchObject({ rate: null });
-    expect(rateFor(null, "Male")).toBeNull();
+  it("asks the backend for a quote only once every pricing input is there", () => {
+    expect(quoteParams({ ...valid, gender: "" })).toBeNull();
+    expect(quoteParams({ ...valid, termBenefit: "" })).toBeNull();
+    expect(quoteParams(valid)).toEqual({ dateOfBirth: "1990-06-15", gender: "Female", beginDate: "2026-11-01", term: 10, termBenefit: 500000 });
+    expect(quoteParams(valid, [{ riderUuid: "r1", benefits: "200000" }, { riderUuid: "", benefits: "5" }, { riderUuid: "r2", benefits: "" }]).riders).toBe("r1:200000");
   });
 
   it("validates the person and cover", () => {

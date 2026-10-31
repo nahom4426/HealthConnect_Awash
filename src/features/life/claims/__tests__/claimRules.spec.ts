@@ -28,6 +28,8 @@ describe("claim helpers", () => {
     expect(validateDecision("reject", " ")).toBe("Give a reason");
     expect(validateDecision("approve", "")).toBe("");
     expect(validateDecision("review", "x".repeat(1001))).toBe("At most 1000 characters");
+    expect(validateDecision("reject", "x")).toBe("At least 2 characters");
+    expect(validateDecision("reject", "x".repeat(501))).toBe("At most 500 characters");
   });
 
   it("checks a document upload", () => {

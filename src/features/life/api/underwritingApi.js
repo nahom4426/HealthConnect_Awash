@@ -11,6 +11,10 @@ export function getQuestion(questionUuid) {
 export function updateQuestion(questionUuid, data) {
   return lifeApi().put(`/question/${questionUuid}`, data);
 }
+/** PUT /question/{questionUuid}/status · query: status* (ACTIVE | PENDING | DISABLED) · contract 2026-10 #14 */
+export function updateQuestionStatus(questionUuid, status) {
+  return lifeApi().put(`/question/${questionUuid}/status`, undefined, { params: { status } });
+}
 /** DELETE /question/{questionUuid} · returns: MessageResponse */
 export function deleteQuestion(questionUuid) {
   return lifeApi().delete(`/question/${questionUuid}`);

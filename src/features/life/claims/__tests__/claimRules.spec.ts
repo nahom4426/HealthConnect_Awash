@@ -90,6 +90,7 @@ describe("claim helpers", () => {
     const t = claimTimeline({ requestedDate: "2026-10-01T09:00:00", agencyComment: "Urgent" });
     expect(t[0]).toEqual({ label: "Submitted", date: "2026-10-01T09:00:00", comment: "Urgent" });
     expect(t[1]).toEqual({ label: "Registered", date: null, comment: "" });
+    expect(claimTimeline({ status: "SAVED", requestedDate: "2026-10-31" })[0].date).toBeNull();
     expect(missingDocuments({ documents: [{ documentType: "CLAIM_FORM", received: true }, { documentType: "DEATH_CERTIFICATE", received: false }] })).toEqual([{ documentType: "DEATH_CERTIFICATE", received: false }]);
   });
 

@@ -237,8 +237,10 @@ export function toPayRequest(claimUuid, rows, payees = []) {
 
 // ── timeline and documents ──
 export function claimTimeline(c = {}) {
+  // The backend stamps requestedDate when a draft is saved; a draft hasn't been submitted yet
+  const submitted = c.status === S.SAVED ? null : c.requestedDate;
   return [
-    ["Submitted", c.requestedDate, c.agencyComment],
+    ["Submitted", submitted, c.agencyComment],
     ["Registered", c.registeredDate],
     ["Reviewed", c.reviewedDate, c.reviewerComment],
     ["Assessed", c.assessedDate, c.decisionNote],

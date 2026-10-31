@@ -63,6 +63,17 @@ Found in the live test run (2026-10-31, after the service came back; test data i
 8. Data to check with the business: rider "Demeke" has min/max sum assured 0.05–0.1; the older paid quotation
    Africa/Policy/Quote/0002/26 has net premium 250,000 against a gross premium of 4.20.
 
+Found in the claims v2 run (2026-10-31, TEST claim 7843fbd1-e01f-4084-874f-9899ecc2aaac on member
+Africa/Policy/Cnt/0005/26/0001):
+9.  POST /claim-attachment never answers when a file is sent: a 50-byte PDF or text file hangs for 25 s+
+    and nothing is stored. Without a file it answers 500 at once, and without a token 401 at once, so the
+    request reaches the service and stalls while storing the file. This blocks every claim at REGISTERED
+    (review needs every checklist document). Please check the attachment storage path / disk.
+10. Registering a claim again after INFO_REQUESTED gives it a new claimNumberCode (CLN/LIFE/0001/26 became
+    CLN/LIFE/0002/26). Keep the number assigned at the first registration.
+11. POST /claim/v2 sets requestedDate when the draft is saved (status SAVED). It should stay null until the
+    agency submits (PUT /claim/agency/request). The UI ignores it on drafts for now.
+
 ═══════════════════════════════════════════════════════════════════════════════════════════════
 GENERAL RULES
 ═══════════════════════════════════════════════════════════════════════════════════════════════

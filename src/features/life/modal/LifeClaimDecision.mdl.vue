@@ -1,6 +1,6 @@
 <script setup>
-// One step on a claim with a comment (ClaimRequest { claimUuid, comment ≤ 1000 }); reject uses
-// PUT /claim/deny with a required reason. data: { action: 'submit'|'review'|'approve'|'reject', claim }
+// One step on a claim with a comment (ClaimRequest { claimUuid, comment ≤ 1000 }); reject and request-info
+// take a required reason ({ comment }, 2–500). data: { action: keyof DECISIONS, claim: LifeClaimResponse }
 import { ref } from "vue";
 import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
@@ -8,8 +8,11 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
 import TextareaField from "@/components/fields/TextareaField.vue";
 import { toasted } from "@/utils/utils";
-import { DECISIONS, commentLimit, personName, validateDecision } from "../claims/claimRules";
-import { rejectClaim, setInsuranceApproveApprovedBy, setInsuranceApproveRevieweBy, setProviderApprovePreparedBy } from "../api/claimApi";
+import { formatAmount } from "../constants/labels";
+import { DECISIONS, commentLimit, validateDecision } from "../claims/claimRules";
+import {
+  authorizeClaim, registerClaim, rejectLifeClaim, requestClaimInfo, setInsuranceApproveApprovedBy, setInsuranceApproveRevieweBy, setProviderApprovePreparedBy,
+} from "../api/claimApi";
 
 const props = defineProps({ data: { type: Object, default: () => ({}) } });
 const action = props.data?.action;
@@ -22,9 +25,12 @@ const pending = ref(false);
 
 const CALL = {
   submit: (body) => setProviderApprovePreparedBy(body),
+  register: (body) => registerClaim(body),
   review: (body) => setInsuranceApproveRevieweBy(body),
   approve: (body) => setInsuranceApproveApprovedBy(body),
-  reject: (body) => rejectClaim(body.claimUuid, body.comment),
+  authorize: (body) => authorizeClaim(body),
+  requestInfo: (body) => requestClaimInfo(body.claimUuid, body.comment),
+  reject: (body) => rejectLifeClaim(body.claimUuid, body.comment),
 };
 
 async function submit() {
@@ -42,15 +48,16 @@ async function submit() {
 
 <template>
   <ModalParent>
-    <NewFormParent size="md" :title="d.title" :subtitle="[claim.claimNumber, personName(claim)].filter(Boolean).join(' · ')">
+    <NewFormParent size="md" :title="d.title" :subtitle="[claim.claimNumberCode, claim.insuredName].filter(Boolean).join(' · ')">
       <form id="life-claim-decision" class="grid gap-3 p-5" novalidate @submit.prevent="submit">
         <TextareaField v-model="comment" :label="d.required ? 'Reason' : 'Comment'" focus rows="4" :maxlength="commentLimit(action)" counter :placeholder="d.placeholder" :error="error" />
-        <p v-if="action === 'submit'" class="text-xs text-ink-muted">Describe the event (what happened, when and where) — the system doesn't have separate fields for it yet. You can't change the documents after submitting.</p>
+        <p v-if="action === 'submit'" class="text-xs text-ink-muted">You can't change the documents after submitting, unless the insurer asks for more information.</p>
+        <p v-else-if="action === 'approve' && claim.netPayable != null" class="text-xs text-ink-muted">Net payable {{ formatAmount(claim.netPayable) }}. Up to the auto-authorize limit, approving also authorizes the payment.</p>
       </form>
       <template #bottom>
         <div class="flex gap-2 justify-end p-4 w-full border-t border-line">
           <Button variant="outline" @click="closeModal()">Cancel</Button>
-          <Button html-type="submit" form="life-claim-decision" :pending="pending" :variant="d.tone === 'danger' ? 'danger' : 'primary'">{{ d.confirmText }}</Button>
+          <Button html-type="submit" form="life-claim-decision" :pending="pending" :variant="d.tone === 'danger' ? 'destructive' : 'primary'">{{ d.confirmText }}</Button>
         </div>
       </template>
     </NewFormParent>

@@ -1,6 +1,6 @@
 <script setup>
 // Claim work queues for one side: the agency that prepares claims, or the insurer's claims desk.
-// Each tab is one backend list; the queue is passed to the claim page so it knows the stage.
+// Each tab is one status of GET /claim/v2/list.
 import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
@@ -12,58 +12,50 @@ import ListTable from "@/components/ListTable.vue";
 import TextField from "@/components/fields/TextField.vue";
 import { useLifePagedList } from "../../composables/useLifePagedList";
 import { formatAmount, formatDate } from "../../constants/labels";
-import { personName, queuesFor } from "../../claims/claimRules";
-import * as api from "../../api/claimApi";
+import { claimTypeLabel, tabsFor } from "../../claims/claimRules";
+import { getLifeClaims } from "../../api/claimApi";
 
 const route = useRoute();
 const router = useRouter();
 const side = computed(() => route.meta.side || "insurance");
-const queues = computed(() => queuesFor(side.value));
+const tabs = computed(() => tabsFor(side.value));
 
-const FETCH = {
-  agency: { saved: api.getSavedClaims, requested: api.getAgencyRequestedClaims, approved: api.getAgencyApprovedClaims, paid: api.getAgencyPaidClaims, rejected: api.getAgencyRejectedClaims },
-  insurance: {
-    requested: api.getRequestedClaims, registered: api.getRegisteredClaims, reviewed: api.getReviewedClaimsByPayer, approved: api.getAuditedClaimsByPayer,
-    "for-authorization": api.getClaimsForAuthorization, authorized: api.getAuthorizedClaimsByInsurance, paid: api.getInsurancePaidClaims, rejected: api.getRejectedClaimsByPayer,
-  },
-};
-
-const queue = computed(() => (queues.value.some((q) => q.key === route.query.queue) ? route.query.queue : queues.value[0].key));
-const list = useLifePagedList((p) => FETCH[side.value][queue.value](p));
-watch([side, queue], () => { list.page.value = 1; list.reload(); }, { immediate: true });
+const status = computed(() => (tabs.value.some((t) => t.status === route.query.status) ? route.query.status : tabs.value[0].status));
+const list = useLifePagedList((p) => getLifeClaims({ ...p, status: status.value }));
+watch([side, status], () => { list.page.value = 1; list.reload(); }, { immediate: true });
 
 const tab = computed({
-  get: () => queues.value.find((q) => q.key === queue.value)?.label,
-  set: (label) => router.replace({ query: { ...route.query, queue: queues.value.find((q) => q.label === label)?.key } }),
+  get: () => tabs.value.find((t) => t.status === status.value)?.label,
+  set: (label) => router.replace({ query: { ...route.query, status: tabs.value.find((t) => t.label === label)?.status } }),
 });
-const hint = computed(() => queues.value.find((q) => q.key === queue.value)?.hint);
-const showAmount = computed(() => ["authorized", "paid", "for-authorization"].includes(queue.value));
+const hint = computed(() => tabs.value.find((t) => t.status === status.value)?.hint);
+// Before assessment the claimed amount is all there is; after it, the net payable
+const assessed = computed(() => ["APPROVED", "AUTHORIZED", "PAID"].includes(status.value));
 
 const columns = computed(() => [
-  { key: "claimNumber", label: "Claim" },
-  { key: "member", label: "Member" },
-  { key: "policy", label: side.value === "agency" ? "Policy" : "Agency" },
-  { key: "incidentDate", label: "Event date" },
-  { key: "claimDate", label: "Claimed" },
-  ...(showAmount.value ? [{ key: "totalAuthorizeamount", label: "Authorized amount", align: "right" }] : []),
-  { key: "actionDate", label: "Last action" },
+  { key: "claim", label: "Claim" },
+  { key: "insured", label: "Insured" },
+  { key: "type", label: "Type" },
+  { key: "eventDate", label: "Event date" },
+  { key: "amount", label: assessed.value ? "Net payable" : "Claimed", align: "right" },
+  { key: "requestedDate", label: "Submitted" },
 ]);
 
-const open = (c) => router.push({ path: `/life/claims/${c.claimUuid}`, query: { side: side.value, queue: queue.value } });
+const open = (c) => router.push({ path: `/life/claims/${c.claimUuid}`, query: { side: side.value } });
 </script>
 
 <template>
   <div class="p-4 md:p-6">
     <PageHeader
       :title="side === 'agency' ? 'Claims submitted by agency' : 'Claims desk'"
-      :subtitle="side === 'agency' ? 'Claims your office prepares for members of group policies.' : 'Life claims from registration to payment.'"
+      :subtitle="side === 'agency' ? 'Claims your office prepares for insured members and policyholders.' : 'Life claims from registration to payment.'"
     >
       <template v-if="side === 'agency' && lifeCan('Life_Claim_Prepare')" #actions><Button @click="router.push('/life/claims/new')">New claim</Button></template>
     </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-2">
-      <TabGroup v-model="tab" :tabs="queues.map((q) => q.label)" />
-      <div class="w-72"><TextField v-model="list.search.value" type="search" placeholder="Search claim or member" aria-label="Search claims" /></div>
+      <TabGroup v-model="tab" :tabs="tabs.map((t) => t.label)" />
+      <div class="w-72"><TextField v-model="list.search.value" type="search" placeholder="Search claim, policy or name" aria-label="Search claims" /></div>
     </div>
     <p class="mb-4 text-xs text-ink-subtle">{{ hint }}</p>
 
@@ -80,21 +72,18 @@ const open = (c) => router.push({ path: `/life/claims/${c.claimUuid}`, query: { 
       @row-click="open"
       @retry="list.reload()"
     >
-      <template #cell-claimNumber="{ row }"><span class="font-medium whitespace-nowrap text-ink">{{ row.claimNumberCode || row.claimNumber || (queue === "saved" ? "Draft" : "—") }}</span></template>
-      <template #cell-member="{ row }">
-        <span class="text-ink">{{ personName(row) || "—" }}</span>
-        <span v-if="row.certificateNumber" class="block text-xs text-ink-subtle">Certificate {{ row.certificateNumber }}</span>
+      <template #cell-claim="{ row }">
+        <span class="font-medium whitespace-nowrap text-ink">{{ row.claimNumberCode || (row.status === "SAVED" ? "Draft" : "Not registered") }}</span>
+        <span v-if="row.policyNumber" class="block text-xs text-ink-subtle">{{ row.policyNumber }}</span>
       </template>
-      <template #cell-policy="{ row }">
-        <span class="text-ink-muted">
-          <template v-if="side === 'agency'">{{ row.agencyPolicyNumber || "—" }}</template>
-          <template v-else>{{ row.agencyName || "—" }}<span v-if="row.agencyPolicyNumber" class="block text-xs text-ink-subtle">{{ row.agencyPolicyNumber }}</span></template>
-        </span>
+      <template #cell-insured="{ row }"><span class="text-ink">{{ row.insuredName || "—" }}</span></template>
+      <template #cell-type="{ row }">
+        <span class="text-ink-muted">{{ claimTypeLabel(row.claimType) || "—" }}</span>
+        <span v-if="row.riderName" class="block text-xs text-ink-subtle">{{ row.riderName }}</span>
       </template>
-      <template #cell-incidentDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(row.incidentDate) }}</span></template>
-      <template #cell-claimDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(row.claimDate) }}</span></template>
-      <template #cell-totalAuthorizeamount="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.totalAuthorizeamount) }}</span></template>
-      <template #cell-actionDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(row.actionDate) }}</span></template>
+      <template #cell-eventDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(row.eventDate) }}</span></template>
+      <template #cell-amount="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(assessed ? row.netPayable : row.claimedAmount) }}</span></template>
+      <template #cell-requestedDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(row.requestedDate ?? row.audit?.createdAt) }}</span></template>
       <template #footer><PageNav v-model:page="list.page.value" :total-pages="list.totalPages.value" :disabled="list.loading.value" /></template>
     </ListTable>
   </div>

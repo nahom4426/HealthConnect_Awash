@@ -7,7 +7,7 @@ const props = defineProps({ status: { type: String, default: "" } });
 const TONES = {
   success: ["ACTIVE", "PAID", "AUTHORIZED", "VERIFIED"],
   info: ["ISSUED", "MODIFIED", "RENEWED", "REVIEWED", "REQUESTED", "REGISTERED"],
-  warning: ["ACCEPTED", "LAPSED", "REVISED", "APPROVED"],
+  warning: ["ACCEPTED", "LAPSED", "REVISED", "APPROVED", "INFO_REQUESTED"],
   danger: ["CANCELLED", "REJECTED", "DENIED"],
 };
 const CLASSES = {

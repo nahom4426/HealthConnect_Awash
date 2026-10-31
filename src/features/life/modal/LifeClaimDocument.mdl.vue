@@ -1,22 +1,27 @@
 <script setup>
-// Attach or replace a claim document (multipart field "file", query fileNames = the document's name).
-// data: { claimUuid, attachment?: ClaimAttachmentResponse }
+// Attach or replace a claim document (multipart field "file", query fileNames = this file's label,
+// documentType = the checklist item it covers). data: { claimUuid, attachment?: ClaimAttachmentResponse,
+// documentType?: string, checklist?: { documentType, description, received }[] }
 import { ref } from "vue";
 import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
 import TextField from "@/components/fields/TextField.vue";
+import SelectField from "@/components/fields/SelectField.vue";
 import { toasted } from "@/utils/utils";
 import { fileForm } from "../composables/useLifeResource";
-import { formatFileSize, validateAttachment } from "../claims/claimRules";
+import { documentTypeLabel, formatFileSize, validateAttachment } from "../claims/claimRules";
 import { createClaimAttachment, updateClaimAttachment } from "../api/claimApi";
 
 const props = defineProps({ data: { type: Object, default: () => ({}) } });
 const current = props.data?.attachment;
 const replacing = !!current?.claimAttachmentUuid;
 
-const name = ref(current?.fileName?.replace(/\.[^.]+$/, "") ?? "");
+const checklist = props.data?.checklist || [];
+const typeOptions = checklist.map((d) => ({ value: d.documentType, label: d.description || documentTypeLabel(d.documentType) }));
+const documentType = ref(props.data?.documentType || "");
+const name = ref(current?.fileName?.replace(/\.[^.]+$/, "") ?? typeOptions.find((o) => o.value === documentType.value)?.label ?? "");
 const file = ref(null);
 const errors = ref({});
 const pending = ref(false);
@@ -27,13 +32,13 @@ function onFile(e) {
 }
 
 async function submit() {
-  errors.value = validateAttachment(file.value, name.value);
+  errors.value = validateAttachment(file.value, name.value, documentType.value, !replacing && typeOptions.length > 0);
   if (Object.keys(errors.value).length) return;
   pending.value = true;
   const params = { fileNames: name.value.trim() };
   const res = replacing
     ? await updateClaimAttachment(current.claimAttachmentUuid, fileForm(file.value), params)
-    : await createClaimAttachment(fileForm(file.value), { claimUuid: props.data.claimUuid, ...params });
+    : await createClaimAttachment(fileForm(file.value), { claimUuid: props.data.claimUuid, ...params, ...(documentType.value ? { documentType: documentType.value } : {}) });
   pending.value = false;
   if (res?.success) {
     toasted(true, replacing ? "Document replaced" : "Document attached");
@@ -52,6 +57,14 @@ async function submit() {
           <span v-if="file" class="text-xs text-ink-subtle">{{ file.name }} · {{ formatFileSize(file.size) }}</span>
           <span v-if="errors.file" class="text-xs text-error">{{ errors.file }}</span>
         </label>
+        <SelectField
+          v-if="!replacing && typeOptions.length"
+          v-model="documentType"
+          label="Checklist item"
+          :options="typeOptions"
+          :error="errors.documentType"
+          @update:model-value="(v) => !name && (name = typeOptions.find((o) => o.value === v)?.label || '')"
+        />
         <TextField v-model="name" label="Document name" maxlength="100" placeholder="e.g. Death certificate" :error="errors.name" />
       </form>
       <template #bottom>

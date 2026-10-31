@@ -105,6 +105,48 @@ export function getAgencyApprovedClaims(params = {}) {
   return lifeApi().get(`/claim/agency/approved/list`, { params });
 }
 
+// ── claims v2 (contract 2026-10, G3): SAVED → REQUESTED → REGISTERED → REVIEWED → APPROVED → AUTHORIZED → PAID ──
+/** POST /claim/v2 · body: LifeClaimRequest · returns: LifeClaimResponse (SAVED) */
+export function registerLifeClaim(data) {
+  return lifeApi().post(`/claim/v2`, data);
+}
+/** GET /claim/v2/{claimUuid} · returns: LifeClaimResponse (also for claims made before v2) */
+export function getLifeClaim(claimUuid) {
+  return lifeApi().get(`/claim/v2/${claimUuid}`);
+}
+/** GET /claim/v2/list · query: status*: LifeClaimStatus, search, page, limit · returns: { content: LifeClaimResponse[], page, limit, totalPages, totalElements } */
+export function getLifeClaims(params = {}) {
+  return lifeApi().get(`/claim/v2/list`, { params });
+}
+/** GET /claim/required-documents · query: claimType* · returns: { documentType, description }[] */
+export function getRequiredClaimDocuments(params = {}) {
+  return lifeApi().get(`/claim/required-documents`, { params });
+}
+/** PUT /claim/insurance/register · body: ClaimRequest { claimUuid, comment } · REQUESTED → REGISTERED, assigns claimNumberCode */
+export function registerClaim(data) {
+  return lifeApi().put(`/claim/insurance/register`, data);
+}
+/** PUT /claim/{claimUuid}/assessment · body: ClaimAssessmentRequest · on REVIEWED */
+export function assessClaim(claimUuid, data) {
+  return lifeApi().put(`/claim/${claimUuid}/assessment`, data);
+}
+/** PUT /claim/insurance/authorize · body: ClaimRequest · APPROVED → AUTHORIZED */
+export function authorizeClaim(data) {
+  return lifeApi().put(`/claim/insurance/authorize`, data);
+}
+/** PUT /claim/insurance/pay · body: ClaimPayRequest { claimUuid, payments[] } · PAID once every payee is paid */
+export function payClaim(data) {
+  return lifeApi().put(`/claim/insurance/pay`, data);
+}
+/** PUT /claim/{claimUuid}/request-info · body: { comment } · back to the agency (INFO_REQUESTED) */
+export function requestClaimInfo(claimUuid, comment) {
+  return lifeApi().put(`/claim/${claimUuid}/request-info`, { comment });
+}
+/** PUT /claim/{claimUuid}/reject · body: { comment } · REJECTED (final) */
+export function rejectLifeClaim(claimUuid, comment) {
+  return lifeApi().put(`/claim/${claimUuid}/reject`, { comment });
+}
+
 // ── claim-logs ──
 /** GET /claim-log/{claimUuid} · returns: ClaimLogsResponse[] (same data as getClaimLogs, unpaged) */
 export function getClaimLogs_1(claimUuid) {
@@ -120,7 +162,7 @@ export function updateClaimAttachment(claimAttachmentUuid, formData, params = {}
 export function deleteClaimAttachment(claimAttachmentUuid) {
   return lifeApi().delete(`/claim-attachment/${claimAttachmentUuid}`);
 }
-/** POST /claim-attachment · query: claimUuid*: string, fileNames*: string · body: multipart/form-data · returns: object */
+/** POST /claim-attachment · query: claimUuid*: string, fileNames*: string (this file's label), documentType: string (checklist item) · body: multipart/form-data · returns: object */
 export function createClaimAttachment(formData, params = {}) {
   return lifeApi().post(`/claim-attachment`, formData, { params, headers: { 'Content-Type': 'multipart/form-data' } });
 }

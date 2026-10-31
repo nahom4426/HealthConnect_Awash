@@ -77,3 +77,16 @@ export const KycStatus = Object.freeze({
   VERIFIED: "VERIFIED",
   REJECTED: "REJECTED",
 });
+
+/** LifeClaimResponse.status (claims v2). REJECTED is final; INFO_REQUESTED goes back to the agency. */
+export const ClaimStatus = Object.freeze({
+  SAVED: "SAVED",
+  REQUESTED: "REQUESTED",
+  REGISTERED: "REGISTERED",
+  REVIEWED: "REVIEWED",
+  APPROVED: "APPROVED",
+  AUTHORIZED: "AUTHORIZED",
+  PAID: "PAID",
+  REJECTED: "REJECTED",
+  INFO_REQUESTED: "INFO_REQUESTED",
+});

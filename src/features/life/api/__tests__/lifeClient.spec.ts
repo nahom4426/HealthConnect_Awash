@@ -28,11 +28,11 @@ beforeEach(() => { calls.length = 0; auth.count = 0; });
 
 describe("Life API client", () => {
   // 169 operations generated from the OpenAPI document + 9 added from the backend contract of
-  // 2026-10 (docs/life-insurance/10-backend-prompt.md) + 7 customer/KYC operations (G2)
-  it("covers the 169 generated operations plus the 16 contract additions, once each", () => {
+  // 2026-10 (docs/life-insurance/10-backend-prompt.md) + 7 customer/KYC (G2) + 10 claims v2 (G3)
+  it("covers the 169 generated operations plus the 26 contract additions, once each", () => {
     const names = [product, quotation, policy, underwriting, claim, reinsurance, customer].flatMap((m) => Object.keys(m));
-    expect(names).toHaveLength(185);
-    expect(new Set(names).size).toBe(185);
+    expect(names).toHaveLength(195);
+    expect(new Set(names).size).toBe(195);
   });
 
   it("uses the JSON bodies of the 2026-10 contract", async () => {
@@ -44,6 +44,12 @@ describe("Life API client", () => {
     expect(last()).toMatchObject({ method: "put", url: "/question/qn-1/status", config: { params: { status: "DISABLED" } } });
     await policy.getBenefitQuote({ term: 10 });
     expect(last()).toMatchObject({ method: "get", url: "/benefit/quote", config: { params: { term: 10 } } });
+    await claim.assessClaim("c-1", { eligibleAmount: 100, approvedAmount: 90, decisionNote: "ok" });
+    expect(last()).toMatchObject({ method: "put", url: "/claim/c-1/assessment", data: { approvedAmount: 90 } });
+    await claim.requestClaimInfo("c-1", "Need the police report");
+    expect(last()).toMatchObject({ method: "put", url: "/claim/c-1/request-info", data: { comment: "Need the police report" } });
+    await claim.getLifeClaims({ status: "SAVED", page: 1 });
+    expect(last()).toMatchObject({ method: "get", url: "/claim/v2/list", config: { params: { status: "SAVED", page: 1 } } });
     await customer.decideCustomerKyc("cu-1", { kycStatus: "VERIFIED", note: "ID seen" });
     expect(last()).toMatchObject({ method: "put", url: "/customer/cu-1/kyc", data: { kycStatus: "VERIFIED", note: "ID seen" } });
     await customer.getCustomers({ type: "INDIVIDUAL", search: "Liya" });

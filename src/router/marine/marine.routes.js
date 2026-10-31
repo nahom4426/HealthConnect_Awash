@@ -36,7 +36,6 @@ export const marineRoutes = [
   route("/marine/declarations/new", "marine-declaration-new", p("openCovers/DeclarationForm"), { title: "New declaration", marineRoles: QUOTERS }),
   route("/marine/declarations", "marine-declarations", p("quotes/QuoteList"), { title: "Declarations", declaration: true }),
   route("/marine/quotes/new", "marine-quote-new", p("quotes/QuoteWizard"), { title: "New quote", marineRoles: QUOTERS }),
-  route("/marine/quotes/:quoteId/bind-open-cover", "marine-quote-bind-open-cover", p("openCovers/OpenCoverForm"), { title: "Finalise Open Cover terms", marineRoles: UNDERWRITERS }),
   route("/marine/quotes/:id/edit", "marine-quote-edit", p("quotes/QuoteWizard"), { title: "Edit quote", marineRoles: QUOTERS }),
   route("/marine/quotes/:id", "marine-quote", p("quotes/QuoteDetail"), { title: "Quote" }),
   route("/marine/policies", "marine-policies", p("policies/PolicyList"), { title: "Policies" }),
@@ -47,11 +46,15 @@ export const marineRoutes = [
   route("/marine/certificates/:id", "marine-certificate", p("certificates/CertificateDetail"), { title: "Certificate" }),
   route("/marine/open-cover-applications", "marine-open-cover-applications", p("openCovers/OpenCoverApplicationList"), { title: "Open cover applications" }),
   route("/marine/open-cover-applications/new", "marine-open-cover-application-new", p("openCovers/OpenCoverApplicationForm"), { title: "New open cover application" }),
-  route("/marine/open-cover-applications/:applicationId/establish", "marine-open-cover-establish", p("openCovers/OpenCoverForm"), { title: "Establish open cover", marineRoles: UNDERWRITERS }),
   route("/marine/open-cover-applications/:id/edit", "marine-open-cover-application-edit", p("openCovers/OpenCoverApplicationForm"), { title: "Edit open cover application" }),
   route("/marine/open-cover-applications/:id", "marine-open-cover-application", p("openCovers/OpenCoverApplicationDetail"), { title: "Open cover application" }),
   route("/marine/open-covers", "marine-open-covers", p("openCovers/OpenCoverList"), { title: "Open cover agreements" }),
-  route("/marine/open-covers/new", "marine-open-cover-new", p("openCovers/OpenCoverForm"), { title: "New open cover", marineRoles: UNDERWRITERS }),
+  // An Open Cover is only ever opened from the Marine proposal: proposal -> quotation ->
+  // (underwriting) -> policy. The terms are answered on the proposal, so there is no separate
+  // cover-creation page and no second terms form when a quotation is finalised. These redirects
+  // keep old links working by sending them to the proposal form.
+  { path: "/marine/open-covers/new", redirect: "/marine/proposals/new" },
+  { path: "/marine/quotes/:quoteId/bind-open-cover", redirect: (to) => `/marine/quotes/${to.params.quoteId}` },
   route("/marine/open-covers/:coverId/declare", "marine-declare", p("openCovers/DeclarationForm"), { title: "Declare shipment", marineRoles: QUOTERS }),
   route("/marine/open-covers/:id/edit", "marine-open-cover-edit", p("openCovers/OpenCoverForm"), { title: "Edit open cover", marineRoles: UNDERWRITERS }),
   route("/marine/open-covers/:id", "marine-open-cover", p("openCovers/OpenCoverDetail"), { title: "Open cover" }),

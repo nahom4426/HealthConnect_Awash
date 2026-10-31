@@ -16,7 +16,18 @@ import UnderwritingPanel from "../../components/UnderwritingPanel.vue";
 import { cardClass } from "../../components/styles";
 import { useResource } from "../../composables/useResource";
 import { useCan } from "../../composables/useCan";
-import { bindQuote, getQuote, rateQuote, simulateDemoPayment } from "../../api/marineApi";
+import {
+  bindOpenCoverQuote,
+  bindQuote,
+  cancelPremiumPayment,
+  confirmPremiumPayment,
+  getQuote,
+  rateOpenCoverQuote,
+  rateQuote,
+  rejectPremiumPayment,
+  simulateDemoPayment,
+  startPremiumPayment,
+} from "../../api/marineApi";
 import { notifyError } from "../../api/marineClient";
 import { useMarineConfig } from "../../composables/useMarineConfig";
 import { DEMO_METHODS, demoMethodLabel, demoPaymentVisible } from "../../utils/demoPayment";
@@ -59,6 +70,42 @@ const issuedNote = computed(() => quotationIssued(q.value));
 const declaration = computed(() => isDeclarationQuote(q.value));
 const declarationNote = computed(() => declarationPremiumNote(q.value));
 const paymentRequired = computed(() => marineConfig.value?.paymentRequired === true);
+
+// ── premium collection ──
+// Starting a collection records what is owed; only finance confirms that it arrived. The two are
+// separate rights, so the buttons are gated separately rather than on one "can pay" flag.
+const canCollect = computed(() => can("premium.collect"));
+const canConfirmPremium = computed(() => can("premium.confirm"));
+const bankRef = ref("");
+const collecting = ref(false);
+const confirmingReceipt = ref(false);
+const pricingDeposit = ref(false);
+const openCover = computed(() => q.value?.arrangement === "OPEN_COVER");
+const payment = computed(() => q.value?.payment ?? null);
+const premiumPaid = computed(() => payment.value?.status === "CONFIRMED" && payment.value?.matchesPremium !== false);
+/** What is owed before the policy is issued: the shipment premium, or an Open Cover's deposit. */
+const premiumDue = computed(() => q.value?.premiumTotal ?? q.value?.premium?.total ?? null);
+const premiumDueLabel = computed(() =>
+  premiumDue.value == null ? "Not priced yet" : formatMoney(premiumDue.value, q.value?.currency || q.value?.premium?.currency || "ETB")
+);
+/** An Open Cover's deposit has to be priced before it can be collected or the cover issued. */
+const depositPriced = computed(() => openCover.value && premiumDue.value != null);
+const canRateDeposit = computed(
+  () => openCover.value && can("quote.create") && !["BOUND", "DECLINED"].includes(q.value?.status)
+);
+/**
+ * Why the Open Cover cannot be issued yet, or "" when it can. Cover is not on risk until the
+ * deposit is in, so a nil deposit is the only case that needs no collection.
+ */
+const openCoverBlocker = computed(() => {
+  if (!openCover.value) return "";
+  if (!depositPriced.value) return "Price the deposit premium first";
+  if (!paymentRequired.value) return "";
+  if (Number(premiumDue.value) <= 0) return "";
+  if (!payment.value) return "Start the premium collection first";
+  if (!premiumPaid.value) return "Finance has not confirmed the deposit premium arrived";
+  return "";
+});
 const premiumBlockers = computed(() => ratingBlockers(q.value));
 const quotationStatus = computed(() => q.value?.quotationStage || q.value?.status || "");
 const summaryItems = computed(() => {
@@ -84,6 +131,78 @@ const summaryItems = computed(() => {
   ]);
 });
 const { data: q, loading, error, notFound, load, reload } = useResource(getQuote);
+
+const finalising = ref(false);
+
+/**
+ * Issues the Open Cover policy from the terms answered on the proposal. The body is deliberately
+ * empty: the backend reads the approved limits, declaration days, agreed commodity rates and
+ * provisional premium from the proposal this quotation was opened from, so there is no second
+ * terms form to fill in.
+ */
+async function finaliseOpenCover() {
+  finalising.value = true;
+  // No body: axios turns an explicit null into a form-urlencoded POST, which Spring refuses with
+  // 415. Omitting it sends no body at all, which is what @RequestBody(required = false) expects.
+  const res = await bindOpenCoverQuote(q.value.id);
+  finalising.value = false;
+  if (!res.ok) return notifyError(res.error, { onStale: reload });
+  const coverNo = res.data?.openCover?.coverNo ?? res.data?.coverNo ?? "";
+  toasted(true, coverNo ? `Open Cover ${coverNo} created successfully` : "Open Cover created successfully");
+  reload();
+}
+
+/**
+ * Prices an Open Cover quotation at the deposit premium agreed on its proposal. An Open Cover is
+ * not rated voyage by voyage, so this is its equivalent of "Rate": it fixes the amount due at
+ * inception, which finance then collects before the cover is signed.
+ */
+async function priceDeposit() {
+  pricingDeposit.value = true;
+  const res = await rateOpenCoverQuote(q.value.id);
+  pricingDeposit.value = false;
+  if (!res.ok) return notifyError(res.error, { onStale: reload });
+  toasted(true, "Deposit premium priced");
+  reload();
+}
+
+async function startCollection() {
+  collecting.value = true;
+  const res = await startPremiumPayment(q.value.id, { idempotencyKey: `prem-${q.value.id}-${Date.now()}` });
+  collecting.value = false;
+  if (!res.ok) return notifyError(res.error, { onStale: reload });
+  toasted(true, `Premium collection started · ${res.data.financeRef}`);
+  reload();
+}
+
+async function cancelCollection() {
+  collecting.value = true;
+  const res = await cancelPremiumPayment(q.value.id, payment.value.id);
+  collecting.value = false;
+  if (!res.ok) return notifyError(res.error, { onStale: reload });
+  toasted(true, "Premium collection cancelled");
+  reload();
+}
+
+/** Finance records that the premium arrived, against the bank credit or receipt reference. */
+async function confirmReceipt() {
+  confirmingReceipt.value = true;
+  const res = await confirmPremiumPayment(q.value.id, payment.value.id, { bankRef: bankRef.value });
+  confirmingReceipt.value = false;
+  if (!res.ok) return notifyError(res.error, { onStale: reload });
+  bankRef.value = "";
+  toasted(true, "Premium receipt confirmed");
+  reload();
+}
+
+async function rejectReceipt() {
+  confirmingReceipt.value = true;
+  const res = await rejectPremiumPayment(q.value.id, payment.value.id);
+  confirmingReceipt.value = false;
+  if (!res.ok) return notifyError(res.error, { onStale: reload });
+  toasted(true, "Premium recorded as not received");
+  reload();
+}
 
 function modeLabelSafe(mode) {
   const labels = { SEA: "Sea", AIR: "Air", ROAD: "Road", SEA_ROAD: "Sea then road" };
@@ -246,7 +365,10 @@ function bind() {
               @click="rerate"
             >{{ rateLabel }}</Button>
           </template>
-          <Button v-if="q.arrangement === 'OPEN_COVER' && q.status !== 'BOUND' && isUnderwriter" @click="router.push(`/marine/quotes/${q.id}/bind-open-cover`)">Finalise Open Cover terms</Button>
+          <Button v-if="openCover && q.status !== 'BOUND' && canRateDeposit && !depositPriced" :pending="pricingDeposit" @click="priceDeposit">Price deposit premium</Button>
+          <span v-if="openCover && q.status !== 'BOUND' && isUnderwriter" :title="openCoverBlocker">
+            <Button :disabled="!!openCoverBlocker" :pending="finalising" @click="finaliseOpenCover">Finalise Open Cover terms</Button>
+          </span>
           <span v-if="can('quote.bind') && q.status !== 'BOUND' && !q.sanctionsConfirmed" :title="canBind ? '' : q.status === 'REFERRED' ? 'Referral pending' : 'Get a quote first'">
             <Button variant="success" :disabled="!canBind" @click="bind">Bind</Button>
           </span>
@@ -349,6 +471,30 @@ function bind() {
             <h2 id="qd-premium" class="mb-3 text-sm font-semibold text-ink">Rating and premium</h2>
             <p v-if="rateNotice" role="alert" class="p-3 mb-3 text-sm font-semibold rounded-lg bg-warning-soft text-warning-strong">{{ rateNotice }}</p>
             <p v-if="declarationNote" class="mb-3 text-sm text-ink">{{ declarationNote }}</p>
+            <section v-if="q.openCoverPricing" class="p-3 mb-3 rounded-lg border border-line">
+              <h3 class="text-sm font-semibold text-ink">Estimated annual premium</h3>
+              <p class="mt-1 text-2xl font-semibold tabular-nums text-ink">
+                {{ q.openCoverPricing.estimatedAnnualPremium }}
+                <span class="text-sm font-normal text-ink-muted">at {{ q.openCoverPricing.ratePct }}%</span>
+              </p>
+              <p class="mt-1 text-sm text-ink-muted">
+                Estimated annual value {{ q.openCoverPricing.estimatedAnnualValue }} priced at the highest
+                agreed rate among the commodities below. Each declaration is rated on its own insured
+                value, so this is the expected earning of the cover, not a charge.
+              </p>
+              <table class="mt-3 w-full text-sm">
+                <thead><tr class="text-xs font-semibold text-left uppercase text-ink-subtle"><th class="py-1">Commodity</th><th class="py-1">Class</th><th class="py-1 text-right">Rate %</th><th class="py-1 text-right">At that rate</th></tr></thead>
+                <tbody>
+                  <tr v-for="row in q.openCoverPricing.rows" :key="row.hsCode" class="border-t border-line">
+                    <td class="py-1 text-ink">{{ row.description }}</td>
+                    <td class="py-1 text-ink-subtle">{{ row.commodityClass }}</td>
+                    <td class="py-1 text-right tabular-nums">{{ row.ratePct }}</td>
+                    <td class="py-1 text-right tabular-nums">{{ row.premium }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
             <div v-if="canRate && !q.premium && q.arrangement !== 'OPEN_COVER'" class="mb-3">
               <Button :pending="rating" @click="rerate">{{ rateLabel }}</Button>
             </div>
@@ -434,9 +580,84 @@ function bind() {
               <p class="text-sm text-ink-muted">DEMO_PAID is not a collected premium. A typed reference is not a payment.</p>
             </section>
             <template v-else>
-              <p v-if="!q.payment" class="text-sm text-ink-muted">No collection provider is approved, so this screen cannot mark the premium paid.</p>
-              <p v-else class="text-sm text-ink">{{ q.payment.financeRef }} · {{ q.payment.status }} · {{ formatMoney(q.payment.amount, q.payment.currency) }}</p>
-              <p v-if="q.payment?.status === 'PENDING'" class="text-sm text-ink-muted">Started, not confirmed. A pending payment does not allow bind while collection is required.</p>
+              <section class="grid gap-3" aria-labelledby="qd-premium-collection">
+                <h3 id="qd-premium-collection" class="text-sm font-semibold text-ink">Premium collection</h3>
+                <p class="text-sm text-ink">
+                  {{ openCover ? "Deposit premium due at inception" : "Premium due" }}
+                  <strong>{{ premiumDueLabel }}</strong>
+                </p>
+                <p v-if="openCover" class="text-sm text-ink-muted">
+                  An Open Cover is collected in two parts: this deposit, due before the cover is signed, and the rated
+                  premium of each declaration made under it afterwards. A cover agreed on a pure declaration basis has a
+                  deposit of nil and nothing is due now.
+                </p>
+
+                <!-- Open Cover: the deposit has to be priced before it can be collected -->
+                <div v-if="openCover && !depositPriced && canRateDeposit" class="flex flex-wrap gap-2 items-center">
+                  <Button size="sm" :pending="pricingDeposit" @click="priceDeposit">Price deposit premium</Button>
+                  <span class="text-sm text-ink-muted">Reads the provisional premium agreed on the proposal.</span>
+                </div>
+
+                <p v-if="!payment" class="text-sm text-ink-muted">No premium collection has been started on this quotation.</p>
+                <dl v-else class="grid gap-1 text-sm text-ink">
+                  <div><dt class="inline text-ink-muted">Finance reference</dt> <dd class="inline font-medium">{{ payment.financeRef }}</dd></div>
+                  <div><dt class="inline text-ink-muted">Status</dt> <dd class="inline font-medium">{{ payment.status }}</dd></div>
+                  <div><dt class="inline text-ink-muted">Amount</dt> <dd class="inline">{{ formatMoney(payment.amount, payment.currency) }}</dd></div>
+                  <div v-if="payment.providerRef"><dt class="inline text-ink-muted">Bank reference</dt> <dd class="inline">{{ payment.providerRef }}</dd></div>
+                  <div v-if="payment.confirmedAt"><dt class="inline text-ink-muted">Confirmed</dt> <dd class="inline">{{ formatDateTime(payment.confirmedAt) }}</dd></div>
+                  <div v-if="payment.failureReason"><dt class="inline text-ink-muted">Not collected</dt> <dd class="inline">{{ payment.failureReason }}</dd></div>
+                </dl>
+
+                <p v-if="payment?.status === 'PENDING'" class="text-sm text-ink-muted">
+                  Started, not confirmed. A quotation is not bound on a started collection: finance confirms the money
+                  arrived before the policy is issued.
+                </p>
+                <p v-else-if="payment && !payment.matchesPremium" class="p-3 text-sm font-semibold rounded-lg bg-warning-soft text-warning-strong">
+                  This collection is for a different amount than the premium now on the quotation. Start a new one.
+                </p>
+
+                <!-- front office: start or cancel a collection -->
+                <div v-if="canCollect" class="flex flex-wrap gap-2">
+                  <Button
+                    v-if="!payment || payment.status !== 'PENDING'"
+                    size="sm"
+                    :disabled="premiumDue == null || q.status === 'BOUND' || premiumPaid"
+                    :pending="collecting"
+                    @click="startCollection"
+                  >
+                    Start premium collection
+                  </Button>
+                  <Button v-if="payment?.status === 'PENDING'" size="sm" variant="outline" :pending="collecting" @click="cancelCollection">
+                    Cancel collection
+                  </Button>
+                </div>
+
+                <!-- finance: confirm the money arrived -->
+                <section v-if="canConfirmPremium && payment?.status === 'PENDING'" class="grid gap-2 p-3 rounded-xl border border-line bg-surface-muted">
+                  <p class="text-sm font-semibold text-ink">Finance: confirm receipt</p>
+                  <p class="text-sm text-ink-muted">
+                    Confirm only once the funds appear on the bank statement. The reference is recorded on the policy, so a
+                    confirmed premium can always be traced back to a statement line.
+                  </p>
+                  <label class="grid gap-1 text-sm text-ink">
+                    Bank credit or receipt reference
+                    <input
+                      v-model="bankRef"
+                      class="px-2 py-1 rounded-md border border-line bg-surface"
+                      placeholder="e.g. CBE/FT24103100123"
+                    />
+                  </label>
+                  <div class="flex flex-wrap gap-2">
+                    <Button size="sm" variant="success" :disabled="bankRef.trim().length < 4" :pending="confirmingReceipt" @click="confirmReceipt">
+                      Confirm premium received
+                    </Button>
+                    <Button size="sm" variant="outline" :pending="confirmingReceipt" @click="rejectReceipt">Not received</Button>
+                  </div>
+                </section>
+                <p v-else-if="payment?.status === 'PENDING'" class="text-sm text-ink-muted">
+                  Waiting on the finance team to confirm the premium arrived.
+                </p>
+              </section>
             </template>
           </section>
         </template>

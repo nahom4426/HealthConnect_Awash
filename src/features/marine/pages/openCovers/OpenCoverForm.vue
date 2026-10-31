@@ -1,6 +1,10 @@
 <script setup>
-// Open cover form (plan 7.2, MAR-02, MAR-04, MAR-05, MAR-29). Saving a new cover creates its
-// master policy and opens the cover.
+// Amends the terms of an Open Cover that has already been issued (plan 7.2, MAR-04, MAR-05).
+//
+// This form does NOT open a cover. A cover is only ever opened from the Marine proposal: its
+// terms are answered there, the proposal becomes a quotation, and finalising that quotation
+// issues the policy. So there is no create mode, no "establish from application" mode and no
+// second terms form on finalise - only editing what an issued cover already says.
 import { computed, onMounted, ref } from "vue";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
@@ -16,7 +20,7 @@ import MoneyInput from "../../components/MoneyInput.vue";
 import HsCodeAutocomplete from "../../components/HsCodeAutocomplete.vue";
 import { cardClass, inputClass, inputBorder } from "../../components/styles";
 import { useForm } from "../../composables/useForm";
-import { bindOpenCoverQuote, createOpenCover, establishOpenCoverApplication, getOpenCover, getOpenCoverApplication, getQuote, updateOpenCover } from "../../api/marineApi";
+import { getOpenCover, updateOpenCover } from "../../api/marineApi";
 import { notifyError } from "../../api/marineClient";
 import { CLAUSES, MODES } from "../../constants";
 import { compare, parseDecimal } from "../../utils/money";
@@ -24,10 +28,7 @@ import { compare, parseDecimal } from "../../utils/money";
 const route = useRoute();
 const router = useRouter();
 const editId = route.params.id ?? null;
-const applicationId = route.params.applicationId ?? null;
-const quoteId = route.params.quoteId ?? null;
-const loading = ref(!!editId || !!applicationId || !!quoteId);
-const customerRequest = ref(null);
+const loading = ref(true);
 const loadError = ref(null);
 const existing = ref(null);
 let saved = false;
@@ -81,56 +82,7 @@ const initial = ref("");
 const dirty = computed(() => !saved && JSON.stringify(form) !== initial.value);
 
 onMounted(async () => {
-  if (quoteId) {
-    const res = await getQuote(quoteId);
-    loading.value = false;
-    if (!res.ok) return (loadError.value = res.error);
-    if (res.data.arrangement !== "OPEN_COVER") {
-      loadError.value = { status: 422, message: "This quotation is not an Open Cover." };
-      return;
-    }
-    let answers = {};
-    try {
-      answers = typeof res.data.proposalAnswers === "string"
-        ? JSON.parse(res.data.proposalAnswers || "{}")
-        : (res.data.proposalAnswers || {});
-    } catch {
-      answers = {};
-    }
-    customerRequest.value = {
-      annual: res.data.estimatedAnnualValue,
-      max: res.data.maxShipmentValue,
-      routes: res.data.tradingRoutes,
-      currency: res.data.currency || "ETB",
-    };
-    Object.assign(form, {
-      insured: res.data.insured,
-      broker: res.data.broker,
-      periodFrom: answers.periodFrom || form.periodFrom,
-      periodTo: answers.periodTo || form.periodTo,
-      currency: res.data.currency || "ETB",
-      clause: res.data.clause || "ICC_A",
-      warCover: !!res.data.warCover,
-      strikesCover: !!res.data.strikesCover,
-      conveyances: res.data.conveyanceModes ? res.data.conveyanceModes.split(",").filter(Boolean) : [],
-    });
-  } else if (applicationId) {
-    const res = await getOpenCoverApplication(applicationId);
-    loading.value = false;
-    if (!res.ok) return (loadError.value = res.error);
-    const row = res.data;
-    Object.assign(form, {
-      insured: row.insuredId ? { id: row.insuredId, name: row.insuredName } : null,
-      broker: row.brokerId ? { id: row.brokerId, name: row.brokerName } : null,
-      periodFrom: row.periodFrom || form.periodFrom,
-      periodTo: row.periodTo || form.periodTo,
-      currency: row.currency || "ETB",
-      clause: row.requestedClause || "ICC_A",
-      warCover: !!row.warRequested,
-      strikesCover: !!row.strikesRequested,
-      conveyances: row.conveyances ?? [],
-    });
-  } else if (editId) {
+  if (editId) {
     const res = await getOpenCover(editId);
     loading.value = false;
     if (!res.ok) return (loadError.value = res.error);
@@ -182,28 +134,15 @@ async function submit() {
     commodities: form.commodities.map((r) => ({ hsCode: r.commodity.hsCode, ratePct: r.ratePct })),
     provisionalPremium: form.provisionalPremium,
   };
-  const res = quoteId
-    ? await bindOpenCoverQuote(quoteId, body)
-    : applicationId
-      ? await establishOpenCoverApplication(applicationId, body)
-      : editId
-        ? await updateOpenCover(editId, body)
-        : await createOpenCover(body);
+  const res = await updateOpenCover(editId, body);
   pending.value = false;
   if (!res.ok) {
     if (!applyServerError(res.error)) notifyError(res.error);
     return;
   }
   saved = true;
-  const cover = quoteId ? res.data.openCover : res.data;
-  toasted(true, quoteId
-    ? `${cover.coverNo} issued from the quotation`
-    : applicationId
-      ? `${res.data.coverNo} established from the application`
-      : editId
-        ? `${res.data.coverNo} updated`
-        : `${res.data.coverNo} created with master policy ${res.data.masterPolicyNo}`);
-  router.push(`/marine/open-covers/${cover.id}`);
+  toasted(true, `${res.data.coverNo} updated`);
+  router.push(`/marine/open-covers/${res.data.id}`);
 }
 
 onBeforeRouteLeave(
@@ -218,19 +157,12 @@ onBeforeRouteLeave(
 <template>
   <div class="marine-page">
     <MarinePageHeader
-      :title="quoteId ? 'Finalise Open Cover terms' : applicationId ? 'Establish agreement' : existing ? `Edit ${existing.coverNo}` : 'New open cover'"
+      :title="existing ? `Edit ${existing.coverNo}` : 'Open cover'"
       :crumbs="[{ label: 'Marine' }, { label: 'Open covers', to: '/marine/open-covers' }, { label: existing?.coverNo ?? 'New' }]"
     />
     <PageState v-if="loading" kind="loading" />
     <PageState v-else-if="loadError" :kind="loadError.status === 404 ? 'notFound' : 'error'" :message="loadError.message" />
     <form v-else novalidate class="grid gap-4 max-w-5xl" @submit.prevent="submit">
-      <p v-if="customerRequest" class="p-4 text-sm rounded-xl bg-surface-raised text-ink">
-        The customer estimated
-        <strong>{{ customerRequest.annual || "—" }} {{ customerRequest.currency }}</strong> a year
-        and <strong>{{ customerRequest.max || "—" }} {{ customerRequest.currency }}</strong> per shipment.
-        Routes described as: {{ customerRequest.routes || "—" }}.
-        Enter the approved limits, territories and rates. That description is not copied into territories, and no deposit percentage is applied.
-      </p>
       <FormErrorBanner :items="submitted ? bannerItems() : []" />
       <section :class="[cardClass, 'p-5 grid gap-5 sm:grid-cols-2']">
         <FormField v-slot="{ id, invalid }" label="Insured" name="insured" required :error="errors.insured">
@@ -312,7 +244,7 @@ onBeforeRouteLeave(
 
       <div class="flex gap-2 justify-end">
         <Button variant="outline" @click="router.back()">Cancel</Button>
-        <Button html-type="submit" :pending="pending">{{ quoteId ? "Issue Open Cover policy" : existing ? "Save changes" : "Create open cover" }}</Button>
+        <Button html-type="submit" :pending="pending">Save changes</Button>
       </div>
     </form>
   </div>

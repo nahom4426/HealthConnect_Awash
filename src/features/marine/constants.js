@@ -26,6 +26,10 @@ export const PERMISSIONS = Object.freeze({
   "quote.create": ["BROKER", "UNDERWRITER", "SENIOR_UNDERWRITER"],
   "quote.bind": ["BROKER", "UNDERWRITER", "SENIOR_UNDERWRITER"],
   "certificate.amend": ["UNDERWRITER", "SENIOR_UNDERWRITER"],
+  // Starting a collection and confirming it arrived are deliberately different rights: whoever
+  // quotes or binds the business must not be able to declare its premium paid.
+  "premium.collect": ["BROKER", "UNDERWRITER", "SENIOR_UNDERWRITER"],
+  "premium.confirm": ["FINANCE"],
   "rateTable.edit": ["ADMIN", "SENIOR_UNDERWRITER"],
   "fx.edit": ["FINANCE"],
   "masters.edit": ["ADMIN"],

@@ -1,7 +1,8 @@
 <script setup>
 // Open cover application detail: what the customer asked for, and the decision on it.
-// An application carries no rates, limits or premium - those are agreed when it is established,
-// which is why "Establish agreement" hands over to OpenCoverForm rather than editing here.
+// An application carries no rates, limits or premium. Those are answered on the Marine proposal,
+// which is the only way a cover is opened, so this page hands over to the proposal form rather
+// than establishing a cover of its own.
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
@@ -108,7 +109,7 @@ const cover = computed(() => [
           <Button v-if="canEdit" variant="outline" @click="router.push(`/marine/open-cover-applications/${a.id}/edit`)">Edit</Button>
           <Button v-if="canSubmit" :pending="pending" @click="submit">Submit</Button>
           <Button v-if="canDecide" variant="outline" :pending="pending" @click="decline">Decline</Button>
-          <Button v-if="canDecide" :pending="pending" @click="router.push(`/marine/open-cover-applications/${a.id}/establish`)">Establish agreement</Button>
+          <Button v-if="canDecide" :pending="pending" @click="router.push('/marine/proposals/new')">Raise the Open Cover proposal</Button>
           <RouterLink v-if="a.openCoverId" :to="`/marine/open-covers/${a.openCoverId}`"><Button variant="outline">View agreement</Button></RouterLink>
         </template>
       </MarinePageHeader>

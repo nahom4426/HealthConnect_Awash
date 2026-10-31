@@ -130,12 +130,18 @@ const openCoverPricing = computed(() => {
 
 watch(openCoverPricing, (priced) => {
   if (!priced) return;
-  // Keep each row's rate in step with the tariff, and suggest the deposit premium.
+  // Keep each row's rate in step with the tariff. The rates are the tariff's to decide, so
+  // syncing them is right.
+  //
+  // The deposit premium is NOT set here. It is what the underwriter agrees to collect up front,
+  // not a figure the form derives: writing the full annual premium into it would both make that
+  // pricing decision on the underwriter's behalf and overwrite whatever they had typed every time
+  // a rate or the annual value changed. The estimated annual premium is shown beside the field as
+  // the basis for the decision instead.
   for (const row of answers.value.commodityRates ?? []) {
     const rate = configuredRate(row.commodity);
     if (rate !== null) row.ratePct = rate;
   }
-  answers.value.provisionalPremium = Number(priced.premium.toFixed(2));
 });
 
 function proposalPayload() {
@@ -446,6 +452,18 @@ watch(proposalUuid, loadProduct, { immediate: true });
                 :placeholder="field.placeholder || ''"
                 :required="fieldRequired(field, answers)"
               />
+              <!-- The deposit is a figure the underwriter states, so nothing is filled in here.
+                   What the year is expected to earn is shown as the basis for that decision. -->
+              <small v-if="field.id === 'provisionalPremium' && openCoverPricing" class="hint">
+                Basis: estimated annual value {{ openCoverPricing.annual.toLocaleString() }} at the highest
+                agreed rate ({{ openCoverPricing.rate }}%) gives an estimated annual premium of
+                <strong>{{ openCoverPricing.premium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</strong>.
+                The deposit is what you agree to collect up front against that.
+              </small>
+              <small v-else-if="field.id === 'provisionalPremium'" class="hint">
+                Pick the commodities and their agreed rates above to see the estimated annual premium this
+                deposit is set against.
+              </small>
               <small v-if="field.helpText">{{ field.helpText }}</small>
             </label>
           </template>

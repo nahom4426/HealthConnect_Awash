@@ -80,7 +80,7 @@ const open = (c) => router.push({ path: `/life/claims/${c.claimUuid}`, query: { 
       @row-click="open"
       @retry="list.reload()"
     >
-      <template #cell-claimNumber="{ row }"><span class="font-medium whitespace-nowrap text-ink">{{ row.claimNumber || "Draft" }}</span></template>
+      <template #cell-claimNumber="{ row }"><span class="font-medium whitespace-nowrap text-ink">{{ row.claimNumberCode || row.claimNumber || (queue === "saved" ? "Draft" : "—") }}</span></template>
       <template #cell-member="{ row }">
         <span class="text-ink">{{ personName(row) || "—" }}</span>
         <span v-if="row.certificateNumber" class="block text-xs text-ink-subtle">Certificate {{ row.certificateNumber }}</span>

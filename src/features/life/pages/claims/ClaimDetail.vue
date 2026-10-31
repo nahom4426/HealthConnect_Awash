@@ -27,6 +27,13 @@ const claim = useLifeResource(getClaimDetails);
 const c = computed(() => claim.data.value || {});
 const queue = computed(() => (queuesFor(side).some((q) => q.key === route.query.queue) ? route.query.queue : queueFromStatus(c.value.status)));
 const stageLabel = computed(() => queuesFor(side).find((q) => q.key === queue.value)?.label);
+// Registered claims are numbered CLN/LIFE/NNNN/YY (claimNumberCode); older ones may have no number
+const claimTitle = computed(() => {
+  const number = c.value.claimNumberCode || c.value.claimNumber;
+  if (number) return `Claim ${number}`;
+  if (claim.loading.value && !c.value.claimUuid) return "Loading…";
+  return queue.value === "saved" ? "Draft claim" : "Claim";
+});
 const can = computed(() => {
   const a = claimActions(side, queue.value);
   const prepare = lifeCan("Life_Claim_Prepare");
@@ -127,7 +134,7 @@ async function openDocument(a) {
     </div>
 
     <template v-else>
-      <PageHeader :title="c.claimNumber ? `Claim ${c.claimNumber}` : claim.loading.value && !c.claimUuid ? 'Loading…' : 'Draft claim'" :subtitle="personName(c)" :back="{ path: back, query: { queue } }">
+      <PageHeader :title="claimTitle" :subtitle="personName(c)" :back="{ path: back, query: { queue } }">
         <template #badge>
           <span v-if="stageLabel" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-surface-raised text-ink-muted">{{ stageLabel }}</span>
           <StatusBadge v-if="c.status && c.status.toLowerCase() !== stageLabel?.toLowerCase()" :status="c.status" />

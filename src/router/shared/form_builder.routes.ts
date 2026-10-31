@@ -1,0 +1,17 @@
+const FormBuilderHome = () => import('@/features/shared/form_builder/pages/FormBuilderHome.vue');
+const FormBuilderEditor = () => import('@/features/shared/form_builder/pages/FormBuilderEditor.vue');
+
+export const formBuilderRoutes = [
+  {
+    path: '/form-builder',
+    name: 'FormBuilderHome',
+    component: FormBuilderHome,
+    meta: { title: 'Form Builder', requiresAuth: true, roleAccess: 'productConfig' }
+  },
+  {
+    path: '/form-builder/:productId',
+    name: 'FormBuilderEditor',
+    component: FormBuilderEditor,
+    meta: { title: 'Form Builder Editor', requiresAuth: true, roleAccess: 'productConfig' }
+  }
+];

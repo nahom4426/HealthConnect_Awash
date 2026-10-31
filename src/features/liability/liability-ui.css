@@ -1,0 +1,67 @@
+.lia-page {
+  --lia-deep: #0f766e;
+  --lia-mid: #0d9488;
+  --lia-soft: #ccfbf1;
+  --lia-ink: #134e4a;
+  padding: 1.5rem 2rem 3rem;
+  max-width: min(1400px, 100%);
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.lia-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; align-items: flex-start; }
+.lia-kicker { text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; color: var(--lia-deep); font-weight: 700; margin: 0 0 .35rem; }
+.lia-head h1 { margin: 0; font-size: 1.6rem; color: #0f172a; }
+.lia-sub { margin: .4rem 0 0; color: #57534e; }
+.lia-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.lia-btn { background: var(--lia-deep); color: #fff; border: 0; border-radius: .6rem; padding: .55rem 1rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+.lia-btn:disabled { opacity: .5; cursor: not-allowed; }
+.lia-btn.ghost { background: #fff; color: var(--lia-deep); border: 1px solid #99f6e4; }
+.lia-btn.success { background: #047857; }
+.lia-error, .lia-note { padding: .9rem 1rem; border-radius: .7rem; margin-bottom: 1rem; }
+.lia-error { background: #fef2f2; color: #991b1b; }
+.lia-note { background: var(--lia-soft); color: var(--lia-ink); }
+.lia-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 1rem; overflow: hidden; margin-bottom: 1rem; }
+.lia-card h2 { margin: 0; padding: 1rem 1.15rem .45rem; font-size: 1rem; color: #0f172a; }
+.lia-card p, .lia-card ul { margin: 0; padding: 0 1.15rem 1rem; }
+.lia-filters { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.lia-filters input, .lia-filters select { border: 1px solid #e7e5e4; border-radius: .6rem; padding: .5rem .7rem; min-width: 11rem; }
+.lia-filters input[type="search"] { flex: 1 1 16rem; }
+.lia-page table { width: 100%; border-collapse: collapse; }
+.lia-page th, .lia-page td { text-align: left; padding: .85rem 1.1rem; border-bottom: 1px solid #f5f5f4; vertical-align: top; }
+.lia-muted { color: #a8a29e; font-size: .75rem; word-break: break-all; }
+.lia-link, .lia-page button.lia-link { background: none; border: 0; color: var(--lia-deep); font-weight: 700; cursor: pointer; padding: 0; }
+.lia-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.lia-meta > div { background: #fff; border: 1px solid #e7e5e4; border-radius: .8rem; padding: .8rem 1rem; }
+.lia-meta span { display: block; color: #a8a29e; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; }
+.lia-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.lia-answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0 0 .4rem; }
+.lia-answers > div { display: grid; gap: .25rem; padding: .85rem 1.1rem; border-top: 1px solid #f5f5f4; }
+.lia-answers dt { margin: 0; color: #a8a29e; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.lia-answers dd { margin: 0; color: #1c1917; font-size: .95rem; font-weight: 600; line-height: 1.35; word-break: break-word; }
+.lia-tabs { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: 1rem; padding: .3rem; background: #f8fafc; border: 1px solid #e7e5e4; border-radius: .9rem; }
+.lia-tab { border: 0; background: transparent; padding: .5rem .9rem; border-radius: .65rem; font-weight: 600; font-size: .85rem; color: #78716c; cursor: pointer; }
+.lia-tab.active { background: #fff; color: var(--lia-deep); box-shadow: 0 1px 2px rgb(15 23 42 / .06); }
+.lia-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; padding: 0 1.15rem 1.15rem; }
+.lia-form-grid label { display: flex; flex-direction: column; gap: .35rem; font-size: .82rem; font-weight: 600; color: #44403c; }
+.lia-form-grid .span-2 { grid-column: span 2; }
+.lia-form-grid input, .lia-form-grid select, .lia-form-grid textarea {
+  border: 1px solid #d6d3d1; border-radius: .55rem; padding: .6rem .75rem; font-weight: 500; font-size: .95rem;
+}
+.lia-badge {
+  display: inline-flex; align-items: center; border-radius: 999px; padding: .2rem .65rem;
+  font-size: .75rem; font-weight: 700; background: var(--lia-soft); color: var(--lia-ink);
+}
+.lia-queues { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.lia-queue {
+  border: 1px solid #e7e5e4; border-radius: .9rem; padding: .9rem 1rem; background: #fff; text-decoration: none; color: inherit;
+}
+.lia-queue.active { border-color: var(--lia-mid); background: var(--lia-soft); }
+.lia-queue strong { display: block; font-size: .95rem; }
+.lia-queue span { color: #78716c; font-size: .8rem; }
+.lia-pager { display: flex; gap: .5rem; align-items: center; padding: .8rem 1rem; }
+@media (max-width: 900px) {
+  .lia-page { padding: 1.25rem 1rem 2.5rem; }
+  .lia-grid, .lia-answers, .lia-form-grid, .lia-queues { grid-template-columns: 1fr; }
+  .lia-form-grid .span-2 { grid-column: auto; }
+}

@@ -1,0 +1,175 @@
+/* Marine & Cargo look: an ocean-tinted page, glassy cards with an accent on section titles, tinted
+   table headers and rows that light up on hover. Imported by MarinePageHeader, so it loads with any
+   marine page; every rule is scoped to .marine-page (the root of each page) or a marine-* class.
+   Colours follow the Marine module entry in stores/moduleStore (#0c4a6e → #0284c7, accent #38bdf8). */
+
+.marine-page {
+  --m-deep: 12 74 110; /* #0c4a6e */
+  --m-ocean: 2 132 199; /* #0284c7 */
+  --m-sky: 56 189 248; /* #38bdf8 */
+  --m-indigo: 99 102 241;
+  --m-glass: rgb(var(--surface) / 0.82);
+  --m-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 28px -14px rgb(var(--m-deep) / 0.22);
+  --m-wash: 0.14;
+
+  position: relative;
+  min-height: 100%;
+  padding: 1rem 1rem 2.5rem;
+  background:
+    radial-gradient(1100px 360px at 100% -120px, rgb(var(--m-sky) / var(--m-wash)), transparent 65%),
+    radial-gradient(800px 300px at -10% -60px, rgb(var(--m-indigo) / calc(var(--m-wash) * 0.6)), transparent 65%),
+    rgb(var(--canvas));
+}
+@media (min-width: 768px) {
+  .marine-page { padding: 1.5rem 1.75rem 3rem; }
+}
+.marine-page.claim-page {
+  max-width: none;
+  width: 100%;
+}
+@media (min-width: 1280px) {
+  .marine-page.claim-page {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+:root[data-theme="dark"] .marine-page,
+:root.dark .marine-page {
+  --m-glass: rgb(var(--surface) / 0.72);
+  --m-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 14px 30px -16px rgb(0 0 0 / 0.6);
+  --m-wash: 0.1;
+}
+
+/* ── Cards (cardClass); .marine-page raises specificity over Tailwind's bg-surface / rounded-2xl ── */
+.marine-page .marine-card {
+  background: var(--m-glass, rgb(var(--surface)));
+  border-radius: 20px;
+  box-shadow: var(--m-shadow);
+  backdrop-filter: blur(14px);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.marine-page .marine-card:hover { border-color: rgb(var(--m-sky) / 0.45); }
+
+/* Section titles: an ocean accent bar and a divider under the title */
+.marine-card > h2:first-child,
+.marine-card > header:first-child > h2:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+.marine-card > h2:first-child {
+  padding-bottom: 0.7rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgb(var(--line));
+}
+.marine-card > h2:first-child::before,
+.marine-card > header:first-child > h2:first-child::before {
+  content: "";
+  flex-shrink: 0;
+  width: 4px;
+  height: 1.05rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgb(var(--m-sky)), rgb(var(--m-ocean)));
+}
+
+/* ── Tables inside cards ── */
+.marine-card thead {
+  background: linear-gradient(180deg, rgb(var(--m-sky) / 0.12), rgb(var(--m-sky) / 0.05)) !important;
+}
+.marine-card thead th { color: rgb(var(--ink-muted)); }
+.marine-card tbody tr { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+.marine-card tbody tr.cursor-pointer:hover {
+  background: rgb(var(--m-sky) / 0.07) !important;
+  box-shadow: inset 3px 0 0 rgb(var(--m-ocean));
+}
+
+/* ── Page header ── */
+.marine-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 1.1rem 1.35rem 1.25rem;
+  border: 1px solid rgb(var(--line));
+  border-radius: 20px;
+  background:
+    linear-gradient(120deg, rgb(var(--surface) / 0.95) 40%, rgb(var(--m-sky) / 0.1)),
+    rgb(var(--surface));
+  box-shadow: var(--m-shadow);
+}
+.marine-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgb(var(--m-deep)), rgb(var(--m-ocean)) 45%, rgb(var(--m-sky)));
+}
+.marine-hero > :not(.marine-waves) { position: relative; }
+.marine-hero .marine-waves {
+  position: absolute;
+  inset: auto 0 0 auto;
+  width: 62%;
+  height: 72%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
+  color: rgb(var(--m-ocean));
+  pointer-events: none;
+}
+.marine-hero-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, rgb(var(--m-deep)), rgb(var(--m-ocean)) 60%, rgb(var(--m-sky)));
+  box-shadow: 0 8px 18px -8px rgb(var(--m-ocean) / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+
+/* ── Tabs (DetailTabs) ── */
+.marine-tabs {
+  display: inline-flex;
+  max-width: 100%;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  overflow-x: auto;
+  border: 1px solid rgb(var(--line));
+  border-radius: 14px;
+  background: var(--m-glass, rgb(var(--surface)));
+  box-shadow: var(--m-shadow);
+}
+.marine-tab[aria-selected="true"] {
+  color: #fff;
+  background: linear-gradient(135deg, #075985, #0369a1);
+  box-shadow: 0 6px 14px -8px rgb(3 105 161 / 0.9);
+}
+
+/* ── Filter bar ── */
+.marine-filters {
+  padding: 0.65rem;
+  border: 1px solid rgb(var(--line));
+  border-radius: 16px;
+  background: var(--m-glass, rgb(var(--surface)));
+  box-shadow: var(--m-shadow);
+}
+
+/* ── Wizard steps ── */
+.marine-steps button {
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgb(var(--line));
+  background: var(--m-glass, rgb(var(--surface)));
+  box-shadow: var(--m-shadow);
+}
+.marine-steps button[aria-current="step"] {
+  border-color: rgb(var(--m-ocean) / 0.6);
+  background: linear-gradient(135deg, rgb(var(--m-sky) / 0.16), rgb(var(--surface)) 70%);
+}
+
+@media print {
+  .marine-page { background: none; padding: 0; }
+  .marine-hero .marine-waves { display: none; }
+  .marine-card, .marine-hero { box-shadow: none; backdrop-filter: none; }
+}

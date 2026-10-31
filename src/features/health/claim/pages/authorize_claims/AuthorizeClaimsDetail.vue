@@ -1,0 +1,250 @@
+<!-- AuthorizeClaimDetail.vue - Updated with institution name handling -->
+<script setup>
+import DefaultPage from '@/components/DefaultPage.vue';
+import { usePagination } from "@/composables/usePagination";
+import { approveClaimProcessedBy, claimProccessed, getRequestedClaimByBatchDetail, updateServiceProvidedClaimStatus } from '../../api/claimApi';
+import Table from '@/components/Table.vue';
+import { useRoute, useRouter } from 'vue-router';
+import { PaymentStatus } from '@/types/interface';
+import { formatCurrency, toasted, secondDateFormat } from '@/utils/utils';
+import Button from '@/components/Button.vue';
+import TableWithCheckBox from '@/components/TableWithCheckBox.vue';
+import { ref, onMounted, computed } from 'vue';
+import { useApiRequest } from '@/composables/useApiRequest';
+import { openModal } from '@customizer/modal-x';
+import { useClaimByInstitutionBatch } from '../../store/claimByInstitutionBatchStore';
+import CheckProvidedItemsMdl from '../../modal/checkProvidedItems.mdl.vue';
+import ClaimDetailTableRow from '../../components/ClaimDetailTableRow.vue';
+
+const router = useRouter();
+const route = useRoute();
+
+// Get institution name from multiple sources with priority
+const institutionName = computed(() => {
+  // 1. Try to get from route state (passed via router.push or RouterLink)
+  if (route.state?.institutionName) {
+    return route.state.institutionName;
+  }
+  
+  // 2. Try to get from query params
+  if (route.query.institutionName) {
+    return route.query.institutionName;
+  }
+  
+  // 3. Try to get from the first claim in the store
+  const firstClaim = store.claims?.[0];
+  if (firstClaim?.institutionName) {
+    return firstClaim.institutionName;
+  }
+  
+  // 4. Try to get from route params (if institution name is in the URL)
+  if (route.params.institutionName) {
+    return route.params.institutionName;
+  }
+  
+  // 5. Fallback to N/A
+  return 'N/A';
+});
+
+const batchCode = route.params.batchCode;
+const claimUuid = route.params.claimUuid;
+
+const store = useClaimByInstitutionBatch();
+
+const pagination = usePagination({
+  store,
+  auto: true,
+  reset: true,
+  perPage: 1000,
+  cb: (data) => {
+    const query = { ...data, limit: 1000 };
+    if (query.search === "" || query.search == null) delete query.search;
+    return getRequestedClaimByBatchDetail(query, claimUuid);
+  },
+});
+
+onMounted(() => {
+  if (!store.claims?.length) pagination.send();
+});
+
+const checked = ref([]);
+const processedClaimReq = useApiRequest();
+const processWholeReq = useApiRequest();
+
+// show Process Claim button only if there is NO pending serviceClaimStatus in table
+const canProcessWholeClaim = computed(() => {
+  const rows = store.claims || [];
+  if (!rows.length) return false;
+  return rows.every((r) => (r?.serviceClaimStatus || '').toUpperCase() !== 'PENDING');
+});
+
+// process/reject multiple selected
+function batchProcessed() {
+  if (processedClaimReq.pending.value) return;
+
+  // remark optional with action selection
+  openModal('CompleteSelectedClaim', { title: 'Complete Selected Claims' }, (result) => {
+    const body = checked.value.slice(); // these are serviceProvidedUuid
+    if (!body.length) return;
+    
+    const action = result?.action || 'CHECKED';
+    const comment = result?.comment;
+
+    processedClaimReq.send(
+      () => updateServiceProvidedClaimStatus(claimUuid, action, body, comment),
+      (res) => {
+        if (res && res.status >= 200 && res.status < 300) {
+          const actionText = action === 'CHECKED' ? 'CHECKED' : 'REJECTED';
+          toasted(true, `Selected services marked ${actionText}`);
+          
+          // Update status in store instead of removing items
+          const updatedClaims = (store.claims || []).map((claim) => {
+            if (body.includes(claim.serviceProvidedUuid)) {
+              return { ...claim, serviceClaimStatus: action };
+            }
+            return claim;
+          });
+          
+          store.set ? store.set(updatedClaims) : (store.claims = updatedClaims);
+          checked.value = [];
+        }
+      }
+    );
+  });
+}
+
+// open modal to process entire claim (approve processedBy/{claimUuid})
+function openProcessWholeClaim() {
+  openModal('CompleteClaimL3', { 
+    title: 'Authorize Claim', 
+    batchCode,
+    claimUuid: String(claimUuid),
+    onSuccess: () => {
+      toasted(true, 'Claim authorized successfully');
+      router.push('/authorize_claims');
+      pagination.send();
+    }
+  });
+}
+
+// open modal to reject entire claim
+function openRejectWholeClaim() {
+  openModal('RejectClaim', { 
+    title: 'Reject Claim', 
+    batchCode,
+    claimUuid: String(claimUuid),
+    onSuccess: () => {
+      toasted(true, 'Claim rejected successfully');
+      router.push('/authorize_claims');
+      pagination.send();
+    }
+  });
+}
+
+// modal state
+const showItemsModal = ref(false);
+const modalRow = ref(null);
+const modalItems = ref([]);
+const modalTitle = ref('Provided Items');
+
+function openItemsModal(row) {
+  modalRow.value = row;
+  modalItems.value = row?.providedItemResponses || [];
+  modalTitle.value = `Provided Items — ${row?.insuredName || row?.institutionName || ''}`;
+  showItemsModal.value = true;
+}
+
+function getInitials(name) {
+  if (!name || name === 'N/A') return 'I';
+  return name.charAt(0).toUpperCase();
+}
+
+// Log for debugging
+</script>
+
+<template>
+  <DefaultPage>
+    <!-- Header with Institution Name -->
+    <template #header>
+      <div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-lg">
+              {{ getInitials(institutionName) }}
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-ink">{{ institutionName }}</h1>
+              <p class="text-sm text-ink-subtle">Authorize Claim Details</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-muted rounded-lg border border-line">
+            <span class="text-xs font-medium text-ink-muted">Batch:</span>
+            <span class="text-xs font-mono text-ink">{{ batchCode || 'N/A' }}</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-success-soft rounded-lg border border-success/20">
+            <span class="text-xs font-medium text-success">Status:</span>
+            <span class="text-xs font-semibold text-success-strong">APPROVED</span>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #more>
+      <Button :pending="processedClaimReq.pending.value" class="ml-auto" @click="batchProcessed" type="primary" v-if="checked.length">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        Check/Reject Selected ({{ checked.length }})
+      </Button>
+    </template>
+
+    <Table
+      :pending="pagination.pending.value"
+      :show-pagination="false"
+      :headers="{
+        head: [ 'Institution', 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions'],
+        row: [ 'institutionName', 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus']
+      }"
+      :rows="store.claims"
+      :rowCom="ClaimDetailTableRow"
+      placeholder="No claims found"
+    >
+      <template #row>
+        <ClaimDetailTableRow
+          :rowData="store.claims"
+          :rowKeys="[ 'institutionName', 'insuredName', 'itemsCount', 'amount', 'providedDate', 'serviceClaimStatus']"
+          :headKeys="[ 'Institution', 'Insured Name', 'Items', 'Amount', 'Provided Date', 'Status', 'Actions']"
+          :institutionName="institutionName"
+          @viewItems="openItemsModal"
+        />
+      </template>
+    </Table>
+
+    <div class="flex gap-3 justify-end pb-8" v-if="canProcessWholeClaim">
+      <Button :pending="processWholeReq.pending.value" type="danger" @click="openRejectWholeClaim">
+        <div class="flex gap-2 items-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Reject Claim
+        </div>
+      </Button>
+      <Button :pending="processWholeReq.pending.value" type="primary" @click="openProcessWholeClaim">
+        <div class="flex gap-2 items-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Authorize Claim
+        </div>
+      </Button>
+    </div>
+
+    <CheckProvidedItemsMdl
+      v-if="showItemsModal"
+      :row="modalRow"
+      :items="modalItems"
+      :title="modalTitle"
+      @close="showItemsModal = false"
+    />
+  </DefaultPage>
+</template>

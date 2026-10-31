@@ -1,0 +1,719 @@
+<script setup>
+import { ref } from "vue";
+import Button from "@/components/Button.vue";
+import ModalParent from "@/components/ModalParent.vue";
+import NewFormParent from "@/components/NewFormParent.vue";
+import { useApiRequest } from "@/composables/useApiRequest";
+import { useAuthStore } from "@/stores/auth";
+import { toasted } from "@/utils/utils";
+import { closeModal } from "@customizer/modal-x";
+import { importServices, getAllServices } from "../api/serviceApi";
+import { importDrug } from "../api/drugApi";
+import { importInstitutions } from "@/features/health/institutions/api/institutionApi";
+import * as XLSX from 'xlsx';
+import { useRoute } from "vue-router";
+import { useServiceListStore } from "../store/serviceListStore";
+
+const route = useRoute();
+
+const props = defineProps({
+  data: {
+    type: [String, Object],
+    default: "service",
+  },
+});
+
+const importType = ref(typeof props.data === 'string' ? props.data : (props.data?.type || 'service'));
+const onRefetch = typeof props.data === 'object' ? props.data?.onRefetch : undefined;
+
+const triggerRefetch = () => {
+  if (typeof onRefetch !== 'function') return;
+  const delays = [0, 1500, 3500, 7000];
+  delays.forEach((ms) => {
+    window.setTimeout(() => {
+      onRefetch();
+    }, ms);
+  });
+};
+
+// State
+const importResults = ref(null);
+const showResults = ref(false);
+const req = useApiRequest();
+const auth = useAuthStore().auth?.user?.providerUuid;
+const id = route.params.id;
+const currentProviderName = String(route.params.providerName || '').trim();
+const serviceListStore = useServiceListStore();
+const progress = ref(0);
+const importing = ref(false);
+const fileInput = ref();
+const selectedFile = ref(null);
+const fileName = ref("");
+const message = ref({ type: null, text: null });
+const wasSuccessful = ref(false);
+
+const normalizeProviderName = (name) => {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const extractProviderNameFromFilename = (name) => {
+  let file = String(name || '').trim();
+  if (!file) return '';
+  // Remove file extension
+  file = file.replace(/\.(xlsx|xls|csv)$/i, '');
+  // Remove copy suffixes like (1), _1, etc.
+  file = file.replace(/\s*\(\d+\)$/, '');
+  // Remove prefix services_, contract_, provider_ if present
+  file = file.replace(/^(services|contract|provider|eligible_services)_/i, '');
+  // Remove trailing date pattern like _2026-08-18 or _20260818
+  file = file.replace(/_\d{4}-\d{2}-\d{2}$/, '');
+  file = file.replace(/_\d{8}$/, '');
+
+  return file.replace(/_/g, ' ').trim();
+};
+
+const calculateProviderSimilarity = (name1, name2) => {
+  const norm1 = normalizeProviderName(name1);
+  const norm2 = normalizeProviderName(name2);
+
+  if (!norm1 || !norm2) return 0;
+  if (norm1 === norm2) return 1.0;
+
+  const len1 = norm1.length;
+  const len2 = norm2.length;
+  const maxLen = Math.max(len1, len2);
+  if (maxLen === 0) return 1.0;
+
+  // 1. Levenshtein Distance
+  const track = Array(len2 + 1)
+    .fill(null)
+    .map(() => Array(len1 + 1).fill(null));
+
+  for (let i = 0; i <= len1; i++) track[0][i] = i;
+  for (let j = 0; j <= len2; j++) track[j][0] = j;
+
+  for (let j = 1; j <= len2; j++) {
+    for (let i = 1; i <= len1; i++) {
+      const indicator = norm1[i - 1] === norm2[j - 1] ? 0 : 1;
+      track[j][i] = Math.min(
+        track[j][i - 1] + 1, // deletion
+        track[j - 1][i] + 1, // insertion
+        track[j - 1][i - 1] + indicator // substitution
+      );
+    }
+  }
+
+  const distance = track[len2][len1];
+  const charSimilarity = 1 - distance / maxLen;
+
+  // 2. Token Jaccard similarity (for extra words or word order differences)
+  const tokens1 = new Set(norm1.split(' ').filter(Boolean));
+  const tokens2 = new Set(norm2.split(' ').filter(Boolean));
+  const intersection = new Set([...tokens1].filter((x) => tokens2.has(x)));
+  const union = new Set([...tokens1, ...tokens2]);
+  const tokenSimilarity = union.size > 0 ? intersection.size / union.size : 0;
+
+  return Math.max(charSimilarity, tokenSimilarity);
+};
+
+const extractProviderNameFromSheet = (sheetRows) => {
+  if (!Array.isArray(sheetRows)) return '';
+  const maxRows = Math.min(sheetRows.length, 15);
+  for (let r = 0; r < maxRows; r++) {
+    const row = sheetRows[r];
+    if (!Array.isArray(row)) continue;
+    for (let c = 0; c < row.length; c++) {
+      const cell = row[c];
+      const text = String(cell || '').toLowerCase();
+      if (!text) continue;
+      const isLabel = text.includes('provider') && text.includes('name');
+      if (isLabel) {
+        const right = row[c + 1];
+        if (right != null && String(right).trim()) return String(right).trim();
+        const below = sheetRows[r + 1]?.[c];
+        if (below != null && String(below).trim()) return String(below).trim();
+      }
+      if (text.startsWith('provider:')) {
+        return String(cell).split(':').slice(1).join(':').trim();
+      }
+      if (text.startsWith('provider name:')) {
+        return String(cell).split(':').slice(1).join(':').trim();
+      }
+    }
+  }
+  return '';
+};
+
+const clearSelectedFile = () => {
+  progress.value = 0;
+  importing.value = false;
+  selectedFile.value = null;
+  fileName.value = '';
+  previewData.value = [];
+  previewHeaders.value = [];
+  showPreview.value = false;
+  importResults.value = null;
+  showResults.value = false;
+  wasSuccessful.value = false;
+  if (fileInput.value) fileInput.value.value = '';
+};
+
+const validateProviderName = async (file) => {
+  if (!file) return true;
+  if (!currentProviderName) return true;
+  try {
+    const data = await readFileAsync(file);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const sheetRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    const fileProviderName = extractProviderNameFromSheet(sheetRows);
+
+    const providerFromName = extractProviderNameFromFilename(file?.name);
+    const providerToCompare = fileProviderName || providerFromName;
+
+    if (!providerToCompare) return true;
+
+    const similarity = calculateProviderSimilarity(currentProviderName, providerToCompare);
+
+    if (similarity < 0.8) {
+      const matchPct = Math.round(similarity * 100);
+      message.value = {
+        type: 'error',
+        text: `Provider names don't match (${matchPct}% match, at least 80% required). Current: "${currentProviderName}". File: "${providerToCompare}". Please use the correct exported Excel.`
+      };
+      toasted(false, '', `Provider names don't match (${matchPct}% match). Please use the correct exported Excel.`);
+      clearSelectedFile();
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    return true;
+  }
+};
+
+// Preview
+const previewData = ref([]);
+const previewHeaders = ref([]);
+const showPreview = ref(false);
+const previewLoading = ref(false);
+const maxPreviewHeight = "200px";
+
+// Reset
+const reset = () => {
+  progress.value = 0;
+  importing.value = false;
+  selectedFile.value = null;
+  fileName.value = "";
+  message.value = { type: null, text: null };
+  wasSuccessful.value = false;
+  previewData.value = [];
+  previewHeaders.value = [];
+  showPreview.value = false;
+  importResults.value = null;
+  showResults.value = false;
+  if (fileInput.value) fileInput.value.value = "";
+};
+
+// File read
+const readFileAsync = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = (e) => reject(e);
+    reader.readAsArrayBuffer(file);
+  });
+};
+
+const parseFileForPreview = async (file) => {
+  if (!file) return;
+  previewLoading.value = true;
+  try {
+    const data = await readFileAsync(file);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    if (jsonData.length > 0) {
+      previewHeaders.value = jsonData[0];
+      previewData.value = jsonData.slice(1);
+      showPreview.value = true;
+    }
+  } catch (error) {
+    console.error('Error parsing file:', error);
+    message.value = {
+      type: "error",
+      text: "Could not parse file for preview. Please ensure it's a valid Excel/CSV file."
+    };
+  } finally {
+    previewLoading.value = false;
+  }
+};
+
+const refetchServicesList = async () => {
+  try {
+    const payerProviderContractUuid = route.params.id;
+    if (!payerProviderContractUuid) {
+      return;
+    }
+    const existingRes = await getAllServices(payerProviderContractUuid, { page: 0, limit: 25, search: "" });
+
+    // ApiService returns AsyncResponse via responseHandler: { success, data, error }
+    const payload = Object.prototype.hasOwnProperty.call(existingRes || {}, "data") ? existingRes.data : existingRes;
+
+    const existingData = Array.isArray(payload?.content)
+      ? payload.content
+      : (Array.isArray(payload?.data?.content)
+          ? payload.data.content
+          : (Array.isArray(payload) ? payload : []));
+
+    serviceListStore.set(existingData || []);
+  } catch (e) {
+    console.error("Failed to refetch services after import", e);
+  }
+};
+
+// Import
+const importFile = async () => {
+  if (!selectedFile.value) {
+    message.value = { type: "error", text: "Please select a file first" };
+    return;
+  }
+
+  if (importType.value !== "institution") {
+    const ok = await validateProviderName(selectedFile.value);
+    if (!ok) return;
+  }
+
+  importing.value = true;
+  progress.value = 0;
+  message.value = { type: null, text: null };
+  importResults.value = null;
+  showResults.value = false;
+
+  const fd = new FormData();
+  if (importType.value === "institution") {
+    fd.append("institutions", selectedFile.value);
+  } else {
+    fd.append("file", selectedFile.value);
+  }
+
+  try {
+    const apiCall = importType.value === "institution"
+      ? importInstitutions(fd, {
+          onUploadProgress: (e) => {
+            progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
+          },
+        })
+      : (importType.value === "drug"
+          ? importDrug({ payerProviderContractUuid: id }, fd, {
+              onUploadProgress: (e) => {
+                progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
+              },
+            })
+          : importServices({ payerProviderContractUuid: id }, fd, {
+              onUploadProgress: (e) => {
+                progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
+              },
+            }));
+
+    const response = await apiCall;
+
+    // ApiService returns AsyncResponse via responseHandler: { success, data, error, status }
+    if (!response?.success) {
+      throw new Error(response?.error || "Import failed");
+    }
+
+    const responseData = response.data;
+    if (!responseData) {
+      throw new Error("No valid response data from server");
+    }
+
+    importResults.value = responseData;
+
+    // Check if we have row results to process
+    if (!responseData.rowResults || !Array.isArray(responseData.rowResults)) {
+      // Some backends may return success without row details. Treat as success.
+      message.value = {
+        type: "success",
+        text: "Import completed",
+      };
+      wasSuccessful.value = true;
+      showResults.value = true;
+
+      if (importType.value === "service") {
+        await refetchServicesList();
+        window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
+        triggerRefetch();
+      }
+
+      if (importType.value === "institution") {
+        toasted(true, "Institutions imported successfully");
+        if (typeof onRefetch === 'function') onRefetch();
+      } else {
+        toasted(true, importType.value === "drug" ? "Drug imported successfully" : "Services imported successfully");
+      }
+      closeModal(true);
+      return;
+    }
+
+    // Calculate actual success/error counts from rowResults if not provided
+    const successCount = responseData.successCount ||
+      responseData.rowResults.filter(r => r.success).length;
+    const errorCount = responseData.errorCount ||
+      responseData.rowResults.filter(r => r.error).length;
+
+    // Update the counts in the response data
+    responseData.successCount = successCount;
+    responseData.errorCount = errorCount;
+
+    // Determine if the import was successful
+    const hasSuccess = successCount > 0;
+    const firstError = responseData.rowResults.find(r => r.error);
+
+    const totalRows =
+      typeof responseData.totalRows === "number"
+        ? responseData.totalRows
+        : (Array.isArray(responseData.rowResults) ? responseData.rowResults.length : 0);
+
+    if (responseData.rowResults.length > 0) {
+      message.value = {
+        // HTTP request succeeded. Outcome depends on row-level results.
+        type: hasSuccess ? "success" : "error",
+        text: hasSuccess
+          ? `Import completed: ${successCount} success, ${errorCount} failed`
+          : (firstError?.message || `Import completed: ${successCount} success, ${errorCount} failed`)
+      };
+      
+      wasSuccessful.value = hasSuccess;
+      showResults.value = true;
+
+      // Only refetch and close if at least one row actually imported.
+      if (hasSuccess && importType.value === "service") {
+        await refetchServicesList();
+        window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
+        triggerRefetch();
+      }
+
+      if (hasSuccess && importType.value === "institution") {
+        if (typeof onRefetch === 'function') onRefetch();
+      }
+
+      if (hasSuccess) {
+        if (importType.value === "institution") {
+          toasted(true, "Institutions imported successfully");
+        } else {
+          toasted(true, importType.value === "drug" 
+            ? "Drug imported successfully" 
+            : "Services imported successfully");
+        }
+        closeModal(true);
+      }
+    } else if (totalRows > 0) {
+      // Backend processed rows but didn't return per-row details.
+      message.value = {
+        type: hasSuccess ? "success" : "error",
+        text: hasSuccess
+          ? `Import completed: ${successCount} success, ${errorCount} failed`
+          : `Import completed: ${successCount} success, ${errorCount} failed`,
+      };
+
+      wasSuccessful.value = hasSuccess;
+      showResults.value = true;
+
+      if (hasSuccess && importType.value === "service") {
+        await refetchServicesList();
+        window.dispatchEvent(new CustomEvent('service-imported', { detail: { type: 'service' } }));
+        triggerRefetch();
+      }
+
+      if (hasSuccess && importType.value === "institution") {
+        if (typeof onRefetch === 'function') onRefetch();
+      }
+
+      if (hasSuccess) {
+        if (importType.value === "institution") {
+          toasted(true, "Institutions imported successfully");
+        } else {
+          toasted(true, importType.value === "drug"
+            ? "Drug imported successfully"
+            : "Services imported successfully");
+        }
+        closeModal(true);
+      }
+    } else {
+      message.value = { 
+        type: "error", 
+        text: "No data was imported - file might be empty or invalid" 
+      };
+    }
+
+  } catch (error) {
+    console.error('Import error:', error);
+    message.value = {
+      type: "error",
+      text: error?.response?.data?.message || 
+           error?.message || 
+           "Import failed due to an unexpected error"
+    };
+    showResults.value = true;
+  } finally {
+    importing.value = false;
+  }
+};
+
+// File handling
+const handleFile = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const validTypes = [
+    "text/csv",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ];
+
+  if (!validTypes.includes(file.type)) {
+    message.value = { type: "error", text: "Please upload Excel/CSV file" };
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    message.value = { type: "error", text: "File size exceeds 5MB limit" };
+    return;
+  }
+
+  selectedFile.value = file;
+  fileName.value = file.name;
+  message.value = { type: null, text: null };
+  if (importType.value === "institution") {
+    parseFileForPreview(file);
+    return;
+  }
+
+  validateProviderName(file).then((ok) => {
+    if (!ok) return;
+    parseFileForPreview(file);
+  });
+};
+
+const triggerFileInput = () => fileInput.value?.click();
+const removeFile = () => reset();
+
+const title = importType.value === "drug"
+  ? "Import Drug Data"
+  : (importType.value === "institution" ? "Import Institution Data" : "Import Service Data");
+</script>
+
+<template>
+  <div class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/50">
+    <ModalParent id="import-modal">
+      <NewFormParent size="mdd" class="flex flex-col bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-hidden">
+        <div class="overflow-y-auto overflow-x-hidden p-6 space-y-6 custom-scrollbar">
+          
+          <!-- Title -->
+          <div class="text-center">
+            <div class="flex justify-center items-center mx-auto w-12 h-12 bg-primary/10 rounded-full">
+              <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <h2 class="mt-3 text-lg font-semibold text-ink">{{ title }}</h2>
+            <p class="mt-1 text-sm text-ink-subtle">Upload your Excel or CSV file to import data</p>
+          </div>
+
+          <!-- Message -->
+          <div v-if="message.text" class="p-4 rounded-md border shadow-sm"
+            :class="{
+              'bg-success-soft border-success/20 text-success-strong': message.type === 'success',
+              'bg-error-soft border-error/20 text-error-strong': message.type === 'error',
+              'bg-primary/5 border-primary/20 text-primary-hover': !message.type
+            }">
+            <p class="text-sm font-medium leading-snug">{{ message.text }}</p>
+          </div>
+
+          <!-- File Upload -->
+          <div @click="triggerFileInput"
+            class="relative p-8 text-center rounded-lg border-2 border-dashed transition-all duration-200 cursor-pointer"
+            :class="{ 'border-primary/70 bg-primary/[0.015]': selectedFile, 'border-line-strong hover:border-primary/70 hover:bg-primary/[0.015]': !selectedFile }">
+            <template v-if="!selectedFile">
+              <svg class="mx-auto w-12 h-12 text-ink-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p class="mt-4 text-sm text-ink-muted">Click to upload or drag and drop</p>
+              <p class="mt-1 text-xs text-ink-subtle">Excel or CSV files up to 5MB</p>
+              <input ref="fileInput" type="file" class="sr-only" @change="handleFile" />
+            </template>
+            <template v-else>
+              <svg class="mx-auto w-12 h-12 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="mt-2 text-sm font-medium text-ink-muted truncate">{{ fileName }}</p>
+              <p class="mt-1 text-xs text-ink-subtle">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+              <button @click.stop="removeFile"
+                class="mt-3 text-sm font-medium text-error hover:text-error">Remove file</button>
+            </template>
+          </div>
+
+          <!-- Preview -->
+          <div v-if="previewLoading" class="flex justify-center items-center py-8">
+            <div class="w-8 h-8 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
+          </div>
+
+          <div v-if="showPreview && previewData.length > 0" class="overflow-hidden rounded-lg border shadow-sm">
+            <div class="flex justify-between items-center px-4 py-3 bg-surface-muted border-b">
+              <h3 class="text-sm font-medium text-ink-muted">File Preview</h3>
+              <span class="text-xs text-ink-subtle">{{ previewData.length }} rows</span>
+            </div>
+            <div class="overflow-x-scroll overflow-y-scroll custom-scrollbar" :style="`height: ${maxPreviewHeight}`">
+              <table class="min-w-max divide-y divide-line">
+                <thead class="sticky top-0 bg-surface-muted">
+                  <tr>
+                    <th v-for="(header, idx) in previewHeaders" :key="idx"
+                      class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase whitespace-nowrap">
+                      {{ header }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-line">
+                  <tr v-for="(row, rowIdx) in previewData" :key="rowIdx"
+                    :class="rowIdx % 2 === 0 ? 'bg-white' : 'bg-surface-muted hover:bg-surface-muted transition-colors'">
+                    <td v-for="(cell, cellIdx) in row" :key="cellIdx"
+                      class="px-4 py-2 text-xs text-ink-subtle whitespace-nowrap">
+                      {{ cell }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div v-if="importing" class="space-y-2">
+            <div class="flex justify-between text-sm text-ink-muted">
+              <span>Uploading...</span>
+              <span>{{ progress }}%</span>
+            </div>
+            <div class="overflow-hidden w-full h-2.5 bg-line rounded-full">
+              <div class="h-2.5 bg-primary rounded-full transition-all duration-300 ease-out"
+                :style="`width: ${progress}%`"></div>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div v-if="showResults && importResults" class="overflow-hidden rounded-lg border shadow-sm">
+            <div class="flex justify-between items-center px-4 py-3 bg-surface-muted border-b">
+              <h3 class="text-sm font-medium text-ink-muted">Import Results</h3>
+              <div class="flex space-x-4">
+                <span class="px-2.5 py-0.5 text-xs font-medium text-success-strong bg-success-soft rounded-full">
+                  {{ importResults.successCount || 0 }} Success
+                </span>
+                <span class="px-2.5 py-0.5 text-xs font-medium text-error-strong bg-error-soft rounded-full">
+                  {{ importResults.errorCount || 0 }} Failed
+                </span>
+                <span class="px-2.5 py-0.5 text-xs font-medium text-ink bg-surface-muted rounded-full">
+                  {{ importResults.totalRows || 0 }} Total
+                </span>
+              </div>
+            </div>
+            <div class="overflow-x-scroll overflow-y-scroll custom-scrollbar" style="height: 200px">
+              <table class="min-w-max divide-y divide-line">
+                <thead class="sticky top-0 bg-surface-muted">
+                  <tr>
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase">Row</th>
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase">Status</th>
+                    <th class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase">Message</th>
+                    <th v-if="importType === 'service'"
+                      class="px-4 py-2 text-xs font-medium tracking-wider text-left text-ink-subtle uppercase">Service UUID
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-line">
+                  <tr v-for="(result, idx) in importResults.rowResults" :key="idx"
+                    :class="[
+                      result.success ? 'bg-success-soft' : result.error ? 'bg-error-soft' : 'bg-white',
+                      'hover:bg-surface-muted transition-colors'
+                    ]">
+                    <td class="px-4 py-2 text-sm text-ink-subtle whitespace-nowrap">{{ result.rowNumber }}</td>
+                    <td class="px-4 py-2 text-sm whitespace-nowrap">
+                      <span v-if="result.success"
+                        class="px-2.5 py-0.5 text-xs font-medium text-success-strong bg-success-soft rounded-full">Success</span>
+                      <span v-else-if="result.error"
+                        class="px-2.5 py-0.5 text-xs font-medium text-error-strong bg-error-soft rounded-full">Error</span>
+                      <span v-else
+                        class="px-2.5 py-0.5 text-xs font-medium text-ink bg-surface-muted rounded-full">Skipped</span>
+                    </td>
+                    <td class="px-4 py-2 text-sm text-ink-subtle">{{ result.message || '-' }}</td>
+                    <td v-if="importType === 'service'" class="px-4 py-2 text-sm text-ink-subtle">{{ result.serviceUuid || '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <template #bottom>
+          <div class="flex justify-between px-4 py-3 bg-surface-muted rounded-b-lg sm:px-6">
+            <Button @click="closeModal" variant="outline" size="md" :disabled="importing">
+              {{ showResults ? 'Close' : 'Cancel' }}
+            </Button>
+            <div class="flex space-x-3">
+              <Button v-if="selectedFile && !importing && !showResults" @click="removeFile" variant="outline" size="md">
+                Change File
+              </Button>
+              <Button v-if="selectedFile && !importing && !showResults" @click="importFile" variant="primary" size="md">
+                Import Now
+              </Button>
+              <Button v-if="showResults" @click="reset" variant="primary" size="md">
+                Import Again
+              </Button>
+            </div>
+          </div>
+        </template>
+      </NewFormParent>
+    </ModalParent>
+  </div>
+</template>
+<style scoped>
+.custom-scrollbar {
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--ink-subtle)) rgb(var(--surface-muted));
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar) {
+  @apply h-3 w-3;
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar-track) {
+  @apply bg-line rounded;
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar-thumb) {
+  @apply bg-ink-subtle rounded;
+}
+
+:deep(.custom-scrollbar::-webkit-scrollbar-thumb:hover) {
+  @apply bg-ink-subtle;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

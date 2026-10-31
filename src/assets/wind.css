@@ -1,0 +1,591 @@
+@import url("./fonts/geist/geist.css");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Design tokens
+   Colours are RGB triplets so Tailwind opacity modifiers work (bg-primary/10).
+   ========================================================================== */
+:root {
+  /* Brand */
+  --primary:  13 79 128; /* Standard navy #0D4F80 */
+  --primary-hover:  10 63 104;
+  --primary-light: 74 146 214; /* #4A92D6 */
+  --primary-dark: 6 41 74; /* #06294A */
+  --primary-fg:  13 79 128; /* brand-coloured text & icons */
+  --brand-accent:  254 147 18; /* Standard orange #FE9312 */
+  --secondary:  254 147 18;
+
+  /* Neutrals */
+  --canvas: 246 247 250; /* app background */
+  --surface: 255 255 255; /* cards, inputs, popovers */
+  --surface-muted: 249 250 251; /* table headers, subtle fills */
+  --surface-raised: 243 244 246; /* chips, hovered rows, tracks */
+  --line: 228 231 236; /* default borders */
+  --line-strong: 208 213 221; /* input borders, hover borders */
+  --ink: 17 24 39; /* primary text */
+  --ink-muted: 75 85 99; /* secondary text */
+  --ink-subtle: 107 114 128; /* placeholder, captions */
+
+  /* Feedback: base (icons, borders, text), soft (backgrounds), strong (text on soft) */
+  --success: 21 128 61;
+  --success-soft: 236 253 245;
+  --success-strong: 22 101 52;
+  --warning: 180 83 9;
+  --warning-soft: 255 251 235;
+  --warning-strong: 146 64 14;
+  --error: 220 38 38;
+  --error-soft: 254 242 242;
+  --error-strong: 153 27 27;
+  --info: 37 99 235;
+
+  /* Legacy names kept for existing pages */
+  --dark: 32 34 36;
+  --text-clr: var(--ink);
+  --base-clr: 103 103 105;
+  --base-clr2: 247 248 251;
+  --base-clr3: 30 30 30;
+  --base-clr4: 255 255 255;
+  --accent: 239 239 239;
+  --orange: 255 137 0;
+
+  /* Layout */
+  --drawer-width: 16.5rem;
+  --drawer-collapsed-width: 4.5rem;
+  --navbar-height: 4rem;
+
+  /* Controls */
+  --control-h: 2.5rem;
+  --control-h-sm: 2rem;
+  --focus-ring: 0 0 0 3px rgb(var(--primary) / 0.18);
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.04);
+  --shadow-pop: 0 10px 28px -6px rgb(16 24 40 / 0.16), 0 2px 6px -1px rgb(16 24 40 / 0.06);
+  --shadow-drawer: 12px 0 32px -12px rgb(16 24 40 / 0.28); /* sidebar peeking over the page */
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   Dark theme — set by the theme toggle (data-theme on <html>).
+   Warm brown-tinted neutrals so the Nyala brand still reads in the dark.
+   ========================================================================== */
+:root[data-theme="dark"] {
+  /* Brand */
+  --primary:  21 101 166; /* fills on dark surfaces */
+  --primary-hover:  26 116 190;
+  --primary-light: 143 191 234;
+  --primary-dark: 21 101 166;
+  --primary-fg:  143 191 234; /* text & icons on dark surfaces */
+  --brand-accent:  255 174 77;
+  --secondary:  255 174 77;
+
+  /* Neutrals */
+  --canvas:  6 16 29;
+  --surface:  11 26 44;
+  --surface-muted:  15 32 53;
+  --surface-raised:  20 40 64;
+  --line:  30 49 74;
+  --line-strong:  46 68 98;
+  --ink:  234 240 247;
+  --ink-muted:  176 190 208;
+  --ink-subtle:  128 145 168;
+
+  /* Feedback */
+  --success: 74 222 128;
+  --success-soft: 17 48 38;
+  --success-strong: 134 239 172;
+  --warning: 251 191 36;
+  --warning-soft: 52 40 14;
+  --warning-strong: 253 224 138;
+  --error: 248 113 113;
+  --error-soft: 60 22 31;
+  --error-strong: 254 202 202;
+  --info: 96 165 250;
+
+  /* Legacy names */
+  --dark:  234 240 247;
+  --base-clr: 170 160 154;
+  --base-clr2: 38 32 30;
+  --base-clr3: 240 235 232;
+  --base-clr4: 32 27 25;
+  --accent: 58 49 46;
+
+  --focus-ring: 0 0 0 3px rgb(var(--primary-fg) / 0.3);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.35), 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-pop: 0 18px 40px -8px rgb(0 0 0 / 0.6), 0 2px 8px -2px rgb(0 0 0 / 0.45);
+  --shadow-modal: 0 28px 60px -12px rgb(0 0 0 / 0.7);
+  --shadow-drawer: 16px 0 40px -12px rgb(0 0 0 / 0.65);
+  --nav-active-tint: 0.2;
+
+  color-scheme: dark;
+}
+
+/* Bigger touch targets on touch devices */
+@media (pointer: coarse) {
+  :root {
+    --control-h: 2.75rem;
+    --control-h-sm: 2.25rem;
+  }
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: rgb(var(--canvas));
+  @apply text-sm text-text-clr;
+}
+
+/*
+ * @customizer/modal-x ships a global `* { box-sizing: content-box }` that
+ * overrides Tailwind's reset. `html *` is just specific enough to win while
+ * still letting the `box-content` utility opt out.
+ */
+html *,
+html *::before,
+html *::after {
+  box-sizing: border-box;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line-strong)) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--line-strong));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--ink-subtle) / 0.6);
+}
+
+/* Keyboard focus only — mouse clicks don't draw rings */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid rgb(var(--primary) / 0.7);
+  outline-offset: 2px;
+}
+
+i,
+svg {
+  pointer-events: none;
+}
+
+@layer base {
+  .h1 {
+    @apply px-2 text-base font-semibold;
+  }
+  h1 {
+    @apply px-2 text-base font-semibold;
+  }
+}
+
+/* ==========================================================================
+   Reusable component classes
+   ========================================================================== */
+@layer components {
+  /* Surface card */
+  .card {
+    @apply rounded-xl border border-line bg-surface shadow-card;
+  }
+
+  /* Status badge — combine with .badge-{tone} */
+  .badge {
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset;
+  }
+  .badge-neutral {
+    @apply bg-gray-50 text-gray-700 ring-gray-200;
+  }
+  .badge-primary {
+    @apply bg-primary/5 text-primary ring-primary/20;
+  }
+  .badge-success {
+    @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20;
+  }
+  .badge-warning {
+    @apply bg-amber-50 text-amber-700 ring-amber-600/20;
+  }
+  .badge-danger {
+    @apply bg-red-50 text-red-700 ring-red-600/20;
+  }
+
+  /* Legacy helper */
+  .input-style {
+    @apply h-control rounded-lg border border-line-strong bg-surface px-3;
+  }
+
+  .table_action {
+    @apply font-medium text-primary underline-offset-2 hover:underline;
+  }
+
+  /* ---------------------------------------------------------------------
+     Button (components/Button.vue). Hover/disabled guards use :where() so
+     a caller's utilities (hover:bg-*, etc.) keep winning.
+     --------------------------------------------------------------------- */
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    text-transform: capitalize;
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease,
+      color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .btn--xs { padding: 0; }
+  .btn--sm { min-width: 3.5rem; min-height: 2.25rem; padding: 0 0.875rem; }
+  .btn--md { min-width: 6rem; min-height: var(--control-h); }
+  .btn--lg { min-width: 6.5rem; min-height: 2.75rem; padding: 0 1.25rem; font-size: 0.9375rem; }
+
+  .btn--primary {
+    background-color: rgb(var(--primary));
+    color: #fff;
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.08);
+  }
+  .btn--primary:hover:where(:not(:disabled)) { background-color: rgb(var(--primary-hover)); }
+
+  .btn--secondary,
+  .btn--elevated {
+    background-color: rgb(var(--surface));
+    border-color: rgb(var(--line-strong));
+    color: rgb(var(--ink));
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  }
+  .btn--secondary:hover:where(:not(:disabled)),
+  .btn--elevated:hover:where(:not(:disabled)) {
+    background-color: rgb(var(--surface-muted));
+    border-color: rgb(var(--ink-subtle) / 0.5);
+  }
+
+  .btn--ghost { color: rgb(var(--ink-muted)); }
+  .btn--ghost:hover:where(:not(:disabled)) {
+    background-color: rgb(var(--ink) / 0.05);
+    color: rgb(var(--ink));
+  }
+
+  .btn--danger {
+    background-color: rgb(var(--error));
+    color: #fff;
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.08);
+  }
+  .btn--danger:hover:where(:not(:disabled)) { background-color: rgb(185 28 28); }
+  .btn--danger:focus-visible { box-shadow: 0 0 0 3px rgb(var(--error) / 0.2); }
+
+  .btn--edge-primary {
+    background-color: rgb(var(--surface));
+    border-color: rgb(var(--primary) / 0.5);
+    color: rgb(var(--primary));
+  }
+  .btn--edge-primary:hover:where(:not(:disabled)) {
+    background-color: rgb(var(--primary) / 0.05);
+    border-color: rgb(var(--primary));
+  }
+
+  .btn--link {
+    min-width: auto;
+    min-height: auto;
+    padding: 0;
+    border-radius: 0.25rem;
+    color: rgb(var(--primary));
+    text-underline-offset: 3px;
+  }
+  .btn--link:hover:where(:not(:disabled)) { text-decoration: underline; }
+
+  /* Pending state keeps the button width stable */
+  .btn__label--hidden { visibility: hidden; }
+  .btn__spinner {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  /* Pagination buttons (TablePagination.vue and a few pages) */
+  .pagination-btn {
+    @apply flex justify-center items-center px-2 min-w-[2.25rem] h-9 text-sm font-medium rounded-lg border transition-colors border-line bg-surface text-ink-muted;
+  }
+  .pagination-btn:hover:where(:not(:disabled)) {
+    @apply bg-surface-muted text-ink border-line-strong;
+  }
+  .pagination-btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  .pagination-btn-active,
+  .pagination-btn-active:hover:where(:not(:disabled)) {
+    @apply bg-primary border-primary text-white;
+  }
+
+  .Table-header {
+    @apply text-left text-sm;
+  }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-gray-200/80;
+  }
+}
+
+@layer utilities {
+  .sys-focus {
+    box-shadow: var(--focus-ring);
+  }
+}
+
+/* ==========================================================================
+   Legacy utilities (still used by feature pages)
+   ========================================================================== */
+.bar {
+  --bar-height: 100%;
+  --bar-width: 2px;
+  position: relative;
+}
+.bar::after {
+  content: "";
+  position: absolute;
+  top: var(--bar-top);
+  left: var(--bar-left);
+  right: var(--bar-right);
+  bottom: var(--bar-bottom);
+  height: var(--bar-height);
+  width: var(--bar-width);
+  background-color: #0001;
+}
+.bar-right {
+  --bar-right: 0;
+  --bar-left: 115%;
+  --bar-top: 0;
+  --bar-bottom: 0;
+}
+.bar-left {
+  --bar-right: 11%;
+  --bar-left: 0;
+  --bar-top: 0;
+  --bar-bottom: 0;
+}
+.bar-top {
+  --bar-right: 0;
+  --bar-left: 0;
+  --bar-top: 0;
+  --bar-bottom: 115%;
+  --bar-height: 2px;
+  --bar-width: 100%;
+}
+.bar-bottom {
+  --bar-right: 0;
+  --bar-left: 0;
+  --bar-top: 115%;
+  --bar-bottom: 0;
+  --bar-height: 2px;
+  --bar-width: 100%;
+}
+
+.show-scrollbar,
+.custom-scrollbar {
+  overflow: auto;
+}
+
+/* Modal bodies scroll internally */
+.modal-x__modal,
+.modal-x__content,
+.modal-x__body,
+.modal-x-modal,
+.modal-x-content,
+.modal-x-body,
+[data-modal-x] [data-modal-x-content],
+[data-modal-x] [data-modal-x-body],
+.modal-parent,
+.modal-parent .modal-content,
+.form-scrollbar {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Ripple effect (v-ripple) */
+.__ripple {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.__ripple .__ripple_child {
+  z-index: -1;
+  position: absolute;
+  width: 0px;
+  height: 0px;
+  background-color: currentColor;
+  opacity: 0.15;
+  border-radius: 99999px;
+  transform: translate3d(-50%, -50%, 0);
+  pointer-events: none;
+}
+.__ripple_animation {
+  top: var(--y);
+  left: var(--x);
+  animation: ripple 0.45s ease-out;
+}
+@keyframes ripple {
+  100% {
+    width: var(--btnWidth);
+    height: var(--btnWidth);
+    opacity: 0;
+  }
+}
+
+.tooltip {
+  position: relative;
+}
+.tooltip::after {
+  content: "";
+  position: absolute;
+}
+
+/* Shared enter animations */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-pop-in {
+  animation: pop-in var(--duration-base) var(--ease-out);
+}
+
+/* ==========================================================================
+   Theme switching
+   ========================================================================== */
+/* Circular reveal (View Transitions API) — see composables/useTheme.js */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* Fallback for browsers without View Transitions: a short colour cross-fade */
+html.theme-switching *:not(.theme-toggle, .theme-toggle *),
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease,
+    fill 0.35s ease, stroke 0.35s ease, box-shadow 0.35s ease !important;
+}
+
+/* Component classes that @apply fixed palette colours */
+:root[data-theme="dark"] .badge-neutral {
+  background-color: rgb(var(--surface-raised));
+  color: rgb(var(--ink-muted));
+  --tw-ring-color: rgb(var(--line-strong));
+}
+:root[data-theme="dark"] .badge-success {
+  background-color: rgb(16 185 129 / 0.14);
+  color: rgb(110 231 183);
+  --tw-ring-color: rgb(52 211 153 / 0.3);
+}
+:root[data-theme="dark"] .badge-warning {
+  background-color: rgb(245 158 11 / 0.14);
+  color: rgb(252 211 77);
+  --tw-ring-color: rgb(251 191 36 / 0.3);
+}
+:root[data-theme="dark"] .badge-danger {
+  background-color: rgb(239 68 68 / 0.14);
+  color: rgb(252 165 165);
+  --tw-ring-color: rgb(248 113 113 / 0.3);
+}
+:root[data-theme="dark"] .skeleton {
+  background-color: rgb(var(--line));
+}
+:root[data-theme="dark"] .bar::after {
+  background-color: #fff1;
+}
+
+/* The Nyala logo is dark text on white: sit it on a light plate in dark mode */
+:root[data-theme="dark"] .brand-logo-plate {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  padding: 0.125rem 0.375rem;
+}
+
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Narrow screens: keep a table's Actions column visible while the rest scrolls sideways */
+@media (max-width: 1023px) {
+  .table--sticky-actions > thead > tr > th:last-child,
+  .table--sticky-actions > tbody > tr > td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background-color: rgb(var(--surface));
+    box-shadow: -10px 0 10px -10px rgb(16 24 40 / 0.35);
+  }
+  .table--sticky-actions > thead > tr > th:last-child {
+    z-index: 11;
+    background-color: rgb(var(--surface-muted));
+  }
+}

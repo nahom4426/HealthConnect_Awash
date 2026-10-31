@@ -1,0 +1,540 @@
+<script setup>
+import { ref, computed, watch, onMounted } from "vue";
+import Button from "@/components/Button.vue";
+import Table from "@/components/Table.vue";
+import icons from "@/utils/icons";
+import { formatCurrency, toasted } from "@/utils/utils";
+import { useApiRequest } from "@/composables/useApiRequest";
+import { getAttachmentUrl, updateServiceProvidedClaimStatus } from "../../api/claimApi";
+import { useClaimByInstitutionBatch } from "../../store/claimByInstitutionBatchStore";
+import { openModal } from "@customizer/modal-x";
+import { getPackages } from "@/features/health/product_settings/api/coverageApi";
+import { getAuthorization } from "@/features/health/authorization/api/authorizationApi";
+
+const props = defineProps({
+  row: { type: Object, default: null },
+  items: { type: Array, default: () => [] },
+  title: { type: String, default: "Provided Items" },
+  isServiceClaimRejected: { type: Boolean, default: false },
+  isServiceClaimProcessed: { type: Boolean, default: false },
+  isServiceClaimCompleted: { type: Boolean, default: false },
+});
+
+const emit = defineEmits(["close"]);
+
+const localRow = ref(props.row);
+const localItems = ref([...props.items]);
+
+watch(() => props.row, (v) => (localRow.value = v), { immediate: true });
+watch(() => props.items, (v) => (localItems.value = v ? [...v] : []), { immediate: true });
+
+const total = computed(() =>
+  localItems.value.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0)
+);
+
+const packagesByUuid = ref({})
+const loadingPackages = ref(false)
+
+const showAuthorizationModal = ref(false)
+const authorizationLoading = ref(false)
+const authorizationDetails = ref(null)
+const authorizationError = ref("")
+
+const remark = ref("");
+const canResubmit = ref(true);
+const req = useApiRequest();
+const rejectReq = useApiRequest();
+const store = useClaimByInstitutionBatch();
+const loadingAttachment = ref(false)
+
+// Computed to determine which columns to show
+const showCoverageColumn = computed(() => {
+  return localItems.value.some(item => {
+    const coverage = getCoverageLabel(item);
+    return coverage && coverage !== '-';
+  });
+});
+
+const showExcessUsedColumn = computed(() => {
+  return localItems.value.some(item => {
+    const excess = Number(item.excessUsed);
+    return !isNaN(excess) && excess > 0;
+  });
+});
+
+const showAuthorizationColumn = computed(() => {
+  return localItems.value.some(item => item?.authorizationUuid);
+});
+
+const showExtraAmountColumn = computed(() => {
+  return localItems.value.some(item => {
+    const extra = Number(item.extraAmount);
+    return !isNaN(extra) && extra > 0;
+  });
+});
+
+// Build headers dynamically based on what data is available
+const tableHeaders = computed(() => {
+  const head = ['Item ID', 'Code', 'Name', 'Type', 'Package'];
+  if (showCoverageColumn.value) head.push('Coverage');
+  if (showAuthorizationColumn.value) head.push('Authorization');
+  if (showExcessUsedColumn.value) head.push('Excess Used');
+  if (showExtraAmountColumn.value) head.push('Extra Amount');
+  head.push('Qty', 'Unit Price', 'Total', 'Status', 'Actions');
+  return head;
+});
+
+const tableRowFields = computed(() => {
+  const row = ['itemId', 'itemCode', 'itemName', 'type', 'packageUuid'];
+  if (showCoverageColumn.value) row.push('coverage');
+  if (showAuthorizationColumn.value) row.push('authorizationUuid');
+  if (showExcessUsedColumn.value) row.push('excessUsed');
+  if (showExtraAmountColumn.value) row.push('extraAmount');
+  row.push('quantity', 'unitPrice', 'totalPrice', 'itemClaimStatus', 'actions');
+  return row;
+});
+
+function isRejectedItem(it) {
+  const status = it?.itemClaimStatus;
+  return status && String(status).toUpperCase() === "REJECTED";
+}
+
+function openHistory() {
+  const insuredUuid = localRow.value?.insuredPersonUuid || localRow.value?.insuredUuid || localRow.value?.insuredPersonId || null;
+  const contractUuid = localRow.value?.contractUuid || localRow.value?.payerInstitutionContractUuid || null;
+  const institutionUuid = localRow.value?.institutionUuid || null;
+
+  openModal('InsuredHistory', {
+    insuredUuid,
+    contractUuid,
+    institutionUuid,
+  });
+}
+
+async function openAttachment() {
+  try {
+    loadingAttachment.value = true;
+    const id = props.row?.serviceProvidedUuid || props.row?.claimUuid;
+    if (!id) {
+      toasted(false, "", "No attachment ID found");
+      return;
+    }
+
+    const res = await getAttachmentUrl(id);
+    const attachments = Array.isArray(res?.data) ? res.data : [res?.data?.url || res?.data];
+    
+    if (!attachments.length || !attachments[0]) {
+      toasted(false, "", "No attachments found.");
+      return;
+    }
+
+    openModal('AttachmentViewer', { 
+      attachments: attachments,
+      title: 'Service Provided Attachments'
+    });
+    
+  } catch (err) {
+    console.error("❌ Failed to load attachments", err);
+    toasted(false, "", "Could not load attachments. Please try again.");
+  } finally {
+    loadingAttachment.value = false;
+  }
+}
+
+function detectType(it) {
+  if (!it) return "Service";
+  if (it.itemType) {
+    const t = String(it.itemType).toUpperCase();
+    if (t === "DRUG" || t === "MEDICINE") return "Drug";
+    if (t === "SERVICE") return "Service";
+  }
+  if (it.type) return it.type;
+  const id = (it.itemId || "").toString().toUpperCase();
+  if (/^(DR|RX|MED)/.test(id)) return "Drug";
+  if (/^X-?R/.test(id)) return "Service";
+  return "Service";
+}
+
+function getPackageName(packageUuid) {
+  if (!packageUuid) return "-";
+  return packagesByUuid.value?.[packageUuid]?.packageName || "-";
+}
+
+function getCoverageLabel(it) {
+  if (!it) return "-";
+  if (it.authorizationUuid) return "AUTHORIZED";
+  const ex = Number(it.excessUsed);
+  if (!Number.isNaN(ex) && ex > 0) return "EXCESS";
+  return "-";
+}
+
+async function loadPackages() {
+  try {
+    loadingPackages.value = true;
+    const res = await getPackages({ page: 0, size: 1000 });
+
+    let list = [];
+    if (Array.isArray(res)) {
+      list = res;
+    } else if (Array.isArray(res?.data)) {
+      list = res.data;
+    } else if (Array.isArray(res?.data?.content)) {
+      list = res.data.content;
+    } else if (Array.isArray(res?.content)) {
+      list = res.content;
+    }
+
+    const map = {};
+    for (const p of list) {
+      const uuid = p?.packageUuid || p?.uuid;
+      if (uuid) map[uuid] = p;
+    }
+    packagesByUuid.value = map;
+  } catch (e) {
+    console.error("❌ Failed to load packages", e);
+  } finally {
+    loadingPackages.value = false;
+  }
+}
+
+async function openAuthorizationDetails(authorizationUuid) {
+  if (!authorizationUuid) return;
+  try {
+    authorizationError.value = "";
+    authorizationDetails.value = null;
+    authorizationLoading.value = true;
+    showAuthorizationModal.value = true;
+
+    const res = await getAuthorization(authorizationUuid);
+    authorizationDetails.value = res?.data ?? res;
+  } catch (e) {
+    console.error("❌ Failed to load authorization details", e);
+    authorizationError.value = e?.message || "Failed to load authorization details";
+  } finally {
+    authorizationLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadPackages();
+});
+
+async function performAction(action) {
+  if (!localRow.value) return;
+  const claimId = localRow.value.claimUuid || localRow.value?.claimUuid;
+  const body = [localRow.value.serviceProvidedUuid];
+  const remarkVal = remark.value && remark.value.trim() ? remark.value.trim() : undefined;
+
+  const apiRequest = action === 'REJECTION_REQUESTED' ? rejectReq : req;
+
+  apiRequest.send(
+    () =>
+      updateServiceProvidedClaimStatus(
+        claimId,
+        action,
+        body,
+        remarkVal,
+        action === 'REJECTION_REQUESTED' ? canResubmit.value : undefined
+      ),
+    (res) => {
+      if (res && res.status >= 200 && res.status < 300) {
+        let updated;
+        if (action === 'REJECTION_REQUESTED') {
+          updated = (store.claims || []).filter((claim) => !body.includes(claim.serviceProvidedUuid));
+        } else {
+          updated = (store.claims || []).map((claim) => {
+            if (body.includes(claim.serviceProvidedUuid)) {
+              return { ...claim, serviceClaimStatus: action };
+            }
+            return claim;
+          });
+        }
+        if (store.set) {
+          store.set(updated);
+        } else {
+          store.claims = updated;
+        }
+        emit("close");
+      }
+    }
+  );
+}
+</script>
+
+<template>
+  <div class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/45">
+    <div class="overflow-hidden w-full max-w-6xl bg-white rounded-lg shadow-xl">
+      <div class="flex gap-4 justify-between items-start px-6 py-4 border-b">
+        <div class="flex gap-3 items-center">
+          <div class="flex justify-center items-center w-12 h-12 text-white bg-gradient-to-br rounded-md from-primary to-secondary">
+            <span v-html="icons.box" class="w-6 h-6"></span>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">{{ title }}</h3>
+            <p class="text-sm text-ink-subtle">
+              {{ localItems.length }} item{{ localItems.length !== 1 ? "s" : "" }} •
+              total: <span class="font-medium">{{ formatCurrency(total) }}</span>
+            </p>
+            <!-- Status badges -->
+            <span v-if="isServiceClaimRejected" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-error-strong bg-error-soft rounded-full">
+              ⛔ Claim Rejected
+            </span>
+            <span v-else-if="isServiceClaimProcessed" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-success-strong bg-success-soft rounded-full">
+              ✓ Claim Processed
+            </span>
+            <span v-else-if="isServiceClaimCompleted" class="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-primary-hover bg-primary/10 rounded-full">
+              ✓ Claim Completed
+            </span>
+          </div>
+        </div>
+
+        <div class="flex gap-2 items-center">
+          <Button size="sm" type="link" @click="$emit('close')">Close</Button>
+        </div>
+      </div>
+
+      <div class="p-4">
+        <div class="overflow-auto">
+          <Table
+            :pending="false"
+            :showPagination="false"
+            class="w-full"
+            :rowClass="(r) => (isRejectedItem(r) ? 'bg-error-soft text-error-strong hover:bg-error-soft line-through' : '')"
+            :headers="{
+              head: tableHeaders,
+              row: tableRowFields
+            }"
+            :rows="localItems"
+          >
+            <template #placeholder>
+              <div class="py-8 text-center text-ink-subtle">
+                <div v-html="icons.no_data" class="mx-auto mb-3 w-16 h-16"></div>
+                No items available
+              </div>
+            </template>
+
+            <template #itemId="{ row }">
+              <span :class="isRejectedItem(row) ? 'text-error-strong font-medium' : 'text-ink-muted'">
+                {{ row?.itemId || '-' }}
+              </span>
+            </template>
+
+            <template #itemCode="{ row }">
+              <span :class="isRejectedItem(row) ? 'text-error-strong' : 'text-ink-muted'">
+                {{ row?.itemCode || '-' }}
+              </span>
+            </template>
+
+            <template #itemName="{ row }">
+              <span :class="isRejectedItem(row) ? 'text-error-strong font-medium' : 'text-ink'">
+                {{ row?.itemName || '-' }}
+              </span>
+            </template>
+
+            <template #type="{ row }">
+              <span
+                class="inline-block px-2 py-0.5 text-xs font-medium rounded-full"
+                :class="detectType(row) === 'Drug' ? 'bg-error-soft text-error-strong' : 'bg-primary/10 text-primary-hover'"
+              >
+                {{ detectType(row) }}
+              </span>
+            </template>
+
+            <template #packageUuid="{ row }">
+              <span v-if="loadingPackages" class="text-xs text-ink-subtle">Loading...</span>
+              <span v-else>{{ getPackageName(row.packageUuid) }}</span>
+            </template>
+
+            <!-- Only render coverage template if column is shown -->
+            <template v-if="showCoverageColumn" #coverage="{ row }">
+              <span
+                class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
+                :class="getCoverageLabel(row) === 'AUTHORIZED' ? 'bg-success-soft text-success-strong' : (getCoverageLabel(row) === 'EXCESS' ? 'bg-warning-soft text-warning-strong' : 'bg-surface-muted text-ink-muted')"
+              >
+                {{ getCoverageLabel(row) }}
+              </span>
+            </template>
+
+            <!-- Only render authorization template if column is shown -->
+            <template v-if="showAuthorizationColumn" #authorizationUuid="{ row }">
+              <span class="font-mono text-xs">{{ row.authorizationUuid || '-' }}</span>
+            </template>
+
+            <!-- Only render excess used template if column is shown -->
+            <template v-if="showExcessUsedColumn" #excessUsed="{ row }">
+              <span class="block text-right">{{ formatCurrency(row.excessUsed) }}</span>
+            </template>
+
+            <!-- Only render extra amount template if column is shown -->
+            <template v-if="showExtraAmountColumn" #extraAmount="{ row }">
+              <span class="block font-medium text-right text-purple-600">
+                {{ formatCurrency(row.extraAmount) }}
+              </span>
+            </template>
+
+            <template #unitPrice="{ row }">
+              <span class="block text-right">{{ formatCurrency(row.unitPrice) }}</span>
+            </template>
+
+            <template #totalPrice="{ row }">
+              <span class="block font-medium text-right">{{ formatCurrency(row.totalPrice) }}</span>
+            </template>
+
+            <!-- Status column with modern badge -->
+            <template #itemClaimStatus="{ row }">
+              <span
+                v-if="isRejectedItem(row)"
+                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-error-strong bg-error-soft rounded-full border border-error/20"
+              >
+                <span class="mr-1.5 w-1.5 h-1.5 bg-error rounded-full"></span>
+                REJECTED
+              </span>
+              <span
+                v-else
+                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-warning-strong bg-warning-soft rounded-full border border-warning/20"
+              >
+                <span class="mr-1.5 w-1.5 h-1.5 bg-warning rounded-full"></span>
+                {{ row?.itemClaimStatus || 'PENDING' }}
+              </span>
+            </template>
+
+            <!-- Actions column with status indicator -->
+            <template #actions="{ row }">
+              <div class="flex gap-2 justify-end items-center">
+                <Button
+                  v-if="row.authorizationUuid"
+                  type="link"
+                  class="!text-primary hover:!text-primary-hover"
+                  @click.stop="openAuthorizationDetails(row.authorizationUuid)"
+                >
+                  Auth Details
+                </Button>
+                <!-- Show rejected badge if item is rejected -->
+                <span 
+                  v-if="isRejectedItem(row)" 
+                  class="inline-flex items-center px-2 py-1 text-xs font-medium text-error-strong bg-error-soft rounded-lg border border-error/20"
+                >
+                  <svg class="mr-1 w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  </svg>
+                  Rejected
+                </span>
+              </div>
+            </template>
+          </Table>
+
+          <div v-if="localItems.length" class="flex justify-end px-4 py-3 mt-2 text-sm bg-surface-muted rounded-lg border border-line">
+            <div class="text-ink-muted">Total</div>
+            <div class="ml-8 font-semibold">{{ formatCurrency(total) }}</div>
+          </div>
+        </div>
+
+        <!-- Hide remark and resubmit options if service claim is rejected, processed, or completed -->
+        <div v-if="!isServiceClaimRejected && !isServiceClaimProcessed && !isServiceClaimCompleted">
+          <div class="mt-4">
+            <label class="block mb-2 text-sm text-ink-muted">Remark (optional)</label>
+            <textarea v-model="remark" rows="2" class="p-2 w-full text-sm rounded border" placeholder="Add a remark (optional)"></textarea>
+          </div>
+
+          <div class="mt-4">
+            <label class="flex gap-3 items-center text-sm text-ink-muted">
+              <input v-model="canResubmit" type="checkbox" class="w-4 h-4" />
+              <span>Allow resubmission after rejection</span>
+            </label>
+            <p class="mt-1 text-xs text-ink-subtle">
+              If enabled, the provider can fix the issue and resubmit.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center px-6 py-4 bg-surface-muted border-t">
+        <div class="flex gap-3 items-center">
+          <div class="text-sm text-ink-muted">Items: <span class="font-medium">{{ localItems.length }}</span></div>
+          <Button
+            type="primary"
+            class="!bg-purple-600 hover:!bg-purple-700"
+            @click="openHistory"
+          >
+            History
+          </Button>
+          <Button type="primary" @click="openAttachment" :disabled="loadingAttachment">
+            <span v-if="loadingAttachment">Loading...</span>
+            <span v-else>View Attachment</span>
+          </Button>
+        </div>
+        
+        <!-- If rejected - show view only message (no buttons) -->
+        <div v-if="isServiceClaimRejected" class="flex gap-3 items-center">
+          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-error-strong bg-error-soft rounded-lg border border-error/20">
+            <span class="mr-2">⛔</span> This claim has been rejected - View Only
+          </span>
+        </div>
+        
+        <!-- If processed or completed - show status message and Process button only (no Reject) -->
+        <div v-else-if="isServiceClaimProcessed || isServiceClaimCompleted" class="flex gap-3 items-center">
+          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-success-strong bg-success-soft rounded-lg border border-success/20">
+            <span class="mr-2">✓</span> This claim is {{ isServiceClaimProcessed ? 'processed' : 'completed' }}
+          </span>
+          <Button type="primary" @click="performAction('PROCESSED')" :pending="req.pending.value">Process</Button>
+        </div>
+        
+        <!-- Normal state - show both Reject and Process buttons -->
+        <div v-else class="flex gap-3 items-center">
+          <Button type="danger" @click="performAction('REJECTION_REQUESTED')" :pending="rejectReq.pending.value">Reject</Button>
+          <Button type="primary" @click="performAction('PROCESSED')" :pending="req.pending.value">Process</Button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authorization Details Modal -->
+  <div v-if="showAuthorizationModal" class="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/45">
+    <div class="overflow-hidden w-full max-w-2xl bg-white rounded-lg shadow-xl">
+      <div class="flex justify-between items-start px-6 py-4 border-b">
+        <div>
+          <h3 class="text-lg font-semibold text-ink">Authorization Details</h3>
+          <p class="text-sm text-ink-subtle">View authorization information for this item.</p>
+        </div>
+        <Button size="sm" type="link" @click="showAuthorizationModal = false">Close</Button>
+      </div>
+
+      <div class="p-6">
+        <div v-if="authorizationLoading" class="text-sm text-ink-muted">Loading...</div>
+        <div v-else-if="authorizationError" class="text-sm text-error">{{ authorizationError }}</div>
+        <div v-else class="text-sm">
+          <pre class="overflow-auto p-4 text-xs bg-surface-muted rounded border">{{ authorizationDetails }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.table-badge { 
+  display: inline-block; 
+  padding: .125rem .5rem; 
+  border-radius: 9999px; 
+  font-size: .75rem; 
+}
+
+/* Modern styling for rejected items */
+:deep(.bg-error-soft) {
+  --tw-bg-opacity: 0.5;
+}
+
+:deep(.bg-error-soft td) {
+  position: relative;
+}
+
+:deep(.bg-error-soft td::before) {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: rgb(var(--error));
+  border-radius: 2px;
+}
+</style>

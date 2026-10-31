@@ -12,6 +12,7 @@ import Button from "@/components/Button.vue";
 import SingleInstitutionDataProvider from "@/features/health/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationCreationDataProvider from "@/features/health/quotation/components/QuotationCreationDataProvider.vue";
 import { getInsuredPersonById } from "@/features/health/insured_persons/api/insuredPersonsApi";
+import { downloadQuotationPdf, downloadPremiumReceiptPdf, payerFromForms } from "@/features/health/pdf/healthDocuments";
 
 const showInstitution = ref(false)
 const showIndividual = ref(false)
@@ -196,6 +197,23 @@ function formatCurrency(amount: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(amount || 0);
+}
+
+const pdfPending = ref('')
+const payer = () => payerFromForms(isIndividualQuotation.value, institutionForm.value, individualForm.value)
+
+async function downloadPdf(kind: 'quotation' | 'premiumAdvice' | 'receipt') {
+  if (!draft.value || pdfPending.value) return
+  pdfPending.value = kind
+  try {
+    if (kind === 'receipt') await downloadPremiumReceiptPdf(draft.value, {}, payer())
+    else await downloadQuotationPdf(draft.value, payer(), kind)
+  } catch (e) {
+    console.error('PDF generation failed', e)
+    toasted(false, null, 'Could not generate the PDF')
+  } finally {
+    pdfPending.value = ''
+  }
 }
 
 // Enter edit mode - make form editable
@@ -435,6 +453,14 @@ onMounted(async () => {
         <div class="flex gap-3 items-center">
           <span v-if="isEditing" class="px-3 py-1 font-medium text-orange-800 bg-orange-100 rounded-full">Editing</span>
           <span v-else class="px-3 py-1 font-medium text-primary-hover bg-primary/10 rounded-full">Issued</span>
+          <button v-if="draft && !isEditing" type="button" @click="downloadPdf('quotation')" :disabled="!!pdfPending" class="inline-flex gap-2 items-center px-4 py-2 text-sm font-semibold text-primary bg-white rounded-lg border border-primary/30 transition-colors hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            {{ pdfPending === 'quotation' ? 'Generating…' : 'Quotation PDF' }}
+          </button>
+          <button v-if="draft && String(draft.status).toUpperCase() === 'PAID'" type="button" @click="downloadPdf('receipt')" :disabled="!!pdfPending" class="inline-flex gap-2 items-center px-4 py-2 text-sm font-semibold text-primary bg-white rounded-lg border border-primary/30 transition-colors hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            {{ pdfPending === 'receipt' ? 'Generating…' : 'Receipt PDF' }}
+          </button>
         </div>
       </div>
     </template>

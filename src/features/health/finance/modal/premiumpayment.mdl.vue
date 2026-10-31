@@ -7,6 +7,7 @@ import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { computed, reactive, watch, ref, onUnmounted } from "vue";
 import { paypremium } from "@/features/health/finance/api/FinanceApi";
+import { downloadPremiumReceiptPdf } from "@/features/health/pdf/healthDocuments";
 
 // Types
 interface Props {
@@ -282,6 +283,11 @@ function pay(): Promise<any> {
       (res) => {
         if (res.success) {
           toasted(true, "Payment recorded successfully");
+          // Hand the payer their receipt straight away; a PDF failure must not undo the payment.
+          downloadPremiumReceiptPdf(props.data || {}, quotationPaymentRequest).catch((e) => {
+            console.error('Receipt PDF failed:', e);
+            toasted(false, null, "Payment saved, but the receipt PDF could not be generated");
+          });
           window.dispatchEvent(new CustomEvent('paymentSuccess'));
           setTimeout(() => {
             closeModal();

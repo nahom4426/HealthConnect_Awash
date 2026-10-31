@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useQuotationPdfs } from "@/features/health/pdf/useQuotationPdfs";
 type PremiumReceiptQuotationRow = {
   quotationUuid?: string;
   id?: string;
@@ -112,6 +113,9 @@ function getPolicyTypeStyle(policyType: any) {
   }
 }
 
+const { isPending, debitNote, receipt } = useQuotationPdfs();
+const isPaid = (row: PremiumReceiptQuotationRow) => String(row?.status || "").toUpperCase() === "PAID";
+
 function handlePay(row: PremiumReceiptQuotationRow) {
   const fn = props.cells?.onPay || props.onPay;
   if (typeof fn === "function") fn(row);
@@ -219,7 +223,29 @@ function handlePay(row: PremiumReceiptQuotationRow) {
 
       <!-- Actions Column -->
       <td class="px-4 py-4 text-start whitespace-nowrap">
+        <div class="flex gap-2 items-center">
         <button
+          v-if="isPaid(row)"
+          type="button"
+          class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-primary bg-white border border-primary/30 rounded-xl shadow-sm transition-all duration-200 hover:bg-primary/5 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          :disabled="isPending('receipt', row)"
+          @click.stop.prevent="receipt(row)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <span>{{ isPending('receipt', row) ? 'Generating…' : 'Receipt' }}</span>
+        </button>
+        <button
+          v-else
+          type="button"
+          class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-primary bg-white border border-primary/30 rounded-xl shadow-sm transition-all duration-200 hover:bg-primary/5 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          :disabled="isPending('debitNote', row)"
+          @click.stop.prevent="debitNote(row)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <span>{{ isPending('debitNote', row) ? 'Generating…' : 'Debit Note' }}</span>
+        </button>
+        <button
+          v-if="!isPaid(row)"
           type="button"
           class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-success to-success-strong rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:from-success-strong hover:to-success-strong hover:scale-105 focus:outline-none focus:ring-2 focus:ring-success/50 active:scale-95"
           @click.stop.prevent="handlePay(row)"
@@ -229,6 +255,7 @@ function handlePay(row: PremiumReceiptQuotationRow) {
           </svg>
           <span>Pay Now</span>
         </button>
+        </div>
       </td>
     </tr>
   </template>
@@ -297,9 +324,31 @@ function handlePay(row: PremiumReceiptQuotationRow) {
         </div>
       </div>
 
+      <div class="flex gap-2 mt-3">
       <button
+        v-if="isPaid(row)"
         type="button"
-        class="w-full mt-3 flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-gradient-to-r from-success to-success-strong text-white text-sm font-semibold shadow-md hover:shadow-lg hover:from-success-strong hover:to-success-strong active:scale-95 transition-all duration-200"
+        class="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-white border border-primary/30 text-primary text-sm font-semibold shadow-sm hover:bg-primary/5 disabled:opacity-60 transition-all duration-200"
+        :disabled="isPending('receipt', row)"
+        @click.stop.prevent="receipt(row)"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        <span>{{ isPending('receipt', row) ? 'Generating…' : 'Receipt' }}</span>
+      </button>
+      <button
+        v-else
+        type="button"
+        class="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-white border border-primary/30 text-primary text-sm font-semibold shadow-sm hover:bg-primary/5 disabled:opacity-60 transition-all duration-200"
+        :disabled="isPending('debitNote', row)"
+        @click.stop.prevent="debitNote(row)"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        <span>{{ isPending('debitNote', row) ? 'Generating…' : 'Debit Note' }}</span>
+      </button>
+      <button
+        v-if="!isPaid(row)"
+        type="button"
+        class="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-gradient-to-r from-success to-success-strong text-white text-sm font-semibold shadow-md hover:shadow-lg hover:from-success-strong hover:to-success-strong active:scale-95 transition-all duration-200"
         @click.stop.prevent="handlePay(row)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,6 +356,7 @@ function handlePay(row: PremiumReceiptQuotationRow) {
         </svg>
         Pay Now
       </button>
+      </div>
     </div>
   </template>
 </template>

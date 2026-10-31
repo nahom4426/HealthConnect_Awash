@@ -290,6 +290,7 @@ function openSettlePayment() {
   openModal('SettlePayment', {
     title: 'Settle Payment',
     claimUuid: String(claimUuid),
+    batchCode,
     selectedServices,
     institutionUuid: firstClaim?.institutionUuid || '',
     institutionName: firstClaim?.institutionName || institutionName.value || '',

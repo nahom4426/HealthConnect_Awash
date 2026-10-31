@@ -3,6 +3,7 @@ import type { PropType } from "vue";
 import { computed, defineProps } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import icons from "@/utils/icons";
+import { useQuotationPdfs } from "@/features/health/pdf/useQuotationPdfs";
 
 const router = useRouter()
 
@@ -31,6 +32,8 @@ const props = defineProps({
   perPage: { type: Number, default: 25 },
   isMobile: { type: Boolean, default: false },
 });
+
+const { isPending, receipt } = useQuotationPdfs()
 
 function goToInclusion(quotationUuid: string) {
   router.push({
@@ -232,6 +235,21 @@ const hasActions = computed(() =>
           <span class="hidden sm:inline">View</span>
           <span class="sm:hidden">👁️</span>
         </RouterLink>
+
+        <!-- Receipt PDF Button -->
+        <button
+          v-if="String((row as any)?.status || '').toUpperCase() === 'PAID'"
+          @click.stop="() => receipt(row)"
+          :disabled="isPending('receipt', row)"
+          class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary bg-white border border-primary/30 rounded-xl shadow-sm transition-all duration-200 hover:bg-primary/5 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary/50"
+          title="Download payment receipt (PDF)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          <span class="hidden sm:inline">{{ isPending('receipt', row) ? 'Generating…' : 'Receipt' }}</span>
+          <span class="sm:hidden">🧾</span>
+        </button>
 
         <!-- Inclusion Button -->
         <button

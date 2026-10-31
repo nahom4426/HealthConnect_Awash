@@ -10,6 +10,7 @@ import Textarea from '@/components/new_form_elements/Textarea.vue';
 import { settleClaimPayment } from '../api/claimApi';
 import { toasted, formatCurrency } from '@/utils/utils';
 import { useApiRequest } from '@/composables/useApiRequest';
+import { downloadClaimPaymentAdvicePdf } from '@/features/health/pdf/healthDocuments';
 
 const props = defineProps({
   data: {
@@ -127,6 +128,14 @@ async function submit() {
           props.data.onSuccess();
         }
         toasted(true, 'Payment settled successfully');
+        downloadClaimPaymentAdvicePdf(
+          { claimUuid, batchCode: props.data?.batchCode, institutionName: props.data?.institutionName },
+          claimPaymentRequest,
+          selectedServices.value,
+        ).catch((e) => {
+          console.error('Payment advice PDF failed:', e);
+          toasted(false, null, 'Payment settled, but the payment advice PDF could not be generated');
+        });
         closeModal({ success: true });
       } else {
         const errorMessage = res?.error ||

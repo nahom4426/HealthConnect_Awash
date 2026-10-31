@@ -9,6 +9,7 @@ import { useRoute, useRouter } from "vue-router";
 import SingleInstitutionDataProvider from "@/features/health/institutions/components/SingleInstitutionDataProvider.vue";
 import QuotationCreationDataProvider from "@/features/health/quotation/components/QuotationCreationDataProvider.vue";
 import { toasted } from "@/utils/utils";
+import { downloadQuotationPdf, payerFromForms } from "@/features/health/pdf/healthDocuments";
 
 const showInstitution = ref(false)
 const showIndividual = ref(false)
@@ -328,13 +329,14 @@ function onSavedFormSubmit(e: any) {
     const payload = buildBasePayload(quotationUuid);
     
     savedIssueQuotation(quotationUuid, payload)
-      .then((res: any) => {
+      .then(async (res: any) => {
         if (!res || !res.success) {
           toasted(false, 'Failed to issue quotation', res?.error || 'Unknown error');
           return;
         }
 
         toasted(true, 'Saved quotation issued successfully');
+        await downloadIssuedQuotationPdf(quotationUuid);
         try { sessionStorage.setItem('reloadSavedQuotations', '1') } catch {}
         router.back();
       })
@@ -345,6 +347,18 @@ function onSavedFormSubmit(e: any) {
         pendingAction.value = '';
         isSubmitting.value = false;
       });
+  }
+}
+
+// Re-read the quotation so the PDF carries the issued status, code and final premiums.
+async function downloadIssuedQuotationPdf(quotationUuid: string) {
+  try {
+    const resp: any = await getQuotationById(quotationUuid);
+    const q = resp?.data || draft.value;
+    await downloadQuotationPdf(q, payerFromForms(isIndividualQuotation.value, institutionForm.value, individualForm.value));
+  } catch (e) {
+    console.error('Quotation PDF failed', e);
+    toasted(false, null, 'Quotation issued, but the PDF could not be generated');
   }
 }
 

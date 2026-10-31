@@ -5,6 +5,7 @@ import Input from "@/components/new_form_elements/Input.vue";
 import { onMounted, ref, nextTick, computed } from "vue";
 import { getQuotationById, issuePremiumAdvice } from "@/features/health/quotation/api/quotationApi";
 import { getInsuredPersonById } from "@/features/health/insured_persons/api/insuredPersonsApi";
+import { downloadQuotationPdf, downloadPremiumReceiptPdf, payerFromForms } from "@/features/health/pdf/healthDocuments";
 import { useRoute, useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 import SingleInstitutionDataProvider from "@/features/health/institutions/components/SingleInstitutionDataProvider.vue";
@@ -118,7 +119,7 @@ function onAcceptedFormSubmit(e: any) {
   
   
   issuePremiumAdvice(qid, { quotationUuid: qid })
-    .then((res: any) => {
+    .then(async (res: any) => {
       const body = res?.data ?? res;
       if (body?.statusCode && body?.statusCode >= 400) {
         const msg = body?.message || 'Failed to issue premium advice';
@@ -127,6 +128,8 @@ function onAcceptedFormSubmit(e: any) {
       }
 
       toasted(true, 'Premium advice issued');
+      // The payer gets the premium advice (debit note) as soon as it is issued.
+      await downloadPdf('premiumAdvice');
       router.back();
     })
     .catch((err: any) => {
@@ -189,6 +192,23 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const institutionUuidForProvider = ref<string | null>(null)
 const draft = ref<any>(null)
+
+const pdfPending = ref('')
+const payer = () => payerFromForms(isIndividualQuotation.value, institutionForm.value, individualForm.value)
+
+async function downloadPdf(kind: 'quotation' | 'premiumAdvice' | 'receipt') {
+  if (!draft.value || pdfPending.value) return
+  pdfPending.value = kind
+  try {
+    if (kind === 'receipt') await downloadPremiumReceiptPdf(draft.value, {}, payer())
+    else await downloadQuotationPdf(draft.value, payer(), kind)
+  } catch (e) {
+    console.error('PDF generation failed', e)
+    toasted(false, null, 'Could not generate the PDF')
+  } finally {
+    pdfPending.value = ''
+  }
+}
 const pendingAction = ref<string>('')
 
 function buildPrefill(packages: any[]): { packageName: string; planType: string; services: any[] }[] {
@@ -249,6 +269,10 @@ onMounted(async () => {
         <h1 class="text-2xl font-bold text-ink">Accepted Quotation</h1>
         <div class="text-sm text-ink-subtle">
           <span class="px-3 py-1 font-medium text-success-strong bg-success-soft rounded-full">Accepted</span>
+          <button v-if="draft" type="button" @click="downloadPdf('quotation')" :disabled="!!pdfPending" class="ml-2 inline-flex gap-2 items-center px-4 py-2 text-sm font-semibold text-primary bg-white rounded-lg border border-primary/30 transition-colors hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            {{ pdfPending === 'quotation' ? 'Generating…' : 'Quotation PDF' }}
+          </button>
         </div>
       </div>
     </template>

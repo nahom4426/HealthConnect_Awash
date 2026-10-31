@@ -1,8 +1,7 @@
 <script setup>
 // Certificate detail (plan 5.5, MAR-37, MAR-40): the PDF on the left; summary, verification link
-// with QR, versions and the document event log on the right. Pending certificates poll every 5 s.
-// A certificate waiting for its premium shows the debit note instead of the PDF.
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+// with QR, versions and the document event log on the right. Requesting the PDF generates it.
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import QRCode from "qrcode";
@@ -13,31 +12,24 @@ import PageState from "../../components/PageState.vue";
 import KeyValueGrid from "../../components/KeyValueGrid.vue";
 import PdfPreview from "../../components/PdfPreview.vue";
 import StatusBadge from "../../components/StatusBadge.vue";
-import BillingPanel from "../../components/BillingPanel.vue";
 import { cardClass } from "../../components/styles";
 import { useResource } from "../../composables/useResource";
 import { useCan } from "../../composables/useCan";
 import { getCertificate, getCertificatePdf, logCertificateEvent } from "../../api/marineApi";
 import { formatDate, formatDateTime } from "../../utils/format";
 import { formatMoney } from "../../utils/money";
+import { suppliedVerifyUrl } from "../../utils/verifyLink";
 
 const route = useRoute();
 const { data: c, loading, error, notFound, load, reload } = useResource(getCertificate);
 onMounted(() => load(route.params.id));
 watch(() => route.params.id, (id) => id && load(id));
 
-// Pending: the backend is still rendering the PDF
-let timer = null;
-watch(
-  () => c.value?.status,
-  (s) => {
-    clearInterval(timer);
-    if (s === "PENDING") timer = setInterval(reload, 5000);
-  }
-);
-onBeforeUnmount(() => clearInterval(timer));
+function onPdfReady() {
+  if (c.value?.status === "PENDING") reload();
+}
 
-const verifyLink = computed(() => (c.value ? `${location.origin}/verify/${c.value.token}` : ""));
+const verifyLink = computed(() => suppliedVerifyUrl(c.value?.verifyUrl));
 const qr = ref("");
 watch(verifyLink, async (url) => (qr.value = url ? await QRCode.toDataURL(url, { margin: 1, width: 160 }) : ""), { immediate: true });
 
@@ -59,24 +51,13 @@ async function onDownloaded() {
   reload();
 }
 
-const EVENT_LABELS = { EMAIL: "Emailed", DOWNLOAD: "Downloaded", PRINT: "Printed" };
+const EVENT_LABELS = { DOWNLOAD: "Downloaded", PRINT: "Printed", VERIFY: "Verified" };
+const EMAIL_LABELS = { QUEUED: "Email queued", SENT: "Emailed", SKIPPED: "Email not sent", FAILED: "Email failed" };
+const eventLabel = (event) => (event.kind === "EMAIL" ? EMAIL_LABELS[event.delivery] ?? "Email" : EVENT_LABELS[event.kind] ?? event.kind);
 
 const { can } = useCan();
 // Only the newest version of an issued certificate can be amended or cancelled
-const latest = computed(() => c.value && c.value.version === Math.max(...c.value.versions.map((v) => v.version)));
-const isCurrent = computed(() => latest.value && ["ISSUED", "PENDING"].includes(c.value.status));
-// An unpaid version 1 can still be cancelled (nothing to refund)
-const canCancel = computed(() => isCurrent.value || (latest.value && c.value.status === "AWAITING_PAYMENT" && c.value.version === 1));
-const awaiting = computed(() => c.value?.status === "AWAITING_PAYMENT");
-const dueNote = computed(() => c.value?.billing?.find((n) => n.kind === "DEBIT" && ["UNPAID", "PARTLY_PAID"].includes(n.status)));
-function recordPremium() {
-  const n = dueNote.value;
-  openModal(
-    "MarineRecordPayment",
-    { kind: "receipt", id: n.id, title: `Receipt for ${n.noteNo}`, amount: n.outstanding, maxAmount: n.outstanding, editableAmount: true, details: [{ label: "Customer", value: c.value.insured?.name }, { label: "Outstanding", value: formatMoney(n.outstanding, "ETB") }] },
-    (done) => done && reload()
-  );
-}
+const isCurrent = computed(() => c.value && ["ISSUED", "PENDING"].includes(c.value.status) && c.value.version === Math.max(...c.value.versions.map((v) => v.version)));
 function cancel() {
   openModal("MarineCancelCertificate", { certificate: c.value }, (done) => done && reload());
 }
@@ -100,10 +81,9 @@ function cancel() {
         :crumbs="[{ label: 'Marine' }, { label: 'Certificates', to: '/marine/certificates' }, { label: c.certNo }]"
       >
         <template #actions>
-          <Button v-if="awaiting && dueNote && can('finance.post')" variant="success" @click="recordPremium">Record premium receipt</Button>
-          <Button variant="outline" :disabled="c.status === 'PENDING' || awaiting" @click="email">Email</Button>
-          <template v-if="can('certificate.amend') && canCancel">
-            <RouterLink v-if="isCurrent" :to="`/marine/certificates/${c.id}/amend`"><Button variant="outline">Amend</Button></RouterLink>
+          <Button variant="outline" :disabled="c.status === 'PENDING'" @click="email">Email</Button>
+          <template v-if="can('certificate.amend') && isCurrent">
+            <RouterLink :to="`/marine/certificates/${c.id}/amend`"><Button variant="outline">Amend</Button></RouterLink>
             <span :title="c.hasOpenClaim ? 'This certificate has an open claim' : ''">
               <Button variant="outline" :disabled="c.hasOpenClaim" @click="cancel">Cancel</Button>
             </span>
@@ -113,22 +93,7 @@ function cancel() {
 
       <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem] items-start">
         <section :class="[cardClass, 'p-4 min-h-[36rem] flex flex-col']" aria-label="Certificate PDF">
-          <div v-if="awaiting" class="flex flex-col flex-1 gap-3 justify-center items-center px-6 py-20 text-center" role="status">
-            <span class="grid place-items-center w-14 h-14 rounded-2xl ring-8 bg-warning-soft text-warning-strong ring-warning-soft/40" aria-hidden="true">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2" /><path d="M2.5 10h19M6.5 15h3" /></svg>
-            </span>
-            <p class="mt-1 text-base font-semibold text-ink">Waiting for the premium</p>
-            <p class="max-w-md text-sm text-ink-muted">
-              There's no cover yet. The certificate is issued as soon as Finance records payment
-              <template v-if="dueNote"> of <span class="font-semibold text-ink">{{ formatMoney(dueNote.outstanding, "ETB") }}</span> on {{ dueNote.noteNo }}</template>.
-            </p>
-          </div>
-          <div v-else-if="c.status === 'PENDING'" class="flex flex-col flex-1 gap-3 justify-center items-center py-20 text-center" role="status">
-            <span class="w-8 h-8 rounded-full border-4 animate-spin border-primary/20 border-t-primary" aria-hidden="true"></span>
-            <p class="text-sm font-semibold text-ink">PDF is being generated</p>
-            <p class="text-xs text-ink-muted">This page checks again every 5 seconds.</p>
-          </div>
-          <PdfPreview v-else :fetcher="() => getCertificatePdf(c.id)" :file-name="`${c.certNo}-v${c.version}.pdf`" :version="`${c.id}-${c.status}`" @downloaded="onDownloaded" />
+          <PdfPreview :fetcher="() => getCertificatePdf(c.id)" :file-name="`${c.certNo}-v${c.version}.pdf`" :version="`${c.id}-v${c.version}`" @ready="onPdfReady" @downloaded="onDownloaded" />
         </section>
 
         <div class="grid gap-4">
@@ -159,20 +124,16 @@ function cancel() {
             />
           </section>
 
-          <section :class="[cardClass, 'p-4']">
-            <h2 class="mb-2 text-sm font-semibold text-ink">Billing</h2>
-            <BillingPanel :notes="c.billing" />
-          </section>
-
           <section :class="[cardClass, 'p-4']" aria-labelledby="cd-verify">
             <h2 id="cd-verify" class="mb-2 text-sm font-semibold text-ink">Verification</h2>
-            <div class="flex gap-3 items-start">
+            <div v-if="verifyLink" class="flex gap-3 items-start">
               <img v-if="qr" :src="qr" alt="QR code to the verification page" class="w-24 h-24 rounded-lg border border-line" />
               <div class="min-w-0">
                 <a :href="verifyLink" target="_blank" rel="noopener" class="block text-xs break-all text-primary hover:underline">{{ verifyLink }}</a>
                 <Button variant="outline" size="xs" class="mt-2" @click="copyLink">Copy link</Button>
               </div>
             </div>
+            <p v-else class="text-sm text-ink-muted">The public verification address is not confirmed, so this certificate has no verification link.</p>
           </section>
 
           <section :class="[cardClass, 'p-4']">
@@ -191,7 +152,7 @@ function cancel() {
             <p v-if="!c.events.length" class="text-sm text-ink-subtle">No prints, emails or downloads yet.</p>
             <ul v-else class="space-y-2 text-sm">
               <li v-for="(e, i) in [...c.events].reverse()" :key="i">
-                <p class="text-ink"><span class="font-medium">{{ EVENT_LABELS[e.kind] ?? e.kind }}</span> by {{ e.by }}<span v-if="e.to"> to {{ e.to }}</span></p>
+                <p class="text-ink"><span class="font-medium">{{ eventLabel(e) }}</span><span v-if="e.by"> by {{ e.by }}</span><span v-if="e.to"> to {{ e.to }}</span></p>
                 <p class="text-xs text-ink-subtle">{{ formatDateTime(e.at) }}</p>
               </li>
             </ul>

@@ -110,6 +110,11 @@ export async function submitProposal(proposalUuid) {
   return data;
 }
 
+export async function withdrawProposal(proposalUuid) {
+  const { data } = await getClient().post(`/proposals/${proposalUuid}/withdraw`);
+  return data;
+}
+
 export async function updatePremises(proposalUuid, premises) {
   const { data } = await getClient().put(`/proposals/${proposalUuid}/premises`, premises);
   return data;

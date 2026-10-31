@@ -35,12 +35,18 @@ async function load() {
     if (!perils.value.length) {
       perils.value = pc.value.productClass === 'FIRE'
         ? [{ code: 'FIRE_AND_LIGHTNING', label: 'Fire and lightning' }]
-        : [
-          { code: 'THEFT_DAMAGE', label: 'Damage caused by thieves' },
-          { code: 'HOLD_UP', label: 'Hold-up / armed robbery' },
-          { code: 'CASH_IN_SAFE', label: 'Cash in locked safe' },
-          { code: 'CASH_IN_TRANSIT', label: 'Cash in transit' },
-        ];
+        : pc.value.productClass === 'MARINE'
+          ? [
+            { code: 'ICC_A', label: 'Institute Cargo Clauses (A)' },
+            { code: 'ICC_B', label: 'Institute Cargo Clauses (B)' },
+            { code: 'ICC_C', label: 'Institute Cargo Clauses (C)' },
+          ]
+          : [
+            { code: 'THEFT_DAMAGE', label: 'Damage caused by thieves' },
+            { code: 'HOLD_UP', label: 'Hold-up / armed robbery' },
+            { code: 'CASH_IN_SAFE', label: 'Cash in locked safe' },
+            { code: 'CASH_IN_TRANSIT', label: 'Cash in transit' },
+          ];
     }
     if (!form.value.policyUuid && policies.value.length) {
       form.value.policyUuid = policies.value[0].policyUuid;

@@ -33,7 +33,7 @@ const columns = [
 
 <template>
   <div class="marine-page">
-    <MarinePageHeader title="Open covers" subtitle="Annual covers with agreed rates; each shipment is declared against the cover." :crumbs="[{ label: 'Marine' }, { label: 'Open covers' }]">
+    <MarinePageHeader title="Open cover agreements" subtitle="Approved arrangements. Each shipment is declared against an active agreement." :crumbs="[{ label: 'Marine' }, { label: 'Open cover' }, { label: 'Agreements' }]">
       <template #actions>
         <Button v-if="canCreate()" @click="router.push('/marine/open-covers/new')">New open cover</Button>
       </template>

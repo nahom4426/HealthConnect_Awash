@@ -1,16 +1,46 @@
 // Phase 4 of the mock backend (plan section 8): claims with survey, general average, salvage,
 // carrier recovery, documents, deadlines and settlement (MAR-41 to MAR-46).
 import {
-  db, fail, invalid, nowIso, year, lc, listParam, actor, audit, page, inRange, partyRef, vesselRef, portRef, on, hasRole,
+  db, fail, invalid, nowIso, year, lc, listParam, actor, audit, page, inRange, partyRef, vesselRef, portRef, on, hasRole, caller,
   certificateStatus, nextId, fxFor,
 } from "./core";
 import { addDays, daysBetween, todayIso } from "../utils/format";
 import { multiply, parseDecimal, toFixedString } from "../utils/money";
 import { CAUSES_OF_LOSS, DOCUMENT_KINDS } from "../constants";
-import { requestClaimPayment, voucherView } from "./finance";
 
 const CLAIMS = ["CLAIMS_HANDLER", "CLAIMS_MANAGER"];
 const money = (v) => parseDecimal(v) ?? 0n;
+
+function exclusionsAtLoss(conditions, cover) {
+  const left = String(conditions ?? "").trim();
+  const right = String(cover ?? "").trim();
+  if (!right || left.includes(right)) return left || null;
+  return left ? `${left}\n${right}` : right;
+}
+
+function claimsCeiling() {
+  const manager = money(db.rules.authority.find((a) => a.role === "CLAIMS_MANAGER")?.maxSumInsured ?? "0");
+  const handler = money(db.rules.authority.find((a) => a.role === "CLAIMS_HANDLER")?.maxSumInsured ?? "0");
+  if (hasRole("CLAIMS_MANAGER") || caller.roles.length === 0) return manager;
+  if (hasRole("CLAIMS_HANDLER")) return handler;
+  return 0n;
+}
+
+function refuseReserve(claim, amount) {
+  const rate = fxFor(claim.currency)?.rate ?? "1";
+  const etb = multiply(amount, rate) ?? 0n;
+  if (etb > claimsCeiling()) fail(403, "This reserve is above your claims authority.", { code: "ABOVE_AUTHORITY" });
+}
+
+function checkPaymentRef(raw) {
+  const value = String(raw ?? "").trim();
+  if (!value) return "Payment reference is required";
+  if (value.length > 80) return "Payment reference must be 80 characters or less";
+  if ([...value].some((ch) => ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127)) return "Payment reference cannot contain control characters";
+  const used = db.claims.some((c) => (c.payments ?? []).some((p) => String(p.paymentRef).trim().toLowerCase() === value.toLowerCase()));
+  if (used) return "This payment reference is already recorded";
+  return "";
+}
 const s = (v) => toFixedString(v);
 const MAX_FILE = 20 * 1024 * 1024;
 const FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"];
@@ -59,8 +89,10 @@ function meetDeadline(claim, kind, note) {
 function deadlineView(d) {
   const today = todayIso();
   const left = daysBetween(today, d.dueDate);
+  const claim = db.claims.find((c) => c.id === d.claimId);
   return {
     ...d,
+    claimNo: claim?.claimNo ?? null,
     daysLeft: left,
     overdue: d.status === "OPEN" && left < 0,
     // Alerts go out at each window the deadline has passed; overdue ones escalate on the due date
@@ -156,8 +188,6 @@ function claimView(claim) {
     salvage: claim.salvage.map((x) => ({ ...x, salvor: partyRef(x.salvorId) })),
     recovery: claim.recovery ? { ...claim.recovery, carrier: partyRef(claim.recovery.carrierId) } : null,
     recoveryResolved: !claim.recovery || claim.recovery.status !== "OPEN",
-    vouchers: db.vouchers.filter((v) => v.claimId === claim.id).map(voucherView),
-    recoveryReceipts: claim.recoveryReceipts ?? [],
   };
 }
 
@@ -209,6 +239,10 @@ function lossErrors(b, cert) {
   if (!CAUSES_OF_LOSS.some((c) => c.value === b.cause)) e.push({ field: "cause", message: "Pick a cause of loss" });
   if (!String(b.description ?? "").trim()) e.push({ field: "description", message: "Description is required" });
   else if (b.description.length > 2000) e.push({ field: "description", message: "At most 2000 characters" });
+  if (!String(b.lossLocation ?? "").trim()) e.push({ field: "lossLocation", message: "Loss location is required" });
+  else if (b.lossLocation.length > 200) e.push({ field: "lossLocation", message: "Loss location must be 200 characters or less" });
+  if (!String(b.affectedGoods ?? "").trim()) e.push({ field: "affectedGoods", message: "Affected goods are required" });
+  else if (b.affectedGoods.length > 500) e.push({ field: "affectedGoods", message: "Affected goods must be 500 characters or less" });
   if (!(money(b.estimatedAmount) > 0n)) e.push({ field: "estimatedAmount", message: "Estimated amount must be greater than 0" });
   if (!b.payeeId) e.push({ field: "payee", message: "Payee is required" });
   if (cert === undefined) e.push({ field: "certificate", message: "Find the certificate first" });
@@ -220,7 +254,6 @@ on("post", "/claims", ({ body }) => {
   const cert = db.certificates.find((c) => c.id === body?.certificateId);
   const e = lossErrors(body ?? {}, cert);
   if (cert && certificateStatus(cert) === "CANCELLED") e.push({ field: "certificate", message: "A cancelled certificate can't take a claim" });
-  if (cert && certificateStatus(cert) === "AWAITING_PAYMENT") e.push({ field: "certificate", message: "The premium for this certificate isn't paid, so there is no cover" });
   if (e.length) invalid(e);
   const snap = cert.snapshot ?? db.policies.find((p) => p.id === cert.policyId)?.snapshot;
   const policy = db.policies.find((p) => p.id === cert.policyId);
@@ -235,6 +268,13 @@ on("post", "/claims", ({ body }) => {
     notifiedDate: body.notifiedDate,
     deliveryDate: body.deliveryDate || null,
     description: body.description.trim(),
+    lossLocation: body.lossLocation.trim(),
+    affectedGoods: body.affectedGoods.trim(),
+    quoteId: policy?.snapshot?.id ?? null,
+    quoteNo: policy?.snapshot?.quoteNo ?? null,
+    insuredId: snap.insuredId ?? null,
+    coverageClause: snap.clause ?? null,
+    exclusions: exclusionsAtLoss(snap.specialConditions, snap.openCoverId ? db.openCovers.find((c) => c.id === snap.openCoverId)?.exclusions : null),
     currency: snap.currency,
     estimatedAmount: body.estimatedAmount,
     payeeId: body.payeeId,
@@ -266,7 +306,7 @@ on("put", "/claims/:id", ({ params, body }) => {
   const e = lossErrors({ ...claim, ...body }, certFor(claim));
   if (e.length) invalid(e);
   const before = { ...claim };
-  ["lossDate", "notifiedDate", "deliveryDate", "type", "cause", "description", "estimatedAmount", "payeeId", "payeeNote"].forEach((k) => k in body && (claim[k] = body[k] || (k === "deliveryDate" ? null : body[k])));
+  ["lossDate", "notifiedDate", "deliveryDate", "type", "cause", "description", "lossLocation", "affectedGoods", "estimatedAmount", "payeeId", "payeeNote"].forEach((k) => k in body && (claim[k] = body[k] || (k === "deliveryDate" ? null : body[k])));
   claim.clauseCheck = clauseCheck(snapshotFor(claim).clause, claim.cause);
   const policy = db.policies.find((p) => p.id === certFor(claim).policyId);
   claim.outsidePeriod = claim.lossDate < policy.periodFrom || claim.lossDate > policy.periodTo;
@@ -281,6 +321,7 @@ function taskErrors(kind, b) {
   const e = [];
   if (kind === "SURVEY") {
     if (!b.surveyorId) e.push({ field: "surveyor", message: "Surveyor is required" });
+    else if (!db.parties.find((p) => p.id === b.surveyorId)?.types?.includes("SURVEYOR")) e.push({ field: "surveyor", message: "This party is not a surveyor" });
     if (!b.appointedDate) e.push({ field: "appointedDate", message: "Appointed date is required" });
     if (!b.dueDate) e.push({ field: "dueDate", message: "Due date is required" });
     else if (b.appointedDate && b.dueDate <= b.appointedDate) e.push({ field: "dueDate", message: "Due date must be after the appointed date" });
@@ -360,6 +401,7 @@ on("post", "/claims/:id/assess", ({ params, body }) => {
   if (!["REGISTERED", "SURVEYED"].includes(claim.status)) fail(409, "Only a Registered or Surveyed claim can be assessed.", { code: "WRONG_STATE" });
   if (body?.covered === true) {
     if (!(money(body.reserve) > 0n)) invalid([{ field: "reserve", message: "Reserve must be greater than 0" }]);
+    refuseReserve(claim, body.reserve);
     claim.reserve = body.reserve;
     claim.assessment = { covered: true, reserve: body.reserve, by: actor(), at: nowIso() };
     setStatus(claim, "APPROVED", `Covered, reserve ${claim.currency} ${body.reserve}`);
@@ -375,6 +417,7 @@ on("post", "/claims/:id/assess", ({ params, body }) => {
 on("put", "/claims/:id/reserve", ({ params, body }) => {
   const claim = getClaim(params.id);
   if (!(money(body?.reserve) > 0n)) invalid([{ field: "reserve", message: "Reserve must be greater than 0" }]);
+  refuseReserve(claim, body.reserve);
   claim.reserve = body.reserve;
   touch(claim, `Reserve set to ${claim.currency} ${body.reserve}`);
   return claimView(claim);
@@ -389,6 +432,8 @@ on("post", "/claims/:id/settle", ({ params, body }) => {
   if (!body?.payeeId) e.push({ field: "payee", message: "Payee is required" });
   const lossPayee = snapshotFor(claim).lc?.enabled ? snapshotFor(claim).lc.bankId : null;
   if (lossPayee && body?.payeeId !== lossPayee && !String(body?.payeeNote ?? "").trim()) e.push({ field: "payeeNote", message: "Say why payment doesn't go to the loss payee" });
+  const paymentRefError = checkPaymentRef(body?.paymentRef);
+  if (paymentRefError) e.push({ field: "paymentRef", message: paymentRefError });
   if (e.length) invalid(e);
   const missing = missingMandatory(claim);
   if (missing.length)
@@ -400,10 +445,9 @@ on("post", "/claims/:id/settle", ({ params, body }) => {
   const etb = multiply(body.amount, rate) ?? 0n;
   const limit = db.rules.authority.find((a) => a.role === "CLAIMS_MANAGER")?.maxSumInsured ?? "0";
   if (etb > money(limit)) fail(403, "Needs a higher approval limit.", { code: "ABOVE_AUTHORITY" });
-  // The claims manager approves the amount and payee; Finance makes the payment (two people per payment)
-  const v = requestClaimPayment(claim, { amount: body.amount, payeeId: body.payeeId, payeeNote: body.payeeNote });
+  claim.payments.push({ id: String(++db.seq.payment), amount: body.amount, payeeId: body.payeeId, payeeNote: body.payeeNote ?? "", paymentRef: body.paymentRef, paidAt: nowIso(), paidBy: actor(), exportRef: `PAY-${year()}-${String(db.seq.payment).padStart(5, "0")}` });
   claim.payeeId = body.payeeId;
-  setStatus(claim, "PAYMENT_REQUESTED", `${v.voucherNo}: ${claim.currency} ${body.amount} sent to Finance for payment`);
+  setStatus(claim, "PAID", `Paid ${claim.currency} ${body.amount}, reference ${body.paymentRef}`);
   return claimView(claim);
 });
 

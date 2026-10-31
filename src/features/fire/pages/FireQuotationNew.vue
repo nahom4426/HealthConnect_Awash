@@ -22,6 +22,12 @@ async function load() {
   error.value = '';
   try {
     proposal.value = await fetchProposal(route.params.proposalUuid);
+    if (pc.value.productClass === 'MARINE') {
+      if (proposal.value?.marineQuoteId) {
+        await router.replace(`/marine/quotes/${proposal.value.marineQuoteId}`);
+      }
+      return;
+    }
     preview.value = await previewQuote(route.params.proposalUuid);
   } catch (e) {
     error.value = apiError(e);
@@ -58,15 +64,18 @@ onMounted(load);
       </button>
     </header>
 
+    <p v-if="pc.productClass === 'MARINE' && proposal && !proposal.marineQuoteId" class="fire-note">
+      This proposal has no Marine quotation yet. Submit it from the proposal, then rate that quotation.
+    </p>
     <p v-if="error" class="fire-error">{{ error }}</p>
     <p v-if="proposal && proposal.status !== 'SUBMITTED'" class="fire-note">
       Only submitted proposals can be quoted. Current status: {{ proposal.status }}.
     </p>
 
-    <section v-if="preview" class="fire-card">
-      <h2>Rating preview {{ preview.ratingVersion }}</h2>
-      <p class="premium">{{ money(preview.totalPremium) }} <small>{{ preview.currency }}</small></p>
-      <table>
+    <section v-if="preview" class="fire-card premium-card">
+      <h2>Premium preview · {{ preview.ratingVersion }}</h2>
+      <p class="premium">{{ money(preview.totalPremium) }} <small>{{ preview.currency || 'ETB' }}</small></p>
+      <table v-if="preview.breakdown?.length">
         <tbody>
           <tr v-for="(line, i) in preview.breakdown" :key="i">
             <td>{{ line.label }}</td>

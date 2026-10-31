@@ -52,7 +52,15 @@ function shouldForceLogoutOn401(status: any, data: any): boolean {
     message = String((data as any)?.message || "");
   }
 
-  return message.trim().toLowerCase() === "session invalid";
+  // The session was revoked or replaced, so refreshing cannot help and the only way out is to
+  // sign in again. AuthService says "Session invalid"; property-casualty says "Session invalid"
+  // or, on older builds, "Session is no longer valid". Match the family, not one exact string:
+  // a near-miss here leaves the user looping on 401 with a dead token and no way to recover.
+  const normalized = message.trim().toLowerCase();
+  return normalized === "session invalid"
+    || normalized === "session is no longer valid"
+    || (normalized.includes("session") && normalized.includes("invalid"))
+    || (normalized.includes("session") && normalized.includes("no longer valid"));
 }
 
 async function refreshAccessToken(): Promise<{ newToken: string; refreshToken?: string } | null> {

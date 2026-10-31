@@ -32,7 +32,7 @@ export const MODULES = [
   {
     id: 'marine',
     name: 'Marine & Cargo',
-    description: 'Rate configuration for ocean freight, inland transit and hull insurance.',
+    description: 'Cargo proposals, commodity × conveyance rates, and Institute Cargo Clauses.',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M2 20l4-12h12l4 12H2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8V4"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 20c0-2 1.5-4 4-4s4 2 4 4"/></svg>`,
     color: { from: '#0c4a6e', to: '#0284c7', accent: '#38bdf8', glow: 'rgba(2,132,199,0.4)' },
     badge: null,

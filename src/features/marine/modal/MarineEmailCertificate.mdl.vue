@@ -1,6 +1,6 @@
 <script setup>
-// Email a certificate (plan 5.5). data: { certificate } — recipients start with the insured,
-// broker and LC bank emails. The send is queued (202); closes with true when sent.
+// Email a certificate. Recipients start with the insured, broker and LC bank emails.
+// A queued response is not delivery. A skipped response means SMTP was not used.
 import { ref } from "vue";
 import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
@@ -39,7 +39,9 @@ async function send() {
   const res = await emailCertificate(cert.id, { recipients: recipients.value, message: message.value });
   pending.value = false;
   if (res.ok) {
-    toasted(true, "Email queued");
+    const status = res.data?.status;
+    if (status === "QUEUED") toasted(true, res.data.message || "Email queued. Delivery is not confirmed yet.");
+    else toasted(false, res.data?.message || "Email was not sent.");
     closeModal(true);
   } else if (res.error.status === 422) error.value = res.error.fields[0]?.message ?? res.error.message;
   else notifyError(res.error);

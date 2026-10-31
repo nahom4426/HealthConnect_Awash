@@ -35,11 +35,12 @@ defineProps({
         </tr>
       </tfoot>
     </table>
+    <p v-if="premium.sumInsured?.calculation" class="mt-3 text-xs text-ink-muted">{{ premium.sumInsured.calculation }}</p>
     <dl class="grid gap-x-6 gap-y-1 mt-3 text-xs sm:grid-cols-2 text-ink-muted">
       <div><dt class="inline">Rate table:</dt> <dd class="inline font-medium text-ink">{{ premium.rateTableVersion }}</dd></div>
       <div v-if="fx && fx.currency !== 'ETB'">
         <dt class="inline">FX:</dt>
-        <dd class="inline font-medium text-ink">1 {{ fx.currency }} = ETB {{ formatAmount(fx.rate, 4) }} ({{ formatDate(fx.date) }})</dd>
+        <dd class="inline font-medium text-ink">1 {{ fx.currency }} = ETB {{ formatAmount(fx.rate, 4) }} ({{ formatDate(fx.date) }}<template v-if="fx.source">, {{ fx.source }}</template><template v-if="fx.rateType"> {{ fx.rateType }}</template><template v-if="fx.enteredBy">, entered by {{ fx.enteredBy }}</template>)</dd>
         <span v-if="fx.fallback" class="ml-1.5 px-1.5 py-0.5 rounded-full font-semibold bg-warning-soft text-warning-strong">Previous day's rate used</span>
       </div>
     </dl>

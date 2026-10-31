@@ -18,7 +18,7 @@ import { hasAnyRole, useMarineRoles } from "../composables/useCan";
 import { DEADLINE_KINDS, reasonLabel } from "../constants";
 import { statusLabel } from "../i18n";
 import { formatAge, formatDate, formatDateTime } from "../utils/format";
-import { formatAmount, formatMoney } from "../utils/money";
+import { formatMoney } from "../utils/money";
 
 const router = useRouter();
 const moduleStore = useModuleStore();
@@ -105,27 +105,19 @@ const activity = computed(() =>
 );
 
 const WIDGETS = [
-  { key: "myReferrals", title: "My open referrals", all: "/marine/underwriting?assignee=me" },
-  { key: "unassignedReferrals", title: "Unassigned referrals", all: "/marine/underwriting?assignee=none" },
+  { key: "myReferrals", title: "Referred quotations", all: "/marine/quotes?status=REFERRED" },
   { key: "expiringQuotes", title: "Quotes expiring in 5 days", all: "/marine/quotes?expiring=5" },
   { key: "missingFx", title: "Missing FX rates today", all: "/marine/admin/fx-rates" },
   { key: "lateDeclarations", title: "Late declarations", all: "/marine/open-covers" },
-  { key: "deadlines", title: "Deadlines due or overdue", all: "/marine/claims?overdue=true" },
+  { key: "deadlines", title: "Deadlines due or overdue", all: "/marine/deadlines" },
   { key: "recentCertificates", title: "Recent certificates", all: "/marine/certificates" },
-  { key: "customersToApprove", title: "Customers to approve", all: "/marine/customers?status=PENDING_APPROVAL" },
-  { key: "unpaidPremiums", title: "Premiums to collect", all: "/marine/finance/receivables" },
-  { key: "claimPayments", title: "Claim payments to make", all: "/marine/finance/claim-payments" },
-  { key: "refundsToPay", title: "Refunds to pay", all: "/marine/finance/refunds?status=UNPAID" },
 ];
 const shown = computed(() => WIDGETS.filter((w) => data.value?.widgets?.[w.key]));
 
 // The first three actions the role may use (same role lists as the routes), then Switch module
 const ACTIONS = [
-  { label: "Record receipts", sub: "Premium waiting for payment", to: "/marine/finance/receivables", roles: ["FINANCE"], icon: ICONS.money.replace('stroke-width="1.75"', 'stroke-width="2" style="width:20px;height:20px"') },
-  { label: "Claim payments", sub: "Pay approved settlements", to: "/marine/finance/claim-payments", roles: ["FINANCE"], icon: ICONS.queue },
   { label: "New quote", sub: "Price a shipment", to: "/marine/quotes/new", roles: ["BROKER", "UNDERWRITER", "SENIOR_UNDERWRITER"], icon: ICONS.plus },
-  { label: "Underwriting queue", sub: "Decide referred quotes", to: "/marine/underwriting", roles: ["UNDERWRITER", "SENIOR_UNDERWRITER"], icon: ICONS.queue },
-  { label: "Register customer", sub: "Company or individual", to: "/marine/customers/new", roles: ["BROKER", "ADMIN"], icon: ICONS.plus },
+  { label: "Referred quotations", sub: "Finish underwriting on the quotation", to: "/marine/quotes?status=REFERRED", roles: ["UNDERWRITER", "SENIOR_UNDERWRITER"], icon: ICONS.queue },
   { label: "Register claim", sub: "Report a cargo loss", to: "/marine/claims/new", roles: ["CLAIMS_HANDLER"], icon: ICONS.plus },
   { label: "Claims", sub: "Work open claims", to: "/marine/claims", roles: ["CLAIMS_HANDLER", "CLAIMS_MANAGER"], icon: ICONS.queue },
   { label: "FX rates", sub: "Enter today's rates", to: "/marine/admin/fx-rates", roles: ["FINANCE"], icon: ICONS.money.replace('stroke-width="1.75"', 'stroke-width="2" style="width:20px;height:20px"') },
@@ -288,7 +280,7 @@ const actions = computed(() => ACTIONS.filter((a) => hasAnyRole(roles.value, a.r
             <li v-if="!data.widgets[w.key].rows.length" class="mdb-card-sub">None</li>
             <li v-for="(r, i) in data.widgets[w.key].rows" :key="r.id ?? r.currency ?? i" class="mdb-work-row">
               <template v-if="w.key === 'myReferrals' || w.key === 'unassignedReferrals'">
-                <RouterLink :to="`/marine/underwriting/${r.id}`" class="mdb-work-link">{{ r.quoteNo }}</RouterLink>
+                <RouterLink :to="r.quoteId ? `/marine/quotes/${r.quoteId}?tab=underwriting` : `/marine/quotes?status=REFERRED`" class="mdb-work-link">{{ r.quoteNo }}</RouterLink>
                 <span class="mdb-act-entity"> · {{ r.insured?.name }}</span>
                 <p class="mdb-act-entity">{{ r.reasonCodes.map(reasonLabel).join(", ") }} · waiting {{ r.waitingHours }} h</p>
               </template>
@@ -307,22 +299,6 @@ const actions = computed(() => ACTIONS.filter((a) => hasAnyRole(roles.value, a.r
                 <div class="flex gap-2 justify-between items-center">
                   <span><RouterLink :to="`/marine/claims/${r.claimId}?tab=deadlines`" class="mdb-work-link">{{ r.claimNo }}</RouterLink> <span class="mdb-act-entity">· {{ DEADLINE_KINDS[r.kind] }}</span></span>
                   <DeadlineChip :due-date="r.dueDate" :status="r.status" />
-                </div>
-              </template>
-              <template v-else-if="w.key === 'customersToApprove'">
-                <RouterLink :to="`/marine/customers/${r.id}`" class="mdb-work-link">{{ r.name }}</RouterLink>
-                <p class="mdb-act-entity">{{ r.customerNo }} · by {{ r.registeredBy }} · {{ formatAge(r.registeredAt) }} ago</p>
-              </template>
-              <template v-else-if="w.key === 'unpaidPremiums' || w.key === 'refundsToPay'">
-                <div class="flex gap-2 justify-between items-center">
-                  <span><RouterLink :to="`/marine/finance/notes/${r.id}`" class="mdb-work-link">{{ r.noteNo }}</RouterLink> <span class="mdb-act-entity">· {{ r.customer?.name }}</span></span>
-                  <span class="text-sm font-semibold tabular-nums">ETB {{ formatAmount(r.amount) }}</span>
-                </div>
-              </template>
-              <template v-else-if="w.key === 'claimPayments'">
-                <div class="flex gap-2 justify-between items-center">
-                  <span><span class="mdb-work-link">{{ r.voucherNo }}</span> <span class="mdb-act-entity">· {{ r.claimNo }} · {{ r.payee?.name }}</span></span>
-                  <span class="text-sm font-semibold tabular-nums">{{ formatMoney(r.amount, r.currency) }}</span>
                 </div>
               </template>
               <template v-else-if="w.key === 'recentCertificates'">
@@ -388,7 +364,6 @@ const actions = computed(() => ACTIONS.filter((a) => hasAnyRole(roles.value, a.r
 
 <style scoped>
 .mdb-root {
-  font-family: "Rubik", "Inter", system-ui, sans-serif; /* as the other marine pages (theme.css) */
   --theme-color-primary: v-bind("mod.color.to");
   --theme-color-glow: v-bind("mod.color.glow");
   --theme-color-accent: v-bind("mod.color.accent");

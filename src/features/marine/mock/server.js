@@ -18,12 +18,24 @@ import {
   editableQuote, certificateStatus, certificateView, policyView, on, routes, caller, brokerOnly, nextId, declarationContext,
 } from "./core";
 import { assess, applyAssessment, syncReferral } from "./underwriting";
-import { lockToCover } from "./openCovers";
-import { approvedCustomerError } from "./customers";
-import { raiseNote, splitPremium } from "./finance";
+import { lockToCover, listPoliciesWithOpenCovers, getPolicyIncludingOpenCover } from "./openCovers";
 import "./claims";
 
 export { resetMockDb };
+
+on("get", "/config", () => ({
+  features: { hull: false, inlandTransit: false, openCovers: true, certificates: true, referrals: true },
+  currencies: ["ETB"],
+  baseCurrency: "ETB",
+  paymentRequired: false,
+  paymentProvider: null,
+  demoPayment: true,
+  products: [
+    { code: "SINGLE_SHIPMENT", label: "Single shipment", visible: true, available: true, unavailableReason: null },
+    { code: "INLAND_TRANSIT", label: "Inland transit", visible: true, available: false, unavailableReason: "Not available yet." },
+    { code: "HULL", label: "Hull", visible: false, available: false, unavailableReason: "Not available yet." },
+  ],
+}));
 
 // Brokers only reach their own business; anything else answers 404 as if it didn't exist (plan 7.7)
 const mine = (brokerId) => !brokerOnly() || brokerId === caller.brokerPartyId;
@@ -290,6 +302,7 @@ on("get", "/quotes", ({ query }) => {
   if (q) items = items.filter((x) => lc(`${x.quoteNo} ${x.insured?.name}`).includes(q));
   if (statuses.length) items = items.filter((x) => statuses.includes(x.status));
   if (query.product) items = items.filter((x) => x.product === query.product);
+  if (query.declaration === "true" || query.declaration === true) items = items.filter((x) => x.openCoverId);
   if (query.brokerId) items = items.filter((x) => x.brokerId === query.brokerId);
   items = items.filter((x) => inRange(x.createdAt, query.createdFrom, query.createdTo));
   if (query.expiring) items = items.filter((x) => x.validUntil && x.validUntil <= addDays(todayIso(), Number(query.expiring)) && ["QUOTED", "APPROVED"].includes(x.status));
@@ -317,8 +330,6 @@ on("post", "/quotes/:id/rate", ({ params }) => {
   const q = editableQuote(params.id);
   ownQuote(q);
   const e = quoteErrors(q);
-  const notApproved = q.insuredId && approvedCustomerError(q.insuredId);
-  if (notApproved) e.push(notApproved);
   if (e.length) invalid(e);
   if (q.product === "INLAND_TRANSIT") {
     q.mode = "ROAD";
@@ -340,6 +351,9 @@ on("post", "/quotes/:id/bind", ({ params }) => {
   ownQuote(q);
   refreshQuoteStatus(q);
   if (q.sanctionsConfirmed) fail(409, "Sanctions match confirmed. This quote can't be bound.", { code: "SANCTIONS_CONFIRMED" });
+  const screened = db.screenings.filter((x) => x.quoteId === q.id);
+  if (screened.some((x) => x.result === "UNAVAILABLE")) fail(409, "Sanctions screening is unavailable. A current approved list is required before binding.", { code: "SANCTIONS_PENDING" });
+  if (screened.some((x) => x.result === "POTENTIAL")) fail(409, "Resolve the possible sanctions matches before binding.", { code: "SANCTIONS_PENDING" });
   const bindable = (q.status === "QUOTED" && !(q.referralReasons ?? []).length) || q.status === "APPROVED";
   if (!bindable) fail(409, q.status === "REFERRED" ? "Referral pending: an underwriter must approve before binding." : `A ${lc(q.status)} quote can't be bound.`, { code: "WRONG_STATE" });
   const cover = q.openCoverId ? db.openCovers.find((c) => c.id === q.openCoverId) : null;
@@ -365,8 +379,6 @@ on("post", "/quotes/:id/bind", ({ params }) => {
     certNo: nextNo("C", "certificate"),
     version: 1,
     status: "PENDING",
-    // Pay before cover; declarations are billed through the open cover's deposit and year-end adjustment
-    awaitingPayment: !cover,
     policyId: policy.id,
     token: crypto.randomUUID().replace(/-/g, ""),
     createdAt: nowIso(),
@@ -375,33 +387,96 @@ on("post", "/quotes/:id/bind", ({ params }) => {
     snapshot: { ...q },
   };
   db.certificates.push(cert);
-  const debitNote = cover
-    ? null
-    : raiseNote({ source: "BIND", customerId: q.insuredId, brokerId: q.brokerId ?? null, policyId: policy.id, certificateId: cert.id, amounts: splitPremium(q.premium), description: `Premium for ${policy.policyNo}` });
   audit("quote", q.id, `Bound: policy ${policy.policyNo}`);
   audit("policy", policy.id, "Created from quote " + q.quoteNo);
   if (cover) audit("openCover", cover.id, `Declaration ${q.quoteNo} bound${q.late ? " (late)" : ""}`);
-  return {
-    quote: quoteView(q),
-    policy: { id: policy.id, policyNo: policy.policyNo },
-    certificate: { id: cert.id, certNo: cert.certNo, awaitingPayment: cert.awaitingPayment },
-    debitNote: debitNote ? { id: debitNote.id, noteNo: debitNote.noteNo, total: debitNote.total } : null,
-    openCover: cover ? { id: cover.id } : null,
-  };
+  return { quote: quoteView(q), policy: { id: policy.id, policyNo: policy.policyNo }, certificate: { id: cert.id, certNo: cert.certNo }, openCover: cover ? { id: cover.id } : null };
 });
 
-// policies
-on("get", "/policies", ({ query }) => {
-  const q = lc(query.q);
-  const statuses = listParam(query.status);
-  let items = db.policies.filter((p) => mine(p.snapshot.brokerId)).map(policyView);
-  if (q) items = items.filter((p) => lc(`${p.policyNo} ${p.insured?.name} ${p.vesselImo}`).includes(q));
-  if (statuses.length) items = items.filter((p) => statuses.includes(p.status));
-  if (query.product) items = items.filter((p) => p.product === query.product);
-  items = items.filter((p) => inRange(p.periodFrom, query.periodFrom, query.periodTo));
-  return page(items.map((p) => ({ ...p, sumInsuredTotal: p.premium?.sumInsured?.total, premiumTotal: p.premium?.total })), query);
+function premiumBook() {
+  if (!db.premiumPayments) db.premiumPayments = [];
+  return db.premiumPayments;
+}
+function premiumView(row, quote) {
+  return { ...row, matchesPremium: row.amount === quote.premium?.total && row.currency === quote.currency };
+}
+on("get", "/quotes/:id/premium-payments", ({ params }) => {
+  const q = ownQuote(db.quotes.find((x) => x.id === params.id) ?? fail(404, "Quote not found"));
+  return premiumBook().filter((p) => p.quoteId === q.id).map((p) => premiumView(p, q));
 });
-on("get", "/policies/:id", ({ params }) => policyView(ownPolicy(db.policies.find((p) => p.id === params.id) ?? fail(404, "Policy not found"))));
+on("post", "/quotes/:id/premium-payments", ({ params, body }) => {
+  const q = ownQuote(db.quotes.find((x) => x.id === params.id) ?? fail(404, "Quote not found"));
+  const key = String(body?.idempotencyKey ?? "").trim();
+  if (key.length < 8 || key.length > 80 || !/^[A-Za-z0-9._-]+$/.test(key)) invalid([{ field: "idempotencyKey", message: "Idempotency key must be 8 to 80 characters" }]);
+  const book = premiumBook();
+  const same = book.find((p) => p.idempotencyKey === key);
+  if (same) {
+    if (same.quoteId !== q.id) invalid([{ field: "idempotencyKey", message: "This idempotency key was already used for another quote" }]);
+    return premiumView(same, q);
+  }
+  if (!q.premium?.total || !["QUOTED", "APPROVED"].includes(q.status)) fail(409, "Only a priced quote can start premium collection.", { code: "WRONG_STATE" });
+  const open = [...book].reverse().find((p) => p.quoteId === q.id && p.status === "PENDING");
+  if (open && open.amount === q.premium.total && open.currency === q.currency) return premiumView(open, q);
+  const row = {
+    id: nextId(book),
+    quoteId: q.id,
+    idempotencyKey: key,
+    status: "PENDING",
+    amount: q.premium.total,
+    currency: q.currency,
+    financeRef: `PREM-${year()}-${String((db.seq.premium = (db.seq.premium ?? 0) + 1)).padStart(5, "0")}`,
+    provider: null,
+    providerRef: null,
+    failureReason: null,
+    initiatedAt: nowIso(),
+    confirmedAt: null,
+  };
+  book.push(row);
+  audit("quote", q.id, `Premium payment started: ${row.financeRef}`);
+  return premiumView(row, q);
+});
+on("post", "/quotes/:id/premium-payments/:paymentId/cancel", ({ params }) => {
+  const q = ownQuote(db.quotes.find((x) => x.id === params.id) ?? fail(404, "Quote not found"));
+  const row = premiumBook().find((p) => p.id === params.paymentId && p.quoteId === q.id) ?? fail(404, "Premium payment not found");
+  if (row.status !== "PENDING") fail(409, "Only a pending premium payment can be cancelled.", { code: "WRONG_STATE" });
+  row.status = "CANCELLED";
+  row.cancelledAt = nowIso();
+  return premiumView(row, q);
+});
+on("post", "/quotes/:id/demo-payments", ({ params, body }) => {
+  const q = ownQuote(db.quotes.find((x) => x.id === params.id) ?? fail(404, "Quote not found"));
+  if (!q.premium?.total) fail(409, "Rate the quotation before a demo payment. No premium amount is available.", { code: "WRONG_STATE" });
+  const method = String(body?.method ?? "");
+  if (!["DEMO_TELEBIRR", "DEMO_BANK", "DEMO_CASH"].includes(method)) fail(422, "Choose a demo payment method", { code: "VALIDATION" });
+  const outcome = String(body?.outcome ?? "");
+  if (!["SUCCESS", "FAILURE"].includes(outcome)) fail(422, "Outcome must be SUCCESS or FAILURE", { code: "VALIDATION" });
+  if (!db.demoPayments) db.demoPayments = [];
+  const paid = outcome === "SUCCESS";
+  const row = {
+    id: String(db.demoPayments.length + 1),
+    quoteId: q.id,
+    status: paid ? "DEMO_PAID" : "DEMO_FAILED",
+    amount: q.premium.total,
+    currency: q.premium.currency || q.currency || "ETB",
+    method,
+    reference: `DEMO-${year()}-${String(db.demoPayments.length + 1).padStart(5, "0")}`,
+    detail: paid ? "Simulated success. No money was collected." : "Simulated failure. No money was collected.",
+    simulatedAt: nowIso(),
+    simulatedBy: caller.user || "demo",
+    demo: true,
+  };
+  db.demoPayments.push(row);
+  return row;
+});
+on("post", "/quotes/:id/premium-payments/:paymentId/refund", ({ params }) => {
+  const q = ownQuote(db.quotes.find((x) => x.id === params.id) ?? fail(404, "Quote not found"));
+  premiumBook().find((p) => p.id === params.paymentId && p.quoteId === q.id) ?? fail(404, "Premium payment not found");
+  fail(409, "Refunds are not available until a collection provider that supports them is approved.", { code: "WRONG_STATE" });
+});
+
+// policies (shipment policies + bound Open Covers; OC rows are the same open-cover records)
+on("get", "/policies", ({ query }) => listPoliciesWithOpenCovers(query, { mine, policyView, page, lc, listParam, inRange }));
+on("get", "/policies/:id", ({ params }) => getPolicyIncludingOpenCover(params.id, { mine, ownPolicy, policyView, fail }));
 
 // certificates
 on("get", "/certificates", ({ query }) => {
@@ -417,7 +492,6 @@ on("get", "/certificates", ({ query }) => {
 on("get", "/certificates/:id", ({ params }) => certificateView(ownCert(db.certificates.find((c) => c.id === params.id) ?? fail(404, "Certificate not found"))));
 on("get", "/certificates/:id/pdf", async ({ params }) => {
   const c = db.certificates.find((x) => x.id === params.id) ?? fail(404, "Certificate not found");
-  if (certificateStatus(c) === "AWAITING_PAYMENT") fail(409, "The certificate is issued once the premium is paid.", { code: "AWAITING_PAYMENT" });
   if (certificateStatus(c) === "PENDING") fail(409, "The PDF is still being generated.", { code: "PDF_PENDING" });
   const view = certificateView(c);
   const policy = db.policies.find((p) => p.id === c.policyId);
@@ -425,13 +499,12 @@ on("get", "/certificates/:id/pdf", async ({ params }) => {
 });
 on("post", "/certificates/:id/email", ({ params, body }) => {
   const c = db.certificates.find((x) => x.id === params.id) ?? fail(404, "Certificate not found");
-  if (certificateStatus(c) === "AWAITING_PAYMENT") fail(409, "The certificate is issued once the premium is paid.", { code: "AWAITING_PAYMENT" });
   const to = Array.isArray(body?.recipients) ? body.recipients : [];
   const bad = to.filter((r) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r));
   if (!to.length) invalid([{ field: "recipients", message: "Add at least one recipient" }]);
   if (bad.length) invalid([{ field: "recipients", message: `Not a valid email: ${bad.join(", ")}` }]);
-  c.events.push({ kind: "EMAIL", by: actor(), at: nowIso(), to: to.join(", ") });
-  return { __status: 202, queued: true };
+  c.events.push({ kind: "EMAIL", by: actor(), at: nowIso(), to: to.join(", "), delivery: "SKIPPED" });
+  return { __status: 200, status: "SKIPPED", queued: false, message: "Email was not sent because delivery is not enabled." };
 });
 on("post", "/certificates/:id/events", ({ params, body }) => {
   const c = db.certificates.find((x) => x.id === params.id) ?? fail(404, "Certificate not found");
@@ -444,18 +517,14 @@ export const verifyUrl = (token) => `${location.origin}/verify/${token}`;
 on("get", "/public/verify/:token", ({ params }) => {
   const c = db.certificates.find((x) => x.token === params.token) ?? fail(404, "We couldn't verify this certificate.");
   const v = certificateView(c);
-  // A paid-for version takes over; an amendment still awaiting payment doesn't supersede yet
-  const latest = Math.max(...v.versions.filter((x) => x.status !== "AWAITING_PAYMENT").map((x) => x.version));
-  const status = v.status === "CANCELLED" ? "CANCELLED" : c.version < latest || v.status === "AMENDED" ? "SUPERSEDED" : v.status === "EXPIRED" ? "EXPIRED" : v.status === "ISSUED" ? "VALID" : "PENDING"; // AWAITING_PAYMENT shows as not yet valid
+  const latest = Math.max(...v.versions.map((x) => x.version));
+  const status = v.status === "CANCELLED" ? "CANCELLED" : c.version < latest || v.status === "AMENDED" ? "SUPERSEDED" : v.status === "EXPIRED" ? "EXPIRED" : v.status === "ISSUED" ? "VALID" : "PENDING";
   return {
     status,
     certNo: v.certNo,
     version: v.version,
-    insuredName: v.insured?.name,
     vesselName: v.vessel?.name ?? "By air",
     voyage: `${v.loadingPort?.name ?? "—"} → ${v.dischargePort?.name ?? "—"}${v.finalDestination ? ` → ${v.finalDestination}` : ""}`,
-    sumInsured: v.sumInsured,
-    currency: v.currency,
     issuedAt: v.issuedAt,
     insurerPhone: "+251 11 551 8400",
   };
@@ -541,9 +610,12 @@ export async function handleRequest(config) {
     const result = await route.handler({ params, query: config.params || {}, body: parseBody(config.data) });
     if (method !== "get") save();
     if (result?.__blob) return respond(200, result.__blob);
-    if (result?.__status) return respond(result.__status, { queued: true });
+    if (result?.__status) {
+      const { __status, ...body } = result;
+      return respond(__status, body);
+    }
     // Deep copy so callers can't mutate the mock's records in place
-    return respond(method === "post" && /\/(vessels|ports|commodities|parties|customers|users|fx-rates|quotes|rate-tables)$/.test(path) ? 201 : 200, structuredClone(result));
+    return respond(method === "post" && /\/(vessels|ports|commodities|parties|users|fx-rates|quotes|rate-tables)$/.test(path) ? 201 : 200, structuredClone(result));
   } catch (e) {
     if (!(e instanceof HttpError)) {
       console.error("[marine mock]", e);

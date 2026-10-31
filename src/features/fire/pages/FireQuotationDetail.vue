@@ -82,9 +82,10 @@ onMounted(load);
       <div><span>Premium</span><strong>{{ money(quote.totalPremium) }}</strong></div>
     </section>
 
-    <section v-if="quote" class="fire-card">
-      <h2>Breakdown</h2>
-      <table>
+    <section v-if="quote" class="fire-card premium-card">
+      <h2>Premium</h2>
+      <p class="premium">{{ money(quote.totalPremium) }} <small>{{ quote.currency || 'ETB' }}</small></p>
+      <table v-if="quote.breakdown?.length">
         <tbody>
           <tr v-for="(line, i) in quote.breakdown" :key="i">
             <td>{{ line.label }}</td>
@@ -92,6 +93,7 @@ onMounted(load);
           </tr>
         </tbody>
       </table>
+      <p v-else class="fire-note" style="padding-bottom: 1rem">No premium breakdown lines were returned for this quotation.</p>
     </section>
   </div>
 </template>

@@ -29,7 +29,7 @@ const results = ref([]);
 const searching = ref(false);
 
 const { form, errors, pending, check, validate, applyServerError, bannerItems, submitted } = useForm(
-  { lossDate: "", notifiedDate: todayIso(), deliveryDate: "", type: "", cause: "", description: "", estimatedAmount: "", payee: null, payeeNote: "" },
+  { lossDate: "", notifiedDate: todayIso(), deliveryDate: "", type: "", cause: "", description: "", lossLocation: "", affectedGoods: "", estimatedAmount: "", payee: null, payeeNote: "" },
   {
     lossDate: (v) => (!v ? "Loss date is required" : v > todayIso() ? "Loss date can't be in the future" : ""),
     notifiedDate: (v, f) => (!v ? "Notified date is required" : f.lossDate && v < f.lossDate ? "Notified date can't be before the loss date" : ""),
@@ -37,10 +37,12 @@ const { form, errors, pending, check, validate, applyServerError, bannerItems, s
     type: (v) => (v ? "" : "Pick a claim type"),
     cause: (v) => (v ? "" : "Pick a cause of loss"),
     description: (v) => (!v.trim() ? "Description is required" : v.length > 2000 ? "At most 2000 characters" : ""),
+    lossLocation: (v) => (!v.trim() ? "Loss location is required" : v.length > 200 ? "At most 200 characters" : ""),
+    affectedGoods: (v) => (!v.trim() ? "Affected goods are required" : v.length > 500 ? "At most 500 characters" : ""),
     estimatedAmount: (v) => ((parseDecimal(v) ?? 0n) > 0n ? "" : "Estimated amount must be greater than 0"),
     payee: (v) => (v ? "" : "Payee is required"),
   },
-  { lossDate: "Loss date", notifiedDate: "Notified date", deliveryDate: "Delivery date", type: "Claim type", cause: "Cause of loss", description: "Description", estimatedAmount: "Estimated amount", payee: "Payee" }
+  { lossDate: "Loss date", notifiedDate: "Notified date", deliveryDate: "Delivery date", type: "Claim type", cause: "Cause of loss", description: "Description", lossLocation: "Loss location", affectedGoods: "Affected goods", estimatedAmount: "Estimated amount", payee: "Payee" }
 );
 
 async function pick(c) {
@@ -49,6 +51,7 @@ async function pick(c) {
   if (!res.ok) return notifyError(res.error);
   cert.value = res.data;
   form.payee = res.data.lcBank ?? res.data.insured;
+  if (!form.affectedGoods.trim()) form.affectedGoods = res.data.goodsDescription ?? "";
   results.value = [];
 }
 
@@ -83,6 +86,8 @@ async function submit() {
     type: form.type,
     cause: form.cause,
     description: form.description.trim(),
+    lossLocation: form.lossLocation.trim(),
+    affectedGoods: form.affectedGoods.trim(),
     estimatedAmount: form.estimatedAmount,
     payeeId: form.payee.id,
     payeeNote: form.payeeNote,
@@ -98,20 +103,25 @@ async function submit() {
 </script>
 
 <template>
-  <div class="marine-page">
-    <MarinePageHeader title="Register claim" :crumbs="[{ label: 'Marine' }, { label: 'Claims', to: '/marine/claims' }, { label: 'Register' }]" />
-    <form novalidate class="grid gap-4 max-w-4xl" @submit.prevent="submit">
+  <div class="marine-page claim-page">
+    <MarinePageHeader title="New Claim" :crumbs="[{ label: 'Marine' }, { label: 'Claims', to: '/marine/claims/process' }, { label: 'New Claim' }]" />
+    <form novalidate class="grid gap-4 w-full" @submit.prevent="submit">
       <FormErrorBanner :items="submitted ? bannerItems() : []" />
 
-      <section :class="[cardClass, 'p-5']" data-field="certificate" aria-labelledby="rc-cert">
+      <div class="grid gap-4 xl:grid-cols-12 xl:items-start">
+      <section :class="[cardClass, 'p-5 xl:col-span-5']" data-field="certificate" aria-labelledby="rc-cert">
         <h2 id="rc-cert" class="mb-3 text-sm font-semibold text-ink">Certificate</h2>
         <div v-if="cert" class="grid gap-3">
           <KeyValueGrid
+            :cols="2"
             :items="[
               { label: 'Certificate', value: `${cert.certNo} v${cert.version}`, to: `/marine/certificates/${cert.id}` },
               { label: 'Policy', value: cert.policy?.policyNo, to: `/marine/policies/${cert.policy?.id}` },
               { label: 'Insured', value: cert.insured?.name },
               { label: 'Clause', value: clauseLabel(cert.clause) },
+              { label: 'Goods on the certificate', value: cert.goodsDescription, wide: true },
+              { label: 'Conditions', value: cert.specialConditions, wide: true },
+              { label: 'Open cover', value: cert.openCover?.coverNo },
               { label: 'Period', value: `${formatDate(cert.policy?.periodFrom)} to ${formatDate(cert.policy?.periodTo)}` },
               { label: 'Sum insured', value: formatMoney(cert.sumInsured, cert.currency) },
               { label: 'Loss payee', value: cert.lcBank?.name ?? 'None (no LC)' },
@@ -121,7 +131,7 @@ async function submit() {
         </div>
         <template v-else>
           <label for="rc-search" class="text-sm font-medium text-ink">Find by certificate no, BL no or IMO</label>
-          <input id="rc-search" v-model="search" type="search" placeholder="C-2026-00001, BL number or 9074729" :class="[inputClass, inputBorder(errors.certificate), 'mt-1']" />
+          <input id="rc-search" v-model="search" type="search" placeholder="C-2026-00001, BL number or 9074729" :class="[inputClass, inputBorder(errors.certificate), 'mt-1 w-full']" />
           <p v-if="errors.certificate" class="mt-1 text-xs text-error">{{ errors.certificate }}</p>
           <p v-if="searching" class="mt-2 text-sm text-ink-subtle">Searching…</p>
           <ul v-else-if="results.length" class="mt-2 divide-y divide-line rounded-xl border border-line">
@@ -142,7 +152,7 @@ async function submit() {
         </template>
       </section>
 
-      <section :class="[cardClass, 'p-5 grid gap-5 sm:grid-cols-2']" aria-label="Loss">
+      <section :class="[cardClass, 'p-5 grid gap-5 sm:grid-cols-2 xl:col-span-7']" aria-label="Loss">
         <FormField v-slot="{ id, invalid }" label="Loss date" name="lossDate" required :error="errors.lossDate">
           <DateField :id="id" v-model="form.lossDate" :max="todayIso()" :invalid="invalid" @blur="check('lossDate')" />
           <span v-if="outsidePeriod" class="self-start px-2 py-0.5 mt-1 text-xs font-semibold rounded-full bg-warning-soft text-warning-strong">Loss date is outside the period of cover</span>
@@ -166,7 +176,13 @@ async function submit() {
           </select>
         </FormField>
         <FormField v-slot="{ id, invalid }" label="Estimated amount" name="estimatedAmount" required :error="errors.estimatedAmount">
-          <MoneyInput :id="id" v-model:amount="form.estimatedAmount" :currency="cert?.currency ?? 'USD'" lock-currency :invalid="invalid" @blur="check('estimatedAmount')" />
+          <MoneyInput :id="id" v-model:amount="form.estimatedAmount" :currency="cert?.currency ?? 'ETB'" lock-currency :invalid="invalid" @blur="check('estimatedAmount')" />
+        </FormField>
+        <FormField v-slot="{ id, invalid }" label="Loss location" name="lossLocation" required :error="errors.lossLocation">
+          <input :id="id" v-model="form.lossLocation" maxlength="200" :class="[inputClass, inputBorder(invalid)]" @blur="check('lossLocation')" />
+        </FormField>
+        <FormField v-slot="{ id, invalid }" label="Affected goods" name="affectedGoods" required :error="errors.affectedGoods" hint="Starts from the goods on the certificate. Change it when only part of the shipment is affected." class="sm:col-span-2">
+          <textarea :id="id" v-model="form.affectedGoods" rows="2" maxlength="500" :class="[inputClass, inputBorder(invalid), 'h-auto py-2']" @blur="check('affectedGoods')" />
         </FormField>
         <FormField v-slot="{ id, invalid }" label="Description" name="description" required :error="errors.description" :hint="`${form.description.length}/2000`" class="sm:col-span-2">
           <textarea :id="id" v-model="form.description" rows="3" maxlength="2000" :class="[inputClass, inputBorder(invalid), 'h-auto py-2']" @blur="check('description')" />
@@ -179,10 +195,11 @@ async function submit() {
           <input :id="id" v-model="form.payeeNote" :class="[inputClass, 'border-line']" />
         </FormField>
       </section>
+      </div>
 
       <div class="flex gap-2 justify-end">
         <Button variant="outline" @click="router.back()">Cancel</Button>
-        <Button html-type="submit" :pending="pending">Register claim</Button>
+        <Button html-type="submit" :pending="pending">Create claim</Button>
       </div>
     </form>
   </div>

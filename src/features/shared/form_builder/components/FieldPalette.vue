@@ -77,6 +77,10 @@ const paletteItems = [
   { type: 'date', label: 'Date Picker', description: 'Calendar date selection', icon: DateIcon },
   { type: 'toggle', label: 'Yes / No Toggle', description: 'Boolean switch selection', icon: ToggleIcon },
   { type: 'header', label: 'Section Header', description: 'Group divider & section text', icon: SectionIcon },
+  { type: 'party', label: 'Marine party', description: 'Insured, consignee or broker from master data', icon: TextIcon },
+  { type: 'port', label: 'Port', description: 'UN/LOCODE from the port master', icon: TextIcon },
+  { type: 'vessel', label: 'Vessel', description: 'Vessel from the vessel master', icon: TextIcon },
+  { type: 'commodity', label: 'Commodity', description: 'HS code from the commodity master', icon: TextIcon },
 ];
 
 function onDragStart(event, item) {

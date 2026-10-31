@@ -36,7 +36,7 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", close));
       <p v-if="!referrals.length && !deadlines.length" class="px-2 py-3 text-sm text-ink-muted">{{ t("alerts.nothing") }}</p>
       <template v-if="referrals.length">
         <p class="px-2 pt-1 text-xs font-semibold tracking-wide uppercase text-ink-subtle">{{ t("alerts.referrals") }}</p>
-        <RouterLink v-for="r in referrals" :key="r.id" :to="`/marine/underwriting/${r.id}`" class="block px-2 py-1.5 text-sm rounded-lg hover:bg-surface-muted" @click="open = false">
+        <RouterLink v-for="r in referrals" :key="r.id" :to="r.quoteId ? `/marine/quotes/${r.quoteId}?tab=underwriting` : `/marine/quotes?status=REFERRED`" class="block px-2 py-1.5 text-sm rounded-lg hover:bg-surface-muted" @click="open = false">
           {{ r.quoteNo }} <span class="text-ink-subtle">· {{ r.insured?.name }}</span>
         </RouterLink>
       </template>

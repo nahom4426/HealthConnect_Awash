@@ -10,6 +10,7 @@ import {
   saveRateConfig,
   publishRateConfig,
 } from '../api/formBuilderApi';
+import { isPcProduct } from '@/features/pc/pcModule.js';
 
 export const useFormBuilderStore = defineStore('formBuilder', () => {
   const schemas = ref([]);
@@ -183,7 +184,7 @@ export const useFormBuilderStore = defineStore('formBuilder', () => {
 
   async function publishActiveSchema() {
     if (!activeSchema.value) return;
-    if (activeSchema.value.productId === 'fire' || activeSchema.value.productId === 'burglary') {
+    if (isPcProduct(activeSchema.value.productId)) {
       return saveActiveSchema();
     }
     if (!activeSchema.value.formUuid) {

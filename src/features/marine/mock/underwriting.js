@@ -11,8 +11,6 @@ import { addDays, todayIso } from "../utils/format";
 import { vesselAge } from "../utils/imo";
 import { add, multiply, parseDecimal, toFixedString } from "../utils/money";
 import { FOREIGN_CURRENCIES } from "../constants";
-import { cancelUnpaidNotes, financeTotals, paidOnPolicy, raiseNote, splitPremium } from "./finance";
-import { customerStatus, isCustomer } from "./customers";
 
 const UW = ["UNDERWRITER", "SENIOR_UNDERWRITER"];
 const gt = (a, b) => (parseDecimal(a) ?? 0n) > (parseDecimal(b) ?? 0n);
@@ -50,17 +48,20 @@ function subjectsOf(q, vessel) {
 /** Screens every subject of a quote; a reviewed result (Clear or Confirmed) is kept on re-rating. */
 function screen(q, vessel, { persist = true } = {}) {
   return subjectsOf(q, vessel).map((s) => {
-    const matches = db.sanctionsList
+    const matches = (db.sanctionsList ?? []).length
+      ? db.sanctionsList
       .map((e) => ({ list: e.list, matchedName: e.name, ref: e.ref, score: Math.round(matchScore(s.name, e.name) * 100) }))
-      .filter((m) => m.score >= 60);
+      .filter((m) => m.score >= 60)
+      : [];
     const prior = db.screenings.find((x) => x.quoteId === q.id && x.key === s.key && x.name === s.name);
-    if (prior && prior.reviewedAt) return prior;
+    if (prior && prior.reviewedAt && prior.result !== "UNAVAILABLE" && (db.sanctionsList ?? []).length) return prior;
     const record = {
       id: prior?.id ?? String(++db.seq.screening),
       quoteId: q.id,
       ...s,
-      result: matches.length ? "POTENTIAL" : "CLEAR",
+      result: !(db.sanctionsList ?? []).length ? "UNAVAILABLE" : matches.length ? "POTENTIAL" : "CLEAR",
       matches,
+      note: (db.sanctionsList ?? []).length ? prior?.reviewNote : "No approved sanctions list is loaded.",
       screenedAt: nowIso(),
     };
     if (persist) {
@@ -172,6 +173,10 @@ export function assess(q, { persist = true, extraReasons = [], agreedRatePct = n
   if (inland && gt(inland.vehicle, inland.vehicleLimit)) reasons.push({ code: "ACCUMULATION", message: `Truck ${q.inland.truckPlate} carries more than the per-vehicle limit today.` });
   if (inland?.convoy && gt(inland.convoy, inland.convoyLimit)) reasons.push({ code: "ACCUMULATION", message: `Convoy ${q.inland.convoyRef} is over the per-convoy limit.` });
   reasons.push(...extraReasons);
+  const unavailable = screenings.filter((x) => x.result === "UNAVAILABLE");
+  if (unavailable.length) {
+    reasons.push({ code: "SANCTIONS", message: `${unavailable[0].note || "Sanctions data is unavailable."} Not cleared: ${unavailable.map((x) => x.name).join(", ")}.` });
+  }
 
   const confirmed = screenings.some((x) => x.result === "CONFIRMED");
   const all = dedupe(reasons);
@@ -288,6 +293,7 @@ on("post", "/referrals/:id/decide", ({ params, body }) => {
 
   const screenings = db.screenings.filter((x) => x.quoteId === q.id);
   if (screenings.some((x) => x.result === "CONFIRMED")) fail(409, "Sanctions match confirmed. This quote can't be bound.", { code: "SANCTIONS_CONFIRMED" });
+  if (screenings.some((x) => x.result === "UNAVAILABLE")) fail(409, "Sanctions screening is unavailable. A current approved list is required before deciding.", { code: "SANCTIONS_PENDING" });
   if (screenings.some((x) => x.result === "POTENTIAL")) fail(409, "Resolve sanctions matches first.", { code: "SANCTIONS_PENDING" });
 
   const me = callerAuthority();
@@ -317,6 +323,7 @@ on("post", "/referrals/:id/decide", ({ params, body }) => {
 on("post", "/screenings/:id/review", ({ params, body }) => {
   if (!hasRole(...UW)) fail(403, "You don't have permission for this action.");
   const s = db.screenings.find((x) => x.id === params.id) ?? fail(404, "Screening not found");
+  if (s.result === "UNAVAILABLE") fail(409, "Sanctions data is unavailable, so this subject cannot be cleared or confirmed.", { code: "SANCTIONS_PENDING" });
   const note = String(body?.note ?? "").trim();
   const e = [];
   if (!["CLEAR", "CONFIRM"].includes(body?.decision)) e.push({ field: "decision", message: "Pick Clear or Confirm match" });
@@ -333,15 +340,27 @@ on("post", "/screenings/:id/review", ({ params, body }) => {
   return s;
 });
 
+on("get", "/sanctions", () => ({
+  available: (db.sanctionsList ?? []).length > 0,
+  reason: (db.sanctionsList ?? []).length ? null : "No approved sanctions list is loaded.",
+  source: (db.sanctionsList ?? []).length ? "MOCK" : null,
+  version: (db.sanctionsList ?? []).length ? "seed" : null,
+  rowCount: (db.sanctionsList ?? []).length,
+  approvedSources: (db.sanctionsList ?? []).length ? ["MOCK"] : [],
+}));
+on("get", "/sanctions/imports", () => {
+  if (!hasRole("ADMIN")) fail(403, "You don't have permission for this action.");
+  return [];
+});
+
 // ── amend and cancel certificates (MAR-39) ──
 const AMENDABLE = ["vesselImo", "sailingDate", "invoiceValue", "freight", "lc", "specialConditions"];
 
-function amendTarget(id, { allowUnpaid = false } = {}) {
+function amendTarget(id) {
   if (!hasRole(...UW)) fail(403, "You don't have permission for this action.");
   const c = db.certificates.find((x) => x.id === id) ?? fail(404, "Certificate not found");
   const latest = Math.max(...db.certificates.filter((x) => x.certNo === c.certNo).map((x) => x.version));
-  const ok = ["ISSUED", "PENDING"].includes(certificateStatus(c)) || (allowUnpaid && certificateStatus(c) === "AWAITING_PAYMENT" && c.version === 1);
-  if (c.version !== latest || !ok) fail(409, "Only the current version of an issued certificate can be changed.", { code: "WRONG_STATE" });
+  if (c.version !== latest || !["ISSUED", "PENDING"].includes(certificateStatus(c))) fail(409, "Only the current version of an issued certificate can be changed.", { code: "WRONG_STATE" });
   return c;
 }
 
@@ -371,12 +390,7 @@ on("post", "/certificates/:id/amend", ({ params, body }) => {
 
   const snapshot = { ...next, premium: a.premium, fx: a.fx, checks: a.checks };
   const version = c.version + 1;
-  // Extra premium is paid before the new version takes over; until then the current one stays valid
-  const oldSplit = splitPremium(before.premium);
-  const newSplit = splitPremium(a.premium);
-  const amounts = { net: newSplit.net - oldSplit.net, vat: newSplit.vat - oldSplit.vat, stamp: 0n };
-  const extraDue = !cover && amounts.net + amounts.vat > 0n;
-  if (!extraDue) c.status = "AMENDED";
+  c.status = "AMENDED";
   const cert = {
     id: nextId(db.certificates),
     certNo: c.certNo,
@@ -389,19 +403,16 @@ on("post", "/certificates/:id/amend", ({ params, body }) => {
     events: [],
     snapshot,
     amendReason: reason,
-    awaitingPayment: extraDue,
   };
   db.certificates.push(cert);
-  if (!cover)
-    raiseNote({ source: "ENDORSEMENT", customerId: before.insuredId, brokerId: before.brokerId ?? null, policyId: policy.id, certificateId: cert.id, amounts, description: `Amendment of ${c.certNo} to version ${version}` });
   policy.snapshot = snapshot;
   policy.updatedAt = nowIso();
   audit("policy", policy.id, `Certificate ${c.certNo} amended to version ${version}: ${reason}`, before, snapshot);
-  return { id: cert.id, certNo: cert.certNo, version, awaitingPayment: extraDue };
+  return { id: cert.id, certNo: cert.certNo, version };
 });
 
 on("post", "/certificates/:id/cancel", ({ params, body }) => {
-  const c = amendTarget(params.id, { allowUnpaid: true });
+  const c = amendTarget(params.id);
   const e = [];
   if (!["SHIPMENT_CANCELLED", "ISSUED_IN_ERROR", "REPLACED"].includes(body?.reason)) e.push({ field: "reason", message: "Pick a reason" });
   if (!String(body?.note ?? "").trim()) e.push({ field: "note", message: "A note is required" });
@@ -412,20 +423,9 @@ on("post", "/certificates/:id/cancel", ({ params, body }) => {
   c.cancelledAt = nowIso();
   c.cancelReason = body.reason;
   c.cancelNote = body.note;
-  // Shipment never sailed or certificate issued in error: the premium paid comes back. Replaced: no
-  // refund. Unpaid premium is simply cancelled.
-  const snap = c.snapshot ?? policy.snapshot;
-  const paid = paidOnPolicy(policy.id);
-  cancelUnpaidNotes(policy.id, `Certificate ${c.certNo} cancelled`);
-  let refund = 0n;
-  if (body.reason !== "REPLACED" && paid > 0n) {
-    const split = splitPremium(snap.premium);
-    const full = paid >= split.total;
-    const amounts = full ? { net: -split.net, vat: -split.vat, stamp: -split.stamp } : { net: -paid, vat: 0n, stamp: 0n };
-    const cn = raiseNote({ source: "CANCELLATION", customerId: snap.insuredId, brokerId: snap.brokerId ?? null, policyId: policy.id, certificateId: c.id, amounts, description: `Refund on cancelling ${c.certNo}` });
-    refund = parseDecimal(cn?.total) ?? 0n;
-  }
-  policy.refund = { amount: toFixedString(refund), reason: body.reason, at: nowIso(), certNo: c.certNo };
+  // Shipment never sailed or certificate issued in error: full premium back. Replaced: no refund.
+  const premium = (c.snapshot ?? policy.snapshot).premium?.total ?? "0";
+  policy.refund = { amount: body.reason === "REPLACED" ? "0.00" : premium, reason: body.reason, at: nowIso(), certNo: c.certNo };
   if (db.certificates.filter((x) => x.policyId === policy.id).every((x) => ["CANCELLED", "AMENDED"].includes(x.status))) policy.status = "CANCELLED";
   audit("policy", policy.id, `Certificate ${c.certNo} v${c.version} cancelled: ${body.note}`);
   return certificateView(c);
@@ -503,21 +503,6 @@ on("get", "/dashboard", () => {
         .map((c) => ({ id: c.id, certNo: c.certNo, version: c.version, status: certificateStatus(c), issuedAt: c.issuedAt }))
     );
   }
-  if (hasRole("FINANCE")) {
-    const { unpaidPremiums, refundsToPay, claimPayments } = financeTotals();
-    const noteRow = (n) => ({ id: n.id, noteNo: n.noteNo, customer: partyRef(n.customerId), amount: toFixedString((parseDecimal(n.total) ?? 0n) - (parseDecimal(n.paid) ?? 0n)), issuedAt: n.issuedAt });
-    widgets.unpaidPremiums = take([...unpaidPremiums].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)).map(noteRow));
-    widgets.refundsToPay = take(refundsToPay.map(noteRow));
-    widgets.claimPayments = take(claimPayments.map((v) => ({ id: v.id, voucherNo: v.voucherNo, claimNo: v.claimNo, currency: v.currency, amount: v.amount, payee: partyRef(v.payeeId) })));
-  }
-  if (hasRole("ADMIN", ...UW)) {
-    widgets.customersToApprove = take(
-      db.parties
-        .filter((p) => isCustomer(p) && customerStatus(p) === "PENDING_APPROVAL")
-        .sort((a, b) => String(a.registeredAt).localeCompare(String(b.registeredAt)))
-        .map((p) => ({ id: p.id, customerNo: p.customerNo, name: p.name, registeredBy: p.registeredBy, registeredAt: p.registeredAt }))
-    );
-  }
   const overdue = db.deadlines.filter((d) => d.status === "OPEN" && d.dueDate < today).length;
   const bell = (widgets.myReferrals?.count ?? 0) + (hasRole("CLAIMS_HANDLER", "CLAIMS_MANAGER") ? overdue : 0);
   save();
@@ -565,8 +550,6 @@ function dashboardSummary() {
     certificate: (id) => db.certificates.find((c) => c.id === id),
     openCover: (id) => db.openCovers.find((c) => c.id === id),
     claim: (id) => db.claims.find((c) => c.id === id),
-    customer: (id) => db.parties.find((p) => p.id === id),
-    note: (id) => db.notes.find((n) => n.id === id),
   };
   const visible = (a) => {
     if (!brokerOnly()) return true;
@@ -583,7 +566,7 @@ function dashboardSummary() {
     .reverse()
     .map((a) => {
       const rec = NUMBERS[a.entity]?.(a.entityId);
-      return { id: a.id, entity: a.entity, entityId: a.entityId, number: rec?.quoteNo ?? rec?.policyNo ?? rec?.certNo ?? rec?.coverNo ?? rec?.claimNo ?? rec?.customerNo ?? rec?.noteNo ?? null, action: a.action, by: a.by, at: a.at };
+      return { id: a.id, entity: a.entity, entityId: a.entityId, number: rec?.quoteNo ?? rec?.policyNo ?? rec?.certNo ?? rec?.coverNo ?? rec?.claimNo ?? null, action: a.action, by: a.by, at: a.at };
     });
 
   return {

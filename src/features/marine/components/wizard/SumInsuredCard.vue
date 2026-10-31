@@ -8,8 +8,8 @@ import { cardClass } from "../styles";
 const props = defineProps({
   invoice: { type: [String, Number], default: "" },
   freight: { type: [String, Number], default: "" },
-  currency: { type: String, default: "USD" },
-  upliftPct: { type: String, default: "10" },
+  currency: { type: String, default: "ETB" },
+  upliftPct: { type: String, default: "0" },
   /** today's { rate } for the currency, or null */
   fx: { type: Object, default: null },
 });

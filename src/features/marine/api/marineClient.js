@@ -4,12 +4,15 @@ import { marineMockEnabled } from "./mockMode";
 import { rememberCorrelationId } from "../utils/errorReporting";
 
 /**
- * Marine & Cargo backend client (base /api/marine/v1).
+ * Marine & Cargo backend client.
  *
- * The backend is not built yet, so in development every call is answered by the in-browser mock
- * backend in ../mock (data kept in localStorage). Set VITE_MARINE_MOCK=false to send calls to the
- * real service: in dev through the Vite proxy (`/api/marine` → VITE_MARINE_API_HOST), in other
- * builds to v_API_MARINE_URI.
+ * One base path: `/api/marine/v1`. The API gateway rewrites that onto the property-casualty
+ * service at `/api/payer/property-casualty/marine/v1`. Do not call the service context path from
+ * this client. `v_API_MARINE_URI` overrides the base only when a deployment serves that same
+ * gateway prefix under another host; leave it unset to use `/api/marine/v1`.
+ *
+ * Set VITE_MARINE_MOCK=false to send calls to that path. In development the Vite `/api` proxy
+ * forwards it to the gateway. While the mock is on, the in-browser backend in ../mock answers.
  *
  * Calls never throw. They resolve to { ok: true, data, headers } or { ok: false, error: ApiError },
  * the shape plan section 1 ("Error handling") gives every screen.
@@ -71,8 +74,8 @@ function toApiError(e) {
       : [];
   return new ApiError({
     status,
-    code: body?.code || "",
-    message: body?.message || defaultMessage(status),
+    code: body?.code || body?.type || "",
+    message: body?.message || body?.detail || defaultMessage(status),
     fields,
     correlationId: body?.correlationId || e.response.headers?.["x-correlation-id"] || "",
   });

@@ -12,8 +12,11 @@ import { notifyError } from "../api/marineClient";
 import { parseFxCsv } from "../utils/fxCsv";
 import { parseDecimal } from "../utils/money";
 import { todayIso, formatDate } from "../utils/format";
-import { FOREIGN_CURRENCIES } from "../constants";
+import { useMarineConfig } from "../composables/useMarineConfig";
+import { settingsFacts } from "../utils/settingsView";
 
+const marineConfig = useMarineConfig();
+const facts = computed(() => settingsFacts(marineConfig.value));
 const file = ref(null);
 const rows = ref([]);
 const pending = ref(false);
@@ -23,7 +26,11 @@ function rowError(r) {
   if (r.error) return r.error;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date)) return "Date must be YYYY-MM-DD";
   if (r.date > todayIso()) return "Date can't be in the future";
-  if (!FOREIGN_CURRENCIES.includes(r.currency)) return `Currency must be one of ${FOREIGN_CURRENCIES.join(", ")}`;
+  if (!facts.value.foreign.includes(r.currency)) {
+    return facts.value.foreign.length
+      ? `Currency must be one of ${facts.value.foreign.join(", ")}`
+      : "No foreign currency is enabled";
+  }
   const d = parseDecimal(r.rate);
   if (!(d > 0n)) return "Rate must be greater than 0";
   if (r.rate.includes(".") && r.rate.split(".")[1].length > 4) return "At most 4 decimals";
@@ -40,7 +47,8 @@ async function pick(e) {
 const valid = computed(() => rows.value.filter((r) => !r.problem));
 
 function downloadTemplate() {
-  const csv = `date,currency,rate\n${todayIso()},USD,156.0412\n${todayIso()},EUR,169.7720\n`;
+  const samples = facts.value.foreign.map((currency) => `${todayIso()},${currency},`);
+  const csv = ["date,currency,rate", ...samples].join("\n") + "\n";
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   a.download = "fx-rates-template.csv";

@@ -3,6 +3,8 @@
 // and the response is { content, page, size, totalElements }.
 import { get, post, put } from "./marineClient";
 
+export const getConfig = () => get("/config");
+
 // ── masters ──
 export const listVessels = (params) => get("/vessels", params);
 export const getVessel = (imo) => get(`/vessels/${imo}`);
@@ -36,6 +38,7 @@ export const importFxRates = (file) => {
 };
 
 // ── users ──
+export const getMe = () => get("/users/me");
 export const listUsers = (params) => get("/users", params);
 export const createUser = (body) => post("/users", body);
 export const updateUser = (id, body) => put(`/users/${id}`, body);
@@ -48,6 +51,8 @@ export const createQuote = (body) => post("/quotes", body);
 export const updateQuote = (id, body) => put(`/quotes/${id}`, body);
 export const rateQuote = (id) => post(`/quotes/${id}/rate`);
 export const bindQuote = (id) => post(`/quotes/${id}/bind`);
+export const bindOpenCoverQuote = (id, body) => post(`/quotes/${id}/bind-open-cover`, body);
+export const simulateDemoPayment = (id, body) => post(`/quotes/${id}/demo-payments`, body);
 
 // ── policies ──
 export const listPolicies = (params) => get("/policies", params);
@@ -74,16 +79,28 @@ export const getReferral = (id) => get(`/referrals/${id}`);
 export const assignReferral = (id) => post(`/referrals/${id}/assign`);
 export const decideReferral = (id, body) => post(`/referrals/${id}/decide`, body);
 export const reviewScreening = (id, body) => post(`/screenings/${id}/review`, body);
+export const getSanctionsStatus = () => get("/sanctions");
+export const listSanctionsImports = () => get("/sanctions/imports");
+export const importSanctions = (body) => post("/sanctions/imports", body);
 export const amendCertificate = (id, body) => post(`/certificates/${id}/amend`, body);
 export const cancelCertificate = (id, body) => post(`/certificates/${id}/cancel`, body);
 export const getRules = () => get("/rules");
 export const saveRules = (section, body) => put(`/rules/${section}`, body);
 
 // ── phase 3: open covers (MAR-02 to MAR-05) ──
+
 export const listOpenCovers = (params) => get("/open-covers", params);
 export const getOpenCover = (id) => get(`/open-covers/${id}`);
 export const createOpenCover = (body) => post("/open-covers", body);
 export const updateOpenCover = (id, body) => put(`/open-covers/${id}`, body);
+
+export const listOpenCoverApplications = (params) => get("/open-cover-applications", params);
+export const getOpenCoverApplication = (id) => get(`/open-cover-applications/${id}`);
+export const createOpenCoverApplication = (body) => post("/open-cover-applications", body);
+export const updateOpenCoverApplication = (id, body) => put(`/open-cover-applications/${id}`, body);
+export const submitOpenCoverApplication = (id) => post(`/open-cover-applications/${id}/submit`);
+export const declineOpenCoverApplication = (id, body) => post(`/open-cover-applications/${id}/decline`, body);
+export const establishOpenCoverApplication = (id, body) => post(`/open-cover-applications/${id}/establish`, body);
 export const createDeclaration = (id, body) => post(`/open-covers/${id}/declarations`, body);
 export const runAdjustment = (id, body) => post(`/open-covers/${id}/adjustment`, body);
 
@@ -98,34 +115,8 @@ export const uploadClaimDocument = (id, form, onUploadProgress) => post(`/claims
 export const assessClaim = (id, body) => post(`/claims/${id}/assess`, body);
 export const settleClaim = (id, body) => post(`/claims/${id}/settle`, body);
 export const closeClaim = (id) => post(`/claims/${id}/close`);
+export const listDeadlines = (params) => get("/deadlines", params);
 export const markDeadlineMet = (id, body) => post(`/deadlines/${id}/met`, body);
 
 // ── public (no sign-in) ──
 export const verifyCertificate = (token) => get(`/public/verify/${encodeURIComponent(token)}`);
-
-// ── customer registration ──
-export const listCustomers = (params) => get("/customers", params);
-export const getCustomer = (id) => get(`/customers/${id}`);
-export const createCustomer = (body) => post("/customers", body);
-export const updateCustomer = (id, body) => put(`/customers/${id}`, body);
-export const uploadCustomerDocument = (id, form, onUploadProgress) => post(`/customers/${id}/documents`, form, { headers: { "Content-Type": "multipart/form-data" }, onUploadProgress });
-export const approveCustomer = (id, body) => post(`/customers/${id}/approve`, body);
-export const rejectCustomer = (id, body) => post(`/customers/${id}/reject`, body);
-export const getCustomerAccount = (id) => get(`/customers/${id}/account`);
-
-// ── finance ──
-export const listNotes = (params) => get("/finance/notes", params);
-export const getNote = (id) => get(`/finance/notes/${id}`);
-export const getAgeing = () => get("/finance/ageing");
-export const recordReceipt = (body) => post("/finance/receipts", body);
-export const payRefund = (id, body) => post(`/finance/notes/${id}/refund`, body);
-export const listVouchers = (params) => get("/finance/vouchers", params);
-export const payVoucher = (id, body) => post(`/finance/vouchers/${id}/pay`, body);
-export const listRecoveries = () => get("/finance/recoveries");
-export const recordRecovery = (claimId, body) => post(`/finance/recoveries/${claimId}/receipts`, body);
-export const getCommissionRates = () => get("/finance/commission-rates");
-export const saveCommissionRates = (body) => put("/finance/commission-rates", body);
-export const listUnbilledCommission = () => get("/finance/commissions");
-export const listCommissionStatements = (params) => get("/finance/commission-statements", params);
-export const createCommissionStatement = (body) => post("/finance/commission-statements", body);
-export const payCommissionStatement = (id, body) => post(`/finance/commission-statements/${id}/pay`, body);

@@ -36,5 +36,9 @@ export function pcRoutes(module) {
 
 export const fireRoutes = pcRoutes('fire');
 export const burglaryRoutes = pcRoutes('burglary');
+export const liabilityCatalogRoutes = pcRoutes('liability');
+export const marineCatalogRoutes = pcRoutes('marine').filter((route) =>
+  !route.path.startsWith('/marine/policies') && !route.path.startsWith('/marine/claims')
+);
 
 export default fireRoutes;

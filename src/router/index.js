@@ -25,7 +25,7 @@ import motorRoutes from "./motor/motor.routes";
 import lifeRoutes from "./life/life.routes";
 // Marine & Cargo
 import { marineRoutes, marinePublicRoutes } from "./marine/marine.routes";
-import fireRoutes, { burglaryRoutes } from "./fire/fire.routes";
+import fireRoutes, { burglaryRoutes, marineCatalogRoutes } from "./fire/fire.routes";
 import { installRouteLoading } from "./loading";
 // Shared across products
 import adminRoutes from "./shared/admin.routes";
@@ -207,6 +207,7 @@ const router = createRouter({
         ...marineRoutes,
         ...fireRoutes,
         ...burglaryRoutes,
+        ...marineCatalogRoutes,
         ...adminRoutes,
         ...analyticsRoutes,
         ...reportsRoutes,

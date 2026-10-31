@@ -21,11 +21,12 @@ export function emptyDraft() {
     commodity: null,
     goodsDescription: "",
     packing: "",
-    currency: "USD",
+    currency: "ETB",
     invoiceValue: "",
     freight: "",
     invoiceNo: "",
     blNo: "",
+    voyageNo: "",
     containers: [],
     clause: "",
     warCover: false,
@@ -40,6 +41,10 @@ export function emptyDraft() {
 
 export const emptyInland = () => ({ from: null, to: null, truckPlate: "", driverName: "", convoyRef: "" });
 
+function portFromCode(code) {
+  return code ? { code, name: code } : null;
+}
+
 /** API quote → wizard draft */
 export function draftFromQuote(q) {
   return {
@@ -50,20 +55,21 @@ export function draftFromQuote(q) {
     broker: q.broker,
     incoterm: q.incoterm ?? "",
     mode: q.mode ?? "",
-    vessel: q.vessel,
-    loadingPort: q.loadingPort,
+    vessel: q.vessel ?? (q.vesselImo ? { imo: q.vesselImo, name: `IMO ${q.vesselImo}` } : null),
+    loadingPort: q.loadingPort ?? portFromCode(q.portOfLoading),
     transshipments: q.transshipments ?? [],
-    dischargePort: q.dischargePort,
+    dischargePort: q.dischargePort ?? portFromCode(q.portOfDischarge),
     finalDestination: q.finalDestination ?? "",
     sailingDate: q.sailingDate ?? "",
-    commodity: q.commodity,
+    commodity: q.commodity ?? (q.hsCode ? { hsCode: q.hsCode, description: q.hsCode } : null),
     goodsDescription: q.goodsDescription ?? "",
     packing: q.packing ?? "",
-    currency: q.currency ?? "USD",
+    currency: q.currency ?? "ETB",
     invoiceValue: q.invoiceValue ?? "",
     freight: q.freight ?? "",
     invoiceNo: q.invoiceNo ?? "",
     blNo: q.blNo ?? "",
+    voyageNo: q.voyageNo ?? "",
     containers: q.containers ?? [],
     clause: q.clause ?? "",
     warCover: !!q.warCover,
@@ -105,6 +111,7 @@ export function toPayload(d) {
     freight: d.freight || null,
     invoiceNo: d.invoiceNo.trim(),
     blNo: d.blNo.trim(),
+    voyageNo: d.voyageNo.trim(),
     containers: d.containers,
     clause: d.clause || null,
     warCover: d.warCover,

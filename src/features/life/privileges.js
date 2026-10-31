@@ -3,9 +3,11 @@
 // backend codes it stands for (mapping from docs/life-insurance/11-backend-contract-2026-10.md, G10),
 // so a user holding either the name or any of its codes passes the same check in the router, the
 // sidebar and the action buttons.
+// Every Life role holds every life.*.read code, so only Life_Read maps to reads; the other names map to
+// codes that tell the roles apart (a shared code would let one role pass another's check).
 import { hasPrivilege } from "@/utils/privileges";
 
-const crud = (resource, actions = ["create", "read", "update", "delete"]) => actions.map((a) => `life.${resource}.${a}`);
+const write = (resource) => ["create", "update", "delete"].map((a) => `life.${resource}.${a}`);
 
 export const LIFE_PRIVILEGES = {
   Life_Read: [
@@ -18,29 +20,32 @@ export const LIFE_PRIVILEGES = {
     "life.policy_treaty_mapping.read", "life.customer.read", "life.beneficiary.read", "life.underwriting.read",
     "life.premium.read", "life.document.read",
   ],
-  Life_Product_Manage: [...crud("rider"), ...crud("individual_rider"), ...crud("group_rider")],
-  Life_Rate_Manage: [...crud("group_term"), ...crud("insurance_term"), ...crud("individual_rider"), ...crud("group_rider")],
+  Life_Product_Manage: [...write("rider"), ...write("individual_rider"), ...write("group_rider")],
+  Life_Rate_Manage: [...write("group_term"), ...write("insurance_term"), ...write("individual_rider"), ...write("group_rider")],
   Life_Quotation_Create: [
-    "life.quotation.create", ...crud("insured_person"), ...crud("quoted_rider"), ...crud("policy_treaty_mapping"),
-    "life.benefit.create", "life.benefit.update", "life.benefit.delete", ...crud("individual_rider_benefit"),
-    "life.customer.create", "life.customer.update",
+    "life.quotation.create", ...write("insured_person"), ...write("quoted_rider"),
+    ...write("benefit"), ...write("individual_rider_benefit"), "life.customer.create", "life.customer.update",
   ],
-  Life_Quotation_Issue: ["life.quotation.update"],
-  Life_Payment_Record: ["life.quotation.update", "life.premium.pay"],
+  // The backend needs life.quotation.update both to issue and to record payment, and finance holds it,
+  // so issuing is told apart by life.quotation.create (whoever prepares quotations issues them)
+  Life_Quotation_Issue: ["life.quotation.create"],
+  Life_Payment_Record: ["life.premium.pay"],
   Life_Policy_Issue: ["life.policy.update", "life.benefit.issue"],
   Life_Policy_Service: ["life.policy.service", "life.benefit.service"],
   Life_Underwriting_Decide: [
-    "life.underwriting.decide", ...crud("question"), ...crud("possible_answer"), ...crud("answer"),
+    "life.underwriting.decide", ...write("question"), ...write("possible_answer"), ...write("answer"),
     "life.customer.verify", "life.beneficiary.update",
   ],
   Life_Reinsurance_Manage: [
-    ...crud("reinsurer"), ...crud("reinsurance_treaty"), ...crud("reinsurance_treaty_member"), ...crud("reinsurance_fcl_group"),
-    ...crud("reinsurance_medical_parameter"), ...crud("reinsurance_fcl_underwriting_range"),
-    ...crud("reinsurance_treaty_medical_requirement"), ...crud("policy_treaty_mapping"),
+    ...write("reinsurer"), ...write("reinsurance_treaty"), ...write("reinsurance_treaty_member"), ...write("reinsurance_fcl_group"),
+    ...write("reinsurance_medical_parameter"), ...write("reinsurance_fcl_underwriting_range"),
+    ...write("reinsurance_treaty_medical_requirement"),
   ],
-  Life_Claim_Prepare: ["life.claim.create", "life.claim.update", ...crud("claim_attachment")],
-  Life_Claim_Review: ["life.claim.update", "life.claim.register", "life.claim.assess", "life.claim.request_info"],
-  Life_Claim_Approve: ["life.claim.update"],
+  // life.claim.update covers preparing, reviewing and approving (backend follow-up #3), so it maps to none
+  // of them. Until it is split, approving goes with life.claim.authorize: the claims manager holds both.
+  Life_Claim_Prepare: ["life.claim.create", ...write("claim_attachment")],
+  Life_Claim_Review: ["life.claim.register", "life.claim.assess", "life.claim.request_info"],
+  Life_Claim_Approve: ["life.claim.authorize"],
   Life_Claim_Authorize: ["life.claim.authorize"],
   Life_Claim_Pay: ["life.claim.pay"],
   Life_Report_View: ["life.report.read", "life.dashboard.read"],

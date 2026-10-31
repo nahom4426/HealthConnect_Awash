@@ -1,6 +1,6 @@
 <script setup>
 // Policy detail (plan 5.4): shipment, cover, premium, certificates, claims (claims staff) and audit.
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
 import MarinePageHeader from "../../components/MarinePageHeader.vue";
@@ -8,7 +8,6 @@ import PageState from "../../components/PageState.vue";
 import KeyValueGrid from "../../components/KeyValueGrid.vue";
 import PremiumBreakdown from "../../components/PremiumBreakdown.vue";
 import StatusBadge from "../../components/StatusBadge.vue";
-import BillingPanel from "../../components/BillingPanel.vue";
 import AuditTimeline from "../../components/AuditTimeline.vue";
 import DetailTabs from "../../components/DetailTabs.vue";
 import { cardClass } from "../../components/styles";
@@ -16,7 +15,7 @@ import { useResource } from "../../composables/useResource";
 import { getPolicy, listClaims } from "../../api/marineApi";
 import { useCan } from "../../composables/useCan";
 import { CLAIM_TYPES, label } from "../../constants";
-import { productLabel, clauseLabel } from "../../constants";
+import { clauseLabel, policyTypeLabel } from "../../constants";
 import { formatDate, formatDateTime } from "../../utils/format";
 import { formatAmount } from "../../utils/money";
 import { coverItems, lcItems, shipmentItems, vesselText } from "../../utils/quoteSummary";
@@ -27,10 +26,27 @@ const { data: p, loading, error, notFound, load } = useResource(getPolicy);
 const { roles } = useCan();
 const claimsStaff = computed(() => roles.value.some((r) => ["CLAIMS_HANDLER", "CLAIMS_MANAGER"].includes(r)));
 const claims = ref([]);
+
+watch(
+  () => p.value,
+  (policy) => {
+    if (!policy) return;
+    if (policy.policyType === "OPEN_COVER" && policy.openCoverId) {
+      router.replace(`/marine/open-covers/${policy.openCoverId}`);
+    }
+  }
+);
+
 onMounted(async () => {
-  await load(route.params.id);
+  const id = route.params.id;
+  if (String(id).startsWith("oc-")) {
+    const openCoverId = String(id).slice(3);
+    router.replace(`/marine/open-covers/${openCoverId}`);
+    return;
+  }
+  await load(id);
   if (claimsStaff.value) {
-    const res = await listClaims({ policyId: route.params.id, size: 100 });
+    const res = await listClaims({ policyId: id, size: 100 });
     if (res.ok) claims.value = res.data.content;
   }
 });
@@ -52,7 +68,7 @@ const currentCert = computed(() => p.value?.certificates.filter((x) => ["ISSUED"
         :title="p.policyNo"
         :status="p.status"
         entity="policy"
-        :subtitle="`${productLabel(p.product)} · ${p.insured?.name ?? ''} · ${formatDate(p.periodFrom)} to ${formatDate(p.periodTo)}`"
+        :subtitle="`${policyTypeLabel(p.policyType || p.product)} · ${p.insured?.name ?? ''} · ${formatDate(p.periodFrom)} to ${formatDate(p.periodTo)}`"
         :crumbs="[{ label: 'Marine' }, { label: 'Policies', to: '/marine/policies' }, { label: p.policyNo }]"
       >
         <template #badge>
@@ -92,10 +108,6 @@ const currentCert = computed(() => p.value?.certificates.filter((x) => ["ISSUED"
               <span>Refund on cancelling {{ p.refund.certNo }} ({{ p.refund.reason.replace(/_/g, " ").toLowerCase() }}), {{ formatDate(p.refund.at) }}</span>
               <span class="font-semibold tabular-nums">ETB {{ formatAmount(p.refund.amount) }}</span>
             </p>
-          </section>
-          <section :class="[cardClass, 'p-4 mt-4 max-w-3xl']">
-            <h2 class="mb-2 text-sm font-semibold text-ink">Billing</h2>
-            <BillingPanel :notes="p.billing ?? []" />
           </section>
         </template>
         <template #certificates>

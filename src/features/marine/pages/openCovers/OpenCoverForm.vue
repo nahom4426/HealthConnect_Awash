@@ -11,21 +11,23 @@ import PageState from "../../components/PageState.vue";
 import FormField from "../../components/FormField.vue";
 import FormErrorBanner from "../../components/FormErrorBanner.vue";
 import PartyPicker from "../../components/PartyPicker.vue";
-import CustomerPicker from "../../components/CustomerPicker.vue";
 import DateField from "../../components/DateField.vue";
 import MoneyInput from "../../components/MoneyInput.vue";
 import HsCodeAutocomplete from "../../components/HsCodeAutocomplete.vue";
 import { cardClass, inputClass, inputBorder } from "../../components/styles";
 import { useForm } from "../../composables/useForm";
-import { createOpenCover, getOpenCover, updateOpenCover } from "../../api/marineApi";
+import { bindOpenCoverQuote, createOpenCover, establishOpenCoverApplication, getOpenCover, getOpenCoverApplication, getQuote, updateOpenCover } from "../../api/marineApi";
 import { notifyError } from "../../api/marineClient";
-import { CLAUSES, FOREIGN_CURRENCIES } from "../../constants";
+import { CLAUSES, MODES } from "../../constants";
 import { compare, parseDecimal } from "../../utils/money";
 
 const route = useRoute();
 const router = useRouter();
 const editId = route.params.id ?? null;
-const loading = ref(!!editId);
+const applicationId = route.params.applicationId ?? null;
+const quoteId = route.params.quoteId ?? null;
+const loading = ref(!!editId || !!applicationId || !!quoteId);
+const customerRequest = ref(null);
 const loadError = ref(null);
 const existing = ref(null);
 let saved = false;
@@ -37,15 +39,19 @@ const { form, errors, pending, check, validate, applyServerError, bannerItems, s
     broker: null,
     periodFrom: `${y}-01-01`,
     periodTo: `${y}-12-31`,
-    currency: "USD",
+    currency: "ETB",
     annualLimit: "",
     perConveyanceLimit: "",
     declarationDays: 7,
     clause: "ICC_A",
     warCover: true,
     strikesCover: true,
+    conveyances: [],
+    territories: "",
+    transitConditions: "",
+    exclusions: "",
     commodities: [{ commodity: null, ratePct: "" }],
-    provisionalPremium: "",
+    provisionalPremium: "0",
   },
   {
     insured: (v) => (v ? "" : "Insured is required"),
@@ -75,7 +81,56 @@ const initial = ref("");
 const dirty = computed(() => !saved && JSON.stringify(form) !== initial.value);
 
 onMounted(async () => {
-  if (editId) {
+  if (quoteId) {
+    const res = await getQuote(quoteId);
+    loading.value = false;
+    if (!res.ok) return (loadError.value = res.error);
+    if (res.data.arrangement !== "OPEN_COVER") {
+      loadError.value = { status: 422, message: "This quotation is not an Open Cover." };
+      return;
+    }
+    let answers = {};
+    try {
+      answers = typeof res.data.proposalAnswers === "string"
+        ? JSON.parse(res.data.proposalAnswers || "{}")
+        : (res.data.proposalAnswers || {});
+    } catch {
+      answers = {};
+    }
+    customerRequest.value = {
+      annual: res.data.estimatedAnnualValue,
+      max: res.data.maxShipmentValue,
+      routes: res.data.tradingRoutes,
+      currency: res.data.currency || "ETB",
+    };
+    Object.assign(form, {
+      insured: res.data.insured,
+      broker: res.data.broker,
+      periodFrom: answers.periodFrom || form.periodFrom,
+      periodTo: answers.periodTo || form.periodTo,
+      currency: res.data.currency || "ETB",
+      clause: res.data.clause || "ICC_A",
+      warCover: !!res.data.warCover,
+      strikesCover: !!res.data.strikesCover,
+      conveyances: res.data.conveyanceModes ? res.data.conveyanceModes.split(",").filter(Boolean) : [],
+    });
+  } else if (applicationId) {
+    const res = await getOpenCoverApplication(applicationId);
+    loading.value = false;
+    if (!res.ok) return (loadError.value = res.error);
+    const row = res.data;
+    Object.assign(form, {
+      insured: row.insuredId ? { id: row.insuredId, name: row.insuredName } : null,
+      broker: row.brokerId ? { id: row.brokerId, name: row.brokerName } : null,
+      periodFrom: row.periodFrom || form.periodFrom,
+      periodTo: row.periodTo || form.periodTo,
+      currency: row.currency || "ETB",
+      clause: row.requestedClause || "ICC_A",
+      warCover: !!row.warRequested,
+      strikesCover: !!row.strikesRequested,
+      conveyances: row.conveyances ?? [],
+    });
+  } else if (editId) {
     const res = await getOpenCover(editId);
     loading.value = false;
     if (!res.ok) return (loadError.value = res.error);
@@ -92,6 +147,10 @@ onMounted(async () => {
       clause: res.data.clause,
       warCover: !!res.data.warCover,
       strikesCover: !!res.data.strikesCover,
+      conveyances: res.data.conveyances ?? [],
+      territories: (res.data.territories ?? []).join(", "),
+      transitConditions: res.data.transitConditions ?? "",
+      exclusions: res.data.exclusions ?? "",
       commodities: res.data.commodities.map((c) => ({ commodity: c.commodity, ratePct: c.ratePct })),
       provisionalPremium: res.data.provisionalPremium,
     });
@@ -116,18 +175,35 @@ async function submit() {
     clause: form.clause,
     warCover: form.warCover,
     strikesCover: form.strikesCover,
+    conveyances: form.conveyances,
+    territories: form.territories.split(",").map((s) => s.trim()).filter(Boolean),
+    transitConditions: form.transitConditions.trim() || null,
+    exclusions: form.exclusions.trim() || null,
     commodities: form.commodities.map((r) => ({ hsCode: r.commodity.hsCode, ratePct: r.ratePct })),
     provisionalPremium: form.provisionalPremium,
   };
-  const res = editId ? await updateOpenCover(editId, body) : await createOpenCover(body);
+  const res = quoteId
+    ? await bindOpenCoverQuote(quoteId, body)
+    : applicationId
+      ? await establishOpenCoverApplication(applicationId, body)
+      : editId
+        ? await updateOpenCover(editId, body)
+        : await createOpenCover(body);
   pending.value = false;
   if (!res.ok) {
     if (!applyServerError(res.error)) notifyError(res.error);
     return;
   }
   saved = true;
-  toasted(true, editId ? `${res.data.coverNo} updated` : `${res.data.coverNo} created with master policy ${res.data.masterPolicyNo}`);
-  router.push(`/marine/open-covers/${res.data.id}`);
+  const cover = quoteId ? res.data.openCover : res.data;
+  toasted(true, quoteId
+    ? `${cover.coverNo} issued from the quotation`
+    : applicationId
+      ? `${res.data.coverNo} established from the application`
+      : editId
+        ? `${res.data.coverNo} updated`
+        : `${res.data.coverNo} created with master policy ${res.data.masterPolicyNo}`);
+  router.push(`/marine/open-covers/${cover.id}`);
 }
 
 onBeforeRouteLeave(
@@ -142,16 +218,23 @@ onBeforeRouteLeave(
 <template>
   <div class="marine-page">
     <MarinePageHeader
-      :title="existing ? `Edit ${existing.coverNo}` : 'New open cover'"
+      :title="quoteId ? 'Finalise Open Cover terms' : applicationId ? 'Establish agreement' : existing ? `Edit ${existing.coverNo}` : 'New open cover'"
       :crumbs="[{ label: 'Marine' }, { label: 'Open covers', to: '/marine/open-covers' }, { label: existing?.coverNo ?? 'New' }]"
     />
     <PageState v-if="loading" kind="loading" />
     <PageState v-else-if="loadError" :kind="loadError.status === 404 ? 'notFound' : 'error'" :message="loadError.message" />
     <form v-else novalidate class="grid gap-4 max-w-5xl" @submit.prevent="submit">
+      <p v-if="customerRequest" class="p-4 text-sm rounded-xl bg-surface-raised text-ink">
+        The customer estimated
+        <strong>{{ customerRequest.annual || "—" }} {{ customerRequest.currency }}</strong> a year
+        and <strong>{{ customerRequest.max || "—" }} {{ customerRequest.currency }}</strong> per shipment.
+        Routes described as: {{ customerRequest.routes || "—" }}.
+        Enter the approved limits, territories and rates. That description is not copied into territories, and no deposit percentage is applied.
+      </p>
       <FormErrorBanner :items="submitted ? bannerItems() : []" />
       <section :class="[cardClass, 'p-5 grid gap-5 sm:grid-cols-2']">
         <FormField v-slot="{ id, invalid }" label="Insured" name="insured" required :error="errors.insured">
-          <CustomerPicker :id="id" v-model="form.insured" :invalid="invalid" @blur="check('insured')" />
+          <PartyPicker :id="id" v-model="form.insured" type="INSURED" :invalid="invalid" @blur="check('insured')" />
         </FormField>
         <FormField v-slot="{ id }" label="Broker" name="broker">
           <PartyPicker :id="id" v-model="form.broker" type="BROKER" />
@@ -163,7 +246,7 @@ onBeforeRouteLeave(
           <DateField :id="id" v-model="form.periodTo" :min="form.periodFrom" :invalid="invalid" @blur="check('periodTo')" />
         </FormField>
         <FormField v-slot="{ id, invalid }" label="Annual limit" name="annualLimit" required :error="errors.annualLimit" hint="Declarations use this currency">
-          <MoneyInput :id="id" v-model:amount="form.annualLimit" v-model:currency="form.currency" :currencies="FOREIGN_CURRENCIES" :lock-currency="hasDeclarations" :invalid="invalid" @blur="check('annualLimit')" />
+          <MoneyInput :id="id" v-model:amount="form.annualLimit" v-model:currency="form.currency" :lock-currency="hasDeclarations" :invalid="invalid" @blur="check('annualLimit')" />
         </FormField>
         <FormField v-slot="{ id, invalid }" label="Per-conveyance limit" name="perConveyanceLimit" required :error="errors.perConveyanceLimit">
           <MoneyInput :id="id" v-model:amount="form.perConveyanceLimit" :currency="form.currency" lock-currency :invalid="invalid" @blur="check('perConveyanceLimit')" />
@@ -171,7 +254,7 @@ onBeforeRouteLeave(
         <FormField v-slot="{ id, invalid }" label="Declaration days" name="declarationDays" required :error="errors.declarationDays" hint="Days after sailing within which a declaration is on time">
           <input :id="id" v-model.number="form.declarationDays" type="number" min="1" max="60" :class="[inputClass, inputBorder(invalid), '!w-28 tabular-nums']" @blur="check('declarationDays')" />
         </FormField>
-        <FormField v-slot="{ id, invalid }" label="Provisional premium (ETB)" name="provisionalPremium" required :error="errors.provisionalPremium" hint="Adjusted at year end against the declarations">
+        <FormField v-slot="{ id, invalid }" label="Provisional premium (ETB)" name="provisionalPremium" required :error="errors.provisionalPremium" hint="Not collected at Open Cover bind. Use 0 for the initial per-declaration payment model. Year-end reconciliation can use this figure later.">
           <MoneyInput :id="id" v-model:amount="form.provisionalPremium" currency="ETB" :currencies="['ETB']" lock-currency :invalid="invalid" @blur="check('provisionalPremium')" />
         </FormField>
       </section>
@@ -188,6 +271,22 @@ onBeforeRouteLeave(
           <label class="inline-flex gap-2 items-center text-sm text-ink"><input v-model="form.warCover" type="checkbox" class="accent-[rgb(var(--primary))]" /> War cover on every declaration</label>
           <label class="inline-flex gap-2 items-center text-sm text-ink"><input v-model="form.strikesCover" type="checkbox" class="accent-[rgb(var(--primary))]" /> Strikes cover on every declaration</label>
         </div>
+        <FormField label="Conveyances" name="conveyances" hint="Leave all unchecked to accept any conveyance. A declaration outside a checked list is referred.">
+          <div class="flex flex-wrap gap-4">
+            <label v-for="mode in MODES" :key="mode.value" class="inline-flex gap-2 items-center text-sm text-ink">
+              <input v-model="form.conveyances" type="checkbox" :value="mode.value" class="accent-[rgb(var(--primary))]" /> {{ mode.label }}
+            </label>
+          </div>
+        </FormField>
+        <FormField v-slot="{ id }" label="Territories" name="territories" hint="Countries, separated by commas. Leave empty to accept any route. A declaration outside this list is referred.">
+          <input :id="id" v-model="form.territories" :class="inputClass" placeholder="Ethiopia, China" />
+        </FormField>
+        <FormField v-slot="{ id }" label="Transit conditions" name="transitConditions">
+          <textarea :id="id" v-model="form.transitConditions" rows="3" maxlength="2000" :class="inputClass" />
+        </FormField>
+        <FormField v-slot="{ id }" label="Exclusions" name="exclusions">
+          <textarea :id="id" v-model="form.exclusions" rows="3" maxlength="2000" :class="inputClass" />
+        </FormField>
       </section>
 
       <section :class="[cardClass, 'overflow-hidden']" data-field="commodities">
@@ -213,7 +312,7 @@ onBeforeRouteLeave(
 
       <div class="flex gap-2 justify-end">
         <Button variant="outline" @click="router.back()">Cancel</Button>
-        <Button html-type="submit" :pending="pending">{{ existing ? "Save changes" : "Create open cover" }}</Button>
+        <Button html-type="submit" :pending="pending">{{ quoteId ? "Issue Open Cover policy" : existing ? "Save changes" : "Create open cover" }}</Button>
       </div>
     </form>
   </div>

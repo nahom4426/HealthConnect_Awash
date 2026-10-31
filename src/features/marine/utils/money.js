@@ -59,10 +59,10 @@ export function compare(a, b) {
 }
 
 /**
- * Sum insured = (invoice + freight) × (1 + uplift%), the CIF + 10% basis (MAR-23).
- * Returns { base, uplift, total } as 2-decimal strings.
+ * Sum insured = (invoice + freight) × (1 + uplift%). The percent comes from the rate table.
+ * Zero when the table has not set one. Returns { base, uplift, total } as 2-decimal strings.
  */
-export function sumInsured(invoice, freight, upliftPct = "10") {
+export function sumInsured(invoice, freight, upliftPct = "0") {
   const base = add(invoice, freight);
   const uplift = (base * (parseDecimal(upliftPct) ?? 0n)) / (100n * ONE);
   return {

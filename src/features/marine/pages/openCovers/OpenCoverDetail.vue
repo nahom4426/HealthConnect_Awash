@@ -17,7 +17,7 @@ import { cardClass } from "../../components/styles";
 import { useResource } from "../../composables/useResource";
 import { useCan } from "../../composables/useCan";
 import { getOpenCover } from "../../api/marineApi";
-import { clauseLabel } from "../../constants";
+import { clauseLabel, modeLabel } from "../../constants";
 import { formatAmount, formatMoney } from "../../utils/money";
 import { formatDate, formatDateTime, todayIso } from "../../utils/format";
 
@@ -61,7 +61,7 @@ function adjust() {
         <template #actions>
           <Button v-if="canEdit" variant="outline" @click="router.push(`/marine/open-covers/${c.id}/edit`)">Edit</Button>
           <Button v-if="canAdjust" variant="outline" @click="adjust">Year-end adjustment</Button>
-          <Button v-if="canDeclare" @click="router.push(`/marine/open-covers/${c.id}/declare`)">Declare shipment</Button>
+          <Button v-if="canDeclare" @click="router.push(`/marine/open-covers/${c.id}/declare`)">Create declaration</Button>
         </template>
       </MarinePageHeader>
 
@@ -78,7 +78,7 @@ function adjust() {
         <template #declarations>
           <section :class="[cardClass, 'overflow-x-auto']">
             <PageState v-if="!c.declarations.length" kind="empty" title="No declarations yet">
-              <Button v-if="canDeclare" size="sm" @click="router.push(`/marine/open-covers/${c.id}/declare`)">Declare shipment</Button>
+              <Button v-if="canDeclare" size="sm" @click="router.push(`/marine/open-covers/${c.id}/declare`)">Create declaration</Button>
             </PageState>
             <table v-else class="w-full text-sm whitespace-nowrap">
               <thead class="bg-surface-muted">
@@ -115,6 +115,11 @@ function adjust() {
                   { label: 'Strikes', value: c.strikesCover ? 'Covered' : 'Not covered' },
                   { label: 'Declaration days', value: `${c.declarationDays} days after sailing` },
                   { label: 'Broker', value: c.broker?.name },
+                  { label: 'Conveyances', value: c.conveyances?.length ? c.conveyances.map(modeLabel).join(', ') : 'Any' },
+                  { label: 'Territories', value: c.territories?.length ? c.territories.join(', ') : 'Any' },
+                  { label: 'Transit conditions', value: c.transitConditions || '—' },
+                  { label: 'Exclusions', value: c.exclusions || '—' },
+                  { label: 'Catalog version', value: c.schemaVersion || '—' },
                   { label: 'Provisional premium', value: formatMoney(c.provisionalPremium, 'ETB') },
                 ]"
               />

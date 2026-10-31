@@ -2,10 +2,11 @@
 // Wizard step 1: product and parties (plan 5.2).
 import { computed } from "vue";
 import FormField from "../FormField.vue";
-import CustomerPicker from "../CustomerPicker.vue";
 import PartyPicker from "../PartyPicker.vue";
 import { inputClass, inputBorder } from "../styles";
 import { INCOTERMS, PRODUCTS, incotermWarning } from "../../constants";
+import { useMarineConfig } from "../../composables/useMarineConfig";
+import { productSelectable } from "../../utils/productAvailability";
 
 const props = defineProps({
   draft: { type: Object, required: true },
@@ -16,9 +17,16 @@ const props = defineProps({
 });
 const emit = defineEmits(["check"]);
 
-// Inland transit arrives in phase 3; hull only behind its feature flag
-const products = computed(() => PRODUCTS.filter((p) => (p.flag ? props.flags[p.flag] : true)));
-const available = (p) => p.phase && p.phase <= 3 && (!props.locked.product || p.value === props.draft.product);
+const config = useMarineConfig();
+// Hull stays hidden until its flag is on. Inland transit stays in the list and is disabled
+// while GET /config reports inlandTransit false.
+const products = computed(() => PRODUCTS.filter((p) => (p.flag ? props.flags[p.flag] === true || config.value.features?.[p.flag] === true : true)));
+const inlandTransit = computed(() => props.flags.inlandTransit === true || config.value.features?.inlandTransit === true);
+const available = (p) => productSelectable(p, {
+  inlandTransit: inlandTransit.value,
+  lockedProduct: !!props.locked.product,
+  draftProduct: props.draft.product,
+});
 const warning = computed(() => incotermWarning(props.draft.incoterm, props.draft.insuredRole));
 </script>
 
@@ -45,7 +53,7 @@ const warning = computed(() => incotermWarning(props.draft.incoterm, props.draft
 
     <div class="grid gap-5 sm:grid-cols-2">
       <FormField v-slot="{ id, invalid, describedby }" label="Insured" name="insured" required :error="errors.insured">
-        <CustomerPicker :id="id" v-model="draft.insured" :disabled="!!locked.insured" :can-register="!locked.insured" :invalid="invalid" :describedby="describedby" @blur="emit('check', 'insured')" />
+        <PartyPicker :id="id" v-model="draft.insured" type="INSURED" :disabled="!!locked.insured" :can-create="!locked.insured" :invalid="invalid" :describedby="describedby" @blur="emit('check', 'insured')" />
       </FormField>
       <FormField label="Insured is the" name="insuredRole" required :error="errors.insuredRole" hint="Used for the Incoterm check">
         <div class="flex gap-2" role="radiogroup" aria-label="Insured is the">

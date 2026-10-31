@@ -2,6 +2,7 @@ import { computed, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { PERMISSIONS, ROLES } from "../constants";
 import { marineMockEnabled } from "../api/mockMode";
+import { getMe } from "../api/marineApi";
 
 // While the mock backend is on, a "Viewing as" switch on marine pages picks the roles to try,
 // so every permission path can be checked without separate accounts. Off = the real session.
@@ -41,13 +42,42 @@ export function sessionMarineRoles(user) {
   return ROLES.filter((r) => names.has(r));
 }
 
+const marineMe = ref(null);
+let marineMeRequest = null;
+
+/** Loads GET /users/me. Retries after a failed call so a restart does not leave the UI role-less. */
+export function loadMarineMe() {
+  if (marineMockEnabled || marineMeRequest) return marineMeRequest;
+  marineMeRequest = getMe()
+    .then((res) => {
+      if (res.ok) {
+        marineMe.value = res.data;
+        return;
+      }
+      marineMe.value = { roles: [], enabled: false };
+      marineMeRequest = null;
+    })
+    .catch(() => {
+      marineMe.value = { roles: [], enabled: false };
+      marineMeRequest = null;
+    });
+  return marineMeRequest;
+}
+
 export function useMarineRoles() {
   const auth = useAuthStore();
+  if (!marineMockEnabled) loadMarineMe();
   return computed(() => {
     if (marineMockEnabled && devRoles.value) return devRoles.value;
-    const roles = sessionMarineRoles(auth.auth?.user ?? auth.auth);
+    const sessionRoles = sessionMarineRoles(auth.auth?.user ?? auth.auth);
+    if (!marineMockEnabled) {
+      if (marineMe.value?.enabled === false) return [];
+      const fromMe = (marineMe.value?.roles ?? []).filter((role) => ROLES.includes(role));
+      // Super Admin / All Privileges still get menus when /users/me is empty or still loading.
+      return fromMe.length ? fromMe : sessionRoles;
+    }
     // With the mock backend and no Marine roles on the session, act as every role
-    return marineMockEnabled && !roles.length ? [...ROLES] : roles;
+    return sessionRoles.length ? sessionRoles : [...ROLES];
   });
 }
 
@@ -79,6 +109,7 @@ export function brokerPartyId(roles) {
   const brokerOnly = roles.length > 0 && roles.every((r) => r === "BROKER");
   if (!brokerOnly) return null;
   if (marineMockEnabled) return mockIdentity(roles).brokerPartyId;
+  if (marineMe.value?.brokerPartyId) return marineMe.value.brokerPartyId;
   const auth = useAuthStore();
   const u = auth.auth?.user ?? auth.auth ?? {};
   return u.brokerPartyId ?? u.partyId ?? null;

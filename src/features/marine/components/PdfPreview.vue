@@ -22,8 +22,10 @@ async function load() {
   const res = await props.fetcher();
   loading.value = false;
   if (url.value) URL.revokeObjectURL(url.value);
-  if (res.ok) url.value = URL.createObjectURL(res.data instanceof Blob ? res.data : new Blob([res.data], { type: "application/pdf" }));
-  else error.value = res.error;
+  if (res.ok) {
+    url.value = URL.createObjectURL(res.data instanceof Blob ? res.data : new Blob([res.data], { type: "application/pdf" }));
+    emit("ready");
+  } else error.value = res.error;
 }
 watch(() => props.version, load, { immediate: true });
 onBeforeUnmount(() => url.value && URL.revokeObjectURL(url.value));

@@ -1,11 +1,10 @@
 <script setup>
-// Public certificate check (plan 5.7, MAR-38): opened by scanning the certificate's QR code.
-// No sign-in and no app shell; designed for phones first. Shows no LC, premium or contact data.
+// Public certificate check: opened by scanning the certificate's QR code.
+// No sign-in and no app shell. Shows the number, vessel and voyage only.
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import StatusBadge from "../../components/StatusBadge.vue";
 import { verifyCertificate } from "../../api/marineApi";
-import { formatMoney } from "../../utils/money";
 import { formatDate } from "../../utils/format";
 
 const route = useRoute();
@@ -61,10 +60,8 @@ onMounted(async () => {
         <dl class="divide-y divide-line">
           <div v-for="row in [
             ['Certificate no', `${result.certNo} (version ${result.version})`],
-            ['Insured', result.insuredName],
             ['Vessel', result.vesselName],
             ['Voyage', result.voyage],
-            ['Sum insured', formatMoney(result.sumInsured, result.currency)],
             ['Issued', result.issuedAt ? formatDate(result.issuedAt) : '—'],
           ]" :key="row[0]" class="px-4 py-3">
             <dt class="text-xs font-medium text-ink-subtle">{{ row[0] }}</dt>

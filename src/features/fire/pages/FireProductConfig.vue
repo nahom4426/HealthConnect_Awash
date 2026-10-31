@@ -327,9 +327,9 @@ onMounted(load);
           </table>
         </div>
         <div class="add-row">
-          <input v-model="newAxis" :placeholder="`Add ${pc.axis1.toLowerCase()} (e.g. GRADE_E)`" @keyup.enter="addAxis" />
+          <input v-model="newAxis" :placeholder="`Add ${pc.axis1.toLowerCase()}`" @keyup.enter="addAxis" />
           <button type="button" class="fire-btn ghost" @click="addAxis">Add row</button>
-          <input v-model="newOccupancy" placeholder="Add occupancy (e.g. HOTEL)" @keyup.enter="addOccupancy" />
+          <input v-model="newOccupancy" :placeholder="`Add ${pc.axis2.toLowerCase()}`" @keyup.enter="addOccupancy" />
           <button type="button" class="fire-btn ghost" @click="addOccupancy">Add column</button>
         </div>
       </section>

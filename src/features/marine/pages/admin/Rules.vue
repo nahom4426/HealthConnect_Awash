@@ -89,7 +89,13 @@ const recent = computed(() => (rules.value?.changes ?? []).filter((c) => c.secti
 
 <template>
   <div class="marine-page">
-    <MarinePageHeader title="Rules" subtitle="What sends a quote to an underwriter, who can decide it, and the limits and deadlines the system enforces." :crumbs="[{ label: 'Marine' }, { label: 'Admin' }, { label: 'Rules' }]" />
+    <MarinePageHeader title="Underwriting rules" subtitle="Reference rules already in use. A quotation lists the ones its last rating triggered." :crumbs="[{ label: 'Marine' }, { label: 'Marine Settings' }, { label: 'Underwriting rules' }]">
+      <template #badge><span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-warning-soft text-warning-strong">Reference</span></template>
+    </MarinePageHeader>
+    <p role="status" class="p-4 mb-4 text-sm rounded-xl bg-warning-soft text-warning-strong">
+      These figures are reference values. They are already in use on this screen, and they are not approved production rules. The 20-year vessel warranty and its 10% loading are part of that reference set, not an approved tariff. Replace each section, with a change note, before this book is used for live business.
+      No section on this page is marked approved. The quotation and declaration underwriting section shows the rules the last rating triggered.
+    </p>
     <PageState v-if="!rules && !loadError" kind="loading" />
     <PageState v-else-if="loadError" kind="error" :message="loadError.message" @retry="load" />
     <template v-else>

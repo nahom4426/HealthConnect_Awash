@@ -67,7 +67,7 @@ async function activate() {
     "MarineConfirm",
     {
       title: `Activate ${t.value.name}?`,
-      message: `Version ${t.value.name} becomes active from ${formatDate(t.value.effectiveFrom)}${current ? `; version ${current.name} retires on ${formatDate(addDays(t.value.effectiveFrom, -1))}` : ""}. Quotes rated after that use the new rates.`,
+      message: `Version ${t.value.name} becomes the table rating uses from ${formatDate(t.value.effectiveFrom)}${current ? `; version ${current.name} retires on ${formatDate(addDays(t.value.effectiveFrom, -1))}` : ""}. This does not record a business approval. The seeded figures are a placeholder.`,
       confirmLabel: "Activate",
     },
     async (r) => {
@@ -119,6 +119,9 @@ onBeforeRouteLeave(
         </template>
       </MarinePageHeader>
 
+      <p role="status" class="p-4 mb-4 text-sm rounded-xl bg-warning-soft text-warning-strong">
+        Draft, then validation, then activation. Retirement is the effective-to date of a table that was replaced. Approval is not stored. Commodity rates, clause factors, route factors, vessel-age bands, war and strikes, VAT, and stamp duty on this table are the figures in the draft or the active placeholder. They are not an approved tariff.
+      </p>
       <div v-if="editable && problems.length" role="alert" class="p-3 mb-4 rounded-xl border bg-error-soft border-error/30">
         <p class="text-sm font-semibold text-error-strong">{{ problems.length }} {{ problems.length === 1 ? "problem blocks" : "problems block" }} activation</p>
         <ul class="mt-1 text-sm list-disc list-inside text-error-strong"><li v-for="p in problems" :key="p.path + p.message">{{ p.tab }}: {{ p.message }}</li></ul>
@@ -217,7 +220,10 @@ onBeforeRouteLeave(
           </template>
 
           <template #history>
-            <section :class="[cardClass, 'p-4']"><AuditTimeline entity="rateTable" :entity-id="t.id" /></section>
+            <section :class="[cardClass, 'p-4']">
+              <p class="mb-3 text-sm text-ink-muted">Activation and retirement are recorded here. There is no separate approval entry.</p>
+              <AuditTimeline entity="rateTable" :entity-id="t.id" />
+            </section>
           </template>
         </DetailTabs>
     </template>

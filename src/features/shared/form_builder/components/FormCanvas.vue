@@ -117,6 +117,10 @@
               <svg class="w-4 h-4 text-ink-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             </div>
 
+            <div v-else-if="field.type === 'party' || field.type === 'port' || field.type === 'vessel' || field.type === 'commodity' || field.type === 'ports'" class="w-full max-w-full box-border bg-surface-muted border border-line rounded-xl px-3 py-2 text-xs text-ink-subtle pointer-events-none">
+              Select from Marine master data
+            </div>
+
             <div v-else-if="field.type === 'toggle' || field.type === 'boolean'" class="flex items-center space-x-3 pt-1 pointer-events-none">
               <div class="w-10 h-6 bg-line rounded-full p-1 flex items-center">
                 <div class="w-4 h-4 bg-white rounded-full shadow-xs"></div>

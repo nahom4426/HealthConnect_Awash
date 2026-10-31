@@ -63,7 +63,8 @@ onMounted(refresh);
       <div>
         <p class="fire-kicker">{{ pc.kicker }} · quotation</p>
         <h1>Quotations</h1>
-        <p class="fire-sub">Submitted proposals wait here to be quoted. Issuing a quote is a separate step from capturing the risk.</p>
+        <p v-if="pc.productClass === 'MARINE'" class="fire-sub">New Marine quotations are rated on the shipment quote. This list keeps quotations issued before that change.</p>
+        <p v-else class="fire-sub">Submitted proposals wait here to be quoted. Issuing a quote is a separate step from capturing the risk.</p>
       </div>
       <button class="fire-btn ghost" :disabled="loading" @click="refresh">Refresh</button>
     </header>
@@ -104,7 +105,20 @@ onMounted(refresh);
             <td>{{ ratingAxes(row).axis2 }}</td>
             <td>{{ money(row.totalSumInsured) }}</td>
             <td class="row-actions">
-              <button class="link" @click="router.push(`${pc.basePath}/quotations/new/${row.proposalUuid}`)">Issue quotation</button>
+              <button
+                v-if="pc.productClass === 'MARINE' && row.marineQuoteId"
+                class="link"
+                @click="router.push(`/marine/quotes/${row.marineQuoteId}`)"
+              >
+                Open quotation
+              </button>
+              <button
+                v-else-if="pc.productClass !== 'MARINE'"
+                class="link"
+                @click="router.push(`${pc.basePath}/quotations/new/${row.proposalUuid}`)"
+              >
+                Issue quotation
+              </button>
               <button class="link" @click="router.push(`${pc.basePath}/proposals/${row.proposalUuid}`)">Proposal</button>
             </td>
           </tr>

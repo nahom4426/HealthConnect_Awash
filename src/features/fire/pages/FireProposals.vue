@@ -1,8 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { apiError, fetchProposals } from '../api/fireApi.js';
-import { ratingAxes, usePcModule } from '@/features/pc/pcModule.js';
+import { formatAnswerValue, parseAnswers, ratingAxes, usePcModule } from '@/features/pc/pcModule.js';
 import '../fire-ui.css';
 
 const router = useRouter();
@@ -14,10 +14,32 @@ const search = ref('');
 const status = ref('');
 const page = ref(1);
 const totalPages = ref(1);
+const isMarine = computed(() => pc.value.productClass === 'MARINE');
 
 function money(value) {
   if (value == null) return '—';
   return `ETB ${Number(value).toLocaleString('en-ET', { minimumFractionDigits: 2 })}`;
+}
+
+function proposerLabel(row) {
+  if (row?.proposerName) return row.proposerName;
+  const answers = parseAnswers(row?.answersJson);
+  return formatAnswerValue(answers.insuredParty) || formatAnswerValue(answers.broker) || 'Untitled proposal';
+}
+
+function arrangementLabel(row) {
+  const answers = parseAnswers(row?.answersJson);
+  if (answers.insuranceArrangement === 'OPEN_COVER') return 'Open Cover';
+  if (answers.insuranceArrangement === 'SINGLE_SHIPMENT') return 'Single Shipment';
+  return answers.insuranceArrangement || '—';
+}
+
+function sumLabel(row) {
+  const answers = parseAnswers(row?.answersJson);
+  if (answers.insuranceArrangement === 'OPEN_COVER') {
+    return answers.estimatedAnnualValue != null ? money(answers.estimatedAnnualValue) : '—';
+  }
+  return money(row.totalSumInsured || answers.invoiceValue);
 }
 
 async function refresh() {
@@ -79,22 +101,24 @@ onMounted(refresh);
           <tr>
             <th>Proposer</th>
             <th>Status</th>
+            <th v-if="isMarine">Arrangement</th>
             <th>{{ pc.axis1 }}</th>
             <th>{{ pc.axis2 }}</th>
-            <th>Sum insured</th>
+            <th>{{ isMarine ? 'Value' : 'Sum insured' }}</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="row in rows" :key="row.proposalUuid">
             <td>
-              <strong>{{ row.proposerName }}</strong>
+              <strong>{{ proposerLabel(row) }}</strong>
               <div class="muted">{{ row.proposalUuid }}</div>
             </td>
             <td>{{ row.status }}</td>
+            <td v-if="isMarine">{{ arrangementLabel(row) }}</td>
             <td>{{ ratingAxes(row).axis1 }}</td>
             <td>{{ ratingAxes(row).axis2 }}</td>
-            <td>{{ money(row.totalSumInsured) }}</td>
+            <td>{{ sumLabel(row) }}</td>
             <td class="row-actions">
               <button class="link" @click="router.push(`${pc.basePath}/proposals/${row.proposalUuid}`)">Open</button>
               <button
@@ -105,7 +129,7 @@ onMounted(refresh);
                 Edit
               </button>
               <button
-                v-if="row.status === 'SUBMITTED'"
+                v-if="row.status === 'SUBMITTED' && !isMarine"
                 class="link"
                 @click="router.push(`${pc.basePath}/quotations/new/${row.proposalUuid}`)"
               >

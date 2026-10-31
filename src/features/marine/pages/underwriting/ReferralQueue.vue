@@ -1,6 +1,5 @@
 <script setup>
 // Referral queue (plan 6.2, MAR-35): open referrals oldest first, filterable by reason and assignee.
-import { useRouter } from "vue-router";
 import { toasted } from "@/utils/utils";
 import MarinePageHeader from "../../components/MarinePageHeader.vue";
 import FilterBar from "../../components/FilterBar.vue";
@@ -12,8 +11,23 @@ import { notifyError } from "../../api/marineClient";
 import { REFERRAL_REASONS, ROLE_LABELS, reasonLabel } from "../../constants";
 import { formatAmount } from "../../utils/money";
 
-const router = useRouter();
-const list = useListQuery(listReferrals, { filters: { status: ["OPEN"], reason: [], assignee: "", raisedFrom: "", raisedTo: "" }, sort: "raisedAt,asc" });
+const list = useListQuery(listReferrals, {
+  filters: { status: ["OPEN"], reason: [], assignee: "", informationRequested: "false", raisedFrom: "", raisedTo: "" },
+  sort: "raisedAt,asc",
+});
+const views = [
+  { id: "pending", label: "Pending referrals", status: ["OPEN"], assignee: "", informationRequested: "false" },
+  { id: "mine", label: "My assigned reviews", status: ["OPEN"], assignee: "me", informationRequested: "" },
+  { id: "information", label: "Awaiting additional information", status: ["OPEN"], assignee: "", informationRequested: "true" },
+  { id: "approved", label: "Approved reviews", status: ["APPROVED"], assignee: "", informationRequested: "" },
+  { id: "declined", label: "Declined reviews", status: ["DECLINED"], assignee: "", informationRequested: "" },
+];
+
+function show(view) {
+  list.filters.status = [...view.status];
+  list.filters.assignee = view.assignee;
+  list.filters.informationRequested = view.informationRequested;
+}
 const waiting = (h) => (h < 48 ? `${h} h` : `${Math.round(h / 24)} days`);
 
 async function assign(row) {
@@ -38,7 +52,11 @@ const columns = [
 
 <template>
   <div class="marine-page">
-    <MarinePageHeader title="Underwriting" subtitle="Quotes waiting for an underwriter's decision, oldest first." :crumbs="[{ label: 'Marine' }, { label: 'Underwriting' }]" />
+    <MarinePageHeader title="Underwriting queue" subtitle="Reviews of existing quotations, oldest first. Opening a row opens that quotation." :crumbs="[{ label: 'Marine' }, { label: 'Quotations', to: '/marine/quotes' }, { label: 'Underwriting queue' }]">
+    </MarinePageHeader>
+    <div class="flex flex-wrap gap-2 mb-3">
+      <button v-for="view in views" :key="view.id" type="button" class="px-3 py-1 text-sm font-medium rounded-full border border-line text-ink hover:bg-surface-muted" @click="show(view)">{{ view.label }}</button>
+    </div>
     <FilterBar
       :fields="[
         { type: 'multi', key: 'status', label: 'Status', options: [{ value: 'OPEN', label: 'Open' }, { value: 'APPROVED', label: 'Approved' }, { value: 'DECLINED', label: 'Declined' }] },
@@ -48,7 +66,7 @@ const columns = [
       ]"
       :list="list"
     />
-    <ListTable :columns="columns" :list="list" :row-link="(r) => `/marine/underwriting/${r.id}`" empty-title="No referrals waiting" filtered-empty-title="No referrals match these filters">
+    <ListTable :columns="columns" :list="list" :row-link="(r) => `/marine/quotes/${r.quoteId}?tab=underwriting`" empty-title="No referrals waiting" filtered-empty-title="No referrals match these filters">
       <template #cell-insured="{ row }">{{ row.insured?.name ?? "—" }}</template>
       <template #cell-sumInsuredEtb="{ row }">{{ formatAmount(row.sumInsuredEtb) }}</template>
       <template #cell-reasons="{ row }">
@@ -65,7 +83,10 @@ const columns = [
       <template #cell-raisedAt="{ row }">
         <span :class="row.status === 'OPEN' && row.waitingHours > 24 ? 'px-2 py-0.5 rounded-full bg-warning-soft text-warning-strong font-medium' : ''">{{ waiting(row.waitingHours) }}</span>
       </template>
-      <template #cell-status="{ row }"><StatusBadge entity="referral" :status="row.status" /></template>
+      <template #cell-status="{ row }">
+        <StatusBadge entity="referral" :status="row.status" />
+        <span v-if="row.informationRequested" class="ml-1 text-xs font-medium text-warning-strong">Information requested</span>
+      </template>
     </ListTable>
   </div>
 </template>

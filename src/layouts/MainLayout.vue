@@ -10,8 +10,8 @@ import { ADMIN_MODULE_ID, useModuleStore } from "@/stores/moduleStore";
 import healthNavs from "@/features/health/navs";
 import motorNavs from "@/features/motor/navs.js";
 import fireNavs from "@/features/fire/navs.js";
-import marineNavs, { filterMarineNavs } from "@/features/marine/navs.js";
-import { useMarineRoles } from "@/features/marine/composables/useCan";
+import marineNavs from "@/features/marine/navs.js";
+import { hasAnyRole, useMarineRoles } from "@/features/marine/composables/useCan";
 import lifeNavs from "@/features/life/navs.js";
 import engineeringNavs from "@/features/engineering/navs.js";
 import liabilityNavs from "@/features/liability/navs.js";
@@ -107,24 +107,26 @@ watch(
 );
 
 // ── Active module raw navs ──
+const activeNavs = computed(() => MODULE_NAVS[moduleStore.activeModuleId] || healthNavs);
 const marineRoles = useMarineRoles();
-const activeNavs = computed(() => {
-  const id = moduleStore.activeModuleId;
-  // Marine items carry their own role lists (Marine roles, not the AuthService role names)
-  if (id === "marine") return filterMarineNavs(marineNavs, marineRoles.value);
-  return MODULE_NAVS[id] || healthNavs;
-});
+
+function visibleNav(item, user) {
+  if (item.path === "/branches" && !canManageBranches.value) return false;
+  const area = navItemArea(item.name || "");
+  if (area && !hasRoleAccess(user, area)) return false;
+  if (moduleStore.activeModuleId === "marine" && !hasAnyRole(marineRoles.value, item.marineRoles)) return false;
+  return true;
+}
 
 // ── Role-filtered navigation items for all modules (same rules the router enforces) ──
 const filteredNavs = computed(() => {
-  // Marine items are already filtered by Marine role in activeNavs
-  if (moduleStore.activeModuleId === "marine") return activeNavs.value || [];
   const user = authStore.auth?.user ?? authStore.auth ?? {};
-  return (activeNavs.value || []).filter(item => {
-    if (item.path === "/branches" && !canManageBranches.value) return false;
-    const area = navItemArea(item.name || '');
-    return !area || hasRoleAccess(user, area);
-  });
+  return (activeNavs.value || []).map((item) => {
+    if (!item.navs) return visibleNav(item, user) ? item : null;
+    const navs = item.navs.filter((child) => visibleNav(child, user));
+    if (!navs.length || !visibleNav({ ...item, marineRoles: item.marineRoles }, user)) return null;
+    return { ...item, navs };
+  }).filter(Boolean);
 });
 
 // Once the shell is idle, fetch the pages in this module's sidebar so clicking a nav item is instant

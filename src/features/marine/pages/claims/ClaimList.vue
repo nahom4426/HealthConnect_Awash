@@ -1,6 +1,8 @@
 <script setup>
 // Claim list (plan 8.1, MAR-41): soonest deadline first, with an Overdue only toggle.
-import { useRouter } from "vue-router";
+// Process / Approved / Completed routes lock the status bucket via route.meta (same pattern as Fire).
+import { computed, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
 import MarinePageHeader from "../../components/MarinePageHeader.vue";
 import FilterBar from "../../components/FilterBar.vue";
@@ -15,10 +17,54 @@ import { formatAmount } from "../../utils/money";
 import { formatDate } from "../../utils/format";
 import { statusLabel } from "../../i18n";
 
+const route = useRoute();
 const router = useRouter();
 const { roles } = useCan();
 const canRegister = () => roles.value.includes("CLAIMS_HANDLER");
-const list = useListQuery(listClaims, { filters: { q: "", status: [], type: "", handler: "", lossFrom: "", lossTo: "", overdue: "" }, sort: "" });
+
+function statusesFromMeta(meta = route.meta) {
+  const raw = meta.claimStatuses;
+  if (Array.isArray(raw) && raw.length) return raw.map(String);
+  if (typeof raw === "string" && raw.trim()) return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (meta.claimStatus) return [String(meta.claimStatus)];
+  return [];
+}
+
+const presetStatuses = computed(() => statusesFromMeta(route.meta));
+const pageTitle = computed(() => route.meta.claimTitle || "Claims");
+const statusOptions = computed(() => {
+  const allowed = presetStatuses.value.length ? presetStatuses.value : CLAIM_STATUSES;
+  return allowed.map((s) => ({ value: s, label: statusLabel(s) }));
+});
+
+const list = useListQuery(listClaims, {
+  filters: {
+    q: "",
+    status: statusesFromMeta(),
+    type: "",
+    handler: "",
+    lossFrom: "",
+    lossTo: "",
+    overdue: "",
+  },
+  sort: "",
+});
+
+watch(
+  () => `${route.path}|${presetStatuses.value.join(",")}`,
+  () => {
+    list.filters.q = "";
+    list.filters.status = [...presetStatuses.value];
+    list.filters.type = "";
+    list.filters.handler = "";
+    list.filters.lossFrom = "";
+    list.filters.lossTo = "";
+    list.filters.overdue = "";
+    list.page = 1;
+    list.load();
+  }
+);
+
 const columns = [
   { key: "claimNo", label: "Claim no" },
   { key: "certNo", label: "Certificate no" },
@@ -34,16 +80,34 @@ const columns = [
 </script>
 
 <template>
-  <div class="marine-page">
-    <MarinePageHeader title="Claims" :crumbs="[{ label: 'Marine' }, { label: 'Claims' }]">
+  <div class="marine-page claim-page">
+    <MarinePageHeader :title="pageTitle" :crumbs="[{ label: 'Marine' }, { label: 'Claims' }, { label: pageTitle }]">
       <template #actions>
-        <Button v-if="canRegister()" @click="router.push('/marine/claims/new')">Register claim</Button>
+        <Button v-if="canRegister()" @click="router.push('/marine/claims/new')">New claim</Button>
       </template>
     </MarinePageHeader>
+    <nav class="grid gap-2 mb-4 sm:grid-cols-3" aria-label="Claim queues">
+      <RouterLink
+        v-for="bucket in [
+          { to: '/marine/claims/process', label: 'Process', hint: 'Registered, surveyed, recovery' },
+          { to: '/marine/claims/approved', label: 'Approved', hint: 'Ready to settle' },
+          { to: '/marine/claims/completed', label: 'Completed', hint: 'Paid, closed, declined' },
+        ]"
+        :key="bucket.to"
+        :to="bucket.to"
+        :class="[
+          'rounded-xl border px-4 py-3 transition-colors',
+          route.path === bucket.to ? 'border-sky-500 bg-sky-50 text-ink dark:bg-sky-950/40' : 'border-line bg-surface hover:border-sky-300',
+        ]"
+      >
+        <p class="text-sm font-semibold">{{ bucket.label }}</p>
+        <p class="mt-0.5 text-xs text-ink-muted">{{ bucket.hint }}</p>
+      </RouterLink>
+    </nav>
     <FilterBar
       :fields="[
         { type: 'search', key: 'q', label: 'Search claim, certificate, BL no or insured' },
-        { type: 'multi', key: 'status', label: 'Status', options: CLAIM_STATUSES.map((s) => ({ value: s, label: statusLabel(s) })) },
+        { type: 'multi', key: 'status', label: 'Status', options: statusOptions },
         { type: 'select', key: 'type', label: 'Type', options: CLAIM_TYPES },
         { type: 'search', key: 'handler', label: 'Handler' },
         { type: 'dateRange', from: 'lossFrom', to: 'lossTo', label: 'Loss date' },
@@ -51,7 +115,7 @@ const columns = [
       ]"
       :list="list"
     />
-    <ListTable :columns="columns" :list="list" :row-link="(r) => `/marine/claims/${r.id}`" empty-title="No claims yet" filtered-empty-title="No claims match these filters">
+    <ListTable :columns="columns" :list="list" :row-link="(r) => `/marine/claims/${r.id}`" empty-title="No claims in this queue yet" filtered-empty-title="No claims match these filters">
       <template #cell-certNo="{ row }"><RouterLink :to="`/marine/certificates/${row.certificateId}`" class="text-primary hover:underline" @click.stop>{{ row.certNo }}</RouterLink></template>
       <template #cell-insured="{ row }">{{ row.insured?.name ?? "—" }}</template>
       <template #cell-type="{ row }">{{ label(CLAIM_TYPES, row.type) }}</template>
@@ -64,7 +128,7 @@ const columns = [
         <span v-else class="text-ink-subtle">—</span>
       </template>
       <template #empty="{ filtered }">
-        <Button v-if="!filtered && canRegister()" size="sm" @click="router.push('/marine/claims/new')">Register claim</Button>
+        <Button v-if="!filtered && canRegister()" size="sm" @click="router.push('/marine/claims/new')">New claim</Button>
       </template>
     </ListTable>
   </div>

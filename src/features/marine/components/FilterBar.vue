@@ -34,14 +34,14 @@ const labelFor = (f, v) => f.options.find((o) => o.value === v)?.label ?? v;
 <template>
   <div ref="root" class="flex flex-wrap gap-2 items-end mb-4 marine-filters">
     <template v-for="f in fields" :key="f.key || f.from">
-      <div v-if="f.type === 'search'" class="relative">
+      <div v-if="f.type === 'search'" class="relative flex-1 min-w-[16rem] max-w-2xl">
         <svg class="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 pointer-events-none text-ink-subtle" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="9" r="5.5" /><path d="m13.5 13.5 3 3" stroke-linecap="round" /></svg>
         <input
           v-model="list.filters[f.key]"
           type="search"
           :placeholder="f.label"
           :aria-label="f.label"
-          :class="[inputClass, 'border-line !w-72 !h-9 !pl-9']"
+          :class="[inputClass, 'border-line !w-full !h-9 !pl-9']"
         />
       </div>
 

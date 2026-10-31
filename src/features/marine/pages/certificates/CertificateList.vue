@@ -1,5 +1,7 @@
 <script setup>
 // Certificate list (plan 5.5).
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 import MarinePageHeader from "../../components/MarinePageHeader.vue";
 import FilterBar from "../../components/FilterBar.vue";
 import ListTable from "../../components/ListTable.vue";
@@ -11,7 +13,12 @@ import { formatMoney } from "../../utils/money";
 import { formatDateTime } from "../../utils/format";
 import { statusLabel } from "../../i18n";
 
-const list = useListQuery(listCertificates, { filters: { q: "", status: [], vesselImo: "", issuedFrom: "", issuedTo: "" }, sort: "createdAt,desc" });
+const route = useRoute();
+const declarations = computed(() => route.meta.declaration === true);
+const list = useListQuery(
+  (params) => listCertificates({ ...params, declaration: declarations.value }),
+  { filters: { q: "", status: [], vesselImo: "", issuedFrom: "", issuedTo: "" }, sort: "createdAt,desc" }
+);
 const columns = [
   { key: "certNo", label: "Certificate no", sortable: true },
   { key: "version", label: "Version" },
@@ -27,7 +34,10 @@ const columns = [
 
 <template>
   <div class="marine-page">
-    <MarinePageHeader title="Certificates" :crumbs="[{ label: 'Marine' }, { label: 'Certificates' }]" />
+    <MarinePageHeader
+      :title="declarations ? 'Declaration certificates' : 'Certificates'"
+      :crumbs="[{ label: 'Marine' }, { label: declarations ? 'Open cover' : 'Single shipments' }, { label: declarations ? 'Declaration certificates' : 'Certificates' }]"
+    />
     <FilterBar
       :fields="[
         { type: 'search', key: 'q', label: 'Search certificate or BL no' },

@@ -5,7 +5,6 @@ import { computed, ref } from "vue";
 import Button from "@/components/Button.vue";
 import { toasted } from "@/utils/utils";
 import MoneyInput from "../MoneyInput.vue";
-import StatusBadge from "../StatusBadge.vue";
 import { cardClass } from "../styles";
 import { updateReserve } from "../../api/marineApi";
 import { notifyError } from "../../api/marineClient";
@@ -33,12 +32,12 @@ async function saveReserve() {
 </script>
 
 <template>
-  <div class="grid gap-4 max-w-3xl">
+  <div class="grid gap-4 lg:grid-cols-2">
     <section :class="[cardClass, 'p-4']">
       <h3 class="mb-3 text-sm font-semibold text-ink">Reserve</h3>
       <div class="flex flex-wrap gap-2 items-center">
         <MoneyInput v-model:amount="reserve" :currency="claim.currency" lock-currency :class="'w-64'" :aria-label="'Reserve'" />
-        <Button v-if="canWork && !['PAYMENT_REQUESTED', 'PAID', 'CLOSED', 'DECLINED'].includes(claim.status)" variant="outline" :pending="saving" :disabled="!reserve" @click="saveReserve">Save reserve</Button>
+        <Button v-if="canWork && !['PAID', 'CLOSED', 'DECLINED'].includes(claim.status)" variant="outline" :pending="saving" :disabled="!reserve" @click="saveReserve">Save reserve</Button>
       </div>
     </section>
     <section :class="[cardClass, 'p-4']">
@@ -51,16 +50,7 @@ async function saveReserve() {
         <dt class="text-ink-muted">Payee</dt><dd class="text-right">{{ claim.payee?.name }}</dd>
       </dl>
     </section>
-    <section v-if="claim.vouchers?.length" :class="[cardClass, 'p-4']">
-      <h3 class="mb-2 text-sm font-semibold text-ink">Payment requests to Finance</h3>
-      <ul class="space-y-1 text-sm">
-        <li v-for="v in claim.vouchers" :key="v.id" class="flex flex-wrap gap-2 justify-between items-center">
-          <span><span class="font-semibold">{{ v.voucherNo }}</span> · {{ formatMoney(v.amount, claim.currency) }} to {{ v.payee?.name }}</span>
-          <span class="flex gap-2 items-center text-ink-muted">{{ v.requestedBy }}, {{ formatDateTime(v.requestedAt) }} <StatusBadge entity="voucher" :status="v.status" /></span>
-        </li>
-      </ul>
-    </section>
-    <section :class="[cardClass, 'p-4']">
+    <section :class="[cardClass, 'p-4 lg:col-span-2']">
       <h3 class="mb-2 text-sm font-semibold text-ink">Payments</h3>
       <p v-if="!claim.payments.length" class="text-sm text-ink-subtle">No payments yet.</p>
       <ul v-else class="space-y-1 text-sm">

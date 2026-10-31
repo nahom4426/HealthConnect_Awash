@@ -26,7 +26,8 @@ const overLimit = (v, limit) => n(v) > n(limit);
 <template>
   <div class="grid gap-4 text-sm">
     <section v-if="reasons.length" aria-labelledby="ck-reasons">
-      <h3 id="ck-reasons" class="mb-1.5 text-xs font-semibold tracking-wide uppercase text-ink-subtle">Referral reasons</h3>
+      <h3 id="ck-reasons" class="mb-1.5 text-xs font-semibold tracking-wide uppercase text-ink-subtle">Triggered rules</h3>
+      <p class="mb-1.5 text-xs text-ink-muted">Raised by the last rating from the reference rules. These are not an approved rule set.</p>
       <ul class="space-y-1.5">
         <li v-for="(r, i) in reasons" :key="i" class="flex gap-2 items-start">
           <span class="shrink-0 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-warning-soft text-warning-strong">{{ reasonLabel(r.code) }}</span>
@@ -72,7 +73,8 @@ const overLimit = (v, limit) => n(v) > n(limit);
         <li v-for="s in checks.screenings" :key="s.id" class="flex flex-wrap gap-2 justify-between items-center py-1.5">
           <div class="min-w-0">
             <p class="text-ink"><span class="text-ink-subtle">{{ s.type }}:</span> {{ s.name }}</p>
-            <p v-if="s.matches?.length && s.result !== 'CLEAR'" class="text-xs text-ink-muted">{{ s.matches.length }} possible {{ s.matches.length === 1 ? "match" : "matches" }} · top {{ s.matches[0].score }}% on {{ s.matches[0].list }}</p>
+            <p v-if="s.matches?.length && s.result !== 'CLEAR' && s.result !== 'UNAVAILABLE'" class="text-xs text-ink-muted">{{ s.matches.length }} possible {{ s.matches.length === 1 ? "match" : "matches" }} · top {{ s.matches[0].score }}% on {{ s.matches[0].listName || s.matches[0].list }}</p>
+            <p v-if="s.result === 'UNAVAILABLE'" class="text-xs text-warning-strong">{{ s.note || "Sanctions data is unavailable. This is not a clear result." }}</p>
             <p v-if="s.reviewedAt" class="text-xs text-ink-subtle">Reviewed by {{ s.reviewedBy }}, {{ formatDateTime(s.reviewedAt) }}</p>
           </div>
           <div class="flex gap-2 items-center">

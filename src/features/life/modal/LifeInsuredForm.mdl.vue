@@ -25,7 +25,7 @@ const maxBirth = new Date().toISOString().slice(0, 10);
 const GROUPS = [
   { title: "Member", fields: [["title", "Title", 25, "Mr, Mrs, Dr…"], ["firstName", "First name", 25], ["fatherName", "Father's name", 25], ["grandFatherName", "Grandfather's name", 25]] },
   { title: "Contact", fields: [["phone", "Phone", 13, "+2519…"], ["email", "Email (optional)", 50], ["idNumber", "ID number (optional)", 50]] },
-  { title: "Employment", fields: [["position", "Position (optional)", 50], ["branchOffice", "Branch office (optional)", 50]] },
+  { title: "Employment", fields: [["position", "Position", 50], ["branchOffice", "Branch office", 50]] },
   { title: "Address", fields: [["address1", "Sub-city / zone", 50], ["address2", "Woreda", 50], ["address3", "House number", 50], ["state", "Region / city", 50], ["country", "Country", 50]] },
 ];
 

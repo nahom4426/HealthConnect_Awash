@@ -51,6 +51,18 @@ FOLLOW-UPS AFTER YOUR CONTRACT OF 2026-10 (found 2026-10-31)
    the screens accept either. Say if you'd rather we used only your default roles (Claims Adjuster, Branch
    Manager, Underwriter).
 
+Found in the live test run (2026-10-31, after the service came back; test data is marked "TEST"):
+5. POST /insuredperson returns 500 "constraint.violation / Database error" when position or branchOffice is
+   missing, although InsuredRequest marks both optional. Make them required in the DTO with a 400, or allow
+   null in the database. (The UI now requires both.)
+6. Members whose age has no active group-term rate are priced at 0 (quotation Africa/Policy/Quote/0003/26:
+   gross premium 0.00 through issue, pay and policy issue). Your contract says this should be 422 "no matching
+   active rate". Please refuse instead of pricing at 0.
+7. GET /claim/claim-approver-details?claimUuid= returns 500 for a claim nobody has signed off yet, and
+   GET /claim/logs?claimUuid= returns 500 once the claim has been requested. Both should return [] / the log.
+8. Data to check with the business: rider "Demeke" has min/max sum assured 0.05–0.1; the older paid quotation
+   Africa/Policy/Quote/0002/26 has net premium 250,000 against a gross premium of 4.20.
+
 ═══════════════════════════════════════════════════════════════════════════════════════════════
 GENERAL RULES
 ═══════════════════════════════════════════════════════════════════════════════════════════════

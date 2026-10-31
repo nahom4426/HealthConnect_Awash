@@ -67,7 +67,8 @@ export const GENDERS = ["Male", "Female"];
 export const INSURED_FIELDS = [
   // [key, required, maxLength]
   ["title", true, 25], ["firstName", true, 25], ["fatherName", true, 25], ["grandFatherName", true, 25],
-  ["phone", true, 13], ["email", false, 50], ["idNumber", false, 50], ["branchOffice", false, 50], ["position", false, 50],
+  // branchOffice and position are optional in Swagger, but the database rejects a member without them
+  ["phone", true, 13], ["email", false, 50], ["idNumber", false, 50], ["branchOffice", true, 50], ["position", true, 50],
   ["address1", true, 50], ["address2", true, 50], ["address3", true, 50], ["state", true, 50], ["country", true, 50],
 ];
 

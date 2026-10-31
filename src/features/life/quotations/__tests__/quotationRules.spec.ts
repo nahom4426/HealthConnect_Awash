@@ -32,7 +32,7 @@ describe("quotation details", () => {
 describe("insured person", () => {
   const valid = {
     ...fromInsured({}), title: "Mr", firstName: "Abebe", fatherName: "Kebede", grandFatherName: "Tesfaye", phone: "0911223344",
-    address1: "Bole", address2: "Woreda 3", address3: "H.No 12", state: "Addis Ababa", country: "Ethiopia", birthDate: "1990-05-01", gender: "Male", sumAssured: "250000",
+    position: "Officer", branchOffice: "Head office", address1: "Bole", address2: "Woreda 3", address3: "H.No 12", state: "Addis Ababa", country: "Ethiopia", birthDate: "1990-05-01", gender: "Male", sumAssured: "250000",
   };
 
   it("accepts a complete member and sends no premium", () => {

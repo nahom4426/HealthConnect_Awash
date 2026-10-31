@@ -167,7 +167,7 @@ function remove() {
           </ListTable>
         </section>
       </div>
-      <p class="mt-5 text-xs text-ink-subtle">Beneficiaries, the health questionnaire and the policyholder's KYC need new backend endpoints (gaps G1, G4 and G2).</p>
+      <p class="mt-5 text-xs text-ink-subtle">Linking the policyholder (customer and KYC), beneficiaries and the health questionnaire come in the next screens; the backend already supports them.</p>
     </template>
   </div>
 </template>

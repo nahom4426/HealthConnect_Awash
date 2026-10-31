@@ -2,7 +2,7 @@
 // Controlled text / number / date / tel / email / search field on the shared field shell
 // (new_form_elements/NewInputLayout). Use it with v-model when validation lives in the page or a
 // rules module; use new_form_elements/Input with new_form_builder/Form for builder-validated forms.
-import { useId } from "vue";
+import { nextFieldId } from "./fieldId";
 import InputLayout from "../new_form_elements/NewInputLayout.vue";
 
 const props = defineProps({
@@ -22,7 +22,9 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:modelValue"]);
 defineOptions({ inheritAttrs: false });
-const autoId = useId();
+// Not useId(): modals mount as separate Vue apps, so their useId() values repeat the page's and a
+// label could point at a field behind the modal
+const autoId = nextFieldId();
 const inputId = props.id || autoId;
 </script>
 

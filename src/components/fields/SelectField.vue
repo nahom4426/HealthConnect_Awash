@@ -1,6 +1,7 @@
 <script setup>
 // Controlled native select on the shared field shell. options: strings or { value, label }.
-import { computed, useId } from "vue";
+import { computed } from "vue";
+import { nextFieldId } from "./fieldId";
 import InputLayout from "../new_form_elements/NewInputLayout.vue";
 
 const props = defineProps({
@@ -20,7 +21,9 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:modelValue", "change"]);
 defineOptions({ inheritAttrs: false });
-const autoId = useId();
+// Not useId(): modals mount as separate Vue apps, so their useId() values repeat the page's and a
+// label could point at a field behind the modal
+const autoId = nextFieldId();
 const inputId = props.id || autoId;
 const items = computed(() => props.options.map((o) => (o !== null && typeof o === "object" ? o : { value: o, label: String(o) })));
 

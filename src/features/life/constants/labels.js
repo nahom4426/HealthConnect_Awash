@@ -22,6 +22,8 @@ export function formatAmount(value) {
   return Number.isNaN(n) ? String(value) : n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+export const paymentFrequencyLabel = { ANNUAL: "Annual", SEMI_ANNUAL: "Semi-annual", QUARTERLY: "Quarterly", MONTHLY: "Monthly", SINGLE: "Single premium" };
+
 export const quotationStatusLabel = { PENDING: "Draft", ISSUED: "Issued", ACCEPTED: "Accepted", PAID: "Paid" };
 
 /** Whole days from today to an API date (negative once past); display only */

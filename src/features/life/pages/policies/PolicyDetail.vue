@@ -19,7 +19,7 @@ import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
 import { quotationActions } from "../../quotations/quotationRules";
 import { getQuotation, reviseQuotation } from "../../api/quotationApi";
-import { generateTreatyReport } from "../../api/policyApi";
+import { generateTreatyReport, getPolicy } from "../../api/policyApi";
 
 const route = useRoute();
 const router = useRouter();
@@ -28,7 +28,11 @@ const uuid = computed(() => route.params.quotationUuid);
 const policy = useLifeResource(getQuotation);
 const p = computed(() => policy.data.value || {});
 const issued = computed(() => !!p.value.policyIssuedDate);
-watch(uuid, (v) => v && policy.load(v), { immediate: true });
+// Policy figures from GET /policy/{uuid} (PolicyDetailResponse): members, sum assured in force,
+// outstanding premium. The quotation above still carries the status, dates and premiums.
+const detail = useLifeResource(getPolicy);
+const d = computed(() => detail.data.value || {});
+watch(uuid, (v) => { if (v) { policy.load(v); detail.load(v); } }, { immediate: true });
 
 const TABS = ["Members", "Riders", "Reinsurance", "Details"];
 const tab = ref("Members");
@@ -39,6 +43,10 @@ const cards = computed(() => [
   ["Remaining", remainingLabel(remaining.value)],
   ["Term", p.value.term ? `${p.value.term} year${p.value.term === 1 ? "" : "s"}` : "—"],
   ["Net premium", formatAmount(p.value.netPremium)],
+  ["Members", d.value.memberCount != null ? `${d.value.activeMemberCount ?? "—"} active of ${d.value.memberCount}` : "—"],
+  ["Sum assured in force", formatAmount(d.value.totalSumAssured)],
+  ["Outstanding premium", formatAmount(d.value.outstandingPremium)],
+  ["Gross premium", formatAmount(p.value.grossPremium)],
 ]);
 
 // Treaty report: response schema is undocumented (09 §G9 item 4), so show whatever comes back

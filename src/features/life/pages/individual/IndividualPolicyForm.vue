@@ -11,7 +11,7 @@ import TextField from "@/components/fields/TextField.vue";
 import SelectField from "@/components/fields/SelectField.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { BenefitStatus } from "../../constants/statuses";
-import { formatAmount } from "../../constants/labels";
+import { formatAmount, paymentFrequencyLabel } from "../../constants/labels";
 import { GENDERS, benefitActions, fromBenefit, quoteParams, toBenefitRequest, toRiderBenefitRequest, validateBenefit, validateRiderBenefit } from "../../individual/individualRules";
 import { createBenefit, createIndividualRiderBenefit, getBenefit, getBenefitQuote, updateBenefit } from "../../api/policyApi";
 import { getRiders } from "../../api/productApi";
@@ -124,6 +124,13 @@ const PERSON = [["firstName", "First name"], ["fatherName", "Father's name"], ["
           <TextField v-model="form.beginDate" label="Cover starts" type="date" :error="errors.beginDate" />
           <TextField v-model.number="form.insuranceTerm" label="Term (years)" type="number" min="1" step="1" inputmode="numeric" :error="errors.insuranceTerm" />
           <TextField v-model.number="form.termBenefit" label="Sum assured" type="number" numeric min="0" step="any" :error="errors.termBenefit" />
+          <SelectField
+            v-model="form.paymentFrequency"
+            label="Premium paid"
+            :options="Object.entries(paymentFrequencyLabel).map(([value, label]) => ({ value, label }))"
+            placeholder="Choose how often"
+            hint="Sets the premium schedule"
+          />
         </fieldset>
 
         <section v-if="!editing" class="p-5 rounded-2xl border bg-surface border-line shadow-card">

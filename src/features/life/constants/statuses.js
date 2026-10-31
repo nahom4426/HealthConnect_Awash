@@ -18,6 +18,17 @@ export const PolicyStatus = Object.freeze({
   DISABLED: "DISABLED",
   LAPSED: "LAPSED",
   CANCELLED: "CANCELLED",
+  EXPIRED: "EXPIRED",
+  RENEWED: "RENEWED",
+});
+
+/** BenefitRequest/Response.paymentFrequency: how the annual premium is split into instalments */
+export const PaymentFrequency = Object.freeze({
+  ANNUAL: "ANNUAL",
+  SEMI_ANNUAL: "SEMI_ANNUAL",
+  QUARTERLY: "QUARTERLY",
+  MONTHLY: "MONTHLY",
+  SINGLE: "SINGLE",
 });
 
 /** BenefitResponse.status (individual term policy) and IndividualRiderBenefit.status */
@@ -28,6 +39,7 @@ export const BenefitStatus = Object.freeze({
   DISABLED: "DISABLED",
   LAPSED: "LAPSED",
   CANCELLED: "CANCELLED",
+  EXPIRED: "EXPIRED",
 });
 
 /** Question, group-term rate rows, reinsurer */

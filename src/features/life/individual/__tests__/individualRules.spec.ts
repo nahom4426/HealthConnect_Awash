@@ -27,7 +27,8 @@ describe("individual policy", () => {
     const body = toBenefitRequest(valid);
     expect(body).toEqual({ firstName: "Liya", fatherName: "Mekonnen", grandFatherName: "Alemu", gender: "Female", personPhone: "+251911223344", dateOfBirth: "1990-06-15T00:00:00", beginDate: "2026-11-01T00:00:00", insuranceTerm: 10, termBenefit: 500000 });
     expect(body).not.toHaveProperty("termPremium");
-    expect(fromBenefit({ ...body, termPremium: 2100 })).toEqual({ ...valid, insuranceTerm: 10, termBenefit: 500000 });
+    expect(fromBenefit({ ...body, termPremium: 2100 })).toEqual({ ...valid, insuranceTerm: 10, termBenefit: 500000, paymentFrequency: "" });
+    expect(toBenefitRequest({ ...valid, paymentFrequency: "MONTHLY" })).toMatchObject({ paymentFrequency: "MONTHLY" });
   });
 });
 

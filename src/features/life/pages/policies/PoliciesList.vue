@@ -14,7 +14,7 @@ import { daysUntil, formatDate, remainingLabel } from "../../constants/labels";
 import { getPolicies } from "../../api/policyApi";
 
 const router = useRouter();
-const TABS = { Active: PolicyStatus.ACTIVE, Pending: PolicyStatus.PENDING, Modified: PolicyStatus.MODIFIED, Lapsed: PolicyStatus.LAPSED, Cancelled: PolicyStatus.CANCELLED, Disabled: PolicyStatus.DISABLED };
+const TABS = { Active: PolicyStatus.ACTIVE, Pending: PolicyStatus.PENDING, Modified: PolicyStatus.MODIFIED, Lapsed: PolicyStatus.LAPSED, Renewed: PolicyStatus.RENEWED, Expired: PolicyStatus.EXPIRED, Cancelled: PolicyStatus.CANCELLED, Disabled: PolicyStatus.DISABLED };
 const list = useLifePagedList(getPolicies, { status: PolicyStatus.ACTIVE });
 list.reload();
 const tab = computed({ get: () => Object.keys(TABS).find((k) => TABS[k] === list.status.value), set: (t) => (list.status.value = TABS[t]) });

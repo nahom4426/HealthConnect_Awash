@@ -27,7 +27,7 @@ const COLUMNS = [
   { key: "cover", label: "Cover" },
   { key: "status", label: "Status" },
 ];
-const TABS = { Draft: BenefitStatus.PENDING, Active: BenefitStatus.ACTIVE, Renewed: BenefitStatus.RENEWED, Lapsed: BenefitStatus.LAPSED, Cancelled: BenefitStatus.CANCELLED, Disabled: BenefitStatus.DISABLED };
+const TABS = { Draft: BenefitStatus.PENDING, Active: BenefitStatus.ACTIVE, Renewed: BenefitStatus.RENEWED, Lapsed: BenefitStatus.LAPSED, Expired: BenefitStatus.EXPIRED, Cancelled: BenefitStatus.CANCELLED, Disabled: BenefitStatus.DISABLED };
 const list = useLifePagedList(({ status, ...query }) => getBenefits(status, query), { status: BenefitStatus.PENDING });
 list.reload();
 const tab = computed({ get: () => Object.keys(TABS).find((k) => TABS[k] === list.status.value), set: (t) => (list.status.value = TABS[t]) });

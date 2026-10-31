@@ -36,6 +36,7 @@ export function fromBenefit(b = {}) {
     dateOfBirth: b.dateOfBirth ? String(b.dateOfBirth).slice(0, 10) : "",
     beginDate: b.beginDate ? String(b.beginDate).slice(0, 10) : "",
     insuranceTerm: b.insuranceTerm ?? "", termBenefit: b.termBenefit ?? "",
+    paymentFrequency: b.paymentFrequency ?? "",
   };
 }
 
@@ -66,6 +67,8 @@ export function toBenefitRequest(f) {
     gender: f.gender, personPhone: String(f.personPhone).trim(),
     dateOfBirth: toDateTime(f.dateOfBirth), beginDate: toDateTime(f.beginDate),
     insuranceTerm: Number(f.insuranceTerm), termBenefit: Number(f.termBenefit),
+    // Optional: how the annual premium is split into instalments (the premium schedule)
+    ...(f.paymentFrequency ? { paymentFrequency: f.paymentFrequency } : {}),
   };
 }
 

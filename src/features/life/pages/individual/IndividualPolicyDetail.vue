@@ -7,7 +7,7 @@ import { useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import { toasted } from "@/utils/utils";
-import { hasPrivilege } from "@/utils/privileges";
+import { lifeCan } from "@/features/life/privileges";
 import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import ListTable from "@/components/ListTable.vue";
@@ -26,8 +26,8 @@ const benefit = useLifeResource(getBenefit);
 const b = computed(() => benefit.data.value || {});
 const can = computed(() => {
   const a = benefitActions(b.value);
-  const may = hasPrivilege(["Life_Quotation_Create", "Life_Policy_Issue"]);
-  return { edit: a.edit && may, remove: a.remove && may, riders: a.riders && may, issue: a.edit && hasPrivilege("Life_Policy_Issue"), isDraft: a.edit };
+  const may = lifeCan(["Life_Quotation_Create", "Life_Policy_Issue"]);
+  return { edit: a.edit && may, remove: a.remove && may, riders: a.riders && may, issue: a.edit && lifeCan("Life_Policy_Issue"), isDraft: a.edit };
 });
 benefit.load(uuid);
 

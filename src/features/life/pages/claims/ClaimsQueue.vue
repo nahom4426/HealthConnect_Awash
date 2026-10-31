@@ -4,7 +4,7 @@
 import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
-import { hasPrivilege } from "@/utils/privileges";
+import { lifeCan } from "@/features/life/privileges";
 import TabGroup from "@/components/TabGroup.vue";
 import PageHeader from "@/components/PageHeader.vue";
 import PageNav from "@/components/PageNav.vue";
@@ -58,7 +58,7 @@ const open = (c) => router.push({ path: `/life/claims/${c.claimUuid}`, query: { 
       :title="side === 'agency' ? 'Claims submitted by agency' : 'Claims desk'"
       :subtitle="side === 'agency' ? 'Claims your office prepares for members of group policies.' : 'Life claims from registration to payment.'"
     >
-      <template v-if="side === 'agency' && hasPrivilege('Life_Claim_Prepare')" #actions><Button @click="router.push('/life/claims/new')">New claim</Button></template>
+      <template v-if="side === 'agency' && lifeCan('Life_Claim_Prepare')" #actions><Button @click="router.push('/life/claims/new')">New claim</Button></template>
     </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-2">

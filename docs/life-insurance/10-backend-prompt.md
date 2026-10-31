@@ -37,6 +37,21 @@ user of a role when the role is updated). Also: GET /auth/users/user/{uuid} retu
 can't refresh them without a new login.
 
 ═══════════════════════════════════════════════════════════════════════════════════════════════
+FOLLOW-UPS AFTER YOUR CONTRACT OF 2026-10 (found 2026-10-31)
+═══════════════════════════════════════════════════════════════════════════════════════════════
+1. The Life service is unreachable: 192.168.100.251:8194 refuses connections and the gateway on :8888
+   returns 500 for /api/life/**. Nothing of the new contract could be checked live yet.
+2. AuthService ignores ?moduleType= on GET /auth/users/privilege/list and /auth/users/role/all (every
+   module comes back), and the records no longer include moduleType. The admin screens' module filter
+   therefore shows everything. Please apply the filter and return moduleType on each record.
+3. life.claim.update is the code for preparing, reviewing AND approving a claim (your G10 mapping), so any
+   role allowed to prepare a claim may also review and approve it. Please split it (e.g. life.claim.review,
+   life.claim.approve) so the agency, the claims officer and the claims manager can be told apart.
+4. The 8 frontend roles "Life …" now hold your life.* codes (mapped from your table) plus our Life_* names;
+   the screens accept either. Say if you'd rather we used only your default roles (Claims Adjuster, Branch
+   Manager, Underwriter).
+
+═══════════════════════════════════════════════════════════════════════════════════════════════
 GENERAL RULES
 ═══════════════════════════════════════════════════════════════════════════════════════════════
 - Never break existing endpoints, paths, field names or enum values. Add new endpoints or optional fields;

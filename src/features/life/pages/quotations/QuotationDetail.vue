@@ -7,7 +7,7 @@ import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
 import { toasted } from "@/utils/utils";
-import { hasPrivilege } from "@/utils/privileges";
+import { lifeCan } from "@/features/life/privileges";
 import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import InsuredMembersPanel from "../../components/InsuredMembersPanel.vue";
@@ -29,16 +29,16 @@ const q = computed(() => quotation.data.value || {});
 // Status says what is possible next; the user's Life privileges say who may do it
 const can = computed(() => {
   const a = quotationActions(q.value);
-  const create = hasPrivilege("Life_Quotation_Create");
+  const create = lifeCan("Life_Quotation_Create");
   return {
     ...a,
     edit: a.edit && create,
     remove: a.remove && create,
-    issue: a.issue && hasPrivilege("Life_Quotation_Issue"),
-    accept: a.accept && hasPrivilege("Life_Quotation_Issue"),
-    pay: a.pay && hasPrivilege("Life_Payment_Record"),
-    issuePolicy: a.issuePolicy && hasPrivilege("Life_Policy_Issue"),
-    revise: a.revise && hasPrivilege("Life_Policy_Service"),
+    issue: a.issue && lifeCan("Life_Quotation_Issue"),
+    accept: a.accept && lifeCan("Life_Quotation_Issue"),
+    pay: a.pay && lifeCan("Life_Payment_Record"),
+    issuePolicy: a.issuePolicy && lifeCan("Life_Policy_Issue"),
+    revise: a.revise && lifeCan("Life_Policy_Service"),
   };
 });
 const draft = computed(() => can.value.edit);

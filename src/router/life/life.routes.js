@@ -1,5 +1,6 @@
 // Life Insurance routes. Life privileges don't exist in AuthService yet (backend gap G10),
 // so pages only require sign-in for now; add meta.permissions once they are seeded.
+import { lifePermissions } from "@/features/life/privileges";
 const RidersList = () => import("@/features/life/pages/products/RidersList.vue");
 const RiderDetail = () => import("@/features/life/pages/products/RiderDetail.vue");
 const GroupTermRates = () => import("@/features/life/pages/products/GroupTermRates.vue");
@@ -26,18 +27,19 @@ const QuestionsList = () => import("@/features/life/pages/underwriting/Questions
 const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
 
-// Life privileges (seeded in AuthService, category "Life"); the router lets a user in when they hold any
-// one of a route's privileges. Super Admin and "All Privileges" pass everywhere (router/index.js).
+// Life privileges: our Life_* names plus the backend life.* codes each stands for (features/life/privileges.js).
+// The router lets a user in when they hold any one of a route's privileges. Super Admin and
+// "All Privileges" pass everywhere (router/index.js).
 const P = {
-  PRODUCTS: ["Life_Product_Manage", "Life_Rate_Manage"],
-  REINSURANCE: ["Life_Reinsurance_Manage"],
-  QUOTATIONS: ["Life_Quotation_Create", "Life_Quotation_Issue", "Life_Payment_Record", "Life_Policy_Issue"],
-  POLICIES: ["Life_Policy_Issue", "Life_Policy_Service", "Life_Reinsurance_Manage", "Life_Report_View"],
-  INDIVIDUAL: ["Life_Quotation_Create", "Life_Policy_Issue", "Life_Policy_Service"],
-  UNDERWRITING: ["Life_Underwriting_Decide"],
-  CLAIM_AGENCY: ["Life_Claim_Prepare"],
-  CLAIM_DESK: ["Life_Claim_Review", "Life_Claim_Approve", "Life_Claim_Authorize", "Life_Claim_Pay"],
-  CLAIM_ANY: ["Life_Claim_Prepare", "Life_Claim_Review", "Life_Claim_Approve", "Life_Claim_Authorize", "Life_Claim_Pay"],
+  PRODUCTS: lifePermissions(["Life_Product_Manage", "Life_Rate_Manage"]),
+  REINSURANCE: lifePermissions(["Life_Reinsurance_Manage"]),
+  QUOTATIONS: lifePermissions(["Life_Quotation_Create", "Life_Quotation_Issue", "Life_Payment_Record", "Life_Policy_Issue"]),
+  POLICIES: lifePermissions(["Life_Policy_Issue", "Life_Policy_Service", "Life_Reinsurance_Manage", "Life_Report_View"]),
+  INDIVIDUAL: lifePermissions(["Life_Quotation_Create", "Life_Policy_Issue", "Life_Policy_Service"]),
+  UNDERWRITING: lifePermissions(["Life_Underwriting_Decide"]),
+  CLAIM_AGENCY: lifePermissions(["Life_Claim_Prepare"]),
+  CLAIM_DESK: lifePermissions(["Life_Claim_Review", "Life_Claim_Approve", "Life_Claim_Authorize", "Life_Claim_Pay"]),
+  CLAIM_ANY: lifePermissions(["Life_Claim_Prepare", "Life_Claim_Review", "Life_Claim_Approve", "Life_Claim_Authorize", "Life_Claim_Pay"]),
 };
 
 const lifeRoutes = [

@@ -4,7 +4,7 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
-import { hasPrivilege } from "@/utils/privileges";
+import { lifeCan } from "@/features/life/privileges";
 import TabGroup from "@/components/TabGroup.vue";
 import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
@@ -38,7 +38,7 @@ const open = (b) => router.push(`/life/individual/${b.benefitUuid}`);
 <template>
   <div class="p-4 md:p-6">
     <PageHeader title="Individual policies" subtitle="Term life policies for individual customers, with optional riders.">
-      <template v-if="hasPrivilege(['Life_Quotation_Create', 'Life_Policy_Issue'])" #actions><Button @click="router.push('/life/individual/new')">New policy</Button></template>
+      <template v-if="lifeCan(['Life_Quotation_Create', 'Life_Policy_Issue'])" #actions><Button @click="router.push('/life/individual/new')">New policy</Button></template>
     </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

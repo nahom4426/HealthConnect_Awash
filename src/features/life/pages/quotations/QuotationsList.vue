@@ -11,7 +11,7 @@ import StatusBadge from "@/components/StatusBadge.vue";
 import PageNav from "@/components/PageNav.vue";
 import { useLifePagedList } from "../../composables/useLifePagedList";
 import { QuotationStatus } from "../../constants/statuses";
-import { hasPrivilege } from "@/utils/privileges";
+import { lifeCan } from "@/features/life/privileges";
 import { formatDate } from "../../constants/labels";
 import { getQuotations } from "../../api/quotationApi";
 
@@ -47,7 +47,7 @@ const create = () => openModal("LifeQuotationForm", {}, (saved) => saved?.quotat
 <template>
   <div class="p-4 md:p-6">
     <PageHeader title="Group quotations" subtitle="Group term life quotes for institutions, from draft to paid.">
-      <template v-if="hasPrivilege('Life_Quotation_Create')" #actions><Button @click="create">New quotation</Button></template>
+      <template v-if="lifeCan('Life_Quotation_Create')" #actions><Button @click="create">New quotation</Button></template>
     </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-2">

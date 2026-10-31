@@ -6,7 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import { toasted } from "@/utils/utils";
-import { hasPrivilege } from "@/utils/privileges";
+import { lifeCan } from "@/features/life/privileges";
 import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import PageNav from "@/components/PageNav.vue";
@@ -29,14 +29,14 @@ const queue = computed(() => (queuesFor(side).some((q) => q.key === route.query.
 const stageLabel = computed(() => queuesFor(side).find((q) => q.key === queue.value)?.label);
 const can = computed(() => {
   const a = claimActions(side, queue.value);
-  const prepare = hasPrivilege("Life_Claim_Prepare");
+  const prepare = lifeCan("Life_Claim_Prepare");
   return {
     submit: a.submit && prepare,
     remove: a.remove && prepare,
     documents: a.documents && prepare,
-    review: a.review && hasPrivilege("Life_Claim_Review"),
-    approve: a.approve && hasPrivilege("Life_Claim_Approve"),
-    reject: a.reject && hasPrivilege(["Life_Claim_Review", "Life_Claim_Approve"]),
+    review: a.review && lifeCan("Life_Claim_Review"),
+    approve: a.approve && lifeCan("Life_Claim_Approve"),
+    reject: a.reject && lifeCan(["Life_Claim_Review", "Life_Claim_Approve"]),
   };
 });
 

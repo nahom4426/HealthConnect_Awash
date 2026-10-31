@@ -7,7 +7,7 @@ import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
 import { toasted } from "@/utils/utils";
-import { hasPrivilege } from "@/utils/privileges";
+import { lifeCan } from "@/features/life/privileges";
 import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import InsuredMembersPanel from "../../components/InsuredMembersPanel.vue";
@@ -100,7 +100,7 @@ function renew() {
         <template v-if="p.policyStatus" #badge><StatusBadge :status="p.policyStatus" /></template>
         <template #actions>
           <Button variant="outline" @click="router.push(`/life/quotations/${uuid}`)">View quotation</Button>
-          <Button v-if="quotationActions(p).revise && hasPrivilege('Life_Policy_Service')" @click="renew">Renew / revise</Button>
+          <Button v-if="quotationActions(p).revise && lifeCan('Life_Policy_Service')" @click="renew">Renew / revise</Button>
         </template>
       </PageHeader>
 
@@ -118,7 +118,7 @@ function renew() {
         <QuotedRidersPanel v-show="tab === 'Riders'" :key="`r${uuid}`" :quotation-uuid="uuid" />
         <div v-show="tab === 'Reinsurance'" class="grid gap-4">
           <TreatyLinksPanel :key="`t${uuid}`" :quotation-uuid="uuid">
-            <template v-if="hasPrivilege(['Life_Reinsurance_Manage', 'Life_Report_View'])" #actions><Button variant="outline" size="sm" :pending="generating" @click="makeReport">Generate treaty report</Button></template>
+            <template v-if="lifeCan(['Life_Reinsurance_Manage', 'Life_Report_View'])" #actions><Button variant="outline" size="sm" :pending="generating" @click="makeReport">Generate treaty report</Button></template>
           </TreatyLinksPanel>
           <section v-if="report !== null" class="p-5 rounded-2xl border bg-surface border-line shadow-card">
             <h2 class="text-sm font-semibold text-ink">Treaty report</h2>

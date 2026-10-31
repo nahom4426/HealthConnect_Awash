@@ -11,6 +11,7 @@ import { lifeCan } from "@/features/life/privileges";
 import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import ListTable from "@/components/ListTable.vue";
+import PolicyholderPanel from "../../components/PolicyholderPanel.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
@@ -111,7 +112,7 @@ function remove() {
       </PageHeader>
 
       <p v-if="can.edit && b.status" class="px-4 py-2.5 mb-5 text-xs rounded-xl bg-surface-muted text-ink-muted">
-        Draft. To issue it, the premium must be priced, the customer's KYC verified and underwriting clear; the system says which is missing.
+        Draft. To issue it, link the policyholder and verify their KYC; the premium must also be priced and underwriting clear. The system says which is missing.
       </p>
 
       <dl class="grid gap-3 mb-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -122,15 +123,18 @@ function remove() {
       </dl>
 
       <div class="grid gap-5 lg:grid-cols-3">
-        <section class="p-5 rounded-2xl border bg-surface border-line shadow-card">
-          <h2 class="text-sm font-semibold text-ink">Policy</h2>
-          <dl class="grid gap-3 mt-3">
-            <div v-for="[label, value] in facts" :key="label" class="flex gap-3 justify-between text-sm">
-              <dt class="text-ink-subtle">{{ label }}</dt>
-              <dd class="text-right text-ink">{{ value ?? "—" }}</dd>
-            </div>
-          </dl>
-        </section>
+        <div class="grid gap-5 content-start">
+          <section class="p-5 rounded-2xl border bg-surface border-line shadow-card">
+            <h2 class="text-sm font-semibold text-ink">Policy</h2>
+            <dl class="grid gap-3 mt-3">
+              <div v-for="[label, value] in facts" :key="label" class="flex gap-3 justify-between text-sm">
+                <dt class="text-ink-subtle">{{ label }}</dt>
+                <dd class="text-right text-ink">{{ value ?? "—" }}</dd>
+              </div>
+            </dl>
+          </section>
+          <PolicyholderPanel v-if="b.benefitUuid" :benefit="b" :draft="can.isDraft" @changed="benefit.load(uuid)" />
+        </div>
 
         <section class="p-5 rounded-2xl border lg:col-span-2 bg-surface border-line shadow-card">
           <div class="flex flex-wrap gap-3 justify-between items-center">
@@ -167,7 +171,7 @@ function remove() {
           </ListTable>
         </section>
       </div>
-      <p class="mt-5 text-xs text-ink-subtle">Linking the policyholder (customer and KYC), beneficiaries and the health questionnaire come in the next screens; the backend already supports them.</p>
+      <p class="mt-5 text-xs text-ink-subtle">Beneficiaries and the health questionnaire come in the next screens.</p>
     </template>
   </div>
 </template>

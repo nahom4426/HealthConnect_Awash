@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { benefitActions, fromBenefit, pageOf, quoteParams, toBenefitRequest, toRiderBenefitRequest, validateBenefit, validateRiderBenefit } from "../individualRules";
+import { benefitActions, fromBenefit, linkCustomerRequest, pageOf, quoteParams, toBenefitRequest, toRiderBenefitRequest, validateBenefit, validateRiderBenefit } from "../individualRules";
 
 const valid = { firstName: "Liya", fatherName: "Mekonnen", grandFatherName: "Alemu", gender: "Female", personPhone: "+251911223344", dateOfBirth: "1990-06-15", beginDate: "2026-11-01", insuranceTerm: "10", termBenefit: "500000" };
 
@@ -27,8 +27,14 @@ describe("individual policy", () => {
     const body = toBenefitRequest(valid);
     expect(body).toEqual({ firstName: "Liya", fatherName: "Mekonnen", grandFatherName: "Alemu", gender: "Female", personPhone: "+251911223344", dateOfBirth: "1990-06-15T00:00:00", beginDate: "2026-11-01T00:00:00", insuranceTerm: 10, termBenefit: 500000 });
     expect(body).not.toHaveProperty("termPremium");
-    expect(fromBenefit({ ...body, termPremium: 2100 })).toEqual({ ...valid, insuranceTerm: 10, termBenefit: 500000, paymentFrequency: "" });
+    expect(fromBenefit({ ...body, termPremium: 2100 })).toEqual({ ...valid, insuranceTerm: 10, termBenefit: 500000, paymentFrequency: "", customerUuid: "", payerCustomerUuid: "" });
     expect(toBenefitRequest({ ...valid, paymentFrequency: "MONTHLY" })).toMatchObject({ paymentFrequency: "MONTHLY" });
+  });
+
+  it("keeps the policyholder, payer and payment frequency when saving", () => {
+    const saved = { ...toBenefitRequest(valid), customerUuid: "cu-1", payerCustomerUuid: "cu-2", paymentFrequency: "QUARTERLY", termPremium: 2100, status: "PENDING" };
+    expect(toBenefitRequest(fromBenefit(saved))).toMatchObject({ customerUuid: "cu-1", payerCustomerUuid: "cu-2", paymentFrequency: "QUARTERLY" });
+    expect(linkCustomerRequest({ ...saved, customerUuid: null }, "cu-9")).toEqual({ ...toBenefitRequest(valid), customerUuid: "cu-9", payerCustomerUuid: "cu-2", paymentFrequency: "QUARTERLY" });
   });
 });
 

@@ -70,3 +70,10 @@ export const ClaimQueues = Object.freeze([
   { key: "paid", label: "Paid", side: "both" },
   { key: "rejected", label: "Rejected", side: "both" },
 ]);
+
+/** CustomerResponse.kycStatus: an individual policy is issued only for a VERIFIED customer */
+export const KycStatus = Object.freeze({
+  INCOMPLETE: "INCOMPLETE",
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED",
+});

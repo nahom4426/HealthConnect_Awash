@@ -8,7 +8,7 @@ const blank = (v) => v === null || v === undefined || String(v).trim() === "";
 const PHONE = /^\+?\d{7,12}$/;
 export const GENDERS = ["Male", "Female"];
 
-/** What each status allows. There is no issue / activate endpoint yet (gap G11). */
+/** What each status allows. Only a draft (PENDING) is changed; PUT /benefit/{uuid}/issue makes it ACTIVE. */
 export function benefitActions(b = {}) {
   const draft = b.status === BenefitStatus.PENDING || !b.status;
   return { edit: draft, remove: draft, riders: draft };
@@ -37,6 +37,8 @@ export function fromBenefit(b = {}) {
     beginDate: b.beginDate ? String(b.beginDate).slice(0, 10) : "",
     insuranceTerm: b.insuranceTerm ?? "", termBenefit: b.termBenefit ?? "",
     paymentFrequency: b.paymentFrequency ?? "",
+    // Kept so saving the draft doesn't drop its policyholder or payer
+    customerUuid: b.customerUuid ?? "", payerCustomerUuid: b.payerCustomerUuid ?? "",
   };
 }
 
@@ -69,8 +71,14 @@ export function toBenefitRequest(f) {
     insuranceTerm: Number(f.insuranceTerm), termBenefit: Number(f.termBenefit),
     // Optional: how the annual premium is split into instalments (the premium schedule)
     ...(f.paymentFrequency ? { paymentFrequency: f.paymentFrequency } : {}),
+    // The policyholder and the payer (a customer whose KYC must be VERIFIED before issue)
+    ...(f.customerUuid ? { customerUuid: f.customerUuid } : {}),
+    ...(f.payerCustomerUuid ? { payerCustomerUuid: f.payerCustomerUuid } : {}),
   };
 }
+
+/** PUT /benefit/{uuid} body that links `customerUuid` as the policyholder, keeping every other field */
+export const linkCustomerRequest = (b, customerUuid) => toBenefitRequest({ ...fromBenefit(b), customerUuid });
 
 /** One rider on an individual policy. `rider` = RiderResponse (minLimit, maxLimit) when known. */
 export function validateRiderBenefit(f, rider) {

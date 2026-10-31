@@ -110,8 +110,8 @@ const PERSON = [["firstName", "First name"], ["fatherName", "Father's name"], ["
     <div v-else class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <form class="grid gap-5 min-w-0" novalidate @submit.prevent="save">
         <fieldset :disabled="locked" class="grid gap-4 p-5 rounded-2xl border sm:grid-cols-3 bg-surface border-line shadow-card">
-          <legend class="sr-only">Policyholder</legend>
-          <h2 class="text-sm font-semibold sm:col-span-3 text-ink">Policyholder (insured life)</h2>
+          <legend class="sr-only">Insured life</legend>
+          <h2 class="text-sm font-semibold sm:col-span-3 text-ink">Insured life</h2>
           <TextField v-for="[key, label] in PERSON" :key="key" v-model="form[key]" :label="label" maxlength="25" :error="errors[key]" />
           <SelectField v-model="form.gender" label="Gender" :options="GENDERS" :error="errors.gender" />
           <TextField v-model="form.dateOfBirth" label="Date of birth" type="date" :error="errors.dateOfBirth" />

@@ -19,7 +19,7 @@ import { getBenefits } from "../../api/policyApi";
 
 const router = useRouter();
 const COLUMNS = [
-  { key: "holder", label: "Policyholder" },
+  { key: "holder", label: "Insured" },
   { key: "policyNumber", label: "Policy" },
   { key: "insuranceTerm", label: "Term" },
   { key: "sumAssured", label: "Sum assured", align: "right" },

@@ -5,7 +5,7 @@ import { computed } from "vue";
 const props = defineProps({ status: { type: String, default: "" } });
 
 const TONES = {
-  success: ["ACTIVE", "PAID", "AUTHORIZED"],
+  success: ["ACTIVE", "PAID", "AUTHORIZED", "VERIFIED"],
   info: ["ISSUED", "MODIFIED", "RENEWED", "REVIEWED", "REQUESTED", "REGISTERED"],
   warning: ["ACCEPTED", "LAPSED", "REVISED", "APPROVED"],
   danger: ["CANCELLED", "REJECTED", "DENIED"],

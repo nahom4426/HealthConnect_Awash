@@ -20,6 +20,7 @@ import * as policy from "../policyApi";
 import * as underwriting from "../underwritingApi";
 import * as claim from "../claimApi";
 import * as reinsurance from "../reinsuranceApi";
+import * as customer from "../customerApi";
 
 const last = () => calls[calls.length - 1];
 
@@ -27,11 +28,11 @@ beforeEach(() => { calls.length = 0; auth.count = 0; });
 
 describe("Life API client", () => {
   // 169 operations generated from the OpenAPI document + 9 added from the backend contract of
-  // 2026-10 (docs/life-insurance/10-backend-prompt.md); regenerate from Swagger once it is live
-  it("covers the 169 generated operations plus the 9 contract additions, once each", () => {
-    const names = [product, quotation, policy, underwriting, claim, reinsurance].flatMap((m) => Object.keys(m));
-    expect(names).toHaveLength(178);
-    expect(new Set(names).size).toBe(178);
+  // 2026-10 (docs/life-insurance/10-backend-prompt.md) + 7 customer/KYC operations (G2)
+  it("covers the 169 generated operations plus the 16 contract additions, once each", () => {
+    const names = [product, quotation, policy, underwriting, claim, reinsurance, customer].flatMap((m) => Object.keys(m));
+    expect(names).toHaveLength(185);
+    expect(new Set(names).size).toBe(185);
   });
 
   it("uses the JSON bodies of the 2026-10 contract", async () => {
@@ -43,6 +44,10 @@ describe("Life API client", () => {
     expect(last()).toMatchObject({ method: "put", url: "/question/qn-1/status", config: { params: { status: "DISABLED" } } });
     await policy.getBenefitQuote({ term: 10 });
     expect(last()).toMatchObject({ method: "get", url: "/benefit/quote", config: { params: { term: 10 } } });
+    await customer.decideCustomerKyc("cu-1", { kycStatus: "VERIFIED", note: "ID seen" });
+    expect(last()).toMatchObject({ method: "put", url: "/customer/cu-1/kyc", data: { kycStatus: "VERIFIED", note: "ID seen" } });
+    await customer.getCustomers({ type: "INDIVIDUAL", search: "Liya" });
+    expect(last()).toMatchObject({ method: "get", url: "/customer/list", config: { params: { type: "INDIVIDUAL", search: "Liya" } } });
     await policy.getIndividualRiderBenefits({ benefitUuid: "b-1" });
     expect(last()).toMatchObject({ url: "/individual-rider-benefit/active/benefits", config: { params: { benefitUuid: "b-1" } } });
   });

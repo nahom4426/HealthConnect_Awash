@@ -2,6 +2,7 @@
 // Entry screen for the "Notification of Motor Accident" form. Sections and item numbers
 // match the paper form so staff can copy a filled paper form top to bottom. Labels switch
 // between English and the form's own Amharic (notificationLabels.js).
+import { onMounted } from 'vue';
 import { DRIVING_REASONS, emptyInjured } from '@/features/motor/claims/notificationForm';
 import { notificationLabel } from '@/features/motor/claims/notificationLabels';
 
@@ -17,6 +18,15 @@ const showStep = (n) => !props.step || props.step === n;
 const t = (key) => notificationLabel(key, props.lang);
 // Section headings also show the other language, small, so either reader can find their place.
 const other = (key) => notificationLabel(key, props.lang === 'am' ? 'en' : 'am');
+
+// The declaration repeats names already on the form; start it from them so staff only check it.
+onMounted(() => {
+  if (props.step !== 4) return;
+  const d = props.form.declaration;
+  d.insuredName ||= props.form.policyHolder.fullName;
+  d.driverName ||= props.form.driver.fullName;
+  d.date ||= new Date().toISOString().slice(0, 10);
+});
 
 function addInjured() {
   props.form.injuries.push(emptyInjured());
@@ -324,6 +334,36 @@ function removeInjured(idx) {
       </div>
       <button type="button" class="mn-add" @click="addInjured">+ Add injured person</button>
     </section>
+
+    <!-- Declaration (foot of page 2) -->
+    <section v-if="showStep(4)" class="mn-section">
+      <h2 class="mn-title"><span class="mn-no">✍</span> {{ t('sec.decl') }} <span class="mn-alt">{{ other('sec.decl') }}</span></h2>
+      <p class="mn-decl">{{ t('declText') }}</p>
+      <div class="mn-grid">
+        <label class="mn-field">
+          <span>{{ t('declDate') }}</span>
+          <input v-model="form.declaration.date" type="date" />
+        </label>
+        <label class="mn-field">
+          <span>{{ t('declInsured') }}</span>
+          <input v-model="form.declaration.insuredName" type="text" />
+        </label>
+        <label class="mn-field">
+          <span>{{ t('declDriver') }}</span>
+          <input v-model="form.declaration.driverName" type="text" />
+        </label>
+        <span class="mn-spacer" aria-hidden="true"></span>
+        <label class="mn-field span-2">
+          <span>{{ t('declWitness') }} 1.</span>
+          <input v-model="form.declaration.witness1" type="text" placeholder="Name of the person present when the form was filled" />
+        </label>
+        <label class="mn-field span-2">
+          <span>{{ t('declWitness') }} 2.</span>
+          <input v-model="form.declaration.witness2" type="text" />
+        </label>
+      </div>
+      <p class="mn-hint">Names and the date print on their lines; the insured, the driver and the witness still sign the printed form by hand.</p>
+    </section>
   </div>
 </template>
 
@@ -366,6 +406,10 @@ function removeInjured(idx) {
 @media (min-width: 680px) { .mn-injured { grid-template-columns: 1fr 1fr 1fr auto; } }
 .mn-remove { height: 2.3rem; width: 2.3rem; border-radius: 9px; border: 1px solid var(--cn-border); background: transparent; color: var(--cn-sub); cursor: pointer; }
 .mn-remove:hover { border-color: #dc2626; color: #dc2626; }
+.mn-decl { font-size: .78rem; line-height: 1.55; color: var(--cn-sub); margin: -.3rem 0 .9rem; }
+.mn-hint { font-size: .72rem; color: var(--cn-sub); margin-top: .7rem; }
+.mn-spacer { display: none; }
+@media (min-width: 1024px) { .mn-spacer { display: block; } }
 .mn-add { font-size: .78rem; font-weight: 700; color: var(--cn-accent); background: none; border: 1px dashed var(--cn-accent); border-radius: 9px; padding: .45rem .9rem; cursor: pointer; transition: background .15s; }
 .mn-add:hover { background: #eef2ff; }
 .mn-section { transition: border-color .2s, box-shadow .2s; }

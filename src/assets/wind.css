@@ -145,6 +145,12 @@ body,
   height: 100%;
   overflow: hidden;
 }
+/* clip, unlike hidden, can't be scrolled by focus or scrollIntoView, so the app frame never
+   slides up and leaves a blank band; page content scrolls in its own area. */
+body,
+#app {
+  overflow: clip;
+}
 
 body {
   font-family: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,

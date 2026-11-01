@@ -88,6 +88,36 @@ export function loadProcess(claimUuid) {
   return { ...emptyProcess(), ...(saved || {}), documents: { ...(saved?.documents || {}) }, activity: [...(saved?.activity || [])] };
 }
 
+/**
+ * A claim's progress for the screens: what the server stores wins, and this browser's copy only
+ * fills in what the server doesn't store (or didn't accept).
+ */
+export function processFor(claim) {
+  const proc = loadProcess(claim?.claimUuid);
+  if (!claim) return proc;
+  if (typeof claim.filedByRepresentative === 'boolean') proc.representative = claim.filedByRepresentative;
+  if (claim.reportedChannel) proc.reportedChannel = claim.reportedChannel;
+  for (const m of claim.documentMarks || []) {
+    if (m?.documentType) proc.documents[m.documentType] = { status: m.status || '', originalSeen: !!m.originalSeen, reason: m.reason || '' };
+  }
+  const ex = claim.excess;
+  if (ex && (ex.none || (ex.amount !== null && ex.amount !== undefined))) {
+    proc.excess = ex.none ? { none: true } : { amount: Number(ex.amount), receiptNo: ex.receiptNo || '' };
+  }
+  if (claim.salvage?.status) proc.salvage = { status: claim.salvage.status, note: claim.salvage.note || '' };
+  const c = claim.closed;
+  if (c?.outcome) {
+    proc.closed = { outcome: c.outcome, reason: c.reason || '', at: c.closedAt || null, by: c.closedBy || '', atStage: STAGE_OF_STATUS[c.statusBeforeClose] || proc.closed?.atStage || 2 };
+  } else if (c === null && !CLOSED_OUTCOMES[claim.status]) {
+    proc.closed = null; // the server says open (e.g. reopened elsewhere)
+  }
+  if (claim.recovery && Object.keys(claim.recovery).length) {
+    const r = claim.recovery;
+    proc.recovery = { ...r, at: r.at || r.initiatedAt || r.createdAt || proc.recovery?.at || null };
+  }
+  return proc;
+}
+
 export function saveProcess(claimUuid, proc) {
   if (!claimUuid) return;
   try {

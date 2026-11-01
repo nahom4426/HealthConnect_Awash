@@ -7,15 +7,18 @@ import { useRoute, useRouter } from 'vue-router';
 import { getActingRole, roleSwitcherEnabled } from '@/utils/actingRole';
 import {
   fetchClaimByUuid, updateClaimStatus, assignClaimAdjustor, assignClaimGarage, fetchClaimImage, fetchClaimDocuments,
-  fetchClaimDocumentUrl, uploadClaimDocument, requestClaimDocuments, recordSpotSurvey, fetchGarageBids, submitGarageBid,
-  selectWinningGarageBid, initiateSubrogation,
+  fetchClaimDocumentUrl, uploadClaimDocument, markClaimDocument, clearClaimDocumentMark, setClaimRepresentative, fetchAdjustors, requestClaimDocuments, recordSpotSurvey, fetchGarageBids, submitGarageBid,
+  selectWinningGarageBid, initiateSubrogation, saveClaimExcess, saveClaimSalvage, closeClaim, reopenClaim, fetchClaimActivity,
+  updateClaimReportedChannel,
 } from '@/features/motor/claims/api/digitalChannelApi';
 import {
-  STAGES, ADJUSTORS, GARAGES, REPORT_CHANNELS, CLOSED_OUTCOMES, loadProcess, saveProcess, logActivity, documentChecklist,
+  STAGES, ADJUSTORS, GARAGES, REPORT_CHANNELS, CLOSED_OUTCOMES, loadProcess, processFor, saveProcess, logActivity, documentChecklist,
   missingDocuments, currentStage, closedOutcome, stageGate, stageSteps, selectedBid, netSettlement, daysOpen,
 } from '@/features/motor/claims/claimProcess';
 import { loadNotificationForm, formatFormDate } from '@/features/motor/claims/notificationForm';
 import ClaimStepper from '@/features/motor/claims/components/ClaimStepper.vue';
+import MotorNotificationFields from '@/features/motor/claims/components/MotorNotificationFields.vue';
+import { LANGS } from '@/features/motor/claims/notificationLabels';
 import RoleSwitcher from '@/components/RoleSwitcher.vue';
 import { revokeObjectUrls } from '@/utils/imageBlob';
 import { useAuthStore } from '@/stores/auth';
@@ -47,6 +50,15 @@ const myName = computed(() => authStore.auth?.user?.fullName || authStore.auth?.
 const canManage = computed(() => !['ROLE_CUSTOMER', 'ROLE_GARAGE'].includes(myRole.value));
 
 const form = computed(() => loadNotificationForm(claim.value).form);
+
+// The full form panel follows the language chosen on the new-claim screen.
+const LANG_KEY = 'motor.claimForm.lang';
+const formOpen = ref(false);
+const formLang = ref((() => { try { return localStorage.getItem(LANG_KEY) || 'en'; } catch { return 'en'; } })());
+function setFormLang(code) {
+  formLang.value = code;
+  try { localStorage.setItem(LANG_KEY, code); } catch { /* storage blocked */ }
+}
 const stage = computed(() => (claim.value ? currentStage(claim.value, proc.value) : 2));
 const outcome = computed(() => closedOutcome(claim.value, proc.value));
 const steps = computed(() => stageSteps(claim.value, proc.value, viewStage.value));
@@ -61,7 +73,9 @@ const gateOpen = computed(() => gate.value.every(i => i.done));
 const age = computed(() => daysOpen(claim.value));
 const net = computed(() => netSettlement(winner.value, proc.value));
 
-const adjustorName = (id) => ADJUSTORS.find(a => a.id === id)?.name || id;
+// Real adjustors from the backend; the built-in list only when the lookup is unavailable.
+const adjustors = ref(ADJUSTORS);
+const adjustorName = (id) => adjustors.value.find(a => a.id === id)?.name || id;
 const garageName = (code) => GARAGES.find(g => g.code === code)?.name || code;
 const money = (n) => (n === null || n === undefined || n === '' ? '—' : `ETB ${Number(n).toLocaleString()}`);
 const words = (t) => (t ? String(t).toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '—');
@@ -83,6 +97,7 @@ function fillForms() {
   const f = form.value;
   const adj = claim.value?.adjustorUuid;
   if (adj) adjustorPick.value = adj;
+  else if (!adjustors.value.some(a => a.id === adjustorPick.value)) adjustorPick.value = adjustors.value[0]?.id || '';
   survey.surveyorName ||= adjustorName(adj) || '';
   survey.surveyDate ||= new Date().toISOString().slice(0, 10);
   survey.location ||= claim.value?.incidentLocation || f.accident.place || '';
@@ -97,12 +112,17 @@ async function loadAll({ keepView = false } = {}) {
   const uuid = claimUuid.value;
   claim.value = await fetchClaimByUuid(uuid);
   if (!claim.value) { loading.value = false; return; }
-  proc.value = loadProcess(claim.value.claimUuid);
-  const [docs, bidList] = await Promise.all([
-    claim.value.documents?.length ? Promise.resolve(claim.value.documents) : fetchClaimDocuments(claim.value.claimUuid),
+  proc.value = processFor(claim.value);
+  const [docs, bidList, activity] = await Promise.all([
+    fetchClaimDocuments(claim.value.claimUuid),
     fetchGarageBids(claim.value.claimUuid),
+    fetchClaimActivity(claim.value.claimUuid),
   ]);
-  uploads.value = docs;
+  serverActivity.value = activity;
+  const listed = mergeDocuments(claim.value.documents, docs);
+  const key = d => `${d.documentType}:${d.originalFileName}`;
+  pendingUploads.value = pendingUploads.value.filter(p => !listed.some(d => (p.documentUuid && d.documentUuid === p.documentUuid) || key(d) === key(p)));
+  uploads.value = mergeDocuments(listed, pendingUploads.value);
   bids.value = bidList.length ? bidList : (claim.value.garageBids || []);
   if (!keepView) viewStage.value = Math.min(stage.value, 7);
   fillForms();
@@ -137,12 +157,22 @@ async function run(fn, successText, { reload = true } = {}) {
     if (reload) await loadAll({ keepView: true });
     return true;
   } catch (e) {
-    const detail = e?.response?.data?.detail || e?.response?.data?.message || e?.message || 'Request failed';
-    notice.value = { type: 'error', text: `Could not save: ${detail}` };
+    notice.value = { type: 'error', text: `Could not save: ${errorText(e)}` };
     return false;
   } finally {
     busy.value = false;
   }
+}
+
+/** The server's reason in plain words; a 422 lists the documents it still counts as missing. */
+function errorText(e) {
+  const data = e?.response?.data || {};
+  const missing = data.properties?.missing || data.missing;
+  if (Array.isArray(missing) && missing.length) {
+    const names = missing.map(t => docName(checklist.value.find(d => d.type === t) || { label: words(t) }));
+    return `the server still counts ${names.length === 1 ? 'this document' : 'these documents'} as missing: ${names.join(', ')}. Upload ${names.length === 1 ? 'it' : 'them'} or mark ${names.length === 1 ? 'it' : 'them'} received, then try again.`;
+  }
+  return data.detail || data.message || e?.message || 'Request failed';
 }
 
 function moveTo(n) {
@@ -150,9 +180,39 @@ function moveTo(n) {
 }
 
 // ── Stage 1: reported ───────────────────────────────────────────────────────
-function setChannel(channel) {
+// The server writes its own activity log; the browser's log is only shown when the server has none.
+const serverActivity = ref([]);
+// The server's log names documents, garages and adjustors by code ("PROFORMA_INVOICE marked received",
+// "garage GAR-201"); show the names staff know, and amounts with thousands separators.
+function readableActivity(text) {
+  let t = String(text || '');
+  for (const d of checklist.value) t = t.split(d.type).join(docName(d));
+  for (const g of GARAGES) t = t.split(g.code).join(g.name).replace(`garage ${g.name}`, g.name);
+  for (const a of adjustors.value) t = t.split(a.id).join(a.name);
+  return t.replace(/ETB (\d{4,})/g, (_, n) => `ETB ${Number(n).toLocaleString()}`);
+}
+const activityList = computed(() => (serverActivity.value.length
+  ? serverActivity.value.map(a => ({ ...a, text: readableActivity(a.text) }))
+  : proc.value.activity));
+
+/** Saves on the server; if it refuses, the change stays on this computer and the page says so. */
+async function saveOnServer(fn, what) {
+  try {
+    await fn();
+    return true;
+  } catch (e) {
+    notice.value = { type: 'error', text: `${what} is saved on this computer only; the server did not accept it (${errorText(e)}).` };
+    return false;
+  }
+}
+
+async function setChannel(channel) {
   proc.value.reportedChannel = channel;
   persist(`Reported by ${words(channel)}`);
+  if (!channel) return;
+  if (await saveOnServer(() => updateClaimReportedChannel(claim.value, channel), 'How it was reported')) {
+    notice.value = { type: 'success', text: `Saved: reported by ${words(channel).toLowerCase()}` };
+  }
 }
 
 function printForm() {
@@ -164,6 +224,21 @@ function printForm() {
 function setRepresentative(value) {
   proc.value.representative = value;
   persist(value ? 'Filed by a representative: power of attorney required' : 'Filed by the insured');
+  setClaimRepresentative(claim.value.claimUuid, value)
+    .catch(e => console.warn('Representative flag not saved on the server; kept on this computer:', e?.message));
+}
+
+/** Sends this browser's document ticks and the representative flag to the server, so its
+ *  document check agrees with what the page shows (ticks made before marks were saved
+ *  on the server only exist here). */
+async function syncDocumentsToServer() {
+  const uuid = claim.value.claimUuid;
+  const warn = e => console.warn('Could not copy a document tick to the server:', e?.message);
+  await setClaimRepresentative(uuid, !!proc.value.representative).catch(warn);
+  for (const [type, mark] of Object.entries(proc.value.documents || {})) {
+    if (!mark || (!mark.status && !mark.originalSeen)) continue;
+    await markClaimDocument(uuid, type, { status: mark.status || '', originalSeen: !!mark.originalSeen, reason: mark.reason || '' }).catch(warn);
+  }
 }
 
 // "Driving licence — original seen, copy kept" → name "Driving licence", detail "Original seen, copy kept".
@@ -174,17 +249,46 @@ const docDetail = (doc) => {
 };
 const DOC_STATE = { pending: 'Waiting', original: 'Original not seen yet', received: 'Received', na: 'Not needed' };
 
+// Uploaded files can be listed on the claim and on /documents; take both, plus any upload this
+// page made that the server has not listed yet, so a fresh upload always shows.
+const pendingUploads = ref([]);
+function mergeDocuments(...lists) {
+  const seen = new Map();
+  for (const d of lists.flat().filter(Boolean)) seen.set(d.documentUuid || `${d.documentType}:${d.originalFileName}`, d);
+  return [...seen.values()];
+}
+
+const docNote = reactive({}); // per document type: { kind: 'busy' | 'ok' | 'error', text }
+
 function markDoc(doc, patch, text) {
-  proc.value.documents[doc.type] = { ...(proc.value.documents[doc.type] || {}), ...patch };
+  const mark = { ...(proc.value.documents[doc.type] || {}), ...patch };
+  proc.value.documents[doc.type] = mark;
+  if (docNote[doc.type]?.kind === 'ok') delete docNote[doc.type];
   persist(text);
+  const body = { status: mark.status || '', originalSeen: !!mark.originalSeen, reason: mark.reason || '' };
+  const empty = !body.status && !body.originalSeen;
+  (empty ? clearClaimDocumentMark(claim.value.claimUuid, doc.type) : markClaimDocument(claim.value.claimUuid, doc.type, body))
+    .catch(e => console.warn('Document mark not saved on the server; kept on this computer:', e?.message));
 }
 
 async function uploadDoc(doc, event) {
   const file = event.target.files?.[0];
   event.target.value = '';
   if (!file) return;
-  const ok = await run(() => uploadClaimDocument(claim.value.claimUuid, file, doc.type), `${docName(doc)} uploaded`);
-  if (ok) persist(`Uploaded ${file.name} as ${docName(doc)}`);
+  docNote[doc.type] = { kind: 'busy', text: `Uploading ${file.name}…` };
+  try {
+    const saved = await uploadClaimDocument(claim.value.claimUuid, file, doc.type);
+    const entry = saved?.documentUuid ? saved : { documentType: doc.type, originalFileName: file.name, contentType: file.type };
+    pendingUploads.value = [...pendingUploads.value, { ...entry, documentType: entry.documentType || doc.type }];
+    uploads.value = mergeDocuments(uploads.value, pendingUploads.value);
+    persist(`Uploaded ${file.name} as ${docName(doc)}`);
+    const needsOriginal = doc.original && !proc.value.documents[doc.type]?.originalSeen;
+    docNote[doc.type] = { kind: 'ok', text: needsOriginal ? `${file.name} uploaded. Tick "Original seen" once you have seen the original.` : `${file.name} uploaded.` };
+    await loadAll({ keepView: true });
+  } catch (e) {
+    const detail = e?.response?.data?.detail || e?.response?.data?.message || e?.message || 'Upload failed';
+    docNote[doc.type] = { kind: 'error', text: `Upload failed: ${detail}` };
+  }
 }
 
 function confirmNa() {
@@ -204,6 +308,7 @@ async function requestMissing() {
 
 async function startAssessment() {
   const ok = await run(async () => {
+    await syncDocumentsToServer();
     await assignClaimAdjustor(claim.value.claimUuid, adjustorPick.value);
     await updateClaimStatus(claim.value.claimUuid, 'IN_PROCESS');
   }, `Assessment started with ${adjustorName(adjustorPick.value)}`);
@@ -241,23 +346,30 @@ async function confirmClose() {
   const kind = closing.value;
   const reason = closeReason.value.trim();
   if (!kind || !reason) return;
-  // The backend may not know REJECTED / WITHDRAWN yet (backend prompt M9); keep the outcome here either way.
+  // Kept on this computer as well, in case the server refuses.
   let savedOnServer = true;
-  try { await updateClaimStatus(claim.value.claimUuid, kind); } catch { savedOnServer = false; }
+  let serverError = '';
+  try { await closeClaim(claim.value.claimUuid, kind, reason); } catch (e) { savedOnServer = false; serverError = errorText(e); }
   proc.value.closed = { outcome: kind, reason, at: new Date().toISOString(), by: myName.value, atStage: stage.value };
   if (kind === 'REJECTED') proc.value.decision = { outcome: 'REJECTED', reason, at: new Date().toISOString(), by: myName.value };
   persist(`${CLOSED_OUTCOMES[kind]}: ${reason}`);
   closing.value = null;
   notice.value = savedOnServer
     ? { type: 'success', text: `Claim ${CLOSED_OUTCOMES[kind].toLowerCase()}` }
-    : { type: 'error', text: `Claim marked ${CLOSED_OUTCOMES[kind].toLowerCase()} on this computer only; the server did not accept the status.` };
+    : { type: 'error', text: `Claim marked ${CLOSED_OUTCOMES[kind].toLowerCase()} on this computer only; the server did not accept it (${serverError}).` };
   await loadAll({ keepView: true });
 }
 
-function reopen() {
+async function reopen() {
+  const onServer = !!claim.value.closed?.outcome || !!CLOSED_OUTCOMES[claim.value.status];
+  if (onServer) {
+    const ok = await run(() => reopenClaim(claim.value.claimUuid, 'Reopened'), 'Claim reopened', { reload: false });
+    if (!ok) return;
+  }
   proc.value.closed = null;
   if (proc.value.decision?.outcome === 'REJECTED') proc.value.decision = null;
   persist('Claim reopened');
+  if (onServer) await loadAll({ keepView: true });
 }
 
 // ── Stage 4: repair quotes ──────────────────────────────────────────────────
@@ -289,10 +401,14 @@ async function chooseBid(bid) {
 const cheapest = computed(() => bids.value.reduce((min, b) => (min === null || Number(b.bidAmount) < Number(min.bidAmount) ? b : min), null));
 
 // ── Stage 5: excess ─────────────────────────────────────────────────────────
-function saveExcess() {
+async function saveExcess() {
   if (!excessForm.none && (!excessForm.amount || !excessForm.receiptNo)) return;
-  proc.value.excess = excessForm.none ? { none: true } : { amount: Number(excessForm.amount), receiptNo: excessForm.receiptNo.trim() };
+  const excess = excessForm.none ? { none: true } : { none: false, amount: Number(excessForm.amount), receiptNo: excessForm.receiptNo.trim() };
+  proc.value.excess = excess.none ? { none: true } : { amount: excess.amount, receiptNo: excess.receiptNo };
   persist(excessForm.none ? 'No excess applies' : `Excess ${money(excessForm.amount)} paid, receipt ${excessForm.receiptNo}`);
+  if (await saveOnServer(() => saveClaimExcess(claim.value.claimUuid, excess), 'The excess')) {
+    notice.value = { type: 'success', text: 'Excess saved' };
+  }
 }
 
 async function sendToGarage() {
@@ -311,15 +427,26 @@ async function setRepairStatus(status, text) {
 }
 
 // ── Stage 7: salvage & handover ─────────────────────────────────────────────
-function saveSalvage() {
+async function saveSalvage() {
   if (!salvageForm.status) return;
-  proc.value.salvage = { status: salvageForm.status, note: salvageForm.note.trim() };
+  const salvage = { status: salvageForm.status, note: salvageForm.note.trim() };
+  proc.value.salvage = salvage;
   persist(salvageForm.status === 'RETURNED' ? `Salvage returned${salvageForm.note ? `: ${salvageForm.note}` : ''}` : 'Salvage not required');
+  if (await saveOnServer(() => saveClaimSalvage(claim.value.claimUuid, salvage), 'Salvage')) {
+    notice.value = { type: 'success', text: 'Salvage saved' };
+  }
 }
 
 async function handover() {
-  const ok = await run(() => updateClaimStatus(claim.value.claimUuid, 'HANDOVER_COMPLETED'), 'Vehicle handed over; claim completed');
-  if (ok) persist('Vehicle handed over to the insured');
+  const ok = await run(() => updateClaimStatus(claim.value.claimUuid, 'HANDOVER_COMPLETED'), 'Vehicle handed over; claim completed', { reload: false });
+  if (!ok) return;
+  persist('Vehicle handed over to the insured');
+  // Nothing is left to do on this claim: go back to the table, on its Completed tab.
+  backToClaims({ done: claim.value.claimNumber || claim.value.claimUuid });
+}
+
+function backToClaims(query = {}) {
+  router.push({ path: `/${claim.value?.productModule || 'motor'}/claims/process`, query });
 }
 
 const otherPartyAtFault = computed(() => {
@@ -337,6 +464,7 @@ async function startRecovery() {
   if (ok) {
     proc.value.recovery = { ...recoveryForm, at: new Date().toISOString() };
     persist(`Recovery started against ${recoveryForm.atFaultPartyName || 'the other party'}`);
+    await loadAll({ keepView: true });
   }
 }
 
@@ -345,10 +473,18 @@ function handleKeyDown(e) {
   if (e.key === 'Escape') { selectedPhoto.value = null; closing.value = null; naFor.value = null; }
 }
 
-watch(claimUuid, () => { loading.value = true; loadAll(); });
+watch(claimUuid, () => {
+  loading.value = true;
+  pendingUploads.value = [];
+  serverActivity.value = [];
+  for (const k of Object.keys(docNote)) delete docNote[k];
+  loadAll();
+});
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('keydown', handleKeyDown);
+  const list = await fetchAdjustors();
+  if (list.length) adjustors.value = list;
   loadAll();
 });
 
@@ -390,9 +526,11 @@ onBeforeUnmount(() => {
         <strong>{{ CLOSED_OUTCOMES[outcome] || words(outcome) }}</strong>
         <span v-if="proc.closed">· {{ proc.closed.reason }} · {{ proc.closed.by }} · {{ when(proc.closed.at) }}</span>
         <button v-if="canManage && proc.closed" type="button" class="cw-link" @click="reopen">Reopen</button>
+        <button type="button" class="cw-link" @click="backToClaims({ tab: 'CLOSED' })">Back to claims →</button>
       </div>
       <div v-else-if="stage === 8" class="cw-banner done" role="status">
         <strong>Claim completed</strong> · vehicle handed over<template v-if="claim.approvedAmount"> · Standard paid {{ money(claim.approvedAmount) }}</template>
+        <button type="button" class="cw-link" @click="backToClaims({ tab: 'DONE' })">Back to claims →</button>
       </div>
 
       <div v-if="notice" class="cn-alert" :class="notice.type" role="alert">{{ notice.text }}</div>
@@ -428,7 +566,9 @@ onBeforeUnmount(() => {
             <div class="cn-grid">
               <div class="cn-field">
                 <label for="cw-channel">How the accident was reported</label>
-                <select id="cw-channel" :value="proc.reportedChannel" :disabled="!canManage" @change="setChannel($event.target.value)">
+                <!-- The server takes the channel when the claim is filed and refuses changes after that. -->
+                <div v-if="claim.reportedChannel" class="cw-static" title="Set when the claim was filed">{{ words(claim.reportedChannel) }}</div>
+                <select v-else id="cw-channel" :value="proc.reportedChannel" :disabled="!canManage" @change="setChannel($event.target.value)">
                   <option value="">Choose…</option>
                   <option v-for="c in REPORT_CHANNELS" :key="c" :value="c">{{ words(c) }}</option>
                 </select>
@@ -446,6 +586,23 @@ onBeforeUnmount(() => {
               <dt>Responsible</dt><dd>{{ form.accident.responsible || '—' }}</dd>
             </dl>
             <p class="cw-desc">{{ form.accident.description || claim.description || 'No description.' }}</p>
+
+            <details class="cw-form" :open="formOpen" @toggle="formOpen = $event.target.open">
+              <summary>
+                <span>Full notification form, as filed</span>
+                <span class="cw-form-sub">Every item of the paper form, sections 1 to 6 and the declaration</span>
+              </summary>
+              <div class="cw-form-tools">
+                <div class="cn-lang" role="group" aria-label="Form language">
+                  <button v-for="l in LANGS" :key="l.code" type="button" :class="{ active: formLang === l.code }" :aria-pressed="formLang === l.code" @click="setFormLang(l.code)">{{ l.label }}</button>
+                </div>
+                <button type="button" class="cn-blank-btn" @click="printForm">Print it</button>
+              </div>
+              <!-- Read-only: the server keeps a submitted claim's form as filed. -->
+              <fieldset class="cw-form-body" disabled>
+                <MotorNotificationFields :form="form" :lang="formLang" />
+              </fieldset>
+            </details>
           </div>
 
           <!-- 2 Documents -->
@@ -471,6 +628,9 @@ onBeforeUnmount(() => {
                     <template v-else-if="doc.files.length">📎 {{ doc.files.map(f => f.originalFileName || 'file').join(', ') }}</template>
                     <template v-else-if="proc.documents[doc.type]?.status === 'RECEIVED'">Paper copy kept on file</template>
                   </div>
+                  <div v-if="docNote[doc.type]" class="cw-doc-note" :class="docNote[doc.type].kind" :role="docNote[doc.type].kind === 'error' ? 'alert' : 'status'">
+                    <span v-if="docNote[doc.type].kind === 'busy'" class="cw-mini-spin" aria-hidden="true"></span>{{ docNote[doc.type].text }}
+                  </div>
                   <div v-if="naFor === doc.type" class="cw-inline-form">
                     <input v-model="naReason" type="text" placeholder="Why isn't it needed?" aria-label="Reason it isn't needed" @keyup.enter="confirmNa" />
                     <button type="button" class="cn-verify-btn" :disabled="!naReason.trim()" @click="confirmNa">Save</button>
@@ -482,8 +642,8 @@ onBeforeUnmount(() => {
                     <input type="checkbox" :checked="doc.originalSeen" @change="markDoc(doc, { originalSeen: $event.target.checked }, `${docName(doc)}: original ${$event.target.checked ? 'seen' : 'not seen'}`)" />
                     Original seen
                   </label>
-                  <label v-if="doc.state !== 'na'" class="cw-mini-btn">
-                    ⤒ Upload<input type="file" class="sr-only" accept="image/*,application/pdf" @change="uploadDoc(doc, $event)" />
+                  <label v-if="doc.state !== 'na'" class="cw-mini-btn" :class="{ busy: docNote[doc.type]?.kind === 'busy' }">
+                    {{ docNote[doc.type]?.kind === 'busy' ? 'Uploading…' : doc.files.length ? '⤒ Upload another' : '⤒ Upload' }}<input type="file" class="sr-only" accept="image/*,application/pdf" :disabled="docNote[doc.type]?.kind === 'busy'" @change="uploadDoc(doc, $event)" />
                   </label>
                   <button v-if="doc.state === 'pending'" type="button" class="cw-mini-btn" @click="markDoc(doc, { status: 'RECEIVED' }, `${docName(doc)}: paper copy received`)">✓ Paper copy received</button>
                   <button v-if="doc.state !== 'na'" type="button" class="cw-mini-btn ghost" @click="naFor = doc.type; naReason = ''">Not needed</button>
@@ -495,7 +655,7 @@ onBeforeUnmount(() => {
               <div class="cn-field cw-grow">
                 <label for="cw-adjustor">Adjustor who will survey the vehicle</label>
                 <select id="cw-adjustor" v-model="adjustorPick">
-                  <option v-for="a in ADJUSTORS" :key="a.id" :value="a.id">{{ a.name }} ({{ a.role }})</option>
+                  <option v-for="a in adjustors" :key="a.id" :value="a.id">{{ a.name }} ({{ a.role }})</option>
                 </select>
               </div>
               <button type="button" class="cn-cancel" :disabled="busy || !missing.length" @click="requestMissing">
@@ -664,14 +824,14 @@ onBeforeUnmount(() => {
 
           <div class="cn-card cw-side-card">
             <h3 class="cw-side-title">Activity</h3>
-            <ol v-if="proc.activity.length" class="cw-activity">
-              <li v-for="(a, i) in proc.activity.slice(0, 12)" :key="i">
+            <ol v-if="activityList.length" class="cw-activity">
+              <li v-for="(a, i) in activityList.slice(0, 20)" :key="i">
                 <span class="cw-dot" aria-hidden="true"></span>
-                <div><p>{{ a.text }}</p><small>{{ a.by }} · {{ when(a.at) }}</small></div>
+                <div><p>{{ a.text }}</p><small>{{ [a.by, when(a.at)].filter(Boolean).join(' · ') }}</small></div>
               </li>
             </ol>
             <p v-else class="cw-empty-inline">Nothing done on this claim yet.</p>
-            <p class="cw-foot">Saved on this computer only, for now.</p>
+            <p v-if="!serverActivity.length && activityList.length" class="cw-foot">The server has no log for this claim yet, so this is what was done on this computer.</p>
           </div>
 
           <div v-if="claimPhotos.length" class="cn-card cw-side-card">
@@ -743,6 +903,19 @@ onBeforeUnmount(() => {
 .cw-facts dt { color: var(--cn-sub); font-weight: 600; }
 .cw-facts dd { color: var(--cn-title); font-weight: 600; margin: 0; overflow-wrap: anywhere; }
 .cw-facts.tight { font-size: .78rem; }
+.cw-form { border: 1px solid var(--cn-border); border-radius: 12px; background: var(--cn-card); }
+.cw-form summary { cursor: pointer; padding: .8rem 1rem; display: flex; flex-direction: column; gap: .1rem; list-style: none; }
+.cw-form summary::-webkit-details-marker { display: none; }
+.cw-form summary > span:first-child { font-size: .85rem; font-weight: 800; color: var(--cn-title); }
+.cw-form summary > span:first-child::before { content: '▸'; display: inline-block; margin-right: .45rem; color: var(--cn-accent); transition: transform .15s; }
+.cw-form[open] summary > span:first-child::before { transform: rotate(90deg); }
+.cw-form summary:hover > span:first-child { color: var(--cn-accent); }
+.cw-form-sub { font-size: .72rem; color: var(--cn-sub); padding-left: 1.1rem; }
+.cw-form-tools { display: flex; justify-content: flex-end; gap: .5rem; padding: 0 1rem .6rem; }
+.cw-form-body { border: 0; margin: 0; padding: 0 1rem 1rem; min-width: 0; }
+/* Filled values read as text, not as greyed-out inputs */
+.cw-form-body :deep(input), .cw-form-body :deep(select), .cw-form-body :deep(textarea) { background: var(--cn-bg); color: var(--cn-title); opacity: 1; -webkit-text-fill-color: var(--cn-title); cursor: default; resize: none; }
+.cw-form-body :deep(.mn-add), .cw-form-body :deep(.mn-remove), .cw-form-body :deep(.mn-hint) { display: none; }
 .cw-desc { font-size: .82rem; color: var(--cn-title); white-space: pre-wrap; background: var(--cn-bg); border-radius: 10px; padding: .75rem .9rem; }
 .cw-muted { color: var(--cn-sub); font-size: .8rem; }
 .cw-note { font-size: .8rem; color: var(--cn-title); background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: .6rem .8rem; }
@@ -758,6 +931,12 @@ onBeforeUnmount(() => {
 .cw-pill.original { background: #fef3c7; color: #92400e; }
 .cw-pill.received { background: #d1fae5; color: #047857; }
 .cw-pill.na { background: #f1f5f9; color: #64748b; }
+.cw-doc-note { display: flex; align-items: center; gap: .4rem; margin-top: .4rem; font-size: .74rem; font-weight: 700; padding: .3rem .55rem; border-radius: 7px; width: fit-content; }
+.cw-doc-note.busy { color: #4338ca; background: #eef2ff; }
+.cw-doc-note.ok { color: #047857; background: #ecfdf5; }
+.cw-doc-note.error { color: #b91c1c; background: #fef2f2; }
+.cw-mini-spin { width: .8rem; height: .8rem; border: 2px solid #c7d2fe; border-top-color: #4338ca; border-radius: 50%; animation: cw-spin .8s linear infinite; }
+.cw-mini-btn.busy { opacity: .7; pointer-events: none; }
 .cw-doc-detail { font-size: .74rem; font-weight: 600; color: var(--cn-sub); margin-top: .1rem; }
 .cw-next { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; padding: .9rem 1rem; border: 1px dashed #c7d2fe; border-radius: 12px; background: #f8faff; }
 .cn-root.dark .cw-next { background: rgba(99,102,241,.06); }
@@ -780,7 +959,7 @@ onBeforeUnmount(() => {
 .cw-inline-form { display: flex; gap: .4rem; margin-top: .5rem; }
 .cw-inline-form input { flex: 1; min-width: 0; padding: .4rem .6rem; border: 1px solid var(--cn-border); border-radius: 8px; font-size: .8rem; background: var(--cn-input-bg); color: var(--cn-title); }
 
-.cw-mini-btn { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; padding: .32rem .7rem; border-radius: 8px; border: 1px solid #c7d2fe; background: #eef2ff; color: #4338ca; font-size: .72rem; font-weight: 700; cursor: pointer; transition: all .15s; }
+.cw-mini-btn { position: relative; display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; padding: .32rem .7rem; border-radius: 8px; border: 1px solid #c7d2fe; background: #eef2ff; color: #4338ca; font-size: .72rem; font-weight: 700; cursor: pointer; transition: all .15s; }
 .cw-mini-btn:hover:not(:disabled) { background: var(--cn-accent); color: #fff; border-color: var(--cn-accent); }
 .cw-mini-btn.ghost { background: transparent; border-color: var(--cn-border); color: var(--cn-sub); }
 .cw-mini-btn:disabled { opacity: .5; cursor: not-allowed; }

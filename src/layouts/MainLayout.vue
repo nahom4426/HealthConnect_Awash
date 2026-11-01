@@ -23,7 +23,7 @@ import burglaryNavs from "@/features/burglary/navs.js";
 import administrationNavs from "@/features/shared/admin/navs.js";
 import imageSrc from "@/assets/img/profile.png";
 
-import { computed, defineAsyncComponent, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 // Only shown on /home, so keep it out of the shell bundle
@@ -36,6 +36,14 @@ const colorStore = useColorStore();
 const langStore = useLanguageStore();
 const route = useRoute();
 const router = useRouter();
+
+// The window itself can't be clipped like the frame below it; if anything scrolls it (focus on an
+// element off screen, a text drag), put it back so the whole app doesn't slide up out of view.
+function keepWindowAtTop() {
+  if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
+}
+onMounted(() => window.addEventListener("scroll", keepWindowAtTop, { passive: true }));
+onBeforeUnmount(() => window.removeEventListener("scroll", keepWindowAtTop));
 
 // ── Top bar user info ──
 const u = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
@@ -293,6 +301,7 @@ const isModuleSelect = computed(() => route.path === "/module-select" || route.p
   height: 100vh;
   background: rgb(var(--canvas));
   overflow: hidden;
+  overflow: clip;
 }
 
 /* ── Right column (topbar + scrollable content) ── */
@@ -302,6 +311,7 @@ const isModuleSelect = computed(() => route.path === "/module-select" || route.p
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overflow: clip;
 }
 
 /* ── Top bar ── */

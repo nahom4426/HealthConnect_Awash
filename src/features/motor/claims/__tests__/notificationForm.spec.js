@@ -49,12 +49,13 @@ describe('motor notification form', () => {
     const f = filledForm();
     f.accident.speed = 'about 40 km/h';
     f.driver.reasonForDriving = 'EMPLOYED';
-    const payload = toClaimPayload(f, { coverageType: 'OWN_DAMAGE', causeOfLoss: 'COLLISION', estimatedAmount: '45000' });
+    const payload = toClaimPayload(f, { coverageType: 'OWN_DAMAGE', causeOfLoss: 'COLLISION', estimatedAmount: '45000', reportedChannel: 'PHONE', reportedAt: '2026-10-30T15:00:00Z' });
     expect(payload).toMatchObject({
       policyNumber: 'SIC-MOT-001', productModule: 'motor', incidentDate: '2026-10-30T14:20:00', incidentTime: '14:20',
       incidentLocation: 'Bole, near Edna Mall', licenseNumber: 'DL-778', estimatedAmount: 45000,
       plateNumber: 'AA 3-12345', driverName: 'Kebede Alemu', driverLicenseNumber: 'DL-778',
       driverRelationship: 'EMPLOYED', vehicleSpeed: 40,
+      submittedVia: 'STAFF', reportedChannel: 'PHONE', reportedAt: '2026-10-30T15:00:00Z',
     });
     expect(payload.thirdPartyName).toBeUndefined();
     expect(payload.notificationForm).toBe(f);
@@ -85,5 +86,12 @@ describe('motor notification form', () => {
   it('writes dates the way the paper form does', () => {
     expect(formatFormDate('2026-10-30')).toBe('30/10/2026');
     expect(formatFormDate('')).toBe('');
+  });
+
+  it('gives forms saved before the declaration an empty declaration, and keeps a filled one', () => {
+    expect(normalizeNotificationForm({ policyHolder: { fullName: 'Abebe' } }).declaration)
+      .toEqual({ date: '', insuredName: '', driverName: '', witness1: '', witness2: '' });
+    const filled = normalizeNotificationForm({ declaration: { date: '2026-11-01', insuredName: 'Abebe', witness1: 'Selam' } });
+    expect(filled.declaration).toMatchObject({ date: '2026-11-01', insuredName: 'Abebe', driverName: '', witness1: 'Selam' });
   });
 });

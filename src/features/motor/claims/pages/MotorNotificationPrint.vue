@@ -1,8 +1,8 @@
 <script setup>
 // Printable copy of Standard Insurance's "Notification of Motor Accident" form
 // (Motor-Claims-Notification-Form.pdf), filled with a claim's answers. Wording, item
-// numbers and the two-page layout copy the PDF exactly, typos included; signatures and
-// the declaration date stay blank for handwriting.
+// numbers and the two-page layout copy the PDF exactly, typos included; the declaration's names
+// and date print on their lines and the signatures stay blank for handwriting.
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { fetchClaimByUuid } from '@/features/motor/claims/api/digitalChannelApi';
@@ -38,6 +38,7 @@ const drv = computed(() => form.value.driver);
 const acc = computed(() => form.value.accident);
 const other = computed(() => form.value.accident.otherParty);
 const dmg = computed(() => form.value.damage);
+const decl = computed(() => form.value.declaration);
 
 function loadEthiopicFont() {
   if (document.getElementById('noto-sans-ethiopic')) return;
@@ -126,7 +127,7 @@ onMounted(async () => {
           <div class="vat-opt"><div><div class="am">አይደለም</div><div class="en">No</div></div><span class="box">{{ ph.vatRegistered === false ? '✓' : '' }}</span></div>
         </div>
         <p class="am-para">&nbsp;በተራ ቁጥር 1.3 ለተጠየቀው ጥያቄ መልስዎ አዎ ከሆነ የተጨማሪ እሴት ታክስ መለያ ቁጥር ይጥቀሱ እንዲሁም የተጨማሪ እሴት ታክስ ምዝገባ የምስክር ወረቀቱን ቅጂ ያያይዙ</p>
-        <div class="row" style="padding-left:4pt"><div class="c" style="width:300pt"><div class="am line">የተጨማሪ እሰሴት ታክስ መለያ ቁጥር <span class="u"></span></div></div></div>
+        <div class="row" style="padding-left:4pt"><div class="c" style="width:300pt"><div class="am line">የተጨማሪ እሰሴት ታክስ መለያ ቁጥር <span class="u">{{ ph.vatNumber }}</span></div></div></div>
         <p class="en-para tight">If your answer to question item 1.3 is yes, Please state your VAT Registration Number and attach copy of VAT Registration Certificate</p>
         <div class="row" style="padding-left:22pt"><div class="c" style="width:308pt"><div class="en">VAT Registration No.&nbsp;<span class="u">{{ ph.vatNumber }}</span></div></div></div>
 
@@ -296,17 +297,17 @@ onMounted(async () => {
         <div class="sign">
           <div class="sign-col">
             <div class="am i" style="padding-left:18pt">ቀን</div>
-            <div class="en">Date <span class="sl" style="width:152pt; margin-left:34pt"></span></div>
+            <div class="en">Date <span class="sl" style="width:152pt; margin-left:34pt">{{ formatFormDate(decl.date) }}</span></div>
             <div class="am i" style="margin-top:6pt">መድን ገቢው ስምና ፊርማ</div>
-            <div class="en">Insured's Name &amp; Signature. <span class="sl" style="width:126pt"></span></div>
+            <div class="en">Insured's Name &amp; Signature. <span class="sl" style="width:126pt">{{ decl.insuredName }}</span></div>
           </div>
           <div class="sign-col">
             <div class="am i">የአሽከርካሪው ስምና ፊርማ</div>
-            <div class="en">Driver's Name and signature <span class="sl" style="width:102pt; margin-left:22pt"></span></div>
+            <div class="en">Driver's Name and signature <span class="sl" style="width:102pt; margin-left:22pt">{{ decl.driverName }}</span></div>
             <div class="am" style="margin-top:4pt">ይህ መግለጫ ሲሞላ የነበሩ</div>
             <div class="en" style="padding-left:5pt">Witness</div>
-            <div class="en" style="margin-left:-10pt">1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sl" style="width:186pt"></span></div>
-            <div class="en" style="padding-left:16pt"><span class="sl" style="width:186pt"></span></div>
+            <div class="en" style="margin-left:-10pt">1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sl" style="width:186pt">{{ decl.witness1 }}</span></div>
+            <div class="en" style="padding-left:16pt"><span class="sl" style="width:186pt">{{ decl.witness2 }}</span></div>
           </div>
         </div>
       </div>
@@ -408,7 +409,11 @@ onMounted(async () => {
 .sign { display: flex; margin-top: 4pt; }
 .sign-col { width: 284pt; }
 .sign-col .en { display: flex; align-items: flex-end; margin-top: 1pt; }
-.sl { display: inline-block; height: 10pt; border-bottom: .8pt solid var(--rule); margin-left: 4pt; }
+.sl {
+  display: inline-block; min-height: 10pt; border-bottom: .8pt solid var(--rule); margin-left: 4pt; padding: 0 2pt;
+  color: var(--val); font-family: 'Segoe UI', 'Noto Sans', 'Noto Sans Ethiopic', Arial, sans-serif; font-size: 8.3pt; line-height: 1.15;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 </style>
 
 <style>

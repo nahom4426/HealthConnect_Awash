@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   emptyProcess, documentChecklist, missingDocuments, currentStage, stageGate, waitingOn, stageSteps,
-  loadProcess, saveProcess, netSettlement, closedOutcome, daysOpen,
+  loadProcess, saveProcess, netSettlement, closedOutcome, daysOpen, processFor,
 } from '../claimProcess';
 
 const upload = (documentType) => ({ documentUuid: documentType, documentType });
@@ -80,5 +80,28 @@ describe('motor claim process', () => {
   it('counts days since the claim was reported', () => {
     expect(daysOpen({ createdAt: '2026-10-28T08:00:00' }, new Date('2026-11-01T09:00:00'))).toBe(4);
     expect(daysOpen({})).toBeNull();
+  });
+
+  it('takes what the server stores over this browser\'s copy', () => {
+    saveProcess('c9', { ...emptyProcess(), excess: { amount: 100, receiptNo: 'OLD' }, reportedChannel: 'PHONE' });
+    const proc = processFor({
+      claimUuid: 'c9', status: 'REJECTED', filedByRepresentative: true, reportedChannel: 'WALK_IN',
+      documentMarks: [{ documentType: 'DRIVING_LICENCE', status: 'RECEIVED', originalSeen: true }],
+      excess: { none: false, amount: 2500, receiptNo: 'R-7' }, salvage: { status: 'RETURNED', note: 'bumper' },
+      closed: { outcome: 'REJECTED', reason: 'No valid licence', statusBeforeClose: 'IN_PROCESS', closedBy: 'Tigist' },
+    });
+    expect(proc.representative).toBe(true);
+    expect(proc.reportedChannel).toBe('WALK_IN');
+    expect(proc.documents.DRIVING_LICENCE).toEqual({ status: 'RECEIVED', originalSeen: true, reason: '' });
+    expect(proc.excess).toEqual({ amount: 2500, receiptNo: 'R-7' });
+    expect(proc.salvage).toEqual({ status: 'RETURNED', note: 'bumper' });
+    expect(proc.closed).toMatchObject({ outcome: 'REJECTED', reason: 'No valid licence', atStage: 3, by: 'Tigist' });
+    expect(currentStage({ status: 'REJECTED' }, proc)).toBe(3);
+  });
+
+  it('keeps this browser\'s copy where the server stores nothing, and clears a closure the server reopened', () => {
+    saveProcess('c10', { ...emptyProcess(), excess: { none: true }, closed: { outcome: 'WITHDRAWN', reason: 'x', atStage: 4 } });
+    expect(processFor({ claimUuid: 'c10', status: 'BID_ASSIGNED' })).toMatchObject({ excess: { none: true }, closed: { outcome: 'WITHDRAWN' } });
+    expect(processFor({ claimUuid: 'c10', status: 'BID_ASSIGNED', closed: null }).closed).toBeNull();
   });
 });

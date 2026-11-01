@@ -43,47 +43,44 @@ async function motorRequest(method, path, { params, data, preferCore = true } = 
 
 // ─── Insureds (Party service) ─────────────────────────────────────────────────
 
+// Motor reads people from party-service, so clients are searched and created there (not in
+// claimconnect's insured persons, whose UUIDs party-service does not know).
+const partyServiceBase = `${import.meta.env.VITE_BACKEND_HOST}/api/payer/party`;
+
+function partyHeaders() {
+  const auth = useAuthStore();
+  const token = auth.auth?.token || auth.auth?.user?.token;
+  return { Authorization: `Bearer ${token}` };
+}
+
 export async function searchInsureds({ search = '', page = 1, limit = 25 } = {}) {
   try {
-    const auth = useAuthStore();
-    const token = auth.auth?.token || auth.auth?.user?.token;
-    const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_HOST}/api/payer/claimconnect/insuredperson/active/search`, {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { search, page, limit, hasInstitution: false },
+    const { data } = await axios.get(`${partyServiceBase}/insureds/search`, {
+      headers: partyHeaders(),
+      params: { search, page, limit },
     });
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.content)) return data.content;
-    if (Array.isArray(data?.data)) return data.data;
-    return [];
+    return Array.isArray(data?.content) ? data.content : [];
   } catch (e) {
     console.warn('Insureds API error:', e.message);
     return [];
   }
 }
 
+/** Registers a person in party-service; gender is required there. Throws on failure. */
 export async function createInsured(payload) {
   const req = {
     firstName:       payload.firstName,
     fatherName:      payload.fatherName,
     grandFatherName: payload.grandFatherName || undefined,
-    gender:          payload.gender || 'Male',
-    Gender:          payload.gender || 'Male',
+    gender:          payload.gender,
     email:           payload.email || undefined,
     phone:           payload.phone || undefined,
+    birthDate:       payload.birthDate || undefined,
     address1:        payload.address1 || undefined,
     status:          'ACTIVE',
-    group:           false,
-    isGroup:         false,
     type:            'INSURED',
   };
-  const formData = new FormData();
-  formData.append('insuredRequest', new Blob([JSON.stringify(req)], { type: 'application/json' }));
-
-  const auth = useAuthStore();
-  const token = auth.auth?.token || auth.auth?.user?.token;
-  const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_HOST}/api/payer/claimconnect/insuredperson`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
-  });
+  const { data } = await axios.post(`${partyServiceBase}/insureds`, req, { headers: partyHeaders() });
   return data;
 }
 
@@ -615,6 +612,31 @@ export async function listCarImages(carUuid) {
   }
 }
 
+/** Staff upload of the Libre. The backend takes both pages together; throws on failure so the caller can show why. */
+export async function uploadCarLibre(carUuid, front, back) {
+  const form = new FormData();
+  form.append('Front_libre', front);
+  form.append('back_libre', back);
+  const { data } = await getCoreClient().post(`/cars/saveCarLibre/${carUuid}`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
+/** Staff upload of pre-inspection photos, all tagged with one image type (Exterior, Interior, Dashboard, Side, Front, Back, Rear). */
+export async function uploadCarImages(carUuid, files, imageType = 'Exterior') {
+  const form = new FormData();
+  files.forEach((file, i) => {
+    form.append(`images[${i}].image`, file);
+    form.append(`images[${i}].imageName`, file.name);
+    form.append(`images[${i}].imageType`, imageType);
+  });
+  const { data } = await getCoreClient().post(`/cars/saveCarImages/${carUuid}`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
 /** Authenticated car/libre image by imageUuid. Resolves to a blob: URL or null. */
 export async function fetchCarImageByUuid(imageUuid) {
   return fetchImageObjectUrl(getClient(), `/cars/getCarImages/${imageUuid}`);
@@ -681,57 +703,13 @@ export async function setQuotationAmounts(quotationUuid, { quotation, deposit, p
   }
 }
 
+/**
+ * Saves the client's cars and their quotations on the server. Failures are thrown (the caller shows
+ * them): there is no browser-only copy, since it would have no car or insured on the server.
+ */
 export async function registerClientsCar(payload) {
-  let backendData = null;
-  try {
-    const { data } = await getCoreClient().post('/cars/registerClientsCar', payload);
-    backendData = data;
-  } catch (e) {
-    console.warn('registerClientsCar backend error:', e.message);
-  }
-
-  // Always save to localStorage for the UI until backend motor quotation DB is fully wired
-  const existing = JSON.parse(localStorage.getItem('standard_motor_quotations') || '[]');
-  const firstCar = payload.carRequests?.[0] || {};
-  // The premium comes from the backend; nothing is estimated here.
-  const backendQuote = backendData?.quotation || backendData?.data || backendData || {};
-
-  const newQuotation = normalizeQuotation({
-    quotationUuid: backendData?.quotationUuid || 'QUO-' + Date.now(),
-    carUuid: backendData?.carUuid || backendData?.data?.carUuid || ('CAR-' + Date.now()),
-    quotationNumber: backendQuote.quotationNumber || '',
-    clientFirstName: payload.firstName || '',
-    clientFatherName: payload.fatherName || '',
-    clientGrandFatherName: payload.grandFatherName || '',
-    clientPhoneNumber: payload.mobilePhone || '',
-    clientEmail: payload.email || '',
-    insurance: '',
-    accountNumber: payload.bankAccount || '',
-    carName: firstCar.carName || '',
-    carModel: firstCar.carModel || '',
-    carType: firstCar.carType || '',
-    plateNumber: firstCar.plateNumber || '',
-    makeYear: firstCar.makeYear || '',
-    engine_No: firstCar.engine || '',
-    buyingPrice: firstCar.buyingPrice || null,
-    category1: firstCar.rateRequest?.categoryUuid || '',
-    category2: '',
-    quotationAmount: backendQuote.quotationAmount ?? null,
-    initialDeposit: backendQuote.initialDeposit ?? null,
-    monthlyPayment: backendQuote.monthlyPayment ?? null,
-    quotationDate: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    quotationStatus: 'PENDING',
-    initialDepositStatus: 'PENDING',
-    checked: false,
-    clientAgreed: false,
-    libreSaved: false,
-    carRequests: payload.carRequests
-  });
-
-  existing.unshift(newQuotation);
-  localStorage.setItem('standard_motor_quotations', JSON.stringify(existing));
-  return { success: true, quotationUuid: newQuotation.quotationUuid, quotation: newQuotation, backendData };
+  const { data } = await getCoreClient().post('/cars/registerClientsCar', payload);
+  return data;
 }
 
 // ─── Digital Channel Claims ─────────────────────────────────

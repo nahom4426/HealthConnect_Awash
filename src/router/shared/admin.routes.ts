@@ -11,6 +11,7 @@ const AddUser = () => import("@/features/shared/admin/user/pages/AddUser.mdl.vue
 const EditUser = () => import("@/features/shared/admin/user/pages/EditUser.vue");
 const UserDetail = () => import("@/features/shared/admin/user/pages/UserDetail.vue");
 const Branches = () => import("@/features/shared/admin/branch/pages/Branches.vue");
+const AuditLog = () => import("@/features/shared/admin/audit/pages/AuditLog.vue");
 const PrivilegeDetail = () => import("@/features/shared/admin/privilege/pages/PrivilegeDetail.vue");
 
 export default [
@@ -79,6 +80,15 @@ export default [
     name: 'Branches',
     component: Branches,
     meta: { requiresAuth: true, permissions: ["branch.manage"] },
+  },
+
+  // Audit Log: append-only audit trail of each service. The backend requires audit.read (or Super Admin);
+  // the router guard lets Super Admin / All Privileges through and otherwise requires ROLE_audit.read.
+  {
+    path: '/audit-log',
+    name: 'AuditLog',
+    component: AuditLog,
+    meta: { requiresAuth: true, permissions: ["audit.read"], title: "Audit Log" },
   },
 
   // Users routes

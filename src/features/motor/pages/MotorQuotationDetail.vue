@@ -8,6 +8,8 @@ import {
   fetchLibreImages,
   listCarImages,
   fetchCarImageByUuid,
+  uploadCarLibre,
+  uploadCarImages,
   saveInitialDeposit,
   updateInitialDepositStatus,
   setQuotationAmounts,
@@ -108,9 +110,99 @@ async function loadCarImages(carUuid) {
   }
 }
 
+// Quotations saved before failed backend saves were surfaced exist only in this browser (QUO-…):
+// their car UUID is made up, so uploads and conversion would fail on the server.
+const savedOnServer = computed(() => !!q.value && !String(q.value.quotationUuid || '').startsWith('QUO-'));
+const canUpload = computed(() => savedOnServer.value && !!q.value?.carUuid);
+
+// ── uploads: the empty boxes double as "+" drop-ins; files are staged, then sent together ──
+// The Libre is required before the quotation can be approved; vehicle photos are optional.
+const IMAGE_TYPES = ['Exterior', 'Interior', 'Dashboard', 'Side', 'Front', 'Back', 'Rear'];
+const libreSlots = computed(() => [
+  { key: 'front', label: 'Front Page', src: libreFront.value },
+  { key: 'back',  label: 'Back Page',  src: libreBack.value },
+]);
+const libreStaged  = ref({ front: null, back: null });   // { file, url, isPdf }
+const stagedPhotos = ref([]);                            // { file, url }
+const photoType    = ref('Exterior');
+const uploadingLibre  = ref(false);
+const uploadingPhotos = ref(false);
+const libreError   = ref('');
+const libreMessage = ref('');
+const photoError   = ref('');
+const photoMessage = ref('');
+
+function stageLibre(side, event) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file) return;
+  clearLibreSide(side);
+  libreStaged.value = { ...libreStaged.value, [side]: { file, url: URL.createObjectURL(file), isPdf: file.type === 'application/pdf' } };
+}
+function clearLibreSide(side) {
+  const prev = libreStaged.value[side];
+  if (prev) URL.revokeObjectURL(prev.url);
+  libreStaged.value = { ...libreStaged.value, [side]: null };
+}
+function stagePhotos(event) {
+  const files = Array.from(event.target.files || []);
+  event.target.value = '';
+  stagedPhotos.value = [...stagedPhotos.value, ...files.map(file => ({ file, url: URL.createObjectURL(file) }))];
+}
+function removeStagedPhoto(i) {
+  URL.revokeObjectURL(stagedPhotos.value[i].url);
+  stagedPhotos.value = stagedPhotos.value.filter((_, idx) => idx !== i);
+}
+
+function uploadFailure(e, fallback) {
+  const d = e?.response?.data;
+  return (typeof d === 'string' ? d : d?.detail || d?.message) || e?.message || fallback;
+}
+
+async function handleUploadLibre() {
+  const { front, back } = libreStaged.value;
+  if (!q.value?.carUuid || !front || !back) return;
+  uploadingLibre.value = true;
+  libreError.value = '';
+  libreMessage.value = '';
+  try {
+    await uploadCarLibre(q.value.carUuid, front.file, back.file);
+    q.value = { ...q.value, libreSaved: true };
+    clearLibreSide('front');
+    clearLibreSide('back');
+    revokeObjectUrls([libreFront.value, libreBack.value]);
+    await loadLibre(q.value.carUuid);
+    libreMessage.value = 'Libre uploaded.';
+  } catch (e) {
+    libreError.value = uploadFailure(e, 'Failed to upload the Libre');
+  } finally {
+    uploadingLibre.value = false;
+  }
+}
+
+async function handleUploadPhotos() {
+  if (!q.value?.carUuid || !stagedPhotos.value.length) return;
+  uploadingPhotos.value = true;
+  photoError.value = '';
+  photoMessage.value = '';
+  try {
+    await uploadCarImages(q.value.carUuid, stagedPhotos.value.map(p => p.file), photoType.value);
+    stagedPhotos.value.forEach(p => URL.revokeObjectURL(p.url));
+    stagedPhotos.value = [];
+    revokeObjectUrls(carImages.value.map(i => i.src));
+    await loadCarImages(q.value.carUuid);
+    photoMessage.value = 'Photos uploaded.';
+  } catch (e) {
+    photoError.value = uploadFailure(e, 'Failed to upload the photos');
+  } finally {
+    uploadingPhotos.value = false;
+  }
+}
+
 onMounted(loadQuotation);
 onBeforeUnmount(() => {
   revokeObjectUrls([libreFront.value, libreBack.value, ...carImages.value.map(i => i.src)]);
+  revokeObjectUrls([libreStaged.value.front?.url, libreStaged.value.back?.url, ...stagedPhotos.value.map(p => p.url)]);
 });
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -258,6 +350,7 @@ function missingForProposal(payload) {
 }
 
 async function convertToProposal() {
+  if (!savedOnServer.value) return;
   error.value = '';
   success.value = '';
   const payload = proposalPayload(q.value);
@@ -346,7 +439,7 @@ function viewImage(title, src) {
             <option value="" disabled>Cover type…</option>
             <option v-for="opt in COVERAGE_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
-          <button class="qd-btn qd-btn-confirm" @click="convertToProposal" :disabled="saving || !convertCoverage">
+          <button class="qd-btn qd-btn-confirm" @click="convertToProposal" :disabled="saving || !convertCoverage || !savedOnServer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             Convert to Proposal
           </button>
@@ -354,6 +447,9 @@ function viewImage(title, src) {
       </div>
 
       <!-- Alerts -->
+      <div v-if="q && !savedOnServer" class="qd-alert qd-alert-err" role="alert">
+        This quotation was never saved to the server (it exists only in this browser), so the Libre cannot be uploaded and it cannot be converted to a proposal. Create it again from New Quotation.
+      </div>
       <div v-if="error" class="qd-alert qd-alert-err">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg>
         {{ error }}
@@ -544,35 +640,44 @@ function viewImage(title, src) {
                 Loading libre images…
               </div>
               <div v-else class="qd-libre-grid">
-                <!-- Front -->
-                <div class="qd-libre-item">
-                  <div class="qd-libre-label">Front Page</div>
-                  <div v-if="libreFront" class="qd-libre-img-wrap" @click="viewImage('Front Page', libreFront)">
-                    <img :src="libreFront" class="qd-libre-img" alt="Front libre" />
+                <div v-for="slot in libreSlots" :key="slot.key" class="qd-libre-item">
+                  <div class="qd-libre-label">{{ slot.label }}</div>
+                  <!-- chosen, not uploaded yet -->
+                  <div v-if="libreStaged[slot.key]" class="qd-libre-img-wrap">
+                    <img v-if="!libreStaged[slot.key].isPdf" :src="libreStaged[slot.key].url" class="qd-libre-img" :alt="slot.label" />
+                    <div v-else class="qd-libre-empty"><span>{{ libreStaged[slot.key].file.name }}</span></div>
+                    <button type="button" class="qd-slot-remove" aria-label="Remove" @click.stop="clearLibreSide(slot.key)">×</button>
+                  </div>
+                  <!-- saved -->
+                  <div v-else-if="slot.src" class="qd-libre-img-wrap" @click="viewImage(slot.label, slot.src)">
+                    <img :src="slot.src" class="qd-libre-img" :alt="slot.label" />
                     <div class="qd-libre-overlay">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:#fff"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     </div>
                   </div>
-                  <div v-else class="qd-libre-empty">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:#cbd5e1"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <span>No front page</span>
-                  </div>
-                </div>
-                <!-- Back -->
-                <div class="qd-libre-item">
-                  <div class="qd-libre-label">Back Page</div>
-                  <div v-if="libreBack" class="qd-libre-img-wrap" @click="viewImage('Back Page', libreBack)">
-                    <img :src="libreBack" class="qd-libre-img" alt="Back libre" />
-                    <div class="qd-libre-overlay">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:#fff"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                    </div>
-                  </div>
-                  <div v-else class="qd-libre-empty">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:#cbd5e1"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <span>No back page</span>
-                  </div>
+                  <!-- nothing yet: "+" to add -->
+                  <label v-else-if="canUpload" class="qd-libre-empty qd-libre-add">
+                    <input type="file" class="qd-file-hidden" accept="image/jpeg,image/png,application/pdf" @change="stageLibre(slot.key, $event)" />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:30px;height:30px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+                    <span>Add {{ slot.label.toLowerCase() }}</span>
+                  </label>
+                  <div v-else class="qd-libre-empty"><span>No {{ slot.label.toLowerCase() }}</span></div>
+                  <label v-if="slot.src && !libreStaged[slot.key] && canUpload" class="qd-slot-replace">Replace
+                    <input type="file" class="qd-file-hidden" accept="image/jpeg,image/png,application/pdf" @change="stageLibre(slot.key, $event)" />
+                  </label>
                 </div>
               </div>
+              <p v-if="canUpload && !q.libreSaved && !libreStaged.front && !libreStaged.back" class="qd-upload-req">
+                Required: the Libre (vehicle registration card) must be uploaded, front and back, before this quotation can be approved.
+              </p>
+              <div v-if="libreStaged.front || libreStaged.back" class="qd-upload-bar">
+                <Button type="secondary" size="sm" :disabled="!(libreStaged.front && libreStaged.back) || uploadingLibre" @click="handleUploadLibre">
+                  {{ uploadingLibre ? 'Uploading…' : 'Upload Libre' }}
+                </Button>
+                <span v-if="!(libreStaged.front && libreStaged.back)" class="qd-upload-hint">Add both pages to upload.</span>
+              </div>
+              <p v-if="libreError" class="qd-upload-err" role="alert">{{ libreError }}</p>
+              <p v-else-if="libreMessage" class="qd-upload-ok">{{ libreMessage }}</p>
             </div>
           </div>
 
@@ -587,7 +692,7 @@ function viewImage(title, src) {
                 <svg class="qd-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:rgb(var(--ink-subtle))"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Loading car images…
               </div>
-              <div v-else-if="carImages.length > 0" class="qd-libre-grid">
+              <div v-else class="qd-libre-grid">
                 <div v-for="img in carImages" :key="img.name" class="qd-libre-item">
                   <div class="qd-libre-label">{{ img.name }}</div>
                   <div class="qd-libre-img-wrap" @click="viewImage(img.name, img.src)">
@@ -597,11 +702,33 @@ function viewImage(title, src) {
                     </div>
                   </div>
                 </div>
+                <div v-for="(p, i) in stagedPhotos" :key="p.url" class="qd-libre-item">
+                  <div class="qd-libre-label">{{ p.file.name }}</div>
+                  <div class="qd-libre-img-wrap">
+                    <img :src="p.url" class="qd-libre-img" :alt="p.file.name" />
+                    <button type="button" class="qd-slot-remove" aria-label="Remove" @click.stop="removeStagedPhoto(i)">×</button>
+                  </div>
+                </div>
+                <div v-if="canUpload" class="qd-libre-item">
+                  <div class="qd-libre-label">{{ carImages.length || stagedPhotos.length ? 'Add more' : 'Add photos' }}</div>
+                  <label class="qd-libre-empty qd-libre-add">
+                    <input type="file" multiple class="qd-file-hidden" accept="image/jpeg,image/png" @change="stagePhotos($event)" />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:30px;height:30px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+                    <span>Add photos</span>
+                  </label>
+                </div>
+                <div v-else-if="!carImages.length" class="qd-libre-empty"><span>No car photos uploaded</span></div>
               </div>
-              <div v-else class="qd-libre-empty">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:#cbd5e1"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span>No car photos uploaded</span>
+              <div v-if="stagedPhotos.length" class="qd-upload-bar">
+                <select v-model="photoType" class="qd-upload-select" aria-label="Photo type">
+                  <option v-for="t in IMAGE_TYPES" :key="t" :value="t">{{ t }}</option>
+                </select>
+                <Button type="secondary" size="sm" :disabled="uploadingPhotos" @click="handleUploadPhotos">
+                  {{ uploadingPhotos ? 'Uploading…' : `Upload ${stagedPhotos.length} photo${stagedPhotos.length > 1 ? 's' : ''}` }}
+                </Button>
               </div>
+              <p v-if="photoError" class="qd-upload-err" role="alert">{{ photoError }}</p>
+              <p v-else-if="photoMessage" class="qd-upload-ok">{{ photoMessage }}</p>
             </div>
           </div>
 
@@ -835,6 +962,19 @@ function viewImage(title, src) {
 .qd-libre-img { width: 100%; height: 160px; object-fit: cover; display: block; }
 .qd-libre-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0); display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
 .qd-libre-img-wrap:hover .qd-libre-overlay { background: rgba(0,0,0,0.4); }
+.qd-upload-req { font-size: 0.75rem; font-weight: 600; color: #b45309; }
+.qd-upload-ok { font-size: 0.75rem; font-weight: 600; color: #15803d; }
+.qd-upload-err { font-size: 0.75rem; font-weight: 600; color: #b91c1c; }
+.qd-libre-img-wrap { position: relative; }
+.qd-file-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.qd-libre-add { position: relative; cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s; }
+.qd-libre-add:hover, .qd-libre-add:focus-within { border-color: #6366f1; background: rgba(99, 102, 241, 0.06); color: #4f46e5; }
+.qd-slot-remove { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 9999px; border: none; background: rgba(15, 23, 42, 0.7); color: #fff; font-size: 1rem; line-height: 1; cursor: pointer; }
+.qd-slot-replace { position: relative; display: inline-block; margin-top: 0.4rem; font-size: 0.72rem; font-weight: 600; color: #4f46e5; cursor: pointer; }
+.qd-upload-bar { display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem; }
+.qd-upload-hint { font-size: 0.72rem; color: rgb(var(--ink-subtle)); }
+.qd-upload-select { padding: 0.3rem 0.5rem; border: 1px solid rgb(var(--line)); border-radius: 0.5rem; font-size: 0.78rem; background: rgb(var(--surface)); }
+.qd-upload-req, .qd-upload-ok, .qd-upload-err { margin-top: 0.75rem; }
 .qd-libre-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; height: 160px; border: 2px dashed rgb(var(--line)); border-radius: 0.625rem; background: rgb(var(--surface-muted)); color: rgb(var(--ink-subtle)); font-size: 0.75rem; }
 
 /* Modal */

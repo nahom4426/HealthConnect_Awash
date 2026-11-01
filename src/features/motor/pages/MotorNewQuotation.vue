@@ -87,6 +87,7 @@ function validateNewInsured() {
   const e = {};
   if (!newInsured.value.firstName?.trim())  e.firstName  = 'Required';
   if (!newInsured.value.fatherName?.trim()) e.fatherName = 'Required';
+  if (!newInsured.value.gender)             e.gender     = 'Required';
   return e;
 }
 
@@ -101,7 +102,7 @@ async function submitNewInsured() {
     pickInsured(created);
     closeAddModal();
   } catch (err) {
-    modalError.value = err?.response?.data?.message || err.message || 'Failed to create insured';
+    modalError.value = err?.response?.data?.detail || err?.response?.data?.message || err.message || 'Failed to create insured';
   } finally {
     modalSaving.value = false;
   }
@@ -430,7 +431,7 @@ async function submit() {
     pageSuccess.value = 'Quotation saved successfully!';
     setTimeout(() => router.push('/motor/quotation'), 1400);
   } catch (err) {
-    pageError.value = err?.response?.data?.message || err.message || 'Failed to save quotation';
+    pageError.value = err?.response?.data?.detail || err?.response?.data?.message || err.message || 'Failed to save quotation';
   } finally {
     saving.value = false;
   }
@@ -867,7 +868,7 @@ async function submit() {
               <Input v-model="newInsured.grandFatherName" name="mi_gfName" :attributes="{ placeholder: 'e.g. Teklu' }" />
             </div>
             <div class="nq-field">
-              <label class="nq-label">Gender</label>
+              <label class="nq-label">Gender <span class="nq-req">*</span></label>
               <Select
                 name="mi_gender"
                 :obj="true"
@@ -876,6 +877,7 @@ async function submit() {
                 @update:modelValue="v => newInsured.gender = v"
                 :attributes="{ placeholder: 'Select gender' }"
               />
+              <span v-if="newInsuredErr.gender" class="nq-err-msg">{{ newInsuredErr.gender }}</span>
             </div>
           </div>
           <div class="nq-grid-2">

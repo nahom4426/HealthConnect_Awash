@@ -10,6 +10,7 @@ import {
   ratingAxes,
   usePcModule,
 } from '@/features/pc/pcModule.js';
+import AuditHistory from '@/components/AuditHistory.vue';
 import '../fire-ui.css';
 
 const route = useRoute();
@@ -330,6 +331,9 @@ onMounted(load);
           </ul>
         </section>
       </div>
+
+      <!-- Audit trail for this proposal (hidden without audit.read) -->
+      <AuditHistory :key="proposal.status" module="property-casualty" :entity-uuid="proposal.proposalUuid || ''" />
     </template>
   </div>
 </template>

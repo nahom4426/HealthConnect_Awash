@@ -1,9 +1,9 @@
 <script setup>
 import { useAuthStore } from "@/stores/auth";
 import { useDarkModeStore } from "@/stores/darkMode";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import imageSrc from "@/assets/img/profile.png";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const props = defineProps({
   breadcrumbs: Object,
@@ -11,13 +11,41 @@ const props = defineProps({
 });
 
 const router    = useRouter();
+const route     = useRoute();
 const authStore = useAuthStore();
 const darkStore = useDarkModeStore();
 const isDark    = computed(() => darkStore.isDark);
 
 // ── Collapse state ──
-const collapsed  = ref(false);
+// Icons only until the pointer (or keyboard focus) is on the sidebar; it then opens over the page.
+// Pinned keeps it open and beside the page, remembered in this browser.
+const PIN_KEY = "sidebar-pinned";
+function readPinned() {
+  try { return localStorage.getItem(PIN_KEY) === "1"; } catch { return false; }
+}
+const pinned     = ref(readPinned());
+const hovered    = ref(false);
+const collapsed  = computed(() => !(pinned.value || hovered.value));
 const openGroups = ref({});
+
+let hoverTimer;
+// A short delay, so passing the pointer across the sidebar doesn't flash it open
+function open() {
+  clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(() => (hovered.value = true), 90);
+}
+function close() {
+  clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(() => (hovered.value = false), 200);
+}
+function onFocusOut(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) close();
+}
+function togglePin() {
+  pinned.value = !pinned.value;
+  try { localStorage.setItem(PIN_KEY, pinned.value ? "1" : "0"); } catch { /* storage unavailable */ }
+  if (!pinned.value) hovered.value = false;
+}
 
 // ── Auth ──
 const u = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
@@ -33,11 +61,12 @@ const userInitials = computed(() => userName.value.split(' ').map(w => w[0]).sli
 
 function handleImageError(e) { e.target.src = imageSrc; }
 function logout() { authStore.logout(); }
-function toggleCollapse() { collapsed.value = !collapsed.value; }
+// Touch screens have no hover: tapping the logo opens the sidebar
+function expand() { clearTimeout(hoverTimer); hovered.value = true; }
 
 // ── Nav group toggle — accordion: close others, open clicked ──
 function toggleGroup(idx) {
-  if (collapsed.value) { collapsed.value = false; }
+  if (collapsed.value) expand();
   const isOpen = openGroups.value[idx];
   openGroups.value = {}; // close all
   if (!isOpen) {
@@ -49,13 +78,34 @@ function toggleGroup(idx) {
 }
 
 function navigate(path) {
-  if (path) router.push(path);
+  if (!path) return;
+  router.push(path);
+  if (!pinned.value) hovered.value = false;
 }
+
+// The group holding the current page opens by itself
+watch(
+  () => [route.path, props.navs],
+  () => {
+    const idx = props.navs.findIndex((nav) => nav.navs?.some((child) => child.path === route.path));
+    if (idx >= 0) openGroups.value = { [idx]: true };
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
   <!-- ════════ LEFT SIDEBAR ════════ -->
-  <aside class="sidebar" :class="{ 'sidebar-collapsed': collapsed, 'sidebar-light': !isDark }">
+  <!-- The shell keeps the icon rail's width in the layout; the sidebar opens over the page from it -->
+  <div
+    class="sidebar-shell"
+    :class="{ 'sidebar-shell-pinned': pinned }"
+    @mouseenter="open"
+    @mouseleave="close"
+    @focusin="open"
+    @focusout="onFocusOut"
+  >
+  <aside class="sidebar" :class="{ 'sidebar-collapsed': collapsed, 'sidebar-light': !isDark, 'sidebar-floating': !pinned && !collapsed }">
 
     <!-- Top accent stripe -->
     <div class="sidebar-accent"></div>
@@ -70,16 +120,22 @@ function navigate(path) {
           <span class="brand-name">Standard Insurance S.C.</span>
           <span class="brand-sub">Your trust, our standard</span>
         </div>
-        <button class="collapse-btn" @click="toggleCollapse" title="Collapse sidebar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="collapse-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        <button
+          class="collapse-btn"
+          :class="{ 'collapse-btn-on': pinned }"
+          :aria-pressed="pinned"
+          :title="pinned ? 'Let the sidebar close to icons' : 'Keep the sidebar open'"
+          @click="togglePin"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="collapse-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v7"/>
           </svg>
         </button>
       </template>
 
       <!-- Clean Single Centered Logo/Toggle in Collapsed Mode -->
       <template v-else>
-        <button class="brand-collapsed-mark" @click="toggleCollapse" title="Expand sidebar">
+        <button class="brand-collapsed-mark" @click="expand" title="Open the menu">
           <img src="/src/assets/img/standard_icon.png" alt="Standard Logo" class="brand-logo-img" />
           <div class="brand-expand-overlay" title="Expand sidebar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="expand-icon">
@@ -171,12 +227,26 @@ function navigate(path) {
     </div>
 
   </aside>
+  </div>
 </template>
 
 <style scoped>
-.sidebar {
-  width: 270px;
+/* Holds the icon rail's width in the page layout (the full width when pinned) */
+.sidebar-shell {
+  position: relative;
+  width: 72px;
   flex-shrink: 0;
+  height: 100vh;
+  z-index: 200;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar-shell-pinned { width: 270px; }
+
+.sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 270px;
   height: 100vh;
   background: #022B54;
   display: flex;
@@ -184,11 +254,18 @@ function navigate(path) {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  position: sticky;
-  top: 0;
-  z-index: 200;
   box-shadow: 4px 0 24px rgba(0,0,0,0.3);
-  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease, box-shadow 0.25s ease;
+}
+/* Open over the page: a deeper shadow lifts it above the content */
+.sidebar-floating { box-shadow: 16px 0 48px rgba(2, 20, 40, 0.35); }
+
+/* Labels fade in as the sidebar opens */
+.nav-item-label, .brand-text, .profile-details, .nav-sub-label { animation: label-in 0.22s ease both; }
+@keyframes label-in { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-shell, .sidebar { transition: none; }
+  .nav-item-label, .brand-text, .profile-details, .nav-sub-label { animation: none; }
 }
 
 .sidebar-light {
@@ -330,6 +407,12 @@ function navigate(path) {
   width: 0.95rem; height: 0.95rem;
   transition: transform 0.25s ease;
 }
+.collapse-btn-on {
+  background: rgba(254, 147, 18, 0.22);
+  border-color: rgba(254, 147, 18, 0.6);
+  color: #FE9312;
+}
+.collapse-btn-on .collapse-icon { transform: rotate(45deg); }
 
 /* ── Section label ── */
 .sidebar-section-label {

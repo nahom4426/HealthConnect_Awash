@@ -17,7 +17,8 @@ export const roleSwitcherEnabled =
 
 function storedUser() {
   try {
-    const raw = JSON.parse(localStorage.getItem("userDetail") || localStorage.getItem("auth_data") || "null");
+    // Only this app's session; "auth_data" may belong to another app on the same origin
+    const raw = JSON.parse(localStorage.getItem("userDetail") || "null");
     return raw?.user ?? raw?.data ?? raw;
   } catch {
     return null;

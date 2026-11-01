@@ -63,9 +63,9 @@ export function updateAnswer(answerUuid, data) {
 export function deleteAnswer(answerUuid) {
   return lifeApi().delete(`/answer/${answerUuid}`);
 }
-/** GET /answer · returns: AnswerResponse[] */
-export function getAnswers() {
-  return lifeApi().get(`/answer`);
+/** GET /answer · query: benefitUuid | personUuid (one policy's health questionnaire, #30) · returns: AnswerResponse[] */
+export function getAnswers(params = {}) {
+  return lifeApi().get(`/answer`, { params });
 }
 /** POST /answer · body: AnswerRequest · returns: AnswerResponse */
 export function createAnswer(data) {

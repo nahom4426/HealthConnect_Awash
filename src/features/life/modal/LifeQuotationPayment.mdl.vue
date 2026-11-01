@@ -12,6 +12,7 @@ import { toasted } from "@/utils/utils";
 import { formatAmount } from "../constants/labels";
 import { recordQuotationPayment } from "../api/quotationApi";
 import { PAYMENT_TAXES, taxesCalculated, toPaymentBody, validatePayment } from "../quotations/quotationRules";
+import { downloadLifeReceiptPdf } from "../pdf/lifeDocuments";
 
 const props = defineProps({ data: { type: Object, default: () => ({}) } });
 const q = props.data?.quotation || {};
@@ -34,10 +35,16 @@ async function submit() {
   errors.value = validatePayment(form, { taxesRequired });
   if (Object.keys(errors.value).length) return;
   pending.value = true;
-  const res = await recordQuotationPayment(q.quotationUuid, toPaymentBody(form, { taxesRequired }));
+  const body = toPaymentBody(form, { taxesRequired });
+  const res = await recordQuotationPayment(q.quotationUuid, body);
   pending.value = false;
   if (res?.success) {
     toasted(true, "Payment recorded");
+    // The receipt for the institution; a PDF failure must not undo the recorded payment
+    downloadLifeReceiptPdf({ ...q, ...(res.data || {}) }, body).catch((e) => {
+      console.error("Receipt PDF failed", e);
+      toasted(false, null, "Payment recorded, but the receipt PDF could not be generated");
+    });
     closeModal(res.data || true);
   }
 }

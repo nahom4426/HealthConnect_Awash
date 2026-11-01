@@ -12,6 +12,7 @@ const ReinsurersList = () => import("@/features/life/pages/reinsurance/Reinsurer
 const MedicalTests = () => import("@/features/life/pages/reinsurance/MedicalTests.vue");
 const QuotationsList = () => import("@/features/life/pages/quotations/QuotationsList.vue");
 const QuotationDetail = () => import("@/features/life/pages/quotations/QuotationDetail.vue");
+const QuotationNew = () => import("@/features/life/pages/quotations/QuotationNew.vue");
 const PoliciesList = () => import("@/features/life/pages/policies/PoliciesList.vue");
 const PolicyDetail = () => import("@/features/life/pages/policies/PolicyDetail.vue");
 const ClaimsQueue = () => import("@/features/life/pages/claims/ClaimsQueue.vue");
@@ -26,6 +27,8 @@ const FormBuilderEditor = () => import("@/features/shared/form_builder/pages/For
 const QuestionsList = () => import("@/features/life/pages/underwriting/QuestionsList.vue");
 const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
+const UnderwritingCases = () => import("@/features/life/pages/underwriting/UnderwritingCases.vue");
+const UnderwritingCase = () => import("@/features/life/pages/underwriting/UnderwritingCase.vue");
 
 // Life privileges: our Life_* names plus the backend life.* codes each stands for (features/life/privileges.js).
 // The router lets a user in when they hold any one of a route's privileges. Super Admin and
@@ -34,6 +37,7 @@ const P = {
   PRODUCTS: lifePermissions(["Life_Product_Manage", "Life_Rate_Manage"]),
   REINSURANCE: lifePermissions(["Life_Reinsurance_Manage"]),
   QUOTATIONS: lifePermissions(["Life_Quotation_Create", "Life_Quotation_Issue", "Life_Payment_Record", "Life_Policy_Issue"]),
+  QUOTATION_CREATE: lifePermissions(["Life_Quotation_Create"]),
   POLICIES: lifePermissions(["Life_Policy_Issue", "Life_Policy_Service", "Life_Reinsurance_Manage", "Life_Report_View"]),
   INDIVIDUAL: lifePermissions(["Life_Quotation_Create", "Life_Policy_Issue", "Life_Policy_Service"]),
   UNDERWRITING: lifePermissions(["Life_Underwriting_Decide"]),
@@ -108,6 +112,13 @@ const lifeRoutes = [
     name: "life-quotations",
     component: QuotationsList,
     meta: { requiresAuth: true, permissions: P.QUOTATIONS, title: "Group quotations" },
+  },
+  {
+    // ?product=TERM_ASSURANCE&plan=Group preselect the product (from the launcher's product cards)
+    path: "/life/quotations/new",
+    name: "life-quotation-new",
+    component: QuotationNew,
+    meta: { requiresAuth: true, permissions: P.QUOTATION_CREATE, title: "New group quotation" },
   },
   {
     path: "/life/quotations/:quotationUuid",
@@ -198,6 +209,18 @@ const lifeRoutes = [
     name: "life-answer-library",
     component: AnswerLibrary,
     meta: { requiresAuth: true, permissions: P.UNDERWRITING, title: "Answer library" },
+  },
+  {
+    path: "/life/underwriting/cases",
+    name: "life-underwriting-cases",
+    component: UnderwritingCases,
+    meta: { requiresAuth: true, permissions: P.UNDERWRITING, title: "Underwriting cases" },
+  },
+  {
+    path: "/life/underwriting/cases/:subjectUuid",
+    name: "life-underwriting-case",
+    component: UnderwritingCase,
+    meta: { requiresAuth: true, permissions: P.UNDERWRITING, title: "Underwriting case" },
   },
 ];
 

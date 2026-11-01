@@ -14,6 +14,9 @@ import InsuredMembersPanel from "../../components/InsuredMembersPanel.vue";
 import QuotedRidersPanel from "../../components/QuotedRidersPanel.vue";
 import TreatyLinksPanel from "../../components/TreatyLinksPanel.vue";
 import QuotationSummaryPanel from "../../components/QuotationSummaryPanel.vue";
+import PolicyAdminTabs from "../../components/PolicyAdminTabs.vue";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { useLifePdfs } from "../../pdf/useLifePdfs";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
@@ -33,6 +36,13 @@ const issued = computed(() => !!p.value.policyIssuedDate);
 const detail = useLifeResource(getPolicy);
 const d = computed(() => detail.data.value || {});
 watch(uuid, (v) => { if (v) { policy.load(v); detail.load(v); } }, { immediate: true });
+
+const pdf = useLifePdfs();
+const documents = computed(() => (issued.value ? [
+  { key: "policySchedule", label: "Policy schedule", hint: "Cover, members and riders" },
+  { key: "receipt", label: "Official receipt", hint: "Premium payment received" },
+] : []));
+const downloadDocument = (key) => (key === "policySchedule" ? pdf.policySchedule(p.value, d.value) : pdf[key](p.value));
 
 const TABS = ["Members", "Riders", "Reinsurance", "Details"];
 const tab = ref("Members");
@@ -107,6 +117,7 @@ function renew() {
       >
         <template v-if="p.policyStatus" #badge><StatusBadge :status="p.policyStatus" /></template>
         <template #actions>
+          <LifeDocumentsMenu :items="documents" :pending="pdf.pending.value" @select="downloadDocument" />
           <Button variant="outline" @click="router.push(`/life/quotations/${uuid}`)">View quotation</Button>
           <Button v-if="quotationActions(p).revise && lifeCan('Life_Policy_Service')" @click="renew">Renew / revise</Button>
         </template>
@@ -142,7 +153,7 @@ function renew() {
         <QuotationSummaryPanel v-show="tab === 'Details'" :quotation="p" />
       </template>
 
-      <p class="mt-5 text-xs text-ink-subtle">Endorsements, member changes, lapse and cancellation need new backend endpoints (gap G5) and aren't available yet.</p>
+      <PolicyAdminTabs v-if="p.quotationUuid === uuid" :key="`a${uuid}`" class="mt-6" kind="policy" :uuid="uuid" :status="p.policyStatus" issued @changed="policy.load(uuid); detail.load(uuid)" />
     </template>
   </div>
 </template>

@@ -2,7 +2,7 @@
 // One individual term policy with its riders. Amounts and premiums are the backend's. Issuing a draft
 // (PUT /benefit/{uuid}/issue) sets the policy number and ACTIVE; the backend refuses with 409 until
 // pricing is complete, the customer's KYC is VERIFIED and underwriting is clear.
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
@@ -12,6 +12,10 @@ import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import ListTable from "@/components/ListTable.vue";
 import PolicyholderPanel from "../../components/PolicyholderPanel.vue";
+import UnderwritingPanel from "../../components/UnderwritingPanel.vue";
+import PolicyAdminTabs from "../../components/PolicyAdminTabs.vue";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { useLifePdfs } from "../../pdf/useLifePdfs";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
@@ -59,7 +63,7 @@ const facts = computed(() => [
   ["Date of birth", b.value.dateOfBirth && formatDate(b.value.dateOfBirth)],
   ["Phone", b.value.personPhone],
   ["Policy number", b.value.policyNumber || "Not issued yet"],
-  ["Term", b.value.insuranceTerm ? `${b.value.insuranceTerm} years` : ""],
+  ["Term", b.value.insuranceTerm ? `${b.value.insuranceTerm} year${Number(b.value.insuranceTerm) === 1 ? "" : "s"}` : ""],
   ["Cover", b.value.beginDate ? `${formatDate(b.value.beginDate)} – ${formatDate(b.value.endDate)}` : ""],
   ["Remaining", b.value.endDate ? remainingLabel(daysUntil(b.value.endDate)) : ""],
   ["Created", formatDate(b.value.createdAt ?? b.value.audit?.createdAt)],
@@ -76,12 +80,28 @@ function removeRider(r) {
     if (res?.success) { toasted(true, "Rider removed"); riderBenefits.load(); benefit.load(uuid); }
   });
 }
+const pdf = useLifePdfs();
+const documents = computed(() => (b.value.policyNumber ? [{ key: "individualPolicy", label: "Policy schedule", hint: "Policyholder, cover and riders" }] : []));
+const downloadDocument = () => pdf.individualPolicy({ ...b.value, benefitUuid: uuid });
+
 function issue() {
   confirmAction({ title: "Issue this policy?", message: "It gets its policy number and the cover becomes active from the start date. Riders are activated and the premium schedule is created.", confirmText: "Issue policy" }, async () => {
     const res = await issueBenefit(uuid);
-    if (res?.success) { toasted(true, "Policy issued"); benefit.load(uuid); riderBenefits.load(); }
+    if (res?.success) {
+      toasted(true, "Policy issued");
+      riderBenefits.load();
+      // Reload first so the schedule carries the new policy number and dates
+      await benefit.load(uuid);
+      downloadDocument();
+    }
   });
 }
+// Health questionnaire, underwriting and beneficiaries (contract 2026-10 G1, G4, #30)
+const underwrite = lifeCan("Life_Underwriting_Decide");
+const questionnaire = () => openModal("LifeHealthQuestionnaire", { benefit: b.value, editable: can.value.isDraft && underwrite }, (saved) => saved && underwriting.value?.reload());
+const beneficiaries = () => openModal("LifeBeneficiaries", { subject: { benefitUuid: uuid }, name: benefitName(b.value), editable: underwrite });
+const underwriting = ref(null);
+
 function remove() {
   confirmAction({ title: "Delete this draft policy?", message: "The policy and its riders are removed. This can't be undone.", confirmText: "Delete", tone: "danger" }, async () => {
     const res = await deleteBenefit(uuid);
@@ -105,6 +125,7 @@ function remove() {
       <PageHeader :title="benefitName(b) || (benefit.loading.value ? 'Loading…' : 'Individual policy')" :subtitle="b.policyNumber ? `Policy ${b.policyNumber} · Individual term life` : 'Individual term life'" back="/life/individual">
         <template v-if="b.status" #badge><StatusBadge :status="b.status" /></template>
         <template #actions>
+          <LifeDocumentsMenu :items="documents" :pending="pdf.pending.value" @select="downloadDocument" />
           <Button v-if="can.remove" variant="ghost" class="!text-error" @click="remove">Delete draft</Button>
           <Button v-if="can.edit" variant="outline" @click="router.push(`/life/individual/${uuid}/edit`)">Edit</Button>
           <Button v-if="can.issue" @click="issue">Issue policy</Button>
@@ -122,56 +143,78 @@ function remove() {
         </div>
       </dl>
 
-      <div class="grid gap-5 lg:grid-cols-3">
-        <div class="grid gap-5 content-start">
+      <div class="grid gap-5 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-5 content-start min-w-0">
           <section class="p-5 rounded-2xl border bg-surface border-line shadow-card">
             <h2 class="text-sm font-semibold text-ink">Policy</h2>
-            <dl class="grid gap-3 mt-3">
+            <dl class="grid grid-cols-1 gap-3 mt-3">
               <div v-for="[label, value] in facts" :key="label" class="flex gap-3 justify-between text-sm">
                 <dt class="text-ink-subtle">{{ label }}</dt>
-                <dd class="text-right text-ink">{{ value ?? "—" }}</dd>
+                <dd class="min-w-0 text-right break-words text-ink">{{ value ?? "—" }}</dd>
               </div>
             </dl>
           </section>
           <PolicyholderPanel v-if="b.benefitUuid" :benefit="b" :draft="can.isDraft" @changed="benefit.load(uuid)" />
         </div>
 
-        <section class="p-5 rounded-2xl border lg:col-span-2 bg-surface border-line shadow-card">
-          <div class="flex flex-wrap gap-3 justify-between items-center">
-            <div>
-              <h2 class="text-sm font-semibold text-ink">Riders</h2>
-              <p class="text-xs text-ink-muted">Premiums are calculated by the system.</p>
-            </div>
-            <Button v-if="can.riders" size="sm" :disabled="riders.loading.value" @click="editRider()">Add rider</Button>
-          </div>
-          <ListTable
-            bare
-            class="mt-4"
-            :columns="riderColumns"
-            :rows="riderBenefits.data.value"
-            row-key="individualRiderBenefitUuid"
-            :loading="riderBenefits.loading.value"
-            :error="riderBenefits.error.value"
-            error-title="Couldn't load riders"
-            empty-title="No riders on this policy."
-            :skeleton-rows="1"
-            @retry="riderBenefits.load()"
-          >
-            <template #cell-rider="{ row }"><span class="text-ink">{{ riderName(row.riderUuid) }}</span></template>
-            <template #cell-benefits="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.benefits) }}</span></template>
-            <template #cell-premium="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.premium) }}</span></template>
-            <template #cell-paid="{ row }"><span class="text-ink-muted">{{ row.paid ? "Yes" : "No" }}</span></template>
-            <template #cell-status="{ row }"><StatusBadge v-if="row.status" :status="row.status" /></template>
-            <template #cell-actions="{ row }">
-              <div class="flex gap-1 justify-end">
-                <Button variant="ghost" size="sm" @click="editRider(row)">Change</Button>
-                <Button variant="ghost" size="sm" class="!text-error" @click="removeRider(row)">Remove</Button>
+        <div class="grid grid-cols-1 gap-5 content-start min-w-0 xl:col-span-2">
+          <section class="p-5 rounded-2xl border bg-surface border-line shadow-card">
+            <div class="flex flex-wrap gap-3 justify-between items-center">
+              <div>
+                <h2 class="text-sm font-semibold text-ink">Riders</h2>
+                <p class="text-xs text-ink-muted">Premiums are calculated by the system.</p>
               </div>
-            </template>
-          </ListTable>
-        </section>
+              <Button v-if="can.riders" size="sm" :disabled="riders.loading.value" @click="editRider()">Add rider</Button>
+            </div>
+            <ListTable
+              bare
+              class="mt-4"
+              :columns="riderColumns"
+              :rows="riderBenefits.data.value"
+              row-key="individualRiderBenefitUuid"
+              :loading="riderBenefits.loading.value"
+              :error="riderBenefits.error.value"
+              error-title="Couldn't load riders"
+              empty-title="No riders on this policy."
+              :skeleton-rows="1"
+              @retry="riderBenefits.load()"
+            >
+              <template #cell-rider="{ row }"><span class="text-ink">{{ riderName(row.riderUuid) }}</span></template>
+              <template #cell-benefits="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.benefits) }}</span></template>
+              <template #cell-premium="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(row.premium) }}</span></template>
+              <template #cell-paid="{ row }"><span class="text-ink-muted">{{ row.paid ? "Yes" : "No" }}</span></template>
+              <template #cell-status="{ row }"><StatusBadge v-if="row.status" :status="row.status" /></template>
+              <template #cell-actions="{ row }">
+                <div class="flex gap-1 justify-end">
+                  <Button variant="ghost" size="sm" @click="editRider(row)">Change</Button>
+                  <Button variant="ghost" size="sm" class="!text-error" @click="removeRider(row)">Remove</Button>
+                </div>
+              </template>
+            </ListTable>
+          </section>
+          <section class="p-5 rounded-2xl border bg-surface border-line shadow-card">
+            <h2 class="text-sm font-semibold text-ink">Health and beneficiaries</h2>
+            <ul class="mt-3 divide-y divide-line">
+              <li class="flex flex-wrap gap-3 justify-between items-center py-2.5">
+                <span class="text-sm">
+                  <span class="text-ink">Health questionnaire</span>
+                  <span class="block text-xs text-ink-subtle">Answered before underwriting; the answers are scored by the system.</span>
+                </span>
+                <Button variant="outline" size="sm" @click="questionnaire">{{ can.isDraft && underwrite ? "Answer" : "View" }}</Button>
+              </li>
+              <li class="flex flex-wrap gap-3 justify-between items-center py-2.5">
+                <span class="text-sm">
+                  <span class="text-ink">Beneficiaries</span>
+                  <span class="block text-xs text-ink-subtle">Who is paid on a claim. Without named beneficiaries, the statutory heirs.</span>
+                </span>
+                <Button variant="outline" size="sm" @click="beneficiaries">{{ underwrite ? "Manage" : "View" }}</Button>
+              </li>
+            </ul>
+          </section>
+          <UnderwritingPanel v-if="b.benefitUuid" ref="underwriting" :subject="{ benefitUuid: uuid }" :editable="can.isDraft && underwrite" />
+        </div>
       </div>
-      <p class="mt-5 text-xs text-ink-subtle">Beneficiaries and the health questionnaire come in the next screens.</p>
+      <PolicyAdminTabs v-if="b.benefitUuid" :key="`a${b.status}`" class="mt-6" kind="benefit" :uuid="uuid" :status="b.status" :issued="!can.isDraft" @changed="benefit.load(uuid)" />
     </template>
   </div>
 </template>

@@ -8,6 +8,7 @@ import ListTable from "@/components/ListTable.vue";
 import TextField from "@/components/fields/TextField.vue";
 import CheckboxField from "@/components/fields/CheckboxField.vue";
 import { toasted } from "@/utils/utils";
+import { lifeCan } from "@/features/life/privileges";
 import PageNav from "@/components/PageNav.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import { fileForm } from "../composables/useLifeResource";
@@ -43,6 +44,9 @@ function remove(p) {
   });
 }
 
+// Each member's beneficiaries (G1): anyone can view, the underwriter changes them
+const beneficiaries = (p) => openModal("LifeBeneficiaries", { subject: { insuredUuid: p.insuredUuid }, name: insuredName(p), editable: lifeCan("Life_Underwriting_Decide") });
+
 const fileInput = ref(null);
 const importing = ref(false);
 async function onImport(e) {
@@ -73,7 +77,7 @@ const columns = computed(() => [
   { key: "premium", label: "Premium", align: "right" },
   { key: "riders", label: "Riders" },
   ...(props.showCover ? [{ key: "cover", label: "Cover" }, { key: "status", label: "Status" }] : []),
-  ...(props.editable ? [{ key: "actions", label: "Actions", srOnly: true }] : []),
+  { key: "actions", label: "Actions", srOnly: true },
 ]);
 defineExpose({ reload: members.reload });
 </script>
@@ -123,8 +127,11 @@ defineExpose({ reload: members.reload });
     <template #cell-status="{ row }"><StatusBadge v-if="row.status" :status="row.status" /></template>
     <template #cell-actions="{ row }">
       <div class="flex gap-1 justify-end">
-        <Button variant="ghost" size="sm" @click="edit(row)">Edit</Button>
-        <Button variant="ghost" size="sm" class="!text-error" @click="remove(row)">Remove</Button>
+        <Button variant="ghost" size="sm" @click="beneficiaries(row)">Beneficiaries</Button>
+        <template v-if="editable">
+          <Button variant="ghost" size="sm" @click="edit(row)">Edit</Button>
+          <Button variant="ghost" size="sm" class="!text-error" @click="remove(row)">Remove</Button>
+        </template>
       </div>
     </template>
     <template #footer><PageNav v-model:page="members.page.value" :total-pages="members.totalPages.value" :disabled="members.loading.value" /></template>

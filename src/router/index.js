@@ -27,6 +27,8 @@ import lifeRoutes from "./life/life.routes";
 import { marineRoutes, marinePublicRoutes } from "./marine/marine.routes";
 import fireRoutes, { burglaryRoutes, marineCatalogRoutes } from "./fire/fire.routes";
 import { installRouteLoading } from "./loading";
+// No-code products, product catalogue, module registry
+import productRoutes from "./products/products.routes";
 // Shared across products
 import adminRoutes from "./shared/admin.routes";
 import analyticsRoutes from "./shared/analytics.routes";
@@ -209,6 +211,7 @@ const router = createRouter({
         ...fireRoutes,
         ...burglaryRoutes,
         ...marineCatalogRoutes,
+        ...productRoutes,
         ...adminRoutes,
         ...analyticsRoutes,
         ...reportsRoutes,
@@ -304,13 +307,10 @@ router.beforeEach((to, from, next) => {
   // Check if route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   
-  // Get user data from store or localStorage fallback
+  // The store is the session (restored from userDetail above). No localStorage fallback: this app
+  // never writes "auth_data", but other apps served from localhost can, and reading it kept a
+  // signed-out user "signed in", so logout bounced from /login straight back to /module-select.
   let rawUser = authStore.auth?.user ?? authStore.auth;
-  if (!rawUser) {
-    try {
-      rawUser = JSON.parse(localStorage.getItem('auth_data') || localStorage.getItem('userDetail') || 'null');
-    } catch (e) {}
-  }
   if (rawUser && rawUser.data) {
     rawUser = rawUser.data;
   }

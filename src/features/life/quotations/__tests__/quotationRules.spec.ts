@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validateRateRows } from "../../rates/rateTables";
 import {
-  fromInsured, quotationActions, quotedRiderSpec, riderChanges, taxesCalculated, toInsuredRequest, toPaymentBody, toQuotationRequest,
+  fromInsured, fromQuotation, quotationActions, quotedRiderSpec, riderChanges, taxesCalculated, toInsuredRequest, toPaymentBody, toQuotationRequest,
   validateInsured, validatePayment, validatePolicyDates, validateQuotation,
 } from "../quotationRules";
 
@@ -21,6 +21,24 @@ describe("quotation details", () => {
     expect(validateQuotation({ institutionUuid: "i1", term: "1.5" }).term).toBe("Whole number of years, at least 1");
     expect(validateQuotation({ institutionUuid: "i1", term: 1, contactPhone: "09-11" }).contactPhone).toBeTruthy();
     expect(validateQuotation({ institutionUuid: "i1", term: 1, contactPhone: "+251911223344" })).toEqual({});
+  });
+
+  it("asks a new quotation for its product, and for a plan when the product has plans", () => {
+    const base = { institutionUuid: "i1", term: 1 };
+    expect(validateQuotation(base, { creating: true })).toEqual({ productType: "Choose the product" });
+    expect(validateQuotation({ ...base, productType: "TERM_ASSURANCE" }, { creating: true })).toEqual({ planType: "Choose the plan" });
+    expect(validateQuotation({ ...base, productType: "WHOLE_LIFE_ASSURANCE" }, { creating: true })).toEqual({});
+    // Quotations saved before products existed can still be edited
+    expect(validateQuotation(base)).toEqual({});
+  });
+
+  it("sends the product, and the plan only for products that have plans", () => {
+    const base = { institutionUuid: "i1", institutionName: "Acme", term: "1" };
+    expect(toQuotationRequest({ ...base, productType: "TERM_ASSURANCE", planType: "Group" })).toMatchObject({ productType: "TERM_ASSURANCE", planType: "Group" });
+    expect(toQuotationRequest({ ...base, productType: "TERM_ASSURANCE", planType: "Modified Large Group" }).planType).toBe("Modified_Large_Group");
+    expect(fromQuotation({ productType: "TERM_ASSURANCE", planType: "Modified_Large_Group" }).planType).toBe("Modified Large Group");
+    expect(toQuotationRequest({ ...base, productType: "WHOLE_LIFE_ASSURANCE", planType: "Group" })).not.toHaveProperty("planType");
+    expect(toQuotationRequest(base)).not.toHaveProperty("productType");
   });
 
   it("records who prepared it", () => {

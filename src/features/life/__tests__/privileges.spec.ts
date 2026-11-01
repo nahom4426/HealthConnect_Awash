@@ -23,13 +23,13 @@ describe("Life privilege map", () => {
   });
 });
 
-// The 8 Life roles as seeded in AuthService (2026-10-31): their write codes, plus the read codes every
+// The 8 Life roles in AuthService (codes as of 2026-11-01, with the claim request/review/approve split): their write codes, plus the read codes every
 // Life role holds. Each role must pass only its own checks.
 const READS = LIFE_PRIVILEGES.Life_Read;
 const ROLES: Record<string, string[]> = {
-  "Life Claims Manager": ["Life_Claim_Approve", "Life_Claim_Authorize", "Life_Report_View", "life.claim.authorize", "life.claim.update", "life.report.read", "life.dashboard.read"],
-  "Life Claims Officer": ["Life_Claim_Review", "life.claim.assess", "life.claim.register", "life.claim.request_info", "life.claim.update"],
-  "Life Claims Agency": ["Life_Claim_Prepare", "life.claim.create", "life.claim.update", "life.claim_attachment.create", "life.claim_attachment.delete", "life.claim_attachment.update"],
+  "Life Claims Manager": ["Life_Claim_Approve", "Life_Claim_Authorize", "Life_Report_View", "life.claim.authorize", "life.claim.approve", "life.claim.update", "life.report.read", "life.dashboard.read"],
+  "Life Claims Officer": ["Life_Claim_Review", "life.claim.assess", "life.claim.register", "life.claim.request_info", "life.claim.review", "life.claim.update"],
+  "Life Claims Agency": ["Life_Claim_Prepare", "life.claim.create", "life.claim.request", "life.claim.update", "life.claim_attachment.create", "life.claim_attachment.delete", "life.claim_attachment.update"],
   "Life Reinsurance Manager": ["Life_Reinsurance_Manage", "Life_Report_View", "life.policy_treaty_mapping.create", "life.policy_treaty_mapping.update", "life.reinsurer.create", "life.reinsurance_treaty.update", "life.report.read"],
   "Life Policy Administrator": ["Life_Policy_Issue", "Life_Policy_Service", "life.benefit.issue", "life.benefit.service", "life.policy.service", "life.policy.update"],
   "Life Finance Officer": ["Life_Claim_Pay", "Life_Payment_Record", "Life_Report_View", "life.claim.pay", "life.premium.pay", "life.quotation.update", "life.report.read"],

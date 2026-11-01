@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { isExactSuperAdmin } from '@/utils/roleAccess';
 
 export const MODULES = [
   {
@@ -88,6 +89,24 @@ export const MODULES = [
 
 export const ADMIN_MODULE_ID = 'administration';
 
+/** Sidebar id for a no-code product's screens, e.g. "product:PET_CARE". */
+export const PRODUCT_MODULE_PREFIX = 'product:';
+
+export const PRODUCT_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8l-9-5-9 5 9 5 9-5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 8v8l9 5 9-5V8"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 13v8"/></svg>`;
+
+export const CATALOGUE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path stroke-linecap="round" d="M17.5 14v7M14 17.5h7"/></svg>`;
+
+const PRODUCT_SERVICE = 'property-casualty';
+
+function strip(privilege) {
+  return String(privilege ?? '').replace(/^ROLE_/, '');
+}
+
+/**
+ * Registry entries come from AuthService (GET /modules/me). The launcher, sidebar, and
+ * per-module button gating read them here; the static MODULES list above only supplies the
+ * icon, colours, and dashboard of modules that have coded screens.
+ */
 export const useModuleStore = defineStore('module', () => {
   const activeModuleId = ref(localStorage.getItem('activeModule') || null);
 
@@ -105,5 +124,178 @@ export const useModuleStore = defineStore('module', () => {
     localStorage.removeItem('activeModule');
   }
 
-  return { activeModuleId, activeModule, selectModule, clearModule };
+  // ── Module registry (GET /modules/me) ──
+  const registry = ref([]);
+  // idle | loading | ready | error | unavailable (server has no registry endpoint yet)
+  const registryStatus = ref('idle');
+  const registryError = ref('');
+  let registryRequest = null;
+
+  // Product definitions, to map a module key to its product key (privilegeModule may differ)
+  const definitions = ref([]);
+  let definitionsRequest = null;
+
+  const registryByKey = computed(() => {
+    const map = {};
+    for (const entry of registry.value) map[entry.key] = entry;
+    return map;
+  });
+
+  async function loadRegistry({ force = false } = {}) {
+    if (registryRequest) return registryRequest;
+    if (!force && registryStatus.value === 'ready') return registry.value;
+    registryStatus.value = 'loading';
+    registryError.value = '';
+    registryRequest = (async () => {
+      try {
+        const { fetchMyModules } = await import('@/features/products/api/modulesApi');
+        const list = await fetchMyModules();
+        registry.value = (Array.isArray(list) ? list : [])
+          .slice()
+          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        registryStatus.value = 'ready';
+      } catch (e) {
+        registryError.value = e?.message || 'Could not load your modules';
+        registryStatus.value = e?.status === 404 ? 'unavailable' : 'error';
+      } finally {
+        registryRequest = null;
+      }
+      return registry.value;
+    })();
+    return registryRequest;
+  }
+
+  async function loadDefinitions({ force = false } = {}) {
+    if (definitionsRequest) return definitionsRequest;
+    if (!force && definitions.value.length) return definitions.value;
+    definitionsRequest = (async () => {
+      try {
+        const { listDefinitions } = await import('@/features/products/api/productsApi');
+        const list = await listDefinitions({ includeRetired: true });
+        definitions.value = Array.isArray(list) ? list : list?.content || [];
+      } catch {
+        // Needs product.read; without it the key fallback below is used
+      } finally {
+        definitionsRequest = null;
+      }
+      return definitions.value;
+    })();
+    return definitionsRequest;
+  }
+
+  function resetRegistry() {
+    registry.value = [];
+    definitions.value = [];
+    registryStatus.value = 'idle';
+  }
+
+  /** Product key (PET_CARE) for a module key (pet_care). */
+  function productClassFor(moduleKey) {
+    const match = definitions.value.find((d) => d.privilegeModule === moduleKey);
+    return match?.key || String(moduleKey || '').toUpperCase();
+  }
+
+  /** Privilege module (pet_care) for a product key (PET_CARE). */
+  function privilegeModuleFor(productClass) {
+    const match = definitions.value.find((d) => d.key === productClass);
+    return match?.privilegeModule || String(productClass || '').toLowerCase();
+  }
+
+  function definitionFor(productClass) {
+    return definitions.value.find((d) => d.key === productClass) || null;
+  }
+
+  function currentUser() {
+    try {
+      const stored = JSON.parse(localStorage.getItem('userDetail') || 'null');
+      return stored?.user ?? stored ?? {};
+    } catch {
+      return {};
+    }
+  }
+
+  function isSuperAdmin() {
+    return isExactSuperAdmin(currentUser());
+  }
+
+  /**
+   * True when the user holds `{moduleKey}.{action}` (e.g. "pet_care", "proposal.create").
+   * Without a registry on the server, controls stay visible and the backend's 403 decides.
+   */
+  function can(moduleKey, action) {
+    if (isSuperAdmin()) return true;
+    if (registryStatus.value === 'unavailable') return true;
+    const entry = registryByKey.value[moduleKey];
+    if (!entry) return false;
+    const wanted = `${moduleKey}.${action}`;
+    return (entry.privileges || []).some((p) => strip(p) === wanted);
+  }
+
+  /** True when the user holds this privilege suffix (".product.read") in any module. */
+  function canAnywhere(suffix) {
+    if (isSuperAdmin()) return true;
+    return registry.value.some((entry) => (entry.privileges || []).some((p) => strip(p).endsWith(suffix)));
+  }
+
+  function isModuleAdmin(moduleKey) {
+    if (isSuperAdmin()) return true;
+    return registryByKey.value[moduleKey]?.admin === true;
+  }
+
+  const adminModuleKeys = computed(() => registry.value.filter((e) => e.admin === true).map((e) => e.key));
+
+  /** Launcher tile for one registry entry: coded screens, generic product screens, or a placeholder. */
+  function present(entry) {
+    const coded = MODULES.find((m) => m.id === entry.key && m.id !== ADMIN_MODULE_ID);
+    const base = {
+      id: entry.key,
+      name: entry.name || entry.key,
+      description: entry.description || '',
+      roleName: entry.roleName || '',
+      admin: entry.admin === true,
+      serviceId: entry.serviceId,
+    };
+    if (coded) {
+      return { ...coded, ...base, description: base.description || coded.description, kind: 'coded' };
+    }
+    if (entry.serviceId === PRODUCT_SERVICE) {
+      const productClass = productClassFor(entry.key);
+      return {
+        ...base,
+        kind: 'product',
+        productClass,
+        icon: PRODUCT_ICON,
+        badge: null,
+        dashboardPath: `/products/${productClass}/proposals`,
+        sidebarId: `${PRODUCT_MODULE_PREFIX}${productClass}`,
+      };
+    }
+    return { ...base, kind: 'unavailable', icon: PRODUCT_ICON, badge: 'Soon', dashboardPath: `/coming-soon/${entry.key}` };
+  }
+
+  const launcherModules = computed(() => registry.value.map(present));
+
+  return {
+    activeModuleId,
+    activeModule,
+    selectModule,
+    clearModule,
+    registry,
+    registryStatus,
+    registryError,
+    registryByKey,
+    loadRegistry,
+    resetRegistry,
+    definitions,
+    loadDefinitions,
+    productClassFor,
+    privilegeModuleFor,
+    definitionFor,
+    can,
+    canAnywhere,
+    isModuleAdmin,
+    isSuperAdmin,
+    adminModuleKeys,
+    launcherModules,
+  };
 });

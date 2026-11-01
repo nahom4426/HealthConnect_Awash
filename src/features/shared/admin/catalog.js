@@ -1,7 +1,12 @@
 import { administeredModules, isExactSuperAdmin } from "@/utils/roleAccess";
+import { useModuleStore } from "@/stores/moduleStore";
 
-/** AuthService ModuleTypes.ALLOWED, plus the Super Admin "every module" scope. */
-export const ADMIN_MODULES = [
+/**
+ * Used only when the server has no module registry yet (GET /modules/me answers 404).
+ * Everywhere else the module list comes from the registry, so a new product's module
+ * shows up in these dropdowns without a frontend change.
+ */
+const LEGACY_MODULES = [
   { value: "health", label: "Health" },
   { value: "life", label: "Life" },
   { value: "motor", label: "Motor" },
@@ -17,11 +22,20 @@ export const ADMIN_MODULES = [
   { value: "party", label: "Party" },
 ];
 
-/** Modules this caller may filter or assign. Super Admin gets the full catalog. */
+/** Every module the caller can see: { value: key, label: name }, in menu order. */
+export function allModules() {
+  const store = useModuleStore();
+  if (store.registryStatus === "unavailable") return LEGACY_MODULES;
+  // MainLayout loads the registry; these screens re-render once it arrives
+  return store.registry.map((entry) => ({ value: entry.key, label: entry.name || entry.key }));
+}
+
+/** Modules this caller may filter or assign. Super Admin gets every module. */
 export function moduleOptions(user) {
+  const modules = allModules();
   const managed = administeredModules(user);
-  if (managed == null) return ADMIN_MODULES;
-  return ADMIN_MODULES.filter((item) => managed.includes(item.value));
+  if (managed == null) return modules;
+  return modules.filter((item) => managed.includes(item.value));
 }
 
 /** List screens: Super Admin starts on every module; a module admin starts on their first module. */
@@ -33,8 +47,8 @@ export function defaultListModule(user) {
 
 export function moduleLabel(value) {
   if (!value) return "";
-  const match = ADMIN_MODULES.find((item) => item.value === value);
-  return match ? match.label : value.charAt(0).toUpperCase() + value.slice(1);
+  const match = allModules().find((item) => item.value === value);
+  return match ? match.label : value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, " ");
 }
 
 /** Drop empty query values so the API keeps its defaults. */

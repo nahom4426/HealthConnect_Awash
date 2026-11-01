@@ -16,6 +16,7 @@ import UnderwritingPanel from "../../components/UnderwritingPanel.vue";
 import PolicyAdminTabs from "../../components/PolicyAdminTabs.vue";
 import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
 import { useLifePdfs } from "../../pdf/useLifePdfs";
+import { individualPolicyDocuments } from "../../pdf/documentMenus";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
@@ -81,7 +82,7 @@ function removeRider(r) {
   });
 }
 const pdf = useLifePdfs();
-const documents = computed(() => (b.value.policyNumber ? [{ key: "individualPolicy", label: "Policy schedule", hint: "Policyholder, cover and riders" }] : []));
+const documents = computed(() => individualPolicyDocuments(b.value));
 const downloadDocument = () => pdf.individualPolicy({ ...b.value, benefitUuid: uuid });
 
 function issue() {

@@ -15,7 +15,10 @@ import { useLifePagedList } from "../../composables/useLifePagedList";
 import { BenefitStatus } from "../../constants/statuses";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
 import { benefitName } from "../../individual/individualRules";
-import { getBenefits } from "../../api/policyApi";
+import { getBenefit, getBenefits } from "../../api/policyApi";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { dataOf, useLifePdfs } from "../../pdf/useLifePdfs";
+import { individualPolicyDocuments } from "../../pdf/documentMenus";
 
 const router = useRouter();
 const COLUMNS = [
@@ -26,6 +29,7 @@ const COLUMNS = [
   { key: "premium", label: "Total premium", align: "right" },
   { key: "cover", label: "Cover" },
   { key: "status", label: "Status" },
+  { key: "documents", label: "Documents", srOnly: true, align: "right" },
 ];
 const TABS = { Draft: BenefitStatus.PENDING, Active: BenefitStatus.ACTIVE, Renewed: BenefitStatus.RENEWED, Lapsed: BenefitStatus.LAPSED, Expired: BenefitStatus.EXPIRED, Cancelled: BenefitStatus.CANCELLED, Disabled: BenefitStatus.DISABLED };
 const list = useLifePagedList(({ status, ...query }) => getBenefits(status, query), { status: BenefitStatus.PENDING });
@@ -33,6 +37,12 @@ list.reload();
 const tab = computed({ get: () => Object.keys(TABS).find((k) => TABS[k] === list.status.value), set: (t) => (list.status.value = TABS[t]) });
 
 const open = (b) => router.push(`/life/individual/${b.benefitUuid}`);
+
+const pdf = useLifePdfs();
+const download = (row) => pdf.forRow(row.benefitUuid, async () => {
+  const b = await dataOf(getBenefit(row.benefitUuid));
+  if (b) await pdf.individualPolicy({ ...row, ...b, benefitUuid: row.benefitUuid });
+});
 </script>
 
 <template>
@@ -77,6 +87,7 @@ const open = (b) => router.push(`/life/individual/${b.benefitUuid}`);
         </span>
       </template>
       <template #cell-status="{ row }"><StatusBadge :status="row.status" /></template>
+      <template #cell-documents="{ row }"><LifeDocumentsMenu size="sm" :items="individualPolicyDocuments(row)" :pending="pdf.pendingRow.value === row.benefitUuid ? 'row' : ''" @select="download(row)" /></template>
       <template #footer><PageNav v-model:page="list.page.value" :total-pages="list.totalPages.value" :disabled="list.loading.value" /></template>
     </ListTable>
   </div>

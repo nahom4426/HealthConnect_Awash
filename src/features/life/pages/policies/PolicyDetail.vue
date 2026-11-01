@@ -17,6 +17,7 @@ import QuotationSummaryPanel from "../../components/QuotationSummaryPanel.vue";
 import PolicyAdminTabs from "../../components/PolicyAdminTabs.vue";
 import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
 import { useLifePdfs } from "../../pdf/useLifePdfs";
+import { groupPolicyDocuments } from "../../pdf/documentMenus";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
@@ -38,10 +39,7 @@ const d = computed(() => detail.data.value || {});
 watch(uuid, (v) => { if (v) { policy.load(v); detail.load(v); } }, { immediate: true });
 
 const pdf = useLifePdfs();
-const documents = computed(() => (issued.value ? [
-  { key: "policySchedule", label: "Policy schedule", hint: "Cover, members and riders" },
-  { key: "receipt", label: "Official receipt", hint: "Premium payment received" },
-] : []));
+const documents = computed(() => groupPolicyDocuments(p.value));
 const downloadDocument = (key) => (key === "policySchedule" ? pdf.policySchedule(p.value, d.value) : pdf[key](p.value));
 
 const TABS = ["Members", "Riders", "Reinsurance", "Details"];

@@ -12,7 +12,10 @@ import { useLifePagedList } from "../../composables/useLifePagedList";
 import { QuotationStatus } from "../../constants/statuses";
 import { lifeCan } from "@/features/life/privileges";
 import { formatDate } from "../../constants/labels";
-import { getQuotations } from "../../api/quotationApi";
+import { getQuotation, getQuotations } from "../../api/quotationApi";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { dataOf, useLifePdfs } from "../../pdf/useLifePdfs";
+import { quotationDocuments } from "../../pdf/documentMenus";
 
 const router = useRouter();
 const TABS = { Draft: QuotationStatus.PENDING, Issued: QuotationStatus.ISSUED, Accepted: QuotationStatus.ACCEPTED, Paid: QuotationStatus.PAID };
@@ -37,10 +40,17 @@ const columns = computed(() => [
   { key: "quotedByFullName", label: "Prepared by" },
   { key: "stageDate", label: stageDateLabel.value },
   { key: "status", label: "Status" },
+  { key: "documents", label: "Documents", srOnly: true, align: "right" },
 ]);
 
 const open = (q) => router.push(`/life/quotations/${q.quotationUuid}`);
 const create = () => router.push("/life/quotations/new");
+
+const pdf = useLifePdfs();
+const download = (row, key) => pdf.forRow(row.quotationUuid, async () => {
+  const q = await dataOf(getQuotation(row.quotationUuid));
+  if (q) await pdf[key]({ ...row, ...q });
+});
 </script>
 
 <template>
@@ -81,6 +91,7 @@ const create = () => router.push("/life/quotations/new");
       <template #cell-quotedByFullName="{ row }"><span class="text-ink-muted">{{ row.quotedByFullName || "—" }}</span></template>
       <template #cell-stageDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(stageDate(row)) }}</span></template>
       <template #cell-status="{ row }"><StatusBadge :status="row.quotationStatus" /></template>
+      <template #cell-documents="{ row }"><LifeDocumentsMenu size="sm" :items="quotationDocuments(row)" :pending="pdf.pendingRow.value === row.quotationUuid ? 'row' : ''" @select="download(row, $event)" /></template>
       <template #footer><PageNav v-model:page="list.page.value" :total-pages="list.totalPages.value" :disabled="list.loading.value" /></template>
     </ListTable>
   </div>

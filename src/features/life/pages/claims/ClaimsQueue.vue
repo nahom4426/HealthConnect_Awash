@@ -13,7 +13,10 @@ import TextField from "@/components/fields/TextField.vue";
 import { useLifePagedList } from "../../composables/useLifePagedList";
 import { formatAmount, formatDate } from "../../constants/labels";
 import { claimTypeLabel, tabsFor } from "../../claims/claimRules";
-import { getLifeClaims } from "../../api/claimApi";
+import { getLifeClaim, getLifeClaims } from "../../api/claimApi";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { dataOf, useLifePdfs } from "../../pdf/useLifePdfs";
+import { claimDocuments } from "../../pdf/documentMenus";
 
 const route = useRoute();
 const router = useRouter();
@@ -39,9 +42,17 @@ const columns = computed(() => [
   { key: "eventDate", label: "Event date" },
   { key: "amount", label: assessed.value ? "Net payable" : "Claimed", align: "right" },
   { key: "requestedDate", label: "Submitted" },
+  ...(assessed.value ? [{ key: "documents", label: "Documents", srOnly: true, align: "right" }] : []),
 ]);
 
 const open = (c) => router.push({ path: `/life/claims/${c.claimUuid}`, query: { side: side.value } });
+
+// The settlement advice lists payees and payments, which only the full claim carries
+const pdf = useLifePdfs();
+const download = (row) => pdf.forRow(row.claimUuid, async () => {
+  const c = await dataOf(getLifeClaim(row.claimUuid));
+  if (c) await pdf.claimSettlement({ ...row, ...c });
+});
 </script>
 
 <template>
@@ -83,6 +94,7 @@ const open = (c) => router.push({ path: `/life/claims/${c.claimUuid}`, query: { 
       </template>
       <template #cell-eventDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(row.eventDate) }}</span></template>
       <template #cell-amount="{ row }"><span class="tabular-nums text-ink">{{ formatAmount(assessed ? row.netPayable : row.claimedAmount) }}</span></template>
+      <template #cell-documents="{ row }"><LifeDocumentsMenu size="sm" :items="claimDocuments(row)" :pending="pdf.pendingRow.value === row.claimUuid ? 'row' : ''" @select="download(row)" /></template>
       <template #cell-requestedDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(row.requestedDate ?? row.audit?.createdAt) }}</span></template>
       <template #footer><PageNav v-model:page="list.page.value" :total-pages="list.totalPages.value" :disabled="list.loading.value" /></template>
     </ListTable>

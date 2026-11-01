@@ -13,6 +13,7 @@ import StatusBadge from "@/components/StatusBadge.vue";
 import ListTable from "@/components/ListTable.vue";
 import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
 import { useLifePdfs } from "../../pdf/useLifePdfs";
+import { claimDocuments } from "../../pdf/documentMenus";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { formatAmount, formatDate } from "../../constants/labels";
@@ -100,9 +101,7 @@ function submitClaim() {
 }
 const assess = () => openModal("LifeClaimAssessment", { claim: c.value }, reloadAfter);
 const pdf = useLifePdfs();
-const pdfDocuments = computed(() => (["AUTHORIZED", "PAID"].includes(c.value.status)
-  ? [{ key: "claimSettlement", label: "Settlement advice", hint: c.value.status === "PAID" ? "Payments to the payees" : "Net payable and payees, for signing" }]
-  : []));
+const pdfDocuments = computed(() => claimDocuments(c.value));
 const downloadDocument = () => pdf.claimSettlement(c.value);
 // Once the claim is fully paid, the settlement advice goes to the payees
 const pay = () => openModal("LifeClaimPayment", { claim: c.value }, async (done) => {

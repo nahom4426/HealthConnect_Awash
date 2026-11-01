@@ -14,6 +14,11 @@ import {
 } from './lifeDocuments';
 
 const rowsOf = (d) => (Array.isArray(d) ? d : Array.isArray(d?.content) ? d.content : []);
+// A record's data, or null when the request failed (the API layer has already shown the error)
+export const dataOf = async (request) => {
+  const res = await request;
+  return res?.success ? res.data || {} : null;
+};
 
 // Every member of a group quotation/policy, page by page (the list endpoint is paged).
 async function allMembers(quotationUuid) {
@@ -64,8 +69,23 @@ export function useLifePdfs() {
     return { members, riders };
   };
 
+  // List rows hold a summary only, so `draw` loads the full record first; `pendingRow` is the
+  // id of the row whose PDF is being made, for that row's button.
+  const pendingRow = ref('');
+  async function forRow(id, draw) {
+    if (pendingRow.value || pending.value) return;
+    pendingRow.value = id;
+    try {
+      await draw();
+    } finally {
+      pendingRow.value = '';
+    }
+  }
+
   return {
     pending,
+    pendingRow,
+    forRow,
     quotation: (q) => run('quotation', async () => downloadLifeQuotationPdf(q, await groupExtras(q))),
     debitNote: (q) => run('debitNote', async () => downloadLifeDebitNotePdf(q, { members: await allMembers(q.quotationUuid) })),
     receipt: (q, payment) => run('receipt', () => downloadLifeReceiptPdf(q, payment)),

@@ -17,6 +17,7 @@ import UnderwritingPanel from "../../components/UnderwritingPanel.vue";
 import QuotationSummaryPanel from "../../components/QuotationSummaryPanel.vue";
 import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
 import { useLifePdfs } from "../../pdf/useLifePdfs";
+import { quotationDocuments } from "../../pdf/documentMenus";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { quotationStatusLabel } from "../../constants/labels";
@@ -76,16 +77,7 @@ const editDetails = () => openModal("LifeQuotationForm", { quotation: q.value },
 
 // PDFs for the client: what is available follows the quotation's stage
 const pdf = useLifePdfs();
-const documents = computed(() => {
-  const s = q.value.quotationStatus;
-  if (!s || s === "PENDING") return [];
-  return [
-    { key: "quotation", label: "Quotation", hint: "Members, riders and premium" },
-    ...(s === "ACCEPTED" || s === "PAID" ? [{ key: "debitNote", label: "Debit note", hint: "Premium due from the institution" }] : []),
-    ...(s === "PAID" ? [{ key: "receipt", label: "Official receipt", hint: "Premium payment received" }] : []),
-    ...(q.value.policyIssuedDate ? [{ key: "policySchedule", label: "Policy schedule", hint: "Cover, members and riders" }] : []),
-  ];
-});
+const documents = computed(() => quotationDocuments(q.value));
 const downloadDocument = (key) => pdf[key](q.value);
 // Issue/accept/policy responses carry the updated quotation; merge so the PDF has the new fields
 const withResponse = (data) => ({ ...q.value, ...(data && typeof data === "object" ? data : {}) });

@@ -11,7 +11,11 @@ import PageNav from "@/components/PageNav.vue";
 import { useLifePagedList } from "../../composables/useLifePagedList";
 import { PolicyStatus } from "../../constants/statuses";
 import { daysUntil, formatDate, remainingLabel } from "../../constants/labels";
-import { getPolicies } from "../../api/policyApi";
+import { getPolicies, getPolicy } from "../../api/policyApi";
+import { getQuotation } from "../../api/quotationApi";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { dataOf, useLifePdfs } from "../../pdf/useLifePdfs";
+import { groupPolicyDocuments } from "../../pdf/documentMenus";
 
 const router = useRouter();
 const TABS = { Active: PolicyStatus.ACTIVE, Pending: PolicyStatus.PENDING, Modified: PolicyStatus.MODIFIED, Lapsed: PolicyStatus.LAPSED, Renewed: PolicyStatus.RENEWED, Expired: PolicyStatus.EXPIRED, Cancelled: PolicyStatus.CANCELLED, Disabled: PolicyStatus.DISABLED };
@@ -27,10 +31,23 @@ const COLUMNS = [
   { key: "remaining", label: "Remaining" },
   { key: "policyIssuedDate", label: "Issued" },
   { key: "status", label: "Status" },
+  { key: "documents", label: "Documents", srOnly: true, align: "right" },
 ];
 
 const policyNo = (p) => p.institutionLifeInsuranceNumber || p.quotationNumber || "—";
 const open = (p) => router.push(`/life/policies/${p.quotationUuid}`);
+
+// As on the policy page: the quotation carries the policy fields, GET /policy/{uuid} the totals
+const pdf = useLifePdfs();
+const download = (row, key) => pdf.forRow(row.quotationUuid, async () => {
+  const [q, detail] = await Promise.all([
+    dataOf(getQuotation(row.quotationUuid)),
+    key === "policySchedule" ? dataOf(getPolicy(row.quotationUuid)) : {},
+  ]);
+  if (!q) return;
+  const p = { ...row, ...q };
+  await (key === "policySchedule" ? pdf.policySchedule(p, detail || {}) : pdf[key](p));
+});
 </script>
 
 <template>
@@ -70,6 +87,7 @@ const open = (p) => router.push(`/life/policies/${p.quotationUuid}`);
       <template #cell-remaining="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ remainingLabel(daysUntil(row.endDate)) }}</span></template>
       <template #cell-policyIssuedDate="{ row }"><span class="whitespace-nowrap text-ink-muted">{{ formatDate(row.policyIssuedDate) }}</span></template>
       <template #cell-status="{ row }"><StatusBadge :status="row.policyStatus" /></template>
+      <template #cell-documents="{ row }"><LifeDocumentsMenu size="sm" :items="groupPolicyDocuments(row)" :pending="pdf.pendingRow.value === row.quotationUuid ? 'row' : ''" @select="download(row, $event)" /></template>
       <template #footer><PageNav v-model:page="list.page.value" :total-pages="list.totalPages.value" :disabled="list.loading.value" /></template>
     </ListTable>
   </div>

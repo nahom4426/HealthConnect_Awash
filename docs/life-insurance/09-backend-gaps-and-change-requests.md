@@ -44,6 +44,7 @@ worked around in the frontend; screens that depend on a gap are blocked until th
 | G11 | Individual policy issuance | Medium |
 | G12 | Credit life (loan-linked, decreasing cover) | Later, if the product is offered |
 | G13 | Audit timeline for quotations/policies | Medium |
+| G14 | Product and plan type on group quotations | High (cheap) |
 
 ---
 
@@ -256,6 +257,47 @@ single or monthly premium; claims pay the lender first.
 `GET /quotation/{uuid}/history` and `GET /policy/{uuid}/history`: status changes and edits with actor and time
 (claims already have logs).
 
+### G14 · Product and plan type on group quotations
+
+**Status: implemented by the backend on 2026-11-01** (migration `0012_quotation_product_plan.xml`; productType required on POST,
+planType by product as below, `GET /quotation/list?productType=`, both fields on quotation and policy responses). Questions
+#31 and #32 are still open. One judgement call on their side: filling in a stored null product/plan on an ISSUED quotation
+counts as a backfill, not a change, so editing older quotations does not 409.
+
+**Problem:** `QuotationRequest` and `QuotationResponse` have no product, so every quotation is implicitly
+group term life. The company sells several life products (standardinsurancesc.com/life-insurance), and since
+2026-11-01 the UI's New quotation form makes the user choose one, opened from the product's card on the
+launcher. The UI already sends `productType` and `planType` on `POST /quotation` and `PUT /quotation/{uuid}`;
+the backend drops them today, so the choice is lost on save.
+**Why:** the quotation, its PDF, the policy issued from it and reports must say which product was sold; pricing
+and underwriting differ by product.
+**Current API:** none. **Required API:** two new optional fields; no new endpoints.
+
+| Field | Type | Values |
+|---|---|---|
+| `productType` | enum `LifeProductType` | `TERM_ASSURANCE`, `ENDOWMENT_ASSURANCE`, `ANTICIPATED_ENDOWMENT`, `CHILDRENS_EDUCATION_ENDOWMENT`, `WHOLE_LIFE_ASSURANCE`, `MORTGAGE_REDEMPTION` |
+| `planType` | enum `LifePlanType` | `Individual`, `Group`, `Modified_Large_Group` (same style as the existing `insuranceType` Group/Individual) |
+
+Plans allowed per product: Term Assurance → Individual, Group, Modified_Large_Group; Endowment Assurance →
+Individual, Group; the other four products have no plan.
+
+- **`QuotationRequest`:** add both fields.
+- **`QuotationResponse`** (detail and `GET /quotation/list` items): return both fields.
+- **`GET /quotation/list`:** optional `productType` filter.
+- **Policy:** the policy issued from a quotation carries the same two fields (`GET /policy/{quotationUuid}`, `GET /policy/lists`).
+
+**DB:** nullable columns `product_type`, `plan_type` on `quotation` (additive migration); existing rows stay null,
+which the UI shows as "Not recorded".
+**Rules / validation:**
+- `productType` required on `POST /quotation` (400 when missing). On `PUT` it may stay null for quotations created before this change.
+- `planType` required when the product has plans and must be one of that product's plans (400 otherwise). It must be null for products without plans.
+- Both fields can change only while the quotation is PENDING (409 after, like the other details).
+- `POST /quotation/revise/{uuid}` copies both fields to the new quotation.
+
+**Example:** `POST /quotation` `{ "institutionUuid":"…","institutionName":"Acme PLC","term":1,"contactPersonFullName":"Abebe Kebede","contactPhone":"0911223344","productType":"TERM_ASSURANCE","planType":"Group" }`
+→ `QuotationResponse` with `"productType":"TERM_ASSURANCE","planType":"Group"`.
+**Questions:** #31 and #32 in [10-backend-prompt.md](10-backend-prompt.md).
+
 ---
 
 ## Copy-paste prompt for the backend session
@@ -266,7 +308,7 @@ single or monthly premium; claims pay the lender first.
 You are working on the Life Insurance Spring Boot service (OpenAPI at /api/life/v3/api-docs, currently 169
 operations, 25 controllers). The web frontend (Vue) has been built against the existing contract; the attached
 document "09-backend-gaps-and-change-requests.md" lists what is missing. Implement the changes in this order:
-G9 → G10 → G1 → G3 → G4 → G6 → G5 → G2 → G11 → G7 → G8 → G13 (G12 only if asked).
+G9 → G10 → G14 → G1 → G3 → G4 → G6 → G5 → G2 → G11 → G7 → G8 → G13 (G12 only if asked).
 
 Rules:
 - Do not break existing endpoints, paths, field names or enum values. Add new endpoints or optional fields;

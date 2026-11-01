@@ -1,14 +1,14 @@
 # 10 · Backend prompt (copy everything inside the box)
 
 Self-contained: the backend team doesn't need any other file. Source of every item:
-[09-backend-gaps-and-change-requests.md](09-backend-gaps-and-change-requests.md) (gap numbers G1–G13, and items 1–30
+[09-backend-gaps-and-change-requests.md](09-backend-gaps-and-change-requests.md) (gap numbers G1–G14, and items 1–32
 under G9). Written 2026-10-29, after frontend stages 1–8.
 
 ````text
 You are working on the Life Insurance Spring Boot service (OpenAPI at /api/life/v3/api-docs, 169 operations,
 25 controllers). The web frontend (Vue, Standard Insurance) is already built against the CURRENT contract:
 products & rates, reinsurance, underwriting questionnaire, group quotations → policies, claims, and individual
-policies. Everything below is what the frontend needs from you. Gap codes (G1…G13) and item numbers (#1…#30)
+policies. Everything below is what the frontend needs from you. Gap codes (G1…G14) and item numbers (#1…#32)
 match the frontend's tracking document, so please keep them in your replies.
 
 ═══════════════════════════════════════════════════════════════════════════════════════════════
@@ -277,6 +277,19 @@ G13 · AUDIT TIMELINE
    GET /quotation/{uuid}/history and GET /policy/{uuid}/history: status changes and edits with actor and
    time (claims already have logs).
 
+G14 · PRODUCT AND PLAN TYPE ON GROUP QUOTATIONS (added 2026-11-01; the UI already sends both fields)
+   QuotationRequest, QuotationResponse (detail + list) and the policy issued from it get two fields:
+     productType  enum TERM_ASSURANCE | ENDOWMENT_ASSURANCE | ANTICIPATED_ENDOWMENT |
+                       CHILDRENS_EDUCATION_ENDOWMENT | WHOLE_LIFE_ASSURANCE | MORTGAGE_REDEMPTION
+     planType     enum Individual | Group | Modified_Large_Group
+   Plans per product: Term → Individual, Group, Modified_Large_Group; Endowment → Individual, Group;
+   the other four have none. GET /quotation/list takes an optional productType filter.
+   DB: nullable quotation.product_type and quotation.plan_type (additive migration; old rows stay null).
+ Rules: productType required on POST (400); planType required and one of the product's plans when the product
+ has plans, null otherwise (400); both change only while PENDING (409); revise copies them.
+ Example: POST /quotation { …existing fields…, "productType":"TERM_ASSURANCE", "planType":"Group" }
+          → QuotationResponse with the same two fields.
+
 G12 · CREDIT LIFE — only if the product will be sold
    Loan-linked cover: lenderInstitutionUuid, loanAccount, loanAmount, loanTermMonths, interestRate,
    coverBasis LEVEL|DECREASING; backend computes the outstanding-balance sum-assured schedule and single or
@@ -296,6 +309,11 @@ QUESTIONS TO ANSWER (documentation only, no code needed unless the answer is "mi
      beginDate be before the payment date?
  #21 PUT /policy/generate/treaty-report/{quotationUuid}: JSON summary or a file? Safe to call more than once?
  #22 GET /policy/lists?search: which fields does it match (policy number, quotation number, institution)?
+ #31 G14: Group quotations are priced from the group-term rate tables. Which other products can be priced
+     today, and what should a quotation for a product without rate tables do (reject with 400, or save
+     unpriced)? Say which rate tables each product needs.
+ #32 G14: Should "Individual" plans of Term and Endowment be quoted as group quotations at all, or go
+     through individual policies (/benefit)? The UI offers them on group quotations until you answer.
  D5  In claims, who is the "agency" (employer HR, agent, or branch)? It decides who gets Life_Claim_Prepare.
  D9  Group quotations use institutionUuid from the shared institution service (/claimconnect/institution) —
      confirm that is intended for Life.

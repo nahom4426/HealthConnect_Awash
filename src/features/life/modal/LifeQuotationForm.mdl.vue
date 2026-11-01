@@ -1,75 +1,58 @@
 <script setup>
-// Create or edit a group quotation's details (QuotationRequest). Institutions come from the shared
-// institution service the health module uses. data: { quotation?: QuotationResponse }
-import { reactive, ref, watch } from "vue";
+// Edit (or create) a group quotation's details in a modal. New quotations normally start on the
+// New quotation page (/life/quotations/new); the form logic is shared in useQuotationForm.
+// data: { quotation?: QuotationResponse, productType?, planType? }
 import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
 import TextField from "@/components/fields/TextField.vue";
-import { toasted } from "@/utils/utils";
-import { useAuthStore } from "@/stores/auth";
-import { getActiveInstitutions } from "@/features/health/institutions/api/institutionApi";
-import { createQuotation, updateQuotation } from "../api/quotationApi";
-import { fromQuotation, toQuotationRequest, validateQuotation } from "../quotations/quotationRules";
+import SelectField from "@/components/fields/SelectField.vue";
+import { LIFE_QUOTE_PRODUCTS } from "@/config/productCategories";
+import { useQuotationForm } from "../quotations/useQuotationForm";
 
 const props = defineProps({ data: { type: Object, default: () => ({}) } });
 const current = props.data?.quotation;
-const editing = !!current?.quotationUuid;
-const auth = useAuthStore();
-
-const form = reactive(fromQuotation(current));
-const errors = ref({});
-const pending = ref(false);
-
-// Institution search
-const query = ref("");
-const results = ref([]);
-const searching = ref(false);
-let timer, seq = 0;
-async function searchInstitutions() {
-  const mine = ++seq;
-  searching.value = true;
-  const res = await getActiveInstitutions({ page: 0, limit: 20, search: query.value.trim(), status: "ACTIVE" });
-  if (mine !== seq) return;
-  const d = res?.data;
-  results.value = Array.isArray(d) ? d : Array.isArray(d?.content) ? d.content : [];
-  searching.value = false;
-}
-watch(query, () => { clearTimeout(timer); timer = setTimeout(searchInstitutions, 300); });
-if (!editing) searchInstitutions();
-
-function pick(i) {
-  form.institutionUuid = i.institutionUuid;
-  form.institutionName = i.institutionName;
-  if (!form.contactPhone && i.telephone) form.contactPhone = String(i.telephone).replace(/[^\d+]/g, "").slice(0, 13);
-  errors.value = { ...errors.value, institutionUuid: undefined };
-}
-function clearInstitution() {
-  form.institutionUuid = "";
-  form.institutionName = "";
-}
+const { editing, form, errors, pending, plans, pickPlan, query, results, searching, pickInstitution: pick, clearInstitution, submit: save } =
+  useQuotationForm({ quotation: current, productType: props.data?.productType, planType: props.data?.planType });
 
 async function submit() {
-  errors.value = validateQuotation(form);
-  if (Object.keys(errors.value).length) return;
-  pending.value = true;
-  const user = auth.auth?.user ?? auth.auth;
-  const res = editing
-    ? await updateQuotation(current.quotationUuid, toQuotationRequest(form, user, current.quotationStatus))
-    : await createQuotation(toQuotationRequest(form, user));
-  pending.value = false;
-  if (res?.success) {
-    toasted(true, editing ? "Quotation updated" : "Draft quotation created");
-    closeModal(res.data || true);
-  }
+  const saved = await save();
+  if (saved) closeModal(saved);
 }
 </script>
 
 <template>
   <ModalParent>
-    <NewFormParent size="md" :title="editing ? 'Edit quotation' : 'New group quotation'" :subtitle="editing ? current.quotationNumber : 'Start a draft; members and riders are added next.'">
+    <NewFormParent size="md" :title="editing ? 'Edit quotation' : 'New group quotation'" :subtitle="editing ? current.quotationNumber : 'Choose the product, then the institution. Members and riders are added next.'">
       <form id="life-quotation-form" class="grid gap-4 p-5" novalidate @submit.prevent="submit">
+        <SelectField
+          v-model="form.productType"
+          label="Product"
+          :required="!editing"
+          :options="LIFE_QUOTE_PRODUCTS"
+          placeholder="Choose a life product"
+          :error="errors.productType"
+        />
+        <div v-if="plans.length" class="grid gap-1.5">
+          <span id="life-quotation-plan" class="text-sm font-medium text-ink">Plan <span class="text-error">*</span></span>
+          <div role="radiogroup" aria-labelledby="life-quotation-plan" class="flex flex-wrap gap-2">
+            <button
+              v-for="plan in plans"
+              :key="plan"
+              type="button"
+              role="radio"
+              :aria-checked="form.planType === plan"
+              :class="[
+                'rounded-lg border px-3.5 py-2 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                form.planType === plan ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-muted hover:border-primary/40',
+              ]"
+              @click="pickPlan(plan)"
+            >{{ plan }}</button>
+          </div>
+          <span v-if="errors.planType" class="text-xs text-error">{{ errors.planType }}</span>
+        </div>
+
         <div v-if="form.institutionUuid" class="flex flex-col gap-1 text-sm font-medium text-ink">
           Institution
           <div class="flex gap-3 justify-between items-center px-3 h-10 rounded-lg border border-primary bg-primary/5">

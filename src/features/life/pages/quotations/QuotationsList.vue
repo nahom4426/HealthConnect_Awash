@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from "vue";
 import { useRouter } from "vue-router";
-import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
 import TabGroup from "@/components/TabGroup.vue";
 import ListTable from "@/components/ListTable.vue";
@@ -41,13 +40,13 @@ const columns = computed(() => [
 ]);
 
 const open = (q) => router.push(`/life/quotations/${q.quotationUuid}`);
-const create = () => openModal("LifeQuotationForm", {}, (saved) => saved?.quotationUuid && open(saved));
+const create = () => router.push("/life/quotations/new");
 </script>
 
 <template>
   <div class="p-4 md:p-6">
     <PageHeader title="Group quotations" subtitle="Group term life quotes for institutions, from draft to paid.">
-      <template v-if="lifeCan('Life_Quotation_Create')" #actions><Button @click="create">New quotation</Button></template>
+      <template v-if="lifeCan('Life_Quotation_Create')" #actions><Button @click="create()">New quotation</Button></template>
     </PageHeader>
 
     <div class="flex flex-wrap gap-3 justify-between items-center mb-2">

@@ -3,6 +3,7 @@
 // backend; these checks only stop incomplete input before it is sent.
 import { QuotationStatus } from "../constants/statuses";
 import { toDateTime } from "../constants/labels";
+import { LIFE_QUOTE_PRODUCTS } from "@/config/productCategories";
 
 const blank = (v) => v === null || v === undefined || String(v).trim() === "";
 const tooLong = (v, n) => String(v ?? "").trim().length > n;
@@ -27,6 +28,8 @@ export function quotationActions(q = {}) {
 // ── quotation details ──
 export function fromQuotation(q = {}) {
   return {
+    productType: q.productType ?? "",
+    planType: q.planType ? String(q.planType).replace(/_/g, " ") : "",
     institutionUuid: q.institutionUuid ?? "",
     institutionName: q.institutionName ?? "",
     term: q.term ?? "",
@@ -35,8 +38,14 @@ export function fromQuotation(q = {}) {
   };
 }
 
-export function validateQuotation(f) {
+/** The plan types of a Life product (LIFE_QUOTE_PRODUCTS), [] when it has none. */
+export const quotePlansFor = (productType) => LIFE_QUOTE_PRODUCTS.find((p) => p.value === productType)?.plans ?? [];
+
+/** `creating`: a new quotation must name its product; older ones were saved without it. */
+export function validateQuotation(f, { creating = false } = {}) {
   const e = {};
+  if (creating && !f.productType) e.productType = "Choose the product";
+  if (f.productType && quotePlansFor(f.productType).length && !f.planType) e.planType = "Choose the plan";
   if (!f.institutionUuid) e.institutionUuid = "Choose the institution";
   if (blank(f.term)) e.term = "Enter the term";
   else if (!Number.isInteger(Number(f.term)) || Number(f.term) < 1) e.term = "Whole number of years, at least 1";
@@ -54,6 +63,12 @@ export function toQuotationRequest(f, user = {}, status) {
     contactPersonFullName: String(f.contactPersonFullName || "").trim(),
     contactPhone: String(f.contactPhone || "").trim(),
   };
+  // Not in QuotationRequest yet (gap G14): sent so the backend stores them once it adds the fields.
+  // Plans go as the backend's enum style, "Modified Large Group" → "Modified_Large_Group".
+  if (f.productType) {
+    body.productType = f.productType;
+    if (quotePlansFor(f.productType).length) body.planType = String(f.planType || "").replace(/ /g, "_");
+  }
   if (user?.userUuid) {
     body.quotedByUuid = user.userUuid;
     body.quotedByFullName = [user.firstName, user.fatherName || user.lastName].filter(Boolean).join(" ");

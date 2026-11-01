@@ -41,11 +41,13 @@ export const LIFE_PRIVILEGES = {
     ...write("reinsurance_medical_parameter"), ...write("reinsurance_fcl_underwriting_range"),
     ...write("reinsurance_treaty_medical_requirement"),
   ],
-  // life.claim.update covers preparing, reviewing and approving (backend follow-up #3), so it maps to none
-  // of them. Until it is split, approving goes with life.claim.authorize: the claims manager holds both.
-  Life_Claim_Prepare: ["life.claim.create", ...write("claim_attachment")],
-  Life_Claim_Review: ["life.claim.register", "life.claim.assess", "life.claim.request_info"],
-  Life_Claim_Approve: ["life.claim.authorize"],
+  // The legacy request, review and approve calls each have their own code since 2026-11-01 (backend
+  // follow-up #3): life.claim.request, life.claim.review, life.claim.approve. life.claim.update no
+  // longer tells the three roles apart, so it maps to none of them. The roles in AuthService must
+  // hold the new codes, or those calls answer 403.
+  Life_Claim_Prepare: ["life.claim.create", "life.claim.request", ...write("claim_attachment")],
+  Life_Claim_Review: ["life.claim.register", "life.claim.assess", "life.claim.request_info", "life.claim.review"],
+  Life_Claim_Approve: ["life.claim.approve"],
   Life_Claim_Authorize: ["life.claim.authorize"],
   Life_Claim_Pay: ["life.claim.pay"],
   Life_Report_View: ["life.report.read", "life.dashboard.read"],

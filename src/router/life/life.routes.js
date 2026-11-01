@@ -12,6 +12,7 @@ const ReinsurersList = () => import("@/features/life/pages/reinsurance/Reinsurer
 const MedicalTests = () => import("@/features/life/pages/reinsurance/MedicalTests.vue");
 const QuotationsList = () => import("@/features/life/pages/quotations/QuotationsList.vue");
 const QuotationDetail = () => import("@/features/life/pages/quotations/QuotationDetail.vue");
+const QuotationNew = () => import("@/features/life/pages/quotations/QuotationNew.vue");
 const PoliciesList = () => import("@/features/life/pages/policies/PoliciesList.vue");
 const PolicyDetail = () => import("@/features/life/pages/policies/PolicyDetail.vue");
 const ClaimsQueue = () => import("@/features/life/pages/claims/ClaimsQueue.vue");
@@ -36,6 +37,7 @@ const P = {
   PRODUCTS: lifePermissions(["Life_Product_Manage", "Life_Rate_Manage"]),
   REINSURANCE: lifePermissions(["Life_Reinsurance_Manage"]),
   QUOTATIONS: lifePermissions(["Life_Quotation_Create", "Life_Quotation_Issue", "Life_Payment_Record", "Life_Policy_Issue"]),
+  QUOTATION_CREATE: lifePermissions(["Life_Quotation_Create"]),
   POLICIES: lifePermissions(["Life_Policy_Issue", "Life_Policy_Service", "Life_Reinsurance_Manage", "Life_Report_View"]),
   INDIVIDUAL: lifePermissions(["Life_Quotation_Create", "Life_Policy_Issue", "Life_Policy_Service"]),
   UNDERWRITING: lifePermissions(["Life_Underwriting_Decide"]),
@@ -110,6 +112,13 @@ const lifeRoutes = [
     name: "life-quotations",
     component: QuotationsList,
     meta: { requiresAuth: true, permissions: P.QUOTATIONS, title: "Group quotations" },
+  },
+  {
+    // ?product=TERM_ASSURANCE&plan=Group preselect the product (from the launcher's product cards)
+    path: "/life/quotations/new",
+    name: "life-quotation-new",
+    component: QuotationNew,
+    meta: { requiresAuth: true, permissions: P.QUOTATION_CREATE, title: "New group quotation" },
   },
   {
     path: "/life/quotations/:quotationUuid",

@@ -1,9 +1,18 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { useModuleStore, MODULES } from '@/stores/moduleStore';
 import { useRoute, useRouter } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';
 import { submitClaim, validatePolicyCoverage } from '@/features/motor/claims/api/digitalChannelApi';
+import MotorNotificationFields from '@/features/motor/claims/components/MotorNotificationFields.vue';
+import ClaimStepper from '@/features/motor/claims/components/ClaimStepper.vue';
+import {
+  emptyNotificationForm, validateNotificationForm, notificationWarnings, toClaimPayload, saveNotificationFormLocally, formatFormDate,
+} from '@/features/motor/claims/notificationForm';
+import { LANGS, notificationLabel } from '@/features/motor/claims/notificationLabels';
+
+// OWN_DAMAGE → "Own Damage"
+const titleCase = (v) => String(v || '').toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
 const route = useRoute();
 const router = useRouter();
@@ -19,17 +28,45 @@ const mod = computed(() => {
   return null;
 });
 
-const policyNumber = ref('NYA-POL-2026-001');
+const policyNumber = ref('');
 const coverageType = ref('');
 const causeOfLoss = ref('');
-const incidentLocation = ref('Addis Ababa, Bole Road');
+const incidentLocation = ref('');
 const description = ref('');
-const estimatedAmount = ref(45000);
-const licenseNumber = ref('ET-DL-98412');
+const estimatedAmount = ref('');
+const licenseNumber = ref('');
 const thirdPartyDetails = ref('');
 const submitting = ref(false);
 const policyValidation = ref(null);
 const message = ref('');
+
+// Motor claims are entered from Standard's "Notification of Motor Accident" form.
+const isMotor = computed(() => (mod.value?.id || 'motor') === 'motor');
+const motorForm = reactive(emptyNotificationForm());
+const motorErrors = ref({});
+const motorWarnings = computed(() => notificationWarnings(motorForm));
+// The claim the backend returned after a motor submit; shows the print panel.
+const submittedClaim = ref(null);
+
+watch(() => motorForm.vehicle.policyNo, () => { policyValidation.value = null; });
+
+// Form labels in English or the paper form's Amharic; remembered per browser.
+const LANG_KEY = 'motor.claimForm.lang';
+const formLang = ref((() => { try { return localStorage.getItem(LANG_KEY) === 'am' ? 'am' : 'en'; } catch { return 'en'; } })());
+
+function loadEthiopicFont() {
+  if (document.getElementById('noto-sans-ethiopic')) return;
+  const link = document.createElement('link');
+  link.id = 'noto-sans-ethiopic';
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;600;700&display=swap';
+  document.head.appendChild(link);
+}
+
+watch(formLang, (lang) => {
+  try { localStorage.setItem(LANG_KEY, lang); } catch { /* not saved; fine */ }
+  if (lang === 'am') loadEthiopicFont();
+}, { immediate: true });
 
 const coverageOptions = {
   motor: ['OWN_DAMAGE', 'THIRD_PARTY', 'COMPREHENSIVE'],
@@ -71,11 +108,118 @@ const isPolicyValid = computed(() => {
 });
 
 async function checkPolicy() {
-  if (!policyNumber.value) return;
-  policyValidation.value = await validatePolicyCoverage(policyNumber.value, mod.value?.id, causeOfLoss.value);
+  const number = isMotor.value ? motorForm.vehicle.policyNo.trim() : policyNumber.value;
+  if (!number) return;
+  policyValidation.value = await validatePolicyCoverage(number, mod.value?.id, causeOfLoss.value);
 }
 
+// The paper form's six sections, grouped into four wizard steps.
+const MOTOR_STEPS = [
+  { n: 1, label: 'Policy & vehicle', hint: 'Sections 1–2', prefixes: ['policyHolder.', 'vehicle.', 'estimatedAmount'] },
+  { n: 2, label: 'Driver', hint: 'Section 3', prefixes: ['driver.'] },
+  { n: 3, label: 'Accident', hint: 'Section 4', prefixes: ['accident.'] },
+  { n: 4, label: 'Damage & review', hint: 'Sections 5–6', prefixes: ['damage.', 'injuries'] },
+];
+const step = ref(1);
+const maxReached = ref(1);
+const stepTop = ref(null);
+
+function allMotorErrors() {
+  const errors = validateNotificationForm(motorForm);
+  if (!estimatedAmount.value || Number(estimatedAmount.value) < 100) {
+    errors.estimatedAmount = 'Enter the estimated loss (at least ETB 100)';
+  }
+  return errors;
+}
+
+function errorsForSteps(errors, upTo) {
+  const prefixes = MOTOR_STEPS.filter(s => s.n <= upTo).flatMap(s => s.prefixes);
+  return Object.fromEntries(Object.entries(errors).filter(([k]) => prefixes.some(p => k.startsWith(p))));
+}
+
+function stepErrorCount(n) {
+  const prefixes = MOTOR_STEPS[n - 1].prefixes;
+  return Object.keys(motorErrors.value).filter(k => prefixes.some(p => k.startsWith(p))).length;
+}
+
+const wizardSteps = computed(() => MOTOR_STEPS.map(s => {
+  const errors = stepErrorCount(s.n);
+  let state = 'todo';
+  if (step.value === s.n) state = errors ? 'error current' : 'current';
+  else if (errors) state = 'error';
+  else if (s.n < maxReached.value) state = 'done';
+  return { ...s, state, hint: errors ? `${errors} to fix` : s.hint };
+}));
+
+function showStep(n) {
+  step.value = n;
+  maxReached.value = Math.max(maxReached.value, n);
+  stepTop.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/** Moves to step n; going forward checks every step in between and stops at the first one with gaps. */
+function goToStep(n) {
+  message.value = '';
+  if (n <= step.value) return showStep(n);
+  const errors = errorsForSteps(allMotorErrors(), n - 1);
+  motorErrors.value = errors;
+  const blocked = MOTOR_STEPS.find(s => s.n < n && stepErrorCount(s.n));
+  if (blocked) {
+    message.value = `Complete the highlighted fields in "${blocked.label}" first.`;
+    return showStep(blocked.n);
+  }
+  showStep(n);
+}
+
+async function handleMotorSubmit() {
+  message.value = '';
+  if (step.value < MOTOR_STEPS.length) return goToStep(step.value + 1);
+  motorErrors.value = allMotorErrors();
+  if (Object.keys(motorErrors.value).length) {
+    const first = MOTOR_STEPS.find(s => stepErrorCount(s.n));
+    message.value = 'Please complete the highlighted fields.';
+    if (first) showStep(first.n);
+    return;
+  }
+  submitting.value = true;
+  try {
+    const form = JSON.parse(JSON.stringify(motorForm));
+    const res = await submitClaim(toClaimPayload(form, {
+      coverageType: coverageType.value,
+      causeOfLoss: causeOfLoss.value,
+      estimatedAmount: estimatedAmount.value,
+    }));
+    saveNotificationFormLocally(res, form);
+    submittedClaim.value = res || {};
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) {
+    message.value = 'Failed to submit claim: ' + e.message;
+  } finally {
+    submitting.value = false;
+  }
+}
+
+function printNotificationForm(claimUuid) {
+  const target = router.resolve({ name: 'motor-claim-notification-print', params: { claimUuid: claimUuid || undefined } });
+  window.open(target.href, '_blank', 'noopener');
+}
+
+function startAnotherClaim() {
+  Object.assign(motorForm, emptyNotificationForm());
+  estimatedAmount.value = '';
+  policyValidation.value = null;
+  motorErrors.value = {};
+  submittedClaim.value = null;
+  message.value = '';
+  step.value = 1;
+  maxReached.value = 1;
+}
+
+const reasonText = { OWNERSHIP: 'Ownership', EMPLOYED: 'Employed', RENT: 'Rent', OTHER: 'Other' };
+const show = (v) => (v === null || v === undefined || String(v).trim() === '' ? '—' : v);
+
 async function handleSubmit() {
+  if (isMotor.value) return handleMotorSubmit();
   submitting.value = true;
   message.value = '';
   try {
@@ -111,21 +255,140 @@ function goBack() {
 <template>
   <div class="cn-root" :class="{ dark: isDark }">
     <div class="cn-header">
-      <button class="cn-back" @click="goBack">
+      <button class="cn-back" aria-label="Back" @click="goBack">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <div>
-        <h1 class="cn-title">File New {{ mod?.name }} Claim</h1>
-        <p class="cn-sub">Submit digital claim notification for {{ mod?.name }}</p>
+        <h1 class="cn-title">New {{ mod?.name }} claim</h1>
+        <p class="cn-sub" v-if="isMotor">Copy the customer's Notification of Motor Accident form, one step at a time</p>
+        <p class="cn-sub" v-else>Submit digital claim notification for {{ mod?.name }}</p>
+      </div>
+      <div v-if="isMotor" class="cn-header-tools">
+        <div class="cn-lang" role="group" aria-label="Form language">
+          <button
+            v-for="l in LANGS"
+            :key="l.code"
+            type="button"
+            :class="{ active: formLang === l.code }"
+            :aria-pressed="formLang === l.code"
+            @click="formLang = l.code"
+          >{{ l.label }}</button>
+        </div>
+        <button type="button" class="cn-blank-btn" @click="printNotificationForm()">Print blank form</button>
       </div>
     </div>
 
-    <form class="cn-card" @submit.prevent="handleSubmit">
+    <div v-if="isMotor && submittedClaim" class="cn-card cn-done" role="status">
+      <div class="cn-done-icon">✓</div>
+      <h2 class="cn-done-title">Claim submitted</h2>
+      <p class="cn-done-text">
+        Claim number <strong class="font-mono">{{ submittedClaim.claimNumber || '—' }}</strong>.
+        Print the notification form for the insured and the driver to sign.
+      </p>
+      <div class="cn-actions cn-done-actions">
+        <button type="button" class="cn-cancel" @click="startAnotherClaim">New claim</button>
+        <button v-if="submittedClaim.claimUuid" type="button" class="cn-cancel" @click="router.push(`/motor/claims/detail/${submittedClaim.claimUuid}`)">Open claim</button>
+        <button type="button" class="cn-submit" :style="`background:linear-gradient(135deg,${mod?.color?.from},${mod?.color?.to})`" @click="printNotificationForm(submittedClaim.claimUuid)">
+          Print notification form
+        </button>
+      </div>
+    </div>
+
+    <form v-else class="cn-card" novalidate @submit.prevent="handleSubmit">
       <div v-if="message" class="cn-alert" :class="message.includes('success') ? 'success' : 'error'">
         {{ message }}
       </div>
 
-      <div class="cn-grid">
+      <template v-if="isMotor">
+        <div ref="stepTop" class="cn-stepper-wrap">
+          <ClaimStepper :steps="wizardSteps" label="Claim steps" @select="s => goToStep(s.n)" />
+        </div>
+
+        <div v-if="step === 1" class="cn-notice" :lang="formLang">{{ notificationLabel('notice', formLang) }}</div>
+
+        <div :key="step" class="cn-step-body">
+        <div v-if="step === 1" class="cn-grid cn-office">
+          <div class="cn-field">
+            <label for="cn-cover">Coverage type <b class="cn-req" aria-hidden="true">*</b></label>
+            <select id="cn-cover" v-model="coverageType" required>
+              <option v-for="opt in currentCoverages" :key="opt" :value="opt">{{ titleCase(opt) }}</option>
+            </select>
+          </div>
+          <div class="cn-field">
+            <label for="cn-cause">Cause of loss <b class="cn-req" aria-hidden="true">*</b></label>
+            <select id="cn-cause" v-model="causeOfLoss" required>
+              <option v-for="c in currentCauses" :key="c" :value="c">{{ titleCase(c) }}</option>
+            </select>
+          </div>
+          <div class="cn-field" :class="{ err: motorErrors.estimatedAmount }">
+            <label for="cn-estimate">Estimated loss (ETB) <b class="cn-req" aria-hidden="true">*</b></label>
+            <input id="cn-estimate" v-model="estimatedAmount" type="number" min="100" placeholder="Best guess of the repair cost" />
+            <small v-if="motorErrors.estimatedAmount" class="cn-err">{{ motorErrors.estimatedAmount }}</small>
+          </div>
+        </div>
+
+        <MotorNotificationFields :form="motorForm" :errors="motorErrors" :step="step" :lang="formLang">
+          <template #policy-number="{ label }">
+            <div class="cn-field span-2" :class="{ err: motorErrors['vehicle.policyNo'] }">
+              <label for="cn-policy">{{ label }} <b class="cn-req" aria-hidden="true">*</b></label>
+              <div class="cn-input-group">
+                <input id="cn-policy" v-model="motorForm.vehicle.policyNo" type="text" />
+                <button type="button" class="cn-verify-btn" @click="checkPolicy">Verify</button>
+              </div>
+              <small v-if="motorErrors['vehicle.policyNo']" class="cn-err">{{ motorErrors['vehicle.policyNo'] }}</small>
+              <div v-if="policyValidation" class="cn-val-tag" :class="isPolicyValid ? 'valid' : 'invalid'">
+                <span class="cn-val-icon">{{ isPolicyValid ? '✓' : '✕' }}</span>
+                <span>{{ policyValidation.validationMessage }}</span>
+              </div>
+            </div>
+          </template>
+        </MotorNotificationFields>
+
+        <section v-if="step === 4" class="cn-review" aria-label="Review before submitting">
+          <h2 class="cn-review-title">Check the details before you submit</h2>
+          <div class="cn-review-grid">
+            <div class="cn-review-card">
+              <div class="cn-review-head"><span>Policy &amp; vehicle</span><button type="button" @click="goToStep(1)">Edit</button></div>
+              <dl>
+                <dt>Policy holder</dt><dd>{{ show(motorForm.policyHolder.fullName) }}</dd>
+                <dt>Phone</dt><dd>{{ show(motorForm.policyHolder.phone) }}</dd>
+                <dt>VAT registered</dt><dd>{{ motorForm.policyHolder.vatRegistered === true ? `Yes · ${show(motorForm.policyHolder.vatNumber)}` : motorForm.policyHolder.vatRegistered === false ? 'No' : '—' }}</dd>
+                <dt>Policy No</dt><dd class="font-mono">{{ show(motorForm.vehicle.policyNo) }}</dd>
+                <dt>Plate No</dt><dd class="font-mono">{{ show(motorForm.vehicle.plateNo) }}</dd>
+                <dt>Vehicle</dt><dd>{{ show([motorForm.vehicle.typeAndMake, motorForm.vehicle.yearOfMake].filter(Boolean).join(', ')) }}</dd>
+                <dt>Cover / cause</dt><dd>{{ titleCase(coverageType) }} · {{ titleCase(causeOfLoss) }}</dd>
+                <dt>Estimated loss</dt><dd>{{ estimatedAmount ? `ETB ${Number(estimatedAmount).toLocaleString()}` : '—' }}</dd>
+              </dl>
+            </div>
+            <div class="cn-review-card">
+              <div class="cn-review-head"><span>Driver</span><button type="button" @click="goToStep(2)">Edit</button></div>
+              <dl>
+                <dt>Name</dt><dd>{{ show(motorForm.driver.fullName) }}</dd>
+                <dt>Driving as</dt><dd>{{ show(motorForm.driver.reasonForDriving === 'OTHER' ? motorForm.driver.reasonOther : reasonText[motorForm.driver.reasonForDriving]) }}</dd>
+                <dt>Licence</dt><dd class="font-mono">{{ show(motorForm.driver.licenceNo) }} {{ motorForm.driver.grade ? `· ${motorForm.driver.grade}` : '' }}</dd>
+                <dt>Licence expiry</dt><dd>{{ show(formatFormDate(motorForm.driver.licenceExpiryDate)) }}</dd>
+              </dl>
+            </div>
+            <div class="cn-review-card">
+              <div class="cn-review-head"><span>Accident</span><button type="button" @click="goToStep(3)">Edit</button></div>
+              <dl>
+                <dt>When</dt><dd>{{ show([formatFormDate(motorForm.accident.date), motorForm.accident.time].filter(Boolean).join(' ')) }}</dd>
+                <dt>Where</dt><dd>{{ show(motorForm.accident.place) }}</dd>
+                <dt>Other party</dt><dd>{{ show([motorForm.accident.otherParty.ownerName, motorForm.accident.otherParty.plateNo].filter(Boolean).join(' · ')) }}</dd>
+                <dt>Police</dt><dd>{{ show(motorForm.accident.police) }}</dd>
+              </dl>
+              <p class="cn-review-desc">{{ show(motorForm.accident.description) }}</p>
+            </div>
+          </div>
+        </section>
+
+        <ul v-if="motorWarnings.length && step >= 2" class="cn-warnings">
+          <li v-for="w in motorWarnings" :key="w">{{ w }}</li>
+        </ul>
+        </div>
+      </template>
+
+      <div v-else class="cn-grid">
         <div class="cn-field">
           <label>Policy Number *</label>
           <div class="cn-input-group">
@@ -157,14 +420,9 @@ function goBack() {
           <input v-model="estimatedAmount" type="number" required min="100" />
         </div>
 
-        <div class="cn-field" :class="{ 'span-2': mod?.id !== 'motor' }">
+        <div class="cn-field span-2">
           <label>Incident Location *</label>
           <input v-model="incidentLocation" type="text" required placeholder="Sub-city, Woreda, Landmark" />
-        </div>
-
-        <div class="cn-field" v-if="mod?.id === 'motor'">
-          <label>Driving License Number</label>
-          <input v-model="licenseNumber" type="text" placeholder="e.g. ET-DL-98412" />
         </div>
 
         <div class="cn-field span-2" v-if="coverageType.includes('THIRD_PARTY')">
@@ -178,7 +436,16 @@ function goBack() {
         </div>
       </div>
 
-      <div class="cn-actions">
+      <div v-if="isMotor" class="cn-actions">
+        <button v-if="step === 1" type="button" class="cn-cancel" @click="goBack">Cancel</button>
+        <button v-else type="button" class="cn-cancel" @click="goToStep(step - 1)">← Back</button>
+        <span class="cn-step-count">Step {{ step }} of {{ MOTOR_STEPS.length }}</span>
+        <button type="submit" class="cn-submit" :disabled="submitting" :style="`background:linear-gradient(135deg,${mod?.color?.from},${mod?.color?.to})`">
+          <template v-if="step < MOTOR_STEPS.length">Next: {{ MOTOR_STEPS[step].label }} →</template>
+          <template v-else>{{ submitting ? 'Submitting…' : 'Submit claim ✓' }}</template>
+        </button>
+      </div>
+      <div v-else class="cn-actions">
         <button type="button" class="cn-cancel" @click="goBack">Cancel</button>
         <button type="submit" class="cn-submit" :disabled="submitting" :style="`background:linear-gradient(135deg,${mod?.color?.from},${mod?.color?.to})`">
           {{ submitting ? 'Submitting Claim...' : 'Submit Digital Claim' }}
@@ -188,63 +455,4 @@ function goBack() {
   </div>
 </template>
 
-<style scoped>
-
-.cn-root {
-  font-family: 'Inter', system-ui, sans-serif;
-  --cn-bg: #f8fafc; --cn-card: #fff; --cn-border: #e2e8f0;
-  --cn-title: #0f172a; --cn-sub: #64748b; --cn-input-bg: #fff;
-  --cn-accent: #6366f1;
-  min-height: 100%; background: var(--cn-bg); padding: 1.5rem 2rem 3rem;
-}
-.cn-root.dark {
-  --cn-bg: #090d16; --cn-card: rgba(30,41,59,0.65); --cn-border: rgba(255,255,255,0.06);
-  --cn-title: #f1f5f9; --cn-sub: #94a3b8; --cn-input-bg: rgba(15,23,42,0.6);
-}
-
-.cn-header { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; }
-.cn-back { background: var(--cn-card); border: 1px solid var(--cn-border); border-radius: 10px; padding: .5rem; cursor: pointer; color: var(--cn-sub); display: flex; transition: all .2s; }
-.cn-back:hover { border-color: var(--cn-accent); color: var(--cn-accent); }
-.cn-title { font-size: 1.15rem; font-weight: 800; color: var(--cn-title); }
-.cn-sub { font-size: .78rem; color: var(--cn-sub); margin-top: .1rem; }
-
-.cn-card { background: var(--cn-card); border: 1px solid var(--cn-border); border-radius: 16px; padding: 2rem; width: 100%; max-width: 1000px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }
-
-.cn-grid { display: grid; grid-template-columns: 1fr; gap: 1.1rem 1.5rem; }
-@media(min-width: 680px) { .cn-grid { grid-template-columns: repeat(2, 1fr); } }
-.span-2 { grid-column: span 1; }
-@media(min-width: 680px) { .span-2 { grid-column: span 2; } }
-
-.cn-field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
-.cn-field label { font-size: .75rem; font-weight: 700; color: var(--cn-title); letter-spacing: .02em; }
-.cn-field input, .cn-field select, .cn-field textarea {
-  background: var(--cn-input-bg); border: 1px solid var(--cn-border); border-radius: 9px;
-  padding: .65rem .9rem; font-size: .84rem; color: var(--cn-title); outline: none;
-  transition: border-color .2s, box-shadow .2s; width: 100%; box-sizing: border-box;
-  font-family: inherit;
-}
-.cn-field select { text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
-.cn-field textarea { resize: vertical; min-height: 80px; }
-.cn-field input:focus, .cn-field select:focus, .cn-field textarea:focus { border-color: var(--cn-accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-
-.cn-input-group { display: flex; gap: .5rem; width: 100%; }
-.cn-input-group input { flex: 1; min-width: 0; }
-.cn-verify-btn { padding: 0 1rem; font-size: .75rem; font-weight: 700; background: var(--cn-accent); color: #fff; border: none; border-radius: 9px; cursor: pointer; flex-shrink: 0; transition: all .2s; }
-.cn-verify-btn:hover { background: #4f46e5; }
-
-.cn-val-tag { font-size: .72rem; font-weight: 700; margin-top: .35rem; padding: .3rem .6rem; border-radius: 6px; display: inline-flex; align-items: center; gap: .3rem; width: fit-content; }
-.cn-val-tag.valid { color: #047857; background: #ecfdf5; border: 1px solid rgba(16,185,129,0.2); }
-.cn-val-tag.invalid { color: #b91c1c; background: #fef2f2; border: 1px solid rgba(239,68,68,0.2); }
-.cn-val-icon { font-weight: 900; }
-
-.cn-alert { padding: .7rem 1rem; border-radius: 10px; font-size: .82rem; font-weight: 700; margin-bottom: 1.25rem; }
-.cn-alert.success { background: #ecfdf5; color: #059669; border: 1px solid rgba(16,185,129,0.2); }
-.cn-alert.error { background: #fef2f2; color: #dc2626; border: 1px solid rgba(220,38,38,0.2); }
-
-.cn-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--cn-border); }
-.cn-cancel { padding: .55rem 1.2rem; border-radius: 9px; border: 1px solid var(--cn-border); background: transparent; color: var(--cn-sub); font-weight: 700; font-size: .84rem; cursor: pointer; transition: all .2s; }
-.cn-cancel:hover { border-color: var(--cn-title); color: var(--cn-title); }
-.cn-submit { padding: .6rem 1.5rem; border-radius: 9px; border: none; color: #fff; font-weight: 700; font-size: .84rem; cursor: pointer; box-shadow: 0 4px 14px rgba(99,102,241,0.2); transition: all .2s; }
-.cn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(99,102,241,0.3); }
-.cn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-</style>
+<style scoped src="../claimUi.css"></style>

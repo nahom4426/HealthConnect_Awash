@@ -106,6 +106,23 @@ export async function fetchClaimDocumentUrl(claimUuid, documentUuid) {
   return fetchImageObjectUrl(getClient(), `/claims/${claimUuid}/documents/${documentUuid}`);
 }
 
+/** Uploads one claim document (multipart "file"); documentType is one of the motor document codes. */
+export async function uploadClaimDocument(claimUuid, file, documentType = 'OTHER') {
+  const body = new FormData();
+  body.append('file', file);
+  const { data } = await getClient().post(`/claims/${claimUuid}/documents`, body, {
+    params: { documentType },
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
+/** Asks the customer for missing documents (backend notifies them). */
+export async function requestClaimDocuments(claimUuid, documentTypes, note = '') {
+  const { data } = await getClient().post(`/claims/${claimUuid}/request-documents`, { documentTypes, note });
+  return data;
+}
+
 export async function fetchClaimsByModule(productModule) {
   let backendList = [];
   try {

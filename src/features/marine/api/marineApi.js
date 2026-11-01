@@ -54,6 +54,17 @@ export const bindQuote = (id) => post(`/quotes/${id}/bind`);
 export const bindOpenCoverQuote = (id, body) => post(`/quotes/${id}/bind-open-cover`, body);
 export const simulateDemoPayment = (id, body) => post(`/quotes/${id}/demo-payments`, body);
 
+// Premium collection. Starting one is the front office's act; confirming the money arrived is
+// finance's, against the bank credit or receipt reference.
+export const listPremiumPayments = (id) => get(`/quotes/${id}/premium-payments`);
+export const startPremiumPayment = (id, body) => post(`/quotes/${id}/premium-payments`, body);
+export const cancelPremiumPayment = (id, paymentId) => post(`/quotes/${id}/premium-payments/${paymentId}/cancel`);
+export const confirmPremiumPayment = (id, paymentId, body) => post(`/quotes/${id}/premium-payments/${paymentId}/confirm`, body);
+export const rejectPremiumPayment = (id, paymentId) => post(`/quotes/${id}/premium-payments/${paymentId}/reject`);
+
+/** Prices an Open Cover quotation at the deposit premium agreed on its proposal. */
+export const rateOpenCoverQuote = (id) => post(`/quotes/${id}/rate-open-cover`);
+
 // ── policies ──
 export const listPolicies = (params) => get("/policies", params);
 export const getPolicy = (id) => get(`/policies/${id}`);
@@ -91,7 +102,8 @@ export const saveRules = (section, body) => put(`/rules/${section}`, body);
 
 export const listOpenCovers = (params) => get("/open-covers", params);
 export const getOpenCover = (id) => get(`/open-covers/${id}`);
-export const createOpenCover = (body) => post("/open-covers", body);
+// No createOpenCover: a cover is opened from the Marine proposal, by finalising the quotation
+// the proposal produces (see bindOpenCoverQuote). The backend refuses POST /open-covers.
 export const updateOpenCover = (id, body) => put(`/open-covers/${id}`, body);
 
 export const listOpenCoverApplications = (params) => get("/open-cover-applications", params);
@@ -100,7 +112,8 @@ export const createOpenCoverApplication = (body) => post("/open-cover-applicatio
 export const updateOpenCoverApplication = (id, body) => put(`/open-cover-applications/${id}`, body);
 export const submitOpenCoverApplication = (id) => post(`/open-cover-applications/${id}/submit`);
 export const declineOpenCoverApplication = (id, body) => post(`/open-cover-applications/${id}/decline`, body);
-export const establishOpenCoverApplication = (id, body) => post(`/open-cover-applications/${id}/establish`, body);
+// No establishOpenCoverApplication: an application is a request for a cover, not a cover. It is
+// taken forward by raising the Open Cover proposal. The backend refuses the establish call.
 export const createDeclaration = (id, body) => post(`/open-covers/${id}/declarations`, body);
 export const runAdjustment = (id, body) => post(`/open-covers/${id}/adjustment`, body);
 

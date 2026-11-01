@@ -112,7 +112,7 @@ const marineRoles = useMarineRoles();
 
 function visibleNav(item, user) {
   if (item.path === "/branches" && !canManageBranches.value) return false;
-  const area = navItemArea(item.name || "");
+  const area = item.area ?? navItemArea(item.name || "");
   if (area && !hasRoleAccess(user, area)) return false;
   if (moduleStore.activeModuleId === "marine" && !hasAnyRole(marineRoles.value, item.marineRoles)) return false;
   return true;

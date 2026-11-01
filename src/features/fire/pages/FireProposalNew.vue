@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { apiError, createProposal, fetchProduct, fetchProposal, fetchPublishedProduct, updateProposal } from '../api/fireApi.js';
-import { getConfig } from '@/features/marine/api/marineApi';
+import { getConfig, listRateTables } from '@/features/marine/api/marineApi';
 import { productChoiceValid, visibleProducts } from '@/features/marine/utils/marineProducts';
 import PartyPicker from '@/features/marine/components/PartyPicker.vue';
 import PortAutocomplete from '@/features/marine/components/PortAutocomplete.vue';
@@ -35,6 +35,10 @@ const isEdit = computed(() => Boolean(proposalUuid.value));
 const isMarine = computed(() => pc.value.productClass === 'MARINE');
 const marineProducts = ref([]);
 const marineArrangements = ref([]);
+// Agreed rates come from the active Marine tariff, by commodity class, so a proposal is priced on
+// what is configured under Marine Settings rather than a number typed on the form.
+const commodityRateByClass = ref({});
+const activeTariffName = ref('');
 const offeredProducts = computed(() => visibleProducts(marineProducts.value));
 const offeredArrangements = computed(() => visibleProducts(marineArrangements.value));
 const visibleSteps = computed(() => steps.value.filter((step) => fieldVisible(step, answers.value)));
@@ -61,6 +65,84 @@ function removeScheduleRow(field, index) {
   rows.splice(index, 1);
   answers.value[field.id] = rows;
 }
+
+// Agreed commodity rates on an Open Cover: the rate card every later declaration is priced on.
+function addCommodityRateRow(field) {
+  const rows = [...(answers.value[field.id] || [])];
+  rows.push({ commodity: null, ratePct: '' });
+  answers.value[field.id] = rows;
+}
+
+function removeCommodityRateRow(field, index) {
+  const rows = [...(answers.value[field.id] || [])];
+  rows.splice(index, 1);
+  answers.value[field.id] = rows.length ? rows : [{ hsCode: '', ratePct: '' }];
+}
+
+function commodityRateRows(field) {
+  const rows = answers.value[field.id];
+  if (!Array.isArray(rows) || !rows.length) {
+    answers.value[field.id] = [{ commodity: null, ratePct: '' }];
+  }
+  return answers.value[field.id];
+}
+
+async function loadCommodityRates() {
+  const res = await listRateTables();
+  if (!res.ok) return;
+  const rows = Array.isArray(res.data) ? res.data : res.data?.content ?? [];
+  const active = rows.find((t) => t.status === 'ACTIVE');
+  if (!active) return;
+  activeTariffName.value = active.name ?? '';
+  const map = {};
+  for (const rate of active.commodityRates ?? []) map[rate.commodityClass] = Number(rate.ratePct);
+  commodityRateByClass.value = map;
+}
+
+/** The configured rate for a picked commodity, via its commodity class. */
+function configuredRate(commodity) {
+  const klass = commodity?.commodityClass ?? commodity?.commodity_class;
+  const rate = klass ? commodityRateByClass.value[klass] : undefined;
+  return Number.isFinite(rate) ? rate : null;
+}
+
+/**
+ * Estimated annual premium for the Open Cover: the estimated annual value priced at the highest
+ * configured rate among the commodities chosen. The highest is used because one cover carries
+ * them all and the figure should not understate the exposure.
+ */
+const openCoverPricing = computed(() => {
+  const rows = answers.value.commodityRates;
+  const annual = Number(answers.value.estimatedAnnualValue);
+  if (!Array.isArray(rows) || !rows.length || !Number.isFinite(annual) || annual <= 0) return null;
+  const priced = rows
+    .map((row) => ({ commodity: row.commodity, rate: configuredRate(row.commodity) }))
+    .filter((row) => row.commodity && row.rate !== null);
+  if (!priced.length) return null;
+  const top = priced.reduce((a, b) => (b.rate > a.rate ? b : a));
+  return {
+    rows: priced.map((row) => ({ ...row, premium: (annual * row.rate) / 100 })),
+    rate: top.rate,
+    premium: (annual * top.rate) / 100,
+    annual,
+  };
+});
+
+watch(openCoverPricing, (priced) => {
+  if (!priced) return;
+  // Keep each row's rate in step with the tariff. The rates are the tariff's to decide, so
+  // syncing them is right.
+  //
+  // The deposit premium is NOT set here. It is what the underwriter agrees to collect up front,
+  // not a figure the form derives: writing the full annual premium into it would both make that
+  // pricing decision on the underwriter's behalf and overwrite whatever they had typed every time
+  // a rate or the annual value changed. The estimated annual premium is shown beside the field as
+  // the basis for the decision instead.
+  for (const row of answers.value.commodityRates ?? []) {
+    const rate = configuredRate(row.commodity);
+    if (rate !== null) row.ratePct = rate;
+  }
+});
 
 function proposalPayload() {
   ensureRequiredScheduleItems(answers.value, product.value);
@@ -89,6 +171,7 @@ async function loadMarineProducts() {
     return;
   }
   marineProducts.value = res.data.products;
+  loadCommodityRates();
   marineArrangements.value = Array.isArray(res.data.arrangements) && res.data.arrangements.length
     ? res.data.arrangements
     : [{ code: 'SINGLE_SHIPMENT', label: 'Single Shipment', visible: true, available: true }];
@@ -290,6 +373,41 @@ watch(proposalUuid, loadProduct, { immediate: true });
               <small v-if="field.helpText">{{ field.helpText }}</small>
             </label>
 
+            <div v-else-if="field.type === 'commodityRates' && fieldVisible(field, answers)" class="span-2">
+              <span class="field-label">{{ field.label }}{{ fieldRequired(field, answers) ? ' *' : '' }}</span>
+              <div v-for="(row, index) in commodityRateRows(field)" :key="index" class="item-row">
+                <HsCodeAutocomplete v-model="row.commodity" />
+                <button type="button" class="link" @click="removeCommodityRateRow(field, index)">Remove</button>
+              </div>
+              <button type="button" class="fire-btn ghost" @click="addCommodityRateRow(field)">Add commodity</button>
+              <small v-if="field.helpText">{{ field.helpText }}</small>
+              <small v-if="activeTariffName">Each commodity is rated from the active tariff <strong>{{ activeTariffName }}</strong> - a rate named for the commodity if there is one, otherwise its class rate. Change rates under Marine Settings, not here.</small>
+              <small v-for="row in commodityRateRows(field)" :key="`warn-${row.commodity?.hsCode}`" v-show="row.commodity && configuredRate(row.commodity) === null" class="error">
+                {{ row.commodity?.description }} has no configured rate for its class. Add one under Marine Settings before this cover can price declarations.
+              </small>
+
+              <div v-if="openCoverPricing" class="fire-card" style="margin-top:.75rem">
+                <strong>Estimated annual premium</strong>
+                <table class="fire-table">
+                  <thead><tr><th>Commodity</th><th>Class</th><th style="text-align:right">Rate %</th><th style="text-align:right">Premium</th></tr></thead>
+                  <tbody>
+                    <tr v-for="(r, i) in openCoverPricing.rows" :key="i">
+                      <td>{{ r.commodity.description }}</td>
+                      <td>{{ r.commodity.commodityClass }}</td>
+                      <td style="text-align:right">{{ r.rate }}</td>
+                      <td style="text-align:right">{{ r.premium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <small>
+                  Estimated annual value {{ openCoverPricing.annual.toLocaleString() }} priced at the highest configured rate
+                  ({{ openCoverPricing.rate }}%) gives
+                  <strong>{{ openCoverPricing.premium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</strong>,
+                  which prefills the provisional premium below. Each declaration is rated on its own commodity and insured value.
+                </small>
+              </div>
+            </div>
+
             <label v-else-if="field.type === 'schedule' && fieldVisible(field, answers)" class="span-2">
               {{ field.label }}
               <div v-for="(row, index) in answers[field.id] || []" :key="index" class="item-row">
@@ -334,6 +452,18 @@ watch(proposalUuid, loadProduct, { immediate: true });
                 :placeholder="field.placeholder || ''"
                 :required="fieldRequired(field, answers)"
               />
+              <!-- The deposit is a figure the underwriter states, so nothing is filled in here.
+                   What the year is expected to earn is shown as the basis for that decision. -->
+              <small v-if="field.id === 'provisionalPremium' && openCoverPricing" class="hint">
+                Basis: estimated annual value {{ openCoverPricing.annual.toLocaleString() }} at the highest
+                agreed rate ({{ openCoverPricing.rate }}%) gives an estimated annual premium of
+                <strong>{{ openCoverPricing.premium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</strong>.
+                The deposit is what you agree to collect up front against that.
+              </small>
+              <small v-else-if="field.id === 'provisionalPremium'" class="hint">
+                Pick the commodities and their agreed rates above to see the estimated annual premium this
+                deposit is set against.
+              </small>
               <small v-if="field.helpText">{{ field.helpText }}</small>
             </label>
           </template>

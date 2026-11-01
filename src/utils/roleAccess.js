@@ -30,6 +30,33 @@ export const ROLE_ACCESS = {
 
 const MANAGE_SUFFIXES = [".user.view", ".user.create", ".role.manage"];
 
+/**
+ * The privilege that opens each area for a property-casualty business role.
+ *
+ * ROLE_ACCESS above lists motor-style role names, which the P&C roles (agent, quotation_officer,
+ * underwriter, policy_officer, finance_officer, auditor) are not in - so without this they would
+ * see no Proposals or Quotations menu at all, and the router would refuse the pages too. Matching
+ * on the privilege instead of the name means a new role works the moment it is granted, rather
+ * than when someone remembers to add its name here.
+ */
+const AREA_PRIVILEGES = {
+  proposals: ".proposal.read",
+  quotation: ".quotation.read",
+  claims: ".claim.read",
+  productConfig: ".product.update",
+};
+
+/** True when the user holds the module privilege that opens this area, in any module. */
+function holdsAreaPrivilege(user, area) {
+  const suffix = AREA_PRIVILEGES[area];
+  if (!suffix) return false;
+  const privileges = [
+    ...(Array.isArray(user?.privileges) ? user.privileges : []),
+    ...(Array.isArray(user?.role?.privilegeList) ? user.role.privilegeList : []),
+  ];
+  return privileges.some((raw) => String(raw ?? "").replace(/^ROLE_/, "").endsWith(suffix));
+}
+
 /** The account whose legacy role is exactly Super Admin. Role name "admin" is a module admin, not this. */
 export function isExactSuperAdmin(user = {}) {
   if (user?.superAdmin === true) return true;
@@ -99,10 +126,16 @@ export function hasRoleAccess(user, area) {
   const roleName = user?.roleName || "";
   const roleCode = userRoleCode(user);
   if (hasFullSystemAccess(user) || hasFullSystemAccess({ roleName, roleCode })) return true;
-  return rule.roleCodes.includes(roleCode) || rule.roleNames.includes(roleName);
+  if (rule.roleCodes.includes(roleCode) || rule.roleNames.includes(roleName)) return true;
+  return holdsAreaPrivilege(user, area);
 }
 
-/** The area a sidebar item belongs to, from its label; null when it is open to everyone. */
+/**
+ * The area a sidebar item belongs to; null when it is open to everyone.
+ *
+ * Matching on the label is fragile - "Marine cargo rates and perils" is a product-configuration
+ * page but contains none of the keywords - so an item may name its area directly with `area`.
+ */
 export function navItemArea(name = "") {
   if (["Product Config", "Proposal Form Builder", "Rate Config"].some((k) => name.includes(k))) return "productConfig";
   if (name.includes("Claim")) return "claims";

@@ -5,6 +5,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { onBeforeRouteLeave, useRoute } from "vue-router";
 import { openModal } from "@customizer/modal-x";
 import Button from "@/components/Button.vue";
+import HsCodeAutocomplete from "../../components/HsCodeAutocomplete.vue";
 import { toasted } from "@/utils/utils";
 import MarinePageHeader from "../../components/MarinePageHeader.vue";
 import PageState from "../../components/PageState.vue";
@@ -97,6 +98,31 @@ onBeforeRouteLeave(
       openModal("MarineConfirm", { title: "Leave without saving?", message: "Your changes to this rate table will be lost.", confirmLabel: "Leave", danger: true }, (r) => resolve(!!r?.confirmed))
     )
 );
+
+// A tariff row with no hsCode is the class rate; one with an hsCode prices a single commodity
+// inside that class. Rating prefers the commodity row and falls back to the class row.
+function classRates(table) {
+  return (table.commodityRates ?? []).filter((r) => !r.hsCode);
+}
+
+function overrideRates(table) {
+  return (table.commodityRates ?? []).filter((r) => r.hsCode);
+}
+
+function addOverride(table) {
+  table.commodityRates = [...(table.commodityRates ?? []), { commodityClass: "", hsCode: "", ratePct: "", commodity: null }];
+}
+
+function removeOverride(table, row) {
+  table.commodityRates = (table.commodityRates ?? []).filter((r) => r !== row);
+}
+
+/** The class comes from the commodity, so an override can never sit under the wrong class. */
+function pickOverride(row, commodity) {
+  row.commodity = commodity;
+  row.hsCode = commodity?.hsCode ?? "";
+  row.commodityClass = commodity?.commodityClass ?? "";
+}
 </script>
 
 <template>
@@ -156,12 +182,29 @@ onBeforeRouteLeave(
               <table class="w-full text-sm">
                 <thead class="bg-surface-muted"><tr class="text-xs font-semibold text-left uppercase text-ink-subtle"><th class="px-4 py-2">Commodity class</th><th class="px-4 py-2 text-right">Base rate %</th></tr></thead>
                 <tbody>
-                  <tr v-for="(r, i) in t.commodityRates" :key="r.commodityClass" class="border-t border-line">
+                  <tr v-for="r in classRates(t)" :key="r.commodityClass" class="border-t border-line">
                     <td class="px-4 py-2 text-ink">{{ r.commodityClass.charAt(0) + r.commodityClass.slice(1).toLowerCase() }}</td>
-                    <td class="px-4 py-2"><input v-model="r.ratePct" inputmode="decimal" :aria-label="`${r.commodityClass} base rate %`" :class="cell(`commodityRates.${i}.ratePct`, 'text-right tabular-nums')" /></td>
+                    <td class="px-4 py-2"><input v-model="r.ratePct" inputmode="decimal" :aria-label="`${r.commodityClass} base rate %`" :class="cell(`commodityRates.${t.commodityRates.indexOf(r)}.ratePct`, 'text-right tabular-nums')" /></td>
                   </tr>
                 </tbody>
               </table>
+              <p class="mt-4 text-xs text-ink-subtle">
+                A class rate prices every commodity in that class. Add an override below only where one
+                commodity should be priced differently from the rest of its class.
+              </p>
+              <table class="mt-2 w-full text-sm">
+                <thead class="bg-surface-muted"><tr class="text-xs font-semibold text-left uppercase text-ink-subtle"><th class="px-4 py-2">Commodity</th><th class="px-4 py-2">Class</th><th class="px-4 py-2 text-right">Rate %</th><th class="px-4 py-2"></th></tr></thead>
+                <tbody>
+                  <tr v-for="r in overrideRates(t)" :key="`${r.commodityClass}|${r.hsCode}`" class="border-t border-line">
+                    <td class="px-4 py-2"><HsCodeAutocomplete :model-value="r.commodity ?? null" @update:model-value="(c) => pickOverride(r, c)" /></td>
+                    <td class="px-4 py-2 text-ink-subtle">{{ r.commodityClass || "—" }}</td>
+                    <td class="px-4 py-2"><input v-model="r.ratePct" inputmode="decimal" :aria-label="`${r.hsCode} rate %`" :class="cell(`commodityRates.${t.commodityRates.indexOf(r)}.ratePct`, 'text-right tabular-nums')" /></td>
+                    <td class="px-4 py-2 text-right"><button type="button" class="text-xs font-semibold text-danger" @click="removeOverride(t, r)">Remove</button></td>
+                  </tr>
+                  <tr v-if="!overrideRates(t).length" class="border-t border-line"><td colspan="4" class="px-4 py-3 text-ink-subtle">No commodity overrides. Every commodity takes its class rate.</td></tr>
+                </tbody>
+              </table>
+              <Button type="button" variant="outline" size="sm" class="mt-2" @click="addOverride(t)">Add commodity override</Button>
             </section>
           </template>
 

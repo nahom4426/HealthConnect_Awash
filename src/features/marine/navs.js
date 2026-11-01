@@ -42,7 +42,7 @@ const marineNavs = [
       { path: "/marine/admin/users", name: "Marine users and roles", marineRoles: ["ADMIN"] },
       { path: "/marine/deadlines", name: "Deadlines and alerts", marineRoles: ["CLAIMS_HANDLER", "CLAIMS_MANAGER"] },
       { path: "/marine/admin/masters", name: "Marine master data", marineRoles: ["ADMIN"] },
-      { path: "/marine/product", name: "Marine cargo rates and perils" },
+      { path: "/marine/product", name: "Marine cargo rates and perils", area: "productConfig" },
       { path: "/form-builder/marine", name: "Proposal form builder" },
       { path: "/marine/admin/sanctions", name: "Sanctions list", marineRoles: ["ADMIN"] },
     ],

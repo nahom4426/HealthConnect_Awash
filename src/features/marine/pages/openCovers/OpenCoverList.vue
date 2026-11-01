@@ -35,7 +35,9 @@ const columns = [
   <div class="marine-page">
     <MarinePageHeader title="Open cover agreements" subtitle="Approved arrangements. Each shipment is declared against an active agreement." :crumbs="[{ label: 'Marine' }, { label: 'Open cover' }, { label: 'Agreements' }]">
       <template #actions>
-        <Button v-if="canCreate()" @click="router.push('/marine/open-covers/new')">New open cover</Button>
+        <!-- A cover is opened from the Marine proposal: its terms are answered there, and the
+             quotation it produces issues the policy. There is no cover-creation form. -->
+        <Button v-if="canCreate()" @click="router.push('/marine/proposals/new')">New Open Cover proposal</Button>
       </template>
     </MarinePageHeader>
     <FilterBar

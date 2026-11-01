@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import router from "@/router"; // ✅ IMPORT ROUTER DIRECTLY
+import { useModuleStore } from "@/stores/moduleStore";
 
 export const useAuthStore = defineStore("authStore", () => {
   /* =======================
@@ -85,6 +86,8 @@ export const useAuthStore = defineStore("authStore", () => {
     clearAuthData();
     auth.value = null;
     imageData.value = "";
+    // The next user must not see this user's modules or privileges
+    useModuleStore().resetRegistry();
 
     // ✅ SPA redirect (NO reload)
     router.replace("/login");

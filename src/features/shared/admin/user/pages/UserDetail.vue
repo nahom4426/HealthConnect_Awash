@@ -10,10 +10,12 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import icons from "@/utils/icons";
 import { useAuthStore } from "@/stores/auth";
 import { administeredModules } from "@/utils/roleAccess";
-import { ADMIN_MODULES, moduleLabel as catalogModuleLabel } from "../../catalog";
+import { allModules, moduleLabel as catalogModuleLabel } from "../../catalog";
+import { useModuleStore } from "@/stores/moduleStore";
 
 const moduleLabel = (m) => catalogModuleLabel(m);
 const authStore = useAuthStore();
+const moduleStore = useModuleStore();
 const caller = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
 const managedModules = computed(() => administeredModules(caller.value));
 
@@ -50,7 +52,7 @@ onMounted(() => {
 const memberships = computed(() => (Array.isArray(user.value?.memberships) ? user.value.memberships : []));
 const moduleChoices = computed(() => {
   const managed = managedModules.value;
-  const values = ADMIN_MODULES.map((item) => item.value);
+  const values = allModules().map((item) => item.value);
   if (managed == null) return values;
   return values.filter((value) => managed.includes(value));
 });
@@ -94,6 +96,7 @@ function addAccess() {
         newRoleUuid.value = '';
         moduleRoles.value = [];
         await loadUser();
+        refreshOwnModules();
       }
     }
   );
@@ -115,11 +118,19 @@ function removeAccess(membership) {
         () => removeUserModuleAccess(userUuid, membership.moduleType),
         async (res) => {
           toasted(res.success, 'Module access removed', res.error);
-          if (res.success) await loadUser();
+          if (res.success) {
+            await loadUser();
+            refreshOwnModules();
+          }
         }
       );
     }
   );
+}
+
+// Changing your own roles changes your menu and privileges
+function refreshOwnModules() {
+  if (caller.value?.userUuid && caller.value.userUuid === userUuid) moduleStore.loadRegistry({ force: true });
 }
 
 const goBack = () => {

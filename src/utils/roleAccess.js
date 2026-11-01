@@ -1,4 +1,5 @@
 import { getActingRole } from "@/utils/actingRole";
+import { useModuleStore } from "@/stores/moduleStore";
 
 /**
  * Which roles may use each area of the motor-style product modules.
@@ -77,6 +78,12 @@ export function administeredModules(user = {}) {
     const moduleType = String(membership?.moduleType || "").trim().toLowerCase();
     const roleName = String(membership?.roleName || "").trim().toLowerCase();
     if (moduleType && roleName === "admin") modules.add(moduleType);
+  }
+  // GET /modules/me marks the modules this user administers with admin: true
+  try {
+    for (const key of useModuleStore().adminModuleKeys) modules.add(key);
+  } catch {
+    // No active Pinia yet (module evaluation); memberships and privileges still apply
   }
   const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
   for (const raw of privileges) {

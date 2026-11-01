@@ -27,6 +27,8 @@ import lifeRoutes from "./life/life.routes";
 import { marineRoutes, marinePublicRoutes } from "./marine/marine.routes";
 import fireRoutes, { burglaryRoutes, marineCatalogRoutes } from "./fire/fire.routes";
 import { installRouteLoading } from "./loading";
+// No-code products, product catalogue, module registry
+import productRoutes from "./products/products.routes";
 // Shared across products
 import adminRoutes from "./shared/admin.routes";
 import analyticsRoutes from "./shared/analytics.routes";
@@ -208,6 +210,7 @@ const router = createRouter({
         ...fireRoutes,
         ...burglaryRoutes,
         ...marineCatalogRoutes,
+        ...productRoutes,
         ...adminRoutes,
         ...analyticsRoutes,
         ...reportsRoutes,

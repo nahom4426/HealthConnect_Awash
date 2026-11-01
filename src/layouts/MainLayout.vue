@@ -6,7 +6,8 @@ import NotificationCenter from "@/components/NotificationCenter.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useColorStore } from "@/stores/colorStore";
-import { ADMIN_MODULE_ID, useModuleStore } from "@/stores/moduleStore";
+import { ADMIN_MODULE_ID, PRODUCT_MODULE_PREFIX, useModuleStore } from "@/stores/moduleStore";
+import { productAdminNavs, productNavs } from "@/features/products/navs.js";
 import healthNavs from "@/features/health/navs";
 import motorNavs from "@/features/motor/navs.js";
 import fireNavs from "@/features/fire/navs.js";
@@ -84,10 +85,14 @@ const MODULE_NAVS = {
   engineering: engineeringNavs,
   liability:   liabilityNavs,
   burglary:    burglaryNavs,
-  [ADMIN_MODULE_ID]: administrationNavs,
+  [ADMIN_MODULE_ID]: [...administrationNavs, ...productAdminNavs],
 };
 
-const ADMIN_SCREEN = /^\/(users|add_user|edit_user|user_detail|roles|create-role|edit_role|role_detail|privileges|add_privilege|edit_privilege|privilege_detail|branches|admin\/user-roles)(\/|$)/;
+const ADMIN_SCREEN = /^\/(users|add_user|edit_user|user_detail|roles|create-role|edit_role|role_detail|privileges|add_privilege|edit_privilege|privilege_detail|branches|admin\/user-roles|admin\/modules|product-catalogue)(\/|$)/;
+const PRODUCT_SCREEN = /^\/products\/([^/]+)/;
+
+// Menu, sidebar and button gating read the module registry (GET /modules/me)
+moduleStore.loadRegistry();
 
 watch(
   () => route.path,
@@ -96,6 +101,13 @@ watch(
       if (moduleStore.activeModuleId !== ADMIN_MODULE_ID) {
         moduleStore.selectModule(ADMIN_MODULE_ID);
       }
+      return;
+    }
+    const product = PRODUCT_SCREEN.exec(path);
+    if (product) {
+      const id = `${PRODUCT_MODULE_PREFIX}${product[1].toUpperCase()}`;
+      if (moduleStore.activeModuleId !== id) moduleStore.selectModule(id);
+      moduleStore.loadDefinitions();
       return;
     }
     const id = path.split("/").filter(Boolean)[0];
@@ -107,11 +119,16 @@ watch(
 );
 
 // ── Active module raw navs ──
-const activeNavs = computed(() => MODULE_NAVS[moduleStore.activeModuleId] || healthNavs);
+const activeNavs = computed(() => {
+  const id = moduleStore.activeModuleId || "";
+  if (id.startsWith(PRODUCT_MODULE_PREFIX)) return productNavs(id.slice(PRODUCT_MODULE_PREFIX.length));
+  return MODULE_NAVS[id] || healthNavs;
+});
 const marineRoles = useMarineRoles();
 
 function visibleNav(item, user) {
   if (item.path === "/branches" && !canManageBranches.value) return false;
+  if (typeof item.visible === "function" && !item.visible(user)) return false;
   const area = item.area ?? navItemArea(item.name || "");
   if (area && !hasRoleAccess(user, area)) return false;
   if (moduleStore.activeModuleId === "marine" && !hasAnyRole(marineRoles.value, item.marineRoles)) return false;
@@ -136,7 +153,7 @@ watch(filteredNavs, (navs) => prefetchRoutesIdle(router, navs), { immediate: tru
 const isHomePage = computed(() => route.path === "/home");
 
 // Module-select page — renders ModuleLauncher directly via RouterView, no NavBar wrapper needed
-const isModuleSelect = computed(() => route.path === "/module-select");
+const isModuleSelect = computed(() => route.path === "/module-select" || route.path.startsWith("/coming-soon/"));
 </script>
 
 <template>

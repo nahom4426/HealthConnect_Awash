@@ -1,10 +1,10 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { useModuleStore, MODULES } from '@/stores/moduleStore';
+import { useModuleStore, MODULES, ADMIN_MODULE_ID, CATALOGUE_ICON } from '@/stores/moduleStore';
 import { useAuthStore } from '@/stores/auth';
 import { useLanguageStore } from '@/stores/languageStore';
 import { canOpenUserManagement } from '@/utils/roleAccess';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import imageSrc from '@/assets/img/profile.png';
 import eicLogo from '@/assets/img/standard_icon.png';
 
@@ -26,9 +26,61 @@ const profilePicture = computed(() => {
 });
 
 const showUserMenu = ref(false);
-const visibleModules = computed(() =>
-  MODULES.filter((mod) => !mod.superAdminOnly || canOpenUserManagement(u.value))
-);
+
+// Tiles come from GET /modules/me (ordered by sortOrder). Only when the server has no module
+// registry yet (404) do we fall back to the built-in list, and say so on the page.
+const registryUnavailable = computed(() => moduleStore.registryStatus === 'unavailable');
+const loadingModules = computed(() => moduleStore.registryStatus === 'loading' && !moduleStore.registry.length);
+const registryFailed = computed(() => moduleStore.registryStatus === 'error');
+
+const adminTile = computed(() => MODULES.find((mod) => mod.id === ADMIN_MODULE_ID));
+const catalogueTile = {
+  id: 'catalogue',
+  name: 'Product catalogue',
+  description: 'Create insurance products, then define their proposal form, covers and pricing — no release needed.',
+  icon: CATALOGUE_ICON,
+  badge: 'Products',
+  dashboardPath: '/product-catalogue',
+  sidebarId: ADMIN_MODULE_ID,
+  kind: 'tool',
+};
+
+const visibleModules = computed(() => {
+  if (registryUnavailable.value) {
+    return MODULES.filter((mod) => !mod.superAdminOnly || canOpenUserManagement(u.value));
+  }
+  const tiles = [...moduleStore.launcherModules];
+  if (moduleStore.isSuperAdmin() || moduleStore.canAnywhere('.product.read')) tiles.push(catalogueTile);
+  if (canOpenUserManagement(u.value) && adminTile.value) tiles.push({ ...adminTile.value, kind: 'tool' });
+  return tiles;
+});
+
+function tileTitle(mod) {
+  // Registry names are editable, so they win; Amharic keeps its translation for coded modules
+  if (langStore.isAmharic) return langStore.t('modules.' + mod.id, {}, mod.name);
+  return mod.name || langStore.t('modules.' + mod.id);
+}
+
+function tileDescription(mod) {
+  if (langStore.isAmharic) return langStore.t('modules.' + mod.id + 'Desc', {}, mod.description);
+  return mod.description || langStore.t('modules.' + mod.id + 'Desc', {}, '');
+}
+
+function tileFooter(mod) {
+  if (mod.kind === 'unavailable') return 'Coming soon';
+  if (mod.roleName) return mod.admin ? `${mod.roleName} · admin` : mod.roleName;
+  return mod.kind === 'tool' ? 'Tools' : '';
+}
+
+function reload() {
+  moduleStore.loadRegistry({ force: true });
+}
+
+onMounted(async () => {
+  // Refetch on every return to the launcher so role changes show up
+  await moduleStore.loadRegistry({ force: true });
+  if (moduleStore.launcherModules.some((mod) => mod.kind === 'product')) moduleStore.loadDefinitions({ force: true });
+});
 
 // Matching card theme colors with standalone larger icons (no inner box wrapper)
 const cardThemeMap = {
@@ -98,7 +150,7 @@ const cardThemeMap = {
 };
 
 function selectModule(mod) {
-  moduleStore.selectModule(mod.id);
+  moduleStore.selectModule(mod.sidebarId || mod.id);
   router.push(mod.dashboardPath);
 }
 
@@ -184,6 +236,18 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
         <p class="text-sm sm:text-[0.92rem] font-medium text-ink-subtle leading-relaxed">Select an insurance module to manage rate configurations, underwriting workflows, and claims processing.</p>
       </div>
 
+      <div v-if="registryUnavailable" class="mb-6 rounded-xl border border-warning/40 bg-warning-soft px-4 py-3 text-xs font-semibold text-warning-strong">
+        This server has no module registry yet, so the built-in module list is shown.
+      </div>
+      <div v-else-if="registryFailed" class="mb-6 flex items-center justify-between gap-3 rounded-xl border border-error/40 bg-error-soft px-4 py-3 text-xs font-semibold text-error-strong">
+        <span>Your modules could not be loaded: {{ moduleStore.registryError }}</span>
+        <button class="rounded-lg border border-error/40 bg-white px-3 py-1 font-bold" @click="reload">Retry</button>
+      </div>
+      <p v-if="loadingModules" class="text-sm font-medium text-ink-subtle">Loading your modules…</p>
+      <p v-else-if="!visibleModules.length && !registryFailed" class="text-sm font-medium text-ink-subtle">
+        You don't have access to any module yet. Ask an administrator to give you a role.
+      </p>
+
       <!-- Module Cards Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
@@ -221,18 +285,18 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
 
             <!-- Title & Description -->
             <h3 class="text-[0.95rem] font-extrabold text-ink mb-1.5 tracking-tight">
-              {{ langStore.t('modules.' + mod.id) }}
+              {{ tileTitle(mod) }}
             </h3>
 
             <p class="text-xs sm:text-[0.82rem] text-ink-subtle font-medium leading-relaxed line-clamp-3 mb-6">
-              {{ langStore.t('modules.' + mod.id + 'Desc') }}
+              {{ tileDescription(mod) }}
             </p>
           </div>
 
           <!-- Bottom Action Row -->
           <div class="pt-3.5 border-t border-line/60 flex items-center justify-between text-xs">
-            <span class="text-[10px] font-semibold text-ink-subtle uppercase tracking-wide">
-              Module v3.2
+            <span class="text-[10px] font-semibold text-ink-subtle uppercase tracking-wide truncate">
+              {{ tileFooter(mod) }}
             </span>
             <span 
               :class="[

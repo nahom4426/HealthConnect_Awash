@@ -21,16 +21,8 @@ const greeting = computed(() => {
   return "Good evening";
 });
 
-const MODULE_COLORS = [
-  { from: "#1e3a8a", to: "#2563eb", glow: "rgba(37,99,235,0.4)" },
-  { from: "#0c4a6e", to: "#0284c7", glow: "rgba(2,132,199,0.4)" },
-  { from: "#064e3b", to: "#059669", glow: "rgba(5,150,105,0.4)" },
-  { from: "#4c1d95", to: "#7c3aed", glow: "rgba(124,58,237,0.4)" },
-  { from: "#78350f", to: "#d97706", glow: "rgba(217,119,6,0.4)"  },
-  { from: "#881337", to: "#e11d48", glow: "rgba(225,29,72,0.4)"  },
-  { from: "#134e4a", to: "#0d9488", glow: "rgba(13,148,136,0.4)" },
-  { from: "#1e1b4b", to: "#4f46e5", glow: "rgba(79,70,229,0.4)"  },
-];
+// Standard Insurance brand for every module (navy gradient)
+const MODULE_COLORS = [{ from: "#06294A", to: "#0D4F80", glow: "rgba(13,79,128,0.4)" }];
 
 const modules = computed(() =>
   props.navs.map((nav, i) => ({

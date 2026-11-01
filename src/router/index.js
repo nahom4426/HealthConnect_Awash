@@ -20,6 +20,7 @@ import product_settingsRoutes from "./health/product_settings.routes";
 import authorizationRoutes from "./health/authorization.routes";
 import reportsRoutes from "./health/reports.routes";
 import brokerRoutes from "./health/broker.routes";
+import healthSettingsRoutes from "./health/settings.routes";
 // Motor
 import motorRoutes from "./motor/motor.routes";
 // Life
@@ -225,6 +226,7 @@ const router = createRouter({
         ...providersRoutes,
         ...product_settingsRoutes,
         ...authorizationRoutes,
+        ...healthSettingsRoutes,
         {
           path: '/rate-config',
           name: 'rate-config',

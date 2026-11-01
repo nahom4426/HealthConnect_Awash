@@ -118,6 +118,16 @@ export default [
           permissions: ["Manages_Quotation"],
         },
       },
+      {
+        path: "/paid_quotation",
+        name: "Paid Quotation",
+        icon: `
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M3 10h18M7 15h2m-3 4h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3Z"/><path d="m14 15l1.5 1.5L18 14"/></svg>
+				`,
+        meta: {
+          permissions: ["Manages_Quotation"],
+        },
+      },
     ],
   },
   {
@@ -653,5 +663,10 @@ export default [
     meta: {
       permissions: ["Read_claims"],
     },
+  },
+  {
+    path: "/health/settings",
+    name: "Settings",
+    icon: icons.settings,
   },
 ];

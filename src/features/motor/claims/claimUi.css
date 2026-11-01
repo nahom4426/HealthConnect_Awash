@@ -62,7 +62,7 @@
 .cn-notice { font-size: .8rem; line-height: 1.5; color: #92400e; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1.25rem; }
 .cn-root.dark .cn-notice { color: #fde68a; background: rgba(120,53,15,0.25); border-color: rgba(252,211,77,0.3); }
 .cn-office { margin-bottom: 1.25rem; }
-@media(min-width: 1024px) { .cn-office { grid-template-columns: repeat(3, 1fr); } }
+@media(min-width: 1024px) { .cn-office { grid-template-columns: repeat(4, 1fr); } }
 .cn-field.err input, .cn-field.err select { border-color: #dc2626; }
 .cn-err { color: #dc2626; font-size: .7rem; font-weight: 600; }
 .cn-warnings { margin-top: 1rem; padding: .7rem 1rem .7rem 2rem; list-style: disc; font-size: .8rem; font-weight: 600; color: #b45309; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; }

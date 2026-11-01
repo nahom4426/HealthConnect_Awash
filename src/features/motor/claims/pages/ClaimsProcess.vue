@@ -6,7 +6,7 @@ import { useModuleStore, MODULES } from '@/stores/moduleStore';
 import { useRoute, useRouter } from 'vue-router';
 import { useDarkModeStore } from '@/stores/darkMode';
 import { fetchClaimsByModule } from '@/features/motor/claims/api/digitalChannelApi';
-import { STAGES, CLOSED_OUTCOMES, loadProcess, currentStage, closedOutcome, waitingOn, daysOpen } from '@/features/motor/claims/claimProcess';
+import { STAGES, CLOSED_OUTCOMES, processFor, currentStage, closedOutcome, waitingOn, daysOpen } from '@/features/motor/claims/claimProcess';
 import { loadNotificationForm } from '@/features/motor/claims/notificationForm';
 
 const route = useRoute();
@@ -36,7 +36,7 @@ const pageMode = computed(() => {
 
 /** Each claim with its stage, what it waits on and its age. */
 const rows = computed(() => claims.value.map(c => {
-  const proc = loadProcess(c.claimUuid);
+  const proc = processFor(c);
   const outcome = closedOutcome(c, proc);
   const stage = currentStage(c, proc);
   const form = loadNotificationForm(c).form;
@@ -58,14 +58,11 @@ const scopedRows = computed(() => {
   return rows.value;
 });
 
-const chips = computed(() => {
+// Top tabs: which group of claims. Open claims also get a stage strip underneath.
+const tabs = computed(() => {
   const list = scopedRows.value;
   const count = fn => list.filter(fn).length;
-  const out = [{ key: 'ACTIVE', label: 'All open', count: count(r => !r.outcome && r.stage <= 7) }];
-  for (const s of STAGES.slice(1)) {
-    const n = count(r => !r.outcome && r.stage === s.n);
-    if (pageMode.value === 'process' || n) out.push({ key: `S${s.n}`, label: s.label, count: n, n: s.n });
-  }
+  const out = [{ key: 'ACTIVE', label: 'Open', count: count(r => !r.outcome && r.stage <= 7) }];
   if (pageMode.value !== 'approved') {
     out.push({ key: 'DONE', label: 'Completed', count: count(r => r.stage === 8) });
     out.push({ key: 'CLOSED', label: 'Rejected / withdrawn', count: count(r => !!r.outcome) });
@@ -73,6 +70,16 @@ const chips = computed(() => {
   out.push({ key: 'ALL', label: 'Everything', count: list.length });
   return out;
 });
+
+const stageCells = computed(() => {
+  const list = scopedRows.value;
+  const stages = pageMode.value === 'approved' ? STAGES.filter(s => s.n === 5 || s.n === 6) : STAGES;
+  return stages.map(s => ({ ...s, count: list.filter(r => !r.outcome && r.stage === s.n).length }));
+});
+
+const activeTab = computed(() => (filter.value.startsWith('S') ? 'ACTIVE' : filter.value));
+const showStages = computed(() => activeTab.value === 'ACTIVE');
+const pickStage = (n) => { filter.value = filter.value === `S${n}` ? 'ACTIVE' : `S${n}`; };
 
 const filteredRows = computed(() => {
   let list = scopedRows.value;
@@ -118,10 +125,21 @@ const pageTitle = computed(() => {
 });
 
 watch([filter, search], () => { currentPage.value = 1; });
-watch(() => route.path, () => { filter.value = pageMode.value === 'completed' ? 'ALL' : 'ACTIVE'; loadClaims(); });
+watch(() => route.path, () => { filter.value = pageMode.value === 'completed' ? 'ALL' : 'ACTIVE'; applyQuery(); loadClaims(); });
+
+// A claim page that just finished a claim sends ?done=<claim number>: open the Completed tab and say so.
+// ?tab= opens a tab directly (Back to claims from a finished claim).
+const justDone = ref('');
+function applyQuery() {
+  const { done, tab } = route.query;
+  justDone.value = done ? String(done) : '';
+  if (done) filter.value = 'DONE';
+  else if (tab && ['ACTIVE', 'DONE', 'CLOSED', 'ALL'].includes(String(tab))) filter.value = String(tab);
+}
 
 onMounted(() => {
   filter.value = pageMode.value === 'completed' ? 'ALL' : 'ACTIVE';
+  applyQuery();
   loadClaims();
 });
 </script>
@@ -145,19 +163,44 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="cl-chips" role="tablist" aria-label="Filter by stage">
-      <button
-        v-for="c in chips"
-        :key="c.key"
-        type="button"
-        role="tab"
-        class="cl-chip"
-        :class="{ active: filter === c.key }"
-        :aria-selected="filter === c.key"
-        @click="filter = c.key"
-      >
-        <span v-if="c.n" class="cl-chip-no">{{ c.n }}</span>{{ c.label }}<span class="cl-chip-count">{{ c.count }}</span>
-      </button>
+    <div v-if="justDone" class="cn-alert success cl-done" role="status">
+      <span>✓ Claim {{ justDone }} completed: the vehicle is handed over. It is listed under Completed.</span>
+      <button type="button" class="cl-clear" aria-label="Dismiss" @click="justDone = ''; router.replace({ query: {} })">✕</button>
+    </div>
+
+    <div class="cn-card cl-filters">
+      <div class="cl-tabs" role="tablist" aria-label="Which claims">
+        <button
+          v-for="t in tabs"
+          :key="t.key"
+          type="button"
+          role="tab"
+          class="cl-tab"
+          :class="{ active: activeTab === t.key }"
+          :aria-selected="activeTab === t.key"
+          @click="filter = t.key"
+        >
+          {{ t.label }}<span class="cl-tab-count">{{ t.count }}</span>
+        </button>
+      </div>
+      <div v-if="showStages" class="cl-stages" :style="{ '--cols': stageCells.length }" role="group" aria-label="Filter open claims by stage">
+        <button
+          v-for="s in stageCells"
+          :key="s.n"
+          type="button"
+          class="cl-stage-cell"
+          :class="{ active: filter === `S${s.n}`, empty: !s.count }"
+          :aria-pressed="filter === `S${s.n}`"
+          :title="`${s.label} · ${s.hint}`"
+          @click="pickStage(s.n)"
+        >
+          <span class="cl-cell-top"><span class="cl-cell-no">{{ s.n }}</span><strong class="cl-cell-count">{{ s.count }}</strong></span>
+          <span class="cl-cell-label">{{ s.label }}</span>
+        </button>
+      </div>
+      <p v-if="filter.startsWith('S')" class="cl-filter-note">
+        Showing stage {{ filter.slice(1) }} only · <button type="button" class="cl-clear" @click="filter = 'ACTIVE'">Show all open claims</button>
+      </p>
     </div>
 
     <div v-if="loading" class="cn-card cl-state"><div class="cl-spinner"></div>Loading claims…</div>
@@ -181,7 +224,7 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="r in pageRows" :key="r.claim.claimUuid || r.claim.claimNumber" tabindex="0" @click="openDetail(r.claim)" @keyup.enter="openDetail(r.claim)">
+          <tr v-for="r in pageRows" :key="r.claim.claimUuid || r.claim.claimNumber" :class="{ 'cl-just-done': justDone && (r.claim.claimNumber === justDone || r.claim.claimUuid === justDone) }" tabindex="0" @click="openDetail(r.claim)" @keyup.enter="openDetail(r.claim)">
             <td>
               <div class="cl-claimno">{{ r.claim.claimNumber || '—' }}</div>
               <div class="cl-sub">{{ r.holder || '—' }}</div>
@@ -225,13 +268,39 @@ onMounted(() => {
 .cl-search:focus-within { border-color: var(--cn-accent); box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
 .cl-new { text-decoration: none; display: inline-flex; align-items: center; }
 
-.cl-chips { display: flex; gap: .45rem; flex-wrap: wrap; margin-bottom: 1rem; }
-.cl-chip { display: inline-flex; align-items: center; gap: .4rem; padding: .42rem .8rem; border-radius: 999px; border: 1px solid var(--cn-border); background: var(--cn-card); color: var(--cn-sub); font-size: .76rem; font-weight: 700; cursor: pointer; transition: all .15s; font-family: inherit; }
-.cl-chip:hover { border-color: #c7d2fe; color: var(--cn-title); }
-.cl-chip.active { background: var(--cn-accent); border-color: var(--cn-accent); color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,.25); }
-.cl-chip-no { width: 1.15rem; height: 1.15rem; border-radius: 999px; border: 1.5px solid currentColor; display: inline-flex; align-items: center; justify-content: center; font-size: .62rem; }
-.cl-chip-count { min-width: 1.3rem; padding: 0 .35rem; border-radius: 999px; background: rgba(100,116,139,.12); font-size: .68rem; text-align: center; }
-.cl-chip.active .cl-chip-count { background: rgba(255,255,255,.25); }
+.cl-filters { padding: 0; margin-bottom: 1rem; overflow: hidden; }
+.cl-tabs { display: flex; gap: .25rem; padding: 0 1rem; border-bottom: 1px solid var(--cn-border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.cl-tab { position: relative; display: inline-flex; align-items: center; gap: .45rem; padding: .85rem .75rem; border: 0; background: none; color: var(--cn-sub); font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; transition: color .15s; }
+.cl-tab:hover { color: var(--cn-title); }
+.cl-tab::after { content: ''; position: absolute; left: .5rem; right: .5rem; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: transparent; transition: background .15s; }
+.cl-tab.active { color: var(--cn-accent); }
+.cl-tab.active::after { background: var(--cn-accent); }
+.cl-tab:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgba(99,102,241,.35); border-radius: 8px; }
+.cl-tab-count { min-width: 1.4rem; padding: .05rem .4rem; border-radius: 999px; background: #f1f5f9; color: var(--cn-sub); font-size: .7rem; font-weight: 800; text-align: center; }
+.cn-root.dark .cl-tab-count { background: rgba(255,255,255,.06); }
+.cl-tab.active .cl-tab-count { background: #eef2ff; color: var(--cn-accent); }
+
+.cl-stages { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: .5rem; padding: .85rem 1rem; }
+@media (max-width: 900px) { .cl-stages { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); } }
+.cl-stage-cell { display: flex; flex-direction: column; gap: .3rem; padding: .6rem .7rem; border-radius: 10px; border: 1px solid var(--cn-border); background: var(--cn-bg); text-align: left; font-family: inherit; cursor: pointer; min-width: 0; transition: border-color .15s, background .15s, transform .15s, box-shadow .15s; }
+.cl-stage-cell:hover { border-color: #c7d2fe; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,23,42,.05); }
+.cl-stage-cell:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,.25); }
+.cl-stage-cell.active { border-color: var(--cn-accent); background: #eef2ff; box-shadow: 0 0 0 1px var(--cn-accent) inset; }
+.cn-root.dark .cl-stage-cell.active { background: rgba(99,102,241,.12); }
+.cl-stage-cell.empty { opacity: .6; }
+.cl-stage-cell.empty.active, .cl-stage-cell.empty:hover { opacity: 1; }
+.cl-cell-top { display: flex; align-items: center; justify-content: space-between; gap: .4rem; }
+.cl-cell-no { width: 1.3rem; height: 1.3rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 800; color: var(--cn-accent); border: 1.5px solid currentColor; flex-shrink: 0; }
+.cl-stage-cell.active .cl-cell-no { background: var(--cn-accent); color: #fff; border-color: var(--cn-accent); }
+.cl-cell-count { font-size: 1.25rem; font-weight: 800; color: var(--cn-title); line-height: 1; }
+.cl-cell-label { font-size: .74rem; font-weight: 700; color: var(--cn-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-stage-cell.active .cl-cell-label { color: var(--cn-title); }
+.cl-filter-note { margin: 0; padding: 0 1rem .8rem; font-size: .75rem; color: var(--cn-sub); }
+.cl-clear { border: 0; background: none; padding: 0; color: var(--cn-accent); font-weight: 700; font-size: .75rem; cursor: pointer; font-family: inherit; }
+.cl-clear:hover { text-decoration: underline; }
+.cl-table tbody tr.cl-just-done { background: #ecfdf5; box-shadow: inset 3px 0 0 #10b981; }
+.cn-root.dark .cl-table tbody tr.cl-just-done { background: rgba(16,185,129,.1); }
+.cl-done { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 
 .cl-state { display: flex; flex-direction: column; align-items: center; gap: .6rem; padding: 3rem; color: var(--cn-sub); font-size: .85rem; }
 .cl-spinner { width: 28px; height: 28px; border: 3px solid var(--cn-border); border-top-color: var(--cn-accent); border-radius: 50%; animation: cl-spin .8s linear infinite; }

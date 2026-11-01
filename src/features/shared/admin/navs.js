@@ -21,6 +21,11 @@ const administrationNavs = [
     name: 'Branches',
     icon: icons.institutinpolicy,
   },
+  {
+    path: '/audit-log',
+    name: 'Audit Log',
+    icon: icons.history,
+  },
 ];
 
 export default administrationNavs;

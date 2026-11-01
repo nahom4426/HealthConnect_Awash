@@ -59,6 +59,7 @@ const gender = ref('');
 const mobilePhone = ref('');
 const userStatus = ref('');
 const roleUuid = ref('');
+const roleError = ref('');
 const branchUuids = ref([]);
 const primaryBranchUuid = ref('');
 
@@ -250,6 +251,12 @@ onMounted(async () => {
 });
 
 function handleSubmit() {
+  // The role is a plain <select>, so the form builder's validation never checks it.
+  if (!roleUuid.value) {
+    roleError.value = 'Please select a role';
+    return;
+  }
+  roleError.value = '';
   const formData = {
     email: email.value,
     title: title.value,
@@ -450,6 +457,7 @@ function handleSubmit() {
               </option>
             </select>
           </InputLayout>
+          <p v-if="roleError" class="text-sm text-error">{{ roleError }}</p>
         </div>
 
         <!-- User Status -->

@@ -10,6 +10,7 @@ import {
   emptyNotificationForm, validateNotificationForm, notificationWarnings, toClaimPayload, saveNotificationFormLocally, formatFormDate,
 } from '@/features/motor/claims/notificationForm';
 import { LANGS, notificationLabel } from '@/features/motor/claims/notificationLabels';
+import { REPORT_CHANNELS } from '@/features/motor/claims/claimProcess';
 
 // OWN_DAMAGE → "Own Damage"
 const titleCase = (v) => String(v || '').toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -34,6 +35,7 @@ const causeOfLoss = ref('');
 const incidentLocation = ref('');
 const description = ref('');
 const estimatedAmount = ref('');
+const reportedChannel = ref('WALK_IN');
 const licenseNumber = ref('');
 const thirdPartyDetails = ref('');
 const submitting = ref(false);
@@ -188,6 +190,7 @@ async function handleMotorSubmit() {
       coverageType: coverageType.value,
       causeOfLoss: causeOfLoss.value,
       estimatedAmount: estimatedAmount.value,
+      reportedChannel: reportedChannel.value,
     }));
     saveNotificationFormLocally(res, form);
     submittedClaim.value = res || {};
@@ -207,6 +210,7 @@ function printNotificationForm(claimUuid) {
 function startAnotherClaim() {
   Object.assign(motorForm, emptyNotificationForm());
   estimatedAmount.value = '';
+  reportedChannel.value = 'WALK_IN';
   policyValidation.value = null;
   motorErrors.value = {};
   submittedClaim.value = null;
@@ -325,6 +329,12 @@ function goBack() {
             <input id="cn-estimate" v-model="estimatedAmount" type="number" min="100" placeholder="Best guess of the repair cost" />
             <small v-if="motorErrors.estimatedAmount" class="cn-err">{{ motorErrors.estimatedAmount }}</small>
           </div>
+          <div class="cn-field">
+            <label for="cn-channel">How it was reported <b class="cn-req" aria-hidden="true">*</b></label>
+            <select id="cn-channel" v-model="reportedChannel">
+              <option v-for="c in REPORT_CHANNELS" :key="c" :value="c">{{ titleCase(c) }}</option>
+            </select>
+          </div>
         </div>
 
         <MotorNotificationFields :form="motorForm" :errors="motorErrors" :step="step" :lang="formLang">
@@ -357,6 +367,7 @@ function goBack() {
                 <dt>Plate No</dt><dd class="font-mono">{{ show(motorForm.vehicle.plateNo) }}</dd>
                 <dt>Vehicle</dt><dd>{{ show([motorForm.vehicle.typeAndMake, motorForm.vehicle.yearOfMake].filter(Boolean).join(', ')) }}</dd>
                 <dt>Cover / cause</dt><dd>{{ titleCase(coverageType) }} · {{ titleCase(causeOfLoss) }}</dd>
+                <dt>Reported by</dt><dd>{{ titleCase(reportedChannel) }}</dd>
                 <dt>Estimated loss</dt><dd>{{ estimatedAmount ? `ETB ${Number(estimatedAmount).toLocaleString()}` : '—' }}</dd>
               </dl>
             </div>

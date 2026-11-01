@@ -50,6 +50,8 @@ export function emptyNotificationForm() {
     damage: { insuredVehicle: '', otherProperty: '' },
     // 6) Injured persons
     injuries: [emptyInjured()],
+    // Declaration at the foot of page 2: names and date print on the lines, signatures are handwritten
+    declaration: { date: '', insuredName: '', driverName: '', witness1: '', witness2: '' },
   };
 }
 
@@ -117,7 +119,7 @@ function firstInteger(text) {
  * whole form under notificationForm, which the backend doesn't store yet (see
  * docs/motor-claims/backend-prompt.md).
  */
-export function toClaimPayload(form, { coverageType, causeOfLoss, estimatedAmount }) {
+export function toClaimPayload(form, { coverageType, causeOfLoss, estimatedAmount, reportedChannel, reportedAt }) {
   const { accident, vehicle, driver, damage } = form;
   const other = accident.otherParty;
   const thirdParty = [other.ownerName, other.plateNo && `Plate ${other.plateNo}`, other.ownerPhone].filter(Boolean).join(', ');
@@ -143,6 +145,10 @@ export function toClaimPayload(form, { coverageType, causeOfLoss, estimatedAmoun
     thirdPartyPhone: orUndefined(other.ownerPhone),
     thirdPartyPlate: orUndefined(other.plateNo),
     thirdPartyDetails: thirdParty || undefined,
+    // Staff enter the paper form; the backend only accepts the channel when the claim is created.
+    submittedVia: 'STAFF',
+    reportedChannel: orUndefined(reportedChannel),
+    reportedAt: reportedChannel ? (reportedAt || new Date().toISOString()) : undefined,
     notificationForm: form,
   };
 }

@@ -2,6 +2,7 @@
 import NavBar from "@/components/NavBar.vue";
 import { canOpenUserManagement, hasRoleAccess, isExactSuperAdmin, navItemArea } from "@/utils/roleAccess";
 import { prefetchRoutesIdle } from "@/router/prefetch";
+import { canReadAudit } from "@/features/shared/admin/audit/Api/AuditApi";
 import NotificationCenter from "@/components/NotificationCenter.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
@@ -23,7 +24,7 @@ import burglaryNavs from "@/features/burglary/navs.js";
 import administrationNavs from "@/features/shared/admin/navs.js";
 import imageSrc from "@/assets/img/profile.png";
 
-import { computed, defineAsyncComponent, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 // Only shown on /home, so keep it out of the shell bundle
@@ -36,6 +37,14 @@ const colorStore = useColorStore();
 const langStore = useLanguageStore();
 const route = useRoute();
 const router = useRouter();
+
+// The window itself can't be clipped like the frame below it; if anything scrolls it (focus on an
+// element off screen, a text drag), put it back so the whole app doesn't slide up out of view.
+function keepWindowAtTop() {
+  if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
+}
+onMounted(() => window.addEventListener("scroll", keepWindowAtTop, { passive: true }));
+onBeforeUnmount(() => window.removeEventListener("scroll", keepWindowAtTop));
 
 // ── Top bar user info ──
 const u = computed(() => authStore.auth?.user ?? authStore.auth ?? {});
@@ -92,6 +101,8 @@ const moduleChipStyle = computed(() => {
   const theme = currentModule.value?.theme;
   return theme ? { background: withAlpha(theme.hex, 0.16), borderColor: withAlpha(theme.hex, 0.5), color: theme.deep } : undefined;
 });
+// Audit log: Super Admin, or anyone holding audit.read (same rule as the /audit-log route guard)
+const canReadAuditLog = computed(() => canReadAudit(authStore.auth?.user ?? authStore.auth ?? {}));
 
 // ── Current page title from breadcrumbs or route ──
 const pageTitle = computed(() => {
@@ -114,7 +125,7 @@ const MODULE_NAVS = {
   [ADMIN_MODULE_ID]: [...administrationNavs, ...productAdminNavs],
 };
 
-const ADMIN_SCREEN = /^\/(users|add_user|edit_user|user_detail|roles|create-role|edit_role|role_detail|privileges|add_privilege|edit_privilege|privilege_detail|branches|admin\/user-roles|admin\/modules|product-catalogue)(\/|$)/;
+const ADMIN_SCREEN = /^\/(users|add_user|edit_user|user_detail|roles|create-role|edit_role|role_detail|privileges|add_privilege|edit_privilege|privilege_detail|branches|audit-log|admin\/user-roles|admin\/modules|product-catalogue)(\/|$)/;
 const PRODUCT_SCREEN = /^\/products\/([^/]+)/;
 
 // Menu, sidebar and button gating read the module registry (GET /modules/me)
@@ -154,6 +165,7 @@ const marineRoles = useMarineRoles();
 
 function visibleNav(item, user) {
   if (item.path === "/branches" && !canManageBranches.value) return false;
+  if (item.path === "/audit-log" && !canReadAuditLog.value) return false;
   if (typeof item.visible === "function" && !item.visible(user)) return false;
   const area = item.area ?? navItemArea(item.name || "");
   if (area && !hasRoleAccess(user, area)) return false;
@@ -242,6 +254,11 @@ const isModuleSelect = computed(() => route.path === "/module-select" || route.p
               <span>Branches</span>
             </button>
 
+            <button v-if="canReadAuditLog" @click="router.push('/audit-log')" class="px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary border border-primary/20 font-bold text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer ml-1" title="Audit Log">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Audit Log</span>
+            </button>
+
             <div class="tb-divider"></div>
 
             <!-- User profile -->
@@ -293,6 +310,7 @@ const isModuleSelect = computed(() => route.path === "/module-select" || route.p
   height: 100vh;
   background: rgb(var(--canvas));
   overflow: hidden;
+  overflow: clip;
 }
 
 /* ── Right column (topbar + scrollable content) ── */
@@ -302,6 +320,7 @@ const isModuleSelect = computed(() => route.path === "/module-select" || route.p
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overflow: clip;
 }
 
 /* ── Top bar ── */

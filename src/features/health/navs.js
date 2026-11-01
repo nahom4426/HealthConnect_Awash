@@ -631,6 +631,14 @@ export default [
     },
   },
   {
+    path: "/audit-log",
+    name: "Audit Log",
+    icon: icons.history,
+    meta: {
+      permissions: ["audit.read"],
+    },
+  },
+  {
     path: "/privileges",
     name: "Privilege",
     icon: icons.privilege,

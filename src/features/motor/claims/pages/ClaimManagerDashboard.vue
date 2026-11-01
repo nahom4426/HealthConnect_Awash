@@ -3,8 +3,8 @@
 // is waiting on, and which have waited longest. Same look as the claims list and claim page.
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { fetchAllClaims } from '@/features/motor/claims/api/digitalChannelApi';
-import { STAGES, ADJUSTORS, CLOSED_OUTCOMES, loadProcess, currentStage, closedOutcome, waitingOn, daysOpen } from '@/features/motor/claims/claimProcess';
+import { fetchAllClaims, fetchAdjustors } from '@/features/motor/claims/api/digitalChannelApi';
+import { STAGES, ADJUSTORS, CLOSED_OUTCOMES, processFor, currentStage, closedOutcome, waitingOn, daysOpen } from '@/features/motor/claims/claimProcess';
 import { loadNotificationForm } from '@/features/motor/claims/notificationForm';
 import RoleSwitcher from '@/components/RoleSwitcher.vue';
 import { useDarkModeStore } from '@/stores/darkMode';
@@ -24,7 +24,7 @@ async function loadClaims() {
 }
 
 const rows = computed(() => claims.value.map(c => {
-  const proc = loadProcess(c.claimUuid);
+  const proc = processFor(c);
   const form = loadNotificationForm(c).form;
   return {
     claim: c,
@@ -81,7 +81,8 @@ const listTitle = computed(() => {
   return 'Open claims, longest waiting first';
 });
 
-const adjustorName = (id) => ADJUSTORS.find(a => a.id === id)?.name || id;
+const adjustors = ref(ADJUSTORS);
+const adjustorName = (id) => adjustors.value.find(a => a.id === id)?.name || id;
 const stageLabel = (r) => (r.outcome ? CLOSED_OUTCOMES[r.outcome] || r.outcome : r.stage === 8 ? 'Completed' : STAGES[r.stage - 1].label);
 const stageTone = (r) => (r.outcome ? 'closed' : r.stage === 8 ? 'done' : r.stage <= 2 ? 'early' : r.stage <= 5 ? 'mid' : 'late');
 const ageTone = (days) => (days === null ? '' : days > 14 ? 'old' : days > 7 ? 'aging' : '');
@@ -91,7 +92,11 @@ function openDetail(claim) {
   router.push(`/${claim.productModule || 'motor'}/claims/detail/${claim.claimUuid}`);
 }
 
-onMounted(loadClaims);
+onMounted(async () => {
+  loadClaims();
+  const list = await fetchAdjustors();
+  if (list.length) adjustors.value = list;
+});
 </script>
 
 <template>

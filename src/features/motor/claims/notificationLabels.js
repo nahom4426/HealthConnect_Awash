@@ -14,6 +14,16 @@ export const NOTIFICATION_LABELS = {
   'sec.4': { en: 'Details of accident', am: 'ስለ አደጋው መግለጫ' },
   'sec.5': { en: 'Details of damage / injury', am: 'ስለደረሰው ጉዳት መግለጫ' },
   'sec.6': { en: 'Injuries to persons', am: 'በአደጋው ስለተገዱ ሰዎች መግለጫ ይስጡ' },
+  // The paper has no heading here; ማረጋገጫ is the plain word for the declaration that follows.
+  'sec.decl': { en: 'Declaration', am: 'ማረጋገጫ' },
+  declText: {
+    en: 'I/We declare the forgoing particulars to be true and correct in every respect, and underetake to the company every assistance in my/our power in dealing with the claim.',
+    am: 'እኔ/እኛ ከዚህ በላይ ለቀረቡልኝ /ለቀረቡልን ጥያቄዎች የሰጠሁት/የስጠነው ቃል /ዝርዘር መግለጭ /እውነተኛ እና ትክክለኛ መሆኑን እየገለፅኩ/እየገለፅን ከዚህ በተጨማሪ ኩባንያው በበኩሉ ለሚወስደው ማንኛውም እርምጃ ተገቢውን እርዳታ እና ድጋፍ የምሰጥ መሆኑን አሳውቃለሁ/የምንስጥ መሆኑን እናሳውቃለን፡፡',
+  },
+  declDate: { en: 'Date', am: 'ቀን' },
+  declInsured: { en: "Insured's Name & Signature", am: 'መድን ገቢው ስምና ፊርማ' },
+  declDriver: { en: "Driver's Name and signature", am: 'የአሽከርካሪው ስምና ፊርማ' },
+  declWitness: { en: 'Witness', am: 'ይህ መግለጫ ሲሞላ የነበሩ' },
 
   fullName: { en: 'Name in full', am: 'ሙሉ ስም' },
   profession: { en: 'Profession', am: 'ስራው ወይም ሙያው' },

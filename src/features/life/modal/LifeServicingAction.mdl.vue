@@ -30,9 +30,10 @@ async function submit() {
   pending.value = false;
   if (!res?.success) return;
   const r = res.data || {};
-  const done = r.message || d.done;
-  if (action !== "cancel") toasted(true, done);
-  else toasted(true, r.refundAmount != null ? `${done}. Refund ${formatAmount(r.refundAmount)}` : `${done}. No refund: the refund percentage isn't configured`);
+  // The backend's message already says whether a refund was calculated
+  if (r.message) toasted(true, r.message);
+  else if (action === "cancel" && r.refundAmount != null) toasted(true, `${d.done}. Refund ${formatAmount(r.refundAmount)}`);
+  else toasted(true, d.done);
   closeModal(r);
 }
 </script>

@@ -43,13 +43,16 @@
             Insured: <strong class="text-ink">{{ proposal.insuredName }}</strong> ({{ proposal.insuredPhone || '—' }}) • 
             Plate: <strong class="text-blue-700 font-mono">{{ proposal.vehiclePlateNumber }}</strong>
           </p>
+          <div v-if="libreMissing && uiStatus === 'SUBMITTED'" class="mpd-alert mt-2" role="alert">
+            The customer has not uploaded the Libre (vehicle registration card) yet. The proposal cannot be approved until it is uploaded.
+          </div>
         </div>
 
         <div class="mpd-header-actions">
           <RoleSwitcher />
           <!-- SUBMITTED: underwriter decides -->
           <template v-if="uiStatus === 'SUBMITTED'">
-            <button type="button" v-if="isUnderwriter" class="mpd-issue-btn" :disabled="isActing" @click="handleApprove">
+            <button type="button" v-if="isUnderwriter" class="mpd-issue-btn" :disabled="isActing || libreMissing" :title="libreMissing ? 'Waiting for the customer to upload the Libre' : ''" @click="handleApprove">
               <svg class="mpd-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               {{ isActing ? 'Working…' : 'Approve Proposal' }}
             </button>
@@ -305,7 +308,7 @@
                     <option value="PASSED">PASSED — Vehicle Condition Verified Clean</option>
                     <option value="FAILED">FAILED — Pre-existing Damage Found</option>
                   </select>
-                  <button type="button" @click="handleSubmitInspection" class="mpd-suc-btn">
+                  <button type="button" :disabled="libreMissing && inspectionStatus === 'PASSED'" :title="libreMissing && inspectionStatus === 'PASSED' ? 'Waiting for the customer to upload the Libre' : ''" @click="handleSubmitInspection" class="mpd-suc-btn">
                     Submit Inspection Finding
                   </button>
                 </div>
@@ -421,6 +424,9 @@
           </div>
         </div>
       </div>
+
+      <!-- Audit trail for this proposal (hidden without audit.read) -->
+      <AuditHistory :key="proposal.status" module="motor" :entity-uuid="proposal.proposalUuid || ''" />
     </div>
 
     <div v-if="showCertModal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm overflow-y-auto print:bg-transparent">
@@ -843,6 +849,7 @@ import {
 } from '@/features/motor/claims/api/digitalChannelApi';
 import { useRoleContext } from '../composables/useRoleContext';
 import RoleSwitcher from '@/components/RoleSwitcher.vue';
+import AuditHistory from '@/components/AuditHistory.vue';
 import { listCarImages, fetchCarImageByUuid } from '@/features/motor/api/motorApi';
 import { revokeObjectUrls } from '@/utils/imageBlob';
 
@@ -945,6 +952,8 @@ const normRole = computed(() => {
   const roleFromStorage = getActingRole() || activeRole.value || '';
   return roleFromStorage.toUpperCase().replace('ROLE_', '');
 });
+// The backend refuses to approve until the customer has uploaded the Libre (libreSaved === false).
+const libreMissing = computed(() => proposal.value?.libreSaved === false);
 const isUnderwriter = computed(() => normRole.value === 'UNDERWRITER' || normRole.value === 'SUPER_ADMIN');
 const isAdjustor = computed(() => normRole.value === 'ADJUSTOR');
 const isProductManager = computed(() => normRole.value === 'PRODUCT_MANAGER');
@@ -1233,6 +1242,7 @@ async function handleIssueContract() {
 .mpd-sec-btn:hover { background: var(--tint-ede9fe, #ede9fe); }
 .mpd-suc-btn { padding: 0.45rem; background: var(--tint-f0fdf4, #f0fdf4); color: var(--shade-15803d, #15803d); border: 1px solid var(--tint-bbf7d0, #bbf7d0); border-radius: 0.5rem; font-size: 0.74rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
 .mpd-suc-btn:hover { background: var(--tint-dcfce7, #dcfce7); }
+.mpd-suc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .mpd-report-box { background: var(--tint-f5f3ff, #f5f3ff); border: 1px solid var(--tint-ede9fe, #ede9fe); border-radius: 0.6rem; padding: 0.85rem; font-size: 0.78rem; color: #4c1d95; }
 
 /* Gateway & Document Boxes */

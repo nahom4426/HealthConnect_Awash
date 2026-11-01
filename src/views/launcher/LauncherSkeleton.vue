@@ -76,16 +76,11 @@ defineProps({ variant: { type: String, default: 'modules' } });
         </div>
         <span class="sk block h-10 w-full rounded-xl lg:w-72"></span>
       </div>
-      <span class="sk mb-6 block h-9 w-80 rounded-xl"></span>
-
-      <div class="mb-4 flex items-center gap-3">
-        <span class="sk h-3 w-40 rounded-md"></span>
-        <span class="h-px flex-1 bg-line"></span>
-      </div>
+      <span class="sk mb-5 block h-3 w-28 rounded-md"></span>
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
         <div v-for="n in 6" :key="n" class="sk-card flex flex-col rounded-2xl border border-line bg-white p-5" :style="{ animationDelay: `${n * 60}ms` }">
           <div class="mb-4 flex items-start justify-between">
-            <span class="sk h-11 w-11 rounded-xl"></span>
+            <span class="sk h-16 w-24 rounded-xl"></span>
             <span class="sk h-5 w-14 rounded-full"></span>
           </div>
           <span class="sk mb-3 block h-4 w-3/5 rounded-md"></span>

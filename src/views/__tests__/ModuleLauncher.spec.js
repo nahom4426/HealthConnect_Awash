@@ -160,16 +160,11 @@ describe('ModuleLauncher', () => {
 
   it('puts life, medical and travel under Life, and the registry modules under Non-Life', async () => {
     const { wrapper } = await mountAt('/module-select?view=products');
-    expect(tabs(wrapper)).toEqual([
-      'All products · 11',
-      'Life · 9',
-      'Non-Life · 2',
-    ]);
-    expect(wrapper.findAll('section h3').map((h) => h.text().replace(/\s+/g, ' '))).toEqual([
-      'Life · Life assurance',
-      'Life · Medical & travel insurance',
-      'Non-Life · Property & liability',
-    ]);
+    expect(tabs(wrapper)).toEqual(['All products · 11', 'Life · 9', 'Non-Life · 2']);
+    // One plain list: no group tabs and no group headings
+    expect(wrapper.find('[aria-label="Product groups"]').exists()).toBe(false);
+    expect(wrapper.findAll('section h3')).toHaveLength(0);
+    expect(cards(wrapper)).toHaveLength(11);
   });
 
   it('lists the life products, medical and travel on the Life tab', async () => {
@@ -190,26 +185,13 @@ describe('ModuleLauncher', () => {
     expect(card(wrapper, 'World Wide Travel Insurance').text()).toContain('Not set up yet');
   });
 
-  it('narrows a category to one product group, and clears the filters', async () => {
-    const { wrapper, router } = await mountAt('/module-select?view=products&category=life');
-    const groupTabs = () => wrapper.findAll('[aria-label="Product groups"] button');
-    expect(groupTabs().map((b) => b.text().replace(/\s+/g, ' '))).toEqual([
-      'All groups 9',
-      'Life assurance 7',
-      'Medical & travel insurance 2',
-    ]);
-
-    await groupTabs()[2].trigger('click');
-    await flushPromises();
-    expect(router.currentRoute.value.query.group).toBe('medical-travel');
-    expect(cardNames(wrapper)).toEqual(['Medical Insurance', 'World Wide Travel Insurance']);
-    expect(wrapper.text()).toContain('Showing 2 products');
-
-    // Another category starts again from all of its groups
+  it('narrows to a category, and clears the filters', async () => {
+    const { wrapper, router } = await mountAt('/module-select?view=products');
     await wrapper.findAll('[aria-label="Product categories"] button')[2].trigger('click');
     await flushPromises();
-    expect(router.currentRoute.value.query.group).toBeUndefined();
+    expect(router.currentRoute.value.query.category).toBe('non-life');
     expect(cardNames(wrapper)).toEqual(['Fire Insurance', 'Pet Care']);
+    expect(wrapper.text()).toContain('Showing 2 products');
 
     await wrapper.findAll('button').find((b) => b.text() === 'Clear filters').trigger('click');
     await flushPromises();

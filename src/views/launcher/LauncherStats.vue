@@ -346,19 +346,18 @@ const statusOptions = {
         <li v-for="mod in quickModules" :key="mod.id">
           <button
             type="button"
-            class="group flex h-full w-full items-center gap-2.5 rounded-xl border py-2 pl-2 pr-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            :style="cardStyle(themeOf(mod))"
+            class="group flex h-full w-full items-center gap-2.5 rounded-xl border border-line bg-white py-2 pl-2 pr-3 text-left shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             :title="`Open ${titleOf(mod)}`"
             @click="emit('open-module', mod)"
           >
-            <span class="block h-10 w-14 shrink-0 transition-transform duration-300 group-hover:scale-110">
+            <span class="block h-10 w-14 shrink-0 rounded-lg bg-surface-muted p-0.5 transition-transform duration-300 group-hover:scale-110">
               <ModuleArt :kind="themeOf(mod).art" />
             </span>
             <span class="min-w-0 flex-1">
               <span class="block truncate text-xs font-extrabold text-ink">{{ titleOf(mod) }}</span>
               <span class="block truncate text-[10px] text-ink-muted">{{ mod.roleName || (mod.kind === 'tool' ? 'Tools' : 'Open module') }}</span>
             </span>
-            <svg class="h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-0.5" :style="{ color: themeOf(mod).deep }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <svg class="h-3.5 w-3.5 shrink-0 text-ink-subtle transition-all group-hover:translate-x-0.5 group-hover:text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
         </li>
       </ul>

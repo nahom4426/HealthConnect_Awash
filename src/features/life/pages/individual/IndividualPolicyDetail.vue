@@ -17,7 +17,7 @@ import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
 import { benefitActions, benefitName } from "../../individual/individualRules";
 import { deleteBenefit, deleteIndividualRiderBenefit, getBenefit, getIndividualRiderBenefits, issueBenefit } from "../../api/policyApi";
-import { getRiders } from "../../api/productApi";
+import { getKnownRiders } from "../../api/knownRiders";
 
 const route = useRoute();
 const router = useRouter();
@@ -34,7 +34,7 @@ benefit.load(uuid);
 
 // Riders of this policy only (?benefitUuid=, contract 2026-10 #29); the filter below guards older servers
 const riderBenefits = useLifeResource(() => getIndividualRiderBenefits({ benefitUuid: uuid }), { initial: [], map: (d) => (Array.isArray(d) ? d : []).filter((r) => r.benefitUuid === uuid) });
-const riders = useLifeResource(getRiders, { initial: [] });
+const riders = useLifeResource(getKnownRiders, { initial: [] }); // includes replaced/deactivated riders the policy may still carry
 riderBenefits.load();
 riders.load();
 const riderName = (id) => riders.data.value.find((r) => r.riderUuid === id)?.riderName || "Rider";

@@ -11,6 +11,7 @@ import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { getModifiedRiders, getPendingRiders, getRiders } from "../../api/productApi";
+import { PolicyStatus } from "../../constants/statuses";
 
 const router = useRouter();
 const COLUMNS = [
@@ -20,18 +21,24 @@ const COLUMNS = [
   { key: "status", label: "Status" },
   { key: "open", label: "Open", align: "right", srOnly: true },
 ];
-// The backend keeps riders in versions: pending (draft), active (in use), modified (superseded)
-const TABS = { Active: getRiders, Pending: getPendingRiders, Modified: getModifiedRiders };
+// The backend keeps riders in versions: pending (draft), active (in use), modified (replaced by a newer
+// revision) and disabled (deactivated). GET /rider/modified returns both of the last two, split here by status.
+const TABS = {
+  Active: { fetch: getRiders },
+  Pending: { fetch: getPendingRiders },
+  Replaced: { fetch: getModifiedRiders, status: PolicyStatus.MODIFIED },
+  Deactivated: { fetch: getModifiedRiders, status: PolicyStatus.DISABLED },
+};
 const tab = ref("Active");
 const search = ref("");
 
-const { data: riders, loading, error, load } = useLifeResource((t) => TABS[t](), { initial: [], map: (d) => (Array.isArray(d) ? d : []) });
+const { data: riders, loading, error, load } = useLifeResource((t) => TABS[t].fetch(), { initial: [], map: (d) => (Array.isArray(d) ? d : []) });
 watch(tab, (t) => load(t), { immediate: true });
 
 const visible = computed(() => {
   const q = search.value.trim().toLowerCase();
-  if (!q) return riders.value;
-  return riders.value.filter((r) => `${r.riderName} ${r.riderDescription}`.toLowerCase().includes(q));
+  const status = TABS[tab.value].status;
+  return riders.value.filter((r) => (!status || r.status === status) && (!q || `${r.riderName} ${r.riderDescription}`.toLowerCase().includes(q)));
 });
 
 function newRider() {

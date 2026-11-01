@@ -7,7 +7,7 @@ import { useLifeResource } from "../composables/useLifeResource";
 import { confirmAction } from "../composables/confirmAction";
 import { quotedRiderSpec, riderChanges } from "../quotations/quotationRules";
 import { createQuotedRider, deleteQuotedRider, getQuotedRiders, updateQuotedRider } from "../api/quotationApi";
-import { getRiders } from "../api/productApi";
+import { getKnownRiders } from "../api/knownRiders";
 
 const props = defineProps({
   quotationUuid: { type: String, required: true },
@@ -16,7 +16,8 @@ const props = defineProps({
 const emit = defineEmits(["count"]);
 
 const quotedRiders = useLifeResource(() => getQuotedRiders({ quotationUuid: props.quotationUuid }), { initial: [] });
-const library = useLifeResource(getRiders, { initial: [] });
+// Every rider the quotation may carry; only active ones can be added (see quotedRiderSpec)
+const library = useLifeResource(getKnownRiders, { initial: [] });
 const spec = computed(() => quotedRiderSpec(library.data.value || []));
 const saving = ref(false);
 

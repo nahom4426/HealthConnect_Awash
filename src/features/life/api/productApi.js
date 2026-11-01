@@ -19,6 +19,14 @@ export function deleteRider(riderUuid) {
 export function activateRider(riderUuid) {
   return lifeApi().put(`/rider/activate/${riderUuid}`, undefined);
 }
+/** PUT /rider/deactivate/{riderUuid} · ACTIVE → DISABLED · returns: RiderResponse */
+export function deactivateRider(riderUuid) {
+  return lifeApi().put(`/rider/deactivate/${riderUuid}`, undefined);
+}
+/** PUT /rider/reactivate/{riderUuid} · DISABLED → ACTIVE · returns: RiderResponse */
+export function reactivateRider(riderUuid) {
+  return lifeApi().put(`/rider/reactivate/${riderUuid}`, undefined);
+}
 /** POST /rider · body: RiderRequest · returns: RiderResponse */
 export function createRider(data) {
   return lifeApi().post(`/rider`, data);

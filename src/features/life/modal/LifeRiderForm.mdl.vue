@@ -1,5 +1,6 @@
 <script setup>
 // Create or edit a rider (RiderRequest: riderName ≤100, riderDescription ≤250, minLimit, maxLimit).
+// Only drafts (PENDING) can be edited; the backend sets the status and ignores it in the request.
 // data: { rider?: RiderResponse } — closes with the saved RiderResponse, or nothing if cancelled.
 import { reactive, ref } from "vue";
 import { closeModal } from "@customizer/modal-x";
@@ -46,8 +47,6 @@ async function submit() {
     minLimit: Number(form.minLimit),
     maxLimit: Number(form.maxLimit),
   };
-  // Keep the current status on edit; on create the backend decides the initial status
-  if (editing) body.status = props.data.rider.status;
   pending.value = true;
   const res = editing ? await updateRider(props.data.rider.riderUuid, body) : await createRider(body);
   pending.value = false;

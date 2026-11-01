@@ -23,7 +23,7 @@ import { benefitName } from "../../individual/individualRules";
 import { CLAIM_TYPES, needsRider, newClaimForm, newPayee, toClaimRequest, validateClaim } from "../../claims/claimRules";
 import { getBenefits, getIndividualRiderBenefits, getPolicies } from "../../api/policyApi";
 import { getInsuredPersons, getQuotedRiders } from "../../api/quotationApi";
-import { getRiders } from "../../api/productApi";
+import { getKnownRiders } from "../../api/knownRiders";
 import { registerLifeClaim } from "../../api/claimApi";
 
 const router = useRouter();
@@ -59,7 +59,7 @@ function chooseBenefit(b) {
 }
 
 // The riders on the chosen cover: [{ riderUuid, name, sumAssured }]
-const allRiders = useLifeResource(getRiders, { initial: [] });
+const allRiders = useLifeResource(getKnownRiders, { initial: [] }); // a cover can still carry replaced/deactivated riders
 allRiders.load();
 const coverRiders = useLifeResource(
   (id) => (group.value ? getQuotedRiders({ quotationUuid: id }) : getIndividualRiderBenefits({ benefitUuid: id })),

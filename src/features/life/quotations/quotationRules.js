@@ -106,15 +106,22 @@ export function toInsuredRequest(f, { institutionUuid, quotationUuid, status } =
 export const insuredName = (p = {}) => [p.title, p.firstName, p.fatherName, p.grandFatherName].filter(Boolean).join(" ");
 
 // ── riders on the quotation (RateTableEditor spec) ──
-/** `riders` = active RiderResponse[] (riderUuid, riderName, minLimit, maxLimit) */
+/**
+ * `riders` = RiderResponse[] (riderUuid, riderName, minLimit, maxLimit, status). Only ACTIVE riders can be
+ * picked for a new row; replaced or deactivated ones stay listed so rows that already have them show their name.
+ */
 export function quotedRiderSpec(riders = []) {
+  const INACTIVE = { MODIFIED: "replaced", DISABLED: "deactivated" };
   return {
     id: "quoted-rider",
     title: "Riders",
     emptyTitle: "No riders on this quotation",
     idField: "quotedRiderUuid",
     columns: [
-      { key: "riderUuid", label: "Rider", type: "select", wide: true, lockExisting: true, options: riders.map((r) => ({ value: r.riderUuid, label: r.riderName })) },
+      { key: "riderUuid", label: "Rider", type: "select", wide: true, lockExisting: true, options: riders.map((r) => {
+        const note = r.status && r.status !== "ACTIVE" ? INACTIVE[r.status] || r.status.toLowerCase() : "";
+        return { value: r.riderUuid, label: note ? `${r.riderName} (${note})` : r.riderName, disabled: !!note };
+      }) },
       { key: "sumAssured", label: "Sum assured", type: "decimal", min: 0 },
     ],
     uniqueBy: (r) => r.riderUuid || "",

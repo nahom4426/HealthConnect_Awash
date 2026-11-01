@@ -18,7 +18,8 @@ const props = defineProps({ data: { type: Object, default: () => ({}) } });
 const benefit = props.data?.benefit || {};
 const current = props.data?.riderBenefit;
 const editing = !!current?.individualRiderBenefitUuid;
-const riders = computed(() => (props.data?.riders || []).filter((r) => r.riderUuid === current?.riderUuid || !(props.data?.taken || []).includes(r.riderUuid)));
+// Only active riders can be added; the one being changed stays even if it has since been replaced or deactivated
+const riders = computed(() => (props.data?.riders || []).filter((r) => r.riderUuid === current?.riderUuid || (!["MODIFIED", "DISABLED"].includes(r.status) && !(props.data?.taken || []).includes(r.riderUuid))));
 
 const form = reactive({ riderUuid: current?.riderUuid ?? "", benefits: current?.benefits ?? "" });
 const errors = ref({});

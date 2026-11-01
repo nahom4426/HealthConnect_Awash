@@ -58,6 +58,19 @@ describe("quoted riders", () => {
     expect(validateRateRows(quotedRiderSpec(riders), [{ _key: "a", riderUuid: "r-adb", sumAssured: "100000" }]).valid).toBe(true);
   });
 
+  it("lists replaced and deactivated riders by name but only offers active ones", () => {
+    const all = [
+      { riderUuid: "r-1", riderName: "ADB", status: "ACTIVE" },
+      { riderUuid: "r-0", riderName: "ADB", status: "MODIFIED" },
+      { riderUuid: "r-2", riderName: "TPD", status: "DISABLED" },
+    ];
+    expect(quotedRiderSpec(all).columns[0].options).toEqual([
+      { value: "r-1", label: "ADB", disabled: false },
+      { value: "r-0", label: "ADB (replaced)", disabled: true },
+      { value: "r-2", label: "TPD (deactivated)", disabled: true },
+    ]);
+  });
+
   it("creates new rows and updates only changed sums", () => {
     const original = [{ quotedRiderUuid: "qr1", riderUuid: "r-adb", sumAssured: 100000 }, { quotedRiderUuid: "qr2", riderUuid: "r-tpd", sumAssured: 50000 }];
     const rows = [{ quotedRiderUuid: "qr1", riderUuid: "r-adb", sumAssured: "100000" }, { quotedRiderUuid: "qr2", riderUuid: "r-tpd", sumAssured: "75000" }, { riderUuid: "r-ci", sumAssured: "60000" }];

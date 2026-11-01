@@ -29,10 +29,11 @@ beforeEach(() => { calls.length = 0; auth.count = 0; });
 describe("Life API client", () => {
   // 169 operations generated from the OpenAPI document + 9 added from the backend contract of
   // 2026-10 (docs/life-insurance/10-backend-prompt.md) + 7 customer/KYC (G2) + 10 claims v2 (G3)
-  it("covers the 169 generated operations plus the 26 contract additions, once each", () => {
+  // + 2 rider deactivate/reactivate
+  it("covers the 169 generated operations plus the 28 contract additions, once each", () => {
     const names = [product, quotation, policy, underwriting, claim, reinsurance, customer].flatMap((m) => Object.keys(m));
-    expect(names).toHaveLength(195);
-    expect(new Set(names).size).toBe(195);
+    expect(names).toHaveLength(197);
+    expect(new Set(names).size).toBe(197);
   });
 
   it("uses the JSON bodies of the 2026-10 contract", async () => {
@@ -56,6 +57,10 @@ describe("Life API client", () => {
     expect(last()).toMatchObject({ method: "get", url: "/customer/list", config: { params: { type: "INDIVIDUAL", search: "Liya" } } });
     await policy.getIndividualRiderBenefits({ benefitUuid: "b-1" });
     expect(last()).toMatchObject({ url: "/individual-rider-benefit/active/benefits", config: { params: { benefitUuid: "b-1" } } });
+    await product.deactivateRider("r-1");
+    expect(last()).toMatchObject({ method: "put", url: "/rider/deactivate/r-1" });
+    await product.reactivateRider("r-1");
+    expect(last()).toMatchObject({ method: "put", url: "/rider/reactivate/r-1" });
   });
 
   it("targets the Life service through /api/life and always authenticates", async () => {

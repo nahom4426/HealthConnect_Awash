@@ -53,11 +53,18 @@ onMounted(async () => {
   
   if (props.data?.userUuid) {
     userUuid.value = props.data.userUuid;
-    userData.value = props.data.user || {};
-    
-    // If we don't have complete user data, fetch it
-    if (userUuid.value && Object.keys(userData.value).length === 0) {
-      await fetchUserData();
+    // Always load the user fresh: the list row can be stale or partial (e.g. after an earlier save),
+    // and the form reads its values only once, so it waits for the server copy. The row is the fallback.
+    const rowData = props.data.user || {};
+    userData.value = {};
+    pending.value = true;
+    try {
+      const res = await getUserById(userUuid.value);
+      userData.value = res?.success && res.data ? res.data : rowData;
+    } catch (err) {
+      userData.value = rowData;
+    } finally {
+      pending.value = false;
     }
   }
 });

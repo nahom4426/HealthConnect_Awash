@@ -17,8 +17,8 @@ const darkStore = useDarkModeStore();
 const isDark    = computed(() => darkStore.isDark);
 
 // ── Collapse state ──
-// Icons only until the pointer (or keyboard focus) is on the sidebar; it then opens over the page.
-// Pinned keeps it open and beside the page, remembered in this browser.
+// Icons only until the pointer (or keyboard focus) is on the sidebar; it then opens and pushes the
+// page across, so nothing is covered. Pinned keeps it open, remembered in this browser.
 const PIN_KEY = "sidebar-pinned";
 function readPinned() {
   try { return localStorage.getItem(PIN_KEY) === "1"; } catch { return false; }
@@ -29,10 +29,10 @@ const collapsed  = computed(() => !(pinned.value || hovered.value));
 const openGroups = ref({});
 
 let hoverTimer;
-// A short delay, so passing the pointer across the sidebar doesn't flash it open
+// A short delay, so passing the pointer across the sidebar doesn't shift the page for nothing
 function open() {
   clearTimeout(hoverTimer);
-  hoverTimer = setTimeout(() => (hovered.value = true), 90);
+  hoverTimer = setTimeout(() => (hovered.value = true), 140);
 }
 function close() {
   clearTimeout(hoverTimer);
@@ -91,16 +91,16 @@ watch(
 
 <template>
   <!-- ════════ LEFT SIDEBAR ════════ -->
-  <!-- The shell keeps the icon rail's width in the layout; the sidebar opens over the page from it -->
+  <!-- The shell takes the sidebar's width in the layout, so the page moves over when it opens -->
   <div
     class="sidebar-shell"
-    :class="{ 'sidebar-shell-pinned': pinned }"
+    :class="{ 'sidebar-shell-open': !collapsed }"
     @mouseenter="open"
     @mouseleave="close"
     @focusin="open"
     @focusout="onFocusOut"
   >
-  <aside class="sidebar" :class="{ 'sidebar-collapsed': collapsed, 'sidebar-light': !isDark, 'sidebar-floating': !pinned && !collapsed }">
+  <aside class="sidebar" :class="{ 'sidebar-collapsed': collapsed, 'sidebar-light': !isDark }">
 
     <!-- Top accent stripe -->
     <div class="sidebar-accent"></div>
@@ -226,7 +226,7 @@ watch(
 </template>
 
 <style scoped>
-/* Holds the icon rail's width in the page layout (the full width when pinned) */
+/* The sidebar's width in the page layout: the icon rail, or the full width when open */
 .sidebar-shell {
   position: relative;
   width: 72px;
@@ -235,7 +235,7 @@ watch(
   z-index: 200;
   transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.sidebar-shell-pinned { width: 270px; }
+.sidebar-shell-open { width: 270px; }
 
 .sidebar {
   position: absolute;
@@ -252,8 +252,6 @@ watch(
   box-shadow: 4px 0 24px rgba(0,0,0,0.3);
   transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease, box-shadow 0.25s ease;
 }
-/* Open over the page: a deeper shadow lifts it above the content */
-.sidebar-floating { box-shadow: 16px 0 48px rgba(2, 20, 40, 0.35); }
 
 /* Labels fade in as the sidebar opens */
 .nav-item-label, .brand-text, .profile-details, .nav-sub-label { animation: label-in 0.22s ease both; }

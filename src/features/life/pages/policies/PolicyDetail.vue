@@ -14,6 +14,7 @@ import InsuredMembersPanel from "../../components/InsuredMembersPanel.vue";
 import QuotedRidersPanel from "../../components/QuotedRidersPanel.vue";
 import TreatyLinksPanel from "../../components/TreatyLinksPanel.vue";
 import QuotationSummaryPanel from "../../components/QuotationSummaryPanel.vue";
+import PolicyAdminTabs from "../../components/PolicyAdminTabs.vue";
 import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
 import { useLifePdfs } from "../../pdf/useLifePdfs";
 import { useLifeResource } from "../../composables/useLifeResource";
@@ -152,7 +153,7 @@ function renew() {
         <QuotationSummaryPanel v-show="tab === 'Details'" :quotation="p" />
       </template>
 
-      <p class="mt-5 text-xs text-ink-subtle">Endorsements, member changes, lapse and cancellation need new backend endpoints (gap G5) and aren't available yet.</p>
+      <PolicyAdminTabs v-if="p.quotationUuid === uuid" :key="`a${uuid}`" class="mt-6" kind="policy" :uuid="uuid" :status="p.policyStatus" issued @changed="policy.load(uuid); detail.load(uuid)" />
     </template>
   </div>
 </template>

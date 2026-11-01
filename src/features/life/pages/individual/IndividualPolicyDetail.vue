@@ -13,6 +13,7 @@ import StatusBadge from "@/components/StatusBadge.vue";
 import ListTable from "@/components/ListTable.vue";
 import PolicyholderPanel from "../../components/PolicyholderPanel.vue";
 import UnderwritingPanel from "../../components/UnderwritingPanel.vue";
+import PolicyAdminTabs from "../../components/PolicyAdminTabs.vue";
 import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
 import { useLifePdfs } from "../../pdf/useLifePdfs";
 import { useLifeResource } from "../../composables/useLifeResource";
@@ -213,6 +214,7 @@ function remove() {
           <UnderwritingPanel v-if="b.benefitUuid" ref="underwriting" :subject="{ benefitUuid: uuid }" :editable="can.isDraft && underwrite" />
         </div>
       </div>
+      <PolicyAdminTabs v-if="b.benefitUuid" :key="`a${b.status}`" class="mt-6" kind="benefit" :uuid="uuid" :status="b.status" :issued="!can.isDraft" @changed="benefit.load(uuid)" />
     </template>
   </div>
 </template>

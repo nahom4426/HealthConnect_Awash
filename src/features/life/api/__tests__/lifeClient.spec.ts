@@ -23,6 +23,9 @@ import * as reinsurance from "../reinsuranceApi";
 import * as customer from "../customerApi";
 import * as beneficiary from "../beneficiaryApi";
 import * as underwritingCase from "../underwritingCaseApi";
+import * as premium from "../premiumApi";
+import * as servicing from "../servicingApi";
+import * as documents from "../documentApi";
 
 const last = () => calls[calls.length - 1];
 
@@ -80,6 +83,22 @@ describe("Life API client", () => {
     expect(last()).toMatchObject({ method: "put", url: "/underwriting/m-1/medical-requirement/r-1" });
     await underwriting.getAnswers({ benefitUuid: "b-1" });
     expect(last()).toMatchObject({ method: "get", url: "/answer", config: { params: { benefitUuid: "b-1" } } });
+  });
+
+  it("covers premiums (G6), servicing (G5) and documents (G7)", async () => {
+    expect([Object.keys(premium).length, Object.keys(servicing).length, Object.keys(documents).length]).toEqual([5, 4, 4]);
+    await premium.recordPremiumPayment({ scheduleItemUuid: "s-1", amount: 10 });
+    expect(last()).toMatchObject({ method: "post", url: "/premium/payment", data: { scheduleItemUuid: "s-1" } });
+    await premium.getPremiumReceipt("pay-1");
+    expect(last()).toMatchObject({ url: "/premium/receipt/pay-1", config: { responseType: "blob" } });
+    await servicing.servicePolicy("benefit", "b-1", "lapse", { effectiveDate: "2026-11-01", reason: "x" });
+    expect(last()).toMatchObject({ method: "put", url: "/benefit/b-1/lapse" });
+    await servicing.servicePolicy("policy", "q-1", "cancel", { effectiveDate: "2026-11-01", reason: "x" });
+    expect(last()).toMatchObject({ method: "put", url: "/policy/q-1/cancel" });
+    await servicing.getEndorsements("policy", "q-1");
+    expect(last()).toMatchObject({ method: "get", url: "/policy/q-1/endorsements" });
+    await documents.getDocuments({ ownerType: "POLICY", ownerUuid: "q-1" });
+    expect(last()).toMatchObject({ url: "/document/list", config: { params: { ownerType: "POLICY", ownerUuid: "q-1" } } });
   });
 
   it("targets the Life service through /api/life and always authenticates", async () => {

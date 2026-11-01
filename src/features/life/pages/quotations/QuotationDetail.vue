@@ -15,6 +15,8 @@ import QuotedRidersPanel from "../../components/QuotedRidersPanel.vue";
 import TreatyLinksPanel from "../../components/TreatyLinksPanel.vue";
 import UnderwritingPanel from "../../components/UnderwritingPanel.vue";
 import QuotationSummaryPanel from "../../components/QuotationSummaryPanel.vue";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { useLifePdfs } from "../../pdf/useLifePdfs";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { quotationStatusLabel } from "../../constants/labels";
@@ -72,19 +74,39 @@ const steps = computed(() => [
 
 const editDetails = () => openModal("LifeQuotationForm", { quotation: q.value }, (saved) => saved && quotation.load(uuid.value));
 
-function statusStep(fn, { title, message, confirmText, done }) {
+// PDFs for the client: what is available follows the quotation's stage
+const pdf = useLifePdfs();
+const documents = computed(() => {
+  const s = q.value.quotationStatus;
+  if (!s || s === "PENDING") return [];
+  return [
+    { key: "quotation", label: "Quotation", hint: "Members, riders and premium" },
+    ...(s === "ACCEPTED" || s === "PAID" ? [{ key: "debitNote", label: "Debit note", hint: "Premium due from the institution" }] : []),
+    ...(s === "PAID" ? [{ key: "receipt", label: "Official receipt", hint: "Premium payment received" }] : []),
+    ...(q.value.policyIssuedDate ? [{ key: "policySchedule", label: "Policy schedule", hint: "Cover, members and riders" }] : []),
+  ];
+});
+const downloadDocument = (key) => pdf[key](q.value);
+// Issue/accept/policy responses carry the updated quotation; merge so the PDF has the new fields
+const withResponse = (data) => ({ ...q.value, ...(data && typeof data === "object" ? data : {}) });
+
+function statusStep(fn, { title, message, confirmText, done, then }) {
   confirmAction({ title, message, confirmText }, async () => {
     const res = await fn(uuid.value);
-    if (res?.success) { toasted(true, done); reloadAll(); }
+    if (res?.success) { toasted(true, done); then?.(withResponse(res.data)); reloadAll(); }
   });
 }
 const issue = () => {
   if (!counts.members) { toasted(false, "Add at least one member before issuing"); tab.value = "Members"; return; }
-  statusStep(issueQuotation, { title: "Issue this quotation?", message: "Premiums are fixed and it is sent to the client. Members and riders can no longer be changed.", confirmText: "Issue", done: "Quotation issued" });
+  statusStep(issueQuotation, { title: "Issue this quotation?", message: "Premiums are fixed and it is sent to the client. Members and riders can no longer be changed.", confirmText: "Issue", done: "Quotation issued", then: pdf.quotation });
 };
-const accept = () => statusStep(acceptQuotation, { title: "Mark as accepted?", message: `Confirm that ${q.value.institutionName || "the client"} accepted the quotation. Finance can then record the payment.`, confirmText: "Mark accepted", done: "Quotation accepted" });
+const accept = () => statusStep(acceptQuotation, { title: "Mark as accepted?", message: `Confirm that ${q.value.institutionName || "the client"} accepted the quotation. Finance can then record the payment.`, confirmText: "Mark accepted", done: "Quotation accepted", then: pdf.debitNote });
 const pay = () => openModal("LifeQuotationPayment", { quotation: q.value }, (saved) => saved && reloadAll());
-const issuePolicyNow = () => openModal("LifeIssuePolicy", { quotation: q.value }, (saved) => saved && reloadAll());
+const issuePolicyNow = () => openModal("LifeIssuePolicy", { quotation: q.value }, (saved) => {
+  if (!saved) return;
+  pdf.policySchedule(withResponse(saved));
+  reloadAll();
+});
 function revise() {
   confirmAction({ title: "Revise this quotation?", message: "A new draft version is created from it for the renewal or change. This one stays as it is.", confirmText: "Create revision" }, async () => {
     const res = await reviseQuotation(uuid.value);
@@ -125,6 +147,7 @@ function remove() {
           <StatusBadge v-if="q.policyStatus && q.policyIssuedDate" :status="q.policyStatus" />
         </template>
         <template #actions>
+          <LifeDocumentsMenu :items="documents" :pending="pdf.pending.value" @select="downloadDocument" />
           <Button v-if="can.remove" variant="ghost" class="!text-error" @click="remove">Delete draft</Button>
           <Button v-if="can.edit" variant="outline" @click="editDetails">Edit details</Button>
           <Button v-if="can.issue" @click="issue">Issue quotation</Button>

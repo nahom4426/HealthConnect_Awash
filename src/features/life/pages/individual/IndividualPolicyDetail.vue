@@ -13,6 +13,8 @@ import StatusBadge from "@/components/StatusBadge.vue";
 import ListTable from "@/components/ListTable.vue";
 import PolicyholderPanel from "../../components/PolicyholderPanel.vue";
 import UnderwritingPanel from "../../components/UnderwritingPanel.vue";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { useLifePdfs } from "../../pdf/useLifePdfs";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { daysUntil, formatAmount, formatDate, remainingLabel } from "../../constants/labels";
@@ -77,10 +79,20 @@ function removeRider(r) {
     if (res?.success) { toasted(true, "Rider removed"); riderBenefits.load(); benefit.load(uuid); }
   });
 }
+const pdf = useLifePdfs();
+const documents = computed(() => (b.value.policyNumber ? [{ key: "individualPolicy", label: "Policy schedule", hint: "Policyholder, cover and riders" }] : []));
+const downloadDocument = () => pdf.individualPolicy({ ...b.value, benefitUuid: uuid });
+
 function issue() {
   confirmAction({ title: "Issue this policy?", message: "It gets its policy number and the cover becomes active from the start date. Riders are activated and the premium schedule is created.", confirmText: "Issue policy" }, async () => {
     const res = await issueBenefit(uuid);
-    if (res?.success) { toasted(true, "Policy issued"); benefit.load(uuid); riderBenefits.load(); }
+    if (res?.success) {
+      toasted(true, "Policy issued");
+      riderBenefits.load();
+      // Reload first so the schedule carries the new policy number and dates
+      await benefit.load(uuid);
+      downloadDocument();
+    }
   });
 }
 // Health questionnaire, underwriting and beneficiaries (contract 2026-10 G1, G4, #30)
@@ -112,6 +124,7 @@ function remove() {
       <PageHeader :title="benefitName(b) || (benefit.loading.value ? 'Loading…' : 'Individual policy')" :subtitle="b.policyNumber ? `Policy ${b.policyNumber} · Individual term life` : 'Individual term life'" back="/life/individual">
         <template v-if="b.status" #badge><StatusBadge :status="b.status" /></template>
         <template #actions>
+          <LifeDocumentsMenu :items="documents" :pending="pdf.pending.value" @select="downloadDocument" />
           <Button v-if="can.remove" variant="ghost" class="!text-error" @click="remove">Delete draft</Button>
           <Button v-if="can.edit" variant="outline" @click="router.push(`/life/individual/${uuid}/edit`)">Edit</Button>
           <Button v-if="can.issue" @click="issue">Issue policy</Button>

@@ -33,7 +33,7 @@ describe('health payer PDFs', () => {
   // Serve the real logo files so the PDFs are drawn as in the browser.
   beforeAll(() => {
     vi.stubGlobal('fetch', async (url) => {
-      const buf = readFileSync(`src/features/health/pdf/${String(url).split('/').pop()}`);
+      const buf = readFileSync(`src/features/shared/pdf/${String(url).split('/').pop()}`);
       return { blob: async () => new Blob([buf], { type: 'image/png' }) };
     });
   });

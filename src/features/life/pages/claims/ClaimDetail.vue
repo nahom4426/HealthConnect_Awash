@@ -11,6 +11,8 @@ import { lifeCan } from "@/features/life/privileges";
 import PageHeader from "@/components/PageHeader.vue";
 import StatusBadge from "@/components/StatusBadge.vue";
 import ListTable from "@/components/ListTable.vue";
+import LifeDocumentsMenu from "../../components/LifeDocumentsMenu.vue";
+import { useLifePdfs } from "../../pdf/useLifePdfs";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
 import { formatAmount, formatDate } from "../../constants/labels";
@@ -97,7 +99,19 @@ function submitClaim() {
   } else decide("submit");
 }
 const assess = () => openModal("LifeClaimAssessment", { claim: c.value }, reloadAfter);
-const pay = () => openModal("LifeClaimPayment", { claim: c.value }, reloadAfter);
+const pdf = useLifePdfs();
+const pdfDocuments = computed(() => (["AUTHORIZED", "PAID"].includes(c.value.status)
+  ? [{ key: "claimSettlement", label: "Settlement advice", hint: c.value.status === "PAID" ? "Payments to the payees" : "Net payable and payees, for signing" }]
+  : []));
+const downloadDocument = () => pdf.claimSettlement(c.value);
+// Once the claim is fully paid, the settlement advice goes to the payees
+const pay = () => openModal("LifeClaimPayment", { claim: c.value }, async (done) => {
+  if (!done) return;
+  documents.load();
+  logs.load();
+  await claim.load(uuid);
+  if (c.value.status === "PAID") downloadDocument();
+});
 function remove() {
   confirmAction({ title: "Delete this draft claim?", message: "The claim and its documents are removed. This can't be undone.", confirmText: "Delete", tone: "danger" }, async () => {
     const res = await deleteClaim(uuid);
@@ -140,6 +154,7 @@ async function openDocument(a) {
       <PageHeader :title="claimTitle" :subtitle="[c.insuredName, c.policyNumber].filter(Boolean).join(' · ')" :back="{ path: back, query: c.status ? { status: c.status } : {} }">
         <template v-if="c.status" #badge><StatusBadge :status="c.status" /></template>
         <template #actions>
+          <LifeDocumentsMenu :items="pdfDocuments" :pending="pdf.pending.value" @select="downloadDocument" />
           <Button v-if="can.remove" variant="ghost" class="!text-error" @click="remove">Delete draft</Button>
           <Button v-if="can.reject" variant="ghost" class="!text-error" @click="decide('reject')">Reject</Button>
           <Button v-if="can.requestInfo" variant="outline" @click="decide('requestInfo')">Ask for information</Button>

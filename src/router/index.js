@@ -306,13 +306,10 @@ router.beforeEach((to, from, next) => {
   // Check if route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   
-  // Get user data from store or localStorage fallback
+  // The store is the session (restored from userDetail above). No localStorage fallback: this app
+  // never writes "auth_data", but other apps served from localhost can, and reading it kept a
+  // signed-out user "signed in", so logout bounced from /login straight back to /module-select.
   let rawUser = authStore.auth?.user ?? authStore.auth;
-  if (!rawUser) {
-    try {
-      rawUser = JSON.parse(localStorage.getItem('auth_data') || localStorage.getItem('userDetail') || 'null');
-    } catch (e) {}
-  }
   if (rawUser && rawUser.data) {
     rawUser = rawUser.data;
   }

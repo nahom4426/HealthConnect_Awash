@@ -6,7 +6,10 @@ import NotificationCenter from "@/components/NotificationCenter.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBreadcrumb } from "@/stores/breadCrumbsStore";
 import { useColorStore } from "@/stores/colorStore";
-import { ADMIN_MODULE_ID, PRODUCT_MODULE_PREFIX, useModuleStore } from "@/stores/moduleStore";
+import { ADMIN_MODULE_ID, MODULES, PRODUCT_ICON, PRODUCT_MODULE_PREFIX, useModuleStore } from "@/stores/moduleStore";
+import { useLanguageStore } from "@/stores/languageStore";
+import { PRODUCT_THEME, TOOL_THEME, themeOf } from "@/views/launcher/moduleThemes";
+import { withAlpha } from "@/config/chartPalette";
 import { productAdminNavs, productNavs } from "@/features/products/navs.js";
 import healthNavs from "@/features/health/navs";
 import motorNavs from "@/features/motor/navs.js";
@@ -30,6 +33,7 @@ const authStore = useAuthStore();
 const moduleStore = useModuleStore();
 const breadcrumbs = useBreadcrumb();
 const colorStore = useColorStore();
+const langStore = useLanguageStore();
 const route = useRoute();
 const router = useRouter();
 
@@ -65,6 +69,28 @@ const canManageBranches = computed(() => {
     privileges.includes("ROLE_All Privileges") ||
     privileges.includes("ROLE_branch.manage")
   );
+});
+
+// ── The module this page belongs to, for the top bar ──
+const currentModule = computed(() => {
+  const id = moduleStore.activeModuleId || "";
+  if (id.startsWith(PRODUCT_MODULE_PREFIX)) {
+    const key = id.slice(PRODUCT_MODULE_PREFIX.length);
+    const registryName = moduleStore.registryByKey[moduleStore.privilegeModuleFor(key)]?.name;
+    return { id, name: moduleStore.definitionFor(key)?.name || registryName || key, icon: PRODUCT_ICON, theme: PRODUCT_THEME, home: `/products/${key}/proposals` };
+  }
+  const coded = MODULES.find((m) => m.id === id);
+  if (!coded) return null;
+  // Registry names are editable, so they win; Amharic keeps its translation, as on the launcher
+  const name = langStore.isAmharic
+    ? langStore.t(`modules.${id}`, {}, coded.name)
+    : moduleStore.registryByKey[id]?.name || coded.name;
+  const theme = id === ADMIN_MODULE_ID ? TOOL_THEME : themeOf({ id, kind: "coded" });
+  return { id, name, icon: coded.icon, theme, home: coded.dashboardPath };
+});
+const moduleChipStyle = computed(() => {
+  const theme = currentModule.value?.theme;
+  return theme ? { background: withAlpha(theme.hex, 0.16), borderColor: withAlpha(theme.hex, 0.5), color: theme.deep } : undefined;
 });
 
 // ── Current page title from breadcrumbs or route ──
@@ -179,6 +205,25 @@ const isModuleSelect = computed(() => route.path === "/module-select" || route.p
         <!-- TOP BAR -->
         <header class="topbar">
           <div class="topbar-left">
+            <!-- Where you are: the module, then the page -->
+            <template v-if="currentModule">
+              <button
+                class="module-chip"
+                :style="moduleChipStyle"
+                :title="`Go to the ${currentModule.name} home page`"
+                @click="router.push(currentModule.home)"
+              >
+                <span class="module-chip-icon" v-html="currentModule.icon" />
+                <span class="module-chip-text">
+                  <span class="module-chip-label">Module</span>
+                  <span class="module-chip-name">{{ currentModule.name }}</span>
+                </span>
+              </button>
+              <button class="module-switch" title="Switch module" aria-label="Switch module" @click="router.push('/module-select')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+              </button>
+              <svg class="topbar-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+            </template>
             <h2 class="topbar-title">{{ pageTitle }}</h2>
           </div>
           <div class="topbar-right">
@@ -275,8 +320,75 @@ const isModuleSelect = computed(() => route.path === "/module-select" || route.p
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.topbar-left {}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+/* Module chip: the module's icon and name in its own colour */
+.module-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0.85rem 0.3rem 0.3rem;
+  border-radius: 0.85rem;
+  border: 1px solid;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: chip-in 0.3s ease both;
+}
+.module-chip:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); }
+.module-chip-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.85);
+  flex-shrink: 0;
+}
+.module-chip-icon :deep(svg) { width: 1.1rem; height: 1.1rem; }
+.module-chip-text { display: flex; flex-direction: column; line-height: 1.1; text-align: left; }
+.module-chip-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+}
+.module-chip-name { font-size: 0.85rem; font-weight: 800; }
+@keyframes chip-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.module-switch {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgb(var(--line));
+  background: rgb(var(--surface-muted));
+  color: rgb(var(--ink-muted));
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.module-switch svg { width: 1rem; height: 1rem; }
+.module-switch:hover { color: rgb(var(--ink)); border-color: rgb(var(--line-strong)); background: rgb(var(--surface-raised)); }
+
+.topbar-sep { width: 1rem; height: 1rem; color: rgb(var(--ink-subtle)); flex-shrink: 0; }
+
+@media (max-width: 768px) {
+  .module-chip-label, .module-switch, .topbar-sep { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .module-chip { animation: none; }
+}
 .topbar-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 1.1rem;
   font-weight: 700;
   color: rgb(var(--ink));

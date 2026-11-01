@@ -7,6 +7,7 @@ const RateConfigHome = () => import("@/views/RateConfig/RateConfigHome.vue");
 const RateConfigForm = () => import("@/views/RateConfig/RateConfigForm.vue");
 const ModuleLauncher = () => import("@/views/ModuleLauncher.vue");
 const ModuleDashboard = () => import("@/views/ModuleDashboard.vue");
+const LifeDashboard = () => import("@/features/life/pages/LifeDashboard.vue");
 // Health (ClaimConnect)
 import quotationRoutes from "./health/quotation.routes";
 import underwritingRoutes from "./health/underwriting.routes";
@@ -183,7 +184,7 @@ const router = createRouter({
         {
           path: '/life/dashboard',
           name: 'life-dashboard',
-          component: ModuleDashboard,
+          component: LifeDashboard,
           meta: { requiresAuth: true },
         },
         {

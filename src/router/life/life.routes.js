@@ -29,6 +29,7 @@ const QuestionEditor = () => import("@/features/life/pages/underwriting/Question
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
 const UnderwritingCases = () => import("@/features/life/pages/underwriting/UnderwritingCases.vue");
 const UnderwritingCase = () => import("@/features/life/pages/underwriting/UnderwritingCase.vue");
+const LifeReports = () => import("@/features/life/pages/LifeReports.vue");
 
 // Life privileges: our Life_* names plus the backend life.* codes each stands for (features/life/privileges.js).
 // The router lets a user in when they hold any one of a route's privileges. Super Admin and
@@ -43,6 +44,7 @@ const P = {
   UNDERWRITING: lifePermissions(["Life_Underwriting_Decide"]),
   CLAIM_AGENCY: lifePermissions(["Life_Claim_Prepare"]),
   CLAIM_DESK: lifePermissions(["Life_Claim_Review", "Life_Claim_Approve", "Life_Claim_Authorize", "Life_Claim_Pay"]),
+  REPORTS: lifePermissions(["Life_Report_View"]),
   CLAIM_ANY: lifePermissions(["Life_Claim_Prepare", "Life_Claim_Review", "Life_Claim_Approve", "Life_Claim_Authorize", "Life_Claim_Pay"]),
 };
 
@@ -221,6 +223,12 @@ const lifeRoutes = [
     name: "life-underwriting-case",
     component: UnderwritingCase,
     meta: { requiresAuth: true, permissions: P.UNDERWRITING, title: "Underwriting case" },
+  },
+  {
+    path: "/life/reports",
+    name: "life-reports",
+    component: LifeReports,
+    meta: { requiresAuth: true, permissions: P.REPORTS, title: "Life reports" },
   },
 ];
 

@@ -26,6 +26,7 @@ import * as underwritingCase from "../underwritingCaseApi";
 import * as premium from "../premiumApi";
 import * as servicing from "../servicingApi";
 import * as documents from "../documentApi";
+import * as reports from "../reportApi";
 
 const last = () => calls[calls.length - 1];
 
@@ -99,6 +100,15 @@ describe("Life API client", () => {
     expect(last()).toMatchObject({ method: "get", url: "/policy/q-1/endorsements" });
     await documents.getDocuments({ ownerType: "POLICY", ownerUuid: "q-1" });
     expect(last()).toMatchObject({ url: "/document/list", config: { params: { ownerType: "POLICY", ownerUuid: "q-1" } } });
+  });
+
+  it("covers the dashboard and reports (G8)", async () => {
+    await reports.getDashboardSummary({ from: "2026-01-01", to: "2026-11-01" });
+    expect(last()).toMatchObject({ method: "get", url: "/dashboard/summary", config: { params: { from: "2026-01-01" } } });
+    await reports.getReport("policy-register", { from: "2026-01-01" });
+    expect(last()).toMatchObject({ url: "/report/policy-register", config: { params: { from: "2026-01-01", format: "json" } } });
+    await reports.downloadReport("claims-register", {});
+    expect(last()).toMatchObject({ url: "/report/claims-register", config: { params: { format: "xlsx" }, responseType: "blob" } });
   });
 
   it("targets the Life service through /api/life and always authenticates", async () => {

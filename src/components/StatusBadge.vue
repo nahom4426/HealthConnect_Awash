@@ -5,10 +5,10 @@ import { computed } from "vue";
 const props = defineProps({ status: { type: String, default: "" } });
 
 const TONES = {
-  success: ["ACTIVE", "PAID", "AUTHORIZED", "VERIFIED"],
-  info: ["ISSUED", "MODIFIED", "RENEWED", "REVIEWED", "REQUESTED", "REGISTERED"],
-  warning: ["ACCEPTED", "LAPSED", "REVISED", "APPROVED", "INFO_REQUESTED"],
-  danger: ["CANCELLED", "REJECTED", "DENIED"],
+  success: ["ACTIVE", "PAID", "AUTHORIZED", "VERIFIED", "STANDARD", "RECEIVED"],
+  info: ["ISSUED", "MODIFIED", "RENEWED", "REVIEWED", "REQUESTED", "REGISTERED", "DECIDED"],
+  warning: ["ACCEPTED", "LAPSED", "REVISED", "APPROVED", "INFO_REQUESTED", "PENDING_UNDERWRITING", "REQUIREMENTS_OUTSTANDING", "OUTSTANDING", "LOADED", "EXCLUSION", "POSTPONED"],
+  danger: ["CANCELLED", "REJECTED", "DENIED", "DECLINED"],
 };
 const CLASSES = {
   success: "bg-success-soft text-success-strong",

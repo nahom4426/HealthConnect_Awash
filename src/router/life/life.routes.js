@@ -26,6 +26,8 @@ const FormBuilderEditor = () => import("@/features/shared/form_builder/pages/For
 const QuestionsList = () => import("@/features/life/pages/underwriting/QuestionsList.vue");
 const QuestionEditor = () => import("@/features/life/pages/underwriting/QuestionEditor.vue");
 const AnswerLibrary = () => import("@/features/life/pages/underwriting/AnswerLibrary.vue");
+const UnderwritingCases = () => import("@/features/life/pages/underwriting/UnderwritingCases.vue");
+const UnderwritingCase = () => import("@/features/life/pages/underwriting/UnderwritingCase.vue");
 
 // Life privileges: our Life_* names plus the backend life.* codes each stands for (features/life/privileges.js).
 // The router lets a user in when they hold any one of a route's privileges. Super Admin and
@@ -198,6 +200,18 @@ const lifeRoutes = [
     name: "life-answer-library",
     component: AnswerLibrary,
     meta: { requiresAuth: true, permissions: P.UNDERWRITING, title: "Answer library" },
+  },
+  {
+    path: "/life/underwriting/cases",
+    name: "life-underwriting-cases",
+    component: UnderwritingCases,
+    meta: { requiresAuth: true, permissions: P.UNDERWRITING, title: "Underwriting cases" },
+  },
+  {
+    path: "/life/underwriting/cases/:subjectUuid",
+    name: "life-underwriting-case",
+    component: UnderwritingCase,
+    meta: { requiresAuth: true, permissions: P.UNDERWRITING, title: "Underwriting case" },
   },
 ];
 

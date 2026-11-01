@@ -21,6 +21,8 @@ import * as underwriting from "../underwritingApi";
 import * as claim from "../claimApi";
 import * as reinsurance from "../reinsuranceApi";
 import * as customer from "../customerApi";
+import * as beneficiary from "../beneficiaryApi";
+import * as underwritingCase from "../underwritingCaseApi";
 
 const last = () => calls[calls.length - 1];
 
@@ -61,6 +63,23 @@ describe("Life API client", () => {
     expect(last()).toMatchObject({ method: "put", url: "/rider/deactivate/r-1" });
     await product.reactivateRider("r-1");
     expect(last()).toMatchObject({ method: "put", url: "/rider/reactivate/r-1" });
+  });
+
+  it("covers beneficiaries (G1) and underwriting cases (G4)", async () => {
+    expect(Object.keys(beneficiary)).toHaveLength(4);
+    expect(Object.keys(underwritingCase)).toHaveLength(5);
+    await beneficiary.getBeneficiaryDesignation({ benefitUuid: "b-1" });
+    expect(last()).toMatchObject({ method: "get", url: "/beneficiary/list", config: { params: { benefitUuid: "b-1" } } });
+    await beneficiary.saveBeneficiaryDesignation({ insuredUuid: "m-1", statutoryDefault: true, beneficiaries: [] });
+    expect(last()).toMatchObject({ method: "put", url: "/beneficiary/designation", data: { insuredUuid: "m-1" } });
+    await underwritingCase.evaluateUnderwriting({ quotationUuid: "q-1" });
+    expect(last()).toMatchObject({ method: "post", url: "/underwriting/evaluate", data: undefined, config: { params: { quotationUuid: "q-1" } } });
+    await underwritingCase.decideUnderwriting("m-1", { decision: "STANDARD", note: "ok" });
+    expect(last()).toMatchObject({ method: "put", url: "/underwriting/m-1/decision", data: { decision: "STANDARD" } });
+    await underwritingCase.updateMedicalRequirement("m-1", "r-1", { status: "WAIVED" });
+    expect(last()).toMatchObject({ method: "put", url: "/underwriting/m-1/medical-requirement/r-1" });
+    await underwriting.getAnswers({ benefitUuid: "b-1" });
+    expect(last()).toMatchObject({ method: "get", url: "/answer", config: { params: { benefitUuid: "b-1" } } });
   });
 
   it("targets the Life service through /api/life and always authenticates", async () => {

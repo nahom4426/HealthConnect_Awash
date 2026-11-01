@@ -13,6 +13,7 @@ import StatusBadge from "@/components/StatusBadge.vue";
 import InsuredMembersPanel from "../../components/InsuredMembersPanel.vue";
 import QuotedRidersPanel from "../../components/QuotedRidersPanel.vue";
 import TreatyLinksPanel from "../../components/TreatyLinksPanel.vue";
+import UnderwritingPanel from "../../components/UnderwritingPanel.vue";
 import QuotationSummaryPanel from "../../components/QuotationSummaryPanel.vue";
 import { useLifeResource } from "../../composables/useLifeResource";
 import { confirmAction } from "../../composables/confirmAction";
@@ -44,7 +45,7 @@ const can = computed(() => {
 const draft = computed(() => can.value.edit);
 const isDraft = computed(() => quotationActions(q.value).edit);
 
-const TABS = ["Members", "Riders", "Reinsurance", "Details"];
+const TABS = ["Members", "Riders", "Reinsurance", "Underwriting", "Details"];
 const tab = ref("Members");
 // Panels load their own data; a new key remounts them after a status change or on a revision
 const version = ref(0);
@@ -159,6 +160,8 @@ function remove() {
         <InsuredMembersPanel v-show="tab === 'Members'" :key="`m${version}`" :quotation="q" :editable="draft" @count="counts.members = $event" />
         <QuotedRidersPanel v-show="tab === 'Riders'" :key="`r${version}`" :quotation-uuid="uuid" :editable="draft" @count="counts.riders = $event" />
         <TreatyLinksPanel v-show="tab === 'Reinsurance'" :key="`t${version}`" :quotation-uuid="uuid" :editable="draft" @count="counts.treaties = $event" />
+        <!-- Issuing is refused (409) while any member's case is undecided -->
+        <UnderwritingPanel v-if="tab === 'Underwriting'" :key="`u${version}`" :subject="{ quotationUuid: uuid }" :editable="draft && lifeCan('Life_Underwriting_Decide')" />
         <QuotationSummaryPanel v-show="tab === 'Details'" :quotation="q" />
       </template>
     </template>

@@ -24,10 +24,11 @@ const FIELDS = ["beneficiaryUuid", "type", "firstName", "fatherName", "grandFath
 
 export const newBeneficiary = (type = "PRIMARY") => ({ ...Object.fromEntries(FIELDS.map((k) => [k, ""])), type });
 
-/** BeneficiaryDesignationResponse → form; only the ACTIVE beneficiaries are edited */
+/** BeneficiaryDesignationResponse → form; only the ACTIVE beneficiaries are edited. Version 0 (never
+ *  designated) reports statutoryDefault, but the form then starts by naming beneficiaries. */
 export function fromDesignation(d = {}) {
   return {
-    statutoryDefault: !!d.statutoryDefault && !(d.beneficiaries || []).length,
+    statutoryDefault: !!d.version && !!d.statutoryDefault && !(d.beneficiaries || []).length,
     note: "",
     beneficiaries: (d.beneficiaries || []).filter((b) => b.status !== "SUPERSEDED").map((b) => Object.fromEntries(FIELDS.map((k) => [k, b[k] ?? ""]))),
   };

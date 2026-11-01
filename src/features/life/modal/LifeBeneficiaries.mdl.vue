@@ -56,7 +56,7 @@ async function save() {
 
 <template>
   <ModalParent>
-    <NewFormParent size="xl" :title="editing ? 'Change beneficiaries' : 'Beneficiaries'" :subtitle="data?.name">
+    <NewFormParent size="lg" :title="editing ? 'Change beneficiaries' : 'Beneficiaries'" :subtitle="data?.name">
       <div class="grid gap-4 p-5">
         <p v-if="current.loading.value && !current.data.value" class="text-sm text-ink-muted">Loading…</p>
         <p v-else-if="current.error.value" class="text-sm text-error">{{ current.error.value }}</p>

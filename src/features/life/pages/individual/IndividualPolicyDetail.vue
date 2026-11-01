@@ -60,7 +60,7 @@ const facts = computed(() => [
   ["Date of birth", b.value.dateOfBirth && formatDate(b.value.dateOfBirth)],
   ["Phone", b.value.personPhone],
   ["Policy number", b.value.policyNumber || "Not issued yet"],
-  ["Term", b.value.insuranceTerm ? `${b.value.insuranceTerm} years` : ""],
+  ["Term", b.value.insuranceTerm ? `${b.value.insuranceTerm} year${Number(b.value.insuranceTerm) === 1 ? "" : "s"}` : ""],
   ["Cover", b.value.beginDate ? `${formatDate(b.value.beginDate)} – ${formatDate(b.value.endDate)}` : ""],
   ["Remaining", b.value.endDate ? remainingLabel(daysUntil(b.value.endDate)) : ""],
   ["Created", formatDate(b.value.createdAt ?? b.value.audit?.createdAt)],
@@ -129,21 +129,21 @@ function remove() {
         </div>
       </dl>
 
-      <div class="grid gap-5 lg:grid-cols-3">
-        <div class="grid gap-5 content-start">
+      <div class="grid gap-5 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-5 content-start min-w-0">
           <section class="p-5 rounded-2xl border bg-surface border-line shadow-card">
             <h2 class="text-sm font-semibold text-ink">Policy</h2>
-            <dl class="grid gap-3 mt-3">
+            <dl class="grid grid-cols-1 gap-3 mt-3">
               <div v-for="[label, value] in facts" :key="label" class="flex gap-3 justify-between text-sm">
                 <dt class="text-ink-subtle">{{ label }}</dt>
-                <dd class="text-right text-ink">{{ value ?? "—" }}</dd>
+                <dd class="min-w-0 text-right break-words text-ink">{{ value ?? "—" }}</dd>
               </div>
             </dl>
           </section>
           <PolicyholderPanel v-if="b.benefitUuid" :benefit="b" :draft="can.isDraft" @changed="benefit.load(uuid)" />
         </div>
 
-        <div class="grid gap-5 content-start lg:col-span-2">
+        <div class="grid grid-cols-1 gap-5 content-start min-w-0 xl:col-span-2">
           <section class="p-5 rounded-2xl border bg-surface border-line shadow-card">
             <div class="flex flex-wrap gap-3 justify-between items-center">
               <div>

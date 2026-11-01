@@ -72,6 +72,8 @@ describe("beneficiaries", () => {
       benefitUuid: "p1", statutoryDefault: false,
       beneficiaries: [{ beneficiaryUuid: "b1", type: "PRIMARY", firstName: "Almaz", fatherName: "Bekele", relationship: "SPOUSE", dateOfBirth: "1990-01-01", sharePercent: 100 }],
     });
+    expect(fromDesignation({ version: 0, statutoryDefault: true, beneficiaries: [] }).statutoryDefault).toBe(false);
+    expect(fromDesignation({ version: 2, statutoryDefault: true, beneficiaries: [] }).statutoryDefault).toBe(true);
     expect(toDesignationRequest({ statutoryDefault: true, beneficiaries: [adult], note: "Heirs" }, { insuredUuid: "m1" })).toEqual({ insuredUuid: "m1", statutoryDefault: true, beneficiaries: [], note: "Heirs" });
   });
 });

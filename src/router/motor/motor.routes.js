@@ -11,19 +11,30 @@ const ClaimNew = () => import("@/features/motor/claims/pages/ClaimNew.vue");
 const ClaimDetail = () => import("@/features/motor/claims/pages/ClaimDetail.vue");
 const ClaimManagerDashboard = () => import("@/features/motor/claims/pages/ClaimManagerDashboard.vue");
 const GarageDashboard = () => import("@/features/motor/claims/pages/GarageDashboard.vue");
+const MotorNotificationPrint = () => import("@/features/motor/claims/pages/MotorNotificationPrint.vue");
+
+// Full-page routes outside MainLayout (no sidebar), so they print cleanly.
+export const motorPrintRoutes = [
+  {
+    path: '/motor/claims/notification-form/:claimUuid?',
+    name: 'motor-claim-notification-print',
+    component: MotorNotificationPrint,
+    meta: { requiresAuth: true, roleAccess: 'claims' },
+  },
+];
 
 const claimsRoutes = [
   {
     path: '/motor/claims/process',
     name: 'module-claims-process',
     component: ClaimsProcess,
-    meta: { requiresAuth: true, roleAccess: 'claims' },
+    meta: { requiresAuth: true, roleAccess: 'claims', title: 'Claims' },
   },
   {
     path: '/motor/claims/manager',
     name: 'module-claims-manager',
     component: ClaimManagerDashboard,
-    meta: { requiresAuth: true, roleAccess: 'claims' },
+    meta: { requiresAuth: true, roleAccess: 'claims', title: 'Claims dashboard' },
   },
   {
     path: '/motor/claims/garage',
@@ -35,25 +46,25 @@ const claimsRoutes = [
     path: '/motor/claims/approved',
     name: 'module-claims-approved',
     component: ClaimsProcess,
-    meta: { requiresAuth: true, roleAccess: 'claims' },
+    meta: { requiresAuth: true, roleAccess: 'claims', title: 'Approved claims' },
   },
   {
     path: '/motor/claims/completed',
     name: 'module-claims-completed',
     component: ClaimsProcess,
-    meta: { requiresAuth: true, roleAccess: 'claims' },
+    meta: { requiresAuth: true, roleAccess: 'claims', title: 'Completed claims' },
   },
   {
     path: '/motor/claims/new',
     name: 'module-claims-new',
     component: ClaimNew,
-    meta: { requiresAuth: true, roleAccess: 'claims' },
+    meta: { requiresAuth: true, roleAccess: 'claims', title: 'New claim' },
   },
   {
     path: '/motor/claims/detail/:claimUuid',
     name: 'module-claims-detail',
     component: ClaimDetail,
-    meta: { requiresAuth: true, roleAccess: 'claims' },
+    meta: { requiresAuth: true, roleAccess: 'claims', title: 'Claim' },
   },
 ];
 

@@ -69,7 +69,12 @@ function toggleGroup(idx) {
   if (collapsed.value) expand();
   const isOpen = openGroups.value[idx];
   openGroups.value = {}; // close all
-  if (!isOpen) openGroups.value = { [idx]: true }; // open clicked if it was closed
+  if (!isOpen) {
+    openGroups.value = { [idx]: true }; // open clicked if it was closed
+    // A group may name a landing page (one of its own items) to show when it is opened.
+    const group = props.navs[idx];
+    if (group?.landing && group.navs?.some(c => c.path === group.landing)) navigate(group.landing);
+  }
 }
 
 function navigate(path) {

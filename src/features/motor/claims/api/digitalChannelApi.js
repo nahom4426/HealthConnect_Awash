@@ -106,6 +106,108 @@ export async function fetchClaimDocumentUrl(claimUuid, documentUuid) {
   return fetchImageObjectUrl(getClient(), `/claims/${claimUuid}/documents/${documentUuid}`);
 }
 
+/** Uploads one claim document (multipart "file"); documentType is one of the motor document codes. */
+export async function uploadClaimDocument(claimUuid, file, documentType = 'OTHER') {
+  const body = new FormData();
+  body.append('file', file);
+  const { data } = await getClient().post(`/claims/${claimUuid}/documents`, body, {
+    params: { documentType },
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
+/** Saves a staff mark on one document type: { status: 'RECEIVED' | 'NA' | '', originalSeen, reason }. */
+export async function markClaimDocument(claimUuid, documentType, mark) {
+  const { data } = await getClient().put(`/claims/${claimUuid}/documents/${documentType}/mark`, mark);
+  return data;
+}
+
+/** Removes the staff mark on one document type. */
+export async function clearClaimDocumentMark(claimUuid, documentType) {
+  await getClient().delete(`/claims/${claimUuid}/documents/${documentType}/mark`);
+}
+
+/** Records whether someone other than the insured filed the claim (a power of attorney is then required). */
+export async function setClaimRepresentative(claimUuid, filedByRepresentative) {
+  const { data } = await getClient().put(`/claims/${claimUuid}/representative`, { filedByRepresentative });
+  return data;
+}
+
+/** Active adjustors as { id, name, role }; empty when the lookup is unavailable. */
+export async function fetchAdjustors() {
+  try {
+    const { data } = await getClient().get('/lookups/adjustors');
+    return (Array.isArray(data) ? data : [])
+      .filter(a => a.active !== false && a.adjustorUuid)
+      .map(a => ({ id: a.adjustorUuid, name: a.name || a.adjustorUuid, role: a.role || 'Adjustor' }));
+  } catch (e) {
+    console.warn('fetchAdjustors error:', e.message);
+    return [];
+  }
+}
+
+/** Excess the insured paid: { none: true } or { amount, receiptNo }. */
+export async function saveClaimExcess(claimUuid, excess) {
+  const { data } = await getClient().put(`/claims/${claimUuid}/excess`, excess);
+  return data;
+}
+
+/** Salvage: { status: 'RETURNED' | 'NOT_REQUIRED', note }. */
+export async function saveClaimSalvage(claimUuid, salvage) {
+  const { data } = await getClient().put(`/claims/${claimUuid}/salvage`, salvage);
+  return data;
+}
+
+/** Rejects or withdraws a claim: outcome 'REJECTED' | 'WITHDRAWN', with a reason. */
+export async function closeClaim(claimUuid, outcome, reason) {
+  const { data } = await getClient().post(`/claims/${claimUuid}/close`, { outcome, reason });
+  return data;
+}
+
+export async function reopenClaim(claimUuid, reason = '') {
+  const { data } = await getClient().post(`/claims/${claimUuid}/reopen`, { reason });
+  return data;
+}
+
+/** The claim's activity log as [{ text, by, at }], newest first; empty when unavailable. */
+export async function fetchClaimActivity(claimUuid) {
+  try {
+    const { data } = await getClient().get(`/claims/${claimUuid}/activity`);
+    const list = Array.isArray(data) ? data : (data?.content || data?.items || []);
+    return list.map(a => ({ text: a.text || a.action || '', by: a.byName || a.by || '', at: a.at || a.createdAt || null }));
+  } catch (e) {
+    console.warn(`fetchClaimActivity error for ${claimUuid}:`, e.message);
+    return [];
+  }
+}
+
+// Fields PUT /claims/{uuid} accepts; the claim is sent back whole so nothing is cleared.
+const CLAIM_UPDATE_FIELDS = [
+  'carUuid', 'causeOfLoss', 'claimType', 'coverageType', 'damagedParts', 'description', 'driverLicenseNumber',
+  'driverLicenseType', 'driverName', 'driverRelationship', 'estimatedAmount', 'gpsCoordinates', 'incidentDate',
+  'incidentLocation', 'incidentTime', 'insuredUuid', 'isVehicleDrivable', 'legalBeneficiaryDetails', 'licenseNumber',
+  'notificationForm', 'plateNumber', 'policyNumber', 'productModule', 'reportedAt', 'reportedChannel', 'roadCondition',
+  'submittedVia', 'thirdPartyDetails', 'thirdPartyInsurer', 'thirdPartyName', 'thirdPartyPhone', 'thirdPartyPlate',
+  'thirdPartyPolicyNumber', 'towingRequired', 'vehicleSpeed', 'weatherCondition',
+];
+
+/** How the accident was first reported (PHONE, WALK_IN, ...). */
+export async function updateClaimReportedChannel(claim, reportedChannel) {
+  const body = {};
+  for (const k of CLAIM_UPDATE_FIELDS) if (claim[k] !== undefined && claim[k] !== null) body[k] = claim[k];
+  body.reportedChannel = reportedChannel;
+  body.reportedAt = claim.reportedAt || new Date().toISOString();
+  const { data } = await getClient().put(`/claims/${claim.claimUuid}`, body);
+  return data;
+}
+
+/** Asks the customer for missing documents (backend notifies them). */
+export async function requestClaimDocuments(claimUuid, documentTypes, note = '') {
+  const { data } = await getClient().post(`/claims/${claimUuid}/request-documents`, { documentTypes, note });
+  return data;
+}
+
 export async function fetchClaimsByModule(productModule) {
   let backendList = [];
   try {

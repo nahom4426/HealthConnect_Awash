@@ -22,7 +22,7 @@ import reportsRoutes from "./health/reports.routes";
 import brokerRoutes from "./health/broker.routes";
 import healthSettingsRoutes from "./health/settings.routes";
 // Motor
-import motorRoutes from "./motor/motor.routes";
+import motorRoutes, { motorPrintRoutes } from "./motor/motor.routes";
 // Life
 import lifeRoutes from "./life/life.routes";
 // Marine & Cargo
@@ -142,6 +142,7 @@ const router = createRouter({
       meta: { requiresAuth: false }
     },
     ...marinePublicRoutes,
+    ...motorPrintRoutes,
     {
       path: "/app",
       name: "app",

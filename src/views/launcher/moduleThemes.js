@@ -1,25 +1,29 @@
-// One soft colour per module across the launcher (Dashboard tiles, tabs, charts, Products cards).
-// `hex` is a light pastel used for fills, bars and dots; `deep` is the same hue dark enough for
-// text and icons on that pastel. Cards and buttons take translucent tints of `hex`, so they stay
-// light on a white page and quiet on the dark theme.
+// Every module uses the Standard Insurance brand blue across the launcher (Dashboard tiles, tabs,
+// charts, Products cards); modules are told apart by their art, icon and name. `hex` is the light
+// brand blue used for fills, bars and dots; `deep` is the brand navy for text and icons on it.
+// Cards and buttons take translucent tints of `hex`, so they stay light on a white page and quiet
+// on the dark theme.
 import { withAlpha } from '@/config/chartPalette';
 
+/** Standard Insurance brand: light blue #4A92D6 for tints, navy #0D4F80 for text and icons */
+const BRAND = { hex: '#4A92D6', deep: '#0D4F80' };
+
 export const MODULE_THEMES = {
-  motor: { hex: '#60a5fa', deep: '#1d4ed8', art: 'motor' },
-  fire: { hex: '#fbbf24', deep: '#b45309', art: 'fire' },
-  health: { hex: '#34d399', deep: '#047857', art: 'health' },
-  marine: { hex: '#38bdf8', deep: '#0369a1', art: 'marine' },
-  travel: { hex: '#7dd3fc', deep: '#0369a1', art: 'travel' },
-  life: { hex: '#fda4af', deep: '#be123c', art: 'life' },
-  engineering: { hex: '#a78bfa', deep: '#6d28d9', art: 'engineering' },
-  liability: { hex: '#5eead4', deep: '#0f766e', art: 'liability' },
-  burglary: { hex: '#a5b4fc', deep: '#4338ca', art: 'burglary' },
+  motor: { ...BRAND, art: 'motor' },
+  fire: { ...BRAND, art: 'fire' },
+  health: { ...BRAND, art: 'health' },
+  marine: { ...BRAND, art: 'marine' },
+  travel: { ...BRAND, art: 'travel' },
+  life: { ...BRAND, art: 'life' },
+  engineering: { ...BRAND, art: 'engineering' },
+  liability: { ...BRAND, art: 'liability' },
+  burglary: { ...BRAND, art: 'burglary' },
 };
 
 /** No-code products from the catalogue */
-export const PRODUCT_THEME = { hex: '#c4b5fd', deep: '#6d28d9', art: 'product' };
+export const PRODUCT_THEME = { ...BRAND, art: 'product' };
 /** Tools such as User Management and the Product catalogue */
-export const TOOL_THEME = { hex: '#cbd5e1', deep: '#334155', art: 'tool' };
+export const TOOL_THEME = { ...BRAND, art: 'tool' };
 
 /** Theme of a module tile ({ id, kind }); unknown modules get the product theme, tools the tool theme. */
 export function themeOf(mod) {

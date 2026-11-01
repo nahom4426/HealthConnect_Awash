@@ -7,12 +7,30 @@ import { useDarkModeStore } from '../stores/darkMode';
 const darkStore = useDarkModeStore();
 const isDark = computed(() => darkStore.isDark);
 const year = new Date().getFullYear();
+const environment = import.meta.env.PROD ? 'Production' : 'Development';
 
-// Figures published on standardinsurancesc.com
-const stats = [
-  { value: '305.9M', unit: 'ETB', label: 'Subscribed capital' },
-  { value: '1,749', unit: '', label: 'Founding shareholders' },
-  { value: '19th', unit: '', label: 'Licensed insurer in Ethiopia' },
+// What the console administers — one entry per back-office area
+const capabilities = [
+  {
+    title: 'Underwriting & policies',
+    desc: 'Quotations, proposals, issuance and endorsements',
+    icon: 'M9 12h6M9 16h6M9 8h2M6 3h9l4 4v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z',
+  },
+  {
+    title: 'Claims administration',
+    desc: 'Intake, assessment, approval and settlement',
+    icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3zM9 12l2 2 4-4',
+  },
+  {
+    title: 'Users & access control',
+    desc: 'Staff accounts, roles and privileges',
+    icon: 'M16 19v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1M9.5 10a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM21 19v-1a4 4 0 00-3-3.87M16 3.13a3.5 3.5 0 010 6.75',
+  },
+  {
+    title: 'Reports & audit',
+    desc: 'Performance, utilization and audit trails',
+    icon: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  },
 ];
 
 // Geometry of the Standard mark (400×400 canvas)
@@ -23,33 +41,65 @@ const MARK_ORANGE = 'M284 213H400V332H284Z';
 <template>
   <div class="login-wrapper" :class="{ dark: isDark }">
 
-    <!-- ── Atmosphere ── -->
-    <div class="bg" aria-hidden="true">
-      <div class="bg-glow bg-glow-1"></div>
-      <div class="bg-glow bg-glow-2"></div>
-      <div class="bg-glow bg-glow-3"></div>
-      <span class="bokeh b1"></span>
-      <span class="bokeh b2"></span>
-      <span class="bokeh b3"></span>
-      <span class="bokeh b4"></span>
-      <span class="bokeh b5"></span>
-      <svg class="bg-mark" viewBox="0 68 400 264" preserveAspectRatio="xMidYMid meet">
-        <path :d="MARK_NAVY" />
-        <path :d="MARK_ORANGE" class="bg-mark-accent" />
-      </svg>
-      <div class="bg-grid"></div>
-    </div>
+    <!-- ── Brand / console side ── -->
+    <aside class="brand">
+      <div class="brand-bg" aria-hidden="true">
+        <div class="brand-grid"></div>
+        <svg class="brand-mark" viewBox="0 68 400 264" preserveAspectRatio="xMidYMid meet">
+          <path :d="MARK_NAVY" />
+          <path :d="MARK_ORANGE" class="brand-mark-accent" />
+        </svg>
+      </div>
 
-    <!-- ── Floating pill nav ── -->
-    <header class="nav">
-      <img :src="standardLogo" alt="Standard Insurance S.C. — ስታንዳርድ ኢንሹራንስ አ.ማ." class="nav-logo" />
-      <div class="nav-actions">
-        <a href="https://standardinsurancesc.com/" target="_blank" rel="noopener noreferrer" class="nav-link">
-          Visit website
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"/></svg>
-        </a>
+      <div class="logo-plate">
+        <img :src="standardLogo" alt="Standard Insurance S.C. — ስታንዳርድ ኢንሹራንስ አ.ማ." class="logo" />
+      </div>
+
+      <div class="brand-body">
+        <span class="eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/>
+          </svg>
+          Administration Console
+        </span>
+        <h1 class="brand-title">Admin <span class="accent">Portal</span></h1>
+        <p class="brand-desc">
+          Back-office workspace for Standard Insurance staff — manage policies, claims, users and reporting across Life and Non-Life lines.
+        </p>
+
+        <ul class="caps">
+          <li v-for="c in capabilities" :key="c.title" class="cap">
+            <span class="cap-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path :d="c.icon"/></svg>
+            </span>
+            <span class="cap-text">
+              <strong>{{ c.title }}</strong>
+              <span>{{ c.desc }}</span>
+            </span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="brand-foot">
+        <span class="env">
+          <span class="env-dot" :class="{ 'env-dot--dev': environment !== 'Production' }"></span>
+          {{ environment }} environment
+        </span>
+        <span>Licensed by the National Bank of Ethiopia</span>
+      </div>
+    </aside>
+
+    <!-- ── Sign-in side ── -->
+    <main class="panel">
+      <div class="panel-top">
+        <span class="secure-tag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>
+          </svg>
+          Secure staff access
+        </span>
         <button
-          class="nav-toggle"
+          class="theme-toggle"
           type="button"
           @click="darkStore.toggle()"
           :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
@@ -63,50 +113,28 @@ const MARK_ORANGE = 'M284 213H400V332H284Z';
           </svg>
         </button>
       </div>
-    </header>
 
-    <!-- ── Content ── -->
-    <div class="content">
-      <section class="hero">
-        <span class="hero-eyebrow">
-          <span class="pulse"></span>
-          Digital Channel Portal
-        </span>
-        <h1 class="hero-title">
-          Your trust,<br />
-          our <span class="accent">standard.</span>
-        </h1>
-        <p class="hero-desc">
-          Underwrite policies, settle claims and track performance across every insurance line — securely, in one place.
-        </p>
-
-        <dl class="stats">
-          <div v-for="s in stats" :key="s.label" class="stat">
-            <dt>{{ s.label }}</dt>
-            <dd>
-              <span v-if="s.unit" class="stat-unit">{{ s.unit }}</span>{{ s.value }}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="panel" aria-label="Sign in">
-        <div class="card">
+      <section class="panel-body" aria-label="Sign in">
+        <div class="form-wrap">
           <LoginForm />
-        </div>
-        <p class="panel-foot">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          Protected by Standard Secure Login
-        </p>
-      </section>
-    </div>
 
-    <footer class="foot">
-      <span>© {{ year }} Standard Insurance S.C. · Licensed by the National Bank of Ethiopia</span>
-      <span class="foot-am" lang="am">ስታንዳርድ ኢንሹራንስ አ.ማ.</span>
-    </footer>
+          <div class="notice" role="note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/>
+            </svg>
+            <p>
+              <strong>Authorized personnel only.</strong>
+              Access is restricted to Standard Insurance staff. Sign-in attempts and activity on this system are logged and monitored.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="panel-foot">
+        <span>© {{ year }} Standard Insurance S.C.</span>
+        <span class="foot-am" lang="am">ስታንዳርድ ኢንሹራንስ አ.ማ.</span>
+      </footer>
+    </main>
   </div>
 </template>
 
@@ -118,11 +146,8 @@ const MARK_ORANGE = 'M284 213H400V332H284Z';
   --si-accent: #FE9312;
   --si-display: 'Rubik', 'Inter', system-ui, sans-serif;
 
-  --si-bg: linear-gradient(140deg, #041C33 0%, #07335A 45%, #0D4F80 100%);
-  --si-card: #FFFFFF;
-  --si-card-border: rgba(255, 255, 255, 0.6);
-  --si-card-shadow: 0 2px 6px rgba(2, 20, 40, 0.12), 0 40px 80px -24px rgba(2, 20, 40, 0.65);
-
+  --si-page: #F4F7FB;
+  --si-panel-border: #E3E9F1;
   --si-surface: #FFFFFF;
   --si-text: #0B2440;
   --si-text-muted: #5A6B80;
@@ -131,14 +156,14 @@ const MARK_ORANGE = 'M284 213H400V332H284Z';
   --si-primary: #0D4F80;
   --si-ring: rgba(13, 79, 128, 0.14);
   --si-ring-strong: rgba(13, 79, 128, 0.35);
-  --si-input-bg: #F3F6FA;
+  --si-input-bg: #FFFFFF;
   --si-input-bg-focus: #FFFFFF;
-  --si-input-border: #F3F6FA;
-  --si-input-border-hover: #D5DEE9;
+  --si-input-border: #D3DCE7;
+  --si-input-border-hover: #A9B8CB;
   --si-btn-bg: #0D4F80;
   --si-btn-bg-hover: #0A3F68;
-  --si-btn-shadow: 0 10px 24px -8px rgba(13, 79, 128, 0.6);
-  --si-btn-shadow-hover: 0 16px 32px -10px rgba(13, 79, 128, 0.75);
+  --si-btn-shadow: 0 6px 16px -8px rgba(13, 79, 128, 0.6);
+  --si-btn-shadow-hover: 0 10px 22px -10px rgba(13, 79, 128, 0.75);
   --si-danger: #DC2626;
   --si-danger-strong: #991B1B;
   --si-danger-text: #7F1D1D;
@@ -146,23 +171,21 @@ const MARK_ORANGE = 'M284 213H400V332H284Z';
   --si-danger-border: #FECACA;
   --si-danger-ring: rgba(220, 38, 38, 0.12);
   --si-overlay: rgba(3, 22, 42, 0.9);
+  --si-notice-bg: #FFF7EC;
+  --si-notice-border: #FBD9AE;
+  --si-notice-text: #6B4A1E;
 
-  position: relative;
   min-height: 100vh;
-  display: flex; flex-direction: column;
-  overflow: hidden;
-  background: var(--si-bg);
-  color: #fff;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  background: var(--si-page);
+  color: var(--si-text);
   font-family: var(--si-display);
-  isolation: isolate;
 }
 
 .login-wrapper.dark {
-  --si-bg: linear-gradient(140deg, #020B16 0%, #04182C 50%, #072A4A 100%);
-  --si-card: #0B1A2C;
-  --si-card-border: rgba(255, 255, 255, 0.08);
-  --si-card-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 40px 80px -24px rgba(0, 0, 0, 0.85);
-
+  --si-page: #07111D;
+  --si-panel-border: #16263A;
   --si-surface: #0B1A2C;
   --si-text: #EAF0F7;
   --si-text-muted: #8E9DB2;
@@ -173,12 +196,12 @@ const MARK_ORANGE = 'M284 213H400V332H284Z';
   --si-ring-strong: rgba(74, 146, 214, 0.45);
   --si-input-bg: #08131F;
   --si-input-bg-focus: #0A1828;
-  --si-input-border: #1B2B40;
-  --si-input-border-hover: #2A3F5C;
+  --si-input-border: #1F3249;
+  --si-input-border-hover: #2F4867;
   --si-btn-bg: #1565A6;
   --si-btn-bg-hover: #1A74BE;
-  --si-btn-shadow: 0 10px 24px -8px rgba(21, 101, 166, 0.65);
-  --si-btn-shadow-hover: 0 16px 32px -10px rgba(21, 101, 166, 0.8);
+  --si-btn-shadow: 0 6px 16px -8px rgba(21, 101, 166, 0.65);
+  --si-btn-shadow-hover: 0 10px 22px -10px rgba(21, 101, 166, 0.8);
   --si-danger: #F87171;
   --si-danger-strong: #FECACA;
   --si-danger-text: #FCA5A5;
@@ -186,224 +209,203 @@ const MARK_ORANGE = 'M284 213H400V332H284Z';
   --si-danger-border: rgba(248, 113, 113, 0.28);
   --si-danger-ring: rgba(248, 113, 113, 0.18);
   --si-overlay: rgba(2, 8, 16, 0.92);
+  --si-notice-bg: rgba(254, 147, 18, 0.07);
+  --si-notice-border: rgba(254, 147, 18, 0.25);
+  --si-notice-text: #F2C894;
 }
 
-/* ── Atmosphere ── */
-.bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-
-.bg-glow { position: absolute; border-radius: 50%; filter: blur(90px); }
-.bg-glow-1 { width: 620px; height: 620px; right: -6%; top: 8%; background: radial-gradient(circle, rgba(254, 147, 18, 0.42), transparent 65%); animation: drift 18s ease-in-out infinite alternate; }
-.bg-glow-2 { width: 520px; height: 520px; right: 24%; bottom: -22%; background: radial-gradient(circle, rgba(230, 110, 30, 0.3), transparent 65%); animation: drift 22s ease-in-out infinite alternate-reverse; }
-.bg-glow-3 { width: 700px; height: 700px; left: -18%; top: -30%; background: radial-gradient(circle, rgba(40, 120, 190, 0.45), transparent 65%); }
-.dark .bg-glow-1 { opacity: 0.7; }
-.dark .bg-glow-2 { opacity: 0.6; }
-.dark .bg-glow-3 { opacity: 0.5; }
-
-/* Warm out-of-focus lights, echoing the website hero */
-.bokeh {
-  position: absolute; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, rgba(255, 196, 120, 0.9), rgba(254, 147, 18, 0.35) 55%, transparent 72%);
-  filter: blur(1.5px);
-  animation: float 12s ease-in-out infinite;
-}
-.b1 { width: 18px; height: 18px; right: 12%; top: 18%; animation-delay: 0s; }
-.b2 { width: 34px; height: 34px; right: 30%; top: 70%; opacity: 0.6; filter: blur(4px); animation-delay: -3s; }
-.b3 { width: 10px; height: 10px; right: 40%; top: 28%; animation-delay: -6s; }
-.b4 { width: 56px; height: 56px; right: 4%; top: 62%; opacity: 0.35; filter: blur(8px); animation-delay: -8s; }
-.b5 { width: 14px; height: 14px; left: 46%; top: 12%; opacity: 0.7; animation-delay: -4s; }
-
-/* The mark as faint architectural line art */
-.bg-mark {
-  position: absolute; right: -6%; bottom: -10%;
-  width: min(68vw, 980px); height: auto;
-  fill: none; stroke: rgba(255, 255, 255, 0.07); stroke-width: 1.2;
-  vector-effect: non-scaling-stroke;
-}
-.bg-mark path { vector-effect: non-scaling-stroke; }
-.bg-mark-accent { stroke: rgba(254, 147, 18, 0.35); fill: rgba(254, 147, 18, 0.04); }
-
-.bg-grid {
-  position: absolute; inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: 26px 26px;
-  mask-image: radial-gradient(ellipse 70% 60% at 25% 45%, #000, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 25% 45%, #000, transparent 75%);
-}
-
-/* ── Nav ── */
-.nav {
-  position: relative; z-index: 2;
-  width: calc(100% - 3rem); max-width: 1280px;
-  margin: 1.5rem auto 0;
-  padding: 0.65rem 0.7rem 0.65rem 1.6rem;
-  box-sizing: border-box;
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  background: #fff;
-  border-radius: 999px;
-  box-shadow: 0 12px 40px -12px rgba(2, 20, 40, 0.5);
-  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.nav-logo { display: block; height: 46px; width: auto; }
-.nav-actions { display: flex; align-items: center; gap: 0.5rem; }
-.nav-link {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  padding: 0.7rem 1.2rem;
-  border-radius: 999px;
-  font-size: 0.875rem; font-weight: 500; color: #0D4F80; text-decoration: none;
-  transition: background 0.2s;
-}
-.nav-link:hover { background: #EEF3F8; }
-.nav-link svg { width: 15px; height: 15px; }
-.nav-toggle {
-  width: 44px; height: 44px; border-radius: 50%;
-  display: grid; place-items: center;
-  border: none; cursor: pointer;
-  background: #0D4F80; color: #fff;
-  transition: transform 0.25s, background 0.2s;
-}
-.nav-toggle:hover { transform: rotate(-15deg); background: #0A3F68; }
-.nav-toggle:focus-visible, .nav-link:focus-visible { outline: 2px solid var(--si-accent); outline-offset: 2px; }
-.nav-toggle svg { width: 19px; height: 19px; }
-
-/* ── Content ── */
-.content {
-  position: relative; z-index: 1;
-  flex: 1;
-  width: calc(100% - 3rem); max-width: 1280px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
-  gap: clamp(2rem, 6vw, 6rem);
-  align-items: center;
-  padding: 3rem clamp(0rem, 2vw, 1.5rem);
-  box-sizing: border-box;
-}
-
-.hero { animation: rise 0.8s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 0.6rem;
-  padding: 0.45rem 1rem 0.45rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.9);
-}
-.pulse { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--si-accent); }
-.pulse::after {
-  content: ''; position: absolute; inset: -4px; border-radius: 50%;
-  border: 2px solid var(--si-accent); opacity: 0;
-  animation: ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-.hero-title {
-  margin: 1.5rem 0 0;
-  font-size: clamp(2.6rem, 5vw, 4.6rem);
-  font-weight: 700; line-height: 1.04; letter-spacing: -0.02em;
+/* ── Brand / console side ── */
+.brand {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  padding: 2.5rem clamp(2rem, 4.5vw, 4.5rem);
+  background: linear-gradient(155deg, #052440 0%, #0A3D66 55%, #0D4F80 100%);
   color: #fff;
 }
-.hero-title .accent {
-  background: linear-gradient(100deg, #FFB347 0%, #FE9312 50%, #F07A00 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
+.dark .brand { background: linear-gradient(155deg, #020B16 0%, #04182C 55%, #072A4A 100%); }
 
-.hero-desc {
-  margin: 1.4rem 0 0;
-  max-width: 470px;
-  font-size: 1.075rem; line-height: 1.65; font-weight: 400;
-  color: rgba(226, 236, 248, 0.82);
+.brand-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.brand-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
 }
+/* The mark as faint architectural line art */
+.brand-mark {
+  position: absolute; right: -14%; bottom: -12%;
+  width: 82%; height: auto;
+  fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 1.2;
+}
+.brand-mark path { vector-effect: non-scaling-stroke; }
+.brand-mark-accent { stroke: rgba(254, 147, 18, 0.4); fill: rgba(254, 147, 18, 0.05); }
 
-.stats {
-  margin: 2.5rem 0 0;
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem;
+/* Large logo on a white plate, so the navy wordmark reads in both themes */
+.logo-plate {
+  align-self: flex-start;
+  padding: 1.1rem 1.6rem;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.55);
+  animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.logo { display: block; height: clamp(64px, 6.2vw, 92px); width: auto; max-width: 100%; }
+
+.brand-body {
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 3rem 0 2.5rem;
   max-width: 560px;
+  animation: rise 0.7s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.stat {
-  padding: 1.1rem 1.15rem;
-  border-radius: 20px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  display: flex; flex-direction: column-reverse; gap: 0.35rem;
-}
-.stat dt { font-size: 0.78rem; line-height: 1.35; color: rgba(226, 236, 248, 0.7); }
-.stat dd { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; color: #fff; line-height: 1.1; }
-.stat-unit { font-size: 0.8rem; font-weight: 600; color: var(--si-accent); margin-right: 0.3rem; vertical-align: 0.35em; }
 
-/* ── Sign-in panel ── */
-.panel { display: flex; flex-direction: column; align-items: center; animation: rise 0.8s 0.16s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.card {
-  position: relative;
-  width: 100%;
-  padding: 2.6rem 2.5rem 2.3rem;
-  box-sizing: border-box;
-  background: var(--si-card);
-  border: 1px solid var(--si-card-border);
-  border-radius: 28px;
-  box-shadow: var(--si-card-shadow);
-  color: var(--si-text);
+.eyebrow {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(254, 147, 18, 0.12);
+  border: 1px solid rgba(254, 147, 18, 0.35);
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #FFC27A;
 }
-/* Orange corner tab, from the logo's square */
-.card::before {
-  content: ''; position: absolute; top: 0; right: 2.5rem;
-  width: 44px; height: 6px; border-radius: 0 0 6px 6px;
-  background: var(--si-accent);
+.eyebrow svg { width: 15px; height: 15px; }
+
+.brand-title {
+  margin: 1.1rem 0 0;
+  font-size: clamp(2.5rem, 4.2vw, 3.6rem);
+  font-weight: 700; line-height: 1.05; letter-spacing: -0.02em;
 }
+.brand-title .accent { color: var(--si-accent); }
+
+.brand-desc {
+  margin: 1rem 0 0;
+  font-size: 1.05rem; line-height: 1.6;
+  color: rgba(226, 236, 248, 0.8);
+}
+
+.caps {
+  list-style: none; margin: 2.25rem 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;
+}
+.cap {
+  display: flex; align-items: flex-start; gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.cap-icon {
+  flex-shrink: 0;
+  width: 38px; height: 38px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFB65C;
+}
+.cap-icon svg { width: 20px; height: 20px; }
+.cap-text { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.cap-text strong { font-size: 0.9rem; font-weight: 600; color: #fff; }
+.cap-text span { font-size: 0.78rem; line-height: 1.4; color: rgba(226, 236, 248, 0.65); }
+
+.brand-foot {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.8rem; color: rgba(226, 236, 248, 0.6);
+}
+.env { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; color: rgba(226, 236, 248, 0.85); }
+.env-dot { width: 8px; height: 8px; border-radius: 50%; background: #34D399; box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2); }
+.env-dot--dev { background: var(--si-accent); box-shadow: 0 0 0 3px rgba(254, 147, 18, 0.2); }
+
+/* ── Sign-in side ── */
+.panel {
+  display: flex; flex-direction: column;
+  padding: 1.75rem clamp(1.5rem, 4vw, 3.5rem) 1.5rem;
+  background: var(--si-surface);
+  border-left: 1px solid var(--si-panel-border);
+}
+
+.panel-top { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; }
+.secure-tag {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  background: var(--si-page);
+  border: 1px solid var(--si-panel-border);
+  font-size: 0.78rem; font-weight: 500; color: var(--si-text-muted);
+}
+.secure-tag svg { width: 14px; height: 14px; color: var(--si-primary); }
+.theme-toggle {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: grid; place-items: center;
+  border: 1px solid var(--si-panel-border); cursor: pointer;
+  background: var(--si-surface); color: var(--si-text-muted);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.theme-toggle:hover { color: var(--si-text); border-color: var(--si-input-border-hover); background: var(--si-page); }
+.theme-toggle:focus-visible { outline: 2px solid var(--si-primary); outline-offset: 2px; }
+.theme-toggle svg { width: 18px; height: 18px; }
+
+.panel-body {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2.5rem 0;
+}
+.form-wrap { width: 100%; max-width: 420px; animation: rise 0.7s 0.14s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.notice {
+  display: flex; gap: 0.7rem;
+  margin-top: 2rem;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  background: var(--si-notice-bg);
+  border: 1px solid var(--si-notice-border);
+  color: var(--si-notice-text);
+}
+.notice svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; color: var(--si-accent); }
+.notice p { margin: 0; font-size: 0.8rem; line-height: 1.5; }
+.notice strong { font-weight: 600; }
 
 .panel-foot {
-  display: inline-flex; align-items: center; gap: 0.45rem;
-  margin: 1.25rem 0 0;
-  font-size: 0.85rem; font-weight: 500; color: rgba(226, 236, 248, 0.8);
-}
-.panel-foot svg { width: 16px; height: 16px; color: var(--si-accent); }
-
-/* ── Footer ── */
-.foot {
-  position: relative; z-index: 1;
-  width: calc(100% - 3rem); max-width: 1280px;
-  margin: 0 auto;
-  padding: 1.25rem clamp(0rem, 2vw, 1.5rem) 1.5rem;
-  box-sizing: border-box;
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1.5rem;
-  font-size: 0.8rem; color: rgba(226, 236, 248, 0.55);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem; color: var(--si-text-muted);
 }
-.foot-am { font-weight: 500; color: rgba(255, 196, 120, 0.75); }
+.foot-am { font-weight: 500; }
 
-@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-@keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(-40px, 30px) scale(1.08); } }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
-@keyframes ping { 0% { transform: scale(0.6); opacity: 0.8; } 80%, 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 /* ── Responsive ── */
-@media (max-width: 1100px) {
-  .stats { grid-template-columns: 1fr 1fr; }
-  .stat:last-child { display: none; }
+@media (max-width: 1180px) {
+  .caps { grid-template-columns: 1fr; }
+  .cap:nth-child(n + 3) { display: none; }
 }
 
 @media (max-width: 960px) {
-  .content { grid-template-columns: 1fr; gap: 2rem; padding-top: 2.25rem; max-width: 560px; }
-  .hero { text-align: left; }
-  .hero-title { font-size: clamp(2.2rem, 8vw, 3rem); }
-  .stats { display: none; }
-  .bg-mark { width: 140vw; right: -40%; bottom: -5%; }
+  .login-wrapper { grid-template-columns: 1fr; }
+  .brand { padding: 1.5rem 1.5rem 1.75rem; }
+  .brand-mark { width: 120%; right: -40%; bottom: -30%; }
+  .brand-body { padding: 1.75rem 0 0; }
+  .brand-title { font-size: 2.25rem; }
+  .brand-desc, .caps, .brand-foot { display: none; }
+  .panel { border-left: none; padding: 1.25rem 1.5rem; }
+  .panel-body { padding: 1.5rem 0 2rem; align-items: flex-start; }
 }
 
 @media (max-width: 560px) {
-  .nav { width: calc(100% - 2rem); margin-top: 1rem; padding: 0.5rem 0.5rem 0.5rem 1.1rem; }
-  .nav-logo { height: auto; width: min(220px, 100%); }
-  .nav-link { display: none; }
-  .nav-toggle { width: 40px; height: 40px; }
-  .content { width: calc(100% - 2rem); padding: 1.75rem 0 1.5rem; }
-  .hero-desc { display: none; }
-  .card { padding: 2rem 1.35rem 1.75rem; border-radius: 24px; }
-  .card::before { right: 1.5rem; }
-  .foot { width: calc(100% - 2rem); padding: 1rem 0 1.25rem; flex-direction: column; align-items: center; text-align: center; }
+  .brand { padding: 1rem 1rem 1.5rem; }
+  .logo-plate { align-self: stretch; padding: 0.85rem 1rem; border-radius: 14px; }
+  .logo { height: auto; width: 100%; }
+  .brand-title { font-size: 1.9rem; }
+  .panel { padding: 1rem; }
+  .panel-foot { flex-direction: column; align-items: center; text-align: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav, .hero, .panel, .bg-glow, .bokeh, .pulse::after { animation: none !important; }
+  .logo-plate, .brand-body, .form-wrap { animation: none !important; }
 }
 </style>

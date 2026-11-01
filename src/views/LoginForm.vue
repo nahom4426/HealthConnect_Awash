@@ -136,7 +136,7 @@ function handleResetPassword() {
             </svg>
           </div>
           <h3 class="lf-success-title">You're signed in</h3>
-          <p class="lf-success-sub">Taking you to your workspace…</p>
+          <p class="lf-success-sub">Opening the admin console…</p>
           <div class="lf-progress-track"><div class="lf-progress-bar"></div></div>
         </div>
       </div>
@@ -145,8 +145,9 @@ function handleResetPassword() {
     <!-- ── LOGIN VIEW ── -->
     <div v-if="!showForgot" class="lf-view">
       <header class="lf-header">
-        <h2 class="lf-title">Sign in</h2>
-        <p class="lf-subtitle">Welcome back. Enter your details to access your dashboard.</p>
+        <span class="lf-eyebrow">Staff sign-in</span>
+        <h2 class="lf-title">Sign in to Admin Portal</h2>
+        <p class="lf-subtitle">Use the account issued to you by your system administrator.</p>
       </header>
 
       <Transition name="alert">
@@ -178,7 +179,7 @@ function handleResetPassword() {
               validation="required"
               name="email"
               label="Username or email"
-              :attributes="{ placeholder: 'e.g. adjustor@standardinsurance.com', autocomplete: 'username', type: 'text' }"
+              :attributes="{ placeholder: 'name@standardinsurance.com', autocomplete: 'username', type: 'text' }"
             />
           </div>
 
@@ -206,19 +207,17 @@ function handleResetPassword() {
             :aria-busy="req.pending.value"
             @click.prevent="submit(loginUser)"
           >
+            <span v-if="req.pending.value" class="lf-spinner" aria-hidden="true"></span>
             <span>{{ req.pending.value ? 'Signing in…' : 'Sign in' }}</span>
-            <span class="lf-btn-orb" aria-hidden="true">
-              <span v-if="req.pending.value" class="lf-spinner"></span>
-              <svg v-else class="lf-btn-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 12h14m-5-5l5 5-5 5"/>
-              </svg>
-            </span>
+            <svg v-if="!req.pending.value" class="lf-btn-arrow" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 12h14m-5-5l5 5-5 5"/>
+            </svg>
           </button>
         </div>
       </Form>
 
       <p class="lf-help">
-        Having trouble signing in? <a href="#" class="lf-link">Contact support</a>
+        Locked out or need access? <a href="#" class="lf-link">Contact your administrator</a>
       </p>
     </div>
 
@@ -310,9 +309,14 @@ function handleResetPassword() {
 
 /* ── Header ── */
 .lf-header { margin-bottom: 1.75rem; }
+.lf-eyebrow {
+  display: inline-block; margin-bottom: 0.6rem;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--si-accent, #FE9312);
+}
 .lf-title {
   font-family: var(--si-display, inherit);
-  font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15;
+  font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;
   color: var(--si-text); margin: 0 0 0.5rem;
 }
 .lf-subtitle { font-size: 0.9375rem; line-height: 1.55; color: var(--si-text-muted); margin: 0; }
@@ -321,7 +325,7 @@ function handleResetPassword() {
 .lf-alert {
   display: flex; align-items: flex-start; gap: 0.75rem;
   padding: 0.875rem 0.875rem 0.875rem 1rem; margin-bottom: 1.25rem;
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--si-danger-bg);
   border: 1px solid var(--si-danger-border);
   color: var(--si-danger-text);
@@ -352,7 +356,7 @@ function handleResetPassword() {
 }
 /* The field shell rendered by NewInputLayout (.input-shell) */
 .lf-field :deep(.input-shell) {
-  height: 54px; border-radius: 16px !important;
+  height: 50px; border-radius: 10px !important;
   background: var(--si-input-bg);
   border: 1.5px solid var(--si-input-border) !important;
   box-shadow: none;
@@ -404,10 +408,10 @@ function handleResetPassword() {
 
 /* ── Buttons ── */
 .lf-btn {
-  position: relative; width: 100%; height: 58px; margin-top: 0.4rem;
+  position: relative; width: 100%; height: 50px; margin-top: 0.4rem;
   display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem;
-  border: none; border-radius: 999px; cursor: pointer;
-  font-family: inherit; font-size: 1rem; font-weight: 500; letter-spacing: 0.01em; color: #fff;
+  border: none; border-radius: 10px; cursor: pointer;
+  font-family: inherit; font-size: 0.975rem; font-weight: 600; letter-spacing: 0.01em; color: #fff;
   background: var(--si-btn-bg);
   box-shadow: var(--si-btn-shadow);
   transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease, opacity 0.2s;
@@ -423,17 +427,8 @@ function handleResetPassword() {
 .lf-btn:active:not(:disabled) { transform: translateY(0); }
 .lf-btn:focus-visible { outline: none; box-shadow: var(--si-btn-shadow), 0 0 0 4px var(--si-ring-strong); }
 .lf-btn:disabled { cursor: progress; opacity: 0.85; }
-/* White circle with arrow, as on standardinsurancesc.com */
-.lf-btn-orb {
-  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-  width: 42px; height: 42px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: #fff; color: var(--si-btn-bg);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.lf-btn-orb .lf-spinner { border-color: rgba(13, 79, 128, 0.25); border-top-color: #0D4F80; }
-.lf-btn-arrow { width: 20px; height: 20px; transition: transform 0.25s ease; }
-.lf-btn:hover:not(:disabled) .lf-btn-orb { transform: translateY(-50%) rotate(-35deg) scale(1.05); }
+.lf-btn-arrow { width: 18px; height: 18px; transition: transform 0.25s ease; }
+.lf-btn:hover:not(:disabled) .lf-btn-arrow { transform: translateX(3px); }
 
 .lf-btn-ghost {
   width: auto; padding: 0 1.25rem; flex-shrink: 0;

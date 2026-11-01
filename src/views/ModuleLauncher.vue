@@ -1,13 +1,17 @@
 <script setup>
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useModuleStore, MODULES, ADMIN_MODULE_ID, CATALOGUE_ICON } from '@/stores/moduleStore';
 import { useAuthStore } from '@/stores/auth';
 import { useLanguageStore } from '@/stores/languageStore';
-import { canOpenUserManagement } from '@/utils/roleAccess';
+import { canOpenUserManagement, isExactSuperAdmin } from '@/utils/roleAccess';
+import LauncherProducts from './launcher/LauncherProducts.vue';
+import LauncherSkeleton from './launcher/LauncherSkeleton.vue';
+import LauncherStats from './launcher/LauncherStats.vue';
 import { computed, onMounted, ref } from 'vue';
 import imageSrc from '@/assets/img/profile.png';
 import eicLogo from '@/assets/img/standard_icon.png';
 
+const route = useRoute();
 const router = useRouter();
 const moduleStore = useModuleStore();
 const authStore = useAuthStore();
@@ -66,14 +70,79 @@ function tileDescription(mod) {
   return mod.description || langStore.t('modules.' + mod.id + 'Desc', {}, '');
 }
 
-function tileFooter(mod) {
-  if (mod.kind === 'unavailable') return 'Coming soon';
-  if (mod.roleName) return mod.admin ? `${mod.roleName} · admin` : mod.roleName;
-  return mod.kind === 'tool' ? 'Tools' : '';
-}
-
 function reload() {
   moduleStore.loadRegistry({ force: true });
+}
+
+/* ── Dashboard / Reports / Products views, kept in the URL so Back returns to the same tab ── */
+const VIEWS = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
+  },
+  {
+    id: 'reports',
+    label: 'Reports',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  },
+  {
+    id: 'products',
+    label: 'Products',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></svg>',
+  },
+];
+const VIEW_INTROS = {
+  dashboard: 'Your business at a glance: claims across every product, and quick access to your modules.',
+  reports: 'Open the reports and analytics your role gives you access to.',
+  products: 'Browse our Life and Non-Life products and start a quotation in one click.',
+};
+const activeView = computed(() => (VIEWS.some((v) => v.id === route.query.view) ? route.query.view : 'dashboard'));
+
+function setView(view) {
+  router.replace({ query: { ...route.query, view: view === 'dashboard' ? undefined : view } });
+}
+
+/* ── Reports: the same privileges the report routes require (any one grants access) ── */
+const REPORTS = [
+  {
+    id: 'analytics',
+    name: 'Analytics dashboard',
+    description: 'Claims and policy trends, with charts across your book of business.',
+    path: '/analytics',
+    moduleId: 'health',
+    permissions: ['Read_claims', 'Read_policies'],
+  },
+  {
+    id: 'utilization',
+    name: 'Utilization report',
+    description: 'Provider credit and service utilization.',
+    path: '/reports/provider-report',
+    moduleId: 'health',
+    permissions: ['Analytics'],
+  },
+  {
+    id: 'report-center',
+    name: 'Report center',
+    description: 'Build and filter dynamic reports.',
+    path: '/reports/dynamic-report',
+    moduleId: 'health',
+    permissions: ['Analytics'],
+  },
+];
+
+function hasAnyPrivilege(permissions) {
+  const user = u.value;
+  const privileges = Array.isArray(user?.privileges) ? user.privileges : [];
+  if (isExactSuperAdmin(user) || privileges.includes('All Privileges') || privileges.includes('ROLE_All Privileges')) return true;
+  return permissions.some((p) => privileges.includes(`ROLE_${p}`));
+}
+
+const visibleReports = computed(() => REPORTS.filter((report) => hasAnyPrivilege(report.permissions)));
+
+function openReport(report) {
+  moduleStore.selectModule(report.moduleId);
+  router.push(report.path);
 }
 
 onMounted(async () => {
@@ -81,73 +150,6 @@ onMounted(async () => {
   await moduleStore.loadRegistry({ force: true });
   if (moduleStore.launcherModules.some((mod) => mod.kind === 'product')) moduleStore.loadDefinitions({ force: true });
 });
-
-// Matching card theme colors with standalone larger icons (no inner box wrapper)
-const cardThemeMap = {
-  motor: {
-    cardBg: 'bg-blue-50',
-    border: 'border-blue-300/80 hover:border-blue-500 ring-1 ring-blue-100',
-    iconColor: 'text-blue-600',
-    badge: 'bg-blue-100 text-blue-700',
-    actionText: 'text-blue-600 group-hover:text-blue-700',
-  },
-  fire: {
-    cardBg: 'bg-amber-50',
-    border: 'border-amber-200/70 hover:border-amber-400',
-    iconColor: 'text-amber-600',
-    badge: 'bg-emerald-100 text-emerald-700',
-    actionText: 'text-amber-600 group-hover:text-amber-700',
-  },
-  health: {
-    cardBg: 'bg-green-50',
-    border: 'border-emerald-200/70 hover:border-emerald-400',
-    iconColor: 'text-emerald-600',
-    badge: 'bg-amber-100 text-amber-700',
-    actionText: 'text-emerald-600 group-hover:text-emerald-700',
-  },
-  marine: {
-    cardBg: 'bg-sky-50',
-    border: 'border-sky-200/70 hover:border-sky-400',
-    iconColor: 'text-sky-600',
-    badge: 'bg-slate-100 text-slate-600',
-    actionText: 'text-sky-600 group-hover:text-sky-700',
-  },
-  life: {
-    cardBg: 'bg-rose-50',
-    border: 'border-rose-200/70 hover:border-rose-400',
-    iconColor: 'text-rose-600',
-    badge: 'bg-slate-100 text-slate-600',
-    actionText: 'text-rose-600 group-hover:text-rose-700',
-  },
-  engineering: {
-    cardBg: 'bg-purple-50',
-    border: 'border-purple-200/70 hover:border-purple-400',
-    iconColor: 'text-purple-600',
-    badge: 'bg-slate-100 text-slate-600',
-    actionText: 'text-purple-600 group-hover:text-purple-700',
-  },
-  liability: {
-    cardBg: 'bg-teal-50',
-    border: 'border-teal-200/70 hover:border-teal-400',
-    iconColor: 'text-teal-600',
-    badge: 'bg-slate-100 text-slate-600',
-    actionText: 'text-teal-600 group-hover:text-teal-700',
-  },
-  burglary: {
-    cardBg: 'bg-violet-50',
-    border: 'border-indigo-200/70 hover:border-indigo-400',
-    iconColor: 'text-indigo-600',
-    badge: 'bg-emerald-100 text-emerald-700',
-    actionText: 'text-indigo-600 group-hover:text-indigo-700',
-  },
-  administration: {
-    cardBg: 'bg-[#f8fafc]',
-    border: 'border-slate-300/80 hover:border-slate-500 ring-1 ring-slate-100',
-    iconColor: 'text-slate-700',
-    badge: 'bg-slate-800 text-white',
-    actionText: 'text-slate-700 group-hover:text-slate-900',
-  },
-};
 
 function selectModule(mod) {
   moduleStore.selectModule(mod.sidebarId || mod.id);
@@ -228,13 +230,51 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
     </header>
 
     <!-- Main Content Container -->
-    <main class="max-w-7xl w-full mx-auto px-8 py-8 flex-1">
+    <main class="max-w-7xl w-full mx-auto px-8 py-6 flex-1">
       
-      <!-- Welcome Section -->
-      <div class="mb-8 space-y-1.5">
-        <h2 class="text-2xl sm:text-[1.85rem] font-black text-ink tracking-tight leading-tight">Welcome, {{ userName }}</h2>
-        <p class="text-sm sm:text-[0.92rem] font-medium text-ink-subtle leading-relaxed">Select an insurance module to manage rate configurations, underwriting workflows, and claims processing.</p>
-      </div>
+      <!-- Welcome bar with the Dashboard / Reports / Products switch. It stays one slim row; the tagline
+           and a line about the chosen section open over the page below it on hover or keyboard focus. -->
+      <section class="relative mb-5 h-14" aria-label="Welcome">
+        <div class="welcome absolute inset-x-0 top-0 z-20 overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-primary-sm">
+          <span class="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-white/[0.06]"></span>
+          <span class="pointer-events-none absolute right-40 -bottom-20 h-32 w-32 rounded-full bg-amber-400/10"></span>
+
+          <div class="relative flex h-14 items-center justify-between gap-3 px-3 sm:px-5">
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="h-6 w-1 shrink-0 rounded-full bg-amber-400"></span>
+              <h2 class="truncate text-base font-black leading-none tracking-tight sm:text-lg">Welcome, {{ userName }}</h2>
+              <svg class="welcome-hint hidden h-4 w-4 shrink-0 text-white/50 sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <nav class="inline-flex shrink-0 rounded-xl bg-white/10 p-0.5 ring-1 ring-white/15" role="tablist" aria-label="Launcher sections">
+              <button
+                v-for="view in VIEWS"
+                :key="view.id"
+                type="button"
+                role="tab"
+                :aria-selected="activeView === view.id"
+                :title="view.label"
+                :class="[
+                  'inline-flex items-center gap-1.5 rounded-[0.6rem] px-2.5 py-1.5 text-xs font-bold transition-all duration-200 sm:px-3.5 [&>span>svg]:h-4 [&>span>svg]:w-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+                  activeView === view.id ? 'bg-white text-primary shadow-soft' : 'text-white/80 hover:bg-white/10 hover:text-white',
+                ]"
+                @click="setView(view.id)"
+              >
+                <span class="inline-flex" v-html="view.icon"></span>
+                <span class="hidden sm:inline">{{ view.label }}</span>
+              </button>
+            </nav>
+          </div>
+
+          <div class="welcome-more">
+            <div class="min-h-0 overflow-hidden">
+              <div class="relative space-y-1 px-5 pb-4 pt-1 sm:pl-[2.4rem]">
+                <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-amber-300">Your trust, our standard</p>
+                <p class="text-sm font-medium leading-relaxed text-white/80">{{ VIEW_INTROS[activeView] }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div v-if="registryUnavailable" class="mb-6 rounded-xl border border-warning/40 bg-warning-soft px-4 py-3 text-xs font-semibold text-warning-strong">
         This server has no module registry yet, so the built-in module list is shown.
@@ -243,72 +283,50 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
         <span>Your modules could not be loaded: {{ moduleStore.registryError }}</span>
         <button class="rounded-lg border border-error/40 bg-white px-3 py-1 font-bold" @click="reload">Retry</button>
       </div>
-      <p v-if="loadingModules" class="text-sm font-medium text-ink-subtle">Loading your modules…</p>
-      <p v-else-if="!visibleModules.length && !registryFailed" class="text-sm font-medium text-ink-subtle">
-        You don't have access to any module yet. Ask an administrator to give you a role.
-      </p>
+      <LauncherSkeleton v-if="loadingModules && activeView !== 'reports'" :variant="activeView === 'products' ? 'products' : 'stats'" />
 
-      <!-- Module Cards Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div
-          v-for="mod in visibleModules"
-          :key="mod.id"
-          @click="selectModule(mod)"
-          :class="[
-            'group rounded-2xl p-6 border transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-2xs hover:shadow-md',
-            cardThemeMap[mod.id]?.cardBg || 'bg-surface-muted',
-            cardThemeMap[mod.id]?.border || 'border-line'
-          ]"
-        >
-          <div>
-            <!-- Top Row: Direct Icon (No Box Wrapper) + Badge -->
-            <div class="flex items-center justify-between mb-5">
-              <div 
-                :class="[
-                  'w-8 h-8 transition-transform group-hover:scale-110 flex items-center justify-center',
-                  cardThemeMap[mod.id]?.iconColor || 'text-ink-muted'
-                ]"
-              >
-                <div class="w-full h-full [&>svg]:w-full [&>svg]:h-full" v-html="mod.icon"></div>
-              </div>
-
-              <span 
-                v-if="mod.badge"
-                :class="[
-                  'px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider',
-                  cardThemeMap[mod.id]?.badge || 'bg-surface-raised text-ink-muted'
-                ]"
-              >
-                {{ mod.badge }}
-              </span>
-            </div>
-
-            <!-- Title & Description -->
-            <h3 class="text-[0.95rem] font-extrabold text-ink mb-1.5 tracking-tight">
-              {{ tileTitle(mod) }}
-            </h3>
-
-            <p class="text-xs sm:text-[0.82rem] text-ink-subtle font-medium leading-relaxed line-clamp-3 mb-6">
-              {{ tileDescription(mod) }}
-            </p>
-          </div>
-
-          <!-- Bottom Action Row -->
-          <div class="pt-3.5 border-t border-line/60 flex items-center justify-between text-xs">
-            <span class="text-[10px] font-semibold text-ink-subtle uppercase tracking-wide truncate">
-              {{ tileFooter(mod) }}
-            </span>
-            <span 
-              :class="[
-                'font-extrabold text-[0.8rem] inline-flex items-center gap-1 transition-transform group-hover:translate-x-0.5',
-                cardThemeMap[mod.id]?.actionText || 'text-blue-600'
-              ]"
-            >
-              Open →
-            </span>
-          </div>
+      <!-- Reports -->
+      <template v-if="activeView === 'reports'">
+        <div v-if="!visibleReports.length" class="rounded-2xl border border-dashed border-line bg-white px-6 py-14 text-center">
+          <p class="text-sm font-bold text-ink">No reports for your role yet</p>
+          <p class="mt-1 text-xs text-ink-subtle">Ask an administrator to give you a reporting role.</p>
         </div>
-      </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          <button
+            v-for="report in visibleReports"
+            :key="report.id"
+            type="button"
+            class="group flex flex-col rounded-2xl border border-line bg-white p-5 text-left shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            @click="openReport(report)"
+          >
+            <span class="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary [&>svg]:h-6 [&>svg]:w-6" v-html="VIEWS[1].icon"></span>
+            <h3 class="text-[0.98rem] font-extrabold leading-snug tracking-tight text-ink">{{ report.name }}</h3>
+            <p class="mt-1.5 text-[0.8rem] font-medium leading-relaxed text-ink-subtle">{{ report.description }}</p>
+            <span class="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-primary">
+              Open report
+              <svg class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </button>
+        </div>
+      </template>
+
+      <!-- Products -->
+      <LauncherProducts
+        v-if="activeView === 'products' && !loadingModules"
+        class="launcher-fade"
+        :modules="visibleModules"
+        :title-of="tileTitle"
+        :description-of="tileDescription"
+      />
+
+      <!-- Statistics -->
+      <LauncherStats
+        v-if="activeView === 'dashboard' && !loadingModules"
+        class="launcher-fade"
+        :modules="visibleModules"
+        :title-of="tileTitle"
+        @open-module="selectModule"
+      />
 
     </main>
   </div>
@@ -316,4 +334,41 @@ function goProfile() { showUserMenu.value = false; router.push('/profile'); }
 
 <style scoped>
 /* Clean Styling matching Proposal Form Builder screenshot */
+
+/* The welcome bar opens downwards over the page, without moving it */
+.welcome { transition: box-shadow 0.3s ease; }
+.welcome:hover,
+.welcome:focus-within { box-shadow: 0 18px 40px rgba(2, 20, 40, 0.28); }
+.welcome-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+}
+.welcome:hover .welcome-more,
+.welcome:focus-within .welcome-more {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.welcome-hint { transition: transform 0.3s ease; }
+.welcome:hover .welcome-hint,
+.welcome:focus-within .welcome-hint { transform: rotate(180deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome, .welcome-more, .welcome-hint { transition: none; }
+}
+
+/* Content eases in when it replaces the loading skeleton */
+.launcher-fade {
+  animation: launcher-fade 0.35s ease-out both;
+}
+
+@keyframes launcher-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launcher-fade { animation: none; }
+}
 </style>

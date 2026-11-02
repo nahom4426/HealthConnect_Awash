@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
+    "dev:customer": "vite --config vite.customer.config.ts",
+    "build:customer": "vite build --config vite.customer.config.ts",
     "preview": "vite preview",
     "type-check": "node scripts/gen-modal-names.cjs && vue-tsc --noEmit -p tsconfig.app.json",
     "test": "vitest run",

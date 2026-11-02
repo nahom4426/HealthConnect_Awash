@@ -101,6 +101,16 @@ export const CATALOGUE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="curr
 
 const PRODUCT_SERVICE = 'property-casualty';
 
+/**
+ * The server has no module registry yet. An older AuthService does not route GET /modules/me, and
+ * answers 404, or, before its error handler was fixed, a 500 reading "No static resource modules/me".
+ * Both mean "use the built-in module list", not "something broke".
+ */
+export function registryIsMissing(e) {
+  if (e?.status === 404) return true;
+  return e?.status === 500 && /no static resource/i.test(String(e?.message || ''));
+}
+
 function strip(privilege) {
   return String(privilege ?? '').replace(/^ROLE_/, '');
 }
@@ -159,7 +169,7 @@ export const useModuleStore = defineStore('module', () => {
         registryStatus.value = 'ready';
       } catch (e) {
         registryError.value = e?.message || 'Could not load your modules';
-        registryStatus.value = e?.status === 404 ? 'unavailable' : 'error';
+        registryStatus.value = registryIsMissing(e) ? 'unavailable' : 'error';
       } finally {
         registryRequest = null;
       }

@@ -14,12 +14,24 @@ const BASE_MODULES = [
 ];
 let myModules = BASE_MODULES;
 vi.mock('@/features/products/api/modulesApi', () => ({ fetchMyModules: async () => myModules }));
-// A catalogue product (Pet Care) makes the launcher load the product definitions
-vi.mock('@/features/products/api/productsApi', () => ({ listDefinitions: async () => [] }));
+// A catalogue product (Pet Care) makes the launcher load the product definitions. Policies and
+// quotations are null (service unreachable) unless a test sells something.
+let pcPolicies = null;
+let pcQuotations = null;
+const page = (rows) => (rows ? { content: rows, totalPages: 1 } : Promise.reject(new Error('unreachable')));
+vi.mock('@/features/products/api/productsApi', () => ({
+  listDefinitions: async () => [],
+  listPolicies: async () => page(pcPolicies),
+  listQuotations: async () => page(pcQuotations),
+}));
 
-// Claims across products for the Dashboard, and the Life service's summary
+// Claims and Motor proposals across products for the Dashboard, and the Life service's summary
 let claims = [];
-vi.mock('@/features/motor/claims/api/digitalChannelApi', () => ({ fetchAllClaims: async () => claims }));
+let motorProposals = null;
+vi.mock('@/features/motor/claims/api/digitalChannelApi', () => ({
+  fetchAllClaims: async () => claims,
+  fetchMotorProposals: async () => motorProposals ?? Promise.reject(new Error('unreachable')),
+}));
 let lifeSummary = { success: false };
 vi.mock('@/features/life/api/dashboardApi', () => ({ getDashboardSummary: async () => lifeSummary }));
 
@@ -36,7 +48,7 @@ async function mountAt(path) {
   router.push(path);
   await router.isReady();
   // chart.js needs a canvas, which jsdom lacks; the charts' data is checked through their props
-  const wrapper = mount(ModuleLauncher, { global: { plugins: [router], stubs: { LineChart: true, BarChart: true } } });
+  const wrapper = mount(ModuleLauncher, { global: { plugins: [router], stubs: { LineChart: true, BarChart: true, DoughnutChart: true } } });
   await flushPromises();
   return { wrapper, router };
 }
@@ -57,6 +69,9 @@ describe('ModuleLauncher', () => {
     localStorage.clear();
     myModules = BASE_MODULES;
     claims = [];
+    pcPolicies = null;
+    pcQuotations = null;
+    motorProposals = null;
     lifeSummary = { success: false };
     user.roleName = 'Underwriter';
     user.privileges = ['ROLE_Analytics'];
@@ -87,6 +102,87 @@ describe('ModuleLauncher', () => {
       .map((li) => li.findAll('div:first-child > span').map((span) => span.text()).join(' | '));
     expect(byProduct).toEqual(['Fire Insurance | 2 · ETB 3.5K', 'Motor | 1 · ETB 500']);
     expect(wrapper.find('[aria-labelledby="stats-recent"]').findAll('li')[0].text()).toContain('CLM-2');
+  });
+
+  it('charts sales from property & casualty policies and Motor proposals', async () => {
+    const thisMonth = new Date().toISOString();
+    pcPolicies = [
+      { policyUuid: 'p1', policyNumber: 'FIR-1', productClass: 'FIRE', status: 'ISSUED', totalPremium: 3000, totalSumInsured: 100000, createdAt: thisMonth },
+      { policyUuid: 'p2', policyNumber: 'FIR-2', productClass: 'FIRE', status: 'EXPIRED', totalPremium: 2000, createdAt: '2024-01-10T10:00:00' },
+      { policyUuid: 'p3', policyNumber: 'FIR-3', productClass: 'FIRE', status: 'CANCELLED', totalPremium: 9000, createdAt: thisMonth },
+    ];
+    pcQuotations = [{ productClass: 'FIRE' }, { productClass: 'FIRE' }, { productClass: 'FIRE' }, { productClass: 'FIRE', status: 'DECLINED' }];
+    motorProposals = [
+      { proposalUuid: 'm1', proposalNumber: 'MOT-1', status: 'ACTIVE', coverageType: 'COMPREHENSIVE', totalPremiumAmount: 5000, createdAt: thisMonth },
+      { proposalUuid: 'm2', status: 'SUBMITTED', totalPremiumAmount: 7000, createdAt: thisMonth },
+      { proposalUuid: 'm3', status: 'APPROVED', totalPremiumAmount: 4000, createdAt: thisMonth },
+    ];
+    claims = [{ claimUuid: 'c1', productModule: 'fire', status: 'SUBMITTED', estimatedAmount: 2500 }];
+    const { wrapper, router } = await mountAt('/module-select');
+    const summary = () => Object.fromEntries(
+      wrapper.find('[aria-label="Sales summary"]').findAll('div').map((d) => [d.find('dt').text(), d.find('dd').text()]),
+    );
+    const chart = (id, name = 'BarChart') => {
+      const found = wrapper.find(`[aria-labelledby="${id}"]`).findComponent({ name });
+      return name === 'DoughnutChart' ? found.props('data') : found.props('chartData');
+    };
+
+    // Cancelled policies, and proposals not yet paid, are not sales
+    expect(summary()).toEqual({
+      'Policies sold': '3',
+      'Written premium': 'ETB 10K',
+      'Average premium': 'ETB 3.3K',
+      'Sum insured': 'ETB 100K',
+      'Quote conversion': '43%',
+      'Loss ratio': '25%',
+    });
+
+    const trend = chart('stats-sales-trend');
+    expect(trend.labels).toHaveLength(12);
+    expect(trend.datasets.map((d) => [d.label, d.data.at(-1)])).toEqual([['Written premium', 8000], ['Policies sold', 2]]);
+    expect(chart('stats-sales-funnel').datasets[0].data).toEqual([7, 3, 1]);
+
+    const loss = chart('stats-sales-loss');
+    expect(loss.labels).toEqual(['Fire Insurance', 'Motor']);
+    expect(loss.datasets.map((d) => d.data)).toEqual([[5000, 5000], [2500, 0]]);
+
+    const states = chart('stats-sales-state', 'DoughnutChart');
+    expect(states.labels).toEqual(['In force', 'Awaiting payment', 'Expired', 'Cancelled']);
+    expect(states.datasets[0].data).toEqual([2, 1, 1, 1]);
+    expect(chart('stats-sales-average').datasets[0].data).toEqual([2500, 5000]);
+    expect(chart('stats-sales-cover', 'DoughnutChart').labels).toEqual(['Comprehensive']);
+
+    const salesRows = wrapper.find('[aria-labelledby="stats-sales-by-product"]').findAll('li')
+      .map((li) => li.findAll('div:first-child > span').map((span) => span.text()).join(' | '));
+    expect(salesRows).toEqual(['Fire Insurance | 2 · ETB 5K', 'Motor | 1 · ETB 5K']);
+    expect(wrapper.find('[aria-labelledby="stats-sales-recent"]').findAll('li')).toHaveLength(3);
+
+    await router.replace({ query: { module: 'motor' } });
+    await flushPromises();
+    expect(summary()['Policies sold']).toBe('1');
+    expect(summary()['Quote conversion']).toBe('33%');
+    expect(summary()['Loss ratio']).toBe('0%');
+  });
+
+  it('puts Sales first, then Claims, then the modules', async () => {
+    const { wrapper } = await mountAt('/module-select');
+    const headings = wrapper.findAll('h3').map((h) => h.attributes('id'));
+    const at = (id) => headings.indexOf(id);
+    expect(at('stats-sales')).toBeGreaterThanOrEqual(0);
+    expect(at('stats-sales')).toBeLessThan(at('stats-kpis-claims'));
+    expect(at('stats-sales-recent')).toBeLessThan(at('stats-kpis-claims'));
+    expect(at('stats-kpis-claims')).toBeLessThan(at('stats-modules'));
+  });
+
+  it('keeps the sales charts, empty, when the sales services cannot be reached', async () => {
+    const { wrapper } = await mountAt('/module-select');
+    const sales = wrapper.find('[aria-labelledby="stats-sales"]');
+    expect(sales.find('[role="status"]').text()).toContain('Sales data could not be loaded');
+    // No figures to give, so a dash rather than a zero
+    expect(sales.find('[aria-label="Sales summary"] dd').text()).toBe('—');
+    expect(sales.findAllComponents({ name: 'BarChart' })).toHaveLength(4);
+    expect(sales.findAllComponents({ name: 'DoughnutChart' })).toHaveLength(2);
+    expect(wrapper.find('[aria-labelledby="stats-sales-trend"] .chart-note').text()).toBe('Sales data could not be loaded');
   });
 
   it('filters the figures by module tab, and by clicking a product bar', async () => {
@@ -130,7 +226,8 @@ describe('ModuleLauncher', () => {
     expect(trend.labels).toHaveLength(6);
     expect(trend.datasets.map((d) => [d.label, d.data.at(-1)])).toEqual([['Filed', 3], ['Completed', 1]]);
 
-    const [amount, status] = wrapper.findAllComponents({ name: 'BarChart' }).map((c) => c.props('chartData'));
+    const [amount, status] = ['stats-amount', 'stats-status']
+      .map((id) => wrapper.find(`[aria-labelledby="${id}"]`).findComponent({ name: 'BarChart' }).props('chartData'));
     expect(amount.labels).toEqual(['Fire Insurance', 'Motor']);
     expect(amount.datasets[0].data).toEqual([3500, 500]);
     expect(status.datasets.map((d) => [d.label, d.data])).toEqual([['Open', [1, 0]], ['Completed', [1, 0]], ['Rejected', [0, 1]]]);

@@ -150,3 +150,9 @@ export function acceptQuotation(quotationUuid) {
 export function declineQuotation(quotationUuid) {
   return call(pcHttp.post(`/quotations/${quotationUuid}/decline`));
 }
+
+/* ── Policies ── */
+
+export function listPolicies(query) {
+  return call(pcHttp.get('/policies', { params: listParams(query) }));
+}

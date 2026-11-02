@@ -39,6 +39,11 @@ export function keyProblem(key) {
 
 export const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
+/** A product filing ({ categoryKey, subcategoryKey }) needs a class of business once a category is chosen. */
+export function filingProblem(filing) {
+  return filing?.categoryKey && !filing.subcategoryKey ? 'Choose a class of business, or set the category to Unfiled' : '';
+}
+
 /** The error's message, unless it is already shown under one of these inputs. */
 export function generalError(err, fields = []) {
   if (!err) return '';

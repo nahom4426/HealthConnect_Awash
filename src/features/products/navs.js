@@ -6,6 +6,7 @@ const ICONS = {
   quotations: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6M9 11h6M9 15h4M5 5h14a1 1 0 011 1v14l-4-2-4 2-4-2-4 2V6a1 1 0 011-1z"/></svg>`,
   setup: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`,
   catalogue: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path stroke-linecap="round" d="M17.5 14v7M14 17.5h7"/></svg>`,
+  categories: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path stroke-linecap="round" d="M8 13h8"/></svg>`,
   registry: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"/></svg>`,
 };
 
@@ -33,6 +34,16 @@ export const productAdminNavs = [
     path: '/product-catalogue',
     name: 'Product catalogue',
     icon: ICONS.catalogue,
+    area: false,
+    visible: () => {
+      const store = useModuleStore();
+      return store.isSuperAdmin() || store.canAnywhere('.product.read');
+    },
+  },
+  {
+    path: '/product-categories',
+    name: 'Product categories',
+    icon: ICONS.categories,
     area: false,
     visible: () => {
       const store = useModuleStore();

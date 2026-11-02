@@ -125,7 +125,7 @@ const MODULE_NAVS = {
   [ADMIN_MODULE_ID]: [...administrationNavs, ...productAdminNavs],
 };
 
-const ADMIN_SCREEN = /^\/(users|add_user|edit_user|user_detail|roles|create-role|edit_role|role_detail|privileges|add_privilege|edit_privilege|privilege_detail|branches|audit-log|admin\/user-roles|admin\/modules|product-catalogue)(\/|$)/;
+const ADMIN_SCREEN = /^\/(users|add_user|edit_user|user_detail|roles|create-role|edit_role|role_detail|privileges|add_privilege|edit_privilege|privilege_detail|branches|audit-log|admin\/user-roles|admin\/modules|product-catalogue|product-categories)(\/|$)/;
 const PRODUCT_SCREEN = /^\/products\/([^/]+)/;
 
 // Menu, sidebar and button gating read the module registry (GET /modules/me)

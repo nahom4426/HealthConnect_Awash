@@ -17,8 +17,18 @@ export function createDefinition(body) {
   return call(pcHttp.post('/product-definitions', body));
 }
 
-export function updateDefinition(key, { name, description, sortOrder }) {
-  return call(pcHttp.put(`/product-definitions/${encodeURIComponent(key)}`, { name, description, sortOrder }));
+/**
+ * Filing has three cases on PUT: subcategoryKey omitted → unchanged, "" → cleared, "MOTOR" → filed.
+ * Pass subcategoryKey (and categoryKey) only when the user changed the filing, or a rename
+ * would silently unfile the product.
+ */
+export function updateDefinition(key, { name, description, sortOrder, subcategoryKey, categoryKey }) {
+  const body = { name, description, sortOrder };
+  if (subcategoryKey !== undefined) {
+    body.subcategoryKey = subcategoryKey;
+    if (subcategoryKey && categoryKey) body.categoryKey = categoryKey;
+  }
+  return call(pcHttp.put(`/product-definitions/${encodeURIComponent(key)}`, body));
 }
 
 export function setDefinitionStatus(key, status) {

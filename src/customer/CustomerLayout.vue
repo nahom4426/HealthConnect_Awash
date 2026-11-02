@@ -12,6 +12,7 @@ const dark = ref(isDark());
 const name = computed(() => fullName(currentUser()) || currentUser()?.email || '');
 const links = [
   { to: '/policies', label: 'File a claim', active: () => route.path.startsWith('/policies') },
+  { to: '/forms', label: 'Claim forms', active: () => route.path.startsWith('/forms') },
   { to: '/claims', label: 'My claims', active: () => route.path.startsWith('/claims') },
 ];
 

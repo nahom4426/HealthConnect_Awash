@@ -116,14 +116,18 @@ export function fit(text, x, y, width, { max = 9, min = 5.5 } = {}) {
   return { text: shown, size, left: x + 2, top: y - 0.6, width };
 }
 
-/** An answer over several ruled lines; the type gets smaller when the text is long. */
-export function block(text, [x, y, width, lineHeight, lines]) {
+/**
+ * An answer over several ruled lines; the type gets smaller when the text is long. `indent` (points) is
+ * for a first line that starts after its label, further right than the lines below it.
+ */
+export function block(text, [x, y, width, lineHeight, lines, indent = 0]) {
   let size = lineHeight > 12 ? 9 : 8.5;
   const perChar = 0.5;
-  while (size > 6.5 && text.length > (width / (perChar * size)) * lines) size -= 0.5;
-  const capacity = Math.floor((width / (perChar * size)) * lines);
+  const room = (sz) => (width * lines - indent) / (perChar * sz);
+  while (size > 6.5 && text.length > room(size)) size -= 0.5;
+  const capacity = Math.floor(room(size));
   const shown = text.length > capacity && capacity > 1 ? `${text.slice(0, capacity - 1)}…` : text;
-  return { text: shown, size, left: x, top: y, width, lineHeight, lines };
+  return { text: shown, size, left: x, top: y, width, lineHeight, lines, indent };
 }
 
 /** Injured persons: name, address and identity columns; up to three rows fit on the form. */

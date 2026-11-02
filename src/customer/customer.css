@@ -1,0 +1,18 @@
+/* The staff app's wind.css fixes html, body and #app to the window and scrolls inside its own frame.
+   The customer site has no frame: the page itself scrolls (the header is sticky to it) and prints in
+   full, so undo that here. */
+html,
+body,
+#app {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+/* Printed forms fill the paper edge to edge: no page padding to push a sheet onto an extra page */
+@media print {
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}

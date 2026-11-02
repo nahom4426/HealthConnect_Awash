@@ -8,6 +8,8 @@ const ClaimForm = () => import('@/customer/pages/ClaimForm.vue');
 const ClaimsPage = () => import('@/customer/pages/ClaimsPage.vue');
 const ClaimDetail = () => import('@/customer/pages/ClaimDetail.vue');
 const ClaimFormPrint = () => import('@/customer/pages/ClaimFormPrint.vue');
+const ClaimFormsPage = () => import('@/customer/pages/ClaimFormsPage.vue');
+const PaperClaimForm = () => import('@/customer/pages/PaperClaimForm.vue');
 
 const router = createRouter({
   history: createWebHistory(),
@@ -23,6 +25,8 @@ const router = createRouter({
         { path: 'claims', name: 'claims', component: ClaimsPage },
         { path: 'claims/:claimUuid', name: 'claim-detail', component: ClaimDetail },
         { path: 'claims/:claimUuid/form', name: 'claim-form-print', component: ClaimFormPrint },
+        { path: 'forms', name: 'claim-forms', component: ClaimFormsPage },
+        { path: 'forms/:formId', name: 'paper-claim-form', component: PaperClaimForm },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/policies' },

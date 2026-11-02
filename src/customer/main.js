@@ -1,6 +1,7 @@
 import '../assets/wind.css';
 import '../assets/theme-dark.css';
 import '../assets/theme-dark-tints.css';
+import './customer.css';
 
 import { createApp } from 'vue';
 import App from './App.vue';

@@ -24,7 +24,16 @@ the staff app (`src/customer/` imports nothing from the rest of `src/`, apart fr
 
 ## Pages
 `/login` · `/policies` (my policies, find by number) · `/policies/:policyNumber/claim` (claim form,
-review, documents) · `/claims` · `/claims/:claimUuid` (progress, details, documents)
+review, documents) · `/claims` · `/claims/:claimUuid` (progress, details, documents) · `/forms` (all
+four claim notification forms) · `/forms/:formId` (fill in and print)
+
+## Other claim forms
+Besides motor, standardinsurancesc.com publishes three claim notification forms: Inland Carriers
+Liability, CPM & CAR, and Workmen's Compensation. `/forms/:formId` (`carriers-liability`, `cpm-car`,
+`workmens-compensation`) asks the form's questions and writes the answers on the original form pages,
+the same way the motor form is printed; the customer prints it or saves it as PDF, signs it and brings
+it to a branch. There is no claims service for these products yet, so nothing is sent to the backend;
+answers stay in the browser as a draft until cleared. Field positions are in `src/customer/paperClaimForms.js`.
 
 ## Run locally
 1. Start the backend (gateway on 8888). The dev server forwards `/api` to `VITE_CUSTOMER_API_HOST`,
@@ -49,4 +58,4 @@ If the API is on another host, build with `VITE_CUSTOMER_API_HOST=https://api.ex
 
 ## Not built yet
 - Self-registration and "forgot password" (the page tells customers to contact their branch).
-- Policies other than motor.
+- Policies other than motor (the other products have printable claim forms only, see above).

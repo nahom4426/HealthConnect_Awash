@@ -59,6 +59,10 @@ onMounted(async () => {
   <div class="mx-auto max-w-3xl">
     <h1 class="text-2xl font-semibold">File a motor claim</h1>
     <p class="mt-1 text-ink-muted">Choose the policy the claim is for.</p>
+    <p class="mt-1 text-sm text-ink-muted">
+      Carriers liability, CPM &amp; CAR or workmen’s compensation claim?
+      <router-link to="/forms" class="text-primary underline">See the other claim forms</router-link>.
+    </p>
 
     <p v-if="loading" class="mt-6 text-ink-muted">Loading your policies…</p>
     <p v-else-if="loadError" role="alert" class="mt-6 rounded-lg bg-error-soft px-3 py-2 text-sm text-error-strong">{{ loadError }}</p>
